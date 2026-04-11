@@ -858,15 +858,23 @@ public class SqsOverflowQueue<T, K>
 
 	}
 
-	private K ignorePersistExceptionAndComplete(T entity, Throwable t) {
+	/**
+	 * Test if an exception that occurred during persistence should be ignored.
+	 * 
+	 * @param entity
+	 *        the entity being persisted
+	 * @param t
+	 *        the exception
+	 * @return the entity ID to complete the future successfully with, or
+	 *         {@code null} to complete the future exceptionally
+	 */
+	private @Nullable K ignorePersistExceptionAndComplete(T entity, Throwable t) {
 		final Set<Class<? extends Throwable>> ignored = getIgnoredDaoExceptions();
 		K id = null;
 		if ( ignored != null ) {
 			for ( Class<? extends Throwable> ignore : ignored ) {
-				if ( (ignore.isAssignableFrom(t.getClass())) ) {
-					log.debug("Ignoring exception while storing entity {}: {}", entity, t.getMessage(),
-							t);
-
+				if ( ignore.isAssignableFrom(t.getClass()) ) {
+					log.debug("Ignoring exception storing entity {}: {}", entity, t.getMessage(), t);
 				}
 			}
 			if ( entity instanceof Unique<?> ) {
