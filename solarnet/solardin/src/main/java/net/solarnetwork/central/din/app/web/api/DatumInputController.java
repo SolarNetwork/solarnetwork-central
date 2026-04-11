@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -98,8 +99,8 @@ public class DatumInputController {
 			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public ResponseEntity<Result<Collection<DatumId>>> postDatum(@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
-			InputStream in) throws IOException {
+			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
+			WebRequest req, InputStream in) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
