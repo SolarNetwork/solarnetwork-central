@@ -31,6 +31,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -192,6 +193,40 @@ public class SqsOverflowQueueTests {
 			.as("SQS message is JSON serialization of datum")
 			.returns(JSON_MAPPER.writeValueAsString(entity), from(SendMessageRequest::messageBody))
 			;
+
+		and.then(result)
+			.as("Result provided")
+			.isEqualTo(entity.getId())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void exceptionOnStore_ignored() throws IOException {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setIgnoredDaoExceptions(Set.of(IllegalArgumentException.class));
+
+		Throwable t = new IllegalArgumentException("boom!");
+		given(delegateDao.persist(any())).willThrow(t);
+
+		// WHEN
+		collector.serviceDidStartup();
+
+		UserEvent entity = new UserEvent(randomLong(), UUID_GENERATOR.generate(),
+				new String[] { randomString() }, null, null);
+
+		UserUuidPK result = collector.persist(entity);
+
+		collector.shutdownAndWait();
+
+		// THEN
+		// @formatter:off
+		then(exceptionHandler).shouldHaveNoInteractions();
+
+		then(delegateDao).shouldHaveNoMoreInteractions();
+
+		then(sqsClient).shouldHaveNoInteractions();
 
 		and.then(result)
 			.as("Result provided")

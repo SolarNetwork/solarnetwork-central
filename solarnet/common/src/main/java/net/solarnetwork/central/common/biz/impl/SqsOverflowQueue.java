@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
@@ -43,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.support.EntityCodec;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.RemoteServiceException;
@@ -105,7 +107,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * @param <K>
  *        the message entity key type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SqsOverflowQueue<T, K>
 		implements GenericWriteOnlyDao<T, K>, PingTest, ServiceLifecycleObserver {
@@ -184,6 +186,7 @@ public class SqsOverflowQueue<T, K>
 	private int shutdownWaitSecs;
 	private @Nullable UncaughtExceptionHandler exceptionHandler;
 	private String pingTestName = DEFAULT_PING_TEST_NAME;
+	private @Nullable Set<Class<? extends Throwable>> ignoredDaoExceptions;
 
 	private @Nullable List<DaoWriterThread> writerThreads;
 	private @Nullable List<QueueReaderThread> readerThreads;
@@ -577,11 +580,16 @@ public class SqsOverflowQueue<T, K>
 				var id = persistEntityInternal(entity);
 				f.complete(id);
 			} catch ( Exception e2 ) {
-				// give up
-				stats.increment(BasicCount.ObjectsDiscarded);
-				log.warn("Failed to persist [{}] after failing to send to SQS queue: {}", entity, e2,
-						e2);
-				f.completeExceptionally(e);
+				final K ignoredId = ignorePersistExceptionAndComplete(entity, e2);
+				if ( ignoredId != null ) {
+					f.complete(ignoredId);
+				} else {
+					// give up
+					stats.increment(BasicCount.ObjectsDiscarded);
+					log.warn("Failed to persist [{}] after failing to send to SQS queue: {}", entity, e2,
+							e2);
+					f.completeExceptionally(e);
+				}
 			}
 		}
 		return f;
@@ -825,24 +833,49 @@ public class SqsOverflowQueue<T, K>
 					var id = persistEntityInternal(item.entity);
 					item.future.complete(id);
 				} catch ( Throwable t ) {
-					stats.increment(BasicCount.ObjectsFailed);
-					log.warn("Error storing entity {}: {}", item.entity, t.getMessage(), t);
-					UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
-					if ( exHandler != null ) {
-						try {
-							exHandler.uncaughtException(this, t);
-						} catch ( Exception e ) {
-							log.error(
-									"Exception handler [{}] threw exception after error storing entity {}",
-									exHandler, item.entity, e);
+					final K ignoredId = ignorePersistExceptionAndComplete(item.entity, t);
+					if ( ignoredId != null ) {
+						item.future.complete(ignoredId);
+					} else {
+						stats.increment(BasicCount.ObjectsFailed);
+						log.warn("Error storing entity {}: {}", item.entity, t.getMessage(), t);
+						UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
+						if ( exHandler != null ) {
+							try {
+								exHandler.uncaughtException(this, t);
+							} catch ( Exception e ) {
+								log.error(
+										"Exception handler [{}] threw exception after error storing entity {}",
+										exHandler, item.entity, e);
+							}
 						}
+						item.future.completeExceptionally(t);
 					}
-					item.future.completeExceptionally(t);
 				}
 			}
 			log.info("Writer thread exiting.");
 		}
 
+	}
+
+	private K ignorePersistExceptionAndComplete(T entity, Throwable t) {
+		final Set<Class<? extends Throwable>> ignored = getIgnoredDaoExceptions();
+		K id = null;
+		if ( ignored != null ) {
+			for ( Class<? extends Throwable> ignore : ignored ) {
+				if ( (ignore.isAssignableFrom(t.getClass())) ) {
+					log.debug("Ignoring exception while storing entity {}: {}", entity, t.getMessage(),
+							t);
+
+				}
+			}
+			if ( entity instanceof Unique<?> ) {
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				Unique<K> unq = (Unique) entity;
+				id = unq.id();
+			}
+		}
+		return id;
 	}
 
 	/**
@@ -1081,6 +1114,28 @@ public class SqsOverflowQueue<T, K>
 	 */
 	public final void setPingTestName(String pingTestName) {
 		this.pingTestName = (pingTestName != null ? pingTestName : DEFAULT_PING_TEST_NAME);
+	}
+
+	/**
+	 * Get the collection of exceptions to ignore when persisting events.
+	 * 
+	 * @return the exceptions, or {@code null}
+	 * @since 1.1
+	 */
+	public final @Nullable Set<Class<? extends Throwable>> getIgnoredDaoExceptions() {
+		return ignoredDaoExceptions;
+	}
+
+	/**
+	 * Set a collection of exceptions to ignore when persisting events.
+	 * 
+	 * @param ignoredDaoExceptions
+	 *        the exceptions to set
+	 * @since 1.1
+	 */
+	public final void setIgnoredDaoExceptions(
+			@Nullable Set<Class<? extends Throwable>> ignoredDaoExceptions) {
+		this.ignoredDaoExceptions = ignoredDaoExceptions;
 	}
 
 }

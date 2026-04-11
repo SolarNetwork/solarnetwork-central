@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
@@ -63,7 +65,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Test cases for the {@link JdbcUserEventDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -106,6 +108,22 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		assertThat("Row message matches", row.get("message"), is(equalTo(event.getMessage())));
 		assertThat("Row jdata matches", getStringMap(row.get("jdata").toString()),
 				is(equalTo(getStringMap(event.getData()))));
+	}
+
+	@Test
+	public void insert_duplicate() {
+		// GIVEN
+		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
+				new String[] { "foo", "bar", "bam" }, "Test obj", "{\"foo\":123}");
+		dao.persist(event);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(DuplicateKeyException.class)
+			.isThrownBy(() -> {
+				dao.persist(event);
+			});
+		// @formatter:on
 	}
 
 	@Test
