@@ -174,28 +174,8 @@ public class UserEventConfig {
 						new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
 						new LinkedHashSetBlockingQueue<>(9), userEventAppenderDao, ENTITY_CODEC);
 				collector.setPingTestName("SQS UserEvent Collector");
-				collector.setReadConcurrency(settings.getReadConcurrency());
-				collector.setWriteConcurrency(settings.getWriteConcurrency());
 				collector.setIgnoredDaoExceptions(Set.of(DuplicateKeyException.class));
-				if ( settings.getWorkItemMaxWait() != null ) {
-					collector.setWorkItemMaxWaitMs(settings.getWorkItemMaxWait().toMillis());
-				}
-				collector.setReadMaxMessageCount(settings.getReadMaxMessageCount());
-				if ( settings.getReadMaxWaitTime() != null ) {
-					collector.setReadMaxWaitTimeSecs((int) settings.getReadMaxWaitTime().toSeconds());
-				}
-				if ( settings.getReadSleepMin() != null ) {
-					collector.setReadSleepMinMs(settings.getReadSleepMin().toMillis());
-				}
-				if ( settings.getReadSleepMax() != null ) {
-					collector.setReadSleepMaxMs(settings.getReadSleepMax().toMillis());
-				}
-				if ( settings.getReadSleepThrottleStep() != null ) {
-					collector.setReadSleepThrottleStepMs(settings.getReadSleepThrottleStep().toMillis());
-				}
-				if ( settings.getShutdownWait() != null ) {
-					collector.setShutdownWaitSecs((int) settings.getShutdownWait().toSeconds());
-				}
+				settings.configure(collector);
 				return collector;
 			}
 

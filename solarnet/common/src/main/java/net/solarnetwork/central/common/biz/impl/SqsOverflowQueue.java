@@ -160,6 +160,13 @@ public class SqsOverflowQueue<T, K>
 	/** The {@code pingTestName} property default value. */
 	public static final String DEFAULT_PING_TEST_NAME = "SQS Overflow Queue";
 
+	/**
+	 * The {@code pingTestTimeoutMs} property default value.
+	 * 
+	 * @since 1.1
+	 */
+	public static final long DEFAULT_PING_TEST_TIMEOUT_MS = 2_000L;
+
 	private static final Logger log = LoggerFactory.getLogger(SqsOverflowQueue.class);
 
 	private static final AtomicInteger READER_COUNTER = new AtomicInteger(0);
@@ -186,6 +193,7 @@ public class SqsOverflowQueue<T, K>
 	private int shutdownWaitSecs;
 	private @Nullable UncaughtExceptionHandler exceptionHandler;
 	private String pingTestName = DEFAULT_PING_TEST_NAME;
+	private long pingTestTimeoutMs = DEFAULT_PING_TEST_TIMEOUT_MS;
 	private @Nullable Set<Class<? extends Throwable>> ignoredDaoExceptions;
 
 	private @Nullable List<DaoWriterThread> writerThreads;
@@ -407,7 +415,7 @@ public class SqsOverflowQueue<T, K>
 
 	@Override
 	public long getPingTestMaximumExecutionMilliseconds() {
-		return 1000;
+		return pingTestTimeoutMs;
 	}
 
 	@Override
@@ -421,7 +429,7 @@ public class SqsOverflowQueue<T, K>
 				req.queueUrl(sqsQueueUrl).attributeNames(
 						QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES,
 						QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE);
-			}).get(900L, TimeUnit.MILLISECONDS);
+			}).get(Math.max(100, pingTestTimeoutMs - 100L), TimeUnit.MILLISECONDS);
 			sqsConnected = true;
 			msgCount = resp.attributesAsStrings()
 					.get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES.toString());
@@ -1122,6 +1130,27 @@ public class SqsOverflowQueue<T, K>
 	 */
 	public final void setPingTestName(String pingTestName) {
 		this.pingTestName = (pingTestName != null ? pingTestName : DEFAULT_PING_TEST_NAME);
+	}
+
+	/**
+	 * Get the ping test timeout, in milliseconds.
+	 * 
+	 * @return the timeout; defaults to {@link #DEFAULT_PING_TEST_TIMEOUT_MS}
+	 * @since 1.1
+	 */
+	public final long getPingTestTimeoutMs() {
+		return pingTestTimeoutMs;
+	}
+
+	/**
+	 * Set the ping test timeout, in milliseconds.
+	 * 
+	 * @param pingTestTimeoutMs
+	 *        the timeout to set
+	 * @since 1.1
+	 */
+	public final void setPingTestTimeoutMs(long pingTestTimeoutMs) {
+		this.pingTestTimeoutMs = pingTestTimeoutMs;
 	}
 
 	/**

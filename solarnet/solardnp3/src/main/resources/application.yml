@@ -116,6 +116,7 @@ app:
       read-sleep-min: "0s"
       read-sleep-max: "30s"
       read-sleep-throttle-step: "1s"
+      ping-test-timeout: "2s"
       shutdown-wait: "30s"
       stat-frequency: 200
 

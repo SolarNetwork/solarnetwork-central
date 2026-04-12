@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
  * Settings for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SqsOverflowQueueSettings extends SqsProperties {
 
@@ -56,6 +56,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	private Duration readSleepMax = Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_MAX_MS);
 	private Duration readSleepThrottleStep = Duration
 			.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
+	private Duration pingTestTimeout = Duration.ofMillis(SqsOverflowQueue.DEFAULT_PING_TEST_TIMEOUT_MS);
 
 	private Duration shutdownWait = Duration.ZERO;
 
@@ -73,6 +74,40 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}
 		return builder.build();
+	}
+
+	/**
+	 * Configure a {@link SqsOverflowQueue} from these settings.
+	 * 
+	 * @param queue
+	 *        the queue to configure
+	 * @since 1.1
+	 */
+	public void configure(SqsOverflowQueue<?, ?> queue) {
+		queue.setReadConcurrency(readConcurrency);
+		queue.setWriteConcurrency(writeConcurrency);
+		if ( pingTestTimeout != null ) {
+			queue.setPingTestTimeoutMs(pingTestTimeout.toMillis());
+		}
+		if ( workItemMaxWait != null ) {
+			queue.setWorkItemMaxWaitMs(workItemMaxWait.toMillis());
+		}
+		queue.setReadMaxMessageCount(readMaxMessageCount);
+		if ( readMaxWaitTime != null ) {
+			queue.setReadMaxWaitTimeSecs((int) readMaxWaitTime.toSeconds());
+		}
+		if ( readSleepMin != null ) {
+			queue.setReadSleepMinMs(readSleepMin.toMillis());
+		}
+		if ( readSleepMax != null ) {
+			queue.setReadSleepMaxMs(readSleepMax.toMillis());
+		}
+		if ( readSleepThrottleStep != null ) {
+			queue.setReadSleepThrottleStepMs(readSleepThrottleStep.toMillis());
+		}
+		if ( shutdownWait != null ) {
+			queue.setShutdownWaitSecs((int) shutdownWait.toSeconds());
+		}
 	}
 
 	/**
@@ -117,7 +152,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * Get the number of reader threads to use.
 	 *
 	 * @return the number of reader threads; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_CONCURRENCY}
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_CONCURRENCY}
 	 */
 	public final int getReadConcurrency() {
 		return readConcurrency;
@@ -141,7 +176,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * Get the number of writer threads to use.
 	 *
 	 * @return the number of writer threads; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_WRITE_CONCURRENCY}
+	 *         {@link SqsOverflowQueue#DEFAULT_WRITE_CONCURRENCY}
 	 */
 	public final int getWriteConcurrency() {
 		return writeConcurrency;
@@ -197,17 +232,20 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * Set the maximum amount of time to wait for a work item to be processed.
 	 *
 	 * @param workItemMaxWait
-	 *        the maximum time to set
+	 *        the maximum time to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_WORK_ITEM_MAX_WAIT_MS}
+	 *        milliseconds will be used
 	 */
 	public final void setWorkItemMaxWait(Duration workItemMaxWait) {
-		this.workItemMaxWait = workItemMaxWait;
+		this.workItemMaxWait = (workItemMaxWait != null ? workItemMaxWait
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS));
 	}
 
 	/**
 	 * Get the maximum number of SQS messages to read per request.
 	 *
 	 * @return the count; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_MAX_MESSAGE_COUNT}
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_MAX_MESSAGE_COUNT}
 	 */
 	public final int getReadMaxMessageCount() {
 		return readMaxMessageCount;
@@ -228,7 +266,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * Get the maximum SQS receive wait time.
 	 *
 	 * @return the seconds; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_MAX_WAIT_TIME_SECS}
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_MAX_WAIT_TIME_SECS}
 	 */
 	public final Duration getReadMaxWaitTime() {
 		return readMaxWaitTime;
@@ -239,10 +277,13 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 *
 	 * @param readMaxWaitTime
 	 *        the seconds to set; see AWS documentation for valid range (e.g.
-	 *        1-20s)
+	 *        1-20s); if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_READ_MAX_WAIT_TIME_SECS} seconds
+	 *        will be used
 	 */
 	public final void setReadMaxWaitTime(Duration readMaxWaitTime) {
-		this.readMaxWaitTime = readMaxWaitTime;
+		this.readMaxWaitTime = (readMaxWaitTime != null ? readMaxWaitTime
+				: Duration.ofSeconds(SqsOverflowQueue.DEFAULT_READ_MAX_WAIT_TIME_SECS));
 	}
 
 	/**
@@ -250,7 +291,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * SQS.
 	 *
 	 * @return the minimum sleep amount; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_MIN_MS}
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_MIN_MS}
 	 */
 	public final Duration getReadSleepMin() {
 		return readSleepMin;
@@ -261,10 +302,13 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * SQS.
 	 *
 	 * @param readSleepMin
-	 *        the minimum sleep amount to set
+	 *        the minimum sleep amount to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_MIN_MS} milliseconds
+	 *        will be used
 	 */
 	public final void setReadSleepMin(Duration readSleepMin) {
-		this.readSleepMin = readSleepMin;
+		this.readSleepMin = (readSleepMin != null ? readSleepMin
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_MIN_MS));
 	}
 
 	/**
@@ -272,7 +316,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * SQS.
 	 *
 	 * @return the minimum sleep amount; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_MAX_MS}
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_MAX_MS}
 	 */
 	public final Duration getReadSleepMax() {
 		return readSleepMax;
@@ -283,10 +327,13 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * SQS.
 	 *
 	 * @param readSleepMax
-	 *        the maximum sleep amount to set
+	 *        the maximum sleep amount to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_MAX_MS} milliseconds
+	 *        will be used
 	 */
 	public final void setReadSleepMax(Duration readSleepMax) {
-		this.readSleepMax = readSleepMax;
+		this.readSleepMax = (readSleepMax != null ? readSleepMax
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_MAX_MS));
 	}
 
 	/**
@@ -294,8 +341,9 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * each received message that is rejected from the work queue, or to
 	 * decrease after successfully offering all messages to the work queue.
 	 *
-	 * @return the step amount, in milliseconds; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
+	 * @return the step amount; defaults to
+	 *         {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
+	 *         milliseconds
 	 */
 	public final Duration getReadSleepThrottleStep() {
 		return readSleepThrottleStep;
@@ -307,10 +355,39 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	 * decrease after successfully offering all messages to the work queue.
 	 *
 	 * @param readSleepThrottleStep
-	 *        the step amount to set
+	 *        the step amount to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
+	 *        milliseconds will be used
 	 */
 	public final void setReadSleepThrottleStep(Duration readSleepThrottleStep) {
-		this.readSleepThrottleStep = readSleepThrottleStep;
+		this.readSleepThrottleStep = (readSleepThrottleStep != null ? readSleepThrottleStep
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS));
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for the ping test to complete.
+	 * 
+	 * @return the timeout; defaults to
+	 *         {@link SqsOverflowQueue#DEFAULT_PING_TEST_TIMEOUT_MS}
+	 *         milliseconds
+	 * @since 1.1
+	 */
+	public final Duration getPingTestTimeout() {
+		return pingTestTimeout;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for the ping test to complete.
+	 * 
+	 * @param pingTestTimeout
+	 *        the timeout to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_PING_TEST_TIMEOUT_MS} milliseconds
+	 *        will be used
+	 * @since 1.1
+	 */
+	public final void setPingTestTimeout(Duration pingTestTimeout) {
+		this.pingTestTimeout = (pingTestTimeout != null ? pingTestTimeout
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_PING_TEST_TIMEOUT_MS));
 	}
 
 }
