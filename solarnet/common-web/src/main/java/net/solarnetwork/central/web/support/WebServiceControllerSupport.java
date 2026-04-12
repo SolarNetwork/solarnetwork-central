@@ -23,7 +23,6 @@
 package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.domain.Result.error;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.time.DateTimeException;
@@ -50,8 +49,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -546,24 +543,6 @@ public final class WebServiceControllerSupport {
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
 
-	private String generateErrorsMessage(@Nullable Errors e, Locale locale,
-			@Nullable MessageSource msgSrc) {
-		String msg = (msgSrc == null ? "Validation error"
-				: nonnull(msgSrc.getMessage("error.validation", null, "Validation error", locale),
-						"Message"));
-		if ( msgSrc != null && e != null && e.hasErrors() ) {
-			StringBuilder buf = new StringBuilder();
-			for ( ObjectError error : e.getAllErrors() ) {
-				if ( !buf.isEmpty() ) {
-					buf.append(" ");
-				}
-				buf.append(msgSrc.getMessage(error, locale));
-			}
-			msg = buf.toString();
-		}
-		return msg;
-	}
-
 	/**
 	 * Handle an {@link InvalidPropertyException}.
 	 *
@@ -606,7 +585,7 @@ public final class WebServiceControllerSupport {
 	public Result<Void> handleValidationException(ValidationException e, WebRequest request,
 			Locale locale) {
 		log.debug("ValidationException in request {}: {}", requestDescription(request), e.toString());
-		String msg = generateErrorsMessage(e.getErrors(), locale,
+		String msg = ExceptionUtils.generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return error(null, msg);
 	}
