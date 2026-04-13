@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -103,9 +104,10 @@ public class InstructionInputController {
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public void postInstruction(@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
-			InputStream in, @RequestHeader(value = "Accept", required = true) String accept,
-			@RequestHeader(value = "Accept-Encoding", required = false) String acceptEncoding,
+			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
+			WebRequest req, InputStream in,
+			@RequestHeader(value = "Accept", required = true) String accept,
+			@RequestHeader(value = "Accept-Encoding", required = false) @Nullable String acceptEncoding,
 			HttpServletResponse response) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 

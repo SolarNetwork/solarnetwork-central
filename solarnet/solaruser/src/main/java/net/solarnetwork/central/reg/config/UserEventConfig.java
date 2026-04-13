@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.config;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.USER_EVENTS;
 import static net.solarnetwork.central.reg.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -174,27 +176,8 @@ public class UserEventConfig {
 						new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
 						new LinkedHashSetBlockingQueue<>(9), userEventAppenderDao, ENTITY_CODEC);
 				collector.setPingTestName("SQS UserEvent Collector");
-				collector.setReadConcurrency(settings.getReadConcurrency());
-				collector.setWriteConcurrency(settings.getWriteConcurrency());
-				if ( settings.getWorkItemMaxWait() != null ) {
-					collector.setWorkItemMaxWaitMs(settings.getWorkItemMaxWait().toMillis());
-				}
-				collector.setReadMaxMessageCount(settings.getReadMaxMessageCount());
-				if ( settings.getReadMaxWaitTime() != null ) {
-					collector.setReadMaxWaitTimeSecs((int) settings.getReadMaxWaitTime().toSeconds());
-				}
-				if ( settings.getReadSleepMin() != null ) {
-					collector.setReadSleepMinMs(settings.getReadSleepMin().toMillis());
-				}
-				if ( settings.getReadSleepMax() != null ) {
-					collector.setReadSleepMaxMs(settings.getReadSleepMax().toMillis());
-				}
-				if ( settings.getReadSleepThrottleStep() != null ) {
-					collector.setReadSleepThrottleStepMs(settings.getReadSleepThrottleStep().toMillis());
-				}
-				if ( settings.getShutdownWait() != null ) {
-					collector.setShutdownWaitSecs((int) settings.getShutdownWait().toSeconds());
-				}
+				collector.setIgnoredDaoExceptions(Set.of(DuplicateKeyException.class));
+				settings.configure(collector);
 				return collector;
 			}
 

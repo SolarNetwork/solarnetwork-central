@@ -61,6 +61,7 @@ public class UserIdRelatedTests {
 
 		// THEN
 		then(o.userIdIsAssigned()).as("Non-min user ID is assigned").isTrue();
+		then(o.assignedUserId()).as("Assigned user ID returned").isSameAs(userId);
 	}
 
 	@Test
@@ -72,7 +73,8 @@ public class UserIdRelatedTests {
 		final var o = new TestUserIdRelated(userId);
 
 		// THEN
-		then(o.userIdIsAssigned()).as("Null user ID is assigned").isFalse();
+		then(o.userIdIsAssigned()).as("Null user ID is not assigned").isFalse();
+		then(o.assignedUserId()).as("Unassigned user ID null").isNull();
 	}
 
 	@Test
@@ -84,19 +86,21 @@ public class UserIdRelatedTests {
 		final var o = new TestUserIdRelated(userId);
 
 		// THEN
-		then(o.userIdIsAssigned()).as("Unassigned non-constant user ID is not assigned").isFalse();
+		then(o.userIdIsAssigned()).as("Unassigned constant user ID is not assigned").isFalse();
+		then(o.assignedUserId()).as("Unassigned user ID null").isNull();
 	}
 
 	@Test
 	public void userIdIsAssigned_nonConstant() {
 		// GIVEN
-		final var userId = UserIdRelated.UNASSIGNED_USER_ID + 1L - 1L;
+		final var userId = Long.valueOf(UserIdRelated.UNASSIGNED_USER_ID + 1L - 1L);
 
 		// WHEN
 		final var o = new TestUserIdRelated(userId);
 
 		// THEN
-		then(o.userIdIsAssigned()).as("Unassigned constant user ID is not assigned").isTrue();
+		then(o.userIdIsAssigned()).as("Non-constant unassigned value user ID is assigned").isTrue();
+		then(o.assignedUserId()).as("Assigned user ID returned").isSameAs(userId);
 	}
 
 }

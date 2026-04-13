@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for objects related to a user entity by way of a user ID.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserIdRelated {
 
@@ -46,6 +48,24 @@ public interface UserIdRelated {
 	 *         if the user ID is not available
 	 */
 	Long getUserId() throws IllegalStateException;
+
+	/**
+	 * Get the user ID, but only if it has an assigned value.
+	 * 
+	 * @return the user ID, or {@code null} if not assigned
+	 * @since 1.2
+	 */
+	default @Nullable Long assignedUserId() {
+		Long result = null;
+		if ( userIdIsAssigned() ) {
+			try {
+				result = getUserId();
+			} catch ( Exception e ) {
+				// should not be here; continue anyway
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Test if the user ID is assigned.

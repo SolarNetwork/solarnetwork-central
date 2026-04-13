@@ -39,6 +39,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Result.ErrorDetail;
 
 /**
  * Helpers for dealing with exceptions.
@@ -137,14 +138,21 @@ public final class ExceptionUtils {
 	 */
 	public static <V> Result<V> generateErrorsResult(@Nullable Errors e, @Nullable String code,
 			@Nullable String message, @Nullable Locale locale, @Nullable MessageSource msgSrc) {
-		List<Result.ErrorDetail> details = null;
+		List<ErrorDetail> details = null;
 		if ( msgSrc != null && e != null && e.hasErrors() ) {
 			for ( ObjectError error : e.getGlobalErrors() ) {
 				if ( details == null ) {
 					details = new ArrayList<>(4);
 				}
-				details.add(new Result.ErrorDetail(error.getObjectName(), null,
-						msgSrc.getMessage(error, locale)));
+				// use default message without localization if available, to work around
+				// https://github.com/spring-projects/spring-framework/issues/36609
+				String msg;
+				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
+					msg = error.getDefaultMessage();
+				} else {
+					msg = msgSrc.getMessage(error, locale);
+				}
+				details.add(new ErrorDetail(error.getObjectName(), null, msg));
 			}
 			for ( FieldError error : e.getFieldErrors() ) {
 				if ( details == null ) {
@@ -163,8 +171,15 @@ public final class ExceptionUtils {
 				String rejectedValueDescription = (error.getRejectedValue() != null
 						? error.getRejectedValue().toString()
 						: null);
-				details.add(new Result.ErrorDetail(location, violationCode, rejectedValueDescription,
-						msgSrc.getMessage(error, locale)));
+				// use default message without localization if available, to work around
+				// https://github.com/spring-projects/spring-framework/issues/36609
+				String msg;
+				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
+					msg = error.getDefaultMessage();
+				} else {
+					msg = msgSrc.getMessage(error, locale);
+				}
+				details.add(new ErrorDetail(location, violationCode, rejectedValueDescription, msg));
 			}
 		}
 		return Result.error(code, message, details);

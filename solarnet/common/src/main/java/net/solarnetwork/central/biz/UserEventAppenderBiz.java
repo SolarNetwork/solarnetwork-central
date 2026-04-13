@@ -83,7 +83,7 @@ public interface UserEventAppenderBiz {
 	 *
 	 * @since 2.1
 	 */
-	public static final Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
+	public static final Function<UserEvent, @Nullable String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
 		final StringBuilder buf = new StringBuilder("user/");
 		buf.append(event.getUserId()).append("/event");
 

@@ -22,12 +22,13 @@
 
 package net.solarnetwork.central.din.app.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import jakarta.servlet.http.HttpServletRequest;
-import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.support.EventDetailsProvider;
 
 /**
@@ -37,13 +38,13 @@ import net.solarnetwork.central.support.EventDetailsProvider;
  * @version 1.1
  */
 public class EndpointAuthenticationDetails extends WebAuthenticationDetails
-		implements UserIdRelated, EventDetailsProvider {
+		implements EventDetailsProvider {
 
 	@Serial
 	private static final long serialVersionUID = 1532466056959330725L;
 
-	private final Long userId;
-	private final UUID endpointId;
+	private final @Nullable Long userId;
+	private final @Nullable UUID endpointId;
 
 	/**
 	 * Constructor.
@@ -54,8 +55,11 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails
 	 *        the user ID
 	 * @param endpointId
 	 *        the endpoint ID
+	 * @throws IllegalArgumentException
+	 *         if {@code request} is {@code null}
 	 */
-	public EndpointAuthenticationDetails(HttpServletRequest request, Long userId, UUID endpointId) {
+	public EndpointAuthenticationDetails(HttpServletRequest request, @Nullable Long userId,
+			@Nullable UUID endpointId) {
 		super(request);
 		this.userId = userId;
 		this.endpointId = endpointId;
@@ -72,10 +76,12 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails
 	 *        the user ID
 	 * @param endpointId
 	 *        the endpoint ID
+	 * @throws IllegalArgumentException
+	 *         if {@code remoteAddress} is {@code null}
 	 */
-	public EndpointAuthenticationDetails(String remoteAddress, String sessionId, Long userId,
-			UUID endpointId) {
-		super(remoteAddress, sessionId);
+	public EndpointAuthenticationDetails(String remoteAddress, @Nullable String sessionId,
+			@Nullable Long userId, @Nullable UUID endpointId) {
+		super(requireNonNullArgument(remoteAddress, "remoteAddress"), sessionId);
 		this.userId = userId;
 		this.endpointId = endpointId;
 	}
@@ -91,8 +97,7 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails
 	 * @return the user ID
 	 * @since 1.1
 	 */
-	@Override
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
@@ -101,7 +106,7 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails
 	 *
 	 * @return the endpoint ID
 	 */
-	public UUID getEndpointId() {
+	public final @Nullable UUID getEndpointId() {
 		return endpointId;
 	}
 
