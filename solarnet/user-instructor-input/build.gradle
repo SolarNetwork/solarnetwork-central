@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User Instructor Input'
-version = '4.0.0'
+version = '4.0.1'
 
 base {
 	archivesName = 'solarnet-user-instructor-input'
