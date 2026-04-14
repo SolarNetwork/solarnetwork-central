@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.app.config;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.security.KeyStore;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -52,7 +53,8 @@ public class TcpProxyServerConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public NettyDynamicProxyServer tcpProxyServer(DynamicProxyServerSettings settings,
 			List<ProxyConfigurationProvider> providers) {
-		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindSocketAddresses());
+		NettyDynamicProxyServer server = new NettyDynamicProxyServer(
+				nonnull(settings.bindSocketAddresses(), "Bind addresses"));
 		server.setWireLogging(settings.isWireLoggingEnabled());
 		if ( settings.hasTlsSettings() ) {
 			server.setTlsProtocols(settings.tls().protocols().toArray(String[]::new));

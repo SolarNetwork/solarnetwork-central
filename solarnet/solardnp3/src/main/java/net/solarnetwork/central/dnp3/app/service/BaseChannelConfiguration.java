@@ -51,7 +51,7 @@ public class BaseChannelConfiguration {
 	 *
 	 * @return the log levels
 	 */
-	public int getLogLevels() {
+	public final int getLogLevels() {
 		return logLevels;
 	}
 
@@ -64,7 +64,7 @@ public class BaseChannelConfiguration {
 	 * @see com.automatak.dnp3.LogLevels
 	 * @see com.automatak.dnp3.LogMasks
 	 */
-	public void setLogLevels(int logLevels) {
+	public final void setLogLevels(int logLevels) {
 		this.logLevels = logLevels;
 	}
 
@@ -73,7 +73,7 @@ public class BaseChannelConfiguration {
 	 *
 	 * @return the minimum retry delay
 	 */
-	public Duration getMinRetryDelay() {
+	public final Duration getMinRetryDelay() {
 		return minRetryDelay;
 	}
 
@@ -81,10 +81,11 @@ public class BaseChannelConfiguration {
 	 * Set the minimum retry delay.
 	 *
 	 * @param minRetryDelay
-	 *        the minimum delay
+	 *        the minimum delay; if {@code null} then
+	 *        {@link #DEFAULT_MIN_RETRY_DELAY} will be used
 	 */
-	public void setMinRetryDelay(Duration minRetryDelay) {
-		this.minRetryDelay = minRetryDelay;
+	public final void setMinRetryDelay(Duration minRetryDelay) {
+		this.minRetryDelay = (minRetryDelay != null ? minRetryDelay : DEFAULT_MIN_RETRY_DELAY);
 	}
 
 	/**
@@ -92,7 +93,7 @@ public class BaseChannelConfiguration {
 	 *
 	 * @return the maximum delay
 	 */
-	public Duration getMaxRetryDelay() {
+	public final Duration getMaxRetryDelay() {
 		return maxRetryDelay;
 	}
 
@@ -100,10 +101,11 @@ public class BaseChannelConfiguration {
 	 * Set the maximum retry delay.
 	 *
 	 * @param maxRetryDelay
-	 *        the maximum delay
+	 *        the maximum delay; if {@code null} then
+	 *        {@link #DEFAULT_MAX_RETRY_DELAY} will be used
 	 */
-	public void setMaxRetryDelay(Duration maxRetryDelay) {
-		this.maxRetryDelay = maxRetryDelay;
+	public final void setMaxRetryDelay(Duration maxRetryDelay) {
+		this.maxRetryDelay = (maxRetryDelay != null ? maxRetryDelay : DEFAULT_MAX_RETRY_DELAY);
 	}
 
 	/**
@@ -111,7 +113,7 @@ public class BaseChannelConfiguration {
 	 *
 	 * @return the number of seconds
 	 */
-	public int getMinRetryDelaySecs() {
+	public final int getMinRetryDelaySecs() {
 		Duration d = getMinRetryDelay();
 		return (d != null ? (int) (d.toMillis() / 1000) : 0);
 	}
@@ -122,7 +124,7 @@ public class BaseChannelConfiguration {
 	 * @param minRetryDelaySecs
 	 *        the number of seconds
 	 */
-	public void setMinRetryDelaySecs(int minRetryDelaySecs) {
+	public final void setMinRetryDelaySecs(int minRetryDelaySecs) {
 		setMinRetryDelay(Duration.ofSeconds(minRetryDelaySecs));
 	}
 
@@ -131,7 +133,7 @@ public class BaseChannelConfiguration {
 	 *
 	 * @return the number of seconds
 	 */
-	public int getMaxRetryDelaySecs() {
+	public final int getMaxRetryDelaySecs() {
 		Duration d = getMaxRetryDelay();
 		return (d != null ? (int) (d.toMillis() / 1000) : 0);
 	}
@@ -142,7 +144,7 @@ public class BaseChannelConfiguration {
 	 * @param maxRetryDelaySecs
 	 *        the number of seconds
 	 */
-	public void setMaxRetryDelaySecs(int maxRetryDelaySecs) {
+	public final void setMaxRetryDelaySecs(int maxRetryDelaySecs) {
 		setMaxRetryDelay(Duration.ofSeconds(maxRetryDelaySecs));
 	}
 

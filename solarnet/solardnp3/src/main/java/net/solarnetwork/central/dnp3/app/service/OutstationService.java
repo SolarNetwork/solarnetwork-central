@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.dnp3.app.service.Dnp3Utils.copySettings;
 import static net.solarnetwork.central.instructor.biz.InstructorBiz.createErrorResultParameters;
 import static net.solarnetwork.domain.InstructionStatus.createStatus;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.automatak.dnp3.AnalogInput;
@@ -142,11 +144,11 @@ public class OutstationService
 	private final Map<Long, Map<String, List<ServerMeasurementConfiguration>>> datumMeasurements;
 	private final Map<Long, Map<String, List<ServerControlConfiguration>>> datumControls;
 
-	private Executor taskExecutor;
+	private @Nullable Executor taskExecutor;
 	private int eventBufferSize = DEFAULT_EVENT_BUFFER_SIZE;
 	private int startupDelaySecs = DEFAULT_STARTUP_DELAY_SECONDS;
 
-	private Outstation outstation;
+	private @Nullable Outstation outstation;
 	private ChannelState channelState = ChannelState.CLOSED;
 
 	/**
@@ -196,8 +198,10 @@ public class OutstationService
 			return;
 		}
 		outstation = createOutstation();
-		outstation.enable();
-		log.info("DNP3 outstation [{}] enabled", getUid());
+		if ( outstation != null ) {
+			outstation.enable();
+			log.info("DNP3 outstation [{}] enabled", getUid());
+		}
 	}
 
 	@Override
@@ -361,7 +365,8 @@ public class OutstationService
 		}
 	}
 
-	private ServerControlConfiguration controlConfigForIndex(ControlType controlType, int index) {
+	private @Nullable ServerControlConfiguration controlConfigForIndex(ControlType controlType,
+			int index) {
 		MeasurementType measType = (controlType == ControlType.Analog
 				? MeasurementType.AnalogOutputStatus
 				: MeasurementType.BinaryOutputStatus);
@@ -377,7 +382,7 @@ public class OutstationService
 	private static final String INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER = "SetControlParameter";
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
+	private @Nullable InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
 			ServerControlConfiguration config) {
 		Instruction instr = null;
 		switch (command.opType) {
@@ -397,15 +402,15 @@ public class OutstationService
 		return issueInstruction("CROB " + command.opType, index, config, instr);
 	}
 
-	private InstructionStatus operateAnalogControl(int index, String opDescription,
+	private @Nullable InstructionStatus operateAnalogControl(int index, String opDescription,
 			ServerControlConfiguration config, Number value) {
 		Instruction instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
 		instr.addParameter(config.getControlId(), value.toString());
 		return issueInstruction(opDescription, index, config, instr);
 	}
 
-	private InstructionStatus issueInstruction(String opDescription, int index,
-			ServerControlConfiguration config, Instruction instr) {
+	private @Nullable InstructionStatus issueInstruction(String opDescription, int index,
+			ServerControlConfiguration config, @Nullable Instruction instr) {
 		InstructionStatus result = null;
 		try {
 			if ( instr != null ) {
@@ -474,11 +479,11 @@ public class OutstationService
 		}
 	}
 
-	private static <T> List<T> nonNullList(List<T> list) {
+	private static <T> List<T> nonNullList(@Nullable List<T> list) {
 		return (list != null ? list : List.of());
 	}
 
-	private OutstationChangeSet changeSetForDatumCapturedEvent(final Datum datum) {
+	private @Nullable OutstationChangeSet changeSetForDatumCapturedEvent(final @Nullable Datum datum) {
 		if ( datum == null || (measurementTypes.isEmpty() && controlTypes.isEmpty()) ) {
 			return null;
 		}
@@ -506,6 +511,9 @@ public class OutstationService
 		OutstationChangeSet changes = null;
 
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
+			if ( config.getProperty() == null ) {
+				continue;
+			}
 			Object propVal = datum.asSampleOperations().findSampleValue(config.getProperty());
 			if ( propVal instanceof Number propNum ) {
 				if ( config.getMultiplier() != null ) {
@@ -516,7 +524,7 @@ public class OutstationService
 				}
 				propVal = propNum;
 			}
-			final int idx = measurementTypes.get(config.getType()).indexOf(config);
+			final int idx = nonNullList(measurementTypes.get(config.getType())).indexOf(config);
 			if ( idx < 0 ) {
 				// really shouldn't be here
 				continue;
@@ -581,7 +589,7 @@ public class OutstationService
 
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			final Object controlVal = controlValue(datum, config.getProperty());
-			final int idx = controlTypes.get(config.getType()).indexOf(config);
+			final int idx = nonNullList(controlTypes.get(config.getType())).indexOf(config);
 			if ( idx < 0 ) {
 				// really shouldn't be here
 				continue;
@@ -599,15 +607,18 @@ public class OutstationService
 				case Analog -> {
 					try {
 						Number n;
-						if ( controlVal instanceof Number controlNum ) {
+						if ( controlVal == null ) {
+							n = null;
+						} else if ( controlVal instanceof Number controlNum ) {
 							n = controlNum;
 						} else {
 							n = new BigDecimal(controlVal.toString());
 						}
-						changes.update(
-								new AnalogOutputStatus(n.doubleValue(),
-										new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
-								index);
+						if ( n != null ) {
+							changes.update(new AnalogOutputStatus(n.doubleValue(),
+									new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
+									index);
+						}
 					} catch ( NumberFormatException e ) {
 						log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
 								controlVal, e.getMessage());
@@ -649,7 +660,7 @@ public class OutstationService
 	 *        the optional datum property name to extract
 	 * @return the control value, or {@code null}
 	 */
-	private static Object controlValue(final Datum datum, final String property) {
+	private static @Nullable Object controlValue(final Datum datum, final @Nullable String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();
 		if ( property != null && !property.isBlank() ) {
 			return ops.findSampleValue(property);
@@ -677,8 +688,10 @@ public class OutstationService
 		return (list != null ? list.size() : 0);
 	}
 
-	private boolean booleanPropertyValue(Object propVal) {
-		if ( propVal instanceof Boolean b ) {
+	private boolean booleanPropertyValue(@Nullable Object propVal) {
+		if ( propVal == null ) {
+			return false;
+		} else if ( propVal instanceof Boolean b ) {
 			return b;
 		} else if ( propVal instanceof Number n ) {
 			return n.intValue() != 0;
@@ -691,7 +704,7 @@ public class OutstationService
 		if ( decimalScale < 0 ) {
 			return value;
 		}
-		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		BigDecimal v = nonnull(NumberUtils.bigDecimalForNumber(value), "Value");
 		if ( v.scale() > decimalScale ) {
 			v = v.setScale(decimalScale, RoundingMode.HALF_UP);
 		}
@@ -702,11 +715,11 @@ public class OutstationService
 		if ( BigDecimal.ONE.compareTo(multiplier) == 0 ) {
 			return value;
 		}
-		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		BigDecimal v = nonnull(NumberUtils.bigDecimalForNumber(value), "Value");
 		return v.multiply(multiplier);
 	}
 
-	private Outstation createOutstation() {
+	private @Nullable Outstation createOutstation() {
 		TcpServerChannelConfiguration conf = new TcpServerChannelConfiguration();
 		conf.setBindAddress(bindAddress);
 		conf.setPort(port);
@@ -1016,7 +1029,7 @@ public class OutstationService
 	 *
 	 * @return the task executor
 	 */
-	public Executor getTaskExecutor() {
+	public @Nullable Executor getTaskExecutor() {
 		return taskExecutor;
 	}
 
@@ -1026,7 +1039,7 @@ public class OutstationService
 	 * @param taskExecutor
 	 *        the task executor to set
 	 */
-	public void setTaskExecutor(Executor taskExecutor) {
+	public void setTaskExecutor(@Nullable Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 

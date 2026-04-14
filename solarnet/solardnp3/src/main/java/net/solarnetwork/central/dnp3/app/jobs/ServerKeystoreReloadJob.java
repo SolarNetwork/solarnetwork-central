@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.net.proxy.config.TlsServerSettings;
 import net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -44,7 +45,7 @@ public class ServerKeystoreReloadJob extends JobSupport {
 	private final TlsServerSettings settings;
 	private final NettyDynamicProxyServer server;
 
-	private Instant lastModified;
+	private @Nullable Instant lastModified;
 
 	/**
 	 * Constructor.

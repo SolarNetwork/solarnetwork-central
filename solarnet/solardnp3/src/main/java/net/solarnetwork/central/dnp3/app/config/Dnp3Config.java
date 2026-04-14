@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.app.config;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +43,7 @@ public class Dnp3Config {
 	public static final int DEFAULT_CONCURRENCY = 2;
 
 	@Value("${app.dnp3.concurrency:#{null}}")
-	private Integer concurrency;
+	private @Nullable Integer concurrency;
 
 	@Bean(destroyMethod = "shutdown")
 	public DNP3Manager dnp3Manager() {
