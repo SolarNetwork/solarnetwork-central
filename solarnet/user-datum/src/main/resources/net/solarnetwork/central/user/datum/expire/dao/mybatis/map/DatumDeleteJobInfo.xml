@@ -75,8 +75,8 @@
 
 	<resultMap id="DatumDeleteJobInfoDirectResult" type="net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo">
 		<constructor>
-			<idArg column="userId" javaType="Long"/>
-			<idArg column="uuid" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<idArg column="user_id" javaType="Long"/>
+			<idArg column="id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		</constructor>
 		<result property="created" column="created"/>
 		<result property="modified" column="modified"/>
