@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -59,6 +58,7 @@ import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
@@ -172,7 +172,7 @@ public class BaseDatumImportBizTests {
 		biz.setWorkPath("/tmp");
 		UserUuidPK pk = new UserUuidPK(1L, UUID.randomUUID());
 		File f = biz.getImportDataFile(pk);
-		assertThat("Work file", f, equalTo(new File("/tmp/" + pk.getUserId() + "-" + pk.getId())));
+		assertThat("Work file", f, equalTo(new File("/tmp/" + pk.getUserId() + "-" + pk.getUuid())));
 	}
 
 	@Test

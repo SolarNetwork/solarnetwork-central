@@ -51,12 +51,12 @@ import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.dao.mybatis.MyBatisDatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * Test cases for the {@link MyBatisDatumImportJobInfoDao} class.
@@ -364,14 +364,14 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void deleteForUserMatchingId() {
 		storeNew();
-		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()), null);
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getUuid()), null);
 		assertThat("Delete count", count, equalTo(1));
 	}
 
 	@Test
 	public void deleteForUserMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -379,7 +379,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void deleteForUserMatchingAll() {
 		storeNew();
-		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -396,7 +396,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
 
-		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 

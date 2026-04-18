@@ -70,7 +70,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -101,6 +100,7 @@ import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
@@ -124,7 +124,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -482,7 +482,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return remove;
 		});
 		return jobInfoDao.findForUser(userId, null).stream().filter(
-				job -> userId.equals(job.getUserId()) && jobIds.contains(job.id().id().toString()))
+				job -> userId.equals(job.getUserId()) && jobIds.contains(job.id().getUuid().toString()))
 				.map(this::taskForJobInfo).collect(toList());
 	}
 
@@ -490,14 +490,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		Resource inputData;
 		if ( info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
-			inputData = new ByteArrayResource(new byte[0], info.getUserId() + "-" + info.id().id());
+			inputData = new ByteArrayResource(new byte[0], info.getUserId() + "-" + info.getUuid());
 		} else {
 			File dataFile = getImportDataFile(info.id());
 			if ( !dataFile.canRead() ) {
 				boolean fetched = fetchImportResource(dataFile);
 				if ( !fetched || !dataFile.canRead() ) {
 					throw new FileNotFoundException(
-							"Data file for job " + info.id().id() + " not found");
+							"Data file for job " + info.id().getUuid() + " not found");
 				}
 			}
 			inputData = new FileSystemResource(dataFile);
@@ -791,7 +791,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				@Nullable String message, @Nullable Instant completionDate) {
 			log.info(
 					"Datum import job {} for user {} transitioned to state {} with success {}; loaded {} datum",
-					info.id().id(), info.getUserId(), state, success, getLoadedCount());
+					info.id().getUuid(), info.getUserId(), state, success, getLoadedCount());
 			info.setImportState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
@@ -860,7 +860,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 			log.info(
 					"Starting datum import job {} for user {} from resource {} and tx mode {}; configuration: {}",
-					info.id().id(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
+					info.id().getUuid(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
 
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum> loader = datumDao
@@ -895,7 +895,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 						info.setLoadedCount(count);
 						if ( progressLogCount > 0 && count % progressLogCount == 0 ) {
 							log.info("Datum import job {} for user {} loaded {} datum with progress {}",
-									info.id().id(), info.getUserId(), count, info.getPercentComplete());
+									info.id().getUuid(), info.getUserId(), count,
+									info.getPercentComplete());
 						}
 					}
 					loader.commit();
@@ -916,7 +917,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		@Override
 		public synchronized void progressChanged(@Nullable DatumImportService context,
 				double amountComplete) {
-			log.trace("Datum import job {} for user {} progress changed: {}", info.id().id(),
+			log.trace("Datum import job {} for user {} progress changed: {}", info.id().getUuid(),
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
@@ -938,7 +939,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public String getJobId() {
-			return info.id().id().toString();
+			return info.id().getUuid().toString();
 		}
 
 		@Override

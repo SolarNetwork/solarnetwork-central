@@ -31,12 +31,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.io.TransferrableResource;
@@ -46,7 +46,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * Abstract class for basic {@link DatumImportBiz} support.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
@@ -89,7 +89,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @return the file
 	 */
 	protected File getImportDataFile(UserUuidPK id) {
-		String fileName = id.getUserId() + "-" + (id.hasId() ? id.id().toString() : "");
+		String fileName = id.getUserId() + "-" + (id.uuidIsAssigned() ? id.getUuid().toString() : "");
 		return new File(getWorkDirectory(), fileName);
 	}
 

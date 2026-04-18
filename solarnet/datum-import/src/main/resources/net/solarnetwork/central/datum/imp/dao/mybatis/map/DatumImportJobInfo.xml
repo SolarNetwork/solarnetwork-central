@@ -111,13 +111,13 @@
 		<result property="metaJson" column="jmeta"/>
 	</resultMap>
 	
-	<select id="get-DatumImportJobInfo-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="DatumImportJobInfoFullResult">
+	<select id="get-DatumImportJobInfo-for-id" parameterType="net.solarnetwork.central.domain.UserUuidPK" resultMap="DatumImportJobInfoFullResult">
 		SELECT
 			<include refid="fragment-DatumImportJobInfo-full-result"/>
 		FROM
 			solarnet.sn_datum_import_job dij
 		WHERE
-			dij.id = #{id} AND dij.user_id = #{userId}
+			dij.id = #{uuid} AND dij.user_id = #{userId}
 	</select>
 
 	<select id="get-DatumImportJobInfo-for-claim" resultMap="DatumImportJobInfoDirectResult" statementType="CALLABLE" flushCache="true" useCache="false">
@@ -164,7 +164,7 @@
 			state = #{desiredState}
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 			<if test="expectedStates != null and expectedStates.length > 0">
 			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
@@ -178,7 +178,7 @@
 			config = #{configJson}::jsonb
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 			<if test="expectedStates != null and expectedStates.length > 0">
 			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
@@ -193,7 +193,7 @@
 			, load_count = #{loadedCount}
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 	</update>
 

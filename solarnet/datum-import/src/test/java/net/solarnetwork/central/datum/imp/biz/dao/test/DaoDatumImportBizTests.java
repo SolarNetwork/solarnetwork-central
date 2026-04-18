@@ -91,7 +91,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -115,6 +114,7 @@ import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -634,7 +634,7 @@ public class DaoDatumImportBizTests {
 		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
 				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
-		String jobId = pk.getId().toString();
+		String jobId = pk.getUuid().toString();
 
 		// when
 		replayAll();
@@ -1470,7 +1470,7 @@ public class DaoDatumImportBizTests {
 		assertThat("Results count", results, hasSize(1));
 		DatumImportStatus status = results.iterator().next();
 		assertThat("Result is requested info", status.getJobId(),
-				equalTo(info.getId().getId().toString()));
+				equalTo(info.getId().getUuid().toString()));
 	}
 
 	@Test
