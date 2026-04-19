@@ -224,7 +224,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			ConcurrentMap<UserUuidPK, DatumImportStatus> map = (ConcurrentMap) taskMap;
 			taskPurgerTask = scheduler.scheduleWithFixedDelay(
-					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), Instant.now(),
+					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), clock.instant(),
 					Duration.ofHours(1));
 		}
 	}
@@ -723,13 +723,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		public DatumImportResult call() throws Exception {
 			// update status to indicate we've started
 			info.setPercentComplete(0);
-			info.setStarted(Instant.now());
+			info.setStarted(clock.instant());
 			updateTaskStatus(DatumImportState.Executing);
 
 			try {
 				doImport();
 				String msg = "Loaded " + getLoadedCount() + " datum.";
-				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, Instant.now());
+				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, clock.instant());
 				userEventAppenderBiz.addEvent(info.getUserId(),
 						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_TAGS, "Import datum end",
 								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
@@ -778,7 +778,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					}
 				}
 				updateTaskStatus(DatumImportState.Completed, Boolean.FALSE, msg.toString(),
-						Instant.now());
+						clock.instant());
 				userEventAppenderBiz.addEvent(info.getUserId(),
 						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_ERROR_TAGS, msg.toString(),
 								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
