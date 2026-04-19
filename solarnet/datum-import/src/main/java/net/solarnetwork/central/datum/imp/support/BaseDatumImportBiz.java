@@ -26,7 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/** A clock. */
-	protected final Clock clock;
+	protected final InstantSource clock;
 
 	/** The user event appender. */
 	protected final UserEventAppenderBiz userEventAppenderBiz;
@@ -75,7 +75,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BaseDatumImportBiz(Clock clock, UserEventAppenderBiz userEventAppenderBiz) {
+	public BaseDatumImportBiz(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");

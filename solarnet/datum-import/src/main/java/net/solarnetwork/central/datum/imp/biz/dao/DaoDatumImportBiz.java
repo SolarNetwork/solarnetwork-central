@@ -33,9 +33,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -192,7 +192,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoDatumImportBiz(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
+	public DaoDatumImportBiz(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz,
 			TaskScheduler scheduler, AsyncTaskExecutor executor, SolarNodeOwnershipDao nodeOwnershipDao,
 			SecurityTokenDao securityTokenDao, DatumImportJobInfoDao jobInfoDao,
 			DatumEntityDao datumDao) {
