@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CommonUserEvents {
 
@@ -92,6 +92,13 @@ public interface CommonUserEvents {
 	 * @since 1.1
 	 */
 	String ERROR_COUNT_DATA_KEY = "errorCount";
+
+	/**
+	 * User event data key for a token ID.
+	 * 
+	 * @since 1.2
+	 */
+	String TOKEN_ID_DATA_KEY = "tokenId";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

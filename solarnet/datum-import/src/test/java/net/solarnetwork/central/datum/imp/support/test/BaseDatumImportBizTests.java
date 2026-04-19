@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.io.File;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -77,6 +79,10 @@ public class BaseDatumImportBizTests {
 	private static final Long TEST_USER_ID = randomLong();
 
 	private class TestDatumImportBiz extends BaseDatumImportBiz {
+
+		private TestDatumImportBiz() {
+			super(Clock.systemUTC(), new InMemoryUserEventAppenderBiz());
+		}
 
 		@Override
 		public <T extends Identity<String>> T optionalService(List<T> collection,

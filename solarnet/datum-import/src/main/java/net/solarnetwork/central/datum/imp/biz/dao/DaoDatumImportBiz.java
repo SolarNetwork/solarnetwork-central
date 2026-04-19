@@ -26,12 +26,14 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Executing;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -68,6 +70,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -94,6 +97,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.datum.imp.domain.DatumImportUserEvents;
 import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
@@ -106,6 +110,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
@@ -127,7 +132,7 @@ import net.solarnetwork.util.StringUtils;
  * @version 2.9
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
-		implements DatumImportJobBiz, ServiceLifecycleObserver {
+		implements DatumImportJobBiz, ServiceLifecycleObserver, DatumImportUserEvents {
 
 	/** The default value for the {@code maxPreviewCount} property. */
 	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
@@ -168,6 +173,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param userEventAppenderBiz
+	 *        the event appender
 	 * @param scheduler
 	 *        the scheduler, to perform periodic cleanup tasks with
 	 * @param executor
@@ -183,10 +192,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-			SolarNodeOwnershipDao nodeOwnershipDao, SecurityTokenDao securityTokenDao,
-			DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
-		super();
+	public DaoDatumImportBiz(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
+			TaskScheduler scheduler, AsyncTaskExecutor executor, SolarNodeOwnershipDao nodeOwnershipDao,
+			SecurityTokenDao securityTokenDao, DatumImportJobInfoDao jobInfoDao,
+			DatumEntityDao datumDao) {
+		super(clock, userEventAppenderBiz);
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
@@ -720,6 +730,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				doImport();
 				String msg = "Loaded " + getLoadedCount() + " datum.";
 				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, Instant.now());
+				userEventAppenderBiz.addEvent(info.getUserId(),
+						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_TAGS, "Import datum end",
+								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
 			} catch ( Exception e ) {
 				if ( e instanceof RemoteServiceException ) {
 					// don't bother with stack trace
@@ -766,6 +779,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				}
 				updateTaskStatus(DatumImportState.Completed, Boolean.FALSE, msg.toString(),
 						Instant.now());
+				userEventAppenderBiz.addEvent(info.getUserId(),
+						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_ERROR_TAGS, msg.toString(),
+								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
 			} finally {
 				if ( info.getImportState() != DatumImportState.Completed ) {
 					updateTaskStatus(DatumImportState.Completed);
@@ -861,6 +877,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			log.info(
 					"Starting datum import job {} for user {} from resource {} and tx mode {}; configuration: {}",
 					info.id().getUuid(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
+			userEventAppenderBiz.addEvent(info.getUserId(), eventForUserRelatedKey(info.getId(),
+					DATUM_IMPORT_TAGS, "Import datum", importDatumUserEventData(txMode)));
 
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum> loader = datumDao
@@ -912,6 +930,17 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					cleanupAfterImportDone(getImportDataFile(info.id()));
 				}
 			}
+		}
+
+		private Map<String, Object> importDatumUserEventData(LoadingTransactionMode txMode) {
+			Map<String, Object> data = new LinkedHashMap<>(4);
+			data.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()));
+			data.put(RESOURCE_DATA_KEY, getImportDataFile(info.id()).getName());
+			data.put(TRANSACTION_MODE_DATA_KEY, txMode.name());
+			if ( info.getTokenId() != null ) {
+				data.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+			}
+			return data;
 		}
 
 		@Override
