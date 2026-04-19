@@ -101,6 +101,20 @@ public interface CommonUserEvents {
 	String TOKEN_ID_DATA_KEY = "tokenId";
 
 	/**
+	 * User event data key for a configuration object.
+	 * 
+	 * @since 1.2
+	 */
+	String CONFIGURATION_DATA_KEY = "config";
+
+	/**
+	 * User event data key for a resource name or path.
+	 * 
+	 * @since 1.2
+	 */
+	String RESOURCE_DATA_KEY = "resource";
+
+	/**
 	 * Populate user-related composite key components to a parameter map.
 	 *
 	 * @param configId

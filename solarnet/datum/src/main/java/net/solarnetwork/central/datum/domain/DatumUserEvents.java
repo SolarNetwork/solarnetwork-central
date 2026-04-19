@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumImportUserEvents.java - 19/04/2026 7:03:40 am
+ * DatumUserEvents.java - 19/04/2026 7:03:40 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,30 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.domain;
+package net.solarnetwork.central.datum.domain;
 
-import java.util.List;
-import net.solarnetwork.central.datum.domain.DatumUserEvents;
+import net.solarnetwork.central.domain.CommonUserEvents;
 
 /**
- * Constants and helpers for datum import user event handling.
+ * Constants and helpers for datum user event handling.
  *
  * @author matt
  * @version 1.0
  */
-public interface DatumImportUserEvents extends DatumUserEvents {
+public interface DatumUserEvents extends CommonUserEvents {
 
-	/** A user event tag for datum import handling. */
-	String IMPORT_TAG = "import";
+	/** A user event tag for datum events. */
+	String DATUM_TAG = "datum";
 
-	/** User event data key for a transaction mode. */
-	String TRANSACTION_MODE_DATA_KEY = "txMode";
-
-	/** Tags for a datum import error event. */
-	List<String> DATUM_IMPORT_ERROR_TAGS = List.of(DATUM_TAG, ERROR_TAG, IMPORT_TAG);
-
-	/** Tags for a datum import. */
-	List<String> DATUM_IMPORT_TAGS = DATUM_IMPORT_ERROR_TAGS.stream().filter(t -> !ERROR_TAG.equals(t))
-			.toList();
+	/** User event data key for a datum count, such as a the number imported. */
+	String DATUM_COUNT_DATA_KEY = "datumCount";
 
 }
