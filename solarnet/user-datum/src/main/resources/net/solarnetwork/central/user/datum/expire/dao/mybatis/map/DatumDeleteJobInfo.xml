@@ -90,13 +90,13 @@
 		<result property="completed" column="completed"/>
 	</resultMap>
 	
-	<select id="get-DatumDeleteJobInfo-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="DatumDeleteJobInfoFullResult">
+	<select id="get-DatumDeleteJobInfo-for-id" parameterType="net.solarnetwork.central.domain.UserUuidPK" resultMap="DatumDeleteJobInfoFullResult">
 		SELECT
 			<include refid="fragment-DatumDeleteJobInfo-full-result"/>
 		FROM
 			solaruser.user_datum_delete_job ddj
 		WHERE
-			ddj.id = #{id} AND ddj.user_id = #{userId}
+			ddj.id = #{uuid} AND ddj.user_id = #{userId}
 	</select>
 
 	<select id="get-DatumDeleteJobInfo-for-claim" resultMap="DatumDeleteJobInfoDirectResult" statementType="CALLABLE">
@@ -143,7 +143,7 @@
 			state = #{desiredState}
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 			<if test="expectedStates != null and expectedStates.length > 0">
 			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
@@ -157,7 +157,7 @@
 			config = #{configJson}::jsonb
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 			<if test="expectedStates != null and expectedStates.length > 0">
 			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
@@ -172,7 +172,7 @@
 			, result_count = #{loadedCount}
 			, modified = CURRENT_TIMESTAMP
 		WHERE
-			id = #{id.id}
+			id = #{id.uuid}
 			AND user_id = #{id.userId}
 	</update>
 

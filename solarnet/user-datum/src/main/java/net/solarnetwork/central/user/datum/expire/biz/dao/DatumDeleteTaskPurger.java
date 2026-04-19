@@ -28,7 +28,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobStatus;
 
 /**

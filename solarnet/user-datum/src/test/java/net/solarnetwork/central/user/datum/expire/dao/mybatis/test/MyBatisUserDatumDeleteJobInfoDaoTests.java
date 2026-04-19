@@ -40,8 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.dao.mybatis.MyBatisUserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
@@ -204,14 +204,14 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	@Test
 	public void deleteForUserMatchingId() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()), null);
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()), null);
 		assertThat("Delete count", count, equalTo(1));
 	}
 
 	@Test
 	public void deleteForUserMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -219,7 +219,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	@Test
 	public void deleteForUserMatchingAll() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -235,7 +235,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
 
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 

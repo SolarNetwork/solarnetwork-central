@@ -29,15 +29,16 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.BaseClaimableJob;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
@@ -67,7 +68,8 @@ public class DatumDeleteJobInfo
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DatumDeleteJobInfo(Long userId, UUID id) {
+	@JsonCreator
+	public DatumDeleteJobInfo(@JsonProperty("userId") Long userId, @JsonProperty("id") UUID id) {
 		this(new UserUuidPK(userId, id));
 	}
 
@@ -89,32 +91,13 @@ public class DatumDeleteJobInfo
 		return nonnull(id().getUserId(), "User ID");
 	}
 
-	public final void setUserId(Long userId) {
-		UserUuidPK pk = getId();
-		if ( pk == null ) {
-			setId(new UserUuidPK(userId, null));
-		} else {
-			pk.setUserId(userId);
-		}
-	}
-
 	@JsonGetter("id")
-	public final @Nullable UUID getUuid() {
-		return id().getId();
-	}
-
-	@JsonSetter("id")
-	public final void setUuid(@Nullable UUID id) {
-		UserUuidPK pk = getId();
-		if ( pk == null ) {
-			setId(new UserUuidPK(null, id));
-		} else {
-			pk.setId(id);
-		}
+	public final UUID getUuid() {
+		return id().getUuid();
 	}
 
 	public final String getJobId() {
-		var id = id().getId();
+		var id = id().getUuid();
 		return (id != null ? id : UNASSIGNED_UUID_ID).toString();
 	}
 

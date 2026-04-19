@@ -56,7 +56,6 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -64,6 +63,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -239,7 +239,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		GeneralNodeDatumFilter f = prepareFilter(request);
 
 		UUID jobId = UUID.randomUUID();
-		UserUuidPK id = new UserUuidPK(request.getUserId(), jobId);
+		UserUuidPK id = new UserUuidPK(nonnull(request.getUserId(), "User ID"), jobId);
 
 		DatumDeleteJobInfo info = new DatumDeleteJobInfo(id);
 		info.setConfiguration(f);
@@ -397,7 +397,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 				@Nullable String message, @Nullable Instant completionDate) {
 			log.info(
 					"Datum delete job {} for user {} transitioned to state {} with success {}; deleted {} datum",
-					info.id().id(), info.getUserId(), state, success, getResultCount());
+					info.id().getUuid(), info.getUserId(), state, success, getResultCount());
 			info.setJobState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
