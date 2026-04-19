@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
  * Payment entity.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class Payment extends BasicEntity<UserUuidPK>
 		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
@@ -94,12 +94,11 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @param currencyCode
 	 *        the currency code
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code id} or {@code created} is
-	 *         {@code null}
+	 *         if any argument except {@code created} is {@code null}
 	 */
 	public Payment(UserUuidPK id, Long accountId, Instant created, PaymentType paymentType,
 			BigDecimal amount, String currencyCode) {
-		super(id, created);
+		super(requireNonNullArgument(id, "id"), created);
 		this.accountId = requireNonNullArgument(accountId, "accountId");
 		this.paymentType = requireNonNullArgument(paymentType, "paymentType");
 		this.amount = requireNonNullArgument(amount, "amount");
@@ -124,8 +123,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @param currencyCode
 	 *        the currency code
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code id} or {@code created} is
-	 *         {@code null}
+	 *         if any argument except {@code created} is {@code null}
 	 */
 	public Payment(UUID id, Long userId, Long accountId, Instant created, PaymentType paymentType,
 			BigDecimal amount, String currencyCode) {
@@ -191,13 +189,13 @@ public class Payment extends BasicEntity<UserUuidPK>
 
 	@Override
 	public boolean hasId() {
-		UserUuidPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		final UserUuidPK id = id();
+		return (id.userIdIsAssigned() && id.uuidIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		return nonnull(nonnull(getId(), "id").getUserId(), "userId");
+		return id().getUserId();
 	}
 
 	/**
