@@ -62,6 +62,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -754,6 +755,35 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
+	}
+
+	private Map<String, Object> startEventData(DatumImportJobInfo info, LoadingTransactionMode txMode) {
+		final Map<String, Object> startData = new LinkedHashMap<>(8);
+		startData.put(CONFIG_ID_DATA_KEY, info.id().getUuid().toString());
+		startData.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()));
+		startData.put(RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, info.id().getUuid()));
+		startData.put(TRANSACTION_MODE_DATA_KEY, txMode.name());
+		if ( info.getTokenId() != null ) {
+			startData.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+		}
+		return startData;
+	}
+
+	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			int loadedCount) {
+		thenStartEndEventsGenerated(info, txMode, loadedCount, startEventData(info, txMode),
+				"Import datum end", false);
+	}
+
+	private void thenStartEndErrorEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			int loadedCount, String errorMessage) {
+		thenStartEndEventsGenerated(info, txMode, loadedCount, startEventData(info, txMode),
+				errorMessage, true);
+	}
+
+	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			int loadedCount, Map<String, Object> startData, String message, boolean error) {
 		// @formatter:off
 		and.then(userEventAppenderBiz.getEvents())
 			.as("Events for import start/end created")
@@ -769,21 +799,19 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 					.as("Datum import tags provided in event")
 					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
 					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, loadingOpts.getTransactionMode().name()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
+					.returns(startData, from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 				and.then(evts).element(1)
 					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.returns((error
+						? DATUM_IMPORT_ERROR_TAGS
+						: DATUM_IMPORT_TAGS).toArray(String[]::new), from(UserEvent::getTags))
+					.as("Message generated")
+					.returns(message, from(UserEvent::getMessage))
 					.as("Job data provided for import end")
 					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
+							CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
+							DATUM_COUNT_DATA_KEY, loadedCount
 						), from(e -> JsonUtils.getStringMap(e.getData()))
 					)
 					;
@@ -885,43 +913,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name(),
-							TOKEN_ID_DATA_KEY, tokenId
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
 	}
 
 	@Test
@@ -995,45 +987,8 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name(),
-							TOKEN_ID_DATA_KEY, tokenId
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_ERROR_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Erorr message generated")
-					.returns(expectedErrorMessage, from(UserEvent::getMessage))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, 0
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, 0,
+				expectedErrorMessage);
 	}
 
 	@Test
@@ -1108,45 +1063,8 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name(),
-							TOKEN_ID_DATA_KEY, tokenId
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_ERROR_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Erorr message generated")
-					.returns(expectedErrorMessage, from(UserEvent::getMessage))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, 0
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, 0,
+				expectedErrorMessage);
 	}
 
 	@Test
@@ -1242,43 +1160,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name(),
-							TOKEN_ID_DATA_KEY, tokenId
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
 	}
 
 	@Test
@@ -1491,40 +1373,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 			.returns(committedCount, from(DatumImportResult::getLoadedCount))
 			;
 
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
 		// @formatter:on
 	}
 
@@ -1610,42 +1459,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.BatchTransactions.name()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import end")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.BatchTransactions, data.size());
 	}
 
 	@Test
@@ -1701,44 +1515,8 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
-			.as("Events for import start/end created")
-			.hasSize(2)
-			.allSatisfy(evt -> {
-				and.then(evt)
-					.as("Event for import user")
-					.returns(TEST_USER_ID, from(UserEvent::getUserId))
-					;
-			})
-			.satisfies(evts -> {
-				and.then(evts).element(0)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import start")
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()),
-							RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, pk.getUuid()),
-							TRANSACTION_MODE_DATA_KEY, LoadingTransactionMode.SingleTransaction.name()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-				and.then(evts).element(1)
-					.as("Datum import tags provided in event")
-					.returns(DATUM_IMPORT_ERROR_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					.as("Job data provided for import end")
-					.as("Erorr message generated")
-					.returns(expectedErrorMessage, from(UserEvent::getMessage))
-					.returns(Map.of(
-							CONFIG_ID_DATA_KEY, pk.getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, data.size()
-						), from(e -> JsonUtils.getStringMap(e.getData()))
-					)
-					;
-			})
-			;
-		// @formatter:on
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size(),
+				expectedErrorMessage);
 	}
 
 	@Test
