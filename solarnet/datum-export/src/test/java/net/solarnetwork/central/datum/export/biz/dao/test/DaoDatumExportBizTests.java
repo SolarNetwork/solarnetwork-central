@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.then;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -56,6 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
@@ -72,12 +74,15 @@ import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.DatumExportResult;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
+import net.solarnetwork.central.datum.export.domain.DatumExportUserEvents;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportDestinationService;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportOptions;
@@ -94,7 +99,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DaoDatumExportBizTests {
+public class DaoDatumExportBizTests implements DatumExportUserEvents {
 
 	private static final String TEST_SECURE_SETTING = "watchout";
 
@@ -118,17 +123,21 @@ public class DaoDatumExportBizTests {
 	private static final DateTimeFormatter CSV_INSTANT_FORMAT = DateTimeFormatter
 			.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
 
+	private Clock clock;
+	private InMemoryUserEventAppenderBiz userEventAppenderBiz;
 	private TestDatumExportDestinationService destService;
 
 	private DaoDatumExportBiz service;
 
 	@BeforeEach
 	public void setup() {
+		clock = Clock.systemUTC();
+		userEventAppenderBiz = new InMemoryUserEventAppenderBiz();
 		destService = new TestDatumExportDestinationService();
 
-		service = new DaoDatumExportBiz(datumExportTaskInfoDao, datumDao, scheduler,
-				new SimpleAsyncTaskExecutor(), textEncryptor, List.of(csvOutput), List.of(destService),
-				null);
+		service = new DaoDatumExportBiz(clock, userEventAppenderBiz, datumExportTaskInfoDao, datumDao,
+				scheduler, new SimpleAsyncTaskExecutor(), textEncryptor, List.of(csvOutput),
+				List.of(destService), null);
 	}
 
 	private static final class TestDatumExportDestinationService
@@ -167,6 +176,41 @@ public class DaoDatumExportBizTests {
 			}
 		}
 
+	}
+
+	private void thenStartEndEventsGenerated(DatumExportTaskInfo info, long exportedCount) {
+		// @formatter:off
+		and.then(userEventAppenderBiz.getEvents())
+			.as("Events for export start/end created")
+			.hasSize(2)
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for export user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					;
+			})
+			.satisfies(evts -> {
+				and.then(evts).element(0)
+					.as("Datum export tags provided in event")
+					.returns(DATUM_EXPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("Job data provided for export start")
+					.returns(Map.of(), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+				and.then(evts).element(1)
+					.as("Datum export tags provided in event")
+					.returns(DATUM_EXPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					//.as("Message generated")
+					//.returns(message, from(UserEvent::getMessage))
+					.as("Job data provided for export end")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, info.id().toString(),
+							DATUM_COUNT_DATA_KEY, exportedCount
+						), from(e -> JsonUtils.getStringMap(e.getData()))
+					)
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -274,6 +318,8 @@ public class DaoDatumExportBizTests {
 				%s,%d,%s,,,1\r
 				""".formatted(CSV_INSTANT_FORMAT.format(d.getCreated()), d.getNodeId(),
 				d.getSourceId()));
+
+		thenStartEndEventsGenerated(req, 0L);
 	}
 
 }

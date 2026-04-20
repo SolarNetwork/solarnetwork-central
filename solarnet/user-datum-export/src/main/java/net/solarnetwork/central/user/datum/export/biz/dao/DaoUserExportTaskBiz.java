@@ -126,6 +126,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		BasicDataConfiguration taskDataConfig = new BasicDataConfiguration(
 				taskConfig.getDataConfiguration());
 		DatumFilterCommand taskDatumFilter = new DatumFilterCommand(taskDataConfig.getDatumFilter());
+		taskDatumFilter.setUserId(config.getUserId());
 
 		if ( taskDatumFilter.getNodeId() == null ) {
 			// set to all available node IDs
@@ -183,6 +184,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		BasicDataConfiguration taskDataConfig = new BasicDataConfiguration(
 				taskConfig.getDataConfiguration());
 		DatumFilterCommand taskDatumFilter = new DatumFilterCommand(taskDataConfig.getDatumFilter());
+		taskDatumFilter.setUserId(config.getUserId());
 
 		if ( taskDatumFilter.getNodeId() == null ) {
 			// set to all available node IDs

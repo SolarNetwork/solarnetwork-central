@@ -26,17 +26,20 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +60,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -77,12 +81,15 @@ import net.solarnetwork.central.datum.export.domain.DatumExportResult;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
+import net.solarnetwork.central.datum.export.domain.DatumExportUserEvents;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.export.support.DatumExportException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
@@ -99,9 +106,10 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO-based implementation of {@link DatumExportBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
-public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
+public class DaoDatumExportBiz
+		implements DatumExportBiz, ServiceLifecycleObserver, DatumExportUserEvents {
 
 	/** The datum export task name. */
 	public static final String DATUM_EXPORT_NAME = "datum-export";
@@ -112,6 +120,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	private final ConcurrentMap<String, DatumExportTask> taskMap = new ConcurrentHashMap<>(16);
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	private final InstantSource clock;
+	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final DatumExportTaskInfoDao taskDao;
 	private final DatumEntityDao datumDao;
 	private final TaskScheduler scheduler;
@@ -132,6 +142,10 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param userEventAppenderBiz
+	 *        the event appender
 	 * @param taskDao
 	 *        the task DAO
 	 * @param datumDao
@@ -154,12 +168,15 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *         if any argument other than {@code transactionTemplate} is
 	 *         {@code null}
 	 */
-	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
-			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,
+	public DaoDatumExportBiz(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz,
+			DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao, TaskScheduler scheduler,
+			AsyncTaskExecutor executor, TextEncryptor textEncryptor,
 			List<DatumExportOutputFormatService> outputFormatServices,
 			List<DatumExportDestinationService> destinationServices,
 			@Nullable TransactionTemplate transactionTemplate) {
 		super();
+		this.clock = requireNonNullArgument(clock, "clock");
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
@@ -196,7 +213,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		if ( scheduler != null ) {
 			// purge completed tasks every hour
 			this.taskPurgerTask = scheduler.scheduleWithFixedDelay(new TaskPurger(),
-					Instant.now().plus(1, ChronoUnit.HOURS), Duration.ofHours(1));
+					clock.instant().plus(1, ChronoUnit.HOURS), Duration.ofHours(1));
 		}
 	}
 
@@ -294,7 +311,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					uploadToDestination(resources);
 				}
 
-				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, Instant.now());
+				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, clock.instant());
 			} catch ( Exception e ) {
 				log.warn("Error exporting datum for task {}: {}", this, e.getMessage());
 				Throwable root = e;
@@ -313,7 +330,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					log.warn("Task {} root cause", this, root);
 				}
 				updateTaskStatus(DatumExportState.Completed, Boolean.FALSE, msg.toString(),
-						Instant.now());
+						clock.instant());
 			} finally {
 				if ( info.getStatus() != DatumExportState.Completed ) {
 					updateTaskStatus(DatumExportState.Completed);
@@ -412,7 +429,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					}
 
 					// all exported data will be audited on the hour we start the export at
-					final Instant auditDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
+					final Instant auditDate = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 					datumDao.bulkExport(new ExportCallback<>() {
 
@@ -551,6 +568,10 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			throw new IllegalArgumentException("The configuration argument is required.");
 		}
 
+		userEventAppenderBiz.addEvent(info.getUserId(),
+				eventForUserRelatedKey(new UserUuidPK(info.getUserId(), info.getId()), DATUM_EXPORT_TAGS,
+						"Export datum", exportDatumUserEventData(info)));
+
 		// copy configs and decrypt
 		var config = new BasicConfiguration(info.getConfiguration());
 		if ( config.getOutputConfiguration() != null ) {
@@ -565,7 +586,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(info.id());
 		taskInfo.setConfig(config);
 		taskInfo.setExportDate(info.getExportDate());
-		taskInfo.setCreated(Instant.now());
+		taskInfo.setCreated(clock.instant());
 		taskInfo.setStatus(DatumExportState.Claimed);
 		taskInfo.setTokenId(info.getTokenId());
 		taskInfo.setUserId(info.getUserId());
@@ -574,6 +595,15 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		task.setDelegate(future);
 		taskMap.putIfAbsent(task.getJobId(), task);
 		return task;
+	}
+
+	private Map<String, Object> exportDatumUserEventData(DatumExportRequest info) {
+		Map<String, Object> data = new LinkedHashMap<>(4);
+		data.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfiguration()));
+		if ( info.getTokenId() != null ) {
+			data.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+		}
+		return data;
 	}
 
 	@Override
