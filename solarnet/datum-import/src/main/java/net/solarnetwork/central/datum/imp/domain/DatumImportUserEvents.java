@@ -46,4 +46,7 @@ public interface DatumImportUserEvents extends DatumUserEvents {
 	List<String> DATUM_IMPORT_TAGS = DATUM_IMPORT_ERROR_TAGS.stream().filter(t -> !ERROR_TAG.equals(t))
 			.toList();
 
+	/** Tags for a datum import progress event. */
+	List<String> DATUM_IMPORT_PROGRESS_TAGS = List.of(DATUM_TAG, IMPORT_TAG, PROGRESS_TAG);
+
 }

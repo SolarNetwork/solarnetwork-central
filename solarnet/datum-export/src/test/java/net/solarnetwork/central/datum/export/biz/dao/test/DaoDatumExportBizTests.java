@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.export.biz.dao.test;
 
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -45,6 +47,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -179,8 +182,9 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 	}
 
 	private void thenStartEndEventsGenerated(DatumExportTaskInfo info, long exportedCount) {
+		// validate start/end events
 		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
+		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
 			.as("Events for export start/end created")
 			.hasSize(2)
 			.allSatisfy(evt -> {
@@ -193,24 +197,67 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 				and.then(evts).element(0)
 					.as("Datum export tags provided in event")
 					.returns(DATUM_EXPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("Message generated")
+					.returns("Export datum", from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
 					.as("Job data provided for export start")
-					.returns(Map.of(), from(e -> JsonUtils.getStringMap(e.getData())))
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(startEventData(info))))
 					;
 				and.then(evts).element(1)
 					.as("Datum export tags provided in event")
 					.returns(DATUM_EXPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
-					//.as("Message generated")
-					//.returns(message, from(UserEvent::getMessage))
+					.as("Message generated")
+					.returns("Export datum end", from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
 					.as("Job data provided for export end")
-					.returns(Map.of(
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(Map.of(
 							CONFIG_ID_DATA_KEY, info.id().toString(),
-							DATUM_COUNT_DATA_KEY, exportedCount
-						), from(e -> JsonUtils.getStringMap(e.getData()))
+							DATUM_COUNT_DATA_KEY, (int)exportedCount
+						)))
 					)
 					;
 			})
 			;
 		// @formatter:on
+
+		// validate progress (if available)
+		var progressEvents = userEventAppenderBiz.getEvents().stream()
+				.filter(evt -> evt.hasTag(PROGRESS_TAG)).toList();
+		if ( progressEvents.isEmpty() ) {
+			return;
+		}
+		// @formatter:off
+		and.then(progressEvents)
+			.as("Progress events contain expected details")
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for export user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					.as("Datum export progress tags provided in event")
+					.returns(DATUM_EXPORT_PROGRESS_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("No message on progress event")
+					.returns(null, from(UserEvent::getMessage))
+					.extracting(e -> JsonUtils.getStringMap(e.getData()), map(String.class, Object.class))
+					.as("Percent complete data provided")
+					.containsKey(PERCENT_COMPLETE_DATA_KEY)
+					.as("Job ID data provided")
+					.containsEntry(CONFIG_ID_DATA_KEY, info.getId().toString())
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	private Map<String, Object> startEventData(DatumExportTaskInfo info) {
+		final Map<String, Object> startData = new LinkedHashMap<>(8);
+		startData.put(CONFIG_ID_DATA_KEY, info.id().toString());
+		startData.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()));
+		if ( info.getTokenId() != null ) {
+			startData.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+		}
+		return startData;
 	}
 
 	@Test
@@ -319,7 +366,7 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 				""".formatted(CSV_INSTANT_FORMAT.format(d.getCreated()), d.getNodeId(),
 				d.getSourceId()));
 
-		thenStartEndEventsGenerated(req, 0L);
+		thenStartEndEventsGenerated(req, 1L);
 	}
 
 }

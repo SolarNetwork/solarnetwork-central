@@ -953,6 +953,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			var _ = progressExecutor()
 					.submit(new ProgressUpdater(info.id(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
+			userEventAppenderBiz.addEvent(info.getUserId(),
+					eventForUserRelatedKey(info.getId(), DATUM_IMPORT_PROGRESS_TAGS, null,
+							Map.of(PERCENT_COMPLETE_DATA_KEY, amountComplete, DATUM_COUNT_DATA_KEY,
+									info.getLoadedCount())));
 			postJobStatusChangedEvent(this, info);
 		}
 

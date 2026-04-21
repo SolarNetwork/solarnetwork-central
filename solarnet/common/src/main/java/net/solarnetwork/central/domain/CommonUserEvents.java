@@ -56,6 +56,13 @@ public interface CommonUserEvents {
 	/** A user event tag for a response. */
 	String RESPONSE_TAG = "res";
 
+	/**
+	 * User event tag for a progress event.
+	 * 
+	 * @since 1.2
+	 */
+	String PROGRESS_TAG = "progress";
+
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
 
@@ -113,6 +120,13 @@ public interface CommonUserEvents {
 	 * @since 1.2
 	 */
 	String RESOURCE_DATA_KEY = "resource";
+
+	/**
+	 * User event data key for a percent complete, from 0 to 1.
+	 * 
+	 * @since 1.2
+	 */
+	String PERCENT_COMPLETE_DATA_KEY = "percentComplete";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

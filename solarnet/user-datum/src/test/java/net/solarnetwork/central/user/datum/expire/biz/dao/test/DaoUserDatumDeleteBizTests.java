@@ -23,11 +23,15 @@
 package net.solarnetwork.central.user.datum.expire.biz.dao.test;
 
 import static java.time.Instant.now;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static net.solarnetwork.central.datum.v2.domain.ObjectDatumId.nodeId;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.easymock.EasyMock.capture;
@@ -42,13 +46,16 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
@@ -59,6 +66,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.task.support.TaskExecutorAdapter;
+import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -66,6 +74,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
@@ -75,6 +84,8 @@ import net.solarnetwork.central.user.datum.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobStatus;
+import net.solarnetwork.central.user.datum.expire.domain.DatumExpireUserEvents;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.test.Assertion;
 
@@ -84,8 +95,11 @@ import net.solarnetwork.test.Assertion;
  * @author matt
  * @version 2.1
  */
-public class DaoUserDatumDeleteBizTests {
+@SuppressWarnings("static-access")
+public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 
+	private Clock clock;
+	private InMemoryUserEventAppenderBiz userEventAppenderBiz;
 	private DatumMaintenanceDao datumDao;
 	private UserNodeDao userNodeDao;
 	private UserDatumDeleteJobInfoDao jobInfoDao;
@@ -94,12 +108,15 @@ public class DaoUserDatumDeleteBizTests {
 
 	@BeforeEach
 	public void setup() {
+		clock = Clock.systemUTC();
+		userEventAppenderBiz = new InMemoryUserEventAppenderBiz();
 		datumDao = EasyMock.createMock(DatumMaintenanceDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		jobInfoDao = EasyMock.createMock(UserDatumDeleteJobInfoDao.class);
 
-		biz = new DaoUserDatumDeleteBiz(new TaskExecutorAdapter(new CallingThreadExecutorService()),
-				userNodeDao, datumDao, jobInfoDao);
+		biz = new DaoUserDatumDeleteBiz(clock, userEventAppenderBiz,
+				new TaskExecutorAdapter(new CallingThreadExecutorService()), userNodeDao, datumDao,
+				jobInfoDao);
 	}
 
 	@AfterEach
@@ -235,6 +252,88 @@ public class DaoUserDatumDeleteBizTests {
 		assertThat("Result", result, notNullValue());
 		assertThat("Result delete count", result.get().getResultCount(), equalTo(count));
 		assertThat("Executed filter same", filterCaptor.getValue(), equalTo(criteriaFromFilter(filter)));
+
+		thenStartEndEventsGenerated(jobInfo, count);
+	}
+
+	private Map<String, Object> startEventData(DatumDeleteJobInfo info) {
+		final Map<String, Object> startData = new LinkedHashMap<>(8);
+		startData.put(CONFIG_ID_DATA_KEY, info.getJobId());
+		startData.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfiguration()));
+		if ( info.getTokenId() != null ) {
+			startData.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+		}
+		return startData;
+	}
+
+	private void thenStartEndEventsGenerated(DatumDeleteJobInfo info, long deleteCount) {
+		// @formatter:off
+		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
+			.as("Events for export start/end created")
+			.hasSize(2)
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for export user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					;
+			})
+			.satisfies(evts -> {
+				and.then(evts).element(0)
+					.as("Datum export tags provided in event")
+					.returns(DATUM_DELETE_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("Message generated")
+					.returns("Delete datum", from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for delete start")
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(startEventData(info))))
+					;
+				and.then(evts).element(1)
+					.as("Datum export tags provided in event")
+					.returns(DATUM_DELETE_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("Message generated")
+					.returns("Delete datum end", from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for delete end")
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(Map.of(
+							CONFIG_ID_DATA_KEY, info.getJobId(),
+							DATUM_COUNT_DATA_KEY, (int)deleteCount
+						)))
+					)
+					;
+			})
+			;
+		// @formatter:on
+
+		// validate progress (if available)
+		var progressEvents = userEventAppenderBiz.getEvents().stream()
+				.filter(evt -> evt.hasTag(PROGRESS_TAG)).toList();
+		if ( progressEvents.isEmpty() ) {
+			return;
+		}
+		// @formatter:off
+		and.then(progressEvents)
+			.as("Progress events contain expected details")
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for export user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					.as("Datum export progress tags provided in event")
+					.returns(DATUM_DELETE_PROGRESS_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("No message on progress event")
+					.returns(null, from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for export end")
+					.isObject()
+					.as("Percent complete data provided")
+					.containsKey(PERCENT_COMPLETE_DATA_KEY)
+					.as("Job ID data provided")
+					.containsEntry(CONFIG_ID_DATA_KEY, info.getJobId())
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	private static final class FilterCapture extends Capture<ObjectStreamCriteria> {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.expire.config;
 
+import java.time.Clock;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.datum.expire.biz.UserExpireBiz;
@@ -46,7 +48,7 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * Configuration for user datum expire services.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserExpireBizConfig {
@@ -69,6 +71,9 @@ public class UserExpireBizConfig {
 	@Autowired
 	private AppEventPublisher eventPublisher;
 
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
 	@Value("${app.user.datum.delete.parallelism:1}")
 	private int deleteTaskParallelism = 1;
 
@@ -81,8 +86,8 @@ public class UserExpireBizConfig {
 			taskExecutor.setConcurrencyLimit(deleteTaskParallelism);
 		}
 
-		DaoUserDatumDeleteBiz biz = new DaoUserDatumDeleteBiz(taskExecutor, userNodeDao, datumDao,
-				jobInfoDao);
+		DaoUserDatumDeleteBiz biz = new DaoUserDatumDeleteBiz(Clock.systemUTC(), userEventAppenderBiz,
+				taskExecutor, userNodeDao, datumDao, jobInfoDao);
 		biz.setScheduler(taskScheduler);
 		biz.setEventPublisher(eventPublisher);
 		return biz;

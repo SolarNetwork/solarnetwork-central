@@ -26,19 +26,52 @@ import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.domain.Identity;
 
 /**
  * API for a {@link Configuration} associated with an identity.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumExportRequest extends Identity<UUID> {
 
 	@Override
 	@NonNull
 	UUID getId();
+
+	/**
+	 * Test if the ID is assigned.
+	 *
+	 * @return {@literal true} if the ID value is assigned, {@literal false} if
+	 *         it is considered "not a value"
+	 * @since 2.2
+	 */
+	default boolean idIsAssigned() {
+		try {
+			return EntityConstants.isAssigned(getId());
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Get the ID, presumed non-null.
+	 *
+	 * <p>
+	 * This method is a nullness-check shortcut, for example to be used after
+	 * {@link #idIsAssigned()} returns {@code true}.
+	 * </p>
+	 *
+	 * @return the ID (presumed non-null)
+	 * @since 2.2
+	 */
+	@Override
+	@SuppressWarnings("NullAway")
+	default UUID id() {
+		return getId();
+	}
 
 	/**
 	 * Get the user ID associated with this job, if any.
@@ -48,6 +81,37 @@ public interface DatumExportRequest extends Identity<UUID> {
 	 */
 	default @Nullable Long getUserId() {
 		return null;
+	}
+
+	/**
+	 * Test if the user ID is assigned.
+	 *
+	 * @return {@literal true} if the user ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 * @since 2.2
+	 */
+	default boolean userIdIsAssigned() {
+		try {
+			return EntityConstants.isAssigned(getUserId());
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Get the user ID, presumed non-null.
+	 *
+	 * <p>
+	 * This method is a nullness-check shortcut, for example to be used after
+	 * {@link #userIdIsAssigned()} returns {@code true}.
+	 * </p>
+	 *
+	 * @return the user ID (presumed non-null)
+	 * @since 2.2
+	 */
+	@SuppressWarnings("NullAway")
+	default Long userId() {
+		return getUserId();
 	}
 
 	/**

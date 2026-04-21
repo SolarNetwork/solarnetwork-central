@@ -265,6 +265,7 @@ public class DaoDatumExportBiz
 		private final Configuration config;
 		private DatumExportState jobState;
 		private double percentComplete;
+		private long datumCount;
 		private @Nullable Future<DatumExportResult> delegate;
 
 		/**
@@ -312,6 +313,10 @@ public class DaoDatumExportBiz
 				}
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, clock.instant());
+				userEventAppenderBiz.addEvent(info.userId(),
+						eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()),
+								DATUM_EXPORT_TAGS, "Export datum end",
+								Map.of(DATUM_COUNT_DATA_KEY, datumCount)));
 			} catch ( Exception e ) {
 				log.warn("Error exporting datum for task {}: {}", this, e.getMessage());
 				Throwable root = e;
@@ -451,6 +456,7 @@ public class DaoDatumExportBiz
 										d.getId().getSourceId());
 								auditor.addNodeDatumAuditResults(singletonMap(pk, 1));
 							}
+							datumCount++;
 							try {
 								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
 							} catch ( IOException e ) {
@@ -491,6 +497,10 @@ public class DaoDatumExportBiz
 		public void progressChanged(@Nullable DatumExportService context, double amountComplete) {
 			// each progress here counts for 50% of overall progress
 			this.percentComplete += (amountComplete / 2.0);
+			userEventAppenderBiz.addEvent(info.userId(),
+					eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()),
+							DATUM_EXPORT_PROGRESS_TAGS, null, Map.of(PERCENT_COMPLETE_DATA_KEY,
+									amountComplete, DATUM_COUNT_DATA_KEY, datumCount)));
 			postJobStatusChangedEvent(this);
 		}
 
@@ -568,8 +578,8 @@ public class DaoDatumExportBiz
 			throw new IllegalArgumentException("The configuration argument is required.");
 		}
 
-		userEventAppenderBiz.addEvent(info.getUserId(),
-				eventForUserRelatedKey(new UserUuidPK(info.getUserId(), info.getId()), DATUM_EXPORT_TAGS,
+		userEventAppenderBiz.addEvent(info.userId(),
+				eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()), DATUM_EXPORT_TAGS,
 						"Export datum", exportDatumUserEventData(info)));
 
 		// copy configs and decrypt

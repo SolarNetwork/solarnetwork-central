@@ -27,6 +27,8 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz.EMPTY_INPUT_RESOURCE_META;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -785,7 +787,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
 			int loadedCount, Map<String, Object> startData, String message, boolean error) {
 		// @formatter:off
-		and.then(userEventAppenderBiz.getEvents())
+		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
 			.as("Events for import start/end created")
 			.hasSize(2)
 			.allSatisfy(evt -> {
@@ -798,8 +800,10 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 				and.then(evts).element(0)
 					.as("Datum import tags provided in event")
 					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.extracting(UserEvent::getData, JSON)
 					.as("Job data provided for import start")
-					.returns(startData, from(e -> JsonUtils.getStringMap(e.getData())))
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(startData)))
 					;
 				and.then(evts).element(1)
 					.as("Datum import tags provided in event")
@@ -808,12 +812,43 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 						: DATUM_IMPORT_TAGS).toArray(String[]::new), from(UserEvent::getTags))
 					.as("Message generated")
 					.returns(message, from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
 					.as("Job data provided for import end")
-					.returns(Map.of(
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(Map.of(
 							CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
 							DATUM_COUNT_DATA_KEY, loadedCount
-						), from(e -> JsonUtils.getStringMap(e.getData()))
+						)))
 					)
+					;
+			})
+			;
+		// @formatter:on
+
+		// validate progress (if available)
+		var progressEvents = userEventAppenderBiz.getEvents().stream()
+				.filter(evt -> evt.hasTag(PROGRESS_TAG)).toList();
+		if ( progressEvents.isEmpty() ) {
+			return;
+		}
+		// @formatter:off
+		and.then(progressEvents)
+			.as("Progress events contain expected details")
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for import user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					.as("Datum export progress tags provided in event")
+					.returns(DATUM_IMPORT_PROGRESS_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("No message on progress event")
+					.returns(null, from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for import end")
+					.isObject()
+					.as("Percent complete data provided")
+					.containsKey(PERCENT_COMPLETE_DATA_KEY)
+					.as("Job ID data provided")
+					.containsEntry(CONFIG_ID_DATA_KEY, info.getUuid().toString())
 					;
 			})
 			;
