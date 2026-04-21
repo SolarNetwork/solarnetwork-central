@@ -39,6 +39,9 @@ public interface DatumExpireUserEvents extends DatumUserEvents {
 	/** A user event tag for datum delete handling. */
 	String DELETE_TAG = "delete";
 
+	/** User event data key for an expiration day count. */
+	String EXPIRE_DAYS_DATA_KEY = "expireDays";
+
 	/** Tags for a datum expire error event. */
 	List<String> DATUM_EXPIRE_ERROR_TAGS = List.of(DATUM_TAG, ERROR_TAG, EXPIRE_TAG);
 

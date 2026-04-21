@@ -35,6 +35,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.domain.LogEventInfo;
 
 /**
  * Base helper class for a scheduled job.
@@ -49,7 +51,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public abstract class JobSupport implements ManagedJob {
 
@@ -81,6 +83,7 @@ public abstract class JobSupport implements ManagedJob {
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
 	private @Nullable Duration warnThresholdTime;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -251,6 +254,28 @@ public abstract class JobSupport implements ManagedJob {
 	 */
 	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		throw new UnsupportedOperationException("Extending class must implement.");
+	}
+
+	/**
+	 * Log a user event, if possible.
+	 * 
+	 * <p>
+	 * If any argument is {@code null}, or the {@code userEventAppenderBiz}
+	 * property is {@code null}, this method does nothing.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID for the event
+	 * @param event
+	 *        the event to add
+	 * @since 2.3
+	 */
+	protected final void addUserEvent(@Nullable Long userId, @Nullable LogEventInfo event) {
+		final UserEventAppenderBiz appender = getUserEventAppenderBiz();
+		if ( appender == null || userId == null || event == null ) {
+			return;
+		}
+		appender.addEvent(userId, event);
 	}
 
 	/**
@@ -436,6 +461,27 @@ public abstract class JobSupport implements ManagedJob {
 	 */
 	public final void setWarnThresholdTime(@Nullable Duration warnThresholdTime) {
 		this.warnThresholdTime = warnThresholdTime;
+	}
+
+	/**
+	 * Get the user event appender.
+	 * 
+	 * @return the the service, or {@code null}
+	 * @since 2.3
+	 */
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
+		return userEventAppenderBiz;
+	}
+
+	/**
+	 * Set the user event appender.
+	 * 
+	 * @param userEventAppenderBiz
+	 *        the service to set
+	 * @since 2.3
+	 */
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
+		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }

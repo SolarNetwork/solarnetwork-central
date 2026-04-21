@@ -279,7 +279,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 			})
 			.satisfies(evts -> {
 				and.then(evts).element(0)
-					.as("Datum export tags provided in event")
+					.as("Datum delete tags provided in event")
 					.returns(DATUM_DELETE_TAGS.toArray(String[]::new), from(UserEvent::getTags))
 					.as("Message generated")
 					.returns("Delete datum", from(UserEvent::getMessage))
@@ -289,7 +289,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 					.isEqualTo(json(JsonUtils.getJSONString(startEventData(info))))
 					;
 				and.then(evts).element(1)
-					.as("Datum export tags provided in event")
+					.as("Datum delete tags provided in event")
 					.returns(DATUM_DELETE_TAGS.toArray(String[]::new), from(UserEvent::getTags))
 					.as("Message generated")
 					.returns("Delete datum end", from(UserEvent::getMessage))

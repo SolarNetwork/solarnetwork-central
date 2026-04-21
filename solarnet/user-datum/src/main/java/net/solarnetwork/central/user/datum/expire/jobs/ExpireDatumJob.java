@@ -22,11 +22,16 @@
 
 package net.solarnetwork.central.user.datum.expire.jobs;
 
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
+import java.util.Map;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.datum.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.datum.expire.domain.DatumExpireUserEvents;
 import net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfiguration;
+import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Job to delete datum for user defined expire policies.
@@ -34,7 +39,7 @@ import net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfigura
  * @author matt
  * @version 2.2
  */
-public class ExpireDatumJob extends JobSupport {
+public class ExpireDatumJob extends JobSupport implements DatumExpireUserEvents {
 
 	private final ExpireUserDataConfigurationDao configDao;
 
@@ -63,7 +68,17 @@ public class ExpireDatumJob extends JobSupport {
 			}
 			long start = System.currentTimeMillis();
 			try {
+				addUserEvent(config.getUserId(),
+						eventForUserRelatedKey(new UserLongPK(config.getUserId(), config.getId()),
+								DATUM_EXPIRE_TAGS, "Expire datum",
+								Map.of(CONFIGURATION_DATA_KEY,
+										JsonUtils.getStringMap(config.getFilterJson()),
+										EXPIRE_DAYS_DATA_KEY, config.getExpireDays())));
 				long count = configDao.deleteExpiredDataForConfiguration(config);
+				addUserEvent(config.getUserId(),
+						eventForUserRelatedKey(new UserLongPK(config.getUserId(), config.getId()),
+								DATUM_EXPIRE_TAGS, "Expire datum end",
+								Map.of(DATUM_COUNT_DATA_KEY, count)));
 				if ( count > 0 && log.isInfoEnabled() ) {
 					log.info("Deleted {} datum in {}s for user {} older than {} days matching policy {}",
 							count, (System.currentTimeMillis() - start) / 1000, config.getUserId(),
