@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Executing;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.NumberUtils.down;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
@@ -681,6 +682,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		private DatumImportJobInfo info;
 		private @Nullable Future<DatumImportResult> delegate;
 		private @Nullable ExecutorService progressExecutor;
+		private int lastPercentCompleteEvent;
 
 		/**
 		 * Construct from a task info.
@@ -953,10 +955,15 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			var _ = progressExecutor()
 					.submit(new ProgressUpdater(info.id(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
-			userEventAppenderBiz.addEvent(info.getUserId(),
-					eventForUserRelatedKey(info.getId(), DATUM_IMPORT_PROGRESS_TAGS, null,
-							Map.of(PERCENT_COMPLETE_DATA_KEY, amountComplete, DATUM_COUNT_DATA_KEY,
-									info.getLoadedCount())));
+			final int eventBucket = nonnull(down((int) (amountComplete * 100), 10), "Amount complete")
+					.intValue();
+			if ( eventBucket > lastPercentCompleteEvent ) {
+				lastPercentCompleteEvent = eventBucket;
+				userEventAppenderBiz.addEvent(info.getUserId(),
+						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_PROGRESS_TAGS, null,
+								Map.of(PERCENT_COMPLETE_DATA_KEY, amountComplete, DATUM_COUNT_DATA_KEY,
+										info.getLoadedCount())));
+			}
 			postJobStatusChangedEvent(this, info);
 		}
 

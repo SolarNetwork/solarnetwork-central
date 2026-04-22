@@ -27,6 +27,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.NumberUtils.down;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -267,6 +268,7 @@ public class DaoDatumExportBiz
 		private double percentComplete;
 		private long datumCount;
 		private @Nullable Future<DatumExportResult> delegate;
+		private int lastPercentCompleteEvent;
 
 		/**
 		 * Construct from a task info.
@@ -497,10 +499,15 @@ public class DaoDatumExportBiz
 		public void progressChanged(@Nullable DatumExportService context, double amountComplete) {
 			// each progress here counts for 50% of overall progress
 			this.percentComplete += (amountComplete / 2.0);
-			userEventAppenderBiz.addEvent(info.userId(),
-					eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()),
-							DATUM_EXPORT_PROGRESS_TAGS, null, Map.of(PERCENT_COMPLETE_DATA_KEY,
-									amountComplete, DATUM_COUNT_DATA_KEY, datumCount)));
+			final int eventBucket = nonnull(down((int) (this.percentComplete * 100), 10),
+					"Amount complete").intValue();
+			if ( eventBucket > lastPercentCompleteEvent ) {
+				lastPercentCompleteEvent = eventBucket;
+				userEventAppenderBiz.addEvent(info.userId(),
+						eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()),
+								DATUM_EXPORT_PROGRESS_TAGS, null, Map.of(PERCENT_COMPLETE_DATA_KEY,
+										amountComplete, DATUM_COUNT_DATA_KEY, datumCount)));
+			}
 			postJobStatusChangedEvent(this);
 		}
 
