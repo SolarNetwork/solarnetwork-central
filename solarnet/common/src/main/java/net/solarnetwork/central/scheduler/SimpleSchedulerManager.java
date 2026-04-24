@@ -51,7 +51,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Implementation of {@link SchedulerManager} using a {@link TaskScheduler}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SimpleSchedulerManager implements SchedulerManager, PingTest, ServiceLifecycleObserver {
 
@@ -145,30 +145,33 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	@Override
 	public synchronized @Nullable ScheduledFuture<?> scheduleJob(String groupId, String id,
 			Runnable task, Trigger trigger) {
+		final JobKey key = new JobKey(groupId, id);
+		return scheduleJob(key, task, trigger);
+	}
+
+	private synchronized @Nullable ScheduledFuture<?> scheduleJob(JobKey key, Runnable task,
+			Trigger trigger) {
 		if ( this.status == SchedulerStatus.Starting ) {
 			if ( startupFutures == null ) {
 				startupFutures = new ArrayList<>();
 			}
-			StartupScheduledFuture f = new StartupScheduledFuture(groupId, id, task, trigger);
+			StartupScheduledFuture f = new StartupScheduledFuture(key, task, trigger);
 			startupFutures.add(f);
 			return f;
 		}
 		final Duration delay = getScheduleDelay();
 		if ( delay != null && delay.isPositive() ) {
-			log.info("Will schedule job {} after delay of {}", new JobKey(groupId, id).getDescription(),
-					delay);
+			log.info("Will schedule job {} after delay of {}", key.getDescription(), delay);
 			return taskScheduler.schedule(() -> {
-				@SuppressWarnings("unused")
-				ScheduledFuture<?> unused = scheduleJobInternal(groupId, id, task, trigger);
+				ScheduledFuture<?> _ = scheduleJobInternal(key, task, trigger);
 			}, Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(delay));
 		}
-		return scheduleJobInternal(groupId, id, task, trigger);
+		return scheduleJobInternal(key, task, trigger);
 	}
 
-	private synchronized @Nullable ScheduledFuture<?> scheduleJobInternal(String groupId, String id,
-			Runnable task, Trigger trigger) {
+	private synchronized @Nullable ScheduledFuture<?> scheduleJobInternal(final JobKey key,
+			final Runnable task, final Trigger trigger) {
 		try {
-			final JobKey key = new JobKey(groupId, id);
 			unscheduleJob(key);
 			log.info("Scheduling job {} @ {}", key.getDescription(),
 					extractExecutionScheduleDescription(trigger));
@@ -178,7 +181,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 			jobs.put(key, job);
 			return f;
 		} catch ( Exception e ) {
-			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e, e);
+			log.error("Error scheduling job [{}]: {}", key.getDescription(), e, e);
 			throw e;
 		}
 	}
@@ -186,15 +189,13 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	private class StartupScheduledFuture extends CompletableFuture<Void>
 			implements ScheduledFuture<Void> {
 
-		private final String groupId;
-		private final String id;
+		private final JobKey key;
 		private final Runnable task;
 		private final Trigger trigger;
 
-		private StartupScheduledFuture(String groupId, String id, Runnable task, Trigger trigger) {
+		private StartupScheduledFuture(JobKey key, Runnable task, Trigger trigger) {
 			super();
-			this.groupId = groupId;
-			this.id = id;
+			this.key = key;
 			this.task = task;
 			this.trigger = trigger;
 		}
@@ -211,7 +212,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 		private void schedule() {
 			@SuppressWarnings("unused")
-			ScheduledFuture<?> unused = scheduleJob(groupId, id, task, trigger);
+			ScheduledFuture<?> unused = scheduleJob(key, task, trigger);
 			complete(null);
 		}
 	}
