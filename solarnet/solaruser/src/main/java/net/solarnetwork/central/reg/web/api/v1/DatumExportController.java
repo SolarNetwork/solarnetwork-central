@@ -219,10 +219,10 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/{configId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteExportConfiguration(@PathVariable Long id) {
+	public Result<Void> deleteExportConfiguration(@PathVariable Long configId) {
 		if ( exportBiz != null ) {
 			UserDatumExportConfiguration config = exportBiz
-					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
+					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), configId);
 			if ( config != null ) {
 				exportBiz.deleteDatumExportConfiguration(config);
 			}
@@ -233,12 +233,12 @@ public class DatumExportController {
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@ResponseBody
 	@RequestMapping(value = "/configs/{configId}/date", method = RequestMethod.POST)
-	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable Long id,
+	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable Long configId,
 			@RequestBody Map<String, Object> body) {
 		LocalDateTime result = null;
 		if ( exportBiz != null ) {
 			UserDatumExportConfiguration config = exportBiz
-					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
+					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), configId);
 			if ( config != null ) {
 				ScheduleType schedule = config.getSchedule();
 				if ( schedule == null ) {
