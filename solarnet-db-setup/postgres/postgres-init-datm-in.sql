@@ -1,7 +1,7 @@
 /**
  * Calculate "stale datum" rows for a given datum primary key that has changed.
  *
- * This function will return 1-3 rows representing stale rows that must be re-calculated.
+ * This function will return 1-4 rows representing stale rows that must be re-calculated.
  * It is designed so that the results can be inserted into `solardatm.agg_stale_datm`, like:
  *
  * 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION solardatm.calc_stale_datm(
 	) RETURNS TABLE (
 		stream_id	UUID,
 		ts_start 	TIMESTAMP WITH TIME ZONE
-	) LANGUAGE SQL STABLE ROWS 3 AS
+	) LANGUAGE SQL STABLE ROWS 4 AS
 $$
 	WITH b AS (
 		-- curr hour
@@ -28,7 +28,7 @@ $$
 			SELECT date_trunc('hour', ts_in) AS ts
 		)
 		UNION ALL
-		-- prev hour
+		-- prev datum hour
 		(
 			SELECT date_trunc('hour', d.ts) AS ts
 			FROM solardatm.da_datm d
@@ -39,9 +39,24 @@ $$
 			LIMIT 1
 		)
 		UNION ALL
-		-- next hour
+		-- prev hour, if datum exactly on hour and prev datum exists
 		(
-			SELECT date_trunc('hour', d.ts) AS ts
+			SELECT date_trunc('hour', ts_in) - INTERVAL 'PT1H' AS ts
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts < ts_in
+				AND d.ts > ts_in - tolerance
+				AND date_trunc('hour', ts_in) = ts_in
+			ORDER BY d.stream_id, d.ts DESC
+			LIMIT 1
+		)
+		UNION ALL
+		-- next datum hour, or next datum hour - 1 if next datum exactly on hour
+		(
+			SELECT CASE WHEN date_trunc('hour', d.ts) = d.ts
+				THEN d.ts - INTERVAL 'PT1H'
+				ELSE date_trunc('hour', d.ts)
+				END AS ts
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts > ts_in
