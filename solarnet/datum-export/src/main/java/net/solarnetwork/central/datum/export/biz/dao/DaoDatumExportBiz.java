@@ -269,6 +269,7 @@ public class DaoDatumExportBiz
 		private long datumCount;
 		private @Nullable Future<DatumExportResult> delegate;
 		private int lastPercentCompleteEvent;
+		private boolean resourcesGenerated;
 
 		/**
 		 * Construct from a task info.
@@ -492,13 +493,15 @@ public class DaoDatumExportBiz
 					outputService);
 			log.info("Uploading datum export job {} resources to {}: {}", info.getId(),
 					config.getOutputConfiguration(), resources);
+			resourcesGenerated = true;
 			destService.export(config, resources, runtimeProps, this);
 		}
 
 		@Override
 		public void progressChanged(@Nullable DatumExportService context, double amountComplete) {
-			// each progress here counts for 50% of overall progress
-			this.percentComplete += (amountComplete / 2.0);
+			// each progress here counts for 50% of overall progress, split between
+			// resource generation and then upload to destination
+			this.percentComplete = (amountComplete / 2.0) + (resourcesGenerated ? 0.5 : 0.0);
 			final int eventBucket = nonnull(down((int) (this.percentComplete * 100), 10),
 					"Amount complete").intValue();
 			if ( eventBucket > lastPercentCompleteEvent ) {
