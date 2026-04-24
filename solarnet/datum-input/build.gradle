@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.5' apply false
+	id 'org.springframework.boot' version '4.0.6' apply false
 }
 
 apply plugin: 'java-library'
