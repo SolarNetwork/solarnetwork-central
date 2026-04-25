@@ -451,4 +451,299 @@ public class JdbcDatumEntityDao_WriteOnlyDaoAggregateTrackingTests extends BaseD
 		);
 		// @formatter:on
 	}
+
+	@Test
+	public void updateStream_withinHour_datumBeforeAfterWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.plus(1, MINUTES));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(59, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start.plus(30, MINUTES); // between left/right
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream within single hour impacts datum hour only", pk.getStreamId(),
+			start
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumWithinPreviousHour_nextDatumWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(30, MINUTES));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour", pk.getStreamId(),
+			start.minus(1, HOURS),
+			start
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumGapWithinHour_nextDatumWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(24, HOURS).minus(30, MINUTES));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and previous datum's hour", pk.getStreamId(),
+			leftDatum.getTimestamp().truncatedTo(HOURS),
+			start.minus(1, HOURS),
+			start
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumGapOnHour_nextDatumWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(24, HOURS));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and previous datum's hour", pk.getStreamId(),
+			leftDatum.getTimestamp().truncatedTo(HOURS),
+			start.minus(1, HOURS),
+			start
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumGapOnHour_nextDatumOnHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(24, HOURS));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(1, HOURS));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and previous datum's hour", pk.getStreamId(),
+			leftDatum.getTimestamp().truncatedTo(HOURS),
+			start.minus(1, HOURS),
+			start
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumGapOnHour_nextDatumGapWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(24, HOURS));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS).plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and previous and next datum's hours", pk.getStreamId(),
+			leftDatum.getTimestamp().truncatedTo(HOURS),
+			start.minus(1, HOURS),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS)
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumGapOnHour_nextDatumGapOnHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(24, HOURS));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and previous datum's hour and next datum's hour - 1", pk.getStreamId(),
+			leftDatum.getTimestamp().truncatedTo(HOURS),
+			start.minus(1, HOURS),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS).minus(1, HOURS)
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumWithinPreviousHour_nextDatumGapWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(30, MINUTES));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS).plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and next datum's hour", pk.getStreamId(),
+			start.minus(1, HOURS),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS)
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_exactHour_previousDatumWithinPreviousHour_nextDatumGapOnHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start.minus(30, MINUTES));
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start;
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream exactly on hour impacts previous hour and next datum's hour - 1", pk.getStreamId(),
+			start.minus(1, HOURS),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS).minus(1, HOURS)
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_withinHour_previousDatumWithinHour_nextDatumGapWithinHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start);
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS).plus(30, MINUTES));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start.plus(1, MINUTES);
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream within hour impacts hour and next datum's hour", pk.getStreamId(),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS)
+		);
+		// @formatter:on
+	}
+
+	@Test
+	public void updateStream_withinHour_previousDatumWithinHour_nextDatumGapOnHour() {
+		// GIVEN
+		// setup stream with existing stale hour
+		final String sourceId = randomSourceId();
+		final GeneralDatum leftDatum = datum(sourceId, start);
+		dao.store(leftDatum);
+		final GeneralDatum rightDatum = datum(sourceId, start.plus(24, HOURS));
+		dao.store(rightDatum);
+
+		deleteStaleDatumRecords();
+
+		// WHEN
+		final Instant ts = start.plus(1, MINUTES);
+		final GeneralDatum d = datum(sourceId, ts);
+		final DatumPK pk = dao.store(d);
+
+		// THEN
+		// @formatter:off
+		thenStaleHoursCreated("Updated stream within hour impacts hour and next datum's hour - 1", pk.getStreamId(),
+			start,
+			rightDatum.getTimestamp().truncatedTo(HOURS).minus(1, HOURS)
+		);
+		// @formatter:on
+	}
+
 }
