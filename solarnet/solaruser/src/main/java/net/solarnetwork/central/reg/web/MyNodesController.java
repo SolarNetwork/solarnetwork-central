@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -82,6 +83,9 @@ public class MyNodesController extends ControllerSupport {
 	@Autowired
 	private MessageSource messageSource;
 
+	@Autowired
+	private Environment environment;
+
 	/**
 	 * Constructor.
 	 *
@@ -131,6 +135,16 @@ public class MyNodesController extends ControllerSupport {
 	@ModelAttribute("alertStatuses")
 	public UserAlertStatus[] alertStatuses() {
 		return UserAlertStatus.values();
+	}
+
+	@ModelAttribute("serviceUrls")
+	public Map<String, String> serviceUrls() {
+		Map<String, String> result = new HashMap<>(4);
+		String url = environment.getProperty("app.network-identity.service-urls.solarquery");
+		if ( url != null ) {
+			result.put("solarquery", url);
+		}
+		return result;
 	}
 
 	/**
