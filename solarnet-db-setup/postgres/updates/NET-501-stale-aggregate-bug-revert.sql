@@ -1,56 +1,4 @@
-CREATE OR REPLACE FUNCTION solardatm.calc_stale_datm(
-		sid 		UUID,
-		ts_in 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS TABLE (
-		stream_id	UUID,
-		ts_start 	TIMESTAMP WITH TIME ZONE
-	) LANGUAGE SQL STABLE ROWS 4 AS
-$$
-	WITH prev_datum_hour AS (
-		SELECT date_trunc('hour', d.ts) AS ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts < ts_in
-			AND d.ts > ts_in - tolerance
-		ORDER BY d.stream_id, d.ts DESC
-		LIMIT 1
-	)
-	, b AS (
-		-- prev datum hour
-		(
-			SELECT ts FROM prev_datum_hour
-		)
-		-- curr hour
-		UNION ALL
-		(
-			SELECT date_trunc('hour', ts_in) AS ts
-		)
-		-- prev hour, if datum exactly on hour and prev datum exists
-		UNION ALL
-		(
-			SELECT date_trunc('hour', ts_in) - INTERVAL 'PT1H' AS ts
-			FROM prev_datum_hour
-			WHERE date_trunc('hour', ts_in) = ts_in
-		)
-		UNION ALL
-		-- next datum hour, or next datum hour - 1 if next datum exactly on hour
-		(
-			SELECT CASE WHEN date_trunc('hour', d.ts) = d.ts
-				THEN d.ts - INTERVAL 'PT1H'
-				ELSE date_trunc('hour', d.ts)
-				END AS ts
-			FROM solardatm.da_datm d
-			WHERE d.stream_id = sid
-				AND d.ts > ts_in
-				AND d.ts < ts_in + tolerance
-			ORDER BY d.stream_id, d.ts
-			LIMIT 1
-		)
-	)
-	SELECT DISTINCT ON (ts) sid, ts FROM b
-$$;
-
+-- a revert to pre-NET-501 process_one_* functions, in case something goes wrong
 
 CREATE OR REPLACE FUNCTION solardatm.process_one_agg_stale_datm(kind CHARACTER)
 	RETURNS SETOF solardatm.obj_datm_id LANGUAGE plpgsql VOLATILE AS
@@ -59,6 +7,9 @@ DECLARE
 	agg_span 				INTERVAL;
 	dest_name				TEXT;
 
+	curs 					CURSOR FOR
+							SELECT * FROM solardatm.agg_stale_datm
+							WHERE agg_kind = kind LIMIT 1 FOR UPDATE SKIP LOCKED;
 	stale 					solardatm.agg_stale_datm;
 	meta					record;
 	tz						TEXT;
@@ -85,22 +36,8 @@ BEGIN
 			dest_name := 'agg_datm_hourly';
 	END CASE;
 
-	-- use a limited delete here to immediately lock the row and block future concurrent
-	-- datum solardatm.store_datum() that inserts same row back into solardatm.agg_stale_datm
-	WITH del AS (
-		SELECT stream_id, ts_start, agg_kind
-		FROM solardatm.agg_stale_datm
-		WHERE agg_kind = kind
-		FOR UPDATE SKIP LOCKED
-		LIMIT 1
-	)
-	DELETE FROM solardatm.agg_stale_datm d
-	USING del
-	WHERE d.stream_id = del.stream_id
-		AND d.ts_start = del.ts_start
-		AND d.agg_kind = del.agg_kind
-	RETURNING d.stream_id, d.ts_start, d.agg_kind
-	INTO stale.stream_id, stale.ts_start, stale.agg_kind;
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
 
 	IF FOUND THEN
 		-- get stream metadata & time zone; will determine if node or location stream
@@ -219,8 +156,12 @@ BEGIN
 			END IF;
 		END IF;
 
+		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;
+
 		RETURN NEXT result_row;
 	END IF;
+
+	CLOSE curs;
 END;
 $$;
 
@@ -231,24 +172,13 @@ DECLARE
 	stale 					solardatm.aud_stale_datm;
 	meta					record;
 	tz						TEXT;
+	curs 					CURSOR FOR
+							SELECT * FROM solardatm.aud_stale_datm
+							WHERE aud_kind = kind LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	-- use a limited delete here to immediately lock the row and block future concurrent
-	-- updates that insert same row back into solardatm.aud_stale_datm
-	WITH del AS (
-		SELECT stream_id, ts_start, aud_kind
-		FROM solardatm.aud_stale_datm
-		WHERE aud_kind = kind
-		FOR UPDATE SKIP LOCKED
-		LIMIT 1
-	)
-	DELETE FROM solardatm.aud_stale_datm d
-	USING del
-	WHERE d.stream_id = del.stream_id
-		AND d.ts_start = del.ts_start
-		AND d.aud_kind = del.aud_kind
-	RETURNING d.stream_id, d.ts_start, d.aud_kind
-	INTO stale.stream_id, stale.ts_start, stale.aud_kind;
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
 
 	IF FOUND THEN
 		-- get stream time zone; will determine if node or location stream
@@ -360,8 +290,10 @@ BEGIN
 		END CASE;
 
 		-- remove processed stale record
+		DELETE FROM solardatm.aud_stale_datm WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
+	CLOSE curs;
 	RETURN result_cnt;
 END;
 $$;
@@ -372,25 +304,14 @@ $$
 DECLARE
 	stale 					solardatm.aud_stale_node;
 	tz						TEXT;
+	curs 					CURSOR FOR
+							SELECT * FROM solardatm.aud_stale_node
+							WHERE aud_kind = kind
+							LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	-- use a limited delete here to immediately lock the row and block future concurrent
-	-- updates that insert same row back into solardatm.aud_stale_node
-	WITH del AS (
-		SELECT node_id, service, ts_start, aud_kind
-		FROM solardatm.aud_stale_node
-		WHERE aud_kind = kind
-		FOR UPDATE SKIP LOCKED
-		LIMIT 1
-	)
-	DELETE FROM solardatm.aud_stale_node d
-	USING del
-	WHERE d.node_id = del.node_id
-		AND d.service = del.service
-		AND d.ts_start = del.ts_start
-		AND d.aud_kind = del.aud_kind
-	RETURNING d.node_id, d.service, d.ts_start, d.aud_kind
-	INTO stale.node_id, stale.service, stale.ts_start, stale.aud_kind;
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
 
 	IF FOUND THEN
 		-- get node time zone; will determine if node or location stream
@@ -446,12 +367,14 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
+		-- remove processed stale record
+		DELETE FROM solardatm.aud_stale_node WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
+	CLOSE curs;
 	RETURN result_cnt;
 END
 $$;
-
 
 CREATE OR REPLACE FUNCTION solardatm.process_one_aud_stale_user(kind CHARACTER)
   RETURNS INTEGER LANGUAGE plpgsql VOLATILE AS
@@ -459,25 +382,14 @@ $$
 DECLARE
 	stale 					solardatm.aud_stale_user;
 	tz						TEXT;
+	curs 					CURSOR FOR
+							SELECT * FROM solardatm.aud_stale_user
+							WHERE aud_kind = kind
+							LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	-- use a limited delete here to immediately lock the row and block future concurrent
-	-- updates that insert same row back into solardatm.aud_stale_user
-	WITH del AS (
-		SELECT user_id, service, ts_start, aud_kind
-		FROM solardatm.aud_stale_user
-		WHERE aud_kind = kind
-		FOR UPDATE SKIP LOCKED
-		LIMIT 1
-	)
-	DELETE FROM solardatm.aud_stale_user d
-	USING del
-	WHERE d.user_id = del.user_id
-		AND d.service = del.service
-		AND d.ts_start = del.ts_start
-		AND d.aud_kind = del.aud_kind
-	RETURNING d.user_id, d.service, d.ts_start, d.aud_kind
-	INTO stale.user_id, stale.service, stale.ts_start, stale.aud_kind;
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
 
 	IF FOUND THEN
 		-- get user time zone; will determine if node or location stream
@@ -533,8 +445,11 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
+		-- remove processed stale record
+		DELETE FROM solardatm.aud_stale_user WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
+	CLOSE curs;
 	RETURN result_cnt;
 END
 $$;
