@@ -24,6 +24,8 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -32,6 +34,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -78,8 +82,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	@Mock
 	private RestOperations restOps;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
@@ -166,8 +169,11 @@ public class SolarEdgeCloudIntegrationServiceTests {
 			.as("HTTP method is GET")
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
-			.returns(SolarEdgeV1CloudIntegrationService.BASE_URI
-					.resolve(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL), from(RequestEntity::getUrl))
+			.returns(fromUri(BASE_URI)
+					.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL)
+					.queryParam(API_KEY_PARAM, apiKey)
+					.build()
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)

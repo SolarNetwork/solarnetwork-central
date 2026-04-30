@@ -22,8 +22,9 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_HEADER;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_PARAM;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
@@ -45,7 +48,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 
@@ -78,17 +81,21 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		return super.httpGet(description, configuration, responseType, (headers) -> {
+			String apiKey = null;
 			if ( configuration instanceof IdentifiableConfiguration c
 					&& c.hasServiceProperty(API_KEY_SETTING) ) {
 				final var decrypted = configuration.copyWithId(configuration.getId());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-				final String apiKey = ((IdentifiableConfiguration) decrypted)
-						.serviceProperty(API_KEY_SETTING, String.class);
-				if ( apiKey != null ) {
-					headers.add(API_KEY_HEADER, apiKey);
-				}
+				apiKey = ((IdentifiableConfiguration) decrypted).serviceProperty(API_KEY_SETTING,
+						String.class);
 			}
-			return setup.apply(headers);
+			URI uri = setup.apply(headers);
+			if ( apiKey != null ) {
+				var uriBuilder = UriComponentsBuilder.fromUri(uri);
+				uriBuilder.replaceQueryParam(API_KEY_PARAM, UriUtils.encodeQueryParam(apiKey, UTF_8));
+				uri = uriBuilder.build(true).toUri();
+			}
+			return uri;
 		}, handler);
 	}
 

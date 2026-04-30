@@ -51,7 +51,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * SolarEdge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -62,7 +62,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	public static final String SITES_LIST_URL = "/sites/list";
 
 	/** The user API key authorization HTTP header name. */
-	public static final String API_KEY_HEADER = "X-API-Key";
+	public static final String API_KEY_PARAM = "api_key";
 
 	/** The JSON and {@code problem+json} accept HTTP header value. */
 	public static final String JSON_AND_PROBLEM_ACCEPT_HEADER_VALUE = "application/json, application/problem+json";
