@@ -631,6 +631,9 @@ LEFT OUTER JOIN solardin.cin_datum_stream_prop cdsprop ON cdsprop.map_id = cdsm.
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
  * based on the exec_at column.
  *
+ * The exec_at column will also be updated to CURRENT_TIMESTAMP, although its original value will
+ * be returned.
+ *
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solardin.claim_datum_stream_poll_task()
@@ -650,7 +653,9 @@ BEGIN
 	OPEN curs;
 	FETCH NEXT FROM curs INTO rec;
 	IF FOUND THEN
-		UPDATE solardin.cin_datum_stream_poll_task SET status = 'p' WHERE CURRENT OF curs;
+		UPDATE solardin.cin_datum_stream_poll_task
+		SET status = 'p', exec_at = CURRENT_TIMESTAMP
+		WHERE CURRENT OF curs;
 		rec.status = 'p';
 		RETURN NEXT rec;
 	END IF;
@@ -667,6 +672,9 @@ $$;
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
  * based on the exec_at column, and only one task at a time per ds_id group can be claimed or
  * executing ('p' or 'e' status).
+ *
+ * The exec_at column will also be updated to CURRENT_TIMESTAMP, although its original value will
+ * be returned.
  *
  * @return the claimed row, if one was able to be claimed
  */
@@ -693,7 +701,9 @@ BEGIN
 	OPEN curs;
 	FETCH NEXT FROM curs INTO rec;
 	IF FOUND THEN
-		UPDATE solardin.cin_datum_stream_rake_task SET status = 'p' WHERE CURRENT OF curs;
+		UPDATE solardin.cin_datum_stream_rake_task
+		SET status = 'p', exec_at = CURRENT_TIMESTAMP
+		WHERE CURRENT OF curs;
 		rec.status = 'p';
 		RETURN NEXT rec;
 	END IF;

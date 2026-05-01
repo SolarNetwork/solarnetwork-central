@@ -29,9 +29,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.within;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
@@ -704,9 +706,8 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
 
-		//TestTransaction.flagForCommit();
-
 		// THEN
+		final Instant afterClaim = now();
 		CloudDatumStreamRakeTaskEntity expected = last.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -715,6 +716,32 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.as("Retrieved entity matches with with Queued state")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
+			;
+
+		var pollData = allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+		then(pollData)
+			.as("Table has rows for each task")
+			.hasSize(2)
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsEntry("ds_id", last.getDatumStreamId())
+					.as("Queued task row claimed")
+					.containsEntry("status", BasicClaimableJobState.Claimed.keyValue())
+					.hasEntrySatisfying("exec_at", ts -> {
+						then(((Timestamp)ts).toInstant())
+							.as("Queued task row execution date reset to 'now'")
+							.isCloseTo(afterClaim, within(Duration.ofSeconds(1)))
+							;
+					})
+					;
+				then(l).element(1, map(String.class, Object.class))
+					.containsEntry("ds_id", conf2.getDatumStreamId())
+					.as("Completed task row not claimed")
+					.containsEntry("status", BasicClaimableJobState.Completed.keyValue())
+					.as("Completed task row execution date unchanged")
+					.containsEntry("exec_at", Timestamp.from(conf2.getExecuteAt()))
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -732,7 +759,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// @formatter:off
 		// 1st task executeAt in future: cannot be claimed
-		CloudDatumStreamRakeTaskEntity conf1 = newCloudDatumStreamRakeTaskEntity(userId,
+		CloudDatumStreamRakeTaskEntity c1 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream1.getConfigId(),
 				BasicClaimableJobState.Queued,
 				now().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
@@ -742,7 +769,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 				;
 
 		// 2nd task executeAt in past: can be claimed
-		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
+		CloudDatumStreamRakeTaskEntity c2 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Queued,
 				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
@@ -752,8 +779,8 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 				;
 		// @formatter:on
 
-		conf1 = dao.get(dao.save(conf1));
-		conf2 = dao.get(dao.save(conf2));
+		var conf1 = dao.get(dao.save(c1));
+		var conf2 = dao.get(dao.save(c2));
 
 		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
 
@@ -761,6 +788,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
 
 		// THEN
+		final Instant afterClaim = now();
 		CloudDatumStreamRakeTaskEntity expected = conf2.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -769,6 +797,32 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.as("Retrieved entity matches row with executeAt in the past")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
+			;
+
+		var pollData = allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+		then(pollData)
+			.as("Table has rows for each task")
+			.hasSize(2)
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsEntry("ds_id", conf1.getDatumStreamId())
+					.as("Future task row not claimed")
+					.containsEntry("status", BasicClaimableJobState.Queued.keyValue())
+					.as("Future task row execution date unchanged")
+					.containsEntry("exec_at", Timestamp.from(conf1.getExecuteAt()))
+					;
+				then(l).element(1, map(String.class, Object.class))
+					.containsEntry("ds_id", conf2.getDatumStreamId())
+					.as("Past task row claimed")
+					.containsEntry("status", BasicClaimableJobState.Claimed.keyValue())
+					.hasEntrySatisfying("exec_at", ts -> {
+						then(((Timestamp)ts).toInstant())
+							.as("Past task row execution date reset to 'now'")
+							.isCloseTo(afterClaim, within(Duration.ofSeconds(1)))
+							;
+					})
+					;
+			})
 			;
 		// @formatter:on
 	}
