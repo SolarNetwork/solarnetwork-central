@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Array;
+import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -59,7 +60,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Common JDBC utilities.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public final class CommonJdbcUtils {
 
@@ -293,7 +294,8 @@ public final class CommonJdbcUtils {
 	 *        the column number to get as a UUID
 	 * @param defaultValue
 	 *        the default value to use if the UUID column value is {@code null}
-	 * @return the UUID, or {@code defaultValue} if the column value is null
+	 * @return the UUID, or {@code defaultValue} if the column value is
+	 *         {@code null}
 	 * @throws SQLException
 	 *         if an error occurs
 	 * @throws IllegalArgumentException
@@ -305,6 +307,52 @@ public final class CommonJdbcUtils {
 	@SuppressWarnings("NullAway")
 	public static UUID uuid(ResultSet rs, int column, UUID defaultValue) throws SQLException {
 		return getUuid(rs, column, defaultValue);
+	}
+
+	/**
+	 * Get a UUID statement value.
+	 * 
+	 * @param call
+	 *        the call to read from
+	 * @param parameterIndex
+	 *        the statement parameter to get as a UUID, starting from {@code 1}
+	 * @return the UUID, or {@code null}
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @since 2.4
+	 */
+	public static @Nullable UUID getUuid(CallableStatement call, int parameterIndex)
+			throws SQLException {
+		return getUuid(call, parameterIndex, null);
+	}
+
+	/**
+	 * Get a UUID statement value.
+	 * 
+	 * @param call
+	 *        the call to read from
+	 * @param parameterIndex
+	 *        the statement parameter to get as a UUID, starting from {@code 1}
+	 * @param defaultValue
+	 *        the default value to use of the UUID parameter value is
+	 *        {@code null}
+	 * @return the UUID, or {@code defaultValue} if the parameter value is
+	 *         {@code null}
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @since 2.4
+	 */
+	public static @Nullable UUID getUuid(CallableStatement call, int parameterIndex,
+			@Nullable UUID defaultValue) throws SQLException {
+		Object sid = call.getObject(parameterIndex);
+		return (sid instanceof UUID uuid ? uuid
+				: sid != null ? UUID.fromString(sid.toString()) : defaultValue);
 	}
 
 	/**
