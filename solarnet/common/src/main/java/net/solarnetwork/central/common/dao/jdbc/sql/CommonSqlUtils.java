@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,7 +45,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
 public final class CommonSqlUtils {
 
@@ -524,6 +525,55 @@ public final class CommonSqlUtils {
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
 			String arrayType, Object @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, arrayType, value, false);
+	}
+
+	/**
+	 * Prepare a SQL statement {@code BigDecimal} array parameter.
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.9
+	 */
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			@Nullable BigDecimal @Nullable [] value) throws SQLException {
+		return prepareArrayParameter(con, stmt, parameterOffset, "NUMERIC", value);
+	}
+
+	/**
+	 * Prepare a SQL statement {@code BigDecimal} array parameter.
+	 *
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.9
+	 */
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			@Nullable BigDecimal @Nullable [] value, boolean setNull) throws SQLException {
+		return prepareArrayParameter(con, stmt, parameterOffset, "NUMERIC", value, setNull);
 	}
 
 	/**
