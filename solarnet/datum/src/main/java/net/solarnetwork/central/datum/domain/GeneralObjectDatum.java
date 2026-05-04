@@ -23,16 +23,43 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
+import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamplesContainer;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * API for a general object/source/timestamp primary key style entity.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface GeneralObjectDatum<K extends Comparable<K> & Serializable & GeneralObjectDatumKey>
-		extends Entity<K>, DatumSamplesContainer {
+		extends Entity<K>, DatumSamplesContainer, DatumIdentity {
+
+	@JsonIgnore
+	@Override
+	default ObjectDatumKind getKind() {
+		return id().getKind();
+	}
+
+	@JsonIgnore
+	@Override
+	default Long getObjectId() {
+		return id().getObjectId();
+	}
+
+	@Override
+	default String getSourceId() {
+		return id().getSourceId();
+	}
+
+	@JsonIgnore
+	@Override
+	default Instant getTimestamp() {
+		return id().getTimestamp();
+	}
 
 }

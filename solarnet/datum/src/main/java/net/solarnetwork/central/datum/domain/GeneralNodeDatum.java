@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -53,6 +54,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * @version 3.0
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
+@JsonIgnoreProperties({ "kind", "objectId", "timestamp" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
 		GeneralObjectDatum<GeneralNodeDatumPK>, CopyingIdentity<GeneralNodeDatum, GeneralNodeDatumPK> {
 
@@ -175,6 +177,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 *
 	 * @return the sourceId
 	 */
+	@Override
 	public final String getSourceId() {
 		return id.getSourceId();
 	}
