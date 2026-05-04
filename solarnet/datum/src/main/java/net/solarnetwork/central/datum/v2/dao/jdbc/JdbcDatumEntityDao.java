@@ -917,9 +917,6 @@ public class JdbcDatumEntityDao
 			CallableStatement call = (CallableStatement) super.createJdbcStatement(con);
 			call.registerOutParameter(1, Types.OTHER);
 
-			streamStmt = con.prepareCall(bulkLoadStreamJdbcCall);
-			call.registerOutParameter(1, Types.OTHER);
-
 			return call;
 		}
 
@@ -928,10 +925,18 @@ public class JdbcDatumEntityDao
 				throws SQLException {
 			final StreamDatum sd = support.datumStreamDatum(d, new GeneralDatum(d, d.getSamples()));
 			if ( sd != null ) {
-				return support.storeDatum(d.getKind(), sd, streamStmt,
+				return support.storeDatum(d.getKind(), sd, streamStmt(stmt.getConnection()),
 						d.getPosted() != null ? Timestamp.from(d.getPosted()) : start);
 			}
 			return support.storeDatum(d, (CallableStatement) stmt, start);
+		}
+
+		private CallableStatement streamStmt(Connection con) throws SQLException {
+			if ( streamStmt != null ) {
+				return streamStmt;
+			}
+			streamStmt = con.prepareCall(bulkLoadStreamJdbcCall);
+			return streamStmt;
 		}
 
 		@Override
@@ -948,6 +953,21 @@ public class JdbcDatumEntityDao
 				}
 			}
 			super.commit();
+		}
+
+		@Override
+		public void close() {
+			if ( streamStmt != null ) {
+				try {
+					if ( !streamStmt.isClosed() ) {
+						streamStmt.close();
+					}
+				} catch ( SQLException e ) {
+					log.warn("Error closing bulk loading statement", e);
+				}
+				streamStmt = null;
+			}
+			super.close();
 		}
 
 	}

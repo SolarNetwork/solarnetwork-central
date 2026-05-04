@@ -423,7 +423,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String @Nullable [] value) throws SQLException {
+			@Nullable String @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
@@ -447,7 +447,7 @@ public final class CommonSqlUtils {
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String @Nullable [] value, boolean setNull) throws SQLException {
+			@Nullable String @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "text", value, setNull);
 	}
 
@@ -523,7 +523,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String arrayType, Object @Nullable [] value) throws SQLException {
+			String arrayType, @Nullable Object @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, arrayType, value, false);
 	}
 
@@ -598,7 +598,7 @@ public final class CommonSqlUtils {
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String arrayType, Object @Nullable [] value, boolean setNull) throws SQLException {
+			String arrayType, @Nullable Object @Nullable [] value, boolean setNull) throws SQLException {
 		if ( value != null ) {
 			Array array = con.createArrayOf(arrayType, value);
 			stmt.setArray(++parameterOffset, array);
