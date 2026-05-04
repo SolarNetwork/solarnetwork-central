@@ -98,7 +98,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based implementation of {@link CloudDatumStreamRakeService}.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class DaoCloudDatumStreamRakeService
 		implements CloudDatumStreamRakeService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
