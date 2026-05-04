@@ -232,7 +232,6 @@ DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
 	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
 	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatm.json_datum_prop_count(jdata_json);
 	is_insert 			BOOLEAN 					:= false;
 
 	sid 	UUID;
@@ -266,7 +265,8 @@ BEGIN
 
 	IF track THEN
 		-- add to audit datum in count
-		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, jdata_prop_count, is_insert);
+		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1,
+			solardatm.json_datum_prop_count(jdata_json), is_insert);
 
 		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
@@ -330,27 +330,27 @@ BEGIN
 	RETURNING (xmax = 0)
 	INTO is_insert;
 
-	-- get count of non-null properties
-	SELECT n.cnt + t.cnt FROM
-	(
-		SELECT count(*) AS cnt FROM (
-			SELECT v FROM unnest(idata) v
-			UNION ALL
-			SELECT v FROM unnest(adata) v
-		) n
-		WHERE v IS NOT NULL
-	) n,
-	(
-		SELECT count(*) AS cnt FROM (
-			SELECT v from unnest(sdata) v
-			UNION ALL
-			SELECT v from unnest(tdata) v
-		) t
-		WHERE v IS NOT NULL
-	) t
-	INTO prop_count;
-
 	IF track THEN
+		-- get count of non-null properties
+		SELECT n.cnt + t.cnt FROM
+		(
+			SELECT count(*) AS cnt FROM (
+				SELECT v FROM unnest(idata) v
+				UNION ALL
+				SELECT v FROM unnest(adata) v
+			) n
+			WHERE v IS NOT NULL
+		) n,
+		(
+			SELECT count(*) AS cnt FROM (
+				SELECT v from unnest(sdata) v
+				UNION ALL
+				SELECT v from unnest(tdata) v
+			) t
+			WHERE v IS NOT NULL
+		) t
+		INTO prop_count;
+
 		-- add to audit datum in count
 		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, prop_count, is_insert);
 
