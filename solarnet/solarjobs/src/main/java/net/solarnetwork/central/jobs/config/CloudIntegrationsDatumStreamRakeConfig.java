@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
 import net.solarnetwork.service.PingTest;
 
@@ -70,6 +71,9 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 
 	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
 
 	@Autowired
 	private DatumEntityDao datumDao;
@@ -104,8 +108,8 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 		var dsMap = datumStreamServices.stream()
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity()));
 		var service = new DaoCloudDatumStreamRakeService(Clock.systemUTC(), userEventAppenderBiz,
-				nodeOwnershipDao, rakeTaskDao, pollTaskDao, datumStreamDao, datumDao,
-				taskExecutor.getThreadPoolExecutor(), dsMap::get);
+				nodeOwnershipDao, rakeTaskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao,
+				datumDao, taskExecutor.getThreadPoolExecutor(), dsMap::get);
 		return service;
 	}
 

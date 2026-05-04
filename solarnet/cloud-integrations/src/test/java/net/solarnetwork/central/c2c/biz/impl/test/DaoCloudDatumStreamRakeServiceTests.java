@@ -84,10 +84,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
@@ -99,6 +101,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Test cases for the {@link DaoCloudDatumStreamRakeService} class.
@@ -131,6 +134,9 @@ public class DaoCloudDatumStreamRakeServiceTests {
 	private CloudDatumStreamConfigurationDao datumStreamDao;
 
 	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Mock
 	private DatumEntityDao datumDao;
 
 	@Mock
@@ -155,6 +161,9 @@ public class DaoCloudDatumStreamRakeServiceTests {
 	private ArgumentCaptor<Datum> datumCaptor;
 
 	@Captor
+	private ArgumentCaptor<StreamDatum> streamDatumCaptor;
+
+	@Captor
 	private ArgumentCaptor<Identity<GeneralNodeDatumPK>> generalNodeDatumCaptor;
 
 	@Captor
@@ -170,7 +179,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamRakeService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, pollTaskDao, datumStreamDao, datumDao, executor, datumStreamServices::get);
+				taskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao, datumDao, executor,
+				datumStreamServices::get);
 
 	}
 
@@ -431,8 +441,14 @@ public class DaoCloudDatumStreamRakeServiceTests {
 		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
 				Map.of(meta1.getStreamId(), meta1), List.of(d1, d2)));
 
+		// look up stream for datum
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setNodeId(meta1.getObjectId());
+		streamCriteria.setSourceId(meta1.getSourceId());
+		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria)).willReturn(List.of(meta1));
+
 		// persist datum with difference
-		given(datumDao.store(any(Datum.class))).willReturn(d2.getId());
+		given(datumDao.store(any(StreamDatum.class))).willReturn(d2.getId());
 
 		// update task details
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
@@ -466,10 +482,12 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(sod, from(DatumCriteria::getEndDate))
 			;
 
-		then(datumDao).should().store(datumCaptor.capture());
-		and.then(datumCaptor.getValue())
+		then(datumDao).should().store(streamDatumCaptor.capture());
+		and.then(streamDatumCaptor.getValue())
 			.as("Datum with difference persisted")
-			.isSameAs(datum2)
+			.isEqualTo(d2)
+			.as("StreamDatum properties populated from datum")
+			.returns(DatumProperties.propertiesFrom(datum2, meta1), from(StreamDatum::getProperties))
 			;
 
 		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
@@ -795,10 +813,15 @@ public class DaoCloudDatumStreamRakeServiceTests {
 				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(meta1.getStreamId(), meta1),
 						existingDatum3));
 
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setNodeId(meta1.getObjectId());
+		streamCriteria.setSourceId(meta1.getSourceId());
+		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria)).willReturn(List.of(meta1));
+
 		// persist datum with difference (missing)
 		final List<Datum> allCloudDatum = List.of(cloudDatum1, cloudDatum2).stream()
 				.flatMap(l -> l.stream()).toList();
-		var datumDaoStoreGiven = given(datumDao.store(any(Datum.class)));
+		var datumDaoStoreGiven = given(datumDao.store(any(StreamDatum.class)));
 		for ( Datum d : allCloudDatum ) {
 			datumDaoStoreGiven = datumDaoStoreGiven
 					.willReturn(new DatumPK(meta1.getStreamId(), d.getTimestamp()));
@@ -886,8 +909,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		final int datumUpdateCount = 4;
 
-		then(datumDao).should(times(datumUpdateCount)).store(datumCaptor.capture());
-		and.then(datumCaptor.getAllValues())
+		then(datumDao).should(times(datumUpdateCount)).store(streamDatumCaptor.capture());
+		and.then(streamDatumCaptor.getAllValues())
 			.as("Missing datum persisted")
 			.hasSize(datumUpdateCount)
 			;

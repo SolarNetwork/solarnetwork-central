@@ -40,6 +40,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -71,19 +72,22 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumIdentity;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamplesOperations;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.NumberUtils;
@@ -121,6 +125,7 @@ public class DaoCloudDatumStreamRakeService
 	private final CloudDatumStreamRakeTaskDao taskDao;
 	private final CloudDatumStreamPollTaskDao pollTaskDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
+	private final DatumStreamMetadataDao datumStreamMetadataDao;
 	private final DatumEntityDao datumDao;
 	private final ExecutorService executorService;
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
@@ -142,6 +147,8 @@ public class DaoCloudDatumStreamRakeService
 	 *        the poll task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMetadataDao
+	 *        the datum stream metadata DAO
 	 * @param datumDao
 	 *        the datum DAO
 	 * @param executor
@@ -156,7 +163,8 @@ public class DaoCloudDatumStreamRakeService
 	public DaoCloudDatumStreamRakeService(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamRakeTaskDao taskDao,
 			CloudDatumStreamPollTaskDao pollTaskDao, CloudDatumStreamConfigurationDao datumStreamDao,
-			DatumEntityDao datumDao, ExecutorService executor,
+			DatumStreamMetadataDao datumStreamMetadataDao, DatumEntityDao datumDao,
+			ExecutorService executor,
 			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
@@ -165,6 +173,8 @@ public class DaoCloudDatumStreamRakeService
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.pollTaskDao = requireNonNullArgument(pollTaskDao, "pollTaskDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamMetadataDao = requireNonNullArgument(datumStreamMetadataDao,
+				"datumStreamMetadataDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.executorService = requireNonNullArgument(executor, "executor");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
@@ -427,6 +437,8 @@ public class DaoCloudDatumStreamRakeService
 				filter.setStartDate(queryStartDate.toInstant());
 				filter.setEndDate(queryEndDate.toInstant());
 
+				final var queryTimestamp = clock.instant();
+
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
@@ -444,14 +456,19 @@ public class DaoCloudDatumStreamRakeService
 							rakedDatum.size());
 
 					// sort by stream
-					SortedMap<DatumId, Datum> datumMapping = rakedDatum.getResults().stream().collect(
-							toMap(d -> d.datumId(), Function.identity(), (l, _) -> l, TreeMap::new));
+					SortedMap<DatumIdentity, Datum> datumMapping = rakedDatum.getResults().stream()
+							.collect(toMap(d -> d.datumIdent(), Function.identity(), (l, _) -> l,
+									TreeMap::new));
+
+					// cache datum stream  metadata to speed up conversion to StreamDatum
+					final Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamMetaCache = new HashMap<>(
+							8);
 
 					ObjectDatumStreamMetadataId currStreamId = null;
-					SortedMap<DatumId, Datum> existingDatum = new TreeMap<>();
+					SortedMap<DatumIdentity, Datum> existingDatum = new TreeMap<>();
 
 					for ( var entry : datumMapping.entrySet() ) {
-						final DatumId datumId = entry.getKey();
+						final DatumIdentity datumId = entry.getKey();
 						final Datum datum = entry.getValue();
 						// validate that provided datum ID matches that on the configuration
 						if ( datum.getObjectId() == null || !objectId.equals(datum.getObjectId()) ) {
@@ -506,12 +523,16 @@ public class DaoCloudDatumStreamRakeService
 
 						Datum existing = existingDatum.get(datumId);
 						if ( existing == null || differ(datum, existing) ) {
-							if ( datum instanceof DatumEntity d ) {
+							if ( datum instanceof StreamDatum d ) {
 								datumDao.store(d);
-							} else if ( datum instanceof GeneralObjectDatum<?> d ) {
-								datumDao.persist(d);
 							} else {
-								datumDao.store(datum);
+								final StreamDatum sDatum = datumStreamDatum(datumId, datum,
+										queryTimestamp, streamMetaCache);
+								if ( sDatum != null ) {
+									datumDao.store(sDatum);
+								} else {
+									datumDao.store(datum);
+								}
 							}
 							iterationUpdateCount++;
 							updateCounts.computeIfAbsent(currStreamId, _ -> new MutableInt(0))
@@ -591,7 +612,7 @@ public class DaoCloudDatumStreamRakeService
 			return max;
 		}
 
-		private SortedMap<DatumId, ObjectDatum> existingDatum(Long userId, DatumId datumId,
+		private SortedMap<DatumIdentity, ObjectDatum> existingDatum(Long userId, DatumIdentity datumId,
 				Instant startDate, Instant endDate) {
 			// query for existing datum
 			var datumFilter = new BasicDatumCriteria();
@@ -609,7 +630,8 @@ public class DaoCloudDatumStreamRakeService
 				var meta = nonnull(results.metadataForStreamId(d.getStreamId()), "Stream metadata");
 				return nonnull(forStreamDatum(d, userId, meta.datumIdent(d.getTimestamp()), meta),
 						"Stream datum");
-			}).collect(Collectors.toMap(d -> d.getId(), Function.identity(), (l, _) -> l, TreeMap::new));
+			}).collect(Collectors.toMap(d -> d.datumIdent(), Function.identity(), (l, _) -> l,
+					TreeMap::new));
 		}
 
 	}
@@ -618,6 +640,45 @@ public class DaoCloudDatumStreamRakeService
 		DatumSamplesOperations s1 = datum.asSampleOperations();
 		DatumSamplesOperations s2 = datum2.asSampleOperations();
 		return s1.differsNumericallyFrom(s2, StringUtils::numberValue, NumberUtils::bigDecimalForNumber);
+	}
+
+	private @Nullable StreamDatum datumStreamDatum(DatumIdentity datumId, Datum datum, Instant received,
+			Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> cache) {
+		final ObjectDatumStreamMetadata meta = datumStreamMetadata(datumId, cache);
+		if ( meta != null ) {
+			try {
+				var datumProps = DatumProperties.propertiesFrom(datum, meta);
+				if ( datumProps != null ) {
+					return new DatumEntity(meta.getStreamId(), datumId.getTimestamp(), received,
+							datumProps);
+				}
+			} catch ( IllegalArgumentException e ) {
+				// incompatible properties for stream; fall back to generic datum
+			}
+		}
+		return null;
+	}
+
+	private @Nullable ObjectDatumStreamMetadata datumStreamMetadata(DatumIdentity datumId,
+			Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> cache) {
+		final var metaId = new ObjectDatumStreamMetadataId(datumId.getKind(), datumId.getObjectId(),
+				datumId.getSourceId());
+		ObjectDatumStreamMetadata meta = cache.get(metaId);
+		if ( meta == null ) {
+			var f = new BasicDatumCriteria();
+			if ( datumId.getKind() == ObjectDatumKind.Location ) {
+				f.setLocationId(datumId.getObjectId());
+			} else {
+				f.setNodeId(datumId.getObjectId());
+			}
+			f.setSourceId(datumId.getSourceId());
+			for ( ObjectDatumStreamMetadata m : datumStreamMetadataDao.findDatumStreamMetadata(f) ) {
+				meta = m;
+				cache.put(metaId, meta);
+				break;
+			}
+		}
+		return meta;
 	}
 
 	/**
