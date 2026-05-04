@@ -69,7 +69,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -473,22 +472,9 @@ public class DaoCloudDatumStreamPollService
 					if ( datumId.getSourceId() == null ) {
 						continue;
 					}
-					if ( datumId instanceof DatumEntity d ) {
+					if ( datumId instanceof StreamDatum d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.store(d);
-						}
-					} else if ( datumId instanceof GeneralObjectDatum<?> d ) {
-						if ( datumStreamSettings.isPublishToSolarIn() ) {
-							final StreamDatum sDatum = datumStreamDatum(datumId, datum, streamMetaCache);
-							if ( sDatum != null ) {
-								datumDao.store(sDatum);
-							} else {
-								datumDao.persist(d);
-							}
-						}
-						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& datumId instanceof GeneralNodeDatum nodeDatum ) {
-							fluxPublisher.processDatum(nodeDatum);
 						}
 					} else {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
