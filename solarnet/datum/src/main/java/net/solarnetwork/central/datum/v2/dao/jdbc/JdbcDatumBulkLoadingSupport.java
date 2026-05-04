@@ -290,10 +290,10 @@ public class JdbcDatumBulkLoadingSupport {
 	/**
 	 * Store a stream datum.
 	 *
-	 * @param kind
-	 *        the datum stream kind
 	 * @param d
 	 *        the datum to store
+	 * @param kind
+	 *        the datum stream kind
 	 * @param stmt
 	 *        the statement to use
 	 * @param receivedDefault
@@ -303,7 +303,7 @@ public class JdbcDatumBulkLoadingSupport {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public boolean storeDatum(ObjectDatumKind kind, StreamDatum d, CallableStatement stmt,
+	public boolean storeDatum(StreamDatum d, ObjectDatumKind kind, CallableStatement stmt,
 			Timestamp receivedDefault) throws SQLException {
 		stmt.setObject(1, d.streamId(), Types.OTHER);
 		stmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));

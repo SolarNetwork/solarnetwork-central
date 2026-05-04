@@ -925,7 +925,7 @@ public class JdbcDatumEntityDao
 				throws SQLException {
 			final StreamDatum sd = support.datumStreamDatum(d, new GeneralDatum(d, d.getSamples()));
 			if ( sd != null ) {
-				return support.storeDatum(d.getKind(), sd, streamStmt(stmt.getConnection()),
+				return support.storeDatum(sd, d.getKind(), streamStmt(stmt.getConnection()),
 						d.getPosted() != null ? Timestamp.from(d.getPosted()) : start);
 			}
 			return support.storeDatum(d, (CallableStatement) stmt, start);
