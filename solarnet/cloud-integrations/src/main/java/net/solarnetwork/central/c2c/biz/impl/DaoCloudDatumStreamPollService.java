@@ -485,12 +485,12 @@ public class DaoCloudDatumStreamPollService
 								datumDao.store(datum);
 							}
 						}
-						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& kind == ObjectDatumKind.Node ) {
-							GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
-							if ( gd instanceof GeneralNodeDatum nodeDatum ) {
-								fluxPublisher.processDatum(nodeDatum);
-							}
+					}
+					if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
+							&& kind == ObjectDatumKind.Node ) {
+						GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
+						if ( gd instanceof GeneralNodeDatum nodeDatum ) {
+							fluxPublisher.processDatum(nodeDatum);
 						}
 					}
 					if ( lastDatumDate == null || lastDatumDate.isBefore(datumId.getTimestamp()) ) {
