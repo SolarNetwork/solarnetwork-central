@@ -101,6 +101,9 @@ public class StoreDatumTests {
 		Capture<Timestamp> recvCaptor = new Capture<>();
 		stmt.setTimestamp(eq(3), capture(recvCaptor));
 
+		// array helper gets connection from statement
+		expect(stmt.getConnection()).andReturn(con).times(4);
+
 		Array iArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("NUMERIC"), aryEq(d.getProperties().getInstantaneous())))
 				.andReturn(iArray);
@@ -114,12 +117,12 @@ public class StoreDatumTests {
 		aArray.free();
 
 		Array sArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("TEXT"), aryEq(d.getProperties().getStatus()))).andReturn(sArray);
+		expect(con.createArrayOf(eq("text"), aryEq(d.getProperties().getStatus()))).andReturn(sArray);
 		stmt.setArray(6, sArray);
 		sArray.free();
 
 		Array tArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("TEXT"), aryEq(d.getProperties().getTags()))).andReturn(tArray);
+		expect(con.createArrayOf(eq("text"), aryEq(d.getProperties().getTags()))).andReturn(tArray);
 		stmt.setArray(7, tArray);
 		tArray.free();
 

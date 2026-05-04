@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -33,6 +32,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.2
  */
 public final class StoreDatum implements CallableStatementCreator, SqlProvider {
@@ -90,37 +90,15 @@ public final class StoreDatum implements CallableStatementCreator, SqlProvider {
 
 		final DatumProperties p = datum.getProperties();
 
-		if ( p == null || p.getInstantaneousLength() < 1 ) {
-			stmt.setNull(4, Types.OTHER);
-		} else {
-			Array a = con.createArrayOf("NUMERIC", p.getInstantaneous());
-			stmt.setArray(4, a);
-			a.free();
-		}
-
-		if ( p == null || p.getAccumulatingLength() < 1 ) {
-			stmt.setNull(5, Types.OTHER);
-		} else {
-			Array a = con.createArrayOf("NUMERIC", p.getAccumulating());
-			stmt.setArray(5, a);
-			a.free();
-		}
-
-		if ( p == null || p.getStatusLength() < 1 ) {
-			stmt.setNull(6, Types.OTHER);
-		} else {
-			Array a = con.createArrayOf("TEXT", p.getStatus());
-			stmt.setArray(6, a);
-			a.free();
-		}
-
-		if ( p == null || p.getTagsLength() < 1 ) {
-			stmt.setNull(7, Types.OTHER);
-		} else {
-			Array a = con.createArrayOf("TEXT", p.getTags());
-			stmt.setArray(7, a);
-			a.free();
-		}
+		// NOTE that prepareArrayParameter uses 0-based parameter offsets, unlike direct JDBC
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
+				p.getInstantaneousLength() > 0 ? p.getInstantaneous() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
+				p.getAccumulatingLength() > 0 ? p.getAccumulating() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
+				p.getStatusLength() > 0 ? p.getStatus() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
+				p.getTagsLength() > 0 ? p.getTags() : null, true);
 
 		return stmt;
 	}

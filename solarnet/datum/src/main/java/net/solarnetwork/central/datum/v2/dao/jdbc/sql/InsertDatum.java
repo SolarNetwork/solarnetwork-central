@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -31,6 +30,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.domain.datum.DatumProperties;
 
@@ -38,7 +38,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * Insert a {@link DatumEntity} into the {@literal solardatm.da_datm} table.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public final class InsertDatum implements PreparedStatementCreator, SqlProvider {
@@ -90,42 +90,23 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		int p = 0;
-		stmt.setObject(++p, datum.getStreamId(), Types.OTHER);
-		stmt.setTimestamp(++p, Timestamp.from(datum.getTimestamp()));
+		stmt.setObject(1, datum.getStreamId(), Types.OTHER);
+		stmt.setTimestamp(2, Timestamp.from(datum.getTimestamp()));
 		if ( datum.getReceived() != null ) {
-			stmt.setTimestamp(++p, Timestamp.from(datum.getReceived()));
+			stmt.setTimestamp(3, Timestamp.from(datum.getReceived()));
 		}
 
-		DatumProperties props = datum.getProperties();
-		if ( props != null && props.getInstantaneousLength() > 0 ) {
-			Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
-			stmt.setArray(++p, array);
-			array.free();
-		} else {
-			stmt.setNull(++p, Types.ARRAY);
-		}
-		if ( props != null && props.getAccumulatingLength() > 0 ) {
-			Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
-			stmt.setArray(++p, array);
-			array.free();
-		} else {
-			stmt.setNull(++p, Types.ARRAY);
-		}
-		if ( props != null && props.getStatusLength() > 0 ) {
-			Array array = con.createArrayOf("TEXT", props.getStatus());
-			stmt.setArray(++p, array);
-			array.free();
-		} else {
-			stmt.setNull(++p, Types.ARRAY);
-		}
-		if ( props != null && props.getTagsLength() > 0 ) {
-			Array array = con.createArrayOf("TEXT", props.getTags());
-			stmt.setArray(++p, array);
-			array.free();
-		} else {
-			stmt.setNull(++p, Types.ARRAY);
-		}
+		final DatumProperties props = datum.getProperties();
+
+		// NOTE that prepareArrayParameter uses 0-based parameter offsets, unlike direct JDBC
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
+				props.getInstantaneousLength() > 0 ? props.getInstantaneous() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
+				props.getAccumulatingLength() > 0 ? props.getAccumulating() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
+				props.getStatusLength() > 0 ? props.getStatus() : null, true);
+		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
+				props.getTagsLength() > 0 ? props.getTags() : null, true);
 
 		return stmt;
 	}
