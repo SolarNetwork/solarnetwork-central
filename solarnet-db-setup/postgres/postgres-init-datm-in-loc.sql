@@ -184,8 +184,10 @@ BEGIN
 	INTO p_i, p_a, p_s, is_insert;
 
 	IF track THEN
+		-- add to audit datum in count
 		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, jdata_prop_count, is_insert);
 
+		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
 		FROM solardatm.calc_stale_datm(sid, ddate)
