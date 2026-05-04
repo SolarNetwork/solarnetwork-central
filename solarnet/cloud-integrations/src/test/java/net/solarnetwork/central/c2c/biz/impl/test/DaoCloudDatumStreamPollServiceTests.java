@@ -87,6 +87,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
@@ -589,10 +590,14 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		// look up stream for datum
 		final var streamId = UUID.randomUUID();
-		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+		final ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
 				datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
 				new String[] { "watts" }, new String[] { "wattHours" }, null);
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willReturn(List.of(streamMeta));
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setNodeId(datumStream.getObjectId());
+		streamCriteria.setSourceId(datumStream.getSourceId());
+		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria))
+				.willReturn(List.of(streamMeta));
 
 		// persist datum
 		final var datumId1 = new DatumPK(streamId, datum1.getTimestamp());

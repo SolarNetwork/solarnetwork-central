@@ -69,12 +69,12 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
-import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -412,9 +412,11 @@ public class DaoCloudDatumStreamPollService
 				return taskInfo;
 			}
 
+			final Instant queryTimestamp = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+
 			final var filter = new BasicQueryFilter();
 			filter.setStartDate(taskInfo.getStartAt());
-			filter.setEndDate(clock.instant());
+			filter.setEndDate(queryTimestamp);
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
 					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
@@ -478,7 +480,8 @@ public class DaoCloudDatumStreamPollService
 						}
 					} else {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
-							final StreamDatum sDatum = datumStreamDatum(datumId, datum, streamMetaCache);
+							final StreamDatum sDatum = datumStreamDatum(datumId, datum, queryTimestamp,
+									streamMetaCache);
 							if ( sDatum != null ) {
 								datumDao.store(sDatum);
 							} else {
@@ -597,14 +600,15 @@ public class DaoCloudDatumStreamPollService
 
 	}
 
-	private @Nullable StreamDatum datumStreamDatum(DatumIdentity datumId, Datum datum,
+	private @Nullable StreamDatum datumStreamDatum(DatumIdentity datumId, Datum datum, Instant received,
 			Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> cache) {
 		final ObjectDatumStreamMetadata meta = datumStreamMetadata(datumId, cache);
 		if ( meta != null ) {
 			try {
 				var datumProps = DatumProperties.propertiesFrom(datum, meta);
 				if ( datumProps != null ) {
-					return new BasicStreamDatum(meta.getStreamId(), datumId.getTimestamp(), datumProps);
+					return new DatumEntity(meta.getStreamId(), datumId.getTimestamp(), received,
+							datumProps);
 				}
 			} catch ( IllegalArgumentException e ) {
 				// incompatible properties for stream; fall back to generic datum
