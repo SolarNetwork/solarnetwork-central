@@ -36,12 +36,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * JDBC datum entity DAO configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class JdbcDatumEntityDaoConfig {
@@ -50,6 +51,14 @@ public class JdbcDatumEntityDaoConfig {
 	 * A cache name to use for stream metadata objects.
 	 */
 	public static final String STREAM_METADATA_CACHE_NAME = "metadata-for-stream";
+
+	/**
+	 * A cache name to use for stream metadata objects using kind/object/source
+	 * keys.
+	 *
+	 * @since 1.3
+	 */
+	public static final String STREAM_OBJECT_METADATA_CACHE_NAME = "metadata-for-stream-object";
 
 	@Autowired
 	private DataSource dataSource;
@@ -84,10 +93,32 @@ public class JdbcDatumEntityDaoConfig {
 	}
 
 	@Bean
+	@Qualifier(STREAM_OBJECT_METADATA_CACHE_NAME)
+	@ConfigurationProperties(prefix = "app.datum.stream-object-metadata-cache")
+	public CacheSettings streamObjectMetadataCacheSettings() {
+		return new CacheSettings();
+	}
+
+	/**
+	 * Get the object metadata cache.
+	 *
+	 * @return the object metadata cache
+	 */
+	@Bean
+	@Qualifier(STREAM_OBJECT_METADATA_CACHE_NAME)
+	public Cache<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamObjectMetadataCache(
+			@Qualifier(STREAM_OBJECT_METADATA_CACHE_NAME) CacheSettings settings) {
+		return settings.createCache(cacheManager, ObjectDatumStreamMetadataId.class,
+				ObjectDatumStreamMetadata.class, STREAM_OBJECT_METADATA_CACHE_NAME);
+	}
+
+	@Bean
 	public JdbcDatumEntityDao datumEntityDao(
-			@Qualifier(STREAM_METADATA_CACHE_NAME) Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache) {
+			@Qualifier(STREAM_METADATA_CACHE_NAME) Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache,
+			@Qualifier(STREAM_OBJECT_METADATA_CACHE_NAME) Cache<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamObjectMetadataCache) {
 		JdbcDatumEntityDao dao = new JdbcDatumEntityDao(jdbcOperations);
 		dao.setStreamMetadataCache(streamMetadataCache);
+		dao.setStreamObjectMetadataCache(streamObjectMetadataCache);
 		dao.setBulkLoadDataSource(dataSource);
 		dao.setBulkLoadTransactionManager(txManager);
 		return dao;

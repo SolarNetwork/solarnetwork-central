@@ -666,16 +666,16 @@ public class DaoCloudDatumStreamRakeService
 		ObjectDatumStreamMetadata meta = cache.get(metaId);
 		if ( meta == null ) {
 			var f = new BasicDatumCriteria();
+			f.setObjectKind(datumId.getKind());
 			if ( datumId.getKind() == ObjectDatumKind.Location ) {
 				f.setLocationId(datumId.getObjectId());
 			} else {
 				f.setNodeId(datumId.getObjectId());
 			}
 			f.setSourceId(datumId.getSourceId());
-			for ( ObjectDatumStreamMetadata m : datumStreamMetadataDao.findDatumStreamMetadata(f) ) {
-				meta = m;
+			meta = datumStreamMetadataDao.findStreamMetadata(f);
+			if ( meta != null ) {
 				cache.put(metaId, meta);
-				break;
 			}
 		}
 		return meta;

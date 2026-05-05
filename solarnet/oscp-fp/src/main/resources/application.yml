@@ -23,6 +23,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 5
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   http.client:
     connections:
       default-max-per-route: 4

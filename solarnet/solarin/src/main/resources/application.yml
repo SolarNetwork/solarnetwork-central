@@ -23,6 +23,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000

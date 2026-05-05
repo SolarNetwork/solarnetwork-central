@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria,
@@ -88,6 +88,18 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 */
 	public BasicDatumCriteria() {
 		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 *
+	 * @param criteria
+	 *        the criteria to copy
+	 * @since 1.7
+	 */
+	public BasicDatumCriteria(PaginationCriteria criteria) {
+		super();
+		copyFrom(criteria);
 	}
 
 	@Override

@@ -38,6 +38,8 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ass
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
@@ -120,6 +122,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 	@Mock
 	private Cache<UUID, ObjectDatumStreamMetadata> cache;
+
+	@Mock
+	private Cache<net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> objectCache;
 
 	@Captor
 	private ArgumentCaptor<ObjectDatumStreamMetadata> metaCaptor;
@@ -775,6 +780,88 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void metadataForObjectStream_node_notFound() {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, randomLong(), randomSourceId(), new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setNodeId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// @formatter:off
+		and.then(result)
+			.as("Metadata not found")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void metadataForObjectStream_node() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setNodeId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		assertDatumStreamMetadata("returned meta", result, meta);
+	}
+
+	@Test
+	public void metadataForObjectStream_location_notFound() {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, randomLong(), randomSourceId(), new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setLocationId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// @formatter:off
+		and.then(result)
+			.as("Metadata not found")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void metadataForObjectStream_location() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setLocationId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		assertDatumStreamMetadata("returned meta", result, meta);
+	}
+
+	@Test
 	public void metadataForStream_node_withJson() {
 		// GIVEN
 		setupTestNode(); // for TZ
@@ -831,6 +918,114 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		assertThat("Cached metadata returned", result, sameInstance(meta));
+	}
+
+	@Test
+	public void metadataForObjectStream_node_cacheMiss() {
+		// GIVEN
+		dao.setStreamObjectMetadataCache(objectCache);
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setNodeId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		final var key = new net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId(meta.getKind(),
+				meta.getObjectId(), meta.getSourceId());
+		then(objectCache).should().put(eq(key), metaCaptor.capture());
+
+		assertDatumStreamMetadata("returned meta", result, meta);
+		assertDatumStreamMetadata("cached meta", metaCaptor.getValue(), meta);
+	}
+
+	@Test
+	public void metadataForObjectStream_node_cacheHit() {
+		// GIVEN
+		dao.setStreamObjectMetadataCache(objectCache);
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, randomLong(), randomSourceId(), new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		final var key = new net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId(meta.getKind(),
+				meta.getObjectId(), meta.getSourceId());
+
+		given(objectCache.get(key)).willReturn(meta);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setNodeId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Cached metadata returned")
+			.isSameAs(meta)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void metadataForObjectStream_location_cacheMiss() {
+		// GIVEN
+		dao.setStreamObjectMetadataCache(objectCache);
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setLocationId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		final var key = new net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId(meta.getKind(),
+				meta.getObjectId(), meta.getSourceId());
+		then(objectCache).should().put(eq(key), metaCaptor.capture());
+
+		assertDatumStreamMetadata("returned meta", result, meta);
+		assertDatumStreamMetadata("cached meta", metaCaptor.getValue(), meta);
+	}
+
+	@Test
+	public void metadataForObjectStream_location_cacheHit() {
+		// GIVEN
+		dao.setStreamObjectMetadataCache(objectCache);
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, randomLong(), randomSourceId(), new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		final var key = new net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId(meta.getKind(),
+				meta.getObjectId(), meta.getSourceId());
+
+		given(objectCache.get(key)).willReturn(meta);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(meta.getKind());
+		filter.setLocationId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Cached metadata returned")
+			.isSameAs(meta)
+			;
+		// @formatter:on
 	}
 
 	@Test

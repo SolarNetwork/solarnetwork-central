@@ -423,9 +423,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 				datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
 				new String[] { "watts" }, new String[] { "wattHours" }, null);
 		// @formatter:off
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any()))
-			.willReturn(List.of())           // first datum stream meta not found
-			.willReturn(List.of(streamMeta)) // meta created by first datum, so found for next
+		given(datumStreamMetadataDao.findStreamMetadata(any()))
+			.willReturn(null)       // first datum stream meta not found
+			.willReturn(streamMeta) // meta created by first datum, so found for next
 			;
 		// @formatter:on
 
@@ -474,11 +474,13 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getServiceProperties))
 			;
 
-		then(datumStreamMetadataDao).should(times(2)).findDatumStreamMetadata(streamMetadataCriteriaCaptor.capture());
+		then(datumStreamMetadataDao).should(times(2)).findStreamMetadata(streamMetadataCriteriaCaptor.capture());
 		and.then(streamMetadataCriteriaCaptor.getAllValues())
 			.allSatisfy(f -> {
 				and.then(f)
-					.as("Node ID used in stream metadata criteria")
+					.as("Node kind used in metadata criteria")
+					.returns(ObjectDatumKind.Node, from(ObjectStreamCriteria::getObjectKind))
+					.as("Node ID used in metadata criteria")
 					.returns(datumStream.getObjectId(), from(ObjectStreamCriteria::getNodeId))
 					.as("Source ID used in metadata criteria")
 					.returns(datumStream.getSourceId(), from(ObjectStreamCriteria::getSourceId))
@@ -594,10 +596,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 				datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
 				new String[] { "watts" }, new String[] { "wattHours" }, null);
 		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
 		streamCriteria.setNodeId(datumStream.getObjectId());
 		streamCriteria.setSourceId(datumStream.getSourceId());
-		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria))
-				.willReturn(List.of(streamMeta));
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(streamMeta);
 
 		// persist datum
 		final var datumId1 = new DatumPK(streamId, datum1.getTimestamp());
@@ -642,9 +644,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getServiceProperties))
 			;
 
-		then(datumStreamMetadataDao).should().findDatumStreamMetadata(streamMetadataCriteriaCaptor.capture());
+		then(datumStreamMetadataDao).should().findStreamMetadata(streamMetadataCriteriaCaptor.capture());
 		and.then(streamMetadataCriteriaCaptor.getValue())
-			.as("Node ID used in stream metadata criteria")
+			.as("Node kind used in metadata criteria")
+			.returns(ObjectDatumKind.Node, from(ObjectStreamCriteria::getObjectKind))
+			.as("Node ID used in metadata criteria")
 			.returns(datumStream.getObjectId(), from(ObjectStreamCriteria::getNodeId))
 			.as("Source ID used in metadata criteria")
 			.returns(datumStream.getSourceId(), from(ObjectStreamCriteria::getSourceId))

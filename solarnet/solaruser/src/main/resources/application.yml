@@ -114,6 +114,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   din:
     max-datum-input-length: 8196
     xslt:

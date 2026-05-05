@@ -443,9 +443,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		// look up stream for datum
 		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
 		streamCriteria.setNodeId(meta1.getObjectId());
 		streamCriteria.setSourceId(meta1.getSourceId());
-		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria)).willReturn(List.of(meta1));
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(meta1);
 
 		// persist datum with difference
 		given(datumDao.store(any(StreamDatum.class))).willReturn(d2.getId());
@@ -814,9 +815,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 						existingDatum3));
 
 		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
 		streamCriteria.setNodeId(meta1.getObjectId());
 		streamCriteria.setSourceId(meta1.getSourceId());
-		given(datumStreamMetadataDao.findDatumStreamMetadata(streamCriteria)).willReturn(List.of(meta1));
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(meta1);
 
 		// persist datum with difference (missing)
 		final List<Datum> allCloudDatum = List.of(cloudDatum1, cloudDatum2).stream()
