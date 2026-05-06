@@ -322,6 +322,35 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		C config = input.toEntity(id);
 
+		// validate a Datum Stream is compatible with its Integration
+		if ( config instanceof CloudDatumStreamConfiguration ds
+				&& ds.getDatumStreamMappingId() != null ) {
+
+			final CloudIntegrationConfiguration integration = integrationDao
+					.integrationForDatumStreamMapping(
+							new UserLongCompositePK(ds.getUserId(), ds.getDatumStreamMappingId()));
+			if ( integration != null ) {
+				CloudIntegrationService intService = integrationService(
+						integration.getServiceIdentifier());
+				if ( intService == null ) {
+					throw new IllegalArgumentException("Cloud Integration service [%s] is not available."
+							.formatted(integration.getServiceIdentifier()));
+				}
+				boolean supported = false;
+				for ( CloudDatumStreamService dsService : intService.datumStreamServices() ) {
+					if ( ds.getServiceIdentifier().equals(dsService.getId()) ) {
+						supported = true;
+						break;
+					}
+				}
+				if ( !supported ) {
+					throw new IllegalArgumentException(
+							"Cloud Integration service [%s] does not support Cloud Datum Stream service [%s]."
+									.formatted(intService.getId(), ds.getServiceIdentifier()));
+				}
+			}
+		}
+
 		// handle OAuth raw token values
 		Map<String, Object> oauthTokenProperties = null;
 		if ( config instanceof CloudIntegrationConfiguration integration

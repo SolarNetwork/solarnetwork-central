@@ -62,6 +62,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -130,7 +132,8 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 
 	private CloudIntegrationConfiguration createIntegration(Long userId) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(),
+				AlsoEnergyCloudIntegrationService.SERVICE_IDENTIFIER);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 
@@ -149,8 +152,8 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString(),
-				ObjectDatumKind.Node);
+				unassignedEntityIdKey(userId), clock.instant(), randomString(),
+				AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER, ObjectDatumKind.Node);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		conf.setObjectId(nodeId);
@@ -177,7 +180,7 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 		final CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
+		input.setServiceIdentifier(AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER);
 		input.setDatumStreamMappingId(mapping.getConfigId());
 		input.setKind(ObjectDatumKind.Node);
 		input.setObjectId(reqNodeId);
@@ -325,7 +328,7 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 		final CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
+		input.setServiceIdentifier(AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER);
 		input.setDatumStreamMappingId(mapping.getConfigId());
 		input.setKind(ObjectDatumKind.Node);
 		input.setObjectId(reqNodeId);

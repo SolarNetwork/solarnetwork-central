@@ -42,6 +42,7 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.assertj.core.api.InstanceOfAssertFactories.STRING;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,6 +74,7 @@ import org.threeten.extra.MutableClock;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
@@ -136,6 +138,8 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	private static final String TEST_SERVICE_ID = randomString();
 
+	private static final String TEST_SERVICE_ID_2 = randomString();
+
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
 
@@ -159,6 +163,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Mock
 	private CloudIntegrationService integrationService;
+
+	@Mock
+	private CloudDatumStreamService datumStreamService;
 
 	@Mock
 	private UserSettingsEntityDao userSettingsDao;
@@ -840,6 +847,51 @@ public class DaoUserCloudIntegrationsBizTests {
 			})
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamConfiguration_save_integrationMismtach() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		// validate integration is compatible with stream
+		final Long mappingId = randomLong();
+		final var integration = new CloudIntegrationConfiguration(userId, randomLong(), EPOCH,
+				"Test Integration", TEST_SERVICE_ID);
+		given(integrationDao
+				.integrationForDatumStreamMapping(new UserLongCompositePK(userId, mappingId)))
+						.willReturn(integration);
+
+		given(integrationService.datumStreamServices()).willReturn(List.of(datumStreamService));
+		given(datumStreamService.getId()).willReturn(TEST_SERVICE_ID); // mismtach
+
+		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
+		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID, ObjectDatumKind.Node);
+		conf.setServiceProps(sprops);
+		conf.setDatumStreamMappingId(mappingId); // should not be allowed because integration mismatch
+
+		// WHEN
+		CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setServiceIdentifier(TEST_SERVICE_ID_2); // mismatch
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		input.setDatumStreamMappingId(mappingId);
+		input.setSchedule(randomString());
+		input.setKind(ObjectDatumKind.Node);
+		input.setObjectId(randomLong());
+		input.setSourceId(randomString());
+		UserLongCompositePK unassignedId = UserLongCompositePK.unassignedEntityIdKey(userId);
+
+		thenIllegalArgumentException().isThrownBy(() -> {
+			biz.saveConfiguration(unassignedId, input);
+		}).withMessageContainingAll(TEST_SERVICE_ID, TEST_SERVICE_ID_2);
+
+		// THEN
+		then(datumStreamDao).shouldHaveNoInteractions();
 	}
 
 	@Test
