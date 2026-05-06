@@ -35,7 +35,7 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudIntegrationConfigurationDao
 		extends GenericCompositeKey2Dao<CloudIntegrationConfiguration, UserLongCompositePK, Long, Long>,
@@ -55,6 +55,26 @@ public interface CloudIntegrationConfigurationDao
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(datumStreamId, "datumStreamId").getUserId());
 		filter.setDatumStreamId(datumStreamId.getEntityId());
+
+		var results = findFiltered(filter);
+		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);
+	}
+
+	/**
+	 * Convenient method to find the integration associated with a datum stream
+	 * mapping.
+	 *
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID to find the integration for
+	 * @return the integration, or {@code null} if not found
+	 * @since 1.2
+	 */
+	default @Nullable CloudIntegrationConfiguration integrationForDatumStreamMapping(
+			UserLongCompositePK datumStreamMappingId) {
+		var filter = new BasicFilter();
+		filter.setUserId(
+				requireNonNullArgument(datumStreamMappingId, "datumStreamMappingId").getUserId());
+		filter.setDatumStreamMappingId(datumStreamMappingId.getEntityId());
 
 		var results = findFiltered(filter);
 		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);

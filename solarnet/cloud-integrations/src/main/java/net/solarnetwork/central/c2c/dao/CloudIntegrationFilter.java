@@ -28,9 +28,9 @@ import net.solarnetwork.central.common.dao.IdentifiableCriteria;
  * A filter for cloud integration entities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria,
-		CloudDatumStreamCriteria, IdentifiableCriteria {
+		CloudDatumStreamCriteria, CloudDatumStreamMappingCriteria, IdentifiableCriteria {
 
 }

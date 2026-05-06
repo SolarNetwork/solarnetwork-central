@@ -347,6 +347,60 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
 	}
 
+	@Test
+	public void findFiltered_forDatumStreamMapping() {
+		// GIVEN
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int datumStreamCount = 2;
+
+		final List<CloudIntegrationConfiguration> integrations = new ArrayList<>(
+				userCount * integrationCount);
+		final Map<UserLongCompositePK, List<CloudDatumStreamConfiguration>> datumStreamsByIntegrationIds = new LinkedHashMap<>(
+				userCount * integrationCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				CloudIntegrationConfiguration integration = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), null);
+				UserLongCompositePK integrationId = dao.create(userId, integration);
+				integration = integration.copyWithId(integrationId);
+				integrations.add(integration);
+				for ( int d = 0; d < datumStreamCount; d++ ) {
+					CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+							integration.getConfigId());
+					CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+							mapping.getConfigId());
+					datumStreamsByIntegrationIds
+							.computeIfAbsent(integration.getId(), _ -> new ArrayList<>(datumStreamCount))
+							.add(datumStream);
+				}
+			}
+		}
+
+		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
+		allCloudDatumStreamConfigurationData(jdbcTemplate);
+
+		// WHEN
+		var randomIntegration = integrations.get(RNG.nextInt(integrations.size()));
+		var randomDatumStream = datumStreamsByIntegrationIds.get(randomIntegration.getId())
+				.get(RNG.nextInt(datumStreamsByIntegrationIds.get(randomIntegration.getId()).size()));
+
+		log.info("Querying for datum stream {}", randomDatumStream.getConfigId());
+
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomDatumStream.getUserId());
+		filter.setDatumStreamMappingId(randomDatumStream.getDatumStreamMappingId());
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		then(results).as("Result for integration for datum stream mapping returned")
+				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
+	}
+
 	private String[] randomServiceIdentifiers(List<CloudIntegrationConfiguration> confs) {
 		String[] randomServiceIdents = confs.stream().filter(_ -> RNG.nextBoolean())
 				.map(c -> c.getServiceIdentifier()).toArray(String[]::new);
