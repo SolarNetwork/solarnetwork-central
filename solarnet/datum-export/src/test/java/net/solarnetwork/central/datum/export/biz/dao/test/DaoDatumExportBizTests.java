@@ -181,7 +181,8 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 
 	}
 
-	private void thenStartEndEventsGenerated(DatumExportTaskInfo info, long exportedCount) {
+	private void thenStartEndEventsGenerated(DatumExportTaskInfo info, long exportedCount,
+			Map<String, Long> exportedCountBySource) {
 		// validate start/end events
 		// @formatter:off
 		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
@@ -214,7 +215,8 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 					.isObject()
 					.isEqualTo(json(JsonUtils.getJSONString(Map.of(
 							CONFIG_ID_DATA_KEY, info.id().toString(),
-							DATUM_COUNT_DATA_KEY, (int)exportedCount
+							DATUM_COUNT_DATA_KEY, (int)exportedCount,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, exportedCountBySource
 						)))
 					)
 					;
@@ -366,7 +368,7 @@ public class DaoDatumExportBizTests implements DatumExportUserEvents {
 				""".formatted(CSV_INSTANT_FORMAT.format(d.getCreated()), d.getNodeId(),
 				d.getSourceId()));
 
-		thenStartEndEventsGenerated(req, 1L);
+		thenStartEndEventsGenerated(req, 1L, Map.of(d.getSourceId(), 1L));
 	}
 
 }

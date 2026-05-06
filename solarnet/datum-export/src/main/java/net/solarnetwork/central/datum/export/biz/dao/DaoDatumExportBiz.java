@@ -102,6 +102,8 @@ import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
+import net.solarnetwork.util.CountTracker;
+import net.solarnetwork.util.StringLongMapping;
 
 /**
  * DAO-based implementation of {@link DatumExportBiz}.
@@ -264,6 +266,7 @@ public class DaoDatumExportBiz
 
 		private final DatumExportTaskInfo info;
 		private final Configuration config;
+		private final CountTracker countTracker;
 		private DatumExportState jobState;
 		private double percentComplete;
 		private long datumCount;
@@ -287,6 +290,7 @@ public class DaoDatumExportBiz
 			this.info = info;
 			this.jobState = DatumExportState.Claimed;
 			this.config = requireNonNullArgument(info.getConfiguration(), "info.configuration");
+			this.countTracker = new StringLongMapping();
 		}
 
 		/**
@@ -319,7 +323,8 @@ public class DaoDatumExportBiz
 				userEventAppenderBiz.addEvent(info.userId(),
 						eventForUserRelatedKey(new UserUuidPK(info.userId(), info.id()),
 								DATUM_EXPORT_TAGS, "Export datum end",
-								Map.of(DATUM_COUNT_DATA_KEY, datumCount)));
+								Map.of(DATUM_COUNT_DATA_KEY, datumCount, DATUM_COUNT_BY_SOURCE_DATA_KEY,
+										countTracker.toMap())));
 			} catch ( Exception e ) {
 				log.warn("Error exporting datum for task {}: {}", this, e.getMessage());
 				Throwable root = e;
@@ -460,6 +465,9 @@ public class DaoDatumExportBiz
 								auditor.addNodeDatumAuditResults(singletonMap(pk, 1));
 							}
 							datumCount++;
+							if ( d != null && d.getId() != null ) {
+								countTracker.incrementCount(d.getId().getSourceId());
+							}
 							try {
 								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
 							} catch ( IOException e ) {
