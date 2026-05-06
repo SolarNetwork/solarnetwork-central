@@ -37,10 +37,10 @@ import net.solarnetwork.util.ObjectUtils;
  * sample components rather than inline sample data.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.30
  */
-public class GeneralLocationDatumComponents extends GeneralLocationDatum {
+public class GeneralLocationDatumComponents extends GeneralLocationDatum implements DatumComponents {
 
 	@Serial
 	private static final long serialVersionUID = -4036964378594823693L;

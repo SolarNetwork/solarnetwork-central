@@ -40,6 +40,7 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -68,7 +69,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Utilities for Datum JSON processing.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  * @since 2.8
  */
 public final class DatumJsonUtils {
@@ -1291,6 +1292,7 @@ public final class DatumJsonUtils {
 	public static final JacksonModule DATUM_MODULE;
 	static {
 		SimpleModule m = new SimpleModule("SolarNet Datum");
+		m.addSerializer(GeneralObjectDatum.class, GeneralObjectDatumSerializer.INSTANCE);
 		m.addSerializer(ObjectDatumStreamMetadataId.class,
 				BasicObjectDatumStreamMetadataIdSerializer.INSTANCE);
 		m.addDeserializer(ObjectDatumStreamMetadataId.class,

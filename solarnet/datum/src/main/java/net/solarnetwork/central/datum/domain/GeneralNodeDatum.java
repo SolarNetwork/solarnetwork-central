@@ -40,7 +40,10 @@ import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesOperations;
 
 /**
  * Generalized node-based datum.
@@ -120,11 +123,30 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		other.samples = (samples != null ? new DatumSamples(samples) : new DatumSamples());
 	}
 
+	@Override
+	public Datum copyWithSamples(DatumSamplesOperations samples) {
+		var gd = new GeneralNodeDatum(id);
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
+	@Override
+	public Datum copyWithId(DatumId id) {
+		var ident = id.toIdentity();
+		var gd = new GeneralNodeDatum(
+				new GeneralNodeDatumPK(ident.getObjectId(), ident.getTimestamp(), ident.getSourceId()));
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
 	/**
 	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
 	 * @return the sample data, or {@code null} if none available
 	 */
+	@Override
 	@JsonUnwrapped
 	@JsonAnyGetter
 	public @Nullable Map<String, ?> getSampleData() {

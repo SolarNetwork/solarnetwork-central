@@ -39,8 +39,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesOperations;
 
 /**
  * Generalized location-based datum.
@@ -56,7 +60,8 @@ import net.solarnetwork.domain.datum.DatumSamples;
 @JsonPropertyOrder({ "created", "locationId", "sourceId" })
 @JsonIgnoreProperties({ "kind", "objectId", "timestamp" })
 public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Cloneable, Serializable,
-		GeneralObjectDatum<GeneralLocationDatumPK> {
+		GeneralObjectDatum<GeneralLocationDatumPK>,
+		CopyingIdentity<GeneralLocationDatum, GeneralLocationDatumPK> {
 
 	@Serial
 	private static final long serialVersionUID = 7682061775759924209L;
@@ -108,11 +113,44 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 		return builder.toString();
 	}
 
+	@Override
+	public GeneralLocationDatum copyWithId(GeneralLocationDatumPK id) {
+		GeneralLocationDatum other = new GeneralLocationDatum(id);
+		copyTo(other);
+		return other;
+	}
+
+	@Override
+	public void copyTo(GeneralLocationDatum other) {
+		other.posted = posted;
+		other.sampleJson = sampleJson;
+		other.samples = (samples != null ? new DatumSamples(samples) : new DatumSamples());
+	}
+
+	@Override
+	public Datum copyWithSamples(DatumSamplesOperations samples) {
+		var gd = new GeneralLocationDatum(id);
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
+	@Override
+	public Datum copyWithId(DatumId id) {
+		var ident = id.toIdentity();
+		var gd = new GeneralLocationDatum(new GeneralLocationDatumPK(ident.getObjectId(),
+				ident.getTimestamp(), ident.getSourceId()));
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
 	/**
 	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
 	 * @return the sample data, or {@code null} if none available
 	 */
+	@Override
 	@JsonUnwrapped
 	@JsonAnyGetter
 	public @Nullable Map<String, ?> getSampleData() {

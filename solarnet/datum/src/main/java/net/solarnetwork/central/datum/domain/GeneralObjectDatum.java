@@ -24,10 +24,15 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamplesContainer;
+import net.solarnetwork.domain.datum.DatumSamplesOperations;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -37,7 +42,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 2.1
  */
 public interface GeneralObjectDatum<K extends Comparable<K> & Serializable & GeneralObjectDatumKey>
-		extends Entity<K>, DatumSamplesContainer, DatumIdentity {
+		extends Entity<K>, DatumSamplesContainer, Datum, DatumIdentity {
 
 	@JsonIgnore
 	@Override
@@ -60,6 +65,34 @@ public interface GeneralObjectDatum<K extends Comparable<K> & Serializable & Gen
 	@Override
 	default Instant getTimestamp() {
 		return id().getTimestamp();
+	}
+
+	@Override
+	default DatumId datumId() {
+		return DatumId.datumId(getKind(), getObjectId(), getSourceId(), getTimestamp());
+	}
+
+	@Override
+	default DatumIdentity datumIdent() {
+		return this;
+	}
+
+	Object clone() throws CloneNotSupportedException;
+
+	@Override
+	default @Nullable Map<String, ?> getSampleData() {
+		return getSamples().getSampleData();
+	}
+
+	@Override
+	default Map<String, ?> asSimpleMap() {
+		var m = getSampleData();
+		return (m != null ? m : Map.of());
+	}
+
+	@Override
+	default DatumSamplesOperations asSampleOperations() {
+		return getSamples();
 	}
 
 }
