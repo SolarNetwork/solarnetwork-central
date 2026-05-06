@@ -25,12 +25,10 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService.DEFAULT_DATUM_STREAM_SETTINGS;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
-import static net.solarnetwork.central.domain.CommonUserEvents.ERROR_COUNT_DATA_KEY;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -114,7 +112,7 @@ import net.solarnetwork.service.RemoteServiceException;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DaoCloudDatumStreamPollServiceTests {
+public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 	private static final String TEST_DATUM_STREAM_SERVICE_IDENTIFIER = randomString();
@@ -327,11 +325,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -342,11 +340,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
-							"datumImportCount", 2,
-							"datumImportCountBySource", Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
+							DATUM_COUNT_DATA_KEY, 2,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datumStream.getSourceId(), 2
 									),
 							"datumLastDate", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
@@ -500,11 +498,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -515,11 +513,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
-							"datumImportCount", 2,
-							"datumImportCountBySource", Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
+							DATUM_COUNT_DATA_KEY, 2,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datumStream.getSourceId(), 2
 									),
 							"datumLastDate", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
@@ -666,11 +664,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -681,11 +679,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
-							"datumImportCount", 2,
-							"datumImportCountBySource", Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
+							DATUM_COUNT_DATA_KEY, 2,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datumStream.getSourceId(), 2
 									),
 							"datumLastDate", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),

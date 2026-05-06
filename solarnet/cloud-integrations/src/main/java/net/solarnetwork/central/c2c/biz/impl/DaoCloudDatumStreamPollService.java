@@ -420,8 +420,8 @@ public class DaoCloudDatumStreamPollService
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
 					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
-							Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
-									taskInfo.getStartAt(), "endAt", filter.getEndDate(), "startedAt",
+							Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
+									taskInfo.getStartAt(), END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY,
 									execTime)));
 
 			log.debug("Polling for {} datum with filter {}", datumStreamIdent, filter);
@@ -555,21 +555,20 @@ public class DaoCloudDatumStreamPollService
 				log.warn("Failed to reset poll task {} @ {} starting @ {}", datumStreamIdent,
 						taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
+				var errData = Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
 						taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
 				var data = new LinkedHashMap<String, Object>(4);
-				data.put("executeAt", taskInfo.getExecuteAt());
-				data.put("startAt", taskInfo.getStartAt());
-				data.put("datumImportCount", polledDatum != null ? polledDatum.size() : 0);
+				data.put(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt());
+				data.put(START_AT_DATA_KEY, taskInfo.getStartAt());
+				data.put(DATUM_COUNT_DATA_KEY, polledDatum != null ? polledDatum.size() : 0);
 				if ( lastDatumDate != null ) {
 					data.put("datumLastDate", lastDatumDate);
 				}
 				if ( polledDatum != null && !polledDatum.isEmpty() ) {
-					data.put("datumImportCount", polledDatum.size());
 					Map<String, Integer> sourceCounts = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
 					Map<String, Instant> lastDates = new TreeMap<>(
@@ -589,7 +588,7 @@ public class DaoCloudDatumStreamPollService
 							return datumId.getTimestamp().isAfter(old) ? datum.getTimestamp() : old;
 						});
 					}
-					data.put("datumImportCountBySource", sourceCounts);
+					data.put(DATUM_COUNT_BY_SOURCE_DATA_KEY, sourceCounts);
 					data.put("datumLastDateBySource", lastDates);
 				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),

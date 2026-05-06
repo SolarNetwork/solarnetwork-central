@@ -444,9 +444,9 @@ public class DaoCloudDatumStreamRakeService
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS,
 								"Rake for datum",
-								Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "executeAt",
-										taskInfo.getExecuteAt(), "startAt", filter.getStartDate(),
-										"endAt", filter.getEndDate(), "startedAt", execTime)));
+								Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
+										taskInfo.getExecuteAt(), START_AT_DATA_KEY, filter.getStartDate(),
+										END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY, execTime)));
 
 				int iterationUpdateCount = 0;
 
@@ -576,25 +576,25 @@ public class DaoCloudDatumStreamRakeService
 				log.warn("Failed to reset rake task {} @ {} starting @ {}", datumStreamIdent,
 						taskInfo.getExecuteAt(), startDate);
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "executeAt",
-						taskInfo.getExecuteAt(), "startAt", startDate.toInstant());
+				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
+						taskInfo.getExecuteAt(), START_AT_DATA_KEY, startDate.toInstant());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
 				var data = new LinkedHashMap<String, Object>(4);
 				data.put(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId());
-				data.put("executeAt", taskInfo.getExecuteAt());
-				data.put("startAt", startDate.toInstant());
-				data.put("endAt", queryStartDate); // this has been moved to start of "next" day
-				data.put("datumUpdateCount", datumUpdateCount);
+				data.put(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt());
+				data.put(START_AT_DATA_KEY, startDate.toInstant());
+				data.put(END_AT_DATA_KEY, queryStartDate); // this has been moved to start of "next" day
+				data.put(DATUM_COUNT_DATA_KEY, datumUpdateCount);
 				if ( !updateCounts.isEmpty() ) {
 					Map<String, Integer> sourceCounts = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
 					for ( var e : updateCounts.entrySet() ) {
 						sourceCounts.put(e.getKey().getSourceId(), e.getValue().toInteger());
 					}
-					data.put("datumUpdateCountBySource", sourceCounts);
+					data.put(DATUM_COUNT_BY_SOURCE_DATA_KEY, sourceCounts);
 				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS, msg, data));

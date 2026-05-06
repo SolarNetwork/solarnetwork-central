@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.domain;
 
 import java.util.List;
 import net.solarnetwork.central.common.http.HttpUserEvents;
+import net.solarnetwork.central.datum.domain.DatumUserEvents;
 import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
 
@@ -31,10 +32,10 @@ import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface CloudIntegrationsUserEvents
-		extends CommonUserEvents, HttpUserEvents, InstructorUserEvents {
+		extends CommonUserEvents, HttpUserEvents, DatumUserEvents, InstructorUserEvents {
 
 	/** A user event tag for cloud integrations. */
 	String CLOUD_INTEGRATIONS_TAG = "c2c";

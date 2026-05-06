@@ -28,13 +28,10 @@ import static java.time.Period.ZERO;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.INTEGRATION_RAKE_TAGS;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
-import static net.solarnetwork.central.domain.CommonUserEvents.CONFIG_ID_DATA_KEY;
-import static net.solarnetwork.central.domain.CommonUserEvents.CONFIG_SUB_ID_DATA_KEY;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
@@ -81,6 +78,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -111,7 +109,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DaoCloudDatumStreamRakeServiceTests {
+public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 	private static final String TEST_DATUM_STREAM_SERVICE_IDENTIFIER = randomString();
@@ -343,10 +341,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -359,10 +357,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 0
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							DATUM_COUNT_DATA_KEY, 0
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 			})
@@ -521,10 +519,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -537,11 +535,11 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 1,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datum2.getSourceId(), 1
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
@@ -690,10 +688,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -706,11 +704,11 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 1,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datum2.getSourceId(), 1
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
@@ -947,10 +945,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -963,10 +961,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -979,10 +977,10 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
@@ -996,11 +994,11 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
-							"datumUpdateCount", 4,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datumStream.getSourceId(), 4
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
