@@ -732,9 +732,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				doImport();
 				String msg = "Loaded " + getLoadedCount() + " datum.";
 				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, clock.instant());
-				userEventAppenderBiz.addEvent(info.getUserId(),
-						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_TAGS, "Import datum end",
-								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
 			} catch ( Exception e ) {
 				if ( e instanceof RemoteServiceException ) {
 					// don't bother with stack trace
@@ -920,6 +917,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 						}
 					}
 					loader.commit();
+					userEventAppenderBiz.addEvent(info.getUserId(),
+							eventForUserRelatedKey(info.getId(), DATUM_IMPORT_TAGS, "Import datum end",
+									Map.of(DATUM_COUNT_DATA_KEY, loader.getCommittedCount(),
+											DATUM_COUNT_BY_SOURCE_DATA_KEY,
+											loader.committedCountsPerSource())));
 				} finally {
 					info.setLoadedCount(loader.getCommittedCount());
 				}

@@ -130,7 +130,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
+import net.solarnetwork.dao.jdbc.JdbcDatumBulkLoadingContextSupport;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -938,7 +938,7 @@ public class JdbcDatumEntityDao
 		return new BulkLoadingContext(options, exceptionHandler);
 	}
 
-	private class BulkLoadingContext extends JdbcBulkLoadingContextSupport<GeneralNodeDatum> {
+	private class BulkLoadingContext extends JdbcDatumBulkLoadingContextSupport<GeneralNodeDatum> {
 
 		private final Timestamp start;
 		private JdbcDatumBulkLoadingSupport support;
@@ -962,7 +962,7 @@ public class JdbcDatumEntityDao
 		}
 
 		@Override
-		protected boolean doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
+		protected boolean doLoadDatum(GeneralNodeDatum d, PreparedStatement stmt, long index)
 				throws SQLException {
 			final StreamDatum sd = support.datumStreamDatum(d, new GeneralDatum(d, d.getSamples()));
 			if ( sd != null ) {

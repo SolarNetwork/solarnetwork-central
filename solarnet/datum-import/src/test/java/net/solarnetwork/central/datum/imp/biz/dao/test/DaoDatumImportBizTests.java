@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -677,6 +678,12 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Preview data count", previewData, hasSize(10));
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void expectCommittedCountBySource(List<GeneralNodeDatum> data) {
+		Map<String, Long> committedCountBySource = countBySource(data);
+		expect(loadingContext.committedCountsPerSource()).andReturn((Map) committedCountBySource);
+	}
+
 	@Test
 	public void performImport() throws Exception {
 		// given
@@ -724,7 +731,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -757,7 +766,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 	}
 
 	private Map<String, Object> startEventData(DatumImportJobInfo info, LoadingTransactionMode txMode) {
@@ -773,19 +782,20 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 	}
 
 	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
-			int loadedCount) {
-		thenStartEndEventsGenerated(info, txMode, loadedCount, startEventData(info, txMode),
+			List<GeneralNodeDatum> expected) {
+		thenStartEndEventsGenerated(info, txMode, expected, startEventData(info, txMode),
 				"Import datum end", false);
 	}
 
 	private void thenStartEndErrorEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
-			int loadedCount, String errorMessage) {
-		thenStartEndEventsGenerated(info, txMode, loadedCount, startEventData(info, txMode),
-				errorMessage, true);
+			List<GeneralNodeDatum> expected, String errorMessage) {
+		thenStartEndEventsGenerated(info, txMode, expected, startEventData(info, txMode), errorMessage,
+				true);
 	}
 
 	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
-			int loadedCount, Map<String, Object> startData, String message, boolean error) {
+			List<GeneralNodeDatum> expected, Map<String, Object> startData, String message,
+			boolean error) {
 		// @formatter:off
 		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
 			.as("Events for import start/end created")
@@ -815,9 +825,12 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 					.extracting(UserEvent::getData, JSON)
 					.as("Job data provided for import end")
 					.isObject()
-					.isEqualTo(json(JsonUtils.getJSONString(Map.of(
-							CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
-							DATUM_COUNT_DATA_KEY, loadedCount
+					.isEqualTo(json(JsonUtils.getJSONString(error
+							? Map.of(CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
+									DATUM_COUNT_DATA_KEY, expected.size())
+							: Map.of(CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
+									DATUM_COUNT_DATA_KEY, expected.size(),
+									DATUM_COUNT_BY_SOURCE_DATA_KEY, countBySource(expected)
 						)))
 					)
 					;
@@ -853,6 +866,14 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 			})
 			;
 		// @formatter:on
+	}
+
+	private Map<String, Long> countBySource(List<GeneralNodeDatum> expected) {
+		Map<String, Long> result = new HashMap<>(expected.size());
+		for ( var d : expected ) {
+			result.compute(d.getSourceId(), (_, v) -> (v != null ? v : 0L) + 1L);
+		}
+		return result;
 	}
 
 	@Test
@@ -915,7 +936,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -948,7 +971,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 	}
 
 	@Test
@@ -1022,7 +1045,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, 0,
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, List.of(),
 				expectedErrorMessage);
 	}
 
@@ -1098,7 +1121,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, 0,
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, List.of(),
 				expectedErrorMessage);
 	}
 
@@ -1162,7 +1185,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1195,7 +1220,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 	}
 
 	@Test
@@ -1266,7 +1291,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1358,7 +1385,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1408,7 +1437,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 			.returns(committedCount, from(DatumImportResult::getLoadedCount))
 			;
 
-		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size());
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 		// @formatter:on
 	}
 
@@ -1460,7 +1489,9 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1494,7 +1525,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndEventsGenerated(info, LoadingTransactionMode.BatchTransactions, data.size());
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.BatchTransactions, data);
 	}
 
 	@Test
@@ -1550,7 +1581,7 @@ public class DaoDatumImportBizTests implements DatumImportUserEvents {
 		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
-		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data.size(),
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data,
 				expectedErrorMessage);
 	}
 

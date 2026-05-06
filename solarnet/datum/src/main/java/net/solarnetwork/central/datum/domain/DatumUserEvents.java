@@ -28,7 +28,7 @@ import net.solarnetwork.central.domain.CommonUserEvents;
  * Constants and helpers for datum user event handling.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumUserEvents extends CommonUserEvents {
 
@@ -37,5 +37,13 @@ public interface DatumUserEvents extends CommonUserEvents {
 
 	/** User event data key for a datum count, such as a the number imported. */
 	String DATUM_COUNT_DATA_KEY = "datumCount";
+
+	/**
+	 * User event data key for a source ID to datum count map, such as a the
+	 * number imported by source.
+	 *
+	 * @since 1.1
+	 */
+	String DATUM_COUNT_BY_SOURCE_DATA_KEY = "datumCountBySource";
 
 }
