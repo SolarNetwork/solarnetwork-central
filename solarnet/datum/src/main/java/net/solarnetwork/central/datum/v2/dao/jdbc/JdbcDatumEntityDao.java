@@ -142,6 +142,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.StringLongMapping;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
@@ -951,6 +952,7 @@ public class JdbcDatumEntityDao
 			start = new Timestamp(System.currentTimeMillis());
 			support = new JdbcDatumBulkLoadingSupport(Clock.systemUTC());
 			support.setDatumStreamMetadataDao(JdbcDatumEntityDao.this);
+			setCountTrackerProvider(StringLongMapping::new);
 		}
 
 		@Override
