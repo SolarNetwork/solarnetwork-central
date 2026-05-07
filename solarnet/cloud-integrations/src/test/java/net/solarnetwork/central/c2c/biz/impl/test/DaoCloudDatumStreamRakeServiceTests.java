@@ -1033,7 +1033,7 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 		datumStream.setSourceId(randomString());
 
 		// update task state to "queued"
-		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
+		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
 
 		// WHEN
 		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
@@ -1044,6 +1044,18 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 		and.thenThrownBy(() -> service.executeTask(task), "Task fails to execute")
 			.as("The exception cause is the one thrown by the submit() call")
 			.isSameAs(rejectedException)
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Claimed));
+		and.then(taskCaptor.getValue())
+			.as("Update state of given task")
+			.isEqualTo(task)
+			.as("Only state changed to Queued in updated task")
+			.returns(true, from(t -> {
+				var expected = task.clone();
+				expected.setState(Queued);
+				return t.isSameAs(expected);
+			}))
 			;
 		// @formatter:on
 	}

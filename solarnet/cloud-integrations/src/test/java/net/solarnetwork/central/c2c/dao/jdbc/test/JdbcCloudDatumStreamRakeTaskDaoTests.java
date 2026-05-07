@@ -415,7 +415,6 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Claimed);
 		conf.setExecuteAt(now().plusMillis(474));
-		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
 		Map<String, Object> props = Map.of("bar", "foo");

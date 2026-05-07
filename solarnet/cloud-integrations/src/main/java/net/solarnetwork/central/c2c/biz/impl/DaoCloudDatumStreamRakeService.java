@@ -223,8 +223,10 @@ public class DaoCloudDatumStreamRakeService
 		} catch ( RejectedExecutionException e ) {
 			log.debug("Datum stream rake task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
-			// go back to queued
-			if ( !taskDao.updateTaskState(task.id(), Queued, task.getState()) ) {
+			// go back to queued and reset execute_at back
+			var taskCopy = task.clone();
+			taskCopy.setState(Queued);
+			if ( !taskDao.updateTask(taskCopy, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream rake task {} state from {} to Queued",
 						task.id().ident(), task.getState());
 			}
@@ -441,12 +443,11 @@ public class DaoCloudDatumStreamRakeService
 
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS,
-								"Rake for datum",
-								Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
-										taskInfo.getExecuteAt(), START_AT_DATA_KEY, filter.getStartDate(),
-										END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY, execTime)));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_RAKE_TAGS, "Rake for datum",
+						Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
+								taskInfo.getExecuteAt(), START_AT_DATA_KEY, filter.getStartDate(),
+								END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY, execTime)));
 
 				int iterationUpdateCount = 0;
 

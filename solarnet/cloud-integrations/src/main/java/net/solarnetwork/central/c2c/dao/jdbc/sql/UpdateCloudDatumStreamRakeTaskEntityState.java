@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
  * Support for UPDATE for {@link CloudDatumStreamRakeTaskEntity} entity state.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatementCreator, SqlProvider {
 
@@ -105,7 +105,6 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 		if ( data != null ) {
 			buf.append("""
 						, exec_at = ?
-						, start_offset = ?::interval
 						, message = ?
 						, sprops = ?::jsonb
 					""");
@@ -151,7 +150,6 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( data != null ) {
 			stmt.setTimestamp(++p, Timestamp.from(data.getExecuteAt()));
-			stmt.setString(++p, data.getOffset().toString());
 			stmt.setString(++p, data.getMessage());
 			stmt.setString(++p, data.getServicePropsJson());
 		}
