@@ -373,7 +373,7 @@ public class DaoCloudDatumStreamPollService
 			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
-				var errMsg = "Failed to update task state from Claimed to Executing.";
+				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
@@ -421,8 +421,8 @@ public class DaoCloudDatumStreamPollService
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
 					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
 							Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
-									taskInfo.getStartAt(), END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY,
-									execTime)));
+									taskInfo.getStartAt(), END_AT_DATA_KEY, filter.getEndDate(),
+									STARTED_AT_DATA_KEY, execTime)));
 
 			log.debug("Polling for {} datum with filter {}", datumStreamIdent, filter);
 			final var polledDatum = datumStreamService.datum(datumStream, filter);
