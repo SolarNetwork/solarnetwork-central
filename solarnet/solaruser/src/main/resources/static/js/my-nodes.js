@@ -125,25 +125,23 @@ $(document).ready(function() {
 		$('#view-cert-password').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
-	}).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(json, _status, _xhr, _form) {
-				var renewAfter = moment(json.certificateRenewAfterDate);
-				
-				updateCertDisplayDetails(json);
-				
-				if ( renewAfter.isAfter() === false ) {
-					$('#modal-cert-renew').removeClass('hidden');
-				}
-				
-				$('#view-cert-modal .cert').removeClass('hidden');
-				$('#view-cert-modal .nocert').addClass('hidden');
-			},
-			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+	}).ajaxForm({
+		dataType: 'json',
+		success: function(json, _status, _xhr, _form) {
+			var renewAfter = moment(json.certificateRenewAfterDate);
+			
+			updateCertDisplayDetails(json);
+			
+			if ( renewAfter.isAfter() === false ) {
+				$('#modal-cert-renew').removeClass('hidden');
 			}
-		});
+			
+			$('#view-cert-modal .cert').removeClass('hidden');
+			$('#view-cert-modal .nocert').addClass('hidden');
+		},
+		error: function(_xhr, _status, statusText) {
+			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+		}
 	});
 	
 	$('#modal-cert-renew').on('click', function(event) {
@@ -174,27 +172,17 @@ $(document).ready(function() {
 		$('#transfer-ownership-recipient').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
-	}).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(_json, _status, _xhr, _form) {
-				$('#transfer-ownership-modal').modal('hide');
-			},
-			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
-			}
-		});
+	}).ajaxForm({
+		dataType: 'json',
+		success: function(_json, _status, _xhr, _form) {
+			$('#transfer-ownership-modal').modal('hide');
+		},
+		error: function(_xhr, _status, statusText) {
+			SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
+		}
 	});
 	
-	$('#decide-transfer-ownership-modal').on('hidden.bs.modal', function() {
-		document.location.reload(true);
-	}).find('button.submit').on('click', function(_event) {
-		var btn = $(this);
-		var form = $('#decide-transfer-ownership-modal');
-		form.find('input[name="accept"]').val(btn.data('accept') ? 'true' : 'false');
-		form.submit();
-	}).each(function() {
-		$(this).ajaxForm({
+	$('#decide-transfer-ownership-modal').ajaxForm({
 			dataType: 'json',
 			success: function(_json, _status, _xhr, _form) {
 				$('#decide-transfer-ownership-modal').modal('hide');
@@ -202,19 +190,24 @@ $(document).ready(function() {
 			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore('#decide-transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
 			}
-		});
+		})
+	.on('hidden.bs.modal', function() {
+		document.location.reload(true);
+	}).find('button.submit').on('click', function(_event) {
+		var btn = $(this);
+		var form = $('#decide-transfer-ownership-modal');
+		form.find('input[name="accept"]').val(btn.data('accept') ? 'true' : 'false');
+		form.submit();
 	});
 	
-	$('#archive-node-modal').each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(_json, _status, _xhr, _form) {
-				document.location.reload(true);
-			},
-			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#archive-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
-			}
-		});
+	$('#archive-node-modal').ajaxForm({
+		dataType: 'json',
+		success: function(_json, _status, _xhr, _form) {
+			document.location.reload(true);
+		},
+		error: function(_xhr, _status, statusText) {
+			SolarReg.showAlertBefore('#archive-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
+		}
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {
@@ -300,17 +293,15 @@ $(document).ready(function() {
 	$('#edit-node-modal').data('page', 1).on('show', function() {
 		dynamicSearchTimer = undefined;
 		$('#edit-node-location-search-results').addClass('hidden');
-	}).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(_json, _status, _xhr, form) {
-				form.modal('hide');
-				document.location.reload(true);
-			},
-			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
-			}
-		});
+	}).ajaxForm({
+		dataType: 'json',
+		success: function(_json, _status, _xhr, form) {
+			form.modal('hide');
+			document.location.reload(true);
+		},
+		error: function(_xhr, _status, statusText) {
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
+		}
 	});
 	
 	function editNodeShowPage(form, newPage) {
