@@ -32,7 +32,7 @@ import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public interface CloudIntegrationsUserEvents
 		extends CommonUserEvents, HttpUserEvents, DatumUserEvents, InstructorUserEvents {
@@ -120,6 +120,14 @@ public interface CloudIntegrationsUserEvents
 	 */
 	List<String> INTEGRATION_RAKE_TAGS = INTEGRATION_RAKE_ERROR_TAGS.stream()
 			.filter(t -> !ERROR_TAG.equals(t)).toList();
+
+	/**
+	 * Tags for rake progress events.
+	 *
+	 * @since 1.7
+	 */
+	List<String> INTEGRATION_RAKE_PROGRESS_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, CLOUD_DATUM_STREAM_TAG,
+			RAKE_TAG, PROGRESS_TAG);
 
 	/**
 	 * Tags for a control instruction error event.

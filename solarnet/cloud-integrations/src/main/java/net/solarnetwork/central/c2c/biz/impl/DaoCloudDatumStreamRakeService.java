@@ -395,19 +395,6 @@ public class DaoCloudDatumStreamRakeService
 				return taskInfo;
 			}
 
-			// save task state to Executing
-			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
-				log.warn("Failed to update rake task {} state from {} to Executing @ {} offset @ {}",
-						datumStreamIdent, startState, taskInfo.getExecuteAt(), taskInfo.getOffset());
-				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
-				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
-						(Object) datumStreamIdent);
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
-				return taskInfo;
-			}
-			taskInfo.setState(Executing);
-
 			final CloudDatumStreamService datumStreamService = datumStreamServiceProvider
 					.apply(datumStream.getServiceIdentifier());
 			if ( datumStreamService == null ) {
@@ -420,9 +407,28 @@ public class DaoCloudDatumStreamRakeService
 				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
-				taskDao.updateTask(taskInfo, Executing);
+				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
+
+			userEventAppenderBiz.addEvent(datumStream.getUserId(),
+					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS, "Rake for datum",
+							Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
+									taskInfo.getExecuteAt(), DATE_OFFSET_DATA_KEY,
+									taskInfo.getOffset().toString(), STARTED_AT_DATA_KEY, execTime)));
+
+			// save task state to Executing
+			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
+				log.warn("Failed to update rake task {} state from {} to Executing @ {} offset @ {}",
+						datumStreamIdent, startState, taskInfo.getExecuteAt(), taskInfo.getOffset());
+				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
+				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
+						(Object) datumStreamIdent);
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+				return taskInfo;
+			}
+			taskInfo.setState(Executing);
 
 			final ZonedDateTime maxDate = maxDate(rakeZone, pollTask);
 
@@ -444,7 +450,7 @@ public class DaoCloudDatumStreamRakeService
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), INTEGRATION_RAKE_TAGS, "Rake for datum",
+						datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
 						Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
 								taskInfo.getExecuteAt(), START_AT_DATA_KEY, filter.getStartDate(),
 								END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY, execTime)));

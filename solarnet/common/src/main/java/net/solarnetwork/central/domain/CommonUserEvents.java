@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CommonUserEvents {
 
@@ -113,6 +113,14 @@ public interface CommonUserEvents {
 	 * @since 1.3
 	 */
 	String END_AT_DATA_KEY = "endAt";
+
+	/**
+	 * User event data key for a time offset, for example in milliseconds or an
+	 * ISO 8601 duration string.
+	 * 
+	 * @since 1.5
+	 */
+	String DATE_OFFSET_DATA_KEY = "dateOffset";
 
 	/**
 	 * User event data key for a count, such as a task repeat count.

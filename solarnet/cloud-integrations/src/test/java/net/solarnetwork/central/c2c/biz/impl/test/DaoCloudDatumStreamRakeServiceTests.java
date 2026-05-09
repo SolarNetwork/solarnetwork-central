@@ -327,16 +327,31 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for start/reset generated")
-			.hasSize(2)
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task progress event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
@@ -348,10 +363,10 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
-				and.then(events).element(1)
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
@@ -505,16 +520,31 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
 			.as("Events for start/reset generated")
-			.hasSize(2)
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
@@ -526,10 +556,10 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
-				and.then(events).element(1)
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
@@ -674,16 +704,31 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for start/reset generated")
-			.hasSize(2)
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
@@ -695,10 +740,10 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
-				and.then(events).element(1)
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
@@ -931,16 +976,31 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(4)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for 3 iterations + final result generated")
-			.hasSize(4)
+			.as("Events for start + 3 iterations + final result generated")
+			.hasSize(5)
 			.satisfies(events -> {
 				and.then(events)
+				.as("Task start event generated")
+				.element(0)
+				.as("Rake tags provided in event")
+				.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+				.as("Task dates provided in event data")
+				.returns(Map.of(
+						CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+						CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+						DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+						EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+						STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+					), from(e -> JsonUtils.getStringMap(e.getData())))
+				;
+
+				and.then(events)
 					.as("Task iteration 1 start event generated")
-					.element(0)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(1)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
@@ -954,9 +1014,9 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 
 				and.then(events)
 					.as("Task iteration 2 start event generated")
-					.element(1)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(2)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
@@ -970,9 +1030,9 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 
 				and.then(events)
 					.as("Task iteration 3 start event generated")
-					.element(2)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(3)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
@@ -985,10 +1045,10 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 					;
 
 
-				and.then(events).element(3)
+				and.then(events).element(4)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
