@@ -332,6 +332,7 @@ public class DaoCloudDatumStreamRakeService
 				return taskInfo;
 			}
 
+			final String taskIdent = taskInfo.id().ident();
 			final String datumStreamIdent = datumStream.id().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
@@ -355,8 +356,8 @@ public class DaoCloudDatumStreamRakeService
 				SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(objectId);
 				if ( ownership == null || !taskInfo.getUserId().equals(ownership.getUserId()) ) {
 					log.warn(
-							"Refusing to execute datum stream {} rake task because task owner {} does not own node {}",
-							datumStreamIdent, taskInfo.getUserId(), objectId);
+							"Refusing to execute datum stream {} rake task {} because task owner {} does not own node {}",
+							taskInfo.getDatumStreamId(), taskIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
 					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
 							(Object) objectId);
@@ -381,8 +382,9 @@ public class DaoCloudDatumStreamRakeService
 			if ( pollTask != null && pollTask.getStartAt() != null
 					&& endDate.isAfter(pollTask.getStartAt().atZone(rakeZone)) ) {
 				log.debug(
-						"Refusing to execute datum stream {} rake task because end date {} is after stream's poll task start date {}",
-						datumStreamIdent, endDate.toInstant(), pollTask.getStartAt());
+						"Refusing to execute datum stream {} rake task {} because end date {} is after stream's poll task start date {}",
+						taskInfo.getDatumStreamId(), taskIdent, endDate.toInstant(),
+						pollTask.getStartAt());
 				var errMsg = "Rake task date is after poll task start.";
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "endDate",
 						(Object) endDate.toInstant(), "startDate", pollTask.getStartAt());
@@ -419,8 +421,10 @@ public class DaoCloudDatumStreamRakeService
 
 			// save task state to Executing
 			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
-				log.warn("Failed to update rake task {} state from {} to Executing @ {} offset @ {}",
-						datumStreamIdent, startState, taskInfo.getExecuteAt(), taskInfo.getOffset());
+				log.warn(
+						"Failed to update datum stream {} rake task {} state from {} to Executing @ {} offset @ {}",
+						taskInfo.getDatumStreamId(), taskIdent, taskInfo.getExecuteAt(),
+						taskInfo.getOffset());
 				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
 						(Object) datumStreamIdent);
@@ -580,8 +584,8 @@ public class DaoCloudDatumStreamRakeService
 
 			// save task state
 			if ( !taskDao.updateTask(taskInfo, Executing) ) {
-				log.warn("Failed to reset rake task {} @ {} starting @ {}", datumStreamIdent,
-						taskInfo.getExecuteAt(), startDate);
+				log.warn("Failed to reset datum stream {} rake task {} @ {} starting @ {}",
+						taskInfo.getDatumStreamId(), taskIdent, taskInfo.getExecuteAt(), startDate);
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
 						taskInfo.getExecuteAt(), START_AT_DATA_KEY, startDate.toInstant());
