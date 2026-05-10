@@ -326,24 +326,22 @@ CREATE TABLE solaruser.user_datum_delete_job (
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solaruser.claim_datum_delete_job()
-  RETURNS solaruser.user_datum_delete_job LANGUAGE plpgsql VOLATILE AS
+  RETURNS solaruser.user_datum_delete_job LANGUAGE SQL VOLATILE AS
 $$
-DECLARE
-	rec solaruser.user_datum_delete_job;
-	curs CURSOR FOR SELECT * FROM solaruser.user_datum_delete_job
-			WHERE state = 'q'
-			ORDER BY created ASC, ID ASC
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solaruser.user_datum_delete_job SET state = 'p' WHERE CURRENT OF curs;
-	END IF;
-	CLOSE curs;
-	RETURN rec;
-END;
+	WITH t AS (
+		SELECT user_id, id
+		FROM solaruser.user_datum_delete_job
+		WHERE state = 'q'
+		ORDER BY created ASC, id ASC
+		LIMIT 1
+		FOR NO KEY UPDATE SKIP LOCKED
+	)
+	UPDATE solaruser.user_datum_delete_job
+	SET state = 'p'
+	FROM t
+	WHERE user_datum_delete_job.user_id = t.user_id
+	AND user_datum_delete_job.id = t.id
+	RETURNING user_datum_delete_job.*
 $$;
 
 /**************************************************************************************************
