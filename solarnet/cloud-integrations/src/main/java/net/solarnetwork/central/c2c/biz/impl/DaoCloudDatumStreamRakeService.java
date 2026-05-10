@@ -262,11 +262,12 @@ public class DaoCloudDatumStreamRakeService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing datum stream {} rake task", taskInfo.id().ident(), e);
+						log.warn("Error executing datum stream {} rake task {}",
+								taskInfo.getDatumStreamId(), taskInfo.id().ident(), e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing datum stream {} rake task: {}", taskInfo.id().ident(),
-								e.toString());
+						log.warn("Error executing datum stream {} rake task {}: {}",
+								taskInfo.getDatumStreamId(), taskInfo.id().ident(), e.toString());
 					}
 					var prevErrorCount = getMapLong(ERROR_COUNT_DATA_KEY,
 							taskInfo.getServiceProperties());
@@ -283,8 +284,9 @@ public class DaoCloudDatumStreamRakeService
 						if ( errorCount < requeueErrorCountMaximum ) {
 							// reset back to queued to try again if HTTP client or IO error
 							log.info(
-									"Resetting datum stream {} rake task by changing state from {} to {} after error: {}",
-									taskInfo.id().ident(), oldState, Queued, e.toString());
+									"Resetting datum stream {} rake task {} by changing state from {} to {} after error: {}",
+									taskInfo.getDatumStreamId(), taskInfo.id().ident(), oldState, Queued,
+									e.toString());
 							taskInfo.setState(Queued);
 							if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 								// bump date into future by 1 minute so we do not immediately try to process again
@@ -293,28 +295,29 @@ public class DaoCloudDatumStreamRakeService
 							}
 						} else {
 							log.info(
-									"Stopping datum stream {} rake task by changing state from {} to {} after {} repeated errors, most recently: {}",
-									taskInfo.id().ident(), oldState, Completed, errorCount,
-									e.toString());
+									"Stopping datum stream {} rake task {} by changing state from {} to {} after {} repeated errors, most recently: {}",
+									taskInfo.getDatumStreamId(), taskInfo.id().ident(), oldState,
+									Completed, errorCount, e.toString());
 							taskInfo.setState(Completed);
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
-								"Stopping datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.id().ident(), oldState, Completed, e.toString());
+								"Stopping datum stream {} rake task {} by changing state from {} to {} after error: {}",
+								taskInfo.getDatumStreamId(), taskInfo.id().ident(), oldState, Completed,
+								e.toString());
 						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
 							taskInfo.id(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
-								"Unable to update datum stream {} rake task info with expected state {} with details: {}",
-								taskInfo.id().ident(), oldState, taskInfo);
+								"Unable to update datum stream {} rake task {} info with expected state {} with details: {}",
+								taskInfo.getDatumStreamId(), taskInfo.id().ident(), oldState, taskInfo);
 					}
 				} catch ( Exception e2 ) {
-					log.warn("Error updating datum stream {} rake task state after error",
-							taskInfo.id().ident(), e2);
+					log.warn("Error updating datum stream {} rake task {} state after error",
+							taskInfo.getDatumStreamId(), taskInfo.id().ident(), e2);
 					// ignore, return original
 				}
 				throw e;
