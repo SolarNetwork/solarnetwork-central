@@ -474,6 +474,24 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// GIVEN
 		insert();
 
+		// insert a 2nd row to validate not updated
+		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
+				lastMapping.getConfigId(), null);
+
+		Map<String, Object> props = Map.of("foo", "bar");
+		// @formatter:off
+		CloudDatumStreamPollTaskEntity conf2 = newCloudDatumStreamPollTaskEntity(userId,
+				datumStream2.getConfigId(),
+				BasicClaimableJobState.Queued,
+				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				now().truncatedTo(ChronoUnit.DAYS),
+				randomString(),
+				props)
+				;
+		// @formatter:on
+
+		UserLongCompositePK conf2Pk = dao.create(userId, conf2);
+
 		// WHEN
 		final BasicClaimableJobState newState = BasicClaimableJobState.Claimed;
 		boolean result = dao.updateTaskState(last.getId(), newState, BasicClaimableJobState.Queued);
@@ -481,7 +499,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// THEN
 		List<Map<String, Object>> data = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1);
+		then(data).as("Table has 1 row").hasSize(2);
 
 		// @formatter:off
 		then(result)
@@ -497,6 +515,12 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.isEqualTo(last)
 			.as("Entity saved updated state")
 			.matches(c -> c.isSameAs(expected))
+			;
+
+		CloudDatumStreamPollTaskEntity unchanged = dao.get(conf2Pk);
+		then(unchanged)
+			.as("Update did not change other entity")
+			.matches(c -> c.isSameAs(conf2))
 			;
 		// @formatter:on
 	}

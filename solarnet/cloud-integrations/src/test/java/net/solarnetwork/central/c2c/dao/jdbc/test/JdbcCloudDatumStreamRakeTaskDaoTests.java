@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamRakeTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamRakeTaskEntity;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -411,6 +412,11 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// GIVEN
 		insert();
 
+		// insert a 2nd row to validate not updated
+		CloudDatumStreamRakeTaskEntity conf2 = last.copyWithId(unassignedEntityIdKey(userId));
+		conf2.setOffset(Period.ofDays(99));
+		UserLongCompositePK conf2Pk = dao.save(conf2);
+
 		// WHEN
 		CloudDatumStreamRakeTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Claimed);
@@ -425,7 +431,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// THEN
 		List<Map<String, Object>> data = allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1);
+		then(data).as("Table has 2 rows").hasSize(2);
 
 		// @formatter:off
 		then(result)
@@ -438,6 +444,12 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
 			.matches(c -> c.isSameAs(conf))
+			;
+
+		CloudDatumStreamRakeTaskEntity unchanged = dao.get(conf2Pk);
+		then(unchanged)
+			.as("Update did not change other entity")
+			.matches(c -> c.isSameAs(conf2))
 			;
 		// @formatter:on
 	}
