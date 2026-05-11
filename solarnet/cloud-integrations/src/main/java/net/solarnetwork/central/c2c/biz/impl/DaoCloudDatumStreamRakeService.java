@@ -426,7 +426,7 @@ public class DaoCloudDatumStreamRakeService
 			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn(
 						"Failed to update datum stream {} rake task {} state from {} to Executing @ {} offset @ {}",
-						taskInfo.getDatumStreamId(), taskIdent, taskInfo.getExecuteAt(),
+						taskInfo.getDatumStreamId(), taskIdent, startState, taskInfo.getExecuteAt(),
 						taskInfo.getOffset());
 				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
