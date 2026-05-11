@@ -456,11 +456,6 @@ public class DaoCloudDatumStreamRakeService
 
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
-								progressEventData(execTime, nonnull(filter.getStartDate(), "start"),
-										nonnull(filter.getEndDate(), "end"), updateCounts)));
-
 				int iterationUpdateCount = 0;
 
 				final var rakedDatum = datumStreamService.datum(datumStream, filter);
@@ -553,6 +548,11 @@ public class DaoCloudDatumStreamRakeService
 						}
 					}
 				}
+
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
+								progressEventData(execTime, nonnull(filter.getStartDate(), "start"),
+										nonnull(filter.getEndDate(), "end"), updateCounts)));
 
 				// iterate to next day
 				queryStartDate = queryEndDate;
