@@ -456,12 +456,6 @@ public class DaoCloudDatumStreamRakeService
 
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
-						Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
-								taskInfo.getExecuteAt(), START_AT_DATA_KEY, filter.getStartDate(),
-								END_AT_DATA_KEY, filter.getEndDate(), STARTED_AT_DATA_KEY, execTime)));
-
 				int iterationUpdateCount = 0;
 
 				final var rakedDatum = datumStreamService.datum(datumStream, filter);
@@ -555,6 +549,11 @@ public class DaoCloudDatumStreamRakeService
 					}
 				}
 
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
+								progressEventData(execTime, nonnull(filter.getStartDate(), "start"),
+										nonnull(filter.getEndDate(), "end"), updateCounts)));
+
 				// iterate to next day
 				queryStartDate = queryEndDate;
 				queryEndDate = queryStartDate.plusDays(1);
@@ -568,8 +567,7 @@ public class DaoCloudDatumStreamRakeService
 				}
 			}
 
-			final var datumUpdateCount = updateCounts.values().stream().mapToInt(n -> n.intValue())
-					.sum();
+			final var datumUpdateCount = datumUpdateCount(updateCounts);
 
 			// success: update task info to start again tomorrow
 			final var now = clock.instant();
@@ -596,24 +594,41 @@ public class DaoCloudDatumStreamRakeService
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
-				var data = new LinkedHashMap<String, Object>(4);
-				data.put(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId());
-				data.put(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt());
-				data.put(START_AT_DATA_KEY, startDate.toInstant());
-				data.put(END_AT_DATA_KEY, queryStartDate); // this has been moved to start of "next" day
-				data.put(DATUM_COUNT_DATA_KEY, datumUpdateCount);
-				if ( !updateCounts.isEmpty() ) {
-					Map<String, Integer> sourceCounts = new TreeMap<>(
-							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
-					for ( var e : updateCounts.entrySet() ) {
-						sourceCounts.put(e.getKey().getSourceId(), e.getValue().toInteger());
-					}
-					data.put(DATUM_COUNT_BY_SOURCE_DATA_KEY, sourceCounts);
-				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS, msg, data));
+						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS, msg,
+								progressEventData(execTime, startDate.toInstant(),
+										queryStartDate.toInstant(), updateCounts)));
 			}
 			return taskInfo;
+		}
+
+		private long datumUpdateCount(Map<ObjectDatumStreamMetadataId, MutableInt> updateCounts) {
+			return updateCounts.values().stream().mapToLong(n -> n.longValue()).sum();
+		}
+
+		private Map<String, Integer> datumUpdateCountBySource(
+				Map<ObjectDatumStreamMetadataId, MutableInt> updateCounts) {
+			Map<String, Integer> sourceCounts = new TreeMap<>(
+					StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
+			for ( var e : updateCounts.entrySet() ) {
+				sourceCounts.put(e.getKey().getSourceId(), e.getValue().toInteger());
+			}
+			return sourceCounts;
+		}
+
+		private Map<String, Object> progressEventData(Instant execTime, Instant startDate,
+				Instant endDate, Map<ObjectDatumStreamMetadataId, MutableInt> updateCounts) {
+			var data = new LinkedHashMap<String, Object>(4);
+			data.put(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId());
+			data.put(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt());
+			data.put(STARTED_AT_DATA_KEY, execTime);
+			data.put(START_AT_DATA_KEY, startDate);
+			data.put(END_AT_DATA_KEY, endDate);
+			data.put(DATUM_COUNT_DATA_KEY, datumUpdateCount(updateCounts));
+			if ( !updateCounts.isEmpty() ) {
+				data.put(DATUM_COUNT_BY_SOURCE_DATA_KEY, datumUpdateCountBySource(updateCounts));
+			}
+			return data;
 		}
 
 		private ZonedDateTime maxDate(ZoneId rakeZone,
