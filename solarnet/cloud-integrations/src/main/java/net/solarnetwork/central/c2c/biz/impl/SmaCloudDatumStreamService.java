@@ -99,7 +99,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -393,6 +393,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
+						.queryParam("WithDeactivatedDevices", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
 				res -> parseSystemDevices(res.getBody(), systemId));
