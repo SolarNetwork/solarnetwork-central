@@ -922,6 +922,17 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 									Map.of(DATUM_COUNT_DATA_KEY, loader.getCommittedCount(),
 											DATUM_COUNT_BY_SOURCE_DATA_KEY,
 											loader.committedCountsPerSource())));
+				} catch ( Exception e ) {
+					if ( txMode == LoadingTransactionMode.NoTransaction ) {
+						try {
+							loader.commit();
+						} catch ( Exception e2 ) {
+							log.warn(
+									"Unable to commit datum import job {} statistics for user {} after load exception: {}",
+									info.id().getUuid(), info.getUserId(), e2.toString());
+						}
+					}
+					throw e;
 				} finally {
 					info.setLoadedCount(loader.getCommittedCount());
 				}
