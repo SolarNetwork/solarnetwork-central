@@ -41,7 +41,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -113,6 +113,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @since 1.5
 	 */
 	public static final String ACTIVE_METADATA = "active";
+
+	/**
+	 * Standard metadata key for an activation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String ACTIVATED_AT_METADATA = "activatedAt";
+
+	/**
+	 * Standard metadata key for a deactivation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String DEACTIVATED_AT_METADATA = "deactivatedAt";
 
 	/**
 	 * Standard metadata key for an azimuth angle value, in degrees.

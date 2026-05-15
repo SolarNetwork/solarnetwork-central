@@ -397,11 +397,11 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						.queryParam("WithDeactivatedDevices", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(res.getBody(), systemId));
+				res -> parseSystemDevices(integration, res.getBody(), systemId));
 	}
 
-	private static List<CloudDataValue> parseSystemDevices(final @Nullable JsonNode json,
-			final String systemId) {
+	private List<CloudDataValue> parseSystemDevices(final CloudIntegrationConfiguration integration,
+			final @Nullable JsonNode json, final String systemId) {
 		/*- EXAMPLE JSON:
 		{
 		  "devices": [
@@ -415,7 +415,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		      "vendor": "SMA Solar Technology AG",
 		      "generatorPower": 6000.0,
 		      "generatorPowerDc": 6000.0,
-		      "isActive": true
+		      "isActive": true,
+		      "deactivatedAt": "2019-04-07T12:30:02"
 		    },
 		*/
 		if ( json == null ) {
@@ -433,6 +434,15 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			populateNonEmptyValue(devNode, "vendor", CloudDataValue.MANUFACTURER_METADATA, meta);
 			populateNonEmptyValue(devNode, "serial", CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA, meta);
 			populateBooleanValue(devNode, "isActive", CloudDataValue.ACTIVE_METADATA, meta);
+			populateTimestampValue(devNode, "deactivatedAt", CloudDataValue.DEACTIVATED_AT_METADATA,
+					meta, s -> {
+						try {
+							ZoneId zone = resolveSystemTimeZone(integration, systemId);
+							return LocalDateTime.parse(s).atZone(zone).toInstant();
+						} catch ( Exception e ) {
+							return null;
+						}
+					});
 
 			populateNonEmptyValue(devNode, "type", "type", meta);
 			populateNumberValue(devNode, "productId", "productId", meta);

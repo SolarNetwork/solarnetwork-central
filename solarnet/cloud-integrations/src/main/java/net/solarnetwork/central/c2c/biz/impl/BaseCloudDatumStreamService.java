@@ -102,7 +102,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -655,11 +655,12 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the map to populate with the {@link Instant} value
 	 * @param parser
 	 *        the function to use for parsing the timestamp value into an
-	 *        {@link Instant}
+	 *        {@link Instant}; if the function returns {@code null} then no
+	 *        value will be added to {@code map}
 	 * @since 1.14
 	 */
 	public static void populateTimestampValue(JsonNode node, String fieldName, String key,
-			Map<String, Object> map, Function<String, Instant> parser) {
+			Map<String, Object> map, Function<String, @Nullable Instant> parser) {
 		JsonNode field = node.path(fieldName);
 		if ( field.isMissingNode() ) {
 			return;
@@ -669,7 +670,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			map.put(key, Instant.ofEpochMilli(field.asLong()));
 		}
 		try {
-			map.put(key, parser.apply(field.asString()));
+			var ts = parser.apply(field.asString());
+			if ( ts != null ) {
+				map.put(key, ts);
+			}
 		} catch ( DateTimeParseException e ) {
 			// ignore
 		}

@@ -34,6 +34,11 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.ACTIVE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEACTIVATED_AT_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -468,6 +473,143 @@ public class SmaCloudDatumStreamServiceTests {
 							"type", "Solar Inverters",
 							"generatorPower", 6000,
 							"generatorPowerDc", 6000
+							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void dataValues_system_deactivatedInverter() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final String systemId = randomLong().toString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-devices-02.json", getClass()),
+				ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// look up time zone for deactivatedAt
+		final ZoneId systemTimeZone = ZoneId.of("America/New_York");
+		given(systemTimeZoneCache.get(systemId)).willReturn(systemTimeZone);
+
+		// WHEN
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
+				Map.of(SmaCloudDatumStreamService.SYSTEM_ID_FILTER, systemId));
+
+		// THEN
+		// @formatter:off
+		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		and.then(authRequestCaptor.getValue())
+			.as("OAuth request provided")
+			.isNotNull()
+			.as("No OAuth2AuthorizedClient provided")
+			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
+			.as("Client registration ID is configuration system identifier")
+			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list system devices")
+			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
+					.path(SmaCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE)
+					.queryParam("WithDeactivatedDevices", true)
+					.buildAndExpand(systemId)
+					.toUri(), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		and.then(results)
+			.as("Result generated for system")
+			.hasSize(2)
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.as("Name provided")
+					.returns("My Inverter 1", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(List.of(systemId, "16"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata provided")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							DEVICE_MODEL_METADATA, "STP 6000TL-20",
+							MANUFACTURER_METADATA, "SMA Solar Technology AG",
+							DEVICE_SERIAL_NUMBER_METADATA, "3421111",
+							ACTIVE_METADATA, true,
+							"productId", 9099,
+							"type", "Solar Inverters",
+							"generatorPower", 6000,
+							"generatorPowerDc", 6000
+							))
+					;
+				and.then(l).element(1)
+					.as("Name provided")
+					.returns("My Inverter 2", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(List.of(systemId, "17"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata provided")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							DEVICE_MODEL_METADATA, "STP 5000TL-20",
+							MANUFACTURER_METADATA, "SMA Solar Technology AG",
+							DEVICE_SERIAL_NUMBER_METADATA, "9687867",
+							ACTIVE_METADATA, false,
+							DEACTIVATED_AT_METADATA, LocalDateTime.parse("2019-04-07T12:30:02")
+								.atZone(systemTimeZone).toInstant(),
+							"productId", 9098,
+							"type", "Solar Inverters",
+							"generatorPower", 5000,
+							"generatorPowerDc", 5000
 							))
 					;
 			})
