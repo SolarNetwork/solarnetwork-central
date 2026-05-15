@@ -111,7 +111,7 @@ subprojects {
 		snCommonOcpp201Version = '3.1.1'
 		snCommonOcppWebJakartaVersion = '4.2.1'
 		snCommonPkiBcVersion = '4.1.1'
-		snCommonWebJakartaVersion = '2.4.1'
+		snCommonWebJakartaVersion = '2.4.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
 		springdocStarterVersion = '3.0.0'
