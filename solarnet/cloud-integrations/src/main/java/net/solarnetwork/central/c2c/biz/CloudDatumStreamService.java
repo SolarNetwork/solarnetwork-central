@@ -41,7 +41,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface CloudDatumStreamService
 		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -91,6 +91,24 @@ public interface CloudDatumStreamService
 	 * @since 1.5
 	 */
 	String VIRTUAL_SOURCE_IDS_SETTING = "virtualSourceIds";
+
+	/**
+	 * A standard setting for either a map or comma-delimited mapping list of
+	 * data value references to associated interval strings.
+	 *
+	 * <p>
+	 * This setting is intended to be used by cloud services that can optimize
+	 * their time-based queries based on the date constraints in this mapping.
+	 * The keys in the mapping represent data value references and the values
+	 * are intervals, formatted like {@code "date1/date2"}. Either date can be
+	 * omitted to represent an open-ended time span. See
+	 * {@link net.solarnetwork.central.support.DateTimeUtils#intervalMap(Map)}
+	 * for more details.
+	 * </p>
+	 *
+	 * @since 2.1
+	 */
+	String OPERATIONAL_DATE_RANGES_SETTING = "operationalDateRanges";
 
 	/**
 	 * Get a localized collection of the available data value filter criteria.

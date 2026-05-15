@@ -58,6 +58,7 @@ dependencies {
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'org.slf4j:slf4j-api'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -65,6 +65,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.threeten.extra.Interval;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -539,6 +540,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		}
 
 		final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+		final Map<String, Map<String, Interval>> systemDeviceOperationalRanges = resolveOperationalRanges(
+				ds);
 
 		final QueryPlan plan = resolveQueryPlan(integration, ds, sourceIdMap, valueProps);
 
@@ -585,7 +588,14 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					.isBefore(usedQueryFilter.getEndDate()); ts = ts.plus(1, DAYS) ) {
 				var day = ts.atZone(zone).toLocalDate();
 				final String queryDay = day.toString();
+				final Interval queryDayRange = Interval.of(day.atStartOfDay(zone).toInstant(),
+						day.plusDays(1).atStartOfDay(zone).toInstant());
 				for ( DeviceQueryPlan devPlan : zoneEntry.getValue().values() ) {
+					if ( shouldSkipQueryForDeviceData(systemDeviceOperationalRanges, devPlan,
+							queryDayRange) ) {
+						continue;
+					}
+
 					String sourceId = nonEmptyString(resolveSourceId(ds, sourceIdMap, devPlan));
 					if ( sourceId == null ) {
 						continue;
@@ -650,6 +660,60 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,
 				r.stream().map(Datum.class::cast).toList());
+	}
+
+	/**
+	 * Convert an operational range mapping into a nested system/device/interval
+	 * mapping.
+	 *
+	 * @param ds
+	 *        the configuration to extract the operational range mapping from
+	 * @return the mapping, or {@code null} if not available
+	 */
+	private @Nullable Map<String, Map<String, Interval>> resolveOperationalRanges(
+			CloudDatumStreamConfiguration ds) {
+		final Map<String, Interval> rangeMapping = ds
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping == null ) {
+			return null;
+		}
+		final int sizeHint = rangeMapping.size();
+		final Map<String, Map<String, Interval>> result = new LinkedHashMap<>(sizeHint);
+		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
+			Matcher m = DEVICE_VALUE_REF_PATTERN.matcher(e.getKey());
+			if ( m.find() ) {
+				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint)).put(m.group(2),
+						e.getValue());
+			}
+		}
+		return (!result.isEmpty() ? result : null);
+	}
+
+	/**
+	 * Test if a device query plan should be skipped for a given date due to an
+	 * operational range constraint.
+	 *
+	 * @param systemDeviceOperationalRanges
+	 *        the range constraints as a nested mapping of
+	 *        system/device/interval
+	 * @param devPlan
+	 *        the device plan to test
+	 * @param dayRange
+	 *        the date range in question
+	 * @return {@code true} if a range constraint exists for the input arguments
+	 *         and no query should be performed for this device on this date
+	 */
+	private boolean shouldSkipQueryForDeviceData(
+			final @Nullable Map<String, Map<String, Interval>> systemDeviceOperationalRanges,
+			DeviceQueryPlan devPlan, Interval dayRange) {
+		final Map<String, Interval> deviceRanges = (systemDeviceOperationalRanges != null
+				? systemDeviceOperationalRanges.get(devPlan.systemId)
+				: null);
+		final Interval deviceRange = (deviceRanges != null ? deviceRanges.get(devPlan.deviceId) : null);
+		if ( deviceRange == null ) {
+			return false;
+		}
+		return !dayRange.overlaps(deviceRange);
 	}
 
 	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
@@ -768,6 +832,20 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			SmaMeasurementType<?> measurement, CloudDatumStreamPropertyConfiguration property) {
 
 	}
+
+	/**
+	 * Value reference pattern, with component matching groups.
+	 *
+	 * <p>
+	 * The matching groups are
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>systemId</li>
+	 * <li>deviceId</li>
+	 * </ol>
+	 */
+	private static final Pattern DEVICE_VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)");
 
 	private static final class DeviceQueryPlan {
 
