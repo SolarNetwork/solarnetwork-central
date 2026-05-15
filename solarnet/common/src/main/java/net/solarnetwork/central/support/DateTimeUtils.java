@@ -95,8 +95,9 @@ public final class DateTimeUtils {
 	 * <li>{@code "/"} - an infinite range
 	 * </ul>
 	 *
-	 * @param key
-	 *        the service property key to extract
+	 * @param mapping
+	 *        a map of arbitrary string keys to associated interval range string
+	 *        values
 	 * @return the mapping, or {@code null}
 	 */
 	public static @Nullable Map<String, Interval> intervalMap(@Nullable Map<String, String> mapping) {
@@ -110,10 +111,8 @@ public final class DateTimeUtils {
 					|| val.length() < 2 ) {
 				continue;
 			}
-			int slashIdx = val.indexOf('/');
-			if ( slashIdx < 0 ) {
-				continue;
-			} else if ( slashIdx == 0 ) {
+			final int slashIdx = val.indexOf('/');
+			if ( slashIdx == 0 ) {
 				Instant end = parseInstant(val.substring(1));
 				if ( end != null ) {
 					result.put(e.getKey(), Interval.endingAt(end));
@@ -123,7 +122,7 @@ public final class DateTimeUtils {
 				if ( start != null ) {
 					result.put(e.getKey(), Interval.startingAt(start));
 				}
-			} else if ( slashIdx < val.length() ) {
+			} else if ( slashIdx > 0 && slashIdx < val.length() ) {
 				Instant start = parseInstant(val.substring(0, slashIdx));
 				Instant end = parseInstant(val.substring(slashIdx + 1));
 				if ( start != null && end != null ) {
