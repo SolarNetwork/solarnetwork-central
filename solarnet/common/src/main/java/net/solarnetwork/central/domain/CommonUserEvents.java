@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface CommonUserEvents {
 
@@ -156,6 +156,14 @@ public interface CommonUserEvents {
 	 * @since 1.2
 	 */
 	String PERCENT_COMPLETE_DATA_KEY = "percentComplete";
+
+	/**
+	 * User event data key for a length of time, either as an ISO 8601 duration
+	 * string or a millisecond number.
+	 * 
+	 * @since 1.5
+	 */
+	String DURATION_DATA_KEY = "duration";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

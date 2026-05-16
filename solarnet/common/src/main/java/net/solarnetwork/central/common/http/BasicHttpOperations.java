@@ -30,6 +30,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.time.Clock;
+import java.time.InstantSource;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +72,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
@@ -87,6 +89,9 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * </p>
 	 */
 	public static final String USER_EVENT_APPENDER_RUNTIME = "userEventAppender";
+
+	/** A clock. */
+	protected final InstantSource clock;
 
 	/** A logger. */
 	protected final Logger log;
@@ -119,6 +124,10 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	/**
 	 * Constructor.
 	 *
+	 * <p>
+	 * The system clock will be used.
+	 * </p>
+	 *
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -132,7 +141,31 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 */
 	public BasicHttpOperations(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags) {
+		this(Clock.systemUTC(), log, userEventAppenderBiz, restOps, errorEventTags);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.2
+	 */
+	public BasicHttpOperations(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags) {
 		super();
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.log = requireNonNullArgument(log, "log");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
@@ -291,7 +324,13 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 
 			validateRequest(req);
 
-			ResponseEntity<O> result = restOps.exchange(req, responseType);
+			final long startAt = clock.millis();
+			ResponseEntity<O> result;
+			try {
+				result = restOps.exchange(req, responseType);
+			} finally {
+				eventData.put(CommonUserEvents.DURATION_DATA_KEY, clock.millis() - startAt);
+			}
 
 			eventData.put(HTTP_STATUS_CODE_DATA_KEY, result.getStatusCode().value());
 			populateResponseBodyEventData(result, eventData);
