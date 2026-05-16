@@ -83,7 +83,7 @@ import tools.jackson.databind.JsonNode;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -183,8 +183,8 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
 		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
-				new OpenWeatherMapRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
-						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
+				new OpenWeatherMapRestOperationsHelper(clock, restOpsLogger, userEventAppenderBiz,
+						restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
 	}
 

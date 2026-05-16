@@ -26,6 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_PARAM;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -48,13 +49,15 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -70,10 +73,12 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SolarEdgeV1RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
+	public SolarEdgeV1RestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 	}
 
 	@Override

@@ -147,7 +147,7 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 	public CloudIntegrationService froniusCloudIntegrationService(
 			@Qualifier(FRONIUS) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new FroniusCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(FroniusCloudIntegrationService.class.getName(),

@@ -200,7 +200,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 	public CloudIntegrationService openWeatherMapCloudIntegrationService(
 			@Qualifier(OPEN_WEATHER_MAP) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new OpenWeatherMapCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(OpenWeatherMapCloudIntegrationService.class.getName(),

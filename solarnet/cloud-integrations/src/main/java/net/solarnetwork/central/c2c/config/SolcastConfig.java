@@ -148,7 +148,7 @@ public class SolcastConfig implements SolarNetCloudIntegrationsConfiguration {
 	public CloudIntegrationService solcastCloudIntegrationService(
 			@Qualifier(SOLCAST) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new SolcastCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolcastCloudIntegrationService.class.getName(),

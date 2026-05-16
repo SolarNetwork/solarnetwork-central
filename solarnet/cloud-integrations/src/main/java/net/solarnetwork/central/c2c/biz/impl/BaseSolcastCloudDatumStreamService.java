@@ -52,7 +52,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseSolcastCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -183,7 +183,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
 		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
-				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
+				new SolcastRestOperationsHelper(clock, restOpsLogger, userEventAppenderBiz, restOps,
 						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> SolcastCloudIntegrationService.SECURE_SETTINGS));
 	}

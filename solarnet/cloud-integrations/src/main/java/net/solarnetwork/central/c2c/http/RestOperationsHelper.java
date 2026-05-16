@@ -25,6 +25,8 @@ package net.solarnetwork.central.c2c.http;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CONTENT_PROCESSED_AUDIT_SERVICE;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,7 +47,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class RestOperationsHelper extends BasicHttpOperations {
 
@@ -57,6 +59,10 @@ public class RestOperationsHelper extends BasicHttpOperations {
 
 	/**
 	 * Constructor.
+	 *
+	 * <p>
+	 * The system clock will be used.
+	 * </p>
 	 *
 	 * @param log
 	 *        the logger
@@ -76,7 +82,35 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags);
+		this(Clock.systemUTC(), log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public RestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags);
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
 		setUserServiceKey(CONTENT_PROCESSED_AUDIT_SERVICE);

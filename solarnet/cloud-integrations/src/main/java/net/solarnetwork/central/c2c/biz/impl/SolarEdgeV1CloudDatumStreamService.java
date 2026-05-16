@@ -118,7 +118,7 @@ import tools.jackson.databind.JsonNode;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -301,7 +301,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		super(SERVICE_IDENTIFIER, "SolarEdge V1 Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
-				new SolarEdgeV1RestOperationsHelper(
+				new SolarEdgeV1RestOperationsHelper(clock,
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));

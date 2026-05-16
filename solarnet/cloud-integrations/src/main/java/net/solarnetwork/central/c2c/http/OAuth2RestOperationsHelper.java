@@ -53,7 +53,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * {@link OAuth2AuthorizedClientManager} support.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
@@ -66,13 +66,6 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
 	/** The OAuth client manager. */
 	protected final OAuth2AuthorizedClientManager oauthClientManager;
-
-	/**
-	 * The clock to use.
-	 *
-	 * @since 1.1
-	 */
-	protected final InstantSource clock;
 
 	/**
 	 * An optional cache of locks to synchronize access token requests per
@@ -203,9 +196,9 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache,
 			@Nullable Map<String, String> extraServicePropertyHeaders) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
-		this.clock = requireNonNullArgument(clock, "clock");
 		this.integrationLocksCache = integrationLocksCache;
 		this.extraServicePropertyHeaders = extraServicePropertyHeaders;
 	}

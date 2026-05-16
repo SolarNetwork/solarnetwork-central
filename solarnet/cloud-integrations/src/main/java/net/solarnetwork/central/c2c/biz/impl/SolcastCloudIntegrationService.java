@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +52,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -137,14 +138,17 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
 	public SolcastCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
+			InstantSource clock) {
 		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, List.of(), userEventAppenderBiz,
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
-				new SolcastRestOperationsHelper(
+				new SolcastRestOperationsHelper(clock,
 						LoggerFactory.getLogger(SolcastCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> SECURE_SETTINGS));

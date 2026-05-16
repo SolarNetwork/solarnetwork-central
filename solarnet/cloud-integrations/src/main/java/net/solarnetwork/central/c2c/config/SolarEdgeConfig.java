@@ -194,7 +194,7 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 	public CloudIntegrationService solarEdgeV1CloudIntegrationService(
 			@Qualifier(SOLAREDGE) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new SolarEdgeV1CloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolarEdgeV1CloudIntegrationService.class.getName(),

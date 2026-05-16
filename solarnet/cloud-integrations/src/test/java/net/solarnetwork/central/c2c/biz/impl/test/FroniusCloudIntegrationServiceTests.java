@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
+import java.time.Clock;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -92,7 +93,7 @@ public class FroniusCloudIntegrationServiceTests {
 	@BeforeEach
 	public void setup() {
 		service = new FroniusCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(FroniusCloudIntegrationService.class.getName(),

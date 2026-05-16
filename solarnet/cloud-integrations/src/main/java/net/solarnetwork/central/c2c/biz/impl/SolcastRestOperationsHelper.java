@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,7 +46,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolcastRestOperationsHelper extends RestOperationsHelper {
 
@@ -54,6 +55,8 @@ public class SolcastRestOperationsHelper extends RestOperationsHelper {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -69,10 +72,12 @@ public class SolcastRestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SolcastRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
+	public SolcastRestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 	}
 
 	@Override

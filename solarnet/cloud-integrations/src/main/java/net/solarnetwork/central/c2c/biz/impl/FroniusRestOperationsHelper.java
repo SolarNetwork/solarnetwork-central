@@ -28,6 +28,7 @@ import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -56,6 +57,8 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -71,10 +74,12 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public FroniusRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
+	public FroniusRestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 	}
 
 	@Override

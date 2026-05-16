@@ -101,7 +101,7 @@ import tools.jackson.databind.JsonNode;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -233,7 +233,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		super(SERVICE_IDENTIFIER, "Fronius Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
-				new FroniusRestOperationsHelper(
+				new FroniusRestOperationsHelper(clock,
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> FroniusCloudIntegrationService.SECURE_SETTINGS));
