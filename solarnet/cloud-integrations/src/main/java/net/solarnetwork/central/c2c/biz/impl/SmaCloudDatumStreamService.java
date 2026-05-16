@@ -772,6 +772,12 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			return List.of();
 		}
 
+		// SMA data is queried by day, and the first data starts at 00:05 and ends at next day at 00:00;
+		// if the filter end date is a whole day, that is normally exclusive but we will cut off the
+		// last element if we omit it so allow that value, even though is inclusive of the end date
+		final boolean endDateIsEod = nonnull(filter.getEndDate(), "End date").atZone(zone)
+				.getHour() == 0;
+
 		for ( JsonNode dataNode : json.path("set") ) {
 			if ( !dataNode.has("time") ) {
 				continue;
@@ -780,7 +786,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
 				continue;
-			} else if ( !ts.isBefore(filter.getEndDate()) ) {
+			} else if ( endDateIsEod ? ts.isAfter(filter.getEndDate())
+					: !ts.isBefore(filter.getEndDate()) ) {
 				break;
 			}
 			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())

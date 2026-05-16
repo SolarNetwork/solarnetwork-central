@@ -3041,4 +3041,195 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void datum_indexedValue_wholeDay() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final String systemId = randomString();
+		final String deviceId = randomString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final String inv1SourceId = "inv/1";
+
+		// configure datum stream mapping
+
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream mapping properties, for energy and power
+
+		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.PowerDc;
+		final String prop1MeasurementName = "dcPowerInput";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "dcPower", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1));
+
+		// configure datum stream
+
+		final Long nodeId = randomLong();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId("unused");
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						"/%s/%s".formatted(systemId, deviceId), inv1SourceId
+						)
+				));
+		// @formatter:on
+
+		// configure expected HTTP responses
+
+		// HTTP request system time zone info (first check cache)
+
+		final ZoneId systemTimeZone = ZoneId.of("America/New_York"); // from sma-plant-01.json
+
+		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
+
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
+
+		// HTTP request measurement set data for each day in filter range, per device per measurement set
+
+		final LocalDate startDay = LocalDate.parse("2025-03-01").atStartOfDay(systemTimeZone)
+				.toLocalDate();
+
+		final UriComponentsBuilder b = fromUri(BASE_URI)
+				.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
+				.queryParam(SmaCloudDatumStreamService.DATE_PARAM, startDay.toString());
+
+		expectedUris.add(b
+				.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
+						prop1MeasuermentSet.shouldReturnEnergyValues())
+				.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey()).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-device-data-Day-PowerDc-01.json", getClass()),
+						JsonNode.class),
+				OK));
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+
+		// cache system time zone
+		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
+
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
+			;
+
+		and.then(result)
+			.as("Datum for entire day parsed from HTTP responses")
+			.hasSize(219)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(inv1SourceId, from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				final int index1 = 0;
+				final Instant expectedTs1 = LocalDateTime.parse("2025-03-01T00:15:00").atZone(systemTimeZone).toInstant();
+				final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
+						"dcPower_a", 1,
+						"dcPower_b", 2,
+						"dcPower_c", 3), null, null);
+
+				and.then(list).element(index1, type(GeneralDatum.class))
+					.as("Datum %d has expected date", index1)
+					.returns(expectedTs1, from(Datum::getTimestamp))
+					.as("Datum %d has expected sample data (indexed value split into multiple properties)", index1)
+					.returns(expectedSamples1, from(GeneralDatum::getSamples))
+					;
+
+				final int index2 = 218;
+				final Instant expectedTs2 = LocalDateTime.parse("2025-03-02T00:00:00").atZone(systemTimeZone).toInstant();
+				final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
+						"dcPower_a", 0.1f,
+						"dcPower_b", 0.2f,
+						"dcPower_c", 0.3f), null, null);
+
+				and.then(list).element(index2, type(GeneralDatum.class))
+					.as("Datum %d has expected date", index2)
+					.returns(expectedTs2, from(Datum::getTimestamp))
+					.as("Datum %d has expected sample data (indexed value split into multiple properties)", index2)
+					.returns(expectedSamples2, from(GeneralDatum::getSamples))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
 }
