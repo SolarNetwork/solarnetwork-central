@@ -162,7 +162,7 @@ app:
       connection-request-timeout: "15s"
       connection-time-to-live: "60s"
       connection-validate-after-inactivity: "15s"
-      socket-timeout: "20s"
+      socket-timeout: "45s"
   job:
     billing:
       account-task:
