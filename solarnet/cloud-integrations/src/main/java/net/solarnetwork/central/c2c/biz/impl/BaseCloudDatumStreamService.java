@@ -48,9 +48,13 @@ import java.util.SequencedCollection;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryOperations;
+import org.springframework.core.retry.Retryable;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -88,6 +92,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
@@ -102,7 +107,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -182,6 +187,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	private @Nullable DatumStreamMetadataDao datumStreamMetadataDao;
 	private @Nullable QueryAuditor queryAuditor;
 	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+	private @Nullable RetryOperations retryOps;
 
 	/**
 	 * Constructor.
@@ -755,8 +761,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					yield val.floatValue();
 				} else {
 					try {
+
 						yield narrow(parseNumber(val.asString(), BigDecimal.class), 2);
-					} catch ( IllegalArgumentException e ) {
+					} catch (
+
+					IllegalArgumentException e ) {
 						yield null;
 					}
 				}
@@ -897,6 +906,81 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Execute a task with retry.
+	 *
+	 * <p>
+	 * If no {@link RetryOperations} is configured via
+	 * {@link #setRetryOps(RetryOperations)} then this method will simply
+	 * execute the task directly, without any retry semantics.
+	 * </p>
+	 *
+	 * @param <R>
+	 *        the task result type
+	 * @param task
+	 *        the task to execute
+	 * @return the task result
+	 * @throws RemoteServiceException
+	 *         if an exception is thrown, after exhausting all retries
+	 * @since 2.2
+	 */
+	protected <R extends @Nullable Object> R doRemoteServiceCallWithRetry(String name,
+			Supplier<R> task) {
+		return doRemoteServiceCallWithRetry(new Retryable<R>() {
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public R execute() throws Throwable {
+				return task.get();
+			}
+
+		});
+	}
+
+	/**
+	 * Execute a task with retry.
+	 *
+	 * <p>
+	 * If no {@link RetryOperations} is configured via
+	 * {@link #setRetryOps(RetryOperations)} then this method will simply
+	 * execute the task directly, without any retry semantics.
+	 * </p>
+	 *
+	 * @param <R>
+	 *        the task result type
+	 * @param retryable
+	 *        the task to execute
+	 * @return the task result
+	 * @throws RemoteServiceException
+	 *         if an exception is thrown, after exhausting all retries
+	 * @since 2.2
+	 */
+	protected <R extends @Nullable Object> R doRemoteServiceCallWithRetry(Retryable<R> retryable) {
+		final RetryOperations ops = getRetryOps();
+		try {
+			if ( ops == null ) {
+				// do it
+				return retryable.execute();
+			} else {
+				return ops.execute(retryable);
+			}
+		} catch ( RetryException e ) {
+			Throwable t = e.getLastException();
+			String msg = "Giving up [%s] after %d tries; last exception: %s"
+					.formatted(retryable.getName(), e.getRetryCount() + 1, t.getMessage());
+			throw new RemoteServiceException(msg, t);
+		} catch ( RemoteServiceException e ) {
+			throw e;
+		} catch ( Throwable e ) {
+			throw new RemoteServiceException(
+					"Failed to execute [%s]: %s".formatted(retryable.getName(), e.getMessage()), e);
+		}
+	}
+
+	/**
 	 * Get the "multiple datum stream" maximum lag setting for a datum stream.
 	 *
 	 * @param datumStream
@@ -998,6 +1082,27 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public final void setDatumStreamMetadataCache(
 			@Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache) {
 		this.datumStreamMetadataCache = datumStreamMetadataCache;
+	}
+
+	/**
+	 * Get a retry API.
+	 *
+	 * @return the retry API
+	 * @since 2.2
+	 */
+	public @Nullable RetryOperations getRetryOps() {
+		return retryOps;
+	}
+
+	/**
+	 * Set a retry API.
+	 *
+	 * @param retryOps
+	 *        the retry API to set
+	 * @since 2.2
+	 */
+	public void setRetryOps(@Nullable RetryOperations retryOps) {
+		this.retryOps = retryOps;
 	}
 
 }

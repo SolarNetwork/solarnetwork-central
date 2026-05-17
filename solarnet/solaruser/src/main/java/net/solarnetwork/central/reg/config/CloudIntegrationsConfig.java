@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.expression.Expression;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudControlService;
@@ -51,6 +52,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.central.support.RetrySettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -202,6 +204,26 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 				nodeInstructionDao, controlServices);
 		hook.setUserEventAppenderBiz(userEventAppenderBiz);
 		return hook;
+	}
+
+	/*- TODO: Consider removing C2C retry from SolarUser
+	 *
+	 * This is meant to be used by SolarJobs, but will test this out in SolarUser
+	 * to see if this is useful, for example in testing the integration data.
+	 */
+
+	@ConfigurationProperties(prefix = "app.c2c.ds-poll.retry")
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	@Bean
+	public RetrySettings cloudDatumStreamPollRetryPolicy() {
+		return new RetrySettings();
+	}
+
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	@Bean
+	public RetryTemplate cloudDatumStreamPollRetryTemplate(
+			@Qualifier(CLOUD_INTEGRATIONS_POLL) RetrySettings settings) {
+		return new RetryTemplate(settings.toPolicy());
 	}
 
 }

@@ -33,6 +33,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -46,13 +47,14 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
+import net.solarnetwork.central.support.RetrySettings;
 import net.solarnetwork.service.PingTest;
 
 /**
  * Cloud integrations datum stream poll configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -119,6 +121,20 @@ public class CloudIntegrationsDatumStreamPollConfig implements SolarNetCloudInte
 				dsMap::get);
 		service.setFluxPublisher(fluxPublisher);
 		return service;
+	}
+
+	@ConfigurationProperties(prefix = "app.c2c.ds-poll.retry")
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	@Bean
+	public RetrySettings cloudDatumStreamPollRetryPolicy() {
+		return new RetrySettings();
+	}
+
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	@Bean
+	public RetryTemplate cloudDatumStreamPollRetryTemplate(
+			@Qualifier(CLOUD_INTEGRATIONS_POLL) RetrySettings settings) {
+		return new RetryTemplate(settings.toPolicy());
 	}
 
 }

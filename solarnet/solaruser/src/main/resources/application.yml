@@ -71,6 +71,11 @@ app:
     encryptor:
       password: "Secret123"
       salt-hex: "01234567"
+    ds-poll:
+      retry:
+        delay: "1s"
+        max-retries: 3
+        multiplier: 2.0        
   datasource:
     hikari:
       minimumIdle: 1

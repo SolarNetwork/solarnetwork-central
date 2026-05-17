@@ -652,24 +652,30 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					}
 					for ( Entry<SmaMeasurementSetType, List<ValueRef>> measurementSetEntry : devPlan.measurementSetRefs
 							.entrySet() ) {
-						restOpsHelper.httpGet("List device measurement set data", integration,
-								JsonNode.class, _ -> {
-									UriComponentsBuilder b = fromUri(
-											resolveBaseUrl(integration, BASE_URI))
-													.path(DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE);
-									if ( queryPeriod != SmaPeriod.Recent ) {
-										b.queryParam(DATE_PARAM, queryDay);
-									}
-									return b.queryParam(RETURN_ENERGY_VALUES_PARAM,
-											measurementSetEntry.getKey().shouldReturnEnergyValues())
-											.buildAndExpand(devPlan.deviceId,
-													measurementSetEntry.getKey(), queryPeriod.getKey())
-											.toUri();
-								},
-								(req, res) -> parseDeviceDatum(integration, devPlan.systemId,
-										devPlan.deviceId, req.getUrl(), res.getBody(), deviceMaxPower,
-										usedQueryFilter, devPlan.zone, measurementSetEntry.getValue(),
-										ds, sourceId, resultDatum));
+						final String taskName = "Get source [%s] system %s device %s day %s measurements"
+								.formatted(sourceId, devPlan.systemId, devPlan.systemId, queryDay);
+						doRemoteServiceCallWithRetry(taskName, () -> {
+							restOpsHelper.httpGet("List device measurement set data", integration,
+									JsonNode.class, _ -> {
+										UriComponentsBuilder b = fromUri(
+												resolveBaseUrl(integration, BASE_URI))
+														.path(DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE);
+										if ( queryPeriod != SmaPeriod.Recent ) {
+											b.queryParam(DATE_PARAM, queryDay);
+										}
+										return b.queryParam(RETURN_ENERGY_VALUES_PARAM,
+												measurementSetEntry.getKey().shouldReturnEnergyValues())
+												.buildAndExpand(devPlan.deviceId,
+														measurementSetEntry.getKey(),
+														queryPeriod.getKey())
+												.toUri();
+									},
+									(req, res) -> parseDeviceDatum(integration, devPlan.systemId,
+											devPlan.deviceId, req.getUrl(), res.getBody(),
+											deviceMaxPower, usedQueryFilter, devPlan.zone,
+											measurementSetEntry.getValue(), ds, sourceId, resultDatum));
+							return null;
+						});
 					}
 				}
 			}

@@ -79,6 +79,10 @@ app:
         max-pool-size: 2
         queue-capacity: 0
         allow-core-thread-time-out: true
+      retry:
+        delay: "1s"
+        max-retries: 3
+        multiplier: 2.0        
       service:
         shutdown-max-wait: "5m"
         fast-reschedule-min-lag: "2d"
