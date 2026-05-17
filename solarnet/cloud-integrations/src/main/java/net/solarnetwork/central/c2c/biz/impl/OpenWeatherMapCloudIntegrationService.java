@@ -152,7 +152,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 							.build()
 							.toUri(),
 					// @formatter:on
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

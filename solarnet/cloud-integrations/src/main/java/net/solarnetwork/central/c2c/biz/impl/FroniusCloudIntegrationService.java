@@ -164,7 +164,7 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL).buildAndExpand()
 							.toUri(),
-					res -> res.getBody());
+					(_, res) -> res.getBody());
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

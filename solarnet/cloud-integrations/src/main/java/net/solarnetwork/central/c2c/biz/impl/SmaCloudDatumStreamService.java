@@ -29,11 +29,13 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.B
 import static net.solarnetwork.central.c2c.biz.impl.SmaResolution.FiveMinute;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.net.URI;
 import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.Duration;
@@ -41,6 +43,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -84,6 +87,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -92,6 +96,7 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 import tools.jackson.databind.JsonNode;
@@ -100,7 +105,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -180,7 +185,21 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public static final String RETURN_ENERGY_VALUES_PARAM = "ReturnEnergyValues";
 
 	/**
-	 * The defaut maximum period of time to request data for in one call to
+	 * A data value metadata key for device generator (rated) power, in W.
+	 *
+	 * @since 2.2
+	 */
+	public static final String DEVICE_GENERATOR_POWER_DATA_KEY = "generatorPower";
+
+	/**
+	 * A measurement set key for PV generation, to use during validation.
+	 *
+	 * @since 2.2
+	 */
+	public static final String PV_GENERATION_MEASUREMENT_KEY = "pvGeneration";
+
+	/**
+	 * The default maximum period of time to request data for in one call to
 	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
 	 */
 	private static final Duration DEFAULT_MAX_FILTER_TIME_RANGE = Duration.ofDays(7);
@@ -192,6 +211,13 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * the timestamps returned from the API are all in site-local time.
 	 */
 	private @Nullable Cache<String, ZoneId> systemTimeZoneCache;
+
+	/**
+	 * A cache of SMA system IDs to associated inventory information. This is
+	 * used to resolve system characteristics for use in data validation.
+	 */
+	private @Nullable Cache<String, CloudDataValue[]> systemInventoryCache;
+
 	private Duration maxFilterTimeRange = DEFAULT_MAX_FILTER_TIME_RANGE;
 
 	/**
@@ -294,13 +320,13 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH)
 						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-				res -> parseSystems(res.getBody()));
+				(_, res) -> parseSystems(res.getBody()));
 
 		return result;
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
+	public static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
 		if ( json == null ) {
 			return List.of();
 		}
@@ -397,10 +423,21 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						.queryParam("WithDeactivatedDevices", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(integration, res.getBody(), systemId));
+				(_, res) -> parseSystemDevices(integration, res.getBody(), systemId));
 	}
 
-	private List<CloudDataValue> parseSystemDevices(final CloudIntegrationConfiguration integration,
+	/**
+	 * Parse system device JSON.
+	 *
+	 * @param integration
+	 *        the integration
+	 * @param json
+	 *        the JSON to parse
+	 * @param systemId
+	 *        the system ID
+	 * @return the data values, never {@code null}
+	 */
+	public List<CloudDataValue> parseSystemDevices(final CloudIntegrationConfiguration integration,
 			final @Nullable JsonNode json, final String systemId) {
 		/*- EXAMPLE JSON:
 		{
@@ -446,7 +483,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 			populateNonEmptyValue(devNode, "type", "type", meta);
 			populateNumberValue(devNode, "productId", "productId", meta);
-			populateNumberValue(devNode, "generatorPower", "generatorPower", meta);
+			populateNumberValue(devNode, "generatorPower", DEVICE_GENERATOR_POWER_DATA_KEY, meta);
 			populateNumberValue(devNode, "generatorPowerDc", "generatorPowerDc", meta);
 
 			result.add(intermediateDataValue(List.of(systemId, id), name, meta, null));
@@ -463,7 +500,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						.path(DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseDeviceMeasurements(res.getBody(), systemId, deviceId));
+				(_, res) -> parseDeviceMeasurements(res.getBody(), systemId, deviceId));
 	}
 
 	private static List<CloudDataValue> parseDeviceMeasurements(final @Nullable JsonNode json,
@@ -559,7 +596,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				queryPeriod != SmaPeriod.Recent
 						? requireNonNullArgument(requireNonNullArgument(filter, "filter").getStartDate(),
 								"filter.startDate")
-						: Instant.now(),
+						: clock.instant(),
 				UTC);
 		final Instant filterEndDate = FiveMinute.tickStart(
 				queryPeriod != SmaPeriod.Recent
@@ -589,6 +626,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		// have to combine measurement set queries into datun instances by source ID, date
 		Map<String, SortedMap<Instant, GeneralDatum>> resultDatum = new LinkedHashMap<>(128);
+
+		// query cache of device max energy per tick, for data validation
+		final Map<String, Integer> deviceMaxPower = new HashMap<>(8);
 
 		// for each zone, interate over days and devices
 		for ( Entry<ZoneId, Map<String, DeviceQueryPlan>> zoneEntry : plan.zoneDevicePlans.entrySet() ) {
@@ -625,8 +665,11 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 											.buildAndExpand(devPlan.deviceId,
 													measurementSetEntry.getKey(), queryPeriod.getKey())
 											.toUri();
-								}, res -> parseDeviceDatum(res.getBody(), usedQueryFilter, devPlan.zone,
-										measurementSetEntry.getValue(), ds, sourceId, resultDatum));
+								},
+								(req, res) -> parseDeviceDatum(integration, devPlan.systemId,
+										devPlan.deviceId, req.getUrl(), res.getBody(), deviceMaxPower,
+										usedQueryFilter, devPlan.zone, measurementSetEntry.getValue(),
+										ds, sourceId, resultDatum));
 					}
 				}
 			}
@@ -744,9 +787,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	}
 
 	// note an empty list is _always_ returned as we populate resultDatum but return type required
-	private List<GeneralDatum> parseDeviceDatum(@Nullable JsonNode json,
-			CloudDatumStreamQueryFilter filter, ZoneId zone, List<ValueRef> valueRefs,
-			CloudDatumStreamConfiguration ds, String sourceId,
+	private List<GeneralDatum> parseDeviceDatum(CloudIntegrationConfiguration integration,
+			String systemId, String deviceId, URI requestUri, @Nullable JsonNode json,
+			Map<String, Integer> deviceMaxPower, CloudDatumStreamQueryFilter filter, ZoneId zone,
+			List<ValueRef> valueRefs, CloudDatumStreamConfiguration ds, String sourceId,
 			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum) {
 		/*- EXAMPLE JSON:
 		{
@@ -778,10 +822,41 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final boolean endDateIsEod = nonnull(filter.getEndDate(), "End date").atZone(zone)
 				.getHour() == 0;
 
+		// use the device rated (maximum) power to validate energy readings. We see invalid energy
+		// data returned from /v1/devices/{deviceId}/measurements/sets/EnergyAndPowerPv/Day?ReturnEnergyValues=true
+		// sometimes, like when a new device comes online and the initial 5min reading is way too high, e.g.
+		//
+		//  "resolution": "FiveMinutes",
+		//  "set": [
+		//          {
+		//            "time": "2026-04-27T20:05:00",
+		//            "pvGeneration": 1024843.0
+		//          },
+		//
+		// In this example, the device metadata "generatorPower" is 7680, so for a 5min period we'd expect
+		// no more than 7680 * 5/60 = 640 Wh. Thus we can discard this data as "invalid" to work around the issue.
+
+		Integer maxPower = deviceMaxPower.get(deviceId);
+		if ( maxPower == null ) {
+			maxPower = resolveDeviceGeneratorPower(integration, systemId, deviceId);
+			if ( maxPower != null ) {
+				deviceMaxPower.put(deviceId, maxPower);
+			}
+		}
+		double maxEnergyPerTick = 0;
+		if ( maxPower != null ) {
+			final SmaResolution resolution = SmaResolution
+					.fromValue(json.path("resolution").stringValue(null));
+			final long tickSeconds = resolution.getTickAmount().get(ChronoUnit.SECONDS);
+			// we allow 2x the rated power as a buffer for a misconfigured rating
+			maxEnergyPerTick = maxPower.doubleValue() * tickSeconds / 3600.0 * 2.0;
+		}
+
 		for ( JsonNode dataNode : json.path("set") ) {
 			if ( !dataNode.has("time") ) {
 				continue;
 			}
+
 			Instant ts = LocalDateTime.parse(dataNode.get("time").stringValue()).atZone(zone)
 					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
@@ -802,6 +877,21 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					continue;
 				}
 				Object propVal = ref.measurement.parser().apply(measurementNode);
+
+				if ( maxEnergyPerTick > 0 && ref.measurementSet.name().startsWith("Energy")
+						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
+						&& propVal instanceof Number gen && gen.doubleValue() > maxEnergyPerTick ) {
+					String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
+							.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
+									datum.getTimestamp(), maxEnergyPerTick / 2.0, maxPower);
+					log.warn(errMsg);
+					userEventAppenderBiz.addEvent(ds.getUserId(),
+							eventForUserRelatedKey(ds.getId(), DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS,
+									errMsg, Map.of(SOURCE_DATA_KEY, ref.property.getValueReference(),
+											HttpUserEvents.HTTP_URI_DATA_KEY, requestUri)));
+					propVal = 0;
+				}
+
 				if ( propVal instanceof Map<?, ?> m ) {
 					for ( Entry<?, ?> e : m.entrySet() ) {
 						String key = e.getKey().toString();
@@ -998,7 +1088,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 							.buildAndExpand(systemId)
 							.toUri()
 					// @formatter:on
-				, res -> {
+				, (_, res) -> {
 					ZoneId zone = ZoneOffset.UTC;
 					var json = res.getBody();
 					String zoneId = json != null
@@ -1020,6 +1110,42 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		}
 
 		return result;
+	}
+
+	private CloudDataValue @Nullable [] resolveSystemInventory(CloudIntegrationConfiguration integration,
+			String systemId) {
+		final var cache = getSystemInventoryCache();
+
+		CloudDataValue[] result = (cache != null ? cache.get(systemId) : null);
+		if ( result != null ) {
+			return result;
+		}
+
+		List<CloudDataValue> response = systemDevices(integration, systemId,
+				Map.of(SYSTEM_ID_FILTER, systemId));
+		if ( response != null ) {
+			result = response.toArray(CloudDataValue[]::new);
+			if ( cache != null ) {
+				cache.put(systemId, result);
+			}
+		}
+
+		return result;
+	}
+
+	private @Nullable Integer resolveDeviceGeneratorPower(CloudIntegrationConfiguration integration,
+			String systemId, String deviceId) {
+		CloudDataValue[] systemInventory = resolveSystemInventory(integration, systemId);
+		if ( systemInventory == null ) {
+			return null;
+		}
+		for ( CloudDataValue dv : systemInventory ) {
+			if ( deviceId.equals(dv.getIdentifiers().getLast()) ) {
+				Map<String, ?> m = dv.getMetadata();
+				return CollectionUtils.getMapInteger(DEVICE_GENERATOR_POWER_DATA_KEY, m);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1052,7 +1178,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * @return the range; defaults to
 	 *         {@link SmaCloudDatumStreamService#DEFAULT_MAX_FILTER_TIME_RANGE}
 	 */
-	public Duration getMaxFilterTimeRange() {
+	public final Duration getMaxFilterTimeRange() {
 		return maxFilterTimeRange;
 	}
 
@@ -1063,9 +1189,35 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 *        the range to set; if {@code null} then
 	 *        {@link #DEFAULT_MAX_FILTER_TIME_RANGE} will be set instead
 	 */
-	public void setMaxFilterTimeRange(Duration maxFilterTimeRange) {
+	public final void setMaxFilterTimeRange(Duration maxFilterTimeRange) {
 		this.maxFilterTimeRange = (maxFilterTimeRange != null ? maxFilterTimeRange
 				: DEFAULT_MAX_FILTER_TIME_RANGE);
+	}
+
+	/**
+	 * Get the system inventory cache.
+	 *
+	 * @return the cache, or {@code null}
+	 * @since 2.2
+	 */
+	public final @Nullable Cache<String, CloudDataValue[]> getSystemInventoryCache() {
+		return systemInventoryCache;
+	}
+
+	/**
+	 * Set the system inventory cache.
+	 *
+	 * <p>
+	 * This cache can be provided to help with device lookup by SMA system ID.
+	 * </p>
+	 *
+	 * @param systemInventoryCache
+	 *        the cache to set
+	 * @since 2.2
+	 */
+	public final void setSystemInventoryCache(
+			@Nullable Cache<String, CloudDataValue[]> systemInventoryCache) {
+		this.systemInventoryCache = systemInventoryCache;
 	}
 
 }

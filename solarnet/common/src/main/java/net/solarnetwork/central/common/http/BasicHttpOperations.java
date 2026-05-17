@@ -72,7 +72,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
@@ -186,14 +186,15 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		this.responseLengthTracker = tracker;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <I extends @Nullable Object, O extends @Nullable Object> ResponseEntity<O> http(
+	public <I extends @Nullable Object, O extends @Nullable Object> HttpExchange<I, O> http(
 			HttpMethod method, URI uri, @Nullable HttpHeaders headers, @Nullable I body,
 			Class<O> responseType, @Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri).headers(headers);
-		final RequestEntity<?> req;
+		final RequestEntity<I> req;
 		if ( body == null ) {
-			req = reqBuilder.build();
+			req = (RequestEntity<I>) reqBuilder.build();
 		} else {
 			req = reqBuilder.body(body);
 		}
@@ -218,10 +219,10 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			result = (Result<O>) httpCache.get(cacheableReq);
 		}
 		if ( result == null ) {
-			ResponseEntity<O> res = exchange(() -> req, responseType, context, runtimeData,
+			HttpExchange<Void, O> res = exchange(() -> req, responseType, context, runtimeData,
 					BasicHttpOperations::defaultRequestEventMessage,
 					BasicHttpOperations::defaultRequestErrorEventMessage);
-			result = Result.success(res.getBody());
+			result = Result.success(res.response().getBody());
 			if ( httpCache != null && req instanceof CachableRequestEntity cacheableReq ) {
 				httpCache.put(cacheableReq, result);
 			}
@@ -285,8 +286,8 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        {@link #defaultRequestErrorEventMessage(Throwable)}
 	 * @return the HTTP response entity
 	 */
-	protected final <O extends @Nullable Object> ResponseEntity<O> exchange(
-			final Supplier<RequestEntity<?>> reqProvider, final Class<O> responseType,
+	protected final <I extends @Nullable Object, O extends @Nullable Object> HttpExchange<I, O> exchange(
+			final Supplier<RequestEntity<I>> reqProvider, final Class<O> responseType,
 			final @Nullable Object context, final @Nullable Map<String, ?> runtimeData,
 			final Supplier<String> eventMessageProvider,
 			final Function<Throwable, String> errorEventMessageProvider) {
@@ -309,7 +310,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		List<String> tags = eventTags;
 		String eventMsg = eventDescription;
 
-		RequestEntity<?> req = null;
+		RequestEntity<I> req = null;
 		try {
 			req = reqProvider.get();
 
@@ -335,7 +336,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			eventData.put(HTTP_STATUS_CODE_DATA_KEY, result.getStatusCode().value());
 			populateResponseBodyEventData(result, eventData);
 
-			return result;
+			return new HttpExchange<>(req, result);
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}",
 					eventDescription, (context != null ? context.getClass().getSimpleName() : null),

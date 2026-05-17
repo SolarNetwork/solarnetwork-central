@@ -140,7 +140,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 					_ -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
 							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

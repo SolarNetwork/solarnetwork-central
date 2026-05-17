@@ -133,7 +133,7 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 
 			final GeneralDatum datum = restOpsHelper.httpGet("Get day conditions", integration,
 					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds));
+					(_, res) -> parseDatum(res.getBody(), ds));
 
 			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum) : List.of());
 

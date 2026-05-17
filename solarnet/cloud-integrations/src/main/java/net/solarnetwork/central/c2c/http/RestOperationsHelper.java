@@ -29,6 +29,7 @@ import java.time.Clock;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,13 +42,14 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.common.http.BasicHttpOperations;
+import net.solarnetwork.central.common.http.HttpExchange;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.10
+ * @version 2.0
  */
 public class RestOperationsHelper extends BasicHttpOperations {
 
@@ -144,7 +146,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 */
 	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
 		return http(description, HttpMethod.GET, null, configuration, responseType, setup, handler);
 	}
 
@@ -184,23 +186,24 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T http(
 			String description, HttpMethod method, @Nullable B body, C configuration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<B>, ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");
 
 		// execute request
-		final ResponseEntity<R> res = exchange(() -> {
+		@SuppressWarnings("unchecked")
+		final HttpExchange<B, R> res = exchange(() -> {
 			// resolve URI and headers
 			final var headers = new HttpHeaders();
 			final URI uri = setup.apply(headers);
 			final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
 					.headers(headers);
 			if ( body == null ) {
-				return reqBuilder.build();
+				return (RequestEntity<B>) reqBuilder.build();
 			}
 			return reqBuilder.body(body);
 		}, responseType, configuration, null, () -> description,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
-		return handler.apply(res);
+		return handler.apply(res.request(), res.response());
 	}
 
 }

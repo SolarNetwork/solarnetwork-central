@@ -251,7 +251,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 							.queryParam(API_KEY_PARAM,
 									decrypted.serviceProperty(API_KEY_SETTING, String.class))
 							.buildAndExpand().toUri(),
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {
@@ -344,7 +344,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 						req.setBasicAuth(username, password);
 					}
 					return uri;
-				}, r -> nonnull(r.getBody(), "Response body"));
+				}, (_, res) -> nonnull(res.getBody(), "Response body"));
 
 		/*- JSON example:
 			{

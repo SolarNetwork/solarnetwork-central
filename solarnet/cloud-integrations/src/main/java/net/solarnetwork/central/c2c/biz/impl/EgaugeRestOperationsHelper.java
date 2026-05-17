@@ -41,6 +41,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.random.RandomGenerator;
 import org.jspecify.annotations.Nullable;
@@ -49,6 +50,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -150,7 +152,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	@Override
 	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
 		try {
 			return super.httpGet(description, configuration, responseType, (headers) -> {
 				if ( configuration instanceof CloudDatumStreamConfiguration c ) {

@@ -63,6 +63,13 @@ public interface CommonUserEvents {
 	 */
 	String PROGRESS_TAG = "progress";
 
+	/**
+	 * User event tag for a validation event.
+	 * 
+	 * @since 1.5
+	 */
+	String VALIDATION_TAG = "validation";
+
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
 

@@ -365,7 +365,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL)
 						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-				res -> parseSites(res.getBody()));
+				(_, res) -> parseSites(res.getBody()));
 	}
 
 	private List<CloudDataValue> siteInventory(CloudIntegrationConfiguration integration, Long siteId,
@@ -373,7 +373,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return restOpsHelper.httpGet("List site inventory", integration, JsonNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI)).path(SITE_INVENTORY_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseSiteInventory(integration, siteId, res.getBody()));
+				(_, res) -> parseSiteInventory(integration, siteId, res.getBody()));
 	}
 
 	private List<CloudDataValue> equipmentChangeLog(CloudIntegrationConfiguration integration,
@@ -382,7 +382,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
 					(_) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
-					res -> parseEquipmentChangeLog(res.getBody(), siteId, deviceType, replacedByRef));
+					(_, res) -> parseEquipmentChangeLog(res.getBody(), siteId, deviceType,
+							replacedByRef));
 		} catch ( RemoteServiceException e ) {
 			if ( e.getCause() instanceof HttpClientErrorException hce
 					&& hce.getStatusCode().is4xxClientError() ) {
@@ -930,7 +931,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 										.queryParam("startTime", startDateParam)
 										.queryParam("endTime", endDateParam)
 										.buildAndExpand(queryPlan.siteId, inverterId).toUri(),
-								res -> parseInverterDatum(res.getBody(), queryPlan, inverterId, ds,
+								(_, res) -> parseInverterDatum(res.getBody(), queryPlan, inverterId, ds,
 										sourceIdMap, timestampFmt));
 						if ( datum != null ) {
 							resultDatum.addAll(datum);
@@ -951,7 +952,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-									r -> nonnull(r.getBody(), "Response body"));
+							(_, res) -> nonnull(res.getBody(), "Response body"));
 					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
 							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -961,7 +962,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-									r -> nonnull(r.getBody(), "Response body"));
+							(_, res) -> nonnull(res.getBody(), "Response body"));
 					// @formatter:on
 					Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy, queryPlan,
 							ds, sourceIdMap, timestampFmt, resolution);
@@ -979,7 +980,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam).buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							res -> parseBatteryDatum(res.getBody(), queryPlan, ds, sourceIdMap,
+							(_, res) -> parseBatteryDatum(res.getBody(), queryPlan, ds, sourceIdMap,
 									timestampFmt));
 					resultDatum.addAll(datum);
 				}
@@ -1441,7 +1442,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							.buildAndExpand(siteId)
 							.toUri();
 					// @formatter:on
-		}, res -> {
+		}, (_, res) -> {
 			ZoneId zone = ZoneOffset.UTC;
 			var json = res.getBody();
 			String zoneId = json != null

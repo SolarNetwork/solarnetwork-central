@@ -469,7 +469,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 								.buildAndExpand(siteId, periodStartDate, periodEndDate)
 								.toUri();
 						// @formatter:on
-					}, res -> parseDatum(ds, siteId, res.getBody(), periodStartDate, datum,
+					}, (_, res) -> parseDatum(ds, siteId, res.getBody(), periodStartDate, datum,
 							refsByComponent));
 				}
 				startDate = periodEndDate;
@@ -526,7 +526,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					.buildAndExpand(filters.get(SITE_ID_FILTER), startDate, endDate)
 					.toUri();
 			// @formatter:on
-		}, res -> parseComponents(siteId, res.getBody()));
+		}, (_, res) -> parseComponents(siteId, res.getBody()));
 	}
 
 	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")

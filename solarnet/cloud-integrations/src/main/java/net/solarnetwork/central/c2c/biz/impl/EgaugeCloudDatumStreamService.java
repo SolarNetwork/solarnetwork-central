@@ -340,7 +340,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 							.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
 							.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
 							.buildAndExpand(deviceId).toUri(),
-					res -> parseDatum(res.getBody(), ds, refsByRegisterName));
+					(_, res) -> parseDatum(res.getBody(), ds, refsByRegisterName));
 
 			// evaluate expressions on final datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -356,7 +356,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return restOpsHelper.httpGet("List registers", datumStream, JsonNode.class,
 				_ -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(REGISTER_URL_PATH).buildAndExpand(deviceId).toUri(),
-				res -> parseDeviceRegisters(deviceId, res.getBody()));
+				(_, res) -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
