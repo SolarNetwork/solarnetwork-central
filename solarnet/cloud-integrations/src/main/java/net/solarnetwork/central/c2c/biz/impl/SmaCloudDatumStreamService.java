@@ -653,7 +653,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					for ( Entry<SmaMeasurementSetType, List<ValueRef>> measurementSetEntry : devPlan.measurementSetRefs
 							.entrySet() ) {
 						final String taskName = "Get source [%s] system %s device %s day %s measurements"
-								.formatted(sourceId, devPlan.systemId, devPlan.systemId, queryDay);
+								.formatted(sourceId, devPlan.systemId, devPlan.deviceId, queryDay);
 						restOpsHelper.httpGet(taskName, integration, JsonNode.class, _ -> {
 							UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE);
