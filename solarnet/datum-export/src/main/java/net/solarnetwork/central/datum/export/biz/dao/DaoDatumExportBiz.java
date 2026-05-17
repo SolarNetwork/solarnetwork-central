@@ -157,8 +157,6 @@ public class DaoDatumExportBiz
 	 *        the scheduler
 	 * @param executor
 	 *        the executor
-	 * @param transactionTemplate
-	 *        the transaction template
 	 * @param textEncryptor
 	 *        the encryptor to handle sensitive properties with
 	 * @param outputFormatServices

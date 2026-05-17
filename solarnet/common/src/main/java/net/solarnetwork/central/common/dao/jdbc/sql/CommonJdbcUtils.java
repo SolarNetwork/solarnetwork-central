@@ -495,7 +495,7 @@ public final class CommonJdbcUtils {
 	 * @param keyColumnName
 	 *        the name of the generated key column to extract
 	 * @return the generated key value
-	 * @throws IllegalStageException
+	 * @throws IllegalStateException
 	 *         if the key is not returned returned or is not a {@code Long}
 	 *         instance
 	 * @since 1.1
