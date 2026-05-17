@@ -1090,7 +1090,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the retry API
 	 * @since 2.2
 	 */
-	public @Nullable RetryOperations getRetryOps() {
+	public final @Nullable RetryOperations getRetryOps() {
 		return retryOps;
 	}
 
@@ -1101,8 +1101,20 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the retry API to set
 	 * @since 2.2
 	 */
-	public void setRetryOps(@Nullable RetryOperations retryOps) {
+	public final void setRetryOps(@Nullable RetryOperations retryOps) {
 		this.retryOps = retryOps;
+		didSetRetryOps(retryOps);
+	}
+
+	/**
+	 * Called after the {@code retryOps} property is configured.
+	 *
+	 * @param retryOps
+	 *        the operations that was configured
+	 * @since 2.2
+	 */
+	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
+		// extending classes can override
 	}
 
 }

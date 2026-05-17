@@ -223,7 +223,7 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 	@Bean
 	public RetryTemplate cloudDatumStreamPollRetryTemplate(
 			@Qualifier(CLOUD_INTEGRATIONS_POLL) RetrySettings settings) {
-		return new RetryTemplate(settings.toPolicy());
+		return SolarNetCloudIntegrationsConfiguration.cloudDatumStreamRetryTemplate(settings);
 	}
 
 }

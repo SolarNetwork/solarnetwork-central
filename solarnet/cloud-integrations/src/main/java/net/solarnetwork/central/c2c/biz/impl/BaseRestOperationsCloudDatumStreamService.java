@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -107,6 +108,11 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	@Override
 	public void didSetUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
+	}
+
+	@Override
+	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
+		restOpsHelper.setRetryOps(retryOps);
 	}
 
 	@Override

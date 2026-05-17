@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.time.Duration;
+import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.retry.RetryPolicy;
 
@@ -51,6 +52,17 @@ public class RetrySettings {
 	 * @return the policy
 	 */
 	public RetryPolicy toPolicy() {
+		return toPolicy(null);
+	}
+
+	/**
+	 * Get a policy from these settings.
+	 * 
+	 * @param customizer
+	 *        an optional customize hook
+	 * @return the policy
+	 */
+	public RetryPolicy toPolicy(@Nullable Consumer<RetryPolicy.Builder> customizer) {
 		final var builder = RetryPolicy.builder();
 		if ( maxRetries != null ) {
 			builder.maxRetries(maxRetries);

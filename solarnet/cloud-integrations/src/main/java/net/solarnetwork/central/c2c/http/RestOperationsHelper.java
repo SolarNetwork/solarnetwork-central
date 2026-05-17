@@ -33,6 +33,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryOperations;
+import org.springframework.core.retry.Retryable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -44,12 +47,13 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.common.http.BasicHttpOperations;
 import net.solarnetwork.central.common.http.HttpExchange;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class RestOperationsHelper extends BasicHttpOperations {
 
@@ -58,6 +62,8 @@ public class RestOperationsHelper extends BasicHttpOperations {
 
 	/** The sensitive key provider. */
 	protected final Function<String, @Nullable Set<String>> sensitiveKeyProvider;
+
+	private @Nullable RetryOperations retryOps;
 
 	/**
 	 * Constructor.
@@ -153,6 +159,11 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	/**
 	 * Make an HTTP request.
 	 *
+	 * <p>
+	 * If {@link #getRestOps()} is configured then it will be used to retry the
+	 * HTTP request using its retry policy.
+	 * </p>
+	 *
 	 * @param <B>
 	 *        the HTTP request body type
 	 * @param <R>
@@ -189,21 +200,73 @@ public class RestOperationsHelper extends BasicHttpOperations {
 			BiFunction<RequestEntity<B>, ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");
 
-		// execute request
-		@SuppressWarnings("unchecked")
-		final HttpExchange<B, R> res = exchange(() -> {
-			// resolve URI and headers
-			final var headers = new HttpHeaders();
-			final URI uri = setup.apply(headers);
-			final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
-					.headers(headers);
-			if ( body == null ) {
-				return (RequestEntity<B>) reqBuilder.build();
+		final var task = new Retryable<T>() {
+
+			@Override
+			public String getName() {
+				return description;
 			}
-			return reqBuilder.body(body);
-		}, responseType, configuration, null, () -> description,
-				BasicHttpOperations::defaultRequestErrorEventMessage);
-		return handler.apply(res.request(), res.response());
+
+			@Override
+			public T execute() throws Throwable {
+				@SuppressWarnings("unchecked")
+				final HttpExchange<B, R> res = exchange(() -> {
+					// resolve URI and headers
+					final var headers = new HttpHeaders();
+					final URI uri = setup.apply(headers);
+					final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
+							.headers(headers);
+					if ( body == null ) {
+						return (RequestEntity<B>) reqBuilder.build();
+					}
+					return reqBuilder.body(body);
+				}, responseType, configuration, null, () -> description,
+						BasicHttpOperations::defaultRequestErrorEventMessage);
+				return handler.apply(res.request(), res.response());
+			}
+
+		};
+
+		final RetryOperations ops = getRetryOps();
+		try {
+			if ( ops == null ) {
+				// do it
+				return task.execute();
+			} else {
+				return ops.execute(task);
+			}
+		} catch ( RetryException e ) {
+			Throwable t = e.getLastException();
+			String msg = "Giving up [%s] after %d tries; last exception: %s".formatted(task.getName(),
+					e.getRetryCount() + 1, t.getMessage());
+			throw new RemoteServiceException(msg, t);
+		} catch ( RemoteServiceException e ) {
+			throw e;
+		} catch ( Throwable e ) {
+			throw new RemoteServiceException(
+					"Failed to execute [%s]: %s".formatted(task.getName(), e.getMessage()), e);
+		}
+	}
+
+	/**
+	 * Get a retry API.
+	 *
+	 * @return the retry API
+	 * @since 2.1
+	 */
+	public @Nullable RetryOperations getRetryOps() {
+		return retryOps;
+	}
+
+	/**
+	 * Set a retry API.
+	 *
+	 * @param retryOps
+	 *        the retry API to set
+	 * @since 2.1
+	 */
+	public void setRetryOps(@Nullable RetryOperations retryOps) {
+		this.retryOps = retryOps;
 	}
 
 }
