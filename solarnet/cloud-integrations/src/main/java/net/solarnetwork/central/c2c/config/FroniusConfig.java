@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -127,6 +128,10 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Autowired
 	private CacheManager cacheManager;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(FRONIUS_SYSTEM_INFO)
 	@ConfigurationProperties(prefix = "app.c2c.cache.fronius-system-info")
@@ -173,6 +178,7 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);

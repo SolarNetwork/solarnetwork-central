@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -166,6 +167,10 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(ALSO_ENERGY)
 	public OAuth2AuthorizedClientManager alsoEnergyOauthAuthorizedClientManager(@Autowired(
@@ -232,6 +237,7 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
