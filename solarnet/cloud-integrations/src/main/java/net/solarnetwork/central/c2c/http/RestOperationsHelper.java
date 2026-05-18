@@ -237,8 +237,8 @@ public class RestOperationsHelper extends BasicHttpOperations {
 			}
 		} catch ( RetryException e ) {
 			Throwable t = e.getLastException();
-			String msg = "Giving up [%s] after %d tries; last exception: %s".formatted(task.getName(),
-					e.getRetryCount() + 1, t.getMessage());
+			String msg = "Giving up [%s] after %d %s; last exception: %s".formatted(task.getName(),
+					e.getRetryCount() + 1, e.getRetryCount() > 1 ? "tries" : "try", t.getMessage());
 			throw new RemoteServiceException(msg, t);
 		} catch ( RemoteServiceException e ) {
 			throw e;
