@@ -879,7 +879,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 				if ( maxEnergyPerTick > 0 && ref.measurementSet.name().startsWith("Energy")
 						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
-						&& propVal instanceof Number gen && gen.doubleValue() > maxEnergyPerTick ) {
+						&& propVal instanceof Number gen
+						&& Math.abs(gen.doubleValue()) > maxEnergyPerTick ) {
 					String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
 							.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
 									datum.getTimestamp(), maxEnergyPerTick / 2.0, maxPower);
