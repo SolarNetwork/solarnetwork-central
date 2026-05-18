@@ -73,6 +73,9 @@ public class RetrySettings {
 		if ( multiplier != null ) {
 			builder.multiplier(multiplier);
 		}
+		if ( customizer != null ) {
+			customizer.accept(builder);
+		}
 		return builder.build();
 	}
 
