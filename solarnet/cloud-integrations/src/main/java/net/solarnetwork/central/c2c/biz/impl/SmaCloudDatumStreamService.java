@@ -641,9 +641,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			final ZonedDateTime endTs = nonnull(usedQueryFilter.getEndDate(), "End date").atZone(zone);
 
 			// the final query day includes the endTs day, unless that is exactly at start of day
-			final LocalDate endDay = (endTs.truncatedTo(DAYS).isBefore(endTs)
-					? endTs.toLocalDate().plusDays(1)
-					: endTs.toLocalDate());
+			final LocalDate endDay = endTs.toLocalDate()
+					.plusDays(endTs.truncatedTo(DAYS).isBefore(endTs) ? 1 : 0);
 
 			for ( LocalDate day = startTs.toLocalDate(); day.isBefore(endDay); day = day.plusDays(1) ) {
 				final String queryDay = day.toString();
