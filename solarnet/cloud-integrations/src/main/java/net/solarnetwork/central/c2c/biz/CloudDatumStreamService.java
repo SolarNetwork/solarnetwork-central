@@ -111,6 +111,19 @@ public interface CloudDatumStreamService
 	String OPERATIONAL_DATE_RANGES_SETTING = "operationalDateRanges";
 
 	/**
+	 * A standard setting for either an list or comma-delimited list of
+	 * "validation types" to ignore.
+	 *
+	 * <p>
+	 * Validation types are implementation specific, and denote types of
+	 * validation like {@code energy-spike}.
+	 * </p>
+	 *
+	 * @since 2.1
+	 */
+	String VALIDATION_IGNORE_SETTING = "validationIgnore";
+
+	/**
 	 * Get a localized collection of the available data value filter criteria.
 	 *
 	 * <p>

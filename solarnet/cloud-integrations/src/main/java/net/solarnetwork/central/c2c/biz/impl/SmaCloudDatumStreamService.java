@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
@@ -75,6 +76,7 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.CommonValidationType;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -629,6 +631,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// have to combine measurement set queries into datun instances by source ID, date
 		Map<String, SortedMap<Instant, GeneralDatum>> resultDatum = new LinkedHashMap<>(128);
 
+		final Set<String> ignoredValidations = ds.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+
 		// query cache of device max energy per tick, for data validation
 		final Map<String, Integer> deviceMaxPower = new HashMap<>(8);
 
@@ -675,8 +679,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 									.toUri();
 						}, (req, res) -> parseDeviceDatum(integration, devPlan.systemId,
 								devPlan.deviceId, req.getUrl(), res.getBody(), deviceMaxPower,
-								usedQueryFilter, devPlan.zone, measurementSetEntry.getValue(), ds,
-								sourceId, resultDatum));
+								ignoredValidations, usedQueryFilter, devPlan.zone,
+								measurementSetEntry.getValue(), ds, sourceId, resultDatum));
 					}
 				}
 			}
@@ -796,8 +800,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	// note an empty list is _always_ returned as we populate resultDatum but return type required
 	private List<GeneralDatum> parseDeviceDatum(CloudIntegrationConfiguration integration,
 			String systemId, String deviceId, URI requestUri, @Nullable JsonNode json,
-			Map<String, Integer> deviceMaxPower, CloudDatumStreamQueryFilter filter, ZoneId zone,
-			List<ValueRef> valueRefs, CloudDatumStreamConfiguration ds, String sourceId,
+			Map<String, Integer> deviceMaxPower, Set<String> ignoredValidations,
+			CloudDatumStreamQueryFilter filter, ZoneId zone, List<ValueRef> valueRefs,
+			CloudDatumStreamConfiguration ds, String sourceId,
 			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum) {
 		/*- EXAMPLE JSON:
 		{
@@ -843,11 +848,14 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// In this example, the device metadata "generatorPower" is 7680, so for a 5min period we'd expect
 		// no more than 7680 * 5/60 = 640 Wh. Thus we can discard this data as "invalid" to work around the issue.
 
-		Integer maxPower = deviceMaxPower.get(deviceId);
-		if ( maxPower == null ) {
-			maxPower = resolveDeviceGeneratorPower(integration, systemId, deviceId);
-			if ( maxPower != null ) {
-				deviceMaxPower.put(deviceId, maxPower);
+		Integer maxPower = null;
+		if ( !ignoredValidations.contains(CommonValidationType.EnergySpike.getKey()) ) {
+			maxPower = deviceMaxPower.get(deviceId);
+			if ( maxPower == null ) {
+				maxPower = resolveDeviceGeneratorPower(integration, systemId, deviceId);
+				if ( maxPower != null ) {
+					deviceMaxPower.put(deviceId, maxPower);
+				}
 			}
 		}
 		double maxEnergyPerTick = 0;

@@ -27,8 +27,10 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.threeten.extra.Interval;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -264,6 +266,22 @@ public final class CloudDatumStreamConfiguration
 	 */
 	public @Nullable Map<String, Interval> servicePropertyIntervalMap(@Nullable String key) {
 		return intervalMap(CollectionUtils.mapPropertyStringMap(key, getServiceProperties()));
+	}
+
+	/**
+	 * Resolve a string set from a service property value.
+	 *
+	 * @param key
+	 *        the service property key to extract
+	 * @return the set, never {@code null}
+	 * @since 1.2
+	 */
+	public Set<String> servicePropertyStringSet(@Nullable String key) {
+		List<String> list = CollectionUtils.mapPropertyStringList(key, getServiceProperties());
+		if ( list == null || list.isEmpty() ) {
+			return Set.of();
+		}
+		return Set.copyOf(list);
 	}
 
 	/**
