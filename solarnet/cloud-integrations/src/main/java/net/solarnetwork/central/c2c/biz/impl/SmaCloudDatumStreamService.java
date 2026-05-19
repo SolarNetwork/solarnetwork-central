@@ -40,9 +40,11 @@ import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -631,12 +633,19 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final Map<String, Integer> deviceMaxPower = new HashMap<>(8);
 
 		// for each zone, interate over days and devices
+
 		for ( Entry<ZoneId, Map<String, DeviceQueryPlan>> zoneEntry : plan.zoneDevicePlans.entrySet() ) {
 			ZoneId zone = zoneEntry.getKey();
-			for ( var ts = nonnull(usedQueryFilter.getStartDate(), "Start date"); ts.atZone(zone)
-					.toLocalDate().atStartOfDay(zone).toInstant()
-					.isBefore(usedQueryFilter.getEndDate()); ts = ts.plus(1, DAYS) ) {
-				var day = ts.atZone(zone).toLocalDate();
+			final ZonedDateTime startTs = nonnull(usedQueryFilter.getStartDate(), "Start date")
+					.atZone(zone);
+			final ZonedDateTime endTs = nonnull(usedQueryFilter.getEndDate(), "End date").atZone(zone);
+
+			// the final query day includes the endTs day, unless that is exactly at start of day
+			final LocalDate endDay = (endTs.truncatedTo(DAYS).isBefore(endTs)
+					? endTs.toLocalDate().plusDays(1)
+					: endTs.toLocalDate());
+
+			for ( LocalDate day = startTs.toLocalDate(); day.isBefore(endDay); day = day.plusDays(1) ) {
 				final String queryDay = day.toString();
 				final Interval queryDayRange = Interval.of(day.atStartOfDay(zone).toInstant(),
 						day.plusDays(1).atStartOfDay(zone).toInstant());
