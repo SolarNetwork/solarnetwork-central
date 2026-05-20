@@ -85,7 +85,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -179,6 +179,30 @@ public class UserCloudIntegrationsController {
 			return success();
 		}
 		final var result = service.dataValueFilters(locale);
+		return success(result);
+	}
+
+	/**
+	 * List the available datum stream validations for a given datum stream
+	 * service.
+	 *
+	 * @param identifier
+	 *        the {@link CloudDatumStreamService} identifier to list the
+	 *        available value filters
+	 * @param locale
+	 *        the desired locale
+	 * @return the services
+	 * @since 1.9
+	 */
+	@RequestMapping(value = "/services/datum-streams/validations", method = RequestMethod.GET)
+	public Result<Iterable<LocalizedServiceInfo>> availableCloudDatumStreamValidations(
+			@RequestParam("identifier") String identifier, Locale locale) {
+		final UserCloudIntegrationsBiz biz = biz();
+		final CloudDatumStreamService service = biz.datumStreamService(identifier);
+		if ( service == null ) {
+			return success();
+		}
+		final var result = service.supportedValidations(locale);
 		return success(result);
 	}
 

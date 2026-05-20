@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
@@ -137,6 +138,25 @@ public interface CloudDatumStreamService
 	 * @return the available filter criteria, never {@code null}
 	 */
 	Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale);
+
+	/**
+	 * Get a localized collection of the available data validation types.
+	 *
+	 * <p>
+	 * The {@link LocalizedServiceInfo#getId()} of each returned object
+	 * represents a validation type key that can be configured on the
+	 * {@link #VALIDATION_IGNORE_SETTING} to disable. By default all supported
+	 * validations are enabled.
+	 * </p>
+	 *
+	 * @param locale
+	 *        the desired locale
+	 * @return the available filter criteria, never {@code null}
+	 * @since 2.1
+	 */
+	default Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		return List.of();
+	}
 
 	/**
 	 * List data values.

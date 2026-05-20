@@ -298,6 +298,18 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	}
 
 	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { CommonValidationType.EnergySpike.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
+	}
+
+	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
