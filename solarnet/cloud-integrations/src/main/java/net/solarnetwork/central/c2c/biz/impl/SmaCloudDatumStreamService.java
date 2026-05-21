@@ -870,14 +870,17 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				}
 			}
 		}
-		double maxEnergyPerTick = 0;
+
+		// use the resolution value as the fallback time value between readings, i.e. for the first reading of the day
+		long tickSeconds = 0;
 		if ( maxPower != null ) {
 			final SmaResolution resolution = SmaResolution
 					.fromValue(json.path("resolution").stringValue(null));
-			final long tickSeconds = resolution.getTickAmount().get(ChronoUnit.SECONDS);
-			// we allow 2x the rated power as a buffer for a misconfigured rating
-			maxEnergyPerTick = maxPower.doubleValue() * tickSeconds / 3600.0 * 2.0;
+			tickSeconds = resolution.getTickAmount().get(ChronoUnit.SECONDS);
 		}
+
+		// track the previous timestamp, to know the actual tick seconds between two readings
+		Instant prevTs = null;
 
 		for ( JsonNode dataNode : json.path("set") ) {
 			if ( !dataNode.has("time") ) {
@@ -892,7 +895,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					: !ts.isBefore(filter.getEndDate()) ) {
 				break;
 			}
-			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
+
+			final GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
 					.computeIfAbsent(ts,
 							k -> new GeneralDatum(
 									DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
@@ -905,19 +909,27 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				}
 				Object propVal = ref.measurement.parser().apply(measurementNode);
 
-				if ( maxEnergyPerTick > 0 && ref.measurementSet.name().startsWith("Energy")
+				if ( maxPower != null && (prevTs != null || tickSeconds > 0)
+						&& ref.measurementSet.name().startsWith("Energy")
 						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
-						&& propVal instanceof Number gen
-						&& Math.abs(gen.doubleValue()) > maxEnergyPerTick ) {
-					String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
-							.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
-									datum.getTimestamp(), maxEnergyPerTick / 2.0, maxPower);
-					log.warn(errMsg);
-					userEventAppenderBiz.addEvent(ds.getUserId(),
-							eventForUserRelatedKey(ds.getId(), DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS,
-									errMsg, Map.of(SOURCE_DATA_KEY, ref.property.getValueReference(),
-											HttpUserEvents.HTTP_URI_DATA_KEY, requestUri)));
-					propVal = 0;
+						&& propVal instanceof Number gen ) {
+					// use the number of seconds between this reading and the previous, or for the first reading the resolution
+					final long secondsDiff = (prevTs != null
+							? ChronoUnit.SECONDS.between(prevTs, datum.getTimestamp())
+							: tickSeconds);
+					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0 * 2.0;
+					if ( Math.abs(gen.doubleValue()) > expectedMaxEnergy ) {
+						String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
+								.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
+										datum.getTimestamp(), expectedMaxEnergy / 2.0, maxPower);
+						log.warn(errMsg);
+						userEventAppenderBiz.addEvent(ds.getUserId(),
+								eventForUserRelatedKey(ds.getId(),
+										DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS, errMsg,
+										Map.of(SOURCE_DATA_KEY, ref.property.getValueReference(),
+												HttpUserEvents.HTTP_URI_DATA_KEY, requestUri)));
+						propVal = 0;
+					}
 				}
 
 				if ( propVal instanceof Map<?, ?> m ) {
@@ -930,6 +942,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					populateSampleProp(datum, ref, propVal, null);
 				}
 			}
+
+			prevTs = datum.getTimestamp();
 		}
 
 		return List.of();
