@@ -1411,7 +1411,8 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
+	 *      StringBuilder)
 	 * @see #locationMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria,
 	 *      ObjectDatumKind, Connection, PreparedStatement, int)

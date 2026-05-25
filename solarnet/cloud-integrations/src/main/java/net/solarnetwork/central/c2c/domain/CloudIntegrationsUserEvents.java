@@ -32,7 +32,7 @@ import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public interface CloudIntegrationsUserEvents
 		extends CommonUserEvents, HttpUserEvents, DatumUserEvents, InstructorUserEvents {
@@ -92,6 +92,14 @@ public interface CloudIntegrationsUserEvents
 	/** Tags for an expression error event. */
 	List<String> DATUM_STREAM_EXPRESSION_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
 			CLOUD_DATUM_STREAM_TAG, EXPRESSION_TAG);
+
+	/**
+	 * Tags for a data validation error event.
+	 *
+	 * @since 1.8
+	 */
+	List<String> DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_DATUM_STREAM_TAG, VALIDATION_TAG);
 
 	/** Tags for a poll error event. */
 	List<String> INTEGRATION_POLL_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,

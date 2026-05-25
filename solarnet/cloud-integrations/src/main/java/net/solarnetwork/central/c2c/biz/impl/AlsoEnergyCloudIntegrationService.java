@@ -174,7 +174,7 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL).buildAndExpand()
 							.toUri(),
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

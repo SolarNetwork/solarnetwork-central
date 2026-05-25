@@ -129,7 +129,7 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 
 			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("Get forecast", integration,
 					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds));
+					(_, res) -> parseDatum(res.getBody(), ds));
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),

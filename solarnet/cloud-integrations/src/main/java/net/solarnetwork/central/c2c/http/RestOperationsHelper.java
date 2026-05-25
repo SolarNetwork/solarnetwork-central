@@ -25,11 +25,17 @@ package net.solarnetwork.central.c2c.http;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CONTENT_PROCESSED_AUDIT_SERVICE;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryOperations;
+import org.springframework.core.retry.Retryable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -39,13 +45,15 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.common.http.BasicHttpOperations;
+import net.solarnetwork.central.common.http.HttpExchange;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.9
+ * @version 2.1
  */
 public class RestOperationsHelper extends BasicHttpOperations {
 
@@ -55,8 +63,14 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	/** The sensitive key provider. */
 	protected final Function<String, @Nullable Set<String>> sensitiveKeyProvider;
 
+	private @Nullable RetryOperations retryOps;
+
 	/**
 	 * Constructor.
+	 *
+	 * <p>
+	 * The system clock will be used.
+	 * </p>
 	 *
 	 * @param log
 	 *        the logger
@@ -76,7 +90,35 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags);
+		this(Clock.systemUTC(), log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public RestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags);
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
 		setUserServiceKey(CONTENT_PROCESSED_AUDIT_SERVICE);
@@ -110,12 +152,17 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 */
 	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
 		return http(description, HttpMethod.GET, null, configuration, responseType, setup, handler);
 	}
 
 	/**
 	 * Make an HTTP request.
+	 *
+	 * <p>
+	 * If {@link #getRestOps()} is configured then it will be used to retry the
+	 * HTTP request using its retry policy.
+	 * </p>
 	 *
 	 * @param <B>
 	 *        the HTTP request body type
@@ -150,23 +197,76 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T http(
 			String description, HttpMethod method, @Nullable B body, C configuration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<B>, ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");
 
-		// execute request
-		final ResponseEntity<R> res = exchange(() -> {
-			// resolve URI and headers
-			final var headers = new HttpHeaders();
-			final URI uri = setup.apply(headers);
-			final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
-					.headers(headers);
-			if ( body == null ) {
-				return reqBuilder.build();
+		final var task = new Retryable<T>() {
+
+			@Override
+			public String getName() {
+				return description;
 			}
-			return reqBuilder.body(body);
-		}, responseType, configuration, null, () -> description,
-				BasicHttpOperations::defaultRequestErrorEventMessage);
-		return handler.apply(res);
+
+			@Override
+			public T execute() throws Throwable {
+				@SuppressWarnings("unchecked")
+				final HttpExchange<B, R> res = exchange(() -> {
+					// resolve URI and headers
+					final var headers = new HttpHeaders();
+					final URI uri = setup.apply(headers);
+					final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
+							.headers(headers);
+					if ( body == null ) {
+						return (RequestEntity<B>) reqBuilder.build();
+					}
+					return reqBuilder.body(body);
+				}, responseType, configuration, null, () -> description,
+						BasicHttpOperations::defaultRequestErrorEventMessage);
+				return handler.apply(res.request(), res.response());
+			}
+
+		};
+
+		final RetryOperations ops = getRetryOps();
+		try {
+			if ( ops == null ) {
+				// do it
+				return task.execute();
+			} else {
+				return ops.execute(task);
+			}
+		} catch ( RetryException e ) {
+			Throwable t = e.getLastException();
+			String msg = "Giving up [%s] after %d %s; last exception: %s".formatted(task.getName(),
+					e.getRetryCount() + 1, e.getRetryCount() > 1 ? "tries" : "try", t.getMessage());
+			throw new RemoteServiceException(msg, t);
+		} catch ( RemoteServiceException e ) {
+			throw e;
+		} catch ( Throwable e ) {
+			throw new RemoteServiceException(
+					"Failed to execute [%s]: %s".formatted(task.getName(), e.getMessage()), e);
+		}
+	}
+
+	/**
+	 * Get a retry API.
+	 *
+	 * @return the retry API
+	 * @since 2.1
+	 */
+	public @Nullable RetryOperations getRetryOps() {
+		return retryOps;
+	}
+
+	/**
+	 * Set a retry API.
+	 *
+	 * @param retryOps
+	 *        the retry API to set
+	 * @since 2.1
+	 */
+	public void setRetryOps(@Nullable RetryOperations retryOps) {
+		this.retryOps = retryOps;
 	}
 
 }

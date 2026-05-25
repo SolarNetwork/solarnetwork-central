@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAmount;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -137,7 +138,7 @@ public enum SmaResolution {
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static SmaResolution fromValue(String value) {
+	public static SmaResolution fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return FiveMinute;
 		}

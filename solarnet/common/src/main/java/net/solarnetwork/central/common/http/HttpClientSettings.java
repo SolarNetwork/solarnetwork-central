@@ -139,7 +139,7 @@ public class HttpClientSettings {
 	 * 
 	 * @param connectionTimeToLive
 	 *        the timeout to set; if {@code null} then
-	 *        {@link #DEFAULT_CONNECTION_TTL_SECS will be used
+	 *        {@link #DEFAULT_CONNECTION_TTL_SECS} will be used
 	 */
 	public final void setConnectionTimeToLive(Duration connectionTimeToLive) {
 		this.connectionTimeToLive = (connectionTimeToLive != null ? connectionTimeToLive

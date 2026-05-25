@@ -374,7 +374,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 									.queryParam("tz", zone.getId())
 									.buildAndExpand().toUri();
 							// @formatter:on
-						}, res -> parseDatum(res.getBody(), e.getValue(), ds, sourceIdMap, dataMap));
+						},
+						(_, res) -> parseDatum(res.getBody(), e.getValue(), ds, sourceIdMap, dataMap));
 			}
 
 			// generate a map of the latest-available timestamp per stream; afterwards the earliest
@@ -431,7 +432,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL)
 						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-				res -> parseSites(res.getBody()));
+				(_, res) -> parseSites(res.getBody()));
 	}
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
@@ -444,7 +445,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						.queryParam("includeDeviceConfig", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSiteHardware(siteId, res.getBody()));
+				(_, res) -> parseSiteHardware(siteId, res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")

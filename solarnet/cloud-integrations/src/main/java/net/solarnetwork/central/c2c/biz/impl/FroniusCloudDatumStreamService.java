@@ -101,7 +101,7 @@ import tools.jackson.databind.JsonNode;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -233,7 +233,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		super(SERVICE_IDENTIFIER, "Fronius Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
-				new FroniusRestOperationsHelper(
+				new FroniusRestOperationsHelper(clock,
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> FroniusCloudIntegrationService.SECURE_SETTINGS));
@@ -290,7 +290,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL)
 						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-				res -> parseSystems(res.getBody()));
+				(_, res) -> parseSystems(res.getBody()));
 	}
 
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
@@ -301,7 +301,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						.path(SYSTEM_DEVICES_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(res.getBody(), systemId));
+				(_, res) -> parseSystemDevices(res.getBody(), systemId));
 	}
 
 	private List<CloudDataValue> deviceChannels(final CloudIntegrationConfiguration integration,
@@ -318,7 +318,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						.queryParam(LIMIT_PARAM, 1)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseDeviceChannels(res.getBody(), systemId, deviceId));
+				(_, res) -> parseDeviceChannels(res.getBody(), systemId, deviceId));
 	}
 
 	private static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
@@ -749,7 +749,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 									.queryParam(OFFSET_PARAM, pageFilter.getOffset())
 									.queryParam(LIMIT_PARAM, limit);
 							return b.buildAndExpand(queryPlan.systemId, deviceId).toUri();
-						}, res -> {
+						}, (_, res) -> {
 							JsonNode json = res.getBody();
 							links.parseJson(json);
 							return parseDeviceDatum(json, deviceEntry.getValue(), datumStream,
@@ -939,11 +939,11 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var integration = integrationProvider.get();
 			result = restOpsHelper.httpGet("View system information", integration, JsonNode.class,
 			// @formatter:off
-							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(SYSTEM_URL_TEMPLATE)
-									.buildAndExpand(systemId).toUri(),
-									// @formatter:on
-					res -> parseSystem(res.getBody(), systemId));
+					_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							.path(SYSTEM_URL_TEMPLATE)
+							.buildAndExpand(systemId).toUri(),
+							// @formatter:on
+					(_, res) -> parseSystem(res.getBody(), systemId));
 			if ( result != null && cache != null ) {
 				cache.put(systemId, result);
 			}

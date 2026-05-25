@@ -29,9 +29,9 @@ import java.util.List;
 import java.util.Map;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
+import net.solarnetwork.central.common.http.HttpExchange;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -53,7 +54,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService
 		implements HttpOperations {
@@ -110,7 +111,12 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	}
 
 	@Override
-	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, @Nullable HttpHeaders headers,
+	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
+		restOpsHelper.setRetryOps(retryOps);
+	}
+
+	@Override
+	public <I, O> HttpExchange<I, O> http(HttpMethod method, URI uri, @Nullable HttpHeaders headers,
 			@Nullable I body, Class<O> responseType, @Nullable Object context,
 			@Nullable Map<String, ?> runtimeData) {
 		return restOpsHelper.http(method, uri, headers, body, responseType, context, runtimeData);

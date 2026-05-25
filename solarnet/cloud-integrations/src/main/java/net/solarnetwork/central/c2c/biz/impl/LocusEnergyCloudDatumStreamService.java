@@ -284,7 +284,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-				res -> parseSites(res.getBody()));
+				(_, res) -> parseSites(res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
@@ -347,7 +347,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseComponents(res.getBody()));
+				(_, res) -> parseComponents(res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
@@ -412,7 +412,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseNodes(res.getBody(), siteId, compId));
+				(_, res) -> parseNodes(res.getBody(), siteId, compId));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
@@ -649,7 +649,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 									return b.buildAndExpand(
 											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
-								}, r -> nonnull(r.getBody(), "Response body"));
+								}, (_, res) -> nonnull(res.getBody(), "Response body"));
 
 						for ( JsonNode dataNode : json.path("data") ) {
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {

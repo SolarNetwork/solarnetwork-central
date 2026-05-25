@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -143,6 +144,10 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(EGAUGE_DEVICE_REGISTERS)
 	@ConfigurationProperties(prefix = "app.c2c.cache.egague-device-registers")
@@ -183,6 +188,7 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);

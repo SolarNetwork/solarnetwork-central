@@ -28,13 +28,16 @@ import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -56,6 +59,8 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -71,17 +76,19 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public FroniusRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
+	public FroniusRestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 	}
 
 	@Override
 	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
 			String description, HttpMethod method, @Nullable B body, C configuration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<B>, ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof IdentifiableConfiguration c
 					&& c.hasServiceProperty(ACCESS_KEY_ID_SETTING) ) {

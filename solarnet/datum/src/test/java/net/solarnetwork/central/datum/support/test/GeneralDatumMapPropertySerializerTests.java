@@ -47,7 +47,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link GeneralDatumMapPropertySerializer} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GeneralDatumMapPropertySerializerTests {
 
@@ -74,6 +74,37 @@ public class GeneralDatumMapPropertySerializerTests {
 				entry("sourceId", d.getSourceId()),
 				entry("a", d.getSampleValue(Instantaneous, "a")),
 				entry("b", d.getSampleValue(Instantaneous, "b")),
+				entry("c", d.getSampleValue(Accumulating, "c")),
+				entry("d", d.getSampleValue(Status, "d"))
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serialize_GeneralDatum_floatingPoint() {
+		// GIVEN
+		final GeneralDatum d = new GeneralDatum(
+				DatumId.nodeId(randomLong(), randomString(), Instant.now()), new DatumSamples(
+						Map.of("a", 1.123f, "b", 2.3456789), Map.of("c", 3), Map.of("d", "four")));
+
+		// WHEN
+		final Object result = new GeneralDatumMapPropertySerializer().serialize(null, null, d);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result serialized to Map")
+			.isInstanceOf(Map.class)
+			.asInstanceOf(map(String.class, Object.class))
+			.as("Floats and Doubles converted to BigDecimal in output")
+			.containsOnly(
+				entry("created", d.getTimestamp()),
+				entry("kind", d.getKind()),
+				entry("objectId", d.getObjectId()),
+				entry("sourceId", d.getSourceId()),
+				entry("a", d.getSampleBigDecimal(Instantaneous, "a")),
+				entry("b", d.getSampleBigDecimal(Instantaneous, "b")),
 				entry("c", d.getSampleValue(Accumulating, "c")),
 				entry("d", d.getSampleValue(Status, "d"))
 			)

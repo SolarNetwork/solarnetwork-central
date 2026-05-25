@@ -30,6 +30,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.InstantSource;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -420,9 +421,14 @@ public class JdbcDatumBulkLoadingSupport {
 					auditStmt.execute();
 				}
 
+				final Instant startDate = stat.getStartDate();
+				final Instant endDate = stat.getEndDate();
+				if ( startDate == null || endDate == null ) {
+					continue;
+				}
 				staleStmt.setObject(1, stat.getStreamId(), Types.OTHER);
-				staleStmt.setTimestamp(2, Timestamp.from(stat.getStartDate()));
-				staleStmt.setTimestamp(3, Timestamp.from(stat.getEndDate()));
+				staleStmt.setTimestamp(2, Timestamp.from(startDate));
+				staleStmt.setTimestamp(3, Timestamp.from(endDate.plus(1, ChronoUnit.HOURS)));
 				staleStmt.execute();
 			}
 		}

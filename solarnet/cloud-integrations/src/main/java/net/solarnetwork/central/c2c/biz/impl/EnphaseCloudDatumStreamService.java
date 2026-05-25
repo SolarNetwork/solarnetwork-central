@@ -343,7 +343,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 							.queryParam(PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
 							.queryParam(PAGE_PARAM, Math.max(1, pagination.page))
 							.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
-					res -> {
+					(_, res) -> {
 						var json = res.getBody();
 						pagination.parseJson(json);
 						return parseSystems(json);
@@ -372,7 +372,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(res.getBody(), systemId));
+				(_, res) -> parseSystemDevices(res.getBody(), systemId));
 	}
 
 	private static class Pagination {
@@ -840,7 +840,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 									.queryParam(GRANULARITY_PARAM, EnphaseGranularity
 											.forQueryDateRange(filterStartDate, filterEndDate).getKey())
 									.buildAndExpand(queryPlan.systemId).toUri(),
-							res -> {
+							(_, res) -> {
 								var result = parseSiteInverterDatum(res.getBody(), systemInvRefs, ds,
 										sourceIdMap, usedQueryFilter);
 								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
@@ -868,7 +868,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 											nonnull(usedQueryFilter.getEndDate(), "Used end date")
 													.getEpochSecond())
 									.buildAndExpand(queryPlan.systemId).toUri(),
-							res -> {
+							(_, res) -> {
 								var result = parseSiteMeterDatum(res.getBody(), systemMetRefs, ds,
 										sourceIdMap);
 								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
