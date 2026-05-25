@@ -114,7 +114,7 @@ import tools.jackson.databind.JsonNode;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
