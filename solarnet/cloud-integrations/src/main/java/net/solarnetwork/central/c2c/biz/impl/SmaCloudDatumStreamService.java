@@ -109,7 +109,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -171,7 +171,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
 				SOURCE_ID_MAP_SETTING_SPECIFIER,
 				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+				OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
+				VALIDATION_IGNORE_SETTING_SPECIFIER,
+				ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER);
 		// @formatter:on
 	}
 
@@ -203,6 +206,13 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public static final String PV_GENERATION_MEASUREMENT_KEY = "pvGeneration";
 
 	/**
+	 * The {@code energyValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
+
+	/**
 	 * The default maximum period of time to request data for in one call to
 	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
 	 */
@@ -223,6 +233,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	private @Nullable Cache<String, CloudDataValue[]> systemInventoryCache;
 
 	private Duration maxFilterTimeRange = DEFAULT_MAX_FILTER_TIME_RANGE;
+	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -879,6 +890,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			tickSeconds = resolution.getTickAmount().get(ChronoUnit.SECONDS);
 		}
 
+		final double energyValidationThreshold = resolveEnergyValidationThreshold(ds);
+
 		// track the previous timestamp, to know the actual tick seconds between two readings
 		Instant prevTs = null;
 
@@ -890,10 +903,19 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			Instant ts = LocalDateTime.parse(dataNode.get("time").stringValue()).atZone(zone)
 					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
+				prevTs = ts;
 				continue;
 			} else if ( endDateIsEod ? ts.isAfter(filter.getEndDate())
 					: !ts.isBefore(filter.getEndDate()) ) {
 				break;
+			}
+
+			if ( maxPower != null && prevTs == null ) {
+				// look up previous datum so we can calculate the expected maximum energy
+				final var prevDatum = lookupPreviousDatum(ds, sourceId, ts);
+				if ( prevDatum != null ) {
+					prevTs = prevDatum.getTimestamp();
+				}
 			}
 
 			final GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
@@ -917,11 +939,13 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					final long secondsDiff = (prevTs != null
 							? ChronoUnit.SECONDS.between(prevTs, datum.getTimestamp())
 							: tickSeconds);
-					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0 * 2.0;
+					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0
+							* energyValidationThreshold;
 					if ( Math.abs(gen.doubleValue()) > expectedMaxEnergy ) {
-						String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
+						String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than %.1fx larger than expected max [%.1f] from device rating [%d]; forcing to 0."
 								.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
-										datum.getTimestamp(), expectedMaxEnergy / 2.0, maxPower);
+										datum.getTimestamp(), energyValidationThreshold,
+										expectedMaxEnergy / energyValidationThreshold, maxPower);
 						log.warn(errMsg);
 						userEventAppenderBiz.addEvent(ds.getUserId(),
 								eventForUserRelatedKey(ds.getId(),
@@ -1190,6 +1214,15 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return null;
 	}
 
+	private double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration ds) {
+		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
+				ds.getServiceProperties());
+		if ( result != null ) {
+			return result;
+		}
+		return getEnergyValidationThreshold();
+	}
+
 	/**
 	 * Get the system time zone cache.
 	 *
@@ -1260,6 +1293,33 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public final void setSystemInventoryCache(
 			@Nullable Cache<String, CloudDataValue[]> systemInventoryCache) {
 		this.systemInventoryCache = systemInventoryCache;
+	}
+
+	/**
+	 * Get the energy validation threshold.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_ENERGY_VALIDATION_THRESHOLD}
+	 * @since 2.3
+	 */
+	public final double getEnergyValidationThreshold() {
+		return energyValidationThreshold;
+	}
+
+	/**
+	 * Set the energy validation threshold.
+	 *
+	 * <p>
+	 * This value represents a multiplication factor by which an energy value
+	 * exceeds the expected maximum energy value for its time period.
+	 * </p>
+	 *
+	 * @param energyValidationThreshold
+	 *        the threshold to set
+	 * @since 2.3
+	 */
+	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
+		this.energyValidationThreshold = energyValidationThreshold;
 	}
 
 }

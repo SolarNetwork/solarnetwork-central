@@ -78,8 +78,10 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -91,6 +93,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -107,7 +110,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -135,6 +138,30 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			VIRTUAL_SOURCE_IDS_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code OPERATIONAL_DATE_RANGES_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OPERATIONAL_DATE_RANGES_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code VALIDATION_IGNORE_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier VALIDATION_IGNORE_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			VALIDATION_IGNORE_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code ENERGY_VALIDATION_THRESHOLD_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			ENERGY_VALIDATION_THRESHOLD_SETTING, null);
 
 	/**
 	 * The default duration used if the
@@ -978,6 +1005,40 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			throw new RemoteServiceException(
 					"Failed to execute [%s]: %s".formatted(retryable.getName(), e.getMessage()), e);
 		}
+	}
+
+	/**
+	 * Query for datum just before a given timestamp.
+	 *
+	 * @param ds
+	 *        the datum stream configuration
+	 * @param sourceId
+	 *        the source ID
+	 * @param ts
+	 *        the timestamp to find a previous datum from
+	 * @return the datum, if available
+	 * @since 2.3
+	 */
+	protected @Nullable Datum lookupPreviousDatum(CloudDatumStreamConfiguration ds, String sourceId,
+			Instant ts) {
+		final DatumEntityDao datumDao = getDatumDao();
+		if ( datumDao != null ) {
+			var prevFilter = new BasicDatumCriteria();
+			prevFilter.setObjectKind(ds.getKind());
+			if ( ds.getKind() == ObjectDatumKind.Location ) {
+				prevFilter.setLocationId(ds.getObjectId());
+			} else {
+				prevFilter.setNodeId(ds.getObjectId());
+			}
+			prevFilter.setSourceId(sourceId);
+			prevFilter.setEndDate(ts);
+			prevFilter.setMostRecent(true);
+			var prevResults = datumDao.findFiltered(prevFilter);
+			if ( prevResults.getReturnedResultCount() > 0 ) {
+				return prevResults.iterator().next();
+			}
+		}
+		return null;
 	}
 
 	/**
