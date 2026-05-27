@@ -116,6 +116,13 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		implements CloudDatumStreamService {
 
 	/**
+	 * The {@code energyValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
+
+	/**
 	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
 	 *
 	 * @since 1.12
@@ -161,7 +168,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 2.3
 	 */
 	public static final TextFieldSettingSpecifier ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
-			ENERGY_VALIDATION_THRESHOLD_SETTING, null);
+			ENERGY_VALIDATION_THRESHOLD_SETTING,
+			String.valueOf((long) DEFAULT_ENERGY_VALIDATION_THRESHOLD));
 
 	/**
 	 * The default duration used if the
@@ -215,6 +223,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	private @Nullable QueryAuditor queryAuditor;
 	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 	private @Nullable RetryOperations retryOps;
+	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -1176,6 +1185,33 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
 		// extending classes can override
+	}
+
+	/**
+	 * Get the energy validation threshold.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_ENERGY_VALIDATION_THRESHOLD}
+	 * @since 2.3
+	 */
+	public final double getEnergyValidationThreshold() {
+		return energyValidationThreshold;
+	}
+
+	/**
+	 * Set the energy validation threshold.
+	 *
+	 * <p>
+	 * This value represents a multiplication factor by which an energy value
+	 * exceeds the expected maximum energy value for its time period.
+	 * </p>
+	 *
+	 * @param energyValidationThreshold
+	 *        the threshold to set
+	 * @since 2.3
+	 */
+	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
+		this.energyValidationThreshold = energyValidationThreshold;
 	}
 
 }

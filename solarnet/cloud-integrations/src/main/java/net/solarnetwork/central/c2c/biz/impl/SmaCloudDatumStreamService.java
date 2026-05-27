@@ -206,13 +206,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public static final String PV_GENERATION_MEASUREMENT_KEY = "pvGeneration";
 
 	/**
-	 * The {@code energyValidationThreshold} property default value.
-	 *
-	 * @since 2.3
-	 */
-	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
-
-	/**
 	 * The default maximum period of time to request data for in one call to
 	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
 	 */
@@ -233,7 +226,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	private @Nullable Cache<String, CloudDataValue[]> systemInventoryCache;
 
 	private Duration maxFilterTimeRange = DEFAULT_MAX_FILTER_TIME_RANGE;
-	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -1293,33 +1285,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public final void setSystemInventoryCache(
 			@Nullable Cache<String, CloudDataValue[]> systemInventoryCache) {
 		this.systemInventoryCache = systemInventoryCache;
-	}
-
-	/**
-	 * Get the energy validation threshold.
-	 *
-	 * @return the threshold; defaults to
-	 *         {@link #DEFAULT_ENERGY_VALIDATION_THRESHOLD}
-	 * @since 2.3
-	 */
-	public final double getEnergyValidationThreshold() {
-		return energyValidationThreshold;
-	}
-
-	/**
-	 * Set the energy validation threshold.
-	 *
-	 * <p>
-	 * This value represents a multiplication factor by which an energy value
-	 * exceeds the expected maximum energy value for its time period.
-	 * </p>
-	 *
-	 * @param energyValidationThreshold
-	 *        the threshold to set
-	 * @since 2.3
-	 */
-	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
-		this.energyValidationThreshold = energyValidationThreshold;
 	}
 
 }
