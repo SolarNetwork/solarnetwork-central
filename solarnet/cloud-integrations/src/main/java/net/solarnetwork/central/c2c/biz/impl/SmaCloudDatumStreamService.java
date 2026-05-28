@@ -1219,15 +1219,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return null;
 	}
 
-	private double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration ds) {
-		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
-				ds.getServiceProperties());
-		if ( result != null ) {
-			return result;
-		}
-		return getEnergyValidationThreshold();
-	}
-
 	/**
 	 * Get the system time zone cache.
 	 *

@@ -101,6 +101,7 @@ import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
@@ -1048,6 +1049,26 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Resolve the energy validation threshold for a datum stream.
+	 *
+	 * @param ds
+	 *        the datum stream to resolve the
+	 *        {@link #ENERGY_VALIDATION_THRESHOLD_SETTING} for
+	 * @return the setting value, falling back to
+	 *         {@link #getEnergyValidationThreshold()} if the setting is not
+	 *         available on the datum stream
+	 * @since 2.3
+	 */
+	protected double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration ds) {
+		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
+				ds.getServiceProperties());
+		if ( result != null ) {
+			return result;
+		}
+		return getEnergyValidationThreshold();
 	}
 
 	/**
