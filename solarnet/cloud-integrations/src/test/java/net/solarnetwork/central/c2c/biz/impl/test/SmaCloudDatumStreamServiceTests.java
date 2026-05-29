@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static java.util.Map.entry;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
@@ -46,6 +47,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
+import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -69,6 +71,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SequencedMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -120,18 +123,22 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.util.NumberUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -143,15 +150,18 @@ import tools.jackson.databind.node.ObjectNode;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class SmaCloudDatumStreamServiceTests {
+public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> eventCaptor;
 
 	@Mock
 	private RestOperations restOps;
@@ -3676,6 +3686,12 @@ public class SmaCloudDatumStreamServiceTests {
 			.containsExactlyElementsOf(expectedUris)
 			;
 
+		final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone).toInstant();
+		final Integer expectedGen1 = 10782938;
+
+		final Instant expectedTs3 = LocalDateTime.parse("2025-03-28T07:05:00").atZone(systemTimeZone).toInstant();
+		final Integer expectedGen3 = 101010;
+
 		and.then(result)
 			.as("Datum for entire day parsed from HTTP responses")
 			.hasSize(5)
@@ -3691,14 +3707,13 @@ public class SmaCloudDatumStreamServiceTests {
 			})
 			.satisfies(list -> {
 				final int index1 = 0;
-				final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-						"wh", 0), null, null);
+						"wh", expectedGen1), null, null);
 
 				and.then(list).element(index1, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index1)
 					.returns(expectedTs1, from(Datum::getTimestamp))
-					.as("Datum %d has expected sample data, wh failed validation and set to 0", index1)
+					.as("Datum %d has expected sample data", index1)
 					.returns(expectedSamples1, from(GeneralDatum::getSamples))
 					;
 
@@ -3715,9 +3730,8 @@ public class SmaCloudDatumStreamServiceTests {
 					;
 
 				final int index3 = 3;
-				final Instant expectedTs3 = LocalDateTime.parse("2025-03-28T07:05:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples3 = new DatumSamples(Map.of(
-						"wh", 0), null, null);
+						"wh", expectedGen3), null, null);
 
 				and.then(list).element(index3, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index3)
@@ -3738,6 +3752,45 @@ public class SmaCloudDatumStreamServiceTests {
 					.returns(expectedSamples4, from(GeneralDatum::getSamples))
 					;
 			})
+			;
+
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(3))
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(1).toString(),
+					inv1SourceId,
+					expectedTs1,
+					expectedGen1,
+					300000,
+					service.getEnergyValidationThreshold(),
+					3000.0,
+					3600
+					))
+			;
+		and.then(events.get(4))
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(1).toString(),
+					inv1SourceId,
+					expectedTs3,
+					expectedGen3,
+					300000,
+					service.getEnergyValidationThreshold(),
+					3000.0,
+					3600
+					))
 			;
 		// @formatter:on
 	}
@@ -3808,6 +3861,7 @@ public class SmaCloudDatumStreamServiceTests {
 
 		// configure datum stream
 
+		final double dataValidationThreshold = 1000.0;
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
@@ -3819,7 +3873,7 @@ public class SmaCloudDatumStreamServiceTests {
 				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
 						"/%s/%s".formatted(systemId, deviceId), inv1SourceId
 						),
-				CloudDatumStreamService.ENERGY_VALIDATION_THRESHOLD_SETTING, 1000
+				CloudDatumStreamService.ENERGY_VALIDATION_THRESHOLD_SETTING, dataValidationThreshold
 				));
 		// @formatter:on
 
@@ -3896,6 +3950,9 @@ public class SmaCloudDatumStreamServiceTests {
 			.containsExactlyElementsOf(expectedUris)
 			;
 
+		final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone).toInstant();
+		final Integer expectedGen1 = 10782938;
+
 		and.then(result)
 			.as("Datum for entire day parsed from HTTP responses")
 			.hasSize(5)
@@ -3911,17 +3968,13 @@ public class SmaCloudDatumStreamServiceTests {
 			})
 			.satisfies(list -> {
 				final int index1 = 0;
-				final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-						"wh", 0), null, null);
+						"wh", expectedGen1), null, null);
 
 				and.then(list).element(index1, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index1)
 					.returns(expectedTs1, from(Datum::getTimestamp))
-					.as("""
-						Datum %d has expected sample data, wh set to 0 becuase still over the
-						threshold configured in datum stream settings
-						""", index1)
+					.as("Datum %d has expected sample data", index1)
 					.returns(expectedSamples1, from(GeneralDatum::getSamples))
 					;
 
@@ -3945,10 +3998,7 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(list).element(index3, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index3)
 					.returns(expectedTs3, from(Datum::getTimestamp))
-					.as("""
-						Datum %d has expected sample data, wh passed validation becuase of the
-						very large threshold configured in datum stream settings
-						""", index3)
+					.as("Datum %d has expected sample data", index3)
 					.returns(expectedSamples3, from(GeneralDatum::getSamples))
 					;
 
@@ -3965,7 +4015,68 @@ public class SmaCloudDatumStreamServiceTests {
 					;
 			})
 			;
+
+		then(userEventAppenderBiz).should(times(4)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		and.then(eventCaptor.getAllValues())
+			.last()
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(1).toString(),
+					inv1SourceId,
+					expectedTs1,
+					expectedGen1,
+					300000,
+					dataValidationThreshold,
+					300000.0,
+					3600
+					))
+
+			;
 		// @formatter:on
+	}
+
+	/*-
+	java.lang.AssertionError: [Event data values]
+	Expecting map:
+	{"configId"=8898692900732655469L
+	, "dataValue"=10782938
+	, "dataValueThreshold"=300000.0
+	, "ratedPower"=3600
+	, "source"="/d1700257562d48/18/EnergyAndPowerPv/pvGeneration"
+	, "sourceId"="inv/1"
+	, "duration"=300000
+	, "timestamp"="2025-03-28 10:50:00Z"
+	, "uri"="https://monitoring.smaapis.de/v1/devices/18/measurements/sets/EnergyAndPowerPv/Day?Date=2025-03-28&ReturnEnergyValues=true"
+	, "validationThreshold"=1000.0}
+	
+	
+	 */
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> dataValidationEventData(CloudDatumStreamConfiguration ds, String source,
+			String uri, String sourceId, Instant timestamp, Number dataValue, Number timeDiff,
+			Number validationThreshold, Number dataValueThreshold, Number ratedPower) {
+		// @formatter:off
+		List<Entry<String, Object>> entries = new ArrayList<>(List.of(
+				  entry(CONFIG_ID_DATA_KEY, ds.getConfigId())
+				, entry(SOURCE_DATA_KEY, source)
+				, entry(HTTP_URI_DATA_KEY, uri.toString())
+				, entry(SOURCE_ID_DATA_KEY, sourceId)
+				, entry("timestamp", ISO_DATE_TIME_ALT_UTC.format(timestamp))
+				, entry("dataValue", dataValue)
+				, entry(DURATION_DATA_KEY, timeDiff)
+				, entry("validationThreshold",  NumberUtils.bigDecimalForNumber(validationThreshold))
+				, entry("dataValueThreshold", NumberUtils.bigDecimalForNumber(dataValueThreshold))
+				, entry("ratedPower", ratedPower)
+				));
+		// @formatter:on
+
+		return Map.ofEntries(entries.toArray(Entry[]::new));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -4124,6 +4235,9 @@ public class SmaCloudDatumStreamServiceTests {
 
 		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
+		final Instant failedTs1 = LocalDateTime.parse("2025-03-28T07:05:00").atZone(systemTimeZone).toInstant();
+		final Integer failedValue1 = 101010;
+
 		and.then(httpRequestCaptor.getAllValues())
 			.allSatisfy(req -> {
 				and.then(req)
@@ -4194,14 +4308,13 @@ public class SmaCloudDatumStreamServiceTests {
 					;
 
 				final int index3 = 3;
-				final Instant expectedTs3 = LocalDateTime.parse("2025-03-28T07:05:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples3 = new DatumSamples(Map.of(
-						"wh", 0), null, null);
+						"wh", failedValue1), null, null);
 
 				and.then(list).element(index3, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index3)
-					.returns(expectedTs3, from(Datum::getTimestamp))
-					.as("Datum %d has expected sample data, wh failed validation and set to 0", index3)
+					.returns(failedTs1, from(Datum::getTimestamp))
+					.as("Datum %d has expected sample data", index3)
 					.returns(expectedSamples3, from(GeneralDatum::getSamples))
 					;
 
@@ -4217,6 +4330,27 @@ public class SmaCloudDatumStreamServiceTests {
 					.returns(expectedSamples4, from(GeneralDatum::getSamples))
 					;
 			})
+			;
+
+		then(userEventAppenderBiz).should(times(4)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(3))
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(1).toString(),
+					inv1SourceId,
+					failedTs1,
+					failedValue1,
+					300000,
+					service.getEnergyValidationThreshold(),
+					3000.0,
+					3600
+					))
 			;
 		// @formatter:on
 	}
@@ -4579,6 +4713,11 @@ public class SmaCloudDatumStreamServiceTests {
 			.containsExactlyElementsOf(expectedUris)
 			;
 
+		final Instant failedTs1 = LocalDateTime.parse("2025-07-04T05:25:00").atZone(systemTimeZone).toInstant();
+		final Integer failedValue1 = 165763;
+		final Instant failedTs2 = LocalDateTime.parse("2025-07-04T12:50:00").atZone(systemTimeZone).toInstant();
+		final Integer failedValue2 = 1132;
+
 		and.then(result)
 			.as("Datum for entire day parsed from HTTP responses")
 			.hasSize(166)
@@ -4595,10 +4734,10 @@ public class SmaCloudDatumStreamServiceTests {
 			.satisfies(list -> {
 				and.then(list).element(0, type(GeneralDatum.class))
 					.as("Datum 0 has expected date")
-					.returns(LocalDateTime.parse("2025-07-04T05:25:00").atZone(systemTimeZone).toInstant(), from(Datum::getTimestamp))
+					.returns(failedTs1, from(Datum::getTimestamp))
 					.as("Datum 0 has expected sample data, wh failed validation and set to 0")
 					.returns(new DatumSamples(Map.of(
-							"wh", 0), null, null), from(GeneralDatum::getSamples))
+							"wh", failedValue1), null, null), from(GeneralDatum::getSamples))
 					;
 
 				and.then(list).element(57, type(GeneralDatum.class))
@@ -4611,12 +4750,50 @@ public class SmaCloudDatumStreamServiceTests {
 
 				and.then(list).element(81, type(GeneralDatum.class))
 					.as("Datum 81 has expected date")
-					.returns(LocalDateTime.parse("2025-07-04T12:50:00").atZone(systemTimeZone).toInstant(), from(Datum::getTimestamp))
+					.returns(failedTs2, from(Datum::getTimestamp))
 					.as("Datum 81 has expected sample data, wh failed validation and set to 0")
 					.returns(new DatumSamples(Map.of(
-							"wh", 0), null, null), from(GeneralDatum::getSamples))
+							"wh", failedValue2), null, null), from(GeneralDatum::getSamples))
 					;
 			})
+			;
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(1))
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(0).toString(),
+					inv1SourceId,
+					failedTs1,
+					failedValue1,
+					300000,
+					service.getEnergyValidationThreshold(),
+					1000.0,
+					6000
+					))
+			;
+		and.then(events.get(2))
+			.as("Event tags for control instructions")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
+					"/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(0).toString(),
+					inv1SourceId,
+					failedTs2,
+					failedValue2,
+					300000,
+					service.getEnergyValidationThreshold(),
+					1000.0,
+					6000
+					))
 			;
 		// @formatter:on
 	}

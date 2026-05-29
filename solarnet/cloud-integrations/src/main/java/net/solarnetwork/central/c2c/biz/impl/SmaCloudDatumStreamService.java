@@ -91,7 +91,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
-import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -934,7 +933,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0
 							* energyValidationThreshold;
 					if ( Math.abs(gen.doubleValue()) > expectedMaxEnergy ) {
-						final String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than %.1fx larger than expected max [%.1f] from device rating [%d]; forcing to 0."
+						final String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than %.1fx larger than expected max [%.1f] from device rating [%d]."
 								.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
 										datum.getTimestamp(), energyValidationThreshold,
 										expectedMaxEnergy / energyValidationThreshold, maxPower);
@@ -947,17 +946,16 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 								DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS, errMsg,
 								// @formatter:off
 										Map.of(SOURCE_DATA_KEY, sourceRef,
-												HttpUserEvents.HTTP_URI_DATA_KEY, requestUri,
-												"sourceId", sourceId,
+												HTTP_URI_DATA_KEY, requestUri,
+												SOURCE_ID_DATA_KEY, sourceId,
 												"timestamp", datum.getTimestamp(),
 												"dataValue", gen,
-												"timeDiff", secondsDiff,
+												DURATION_DATA_KEY, secondsDiff * 1000,
 												"validationThreshold", energyValidationThreshold,
 												"dataValueThreshold", expectedMaxEnergy,
 												"ratedPower", maxPower
 										// @formatter:on
 								)));
-						propVal = 0;
 					}
 				}
 
