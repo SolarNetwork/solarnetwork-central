@@ -78,8 +78,10 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -91,6 +93,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -98,6 +101,7 @@ import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
@@ -107,10 +111,17 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
+
+	/**
+	 * The {@code energyValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
 
 	/**
 	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
@@ -135,6 +146,31 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			VIRTUAL_SOURCE_IDS_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code OPERATIONAL_DATE_RANGES_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OPERATIONAL_DATE_RANGES_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code VALIDATION_IGNORE_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier VALIDATION_IGNORE_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			VALIDATION_IGNORE_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code ENERGY_VALIDATION_THRESHOLD_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			ENERGY_VALIDATION_THRESHOLD_SETTING,
+			String.valueOf((long) DEFAULT_ENERGY_VALIDATION_THRESHOLD));
 
 	/**
 	 * The default duration used if the
@@ -188,6 +224,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	private @Nullable QueryAuditor queryAuditor;
 	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 	private @Nullable RetryOperations retryOps;
+	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -981,6 +1018,60 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Query for datum just before a given timestamp.
+	 *
+	 * @param ds
+	 *        the datum stream configuration
+	 * @param sourceId
+	 *        the source ID
+	 * @param ts
+	 *        the timestamp to find a previous datum from
+	 * @return the datum, if available
+	 * @since 2.3
+	 */
+	protected @Nullable Datum lookupPreviousDatum(CloudDatumStreamConfiguration ds, String sourceId,
+			Instant ts) {
+		final DatumEntityDao datumDao = getDatumDao();
+		if ( datumDao != null ) {
+			var prevFilter = new BasicDatumCriteria();
+			prevFilter.setObjectKind(ds.getKind());
+			if ( ds.getKind() == ObjectDatumKind.Location ) {
+				prevFilter.setLocationId(ds.getObjectId());
+			} else {
+				prevFilter.setNodeId(ds.getObjectId());
+			}
+			prevFilter.setSourceId(sourceId);
+			prevFilter.setEndDate(ts);
+			prevFilter.setMostRecent(true);
+			var prevResults = datumDao.findFiltered(prevFilter);
+			if ( prevResults.getReturnedResultCount() > 0 ) {
+				return prevResults.iterator().next();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Resolve the energy validation threshold for a datum stream.
+	 *
+	 * @param ds
+	 *        the datum stream to resolve the
+	 *        {@link #ENERGY_VALIDATION_THRESHOLD_SETTING} for
+	 * @return the setting value, falling back to
+	 *         {@link #getEnergyValidationThreshold()} if the setting is not
+	 *         available on the datum stream
+	 * @since 2.3
+	 */
+	protected double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration ds) {
+		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
+				ds.getServiceProperties());
+		if ( result != null ) {
+			return result;
+		}
+		return getEnergyValidationThreshold();
+	}
+
+	/**
 	 * Get the "multiple datum stream" maximum lag setting for a datum stream.
 	 *
 	 * @param datumStream
@@ -1115,6 +1206,33 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
 		// extending classes can override
+	}
+
+	/**
+	 * Get the energy validation threshold.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_ENERGY_VALIDATION_THRESHOLD}
+	 * @since 2.3
+	 */
+	public final double getEnergyValidationThreshold() {
+		return energyValidationThreshold;
+	}
+
+	/**
+	 * Set the energy validation threshold.
+	 *
+	 * <p>
+	 * This value represents a multiplication factor by which an energy value
+	 * exceeds the expected maximum energy value for its time period.
+	 * </p>
+	 *
+	 * @param energyValidationThreshold
+	 *        the threshold to set
+	 * @since 2.3
+	 */
+	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
+		this.energyValidationThreshold = energyValidationThreshold;
 	}
 
 }

@@ -42,7 +42,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface CloudDatumStreamService
 		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -123,6 +123,18 @@ public interface CloudDatumStreamService
 	 * @since 2.1
 	 */
 	String VALIDATION_IGNORE_SETTING = "validationIgnore";
+
+	/**
+	 * A standard setting for an energy validation threshold.
+	 *
+	 * <p>
+	 * This number value represents a multiplication factor by which an energy
+	 * value exceeds the expected maximum energy value for its time period.
+	 * </p>
+	 *
+	 * @since 2.2
+	 */
+	String ENERGY_VALIDATION_THRESHOLD_SETTING = "energyValidationThreshold";
 
 	/**
 	 * Get a localized collection of the available data value filter criteria.

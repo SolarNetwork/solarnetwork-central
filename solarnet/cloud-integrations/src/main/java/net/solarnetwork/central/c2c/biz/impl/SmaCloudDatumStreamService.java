@@ -91,7 +91,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
-import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -109,7 +108,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -171,7 +170,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
 				SOURCE_ID_MAP_SETTING_SPECIFIER,
 				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+				OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
+				VALIDATION_IGNORE_SETTING_SPECIFIER,
+				ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER);
 		// @formatter:on
 	}
 
@@ -879,6 +881,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			tickSeconds = resolution.getTickAmount().get(ChronoUnit.SECONDS);
 		}
 
+		final double energyValidationThreshold = resolveEnergyValidationThreshold(ds);
+
 		// track the previous timestamp, to know the actual tick seconds between two readings
 		Instant prevTs = null;
 
@@ -890,10 +894,19 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			Instant ts = LocalDateTime.parse(dataNode.get("time").stringValue()).atZone(zone)
 					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
+				prevTs = ts;
 				continue;
 			} else if ( endDateIsEod ? ts.isAfter(filter.getEndDate())
 					: !ts.isBefore(filter.getEndDate()) ) {
 				break;
+			}
+
+			if ( maxPower != null && prevTs == null ) {
+				// look up previous datum so we can calculate the expected maximum energy
+				final var prevDatum = lookupPreviousDatum(ds, sourceId, ts);
+				if ( prevDatum != null ) {
+					prevTs = prevDatum.getTimestamp();
+				}
 			}
 
 			final GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
@@ -917,18 +930,32 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					final long secondsDiff = (prevTs != null
 							? ChronoUnit.SECONDS.between(prevTs, datum.getTimestamp())
 							: tickSeconds);
-					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0 * 2.0;
+					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0
+							* energyValidationThreshold;
 					if ( Math.abs(gen.doubleValue()) > expectedMaxEnergy ) {
-						String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than 2x larger than expected max [%.1f] from device rating [%d]; forcing to 0."
+						final String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than %.1fx larger than expected max [%.1f] from device rating [%d]."
 								.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
-										datum.getTimestamp(), expectedMaxEnergy / 2.0, maxPower);
+										datum.getTimestamp(), energyValidationThreshold,
+										expectedMaxEnergy / energyValidationThreshold, maxPower);
 						log.warn(errMsg);
-						userEventAppenderBiz.addEvent(ds.getUserId(),
-								eventForUserRelatedKey(ds.getId(),
-										DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS, errMsg,
-										Map.of(SOURCE_DATA_KEY, ref.property.getValueReference(),
-												HttpUserEvents.HTTP_URI_DATA_KEY, requestUri)));
-						propVal = 0;
+
+						final String sourceRef = StringUtils.expandTemplateString(
+								ref.property.getValueReference(),
+								Map.of(SYSTEM_ID_FILTER, systemId, DEVICE_ID_FILTER, deviceId));
+						userEventAppenderBiz.addEvent(ds.getUserId(), eventForUserRelatedKey(ds.getId(),
+								DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS, errMsg,
+								// @formatter:off
+										Map.of(SOURCE_DATA_KEY, sourceRef,
+												HTTP_URI_DATA_KEY, requestUri,
+												SOURCE_ID_DATA_KEY, sourceId,
+												"timestamp", datum.getTimestamp(),
+												"dataValue", gen,
+												DURATION_DATA_KEY, secondsDiff * 1000,
+												"validationThreshold", energyValidationThreshold,
+												"dataValueThreshold", expectedMaxEnergy,
+												"ratedPower", maxPower
+										// @formatter:on
+								)));
 					}
 				}
 
