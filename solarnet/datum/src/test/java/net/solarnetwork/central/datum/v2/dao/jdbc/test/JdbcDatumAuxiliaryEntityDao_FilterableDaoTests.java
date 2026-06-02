@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStreamWithAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumAuxiliary;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -36,7 +37,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -46,6 +46,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -95,7 +96,47 @@ public class JdbcDatumAuxiliaryEntityDao_FilterableDaoTests extends BaseDatumJdb
 		s.putAccumulatingSampleValue("w", 100);
 		assertDatumAuxiliary("Found match", results.iterator().next(), new DatumAuxiliaryEntity(streamId,
 				start.plusHours(13).toInstant(), DatumAuxiliaryType.Reset, now(), f, s, null, null));
+	}
 
+	@Test
+	public void delete_nodesAndSourcesAndType_absoluteDates() throws IOException {
+		// GIVEN
+		insertDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-42.txt", getClass(), "UTC");
+
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusDays(1).toInstant());
+		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
+
+		// WHEN
+		final long result = dao.deleteFiltered(filter);
+
+		// THEN
+		then(result).isEqualTo(2L);
+	}
+
+	@Test
+	public void delete_nodesAndSourcesAndType_searchFilter_absoluteDates() throws IOException {
+		// GIVEN
+		insertDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-42.txt", getClass(), "UTC");
+
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusDays(1).toInstant());
+		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
+		filter.setSearchFilter("(pm/n/bim>50)");
+
+		// WHEN
+		final long result = dao.deleteFiltered(filter);
+
+		// THEN
+		then(result).isEqualTo(1L);
 	}
 
 }

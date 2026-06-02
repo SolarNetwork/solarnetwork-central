@@ -39,6 +39,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -57,6 +58,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,6 +67,7 @@ import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -88,6 +92,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -101,7 +106,7 @@ import tools.jackson.databind.JsonNode;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -146,14 +151,15 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
-
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
-				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
-				SOURCE_ID_MAP_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
-				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				  UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER
+				, SOURCE_ID_MAP_SETTING_SPECIFIER
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				, VALIDATION_IGNORE_SETTING_SPECIFIER
+				, TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
@@ -533,7 +539,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/(.+)");
 
 	private record ValueRef(String systemId, String deviceId, String channelName,
-			CloudDatumStreamPropertyConfiguration property, String sourceId) {
+			CloudDatumStreamPropertyConfiguration property, String deviceRef) {
 
 		private ValueRef(String systemId, String deviceId, String channelName,
 				CloudDatumStreamPropertyConfiguration property) {
@@ -583,7 +589,13 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
-			var resultDatum = new ArrayList<GeneralDatum>();
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
+
+			final Map<String, SortedSet<GeneralDatum>> sortedDatumBySource = new HashMap<>(4);
+			final var resultDatum = new ArrayList<GeneralDatum>();
 			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
 					valueProps);
 
@@ -603,7 +615,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				filter.setMax(1);
 
 				fetchDatumForSystem(filter, datumStream, integration, sourceIdMap, planEntry.getValue(),
-						resultDatum);
+						resultDatum, sortedDatumBySource, ignoredValidations, auxiliary);
 			}
 
 			// evaluate expressions on merged datum
@@ -652,6 +664,12 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
+
+			final Map<String, SortedSet<GeneralDatum>> sortedDatumBySource = new HashMap<>(4);
 			final var resultDatum = new ArrayList<GeneralDatum>();
 			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
 					valueProps);
@@ -673,7 +691,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					queryFilter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 
 					fetchDatumForSystem(queryFilter, ds, integration, sourceIdMap, planEntry.getValue(),
-							resultDatum);
+							resultDatum, sortedDatumBySource, ignoredValidations, auxiliary);
 				}
 				queryStartDate = queryEndDate;
 				queryEndDate = queryStartDate.plus(MAX_QUERY_TIME_RANGE);
@@ -722,16 +740,20 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			usedFilter.setStartDate(startDate);
 			usedFilter.setEndDate(endDate);
 
-			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter, finalResult);
+			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter, finalResult,
+					auxiliary);
 		});
 	}
 
 	private void fetchDatumForSystem(BasicQueryFilter filter, CloudDatumStreamConfiguration datumStream,
 			CloudIntegrationConfiguration integration, @Nullable Map<String, String> sourceIdMap,
-			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum) {
+			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum,
+			Map<String, SortedSet<GeneralDatum>> sortedDatumBySource, Set<String> ignoredValidations,
+			List<DatumAuxiliaryRecord> auxiliary) {
 		if ( queryPlan.deviceValueRefs.isEmpty() ) {
 			return;
 		}
+
 		for ( Entry<String, List<ValueRef>> deviceEntry : queryPlan.deviceValueRefs.entrySet() ) {
 			final String deviceId = deviceEntry.getKey();
 			final int limit = filter.getMax() != null ? filter.getMax() : queryLimit;
@@ -749,11 +771,12 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 									.queryParam(OFFSET_PARAM, pageFilter.getOffset())
 									.queryParam(LIMIT_PARAM, limit);
 							return b.buildAndExpand(queryPlan.systemId, deviceId).toUri();
-						}, (_, res) -> {
+						}, (req, res) -> {
 							JsonNode json = res.getBody();
 							links.parseJson(json);
-							return parseDeviceDatum(json, deviceEntry.getValue(), datumStream,
-									sourceIdMap, pageFilter);
+							return parseDeviceDatum(req, json, deviceEntry.getValue(), datumStream,
+									sourceIdMap, pageFilter, sortedDatumBySource, ignoredValidations,
+									auxiliary);
 						});
 				if ( datum != null ) {
 					resultDatum.addAll(datum);
@@ -798,9 +821,11 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 	}
 
-	private List<GeneralDatum> parseDeviceDatum(@Nullable JsonNode json, List<ValueRef> refs,
-			CloudDatumStreamConfiguration ds, @Nullable Map<String, String> sourceIdMap,
-			CloudDatumStreamQueryFilter filter) {
+	private List<GeneralDatum> parseDeviceDatum(RequestEntity<Void> request, @Nullable JsonNode json,
+			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, CloudDatumStreamQueryFilter filter,
+			Map<String, SortedSet<GeneralDatum>> sortedDatumBySource, Set<String> ignoredValidations,
+			List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 			{
 			  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
@@ -821,6 +846,10 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(datumStream)
+				: null);
+
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		// only need to compute the source ID once, as the same for all device data
@@ -828,6 +857,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 		Set<String> channelNames = refs.stream().map(ValueRef::channelName).collect(toUnmodifiableSet());
 
+		Instant prevTs = null;
+		String deviceRef = null;
 		for ( JsonNode dataNode : json.path("data") ) {
 			final Instant ts;
 			try {
@@ -852,10 +883,11 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						continue;
 					}
 					if ( sourceId == null ) {
-						sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+						sourceId = nonEmptyString(resolveSourceId(datumStream, ref, sourceIdMap));
 						if ( sourceId == null ) {
 							return List.of();
 						}
+						deviceRef = ref.deviceRef;
 					}
 
 					Object propVal = parseJsonDatumPropertyValue(channelNode.path("value"),
@@ -871,8 +903,37 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				continue;
 			}
 
-			result.add(
-					new GeneralDatum(DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, ts), s));
+			final var datum = new GeneralDatum(
+					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts), s);
+
+			if ( timeGapDuration != null && deviceRef != null ) {
+				if ( prevTs == null ) {
+					// look up previous datum so we can perform validation
+					// check local data first
+					final SortedSet<GeneralDatum> localDatum = sortedDatumBySource.get(sourceId);
+					if ( localDatum != null ) {
+						var prevLocalDatum = localDatum.headSet(datum);
+						if ( prevLocalDatum != null && !prevLocalDatum.isEmpty() ) {
+							prevTs = prevLocalDatum.getLast().datumIdent().getTimestamp();
+						}
+					}
+					if ( prevTs == null && sourceId != null ) {
+						// query for prev datum
+						var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
+						}
+					}
+				}
+				if ( prevTs != null ) {
+					auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
+							timeGapDuration, prevTs, datum.datumIdent()));
+				}
+			}
+
+			result.add(datum);
+			sortedDatumBySource.computeIfAbsent(sourceId, _ -> new TreeSet<>()).add(datum);
+			prevTs = ts;
 		}
 
 		return result;
@@ -881,10 +942,10 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
 			ValueRef ref, @Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
-			return sourceIdMap.get(ref.sourceId);
+			return sourceIdMap.get(ref.deviceRef);
 		}
 
-		String result = datumStream.getSourceId() + ref.sourceId;
+		String result = datumStream.getSourceId() + ref.deviceRef;
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {

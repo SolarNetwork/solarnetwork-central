@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -152,4 +153,66 @@ public class SearchFilterUtilsTests {
 		assertThat("Invalid != path", result, is(
 				equalTo("$ ? (@.action == \"StartTransaction\" && @.message.idTag! == \"nzbus0002\")")));
 	}
+
+	@Test
+	public void metadataFilterPathToSqlJsonPath_simple() {
+		// GIVEN
+		final String metadataPath = "foo";
+
+		// WHEN
+		String result = SearchFilterUtils.metadataFilterPathToSqlJsonPath(metadataPath);
+
+		// THEN
+		then(result).as("Simple path converted").isEqualTo("foo");
+	}
+
+	@Test
+	public void metadataFilterPathToSqlJsonPath_nested() {
+		// GIVEN
+		final String metadataPath = "foo/bar";
+
+		// WHEN
+		String result = SearchFilterUtils.metadataFilterPathToSqlJsonPath(metadataPath);
+
+		// THEN
+		then(result).as("Nested path converted").isEqualTo("foo.bar");
+	}
+
+	@Test
+	public void metadataFilterPathToSqlJsonPath_absolute() {
+		// GIVEN
+		final String metadataPath = "/foo";
+
+		// WHEN
+		String result = SearchFilterUtils.metadataFilterPathToSqlJsonPath(metadataPath);
+
+		// THEN
+		then(result).as("Absolute path converted").isEqualTo("foo");
+	}
+
+	@Test
+	public void metadataFilterPathToSqlJsonPath_absoluteNested() {
+		// GIVEN
+		final String metadataPath = "/foo/bar";
+
+		// WHEN
+		String result = SearchFilterUtils.metadataFilterPathToSqlJsonPath(metadataPath);
+
+		// THEN
+		then(result).as("Absolute nested path converted").isEqualTo("foo.bar");
+	}
+
+	@Test
+	public void sqlJsonPath_simpleMetadataPath() {
+		// GIVEN
+		SearchFilter f = SearchFilter.forLDAPSearchFilterString("(/m/foo=bar)");
+
+		// WHEN
+		String result = SearchFilterUtils.toSqlJsonPath(f);
+
+		// THEN
+		assertThat("Metadata path convereted to SQL JSON path", result,
+				is(equalTo("$ ? (@.m.foo == \"bar\")")));
+	}
+
 }

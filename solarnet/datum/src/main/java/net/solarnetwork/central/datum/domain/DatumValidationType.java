@@ -1,5 +1,5 @@
 /* ==================================================================
- * CommonValidationType.java - 20/05/2026 10:22:54 am
+ * DatumValidationType.java - 20/05/2026 10:22:54 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,19 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.biz;
+package net.solarnetwork.central.datum.domain;
 
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.domain.KeyedValue;
 
 /**
- * Enumeration of common validation types.
+ * Enumeration of common datum validation types.
  *
  * @author matt
  * @version 1.0
  */
-public enum CommonValidationType implements KeyedValue {
+public enum DatumValidationType implements KeyedValue {
 
 	/**
 	 * Validate energy data values.
@@ -46,15 +46,25 @@ public enum CommonValidationType implements KeyedValue {
 	 */
 	EnergySpike("energy-spike"),
 
+	/**
+	 * Validate datum stream time gaps.
+	 *
+	 * <p>
+	 * This validation looks for unexpected gaps of time in the datum stream.
+	 * </p>
+	 */
+	TimeGap("time-gap"),
+
 	;
 
 	/**
-	 * A mapping of all common valiation type keys to associated enum instances.
+	 * A mapping of all common validation type keys to associated enum
+	 * instances.
 	 */
-	public static final Map<String, CommonValidationType> KEY_MAPPING;
+	public static final Map<String, DatumValidationType> KEY_MAPPING;
 	static {
-		var map = new HashMap<String, CommonValidationType>(CommonValidationType.values().length);
-		for ( CommonValidationType type : CommonValidationType.values() ) {
+		var map = new HashMap<String, DatumValidationType>(DatumValidationType.values().length);
+		for ( DatumValidationType type : DatumValidationType.values() ) {
 			map.put(type.key, type);
 		}
 		KEY_MAPPING = Map.copyOf(map);
@@ -62,7 +72,7 @@ public enum CommonValidationType implements KeyedValue {
 
 	private final String key;
 
-	private CommonValidationType(String key) {
+	private DatumValidationType(String key) {
 		this.key = key;
 	}
 

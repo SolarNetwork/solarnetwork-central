@@ -38,6 +38,7 @@ import static net.solarnetwork.central.c2c.biz.impl.EnphaseGranularity.FifteenMi
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -55,6 +56,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,6 +65,7 @@ import org.apache.commons.lang3.mutable.MutableLong;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -89,6 +92,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -103,7 +107,7 @@ import tools.jackson.databind.JsonNode;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -198,14 +202,15 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
-
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
-				DEVICE_REPORTING_MAXIMUM_LAG_SETTING_SPECIFIER,
-				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
-				SOURCE_ID_MAP_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				  DEVICE_REPORTING_MAXIMUM_LAG_SETTING_SPECIFIER
+				, UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER
+				, SOURCE_ID_MAP_SETTING_SPECIFIER
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, VALIDATION_IGNORE_SETTING_SPECIFIER
+				, TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
@@ -645,7 +650,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
 	private record ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId,
-			String fieldName, CloudDatumStreamPropertyConfiguration property, String sourceId) {
+			String fieldName, CloudDatumStreamPropertyConfiguration property, String deviceRef) {
 
 		private ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId, String fieldName,
 				CloudDatumStreamPropertyConfiguration property) {
@@ -818,6 +823,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
+
 			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
 			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
 					valueProps);
@@ -840,9 +850,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 									.queryParam(GRANULARITY_PARAM, EnphaseGranularity
 											.forQueryDateRange(filterStartDate, filterEndDate).getKey())
 									.buildAndExpand(queryPlan.systemId).toUri(),
-							(_, res) -> {
-								var result = parseSiteInverterDatum(res.getBody(), systemInvRefs, ds,
-										sourceIdMap, usedQueryFilter);
+							(req, res) -> {
+								var result = parseSiteInverterDatum(req, res.getBody(), systemInvRefs,
+										ds, sourceIdMap, usedQueryFilter, ignoredValidations, auxiliary);
 								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
 										res.getBody(), clock.instant(), result);
 								return result;
@@ -868,9 +878,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 											nonnull(usedQueryFilter.getEndDate(), "Used end date")
 													.getEpochSecond())
 									.buildAndExpand(queryPlan.systemId).toUri(),
-							(_, res) -> {
-								var result = parseSiteMeterDatum(res.getBody(), systemMetRefs, ds,
-										sourceIdMap);
+							(req, res) -> {
+								var result = parseSiteMeterDatum(req, res.getBody(), systemMetRefs, ds,
+										sourceIdMap, ignoredValidations, auxiliary);
 								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
 										res.getBody(), clock.instant(), result);
 								return result;
@@ -898,7 +908,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList());
+					r.stream().map(Datum.class::cast).toList(), auxiliary);
 		});
 	}
 
@@ -948,10 +958,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
 			ValueRef ref, @Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
-			return sourceIdMap.get(ref.sourceId);
+			return sourceIdMap.get(ref.deviceRef);
 		}
 
-		String result = datumStream.getSourceId() + ref.sourceId;
+		String result = datumStream.getSourceId() + ref.deviceRef;
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
@@ -961,9 +971,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private List<GeneralDatum> parseSiteInverterDatum(@Nullable JsonNode json, List<ValueRef> refs,
-			CloudDatumStreamConfiguration ds, @Nullable Map<String, String> sourceIdMap,
-			CloudDatumStreamQueryFilter filter) {
+	private List<GeneralDatum> parseSiteInverterDatum(RequestEntity<Void> request,
+			@Nullable JsonNode json, List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, CloudDatumStreamQueryFilter filter,
+			Set<String> ignoredValidations, List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 			{
 			  "system_id": 2875,
@@ -992,13 +1003,18 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(datumStream)
+				: null);
+
 		final Integer totalDeviceCount = json.path("total_devices").intValue();
 
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		// only need to compute the source ID once, as the same for all site inverter data
 		String sourceId = null;
-
+		String deviceRef = null;
+		Instant prevTs = null;
 		for ( JsonNode telem : json.path("intervals") ) {
 			long ts = telem.path(END_AT_PARAM).longValue();
 			if ( ts < 1 ) {
@@ -1011,10 +1027,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			DatumSamples s = new DatumSamples();
 			for ( ValueRef ref : refs ) {
 				if ( sourceId == null ) {
-					sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+					sourceId = nonEmptyString(resolveSourceId(datumStream, ref, sourceIdMap));
 					if ( sourceId == null ) {
 						return List.of();
 					}
+					deviceRef = ref.deviceRef;
 				}
 				JsonNode fieldNode = switch (ref.fieldName) {
 					case "DevicesReporting" -> telem.path("devices_reporting");
@@ -1043,8 +1060,25 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
 			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
-			result.add(new GeneralDatum(
-					DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, ofEpochSecond(ts)), s));
+			final Instant datumTs = ofEpochSecond(ts);
+			final var datum = new GeneralDatum(
+					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, datumTs),
+					s);
+
+			if ( prevTs == null && sourceId != null ) {
+				// look up previous datum so we can perform validation
+				final var prevDatum = lookupPreviousDatum(datumStream, sourceId, datumTs);
+				if ( prevDatum != null ) {
+					prevTs = prevDatum.getTimestamp();
+				}
+			}
+			if ( timeGapDuration != null && prevTs != null && deviceRef != null ) {
+				auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null, timeGapDuration,
+						prevTs, datum.datumIdent()));
+			}
+
+			result.add(datum);
+			prevTs = datumTs;
 		}
 
 		return result;
@@ -1062,8 +1096,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return false;
 	}
 
-	private List<GeneralDatum> parseSiteMeterDatum(@Nullable JsonNode json, List<ValueRef> refs,
-			CloudDatumStreamConfiguration ds, @Nullable Map<String, String> sourceIdMap) {
+	private List<GeneralDatum> parseSiteMeterDatum(RequestEntity<Void> request, @Nullable JsonNode json,
+			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, Set<String> ignoredValidations,
+			List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 			{
 			  "system_id": 2875,
@@ -1113,12 +1149,18 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(datumStream)
+				: null);
+
 		final Integer totalDeviceCount = json.path("total_devices").intValue();
 
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		// only need to compute the source ID once, as the same for all site meter data
 		String sourceId = null;
+		String deviceRef = null;
+		Instant prevTs = null;
 
 		// first gather up phase-level readings
 		final Map<Instant, List<JsonNode>> phaseReadings = hasPhaseRef(refs) ? new HashMap<>(8) : null;
@@ -1135,19 +1177,20 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 
 		for ( JsonNode telem : json.path("intervals") ) {
-			long ts = telem.path(END_AT_PARAM).longValue();
+			final long ts = telem.path(END_AT_PARAM).longValue();
 			if ( ts < 1 ) {
 				continue;
 			}
 
-			Instant date = ofEpochSecond(ts);
-			DatumSamples s = new DatumSamples();
+			final Instant date = ofEpochSecond(ts);
+			final DatumSamples s = new DatumSamples();
 			for ( ValueRef ref : refs ) {
 				if ( sourceId == null ) {
-					sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+					sourceId = nonEmptyString(resolveSourceId(datumStream, ref, sourceIdMap));
 					if ( sourceId == null ) {
 						return List.of();
 					}
+					deviceRef = ref.deviceRef;
 				}
 				Object propVal = null;
 				if ( "DevicesReporting".equals(ref.fieldName) ) {
@@ -1220,8 +1263,24 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
 			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
-			result.add(new GeneralDatum(DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, date),
-					s));
+			final var datum = new GeneralDatum(
+					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, date),
+					s);
+
+			if ( prevTs == null && sourceId != null ) {
+				// look up previous datum so we can perform validation
+				final var prevDatum = lookupPreviousDatum(datumStream, sourceId, date);
+				if ( prevDatum != null ) {
+					prevTs = prevDatum.getTimestamp();
+				}
+			}
+			if ( timeGapDuration != null && prevTs != null && deviceRef != null ) {
+				auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null, timeGapDuration,
+						prevTs, datum.datumIdent()));
+			}
+
+			result.add(datum);
+			prevTs = date;
 		}
 
 		return result;

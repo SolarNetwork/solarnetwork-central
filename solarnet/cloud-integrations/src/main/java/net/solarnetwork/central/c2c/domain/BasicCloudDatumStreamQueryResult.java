@@ -31,20 +31,23 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 
 /**
  * Basic implementation of {@link CloudDatumStreamQueryResult}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "empty" })
-@JsonPropertyOrder({ "returnedResultCount", "usedQueryFilter", "nextQueryFilter", "results" })
+@JsonPropertyOrder({ "returnedResultCount", "usedQueryFilter", "nextQueryFilter", "results",
+		"auxiliary" })
 public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryResult {
 
 	private final @Nullable CloudDatumStreamQueryFilter usedQueryFilter;
 	private final @Nullable CloudDatumStreamQueryFilter nextQueryFilter;
 	private final SequencedCollection<Datum> results;
+	private final @Nullable SequencedCollection<DatumAuxiliaryRecord> auxiliary;
 
 	/**
 	 * Constructor.
@@ -69,10 +72,31 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	public BasicCloudDatumStreamQueryResult(@Nullable CloudDatumStreamQueryFilter usedQueryFilter,
 			@Nullable CloudDatumStreamQueryFilter nextQueryFilter,
 			@Nullable SequencedCollection<Datum> results) {
+		this(usedQueryFilter, nextQueryFilter, results, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param usedQueryFilter
+	 *        the used query filter, or {@code null}
+	 * @param nextQueryFilter
+	 *        the next query filter, or {@code null}
+	 * @param results
+	 *        the results, or {@code null}
+	 * @param auxiliary
+	 *        the auxiliary, or {@code null}
+	 * @since 1.2
+	 */
+	public BasicCloudDatumStreamQueryResult(@Nullable CloudDatumStreamQueryFilter usedQueryFilter,
+			@Nullable CloudDatumStreamQueryFilter nextQueryFilter,
+			@Nullable SequencedCollection<Datum> results,
+			@Nullable SequencedCollection<DatumAuxiliaryRecord> auxiliary) {
 		super();
 		this.usedQueryFilter = usedQueryFilter;
 		this.nextQueryFilter = nextQueryFilter;
 		this.results = (results != null ? results : List.of());
+		this.auxiliary = auxiliary;
 	}
 
 	@Override
@@ -103,6 +127,11 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	@Override
 	public final @Nullable CloudDatumStreamQueryFilter getNextQueryFilter() {
 		return nextQueryFilter;
+	}
+
+	@Override
+	public @Nullable SequencedCollection<DatumAuxiliaryRecord> getAuxiliary() {
+		return auxiliary;
 	}
 
 }

@@ -33,8 +33,10 @@ import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationSe
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_START_DATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_USE_UTC_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewGranularity.FiveMinute;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -43,6 +45,8 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -52,8 +56,12 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,9 +99,19 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -104,7 +122,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class SolrenViewCloudDatumStreamServiceTests {
+public class SolrenViewCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
@@ -138,14 +156,27 @@ public class SolrenViewCloudDatumStreamServiceTests {
 	@Mock
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
+	@Mock
+	private DatumEntityDao datumDao;
+
+	@Captor
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
+
 	@Captor
 	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
+	private static final String COMPONENT_ID_1 = "1013811710134";
+	private static final String COMPONENT_ID_2 = "1013811710042";
+
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
 	private SolrenViewCloudDatumStreamService service;
+
+	private Long requestSiteId;
+	private CloudDatumStreamConfiguration requestDatumStream;
+	private List<URI> requestUris;
 
 	@BeforeEach
 	public void setup() {
@@ -1021,11 +1052,10 @@ public class SolrenViewCloudDatumStreamServiceTests {
 	}
 
 	private CloudDatumStreamQueryResult request(CloudDatumStreamQueryFilter filter,
-			String... xmlResources) {
+			String[] componentIds, final @Nullable Instant firstDatumTs, String... xmlResources) {
 		// GIVEN
 		final Long siteId = randomLong();
-		final String componentId1 = "1013811710134";
-		final String componentId2 = "1013811710042";
+		this.requestSiteId = siteId;
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
@@ -1039,33 +1069,33 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
-		// configure datum stream properties
-		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
-				componentValueRef(siteId, componentId1, "W"));
-		c1p1.setEnabled(true);
+		final String sourceId = randomString();
+		final Instant now = now();
+		final List<CloudDatumStreamPropertyConfiguration> propConfigs = new ArrayList<>(
+				componentIds.length * 2);
+		final Map<String, String> sourceIdMap = new LinkedHashMap<>(componentIds.length * 2);
+		for ( int i = 0, idx = 0; i < componentIds.length; i++ ) {
+			// configure datum stream properties
+			final CloudDatumStreamPropertyConfiguration p1 = new CloudDatumStreamPropertyConfiguration(
+					TEST_USER_ID, mapping.getConfigId(), idx++, now, Instantaneous, "watts", Reference,
+					componentValueRef(siteId, componentIds[i], "W"));
+			p1.setEnabled(true);
 
-		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
-				componentValueRef(siteId, componentId1, "WHL"));
-		c1p2.setEnabled(true);
+			final CloudDatumStreamPropertyConfiguration p2 = new CloudDatumStreamPropertyConfiguration(
+					TEST_USER_ID, mapping.getConfigId(), idx++, now, Accumulating, "wattHours",
+					Reference, componentValueRef(siteId, componentIds[i], "WHL"));
+			p2.setEnabled(true);
 
-		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
-				componentValueRef(siteId, componentId2, "W"));
-		c2p1.setEnabled(true);
-
-		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
-				componentValueRef(siteId, componentId2, "WHL"));
-		c2p2.setEnabled(true);
+			propConfigs.add(p1);
+			propConfigs.add(p2);
+			sourceIdMap.put(componentIds[i], sourceId + "/" + (i + 1));
+		}
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
-				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
+				.willReturn(propConfigs);
 
 		// configure datum stream
 		final Long nodeId = randomLong();
-		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
@@ -1074,11 +1104,9 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// @formatter:off
 		datumStream.setServiceProps(Map.of(
 				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
-				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
-						componentId1, sourceId + "/ONE",
-						componentId2, sourceId + "/TWO"
-				)
+				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, sourceIdMap
 		));
+		this.requestDatumStream = datumStream;
 		// @formatter:on
 
 		// request data
@@ -1091,12 +1119,26 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		service.setMaxTimePeriods(xmlResources.length);
 
+		if ( firstDatumTs != null ) {
+			// lookup previous datum for first datum in result set
+			final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+			final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+					new DatumProperties());
+			given(datumDao.findFiltered(any()))
+					.willReturn(new BasicObjectDatumStreamFilterResults<>(
+							Map.of(prevDatum.streamId(), emptyMeta(prevDatum.streamId(), "UTC",
+									ObjectDatumKind.Node, nodeId, sourceId + "/1")),
+							List.of(prevDatum)));
+		}
+
 		// WHEN
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
 		// @formatter:off
 		then(restOps).should(times(xmlResources.length)).exchange(httpRequestCaptor.capture(), eq(String.class));
+
+		requestUris = new ArrayList<>(4);
 
 		and.then(httpRequestCaptor.getAllValues())
 			.allSatisfy(req -> {
@@ -1111,20 +1153,22 @@ public class SolrenViewCloudDatumStreamServiceTests {
 			.satisfies(l -> {
 				Instant expectedStartDate = truncateDate(filter.getStartDate(), FiveMinute.getTickDuration(), UTC);
 				for (int i = 0; i < l.size(); i++ ) {
+					URI expectedUri = fromUri(BASE_URI)
+							.path(XML_FEED_PATH)
+							.queryParam(XML_FEED_USE_UTC_PARAM)
+							.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+							.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+							.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+							.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+							.buildAndExpand(
+									siteId,
+									expectedStartDate.plus(5 * i, ChronoUnit.MINUTES),
+									expectedStartDate.plus(5 * (i + 1), ChronoUnit.MINUTES))
+							.toUri();
+					requestUris.add(expectedUri);
 					and.then(l).element(i)
 						.as("Request URI %d", (i+1))
-						.isEqualTo(fromUri(BASE_URI)
-								.path(XML_FEED_PATH)
-								.queryParam(XML_FEED_USE_UTC_PARAM)
-								.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
-								.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
-								.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
-								.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
-								.buildAndExpand(
-										siteId,
-										expectedStartDate.plus(5 * i, ChronoUnit.MINUTES),
-										expectedStartDate.plus(5 * (i + 1), ChronoUnit.MINUTES))
-								.toUri())
+						.isEqualTo(expectedUri)
 						;
 				}
 			})
@@ -1132,7 +1176,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		and.then(result)
 			.as("Datum parsed from HTTP response")
-			.hasSize(2)
+			.hasSize(componentIds.length)
 			.allSatisfy(d -> {
 				and.then(d)
 					.as("Datum kind is from DatumStream configuration")
@@ -1152,7 +1196,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		BasicQueryFilter filter = new BasicQueryFilter();
 		filter.setStartDate(Instant.parse("2024-10-16T22:50:00Z"));
 		filter.setEndDate(filter.getStartDate().plus(FiveMinute.getTickDuration()));
-		final CloudDatumStreamQueryResult result = request(filter, "solrenview-site-data-01.xml");
+		final CloudDatumStreamQueryResult result = request(filter,
+				new String[] { COMPONENT_ID_1, COMPONENT_ID_2 }, null, "solrenview-site-data-01.xml");
 
 		// THEN
 		// @formatter:off
@@ -1175,7 +1220,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		BasicQueryFilter filter = new BasicQueryFilter();
 		filter.setStartDate(Instant.parse("2024-10-16T22:50:00Z"));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
-		final CloudDatumStreamQueryResult result = request(filter, "solrenview-site-data-01.xml");
+		final CloudDatumStreamQueryResult result = request(filter,
+				new String[] { COMPONENT_ID_1, COMPONENT_ID_2 }, null, "solrenview-site-data-01.xml");
 
 		// THEN
 		// @formatter:off
@@ -1190,6 +1236,95 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.returns(filter.getStartDate().plus(FiveMinute.getTickDuration()), from(CloudDatumStreamQueryFilter::getStartDate))
 					.as("Given end period returned because max periods reached")
 					.returns(truncateDate(filter.getEndDate(), FiveMinute.getTickDuration(), UTC), from(CloudDatumStreamQueryFilter::getEndDate))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestDatum_timeJump() {
+		// GIVEN
+		service.setDatumDao(datumDao);
+
+		final Instant firstDatumTs = Instant.parse("2024-10-16T22:50:00Z");
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(Instant.parse("2024-10-16T22:50:00Z"));
+		filter.setEndDate(filter.getStartDate().plus(FiveMinute.getTickDuration()));
+		final CloudDatumStreamQueryResult result = request(filter, new String[] { COMPONENT_ID_1 },
+				firstDatumTs, "solrenview-site-data-01.xml");
+
+		// THEN
+		// @formatter:off
+
+		// lookup prev datum
+		final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+		final String deviceRef = "/%d/%s".formatted(requestSiteId, COMPONENT_ID_1);
+		final String mappedSourceId = requestDatumStream.getSourceId() + "/1";
+		then(datumDao).should().findFiltered(datumCriteriaCaptor.capture());
+		and.then(datumCriteriaCaptor.getValue())
+			.as("Prev datum query is for most recent")
+			.returns(true, from(DatumCriteria::isMostRecent))
+			.as("Prev datum query end date is first datum timestamp")
+			.returns(firstDatumTs, from(DatumCriteria::getEndDate))
+			.as("Prev datum query is for CloudDatumStream kind")
+			.returns(requestDatumStream.getKind(), from(DatumCriteria::getObjectKind))
+			.as("Prev datum query is for CloudDatumStream object (node) ID")
+			.returns(requestDatumStream.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("Prev datum query is for expected source ID")
+			.returns(mappedSourceId, from(DatumCriteria::getSourceId))
+			;
+
+		and.then(result)
+			.as("Result returned")
+			.isNotNull()
+			.satisfies(_ -> {
+				and.then(result.getNextQueryFilter())
+				.as("No next query returned because within max time periods")
+					.isNull()
+					;
+			})
+			;
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(requestDatumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(requestDatumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(mappedSourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap start event datum")
+					.containsAllEntriesOf(timeGapValidationMetadata(deviceRef, requestUris.get(0),
+							null, prevDatumTs, firstDatumTs, true, null))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(firstDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap end event datum")
+					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(deviceRef, requestUris.get(0),
+							null, prevDatumTs, firstDatumTs, false,
+							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)) )
 					;
 			})
 			;

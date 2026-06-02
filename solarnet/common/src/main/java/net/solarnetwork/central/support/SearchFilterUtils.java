@@ -39,7 +39,7 @@ import net.solarnetwork.util.StringUtils;
  * Utilities for working with {@link SearchFilter} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("JdkObsolete")
 public final class SearchFilterUtils {
@@ -130,7 +130,7 @@ public final class SearchFilterUtils {
 					}
 				}
 				if ( !node.hasNestedFilter() ) {
-					LogicOperator op = (ref != null ? ref.op : LogicOperator.AND);
+					final LogicOperator op = (ref != null ? ref.op : LogicOperator.AND);
 					final Map<String, ?> filter = nonnull(node.getFilter(), "filter");
 					for ( Entry<String, ?> e : filter.entrySet() ) {
 						switch (op) {
@@ -148,11 +148,11 @@ public final class SearchFilterUtils {
 								buf.append("!(");
 								break;
 						}
-						String k = e.getKey();
-						Object v = e.getValue();
+						final String k = metadataFilterPathToSqlJsonPath(e.getKey());
+						final Object v = e.getValue();
 						if ( k != null && v != null ) {
-							String s = v.toString();
-							Number n = StringUtils.numberValue(s);
+							final String s = v.toString();
+							final Number n = StringUtils.numberValue(s);
 							if ( node.getCompareOperator() == CompareOperator.PRESENT ) {
 								buf.append("exists (@.").append(k).append(")");
 							} else {
@@ -244,6 +244,19 @@ public final class SearchFilterUtils {
 			}
 		}
 		return (!buf.isEmpty() ? buf.toString() : null);
+	}
+
+	/**
+	 * Convert a metadata filter path to a SQL JSON path.
+	 * 
+	 * @param filterPath
+	 *        the metadata filter path, for example {@code m/room}
+	 * @return the SQL JSON path
+	 * @since 1.2
+	 */
+	public static String metadataFilterPathToSqlJsonPath(String filterPath) {
+		String result = filterPath.replace('/', '.');
+		return (result.startsWith(".") ? result.substring(1) : result);
 	}
 
 }

@@ -33,7 +33,7 @@ import java.time.ZoneOffset;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;

@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumAuxiliaryCriteria.java - 28/11/2020 8:44:10 am
+ * DatumAuxiliaryFilter.java - 26/05/2026 3:45:43 pm
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,24 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.datum.domain;
 
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.common.dao.SearchFilterCriteria;
+import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
- * Search criteria for datum auxiliary streams.
- *
- * <p>
- * The {@link #getSearchFilter()} value supports LDAP-style metadata filters.
- * </p>
+ * Filter API for datum auxiliary related data.
  *
  * @author matt
- * @version 1.1
- * @since 2.8
+ * @version 1.0
  */
-public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria, SearchFilterCriteria {
+public interface DatumAuxiliaryFilter extends Filter {
 
 	/**
 	 * Get an auxiliary type.
@@ -51,7 +46,6 @@ public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria, SearchFilt
 	 * Test if a datum auxiliary type criteria is available.
 	 *
 	 * @return {@code true} if a {@link DatumAuxiliaryType} is specified
-	 * @since 1.1
 	 */
 	default boolean hasDatumAuxiliaryTypeCriteria() {
 		return getDatumAuxiliaryType() != null;

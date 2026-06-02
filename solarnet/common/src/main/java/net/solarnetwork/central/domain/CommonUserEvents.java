@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface CommonUserEvents {
 
@@ -171,6 +171,14 @@ public interface CommonUserEvents {
 	 * @since 1.5
 	 */
 	String DURATION_DATA_KEY = "duration";
+
+	/**
+	 * An identifier to correlate multiple events together, for example a
+	 * time-gap ID for the start/end events.
+	 *
+	 * @since 1.6
+	 */
+	String CORRELATION_ID_DATA_KEY = "correlationId";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

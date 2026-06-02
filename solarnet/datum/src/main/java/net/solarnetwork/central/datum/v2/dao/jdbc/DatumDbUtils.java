@@ -65,7 +65,6 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -89,6 +88,7 @@ import net.solarnetwork.central.domain.AuditNodeServiceValue;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -927,8 +927,8 @@ public final class DatumDbUtils {
 			Iterable<DatumAuxiliary> datums) {
 		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
-					"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
-							+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
+					"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as,jmeta) "
+							+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb,?::jsonb)")) {
 				for ( DatumAuxiliary d : datums ) {
 					String sf = (d.getSamplesFinal() != null
 							? getJSONString(d.getSamplesFinal().getA(), null)
@@ -936,6 +936,7 @@ public final class DatumDbUtils {
 					String ss = (d.getSamplesStart() != null
 							? getJSONString(d.getSamplesStart().getA(), null)
 							: null);
+					String m = (d.getMetadata() != null ? getJSONString(d.getMetadata(), null) : null);
 					if ( log != null ) {
 						log.debug("Inserting DatumAuxiliary {}; {} -> {}", d.getId(), sf, ss);
 					}
@@ -944,6 +945,7 @@ public final class DatumDbUtils {
 					datumStmt.setString(3, d.getType().name());
 					datumStmt.setString(4, sf);
 					datumStmt.setString(5, ss);
+					datumStmt.setString(6, m);
 					datumStmt.execute();
 				}
 			}

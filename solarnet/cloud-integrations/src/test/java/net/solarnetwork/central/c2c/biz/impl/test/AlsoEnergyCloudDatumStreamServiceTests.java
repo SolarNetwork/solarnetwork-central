@@ -30,8 +30,10 @@ import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamSe
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Avg;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Last;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -50,10 +52,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -95,11 +100,22 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -112,15 +128,18 @@ import tools.jackson.databind.node.ObjectNode;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class AlsoEnergyCloudDatumStreamServiceTests {
+public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> eventCaptor;
 
 	@Mock
 	private RestOperations restOps;
@@ -148,6 +167,12 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
+
+	@Mock
+	private DatumEntityDao datumDao;
+
+	@Captor
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -1282,6 +1307,476 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 			.returns(Instant.parse("2024-12-30T21:54:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
 			;
 
+		// @formatter:on
+	}
+
+	@Test
+	public void timeGap_withinRequest() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+		final Long hardwareId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+		prop1.setMultiplier(new BigDecimal("1000"));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+		prop2.setMultiplier(new BigDecimal("1000"));
+		prop2.setScale(0);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-05.json", getClass()), ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		final ZonedDateTime startTs = ZonedDateTime.parse("2024-11-21T10:00:00+00:00");
+		final ZonedDateTime endTs = startTs.plusDays(5);
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startTs.toInstant());
+		filter.setEndDate(endTs.toInstant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI expectedUri = BASE_URI.resolve(BIN_DATA_URL
+				+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+						ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(filter.getStartDate().atZone(UTC).toLocalDateTime()),
+						ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(filter.getEndDate().atZone(UTC).toLocalDateTime())
+						));
+
+		final List<Map<String, Object>> expectedBody = List.of(
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				);
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
+			.returns(expectedBody, from(RequestEntity::getBody))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(3)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(expectedSourceId, from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("watts", 123400);
+				expectedSamples1.putAccumulatingSampleValue("wattHours", 438201);
+
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-11-21T10:00:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples2 = new DatumSamples();
+				expectedSamples2.putInstantaneousSampleValue("watts", 234500);
+				expectedSamples2.putAccumulatingSampleValue("wattHours", 438301);
+
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-11-25T10:00:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples2, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples3 = new DatumSamples();
+				expectedSamples3.putInstantaneousSampleValue("watts", 345600);
+				expectedSamples3.putAccumulatingSampleValue("wattHours", 438401);
+
+				and.then(list)
+					.element(2)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-11-25T10:01:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples3, from(Datum::asSampleOperations))
+					;
+			})
+			;
+
+		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(0))
+			.as("Event tags for HTTP req")
+			.returns(new String[] {CLOUD_INTEGRATIONS_TAG, CLOUD_INTEGRATION_TAG, HTTP_TAG}, from(LogEventInfo::getTags))
+			;
+		and.then(events.get(1))
+			.as("Event tags for data validation")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			;
+
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(expectedSourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				final Instant timeGapStartTs =
+						ZonedDateTime.parse("2024-11-21T10:00:00+00:00").toInstant();
+				final Instant timeGapEndTs =
+						ZonedDateTime.parse("2024-11-25T10:00:00+00:00").toInstant();
+
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap start event datum")
+					.containsAllEntriesOf(timeGapValidationMetadata(
+							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, true, null))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap end event datum")
+					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
+							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, false,
+							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void timeGap_lookupPrevDatum() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+		final Long hardwareId = randomLong();
+
+		service.setDatumDao(datumDao);
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+		prop1.setMultiplier(new BigDecimal("1000"));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+		prop2.setMultiplier(new BigDecimal("1000"));
+		prop2.setScale(0);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-01.json", getClass()), ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// lookup previous datum for first datum in result set
+		final String expectedSourceId = datumStream.getSourceId()
+				+ "/%s/%s".formatted(siteId, hardwareId);
+		final Instant firstDatumTs = ZonedDateTime.parse("2024-11-21T10:00:00+00:00").toInstant();
+		final Instant prevDatumTs = ZonedDateTime.parse("2024-11-11T10:00:00+00:00").toInstant();
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+				new DatumProperties());
+		given(datumDao.findFiltered(any()))
+				.willReturn(
+						new BasicObjectDatumStreamFilterResults<>(
+								Map.of(prevDatum.streamId(), emptyMeta(prevDatum.streamId(), "UTC",
+										datumStream.getKind(), nodeId, expectedSourceId)),
+								List.of(prevDatum)));
+
+		final ZonedDateTime startTs = ZonedDateTime.parse("2024-11-21T10:00:00+00:00");
+		final ZonedDateTime endTs = startTs.plusDays(5);
+
+		// WHEN
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startTs.toInstant());
+		filter.setEndDate(endTs.toInstant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI expectedUri = BASE_URI.resolve(BIN_DATA_URL
+				+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+						ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(filter.getStartDate().atZone(UTC).toLocalDateTime()),
+						ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(filter.getEndDate().atZone(UTC).toLocalDateTime())
+						));
+
+		final List<Map<String, Object>> expectedBody = List.of(
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				);
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
+			.returns(expectedBody, from(RequestEntity::getBody))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		then(datumDao).should().findFiltered(datumCriteriaCaptor.capture());
+		and.then(datumCriteriaCaptor.getValue())
+			.as("Prev datum query is for most recent")
+			.returns(true, from(DatumCriteria::isMostRecent))
+			.as("Prev datum query end date is first datum timestamp")
+			.returns(firstDatumTs, from(DatumCriteria::getEndDate))
+			.as("Prev datum query is for CloudDatumStream kind")
+			.returns(datumStream.getKind(), from(DatumCriteria::getObjectKind))
+			.as("Prev datum query is for CloudDatumStream object (node) ID")
+			.returns(datumStream.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("Prev datum query is for expected source ID")
+			.returns(expectedSourceId, from(DatumCriteria::getSourceId))
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(expectedSourceId, from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("watts", 123400);
+				expectedSamples1.putAccumulatingSampleValue("wattHours", 438201);
+
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(firstDatumTs, from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples2 = new DatumSamples();
+				expectedSamples2.putInstantaneousSampleValue("watts", 234500);
+				expectedSamples2.putAccumulatingSampleValue("wattHours", 438301);
+
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-11-21T10:01:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples2, from(Datum::asSampleOperations))
+					;
+			})
+			;
+
+		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(0))
+			.as("Event tags for HTTP req")
+			.returns(new String[] {CLOUD_INTEGRATIONS_TAG, CLOUD_INTEGRATION_TAG, HTTP_TAG}, from(LogEventInfo::getTags))
+			;
+		and.then(events.get(1))
+			.as("Event tags for data validation")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			;
+
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(expectedSourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap start event datum")
+					.containsAllEntriesOf(timeGapValidationMetadata(
+							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, prevDatumTs, firstDatumTs, true, null))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(firstDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap end event datum")
+					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
+							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, prevDatumTs, firstDatumTs, false,
+							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
+					;
+			})
+			;
 		// @formatter:on
 	}
 

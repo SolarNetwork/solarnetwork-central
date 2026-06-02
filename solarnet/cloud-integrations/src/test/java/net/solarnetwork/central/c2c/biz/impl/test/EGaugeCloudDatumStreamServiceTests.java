@@ -26,8 +26,10 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -37,10 +39,12 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -52,6 +56,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,18 +88,32 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -103,19 +122,22 @@ import tools.jackson.databind.ObjectMapper;
  * Test cases for the {@link EGaugeCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class EGaugeCloudDatumStreamServiceTests {
+public class EGaugeCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents, HttpUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> eventCaptor;
 
 	@Mock
 	private RestOperations restOps;
@@ -143,6 +165,12 @@ public class EGaugeCloudDatumStreamServiceTests {
 
 	@Mock
 	private ClientAccessTokenDao clientAccessTokenDao;
+
+	@Mock
+	private DatumEntityDao datumDao;
+
+	@Captor
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
@@ -419,6 +447,220 @@ public class EGaugeCloudDatumStreamServiceTests {
 											.divide(SECS_PER_HOUR, RoundingMode.DOWN).longValue()
 							), null),
 						Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datum_timeJump() throws IOException {
+		// GIVEN
+		service.setDatumDao(datumDao);
+
+		final String deviceId = randomString();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 0, now(), Instantaneous, "watts", Reference,
+				componentValueRef(deviceId, "use"));
+		c1p1.setEnabled(true);
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(deviceId, "use"));
+		c1p2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				EgaugeCloudDatumStreamService.DEVICE_ID_FILTER, deviceId,
+				CloudIntegrationService.USERNAME_SETTING, "owner",
+				CloudIntegrationService.PASSWORD_SETTING, "Secret123",
+				EgaugeCloudDatumStreamService.GRANULARITY_SETTING, "60"
+		));
+		// @formatter:on
+
+		// pre-populate device register cache to avoid HTTP request
+		CloudDataValue useReg = dataValue(List.of(deviceId, "use"), "use",
+				Map.of("type", "P", "idx", 0));
+		deviceRegistersCache.put(deviceId, new CloudDataValue[] { useReg });
+
+		// make access token available
+		ClientAccessTokenEntity accessToken = new ClientAccessTokenEntity(TEST_USER_ID,
+				userIdSystemIdentifier(TEST_USER_ID, CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, deviceId),
+				"owner", Instant.now(), "Bearer", "TOKEN".getBytes(StandardCharsets.UTF_8),
+				clock.instant().minus(5L, ChronoUnit.MINUTES),
+				clock.instant().plus(1, ChronoUnit.HOURS));
+		given(clientAccessTokenDao.get(accessToken.getId())).willReturn(accessToken);
+
+		final Instant endDate = clock.instant();
+		final Instant startDate = endDate.minusSeconds(60);
+
+		// request register data
+		final JsonNode registerDataJson = objectMapper
+				.readTree(utf8StringResource("egauge-register-data-01.json", getClass()));
+		final var registerDataRes = new ResponseEntity<JsonNode>(registerDataJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(registerDataRes);
+
+		// lookup previous datum for first datum in result set
+		final Instant firstDatumTs = Instant.ofEpochSecond(1729883700L - 60L);
+		final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+				new DatumProperties());
+		given(datumDao.findFiltered(any()))
+				.willReturn(
+						new BasicObjectDatumStreamFilterResults<>(
+								Map.of(prevDatum.streamId(),
+										emptyMeta(prevDatum.streamId(), "UTC", datumStream.getKind(),
+												nodeId, datumStream.getSourceId())),
+								List.of(prevDatum)));
+
+		// WHEN
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		final CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI registerDataUri = fromUriString(EgaugeCloudIntegrationService.BASE_URI_TEMPLATE)
+			.path(EgaugeCloudDatumStreamService.REGISTER_URL_PATH).queryParam("raw")
+			.queryParam("virtual", "value").queryParam("reg", "0")
+			.queryParam("time", "%s:60:%s".formatted(startDate.getEpochSecond(), endDate.getEpochSecond()))
+			.buildAndExpand(deviceId).toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(registerDataUri, from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("Request headers contains token")
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer TOKEN")
+			;
+
+		// lookup prev datum
+		then(datumDao).should().findFiltered(datumCriteriaCaptor.capture());
+		and.then(datumCriteriaCaptor.getValue())
+			.as("Prev datum query is for most recent")
+			.returns(true, from(DatumCriteria::isMostRecent))
+			.as("Prev datum query end date is first datum timestamp")
+			.returns(firstDatumTs, from(DatumCriteria::getEndDate))
+			.as("Prev datum query is for CloudDatumStream kind")
+			.returns(datumStream.getKind(), from(DatumCriteria::getObjectKind))
+			.as("Prev datum query is for CloudDatumStream object (node) ID")
+			.returns(datumStream.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("Prev datum query is for expected source ID")
+			.returns(datumStream.getSourceId(), from(DatumCriteria::getSourceId))
+			;
+
+		// 10044744826787 - 10044736304528
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(1)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), Datum::getSourceId)
+					;
+			})
+			.satisfies(list -> {
+				// inverter
+				and.then(list).element(0)
+					.as("Timestamp from register data delta difference, leading value")
+					.returns(firstDatumTs, from(Datum::getTimestamp))
+					.as("Datum samples from register data")
+					.returns(new DatumSamples(Map.of(
+								"watts", new BigDecimal(10044744826787L - 10044736304528L)
+											.divide(new BigDecimal(60), RoundingMode.DOWN).intValue()
+							), Map.of(
+								"wattHours", new BigDecimal("10044736304528")
+											.divide(SECS_PER_HOUR, RoundingMode.DOWN).longValue()
+							), null),
+						Datum::asSampleOperations)
+					;
+			})
+			;
+
+		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		var events = eventCaptor.getAllValues();
+		and.then(events.get(0))
+			.as("Event tags for HTTP req")
+			.returns(new String[] {CLOUD_INTEGRATIONS_TAG, CLOUD_INTEGRATION_TAG, HTTP_TAG}, from(LogEventInfo::getTags))
+			;
+		and.then(events.get(1))
+			.as("Event tags for data validation")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			;
+
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(datumStream.getSourceId(), from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap start event datum")
+					.containsAllEntriesOf(timeGapValidationMetadata("/%s".formatted(deviceId), registerDataUri,
+							null, prevDatumTs, firstDatumTs, true, null))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(firstDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap end event datum")
+					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata("/%s".formatted(deviceId), registerDataUri,
+							null, prevDatumTs, firstDatumTs, false,
+							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)) )
 					;
 			})
 			;

@@ -114,7 +114,7 @@ CREATE TABLE solardin.din_endpoint (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT din_endpoint_xform_fk FOREIGN KEY (user_id, xform_id)
 		REFERENCES solardin.din_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (xform_id)
 );
 
 
@@ -266,10 +266,10 @@ CREATE TABLE solardin.inin_endpoint (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT inin_endpoint_req_xform_fk FOREIGN KEY (user_id, req_xform_id)
 		REFERENCES solardin.inin_req_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
+		ON UPDATE NO ACTION ON DELETE SET NULL (req_xform_id),
 	CONSTRAINT inin_endpoint_res_xform_fk FOREIGN KEY (user_id, res_xform_id)
 		REFERENCES solardin.inin_res_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (res_xform_id)
 );
 
 
@@ -454,7 +454,7 @@ CREATE TABLE solardin.cin_datum_stream (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT cin_datum_stream_map_fk FOREIGN KEY (user_id, map_id)
 		REFERENCES solardin.cin_datum_stream_map (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (map_id)
 );
 
 

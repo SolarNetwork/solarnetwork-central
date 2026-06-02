@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
  * Primary key for a datum auxiliary entity.

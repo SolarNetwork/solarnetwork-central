@@ -124,6 +124,13 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
 
 	/**
+	 * The {@code timeGapValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final Duration DEFAULT_TIME_GAP_VALIDATION_THRESHOLD = Duration.ofDays(3);
+
+	/**
 	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
 	 *
 	 * @since 1.12
@@ -171,6 +178,15 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public static final TextFieldSettingSpecifier ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			ENERGY_VALIDATION_THRESHOLD_SETTING,
 			String.valueOf((long) DEFAULT_ENERGY_VALIDATION_THRESHOLD));
+
+	/**
+	 * A setting specifier for the
+	 * {@code TIME_GAP_VALIDATION_THRESHOLD_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			TIME_GAP_VALIDATION_THRESHOLD_SETTING, DEFAULT_TIME_GAP_VALIDATION_THRESHOLD.toString());
 
 	/**
 	 * The default duration used if the
@@ -225,6 +241,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 	private @Nullable RetryOperations retryOps;
 	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
+	private Duration timeGapValidationThreshold = DEFAULT_TIME_GAP_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -1020,7 +1037,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/**
 	 * Query for datum just before a given timestamp.
 	 *
-	 * @param ds
+	 * @param datumStream
 	 *        the datum stream configuration
 	 * @param sourceId
 	 *        the source ID
@@ -1029,16 +1046,16 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the datum, if available
 	 * @since 2.3
 	 */
-	protected @Nullable Datum lookupPreviousDatum(CloudDatumStreamConfiguration ds, String sourceId,
-			Instant ts) {
+	protected @Nullable Datum lookupPreviousDatum(CloudDatumStreamConfiguration datumStream,
+			String sourceId, Instant ts) {
 		final DatumEntityDao datumDao = getDatumDao();
 		if ( datumDao != null ) {
 			var prevFilter = new BasicDatumCriteria();
-			prevFilter.setObjectKind(ds.getKind());
-			if ( ds.getKind() == ObjectDatumKind.Location ) {
-				prevFilter.setLocationId(ds.getObjectId());
+			prevFilter.setObjectKind(datumStream.getKind());
+			if ( datumStream.getKind() == ObjectDatumKind.Location ) {
+				prevFilter.setLocationId(datumStream.getObjectId());
 			} else {
-				prevFilter.setNodeId(ds.getObjectId());
+				prevFilter.setNodeId(datumStream.getObjectId());
 			}
 			prevFilter.setSourceId(sourceId);
 			prevFilter.setEndDate(ts);
@@ -1054,7 +1071,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/**
 	 * Resolve the energy validation threshold for a datum stream.
 	 *
-	 * @param ds
+	 * @param datumStream
 	 *        the datum stream to resolve the
 	 *        {@link #ENERGY_VALIDATION_THRESHOLD_SETTING} for
 	 * @return the setting value, falling back to
@@ -1062,13 +1079,29 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *         available on the datum stream
 	 * @since 2.3
 	 */
-	protected double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration ds) {
+	protected double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration datumStream) {
 		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
-				ds.getServiceProperties());
+				datumStream.getServiceProperties());
 		if ( result != null ) {
 			return result;
 		}
 		return getEnergyValidationThreshold();
+	}
+
+	/**
+	 * Resolve the time gap validation threshold for a datum stream.
+	 *
+	 * @param datumStream
+	 *        the datum stream to resolve the
+	 *        {@link #TIME_GAP_VALIDATION_THRESHOLD_SETTING} for
+	 * @return the setting value, falling back to
+	 *         {@link #getTimeGapValidationThreshold()} if the setting is not
+	 *         available on the datum stream
+	 * @since 2.3
+	 */
+	protected Duration resolveTimeGapValidationThreshold(CloudDatumStreamConfiguration datumStream) {
+		return nonnull(datumStream.servicePropertyDuration(TIME_GAP_VALIDATION_THRESHOLD_SETTING,
+				getTimeGapValidationThreshold()), "Time gap validation threshold");
 	}
 
 	/**
@@ -1233,6 +1266,36 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
 		this.energyValidationThreshold = energyValidationThreshold;
+	}
+
+	/**
+	 * Get the time gap validation threshold.
+	 *
+	 * <p>
+	 * This value represents a duration between two datum that must be met to
+	 * trigger a "time gap" style validation event.
+	 * </p>
+	 *
+	 * @return the duration
+	 * @since 2.3
+	 */
+	public final Duration getTimeGapValidationThreshold() {
+		return timeGapValidationThreshold;
+	}
+
+	/**
+	 * Set the time gap validation threshold.
+	 *
+	 * @param timeGapValidationThreshold
+	 *        the value to use; if {@code null} then
+	 *        {@link #DEFAULT_TIME_GAP_VALIDATION_THRESHOLD} will be used
+	 *        instead
+	 * @since 2.3
+	 */
+	public final void setTimeGapValidationThreshold(Duration timeGapValidationThreshold) {
+		this.timeGapValidationThreshold = (timeGapValidationThreshold != null
+				? timeGapValidationThreshold
+				: DEFAULT_TIME_GAP_VALIDATION_THRESHOLD);
 	}
 
 }

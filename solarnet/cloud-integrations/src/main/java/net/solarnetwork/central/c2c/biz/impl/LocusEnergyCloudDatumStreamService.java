@@ -40,6 +40,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -62,12 +63,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -101,6 +105,8 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -138,7 +144,7 @@ import tools.jackson.databind.node.ObjectNode;
  *  }}</pre>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -168,9 +174,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 		// @formatter:off
 		SETTINGS = List.of(
-				granularitySpec,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
-				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				  granularitySpec
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				, VALIDATION_IGNORE_SETTING_SPECIFIER
+				, TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
@@ -618,19 +626,27 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				throw new ValidationException(msg, errors, ms);
 			}
 
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
+
 			final ConcurrentMap<String, Instant> greatestTimestampPerComponent = new ConcurrentHashMap<>(
 					fieldNamesByComponent.size(), 0.9f, 2);
-			final ConcurrentMap<Instant, GeneralDatum> datumByTime = new ConcurrentHashMap<>(
-					fieldNamesByComponent.size(), 0.9f, 2);
+			final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = new ConcurrentSkipListMap<>();
+
+			final Duration timeGapThreshold = (!ignoredValidations.contains(TimeGap.getKey())
+					? resolveTimeGapValidationThreshold(datumStream)
+					: null);
 
 			try {
 				List<Future<Void>> futures = new ArrayList<>(fieldNamesByComponent.size());
 				for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
-					Set<String> fieldNames = reqEntry.getValue();
+					final Set<String> fieldNames = reqEntry.getValue();
+					final String componentRef = "/%s".formatted(reqEntry.getKey());
 					futures.add(executor.submit(() -> {
-						ObjectNode json = restOpsHelper.httpGet("Fetch data", integration,
-								ObjectNode.class, _ -> {
-								// @formatter:off
+						restOpsHelper.httpGet("Fetch data", integration, ObjectNode.class, _ -> {
+							// @formatter:off
 									UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
 											.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
 											.queryParam("gran", granularity.getKey())
@@ -638,59 +654,97 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 											.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
 											;
 									// @formatter:on
-									if ( granularity != LocusEnergyGranularity.Latest
-											&& startDate != null && endDate != null ) {
-										// add date range
-										b.queryParam("start",
-												ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
-										b.queryParam("end",
-												ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
+							if ( granularity != LocusEnergyGranularity.Latest && startDate != null
+									&& endDate != null ) {
+								// add date range
+								b.queryParam("start",
+										ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
+								b.queryParam("end", ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
+							}
+							return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
+									.toUri();
+
+						}, (req, res) -> {
+							final ObjectNode json = nonnull(res.getBody(), "Response body");
+							final MutableBoolean datumIsNew = new MutableBoolean(false);
+							for ( JsonNode dataNode : json.path("data") ) {
+								if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
+
+									final Instant ts;
+									try {
+										ts = Instant.parse(o.get("ts").asString());
+									} catch ( DateTimeParseException dtpe ) {
+										// ignore and continue
+										continue;
 									}
-									return b.buildAndExpand(
-											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
-								}, (_, res) -> nonnull(res.getBody(), "Response body"));
+									datumIsNew.setFalse();
+									final DatumIdentity datumId = ds.datumId(ts).toIdentity();
+									final GeneralDatum datum = datumByTime.computeIfAbsent(datumId,
+											k -> {
+												datumIsNew.setTrue();
+												return new GeneralDatum(k, new DatumSamples());
+											});
+									final DatumSamples samples = datum.getSamples();
 
-						for ( JsonNode dataNode : json.path("data") ) {
-							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
+									boolean foundProp = false;
+									for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+										String fieldName = fieldNamesByProperty.get(property.getId());
 
-								final Instant ts;
-								try {
-									ts = Instant.parse(o.get("ts").asString());
-								} catch ( DateTimeParseException dtpe ) {
-									// ignore and continue
-									continue;
-								}
-
-								final GeneralDatum datum = datumByTime.computeIfAbsent(ts,
-										k -> new GeneralDatum(ds.datumId(k), new DatumSamples()));
-								final DatumSamples samples = datum.getSamples();
-
-								boolean foundProp = false;
-								for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-									String fieldName = fieldNamesByProperty.get(property.getId());
-									JsonNode val = o.get(fieldName);
-									if ( val != null ) {
-										DatumSamplesType propType = property.getPropertyType();
-										Object propVal = parseJsonDatumPropertyValue(val, propType);
-										propVal = property.applyValueTransforms(propVal);
-										if ( propVal != null ) {
-											synchronized ( samples ) {
-												samples.putSampleValue(propType,
-														property.getPropertyName(), propVal);
+										JsonNode val = o.get(fieldName);
+										if ( val != null ) {
+											DatumSamplesType propType = property.getPropertyType();
+											Object propVal = parseJsonDatumPropertyValue(val, propType);
+											propVal = property.applyValueTransforms(propVal);
+											if ( propVal != null ) {
+												synchronized ( samples ) {
+													samples.putSampleValue(propType,
+															property.getPropertyName(), propVal);
+												}
+												if ( !foundProp ) {
+													foundProp = true;
+													// track the greatest timestamp per component to support multi-stream lag
+													greatestTimestampPerComponent.compute(
+															reqEntry.getKey(),
+															(_, v) -> v == null || ts.compareTo(v) > 0
+																	? ts
+																	: v);
+												}
 											}
-											if ( !foundProp ) {
-												foundProp = true;
-												// track the greatest timestamp per component to support multi-stream lag
-												greatestTimestampPerComponent.compute(reqEntry.getKey(),
-														(_, v) -> v == null || ts.compareTo(v) > 0 ? ts
-																: v);
+										}
+									}
+
+									if ( timeGapThreshold != null && foundProp
+											&& datumIsNew.booleanValue() ) {
+										Instant prevTs = null;
+										var localPrevDatum = datumByTime.headMap(datumId);
+										if ( !localPrevDatum.isEmpty() ) {
+											var prevDatum = localPrevDatum.lastEntry().getValue();
+											if ( datumId.getKind() == prevDatum.getKind()
+													&& datumId.getObjectId()
+															.equals(prevDatum.getObjectId())
+													&& datumId.getSourceId()
+															.equals(prevDatum.getSourceId()) ) {
+												prevTs = prevDatum.datumIdent().getTimestamp();
 											}
+										}
+										if ( prevTs == null ) {
+											final var prevDatum = lookupPreviousDatum(datumStream,
+													datumId.getSourceId(), ts);
+											if ( prevDatum != null ) {
+												prevTs = prevDatum.getTimestamp();
+											}
+										}
+										if ( prevTs != null ) {
+											auxiliary.addAll(
+													validateTimeGap(datumStream, req, componentRef, null,
+															timeGapThreshold, prevTs, datumId));
 										}
 									}
 								}
 							}
-						}
+							return null;
+						});
 						return null;
 					}));
 				}
@@ -750,7 +804,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter,
-					r.stream().sorted().map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList(), auxiliary);
 		});
 	}
 }

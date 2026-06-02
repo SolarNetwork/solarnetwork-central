@@ -29,13 +29,12 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.B
 import static net.solarnetwork.central.c2c.biz.impl.SmaResolution.FiveMinute;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
-import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
-import java.net.URI;
 import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.Duration;
@@ -61,10 +60,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.cache.Cache;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -76,7 +77,6 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
-import net.solarnetwork.central.c2c.biz.CommonValidationType;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -91,10 +91,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -173,7 +175,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER,
 				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
 				VALIDATION_IGNORE_SETTING_SPECIFIER,
-				ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER);
+				ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER,
+				TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER);
 		// @formatter:on
 	}
 
@@ -303,7 +306,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
 		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 		List<LocalizedServiceInfo> result = new ArrayList<>(2);
-		for ( String key : new String[] { CommonValidationType.EnergySpike.getKey() } ) {
+		for ( String key : new String[] { DatumValidationType.EnergySpike.getKey() } ) {
 			result.add(new BasicLocalizedServiceInfo(key, locale,
 					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
 					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
@@ -642,8 +645,11 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		usedQueryFilter
 				.setEndDate(nextQueryFilter != null ? nextQueryFilter.getStartDate() : filterEndDate);
 
-		// have to combine measurement set queries into datun instances by source ID, date
-		Map<String, SortedMap<Instant, GeneralDatum>> resultDatum = new LinkedHashMap<>(128);
+		// have to combine measurement set queries into datum instances by source ID, date
+		final Map<String, SortedMap<Instant, GeneralDatum>> resultDatum = new LinkedHashMap<>(128);
+
+		// collect mark records
+		final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 		final Set<String> ignoredValidations = ds.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
 
@@ -692,9 +698,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 											queryPeriod.getKey())
 									.toUri();
 						}, (req, res) -> parseDeviceDatum(integration, devPlan.systemId,
-								devPlan.deviceId, req.getUrl(), res.getBody(), deviceMaxPower,
-								ignoredValidations, usedQueryFilter, devPlan.zone,
-								measurementSetEntry.getValue(), ds, sourceId, resultDatum));
+								devPlan.deviceId, req, res.getBody(), deviceMaxPower, ignoredValidations,
+								usedQueryFilter, devPlan.zone, measurementSetEntry.getValue(), ds,
+								sourceId, resultDatum, auxiliary));
 					}
 				}
 			}
@@ -737,7 +743,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,
-				r.stream().map(Datum.class::cast).toList());
+				r.stream().map(Datum.class::cast).toList(), !auxiliary.isEmpty() ? auxiliary : null);
 	}
 
 	/**
@@ -813,11 +819,12 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	// note an empty list is _always_ returned as we populate resultDatum but return type required
 	private List<GeneralDatum> parseDeviceDatum(CloudIntegrationConfiguration integration,
-			String systemId, String deviceId, URI requestUri, @Nullable JsonNode json,
+			String systemId, String deviceId, RequestEntity<Void> request, @Nullable JsonNode json,
 			Map<String, Integer> deviceMaxPower, Set<String> ignoredValidations,
 			CloudDatumStreamQueryFilter filter, ZoneId zone, List<ValueRef> valueRefs,
 			CloudDatumStreamConfiguration ds, String sourceId,
-			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum) {
+			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum,
+			List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 		{
 		  "plant": {
@@ -842,6 +849,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			return List.of();
 		}
 
+		final Map<String, Object> refParameters = Map.of(SYSTEM_ID_FILTER, systemId, DEVICE_ID_FILTER,
+				deviceId);
+
 		// SMA data is queried by day, and the first data starts at 00:05 and ends at next day at 00:00;
 		// if the filter end date is a whole day, that is normally exclusive but we will cut off the
 		// last element if we omit it so allow that value, even though is inclusive of the end date
@@ -863,7 +873,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// no more than 7680 * 5/60 = 640 Wh. Thus we can discard this data as "invalid" to work around the issue.
 
 		Integer maxPower = null;
-		if ( !ignoredValidations.contains(CommonValidationType.EnergySpike.getKey()) ) {
+		if ( !ignoredValidations.contains(DatumValidationType.EnergySpike.getKey()) ) {
 			maxPower = deviceMaxPower.get(deviceId);
 			if ( maxPower == null ) {
 				maxPower = resolveDeviceGeneratorPower(integration, systemId, deviceId);
@@ -872,6 +882,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				}
 			}
 		}
+
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(ds)
+				: null);
 
 		// use the resolution value as the fallback time value between readings, i.e. for the first reading of the day
 		long tickSeconds = 0;
@@ -901,19 +915,23 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				break;
 			}
 
-			if ( maxPower != null && prevTs == null ) {
-				// look up previous datum so we can calculate the expected maximum energy
+			if ( (maxPower != null || timeGapDuration != null) && prevTs == null ) {
+				// look up previous datum so we can perform validation
 				final var prevDatum = lookupPreviousDatum(ds, sourceId, ts);
 				if ( prevDatum != null ) {
 					prevTs = prevDatum.getTimestamp();
 				}
 			}
 
+			// only track time-gap validation on new datum
+			final var datumIsNew = new MutableBoolean(false);
 			final GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
-					.computeIfAbsent(ts,
-							k -> new GeneralDatum(
-									DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
-									new DatumSamples()));
+					.computeIfAbsent(ts, k -> {
+						datumIsNew.setTrue();
+						return new GeneralDatum(
+								DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
+								new DatumSamples());
+					});
 			for ( ValueRef ref : valueRefs ) {
 				JsonNode measurementNode = dataNode.path(ref.measurement.name());
 				if ( measurementNode == null || measurementNode.isNull()
@@ -926,37 +944,15 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						&& ref.measurementSet.name().startsWith("Energy")
 						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
 						&& propVal instanceof Number gen ) {
-					// use the number of seconds between this reading and the previous, or for the first reading the resolution
-					final long secondsDiff = (prevTs != null
-							? ChronoUnit.SECONDS.between(prevTs, datum.getTimestamp())
-							: tickSeconds);
-					final double expectedMaxEnergy = maxPower.doubleValue() * secondsDiff / 3600.0
-							* energyValidationThreshold;
-					if ( Math.abs(gen.doubleValue()) > expectedMaxEnergy ) {
-						final String errMsg = "Source [%s] system %s device %s energy reading [%.1f] @ %s more than %.1fx larger than expected max [%.1f] from device rating [%d]."
-								.formatted(sourceId, systemId, deviceId, gen.doubleValue(),
-										datum.getTimestamp(), energyValidationThreshold,
-										expectedMaxEnergy / energyValidationThreshold, maxPower);
-						log.warn(errMsg);
+					auxiliary.addAll(validateEnergyDataValue(ds, request,
+							ref.property.getValueReference(), refParameters, gen, maxPower,
+							energyValidationThreshold,
+							prevTs != null ? prevTs : ts.minusSeconds(tickSeconds), datum.datumIdent()));
+				}
 
-						final String sourceRef = StringUtils.expandTemplateString(
-								ref.property.getValueReference(),
-								Map.of(SYSTEM_ID_FILTER, systemId, DEVICE_ID_FILTER, deviceId));
-						userEventAppenderBiz.addEvent(ds.getUserId(), eventForUserRelatedKey(ds.getId(),
-								DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS, errMsg,
-								// @formatter:off
-										Map.of(SOURCE_DATA_KEY, sourceRef,
-												HTTP_URI_DATA_KEY, requestUri,
-												SOURCE_ID_DATA_KEY, sourceId,
-												"timestamp", datum.getTimestamp(),
-												"dataValue", gen,
-												DURATION_DATA_KEY, secondsDiff * 1000,
-												"validationThreshold", energyValidationThreshold,
-												"dataValueThreshold", expectedMaxEnergy,
-												"ratedPower", maxPower
-										// @formatter:on
-								)));
-					}
+				if ( datumIsNew.booleanValue() && timeGapDuration != null && prevTs != null ) {
+					auxiliary.addAll(validateTimeGap(ds, request, ref.property.getValueReference(),
+							refParameters, timeGapDuration, prevTs, datum.datumIdent()));
 				}
 
 				if ( propVal instanceof Map<?, ?> m ) {

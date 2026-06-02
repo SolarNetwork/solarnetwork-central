@@ -1,0 +1,9 @@
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 11:59:00Z","samples":{"i":{"x":1.1,"y":1.1},"a":{"w":10}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 12:58:00Z","type":"Reset","final":{"a":{"w":10}},"start":{"a":{"w":40}},"meta":{"m":{"foo":"bar"},"pm":{"n":{"bim":11}}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 12:59:00Z","samples":{"i":{"x":1.7,"y":7.1},"a":{"w":40}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 13:00:00Z","type":"Reset","final":{"a":{"w":41}},"start":{"a":{"w":100}},"meta":{"m":{"foo":"baz"},"pm":{"n":{"bim":99}}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 13:09:00Z","samples":{"i":{"x":1.8,"y":8.1},"a":{"w":105}}}

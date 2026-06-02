@@ -1,7 +1,7 @@
 /* ==================================================================
- * SelectDatumAuxiliaryTests.java - 28/11/2020 10:07:49 am
+ * DeleteDatumAuxiliaryByFilterTests.java - 27/05/2026 2:06:55 pm
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,11 +24,9 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.support.SearchFilterUtils.toSqlJsonPath;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.util.ClassUtils.getResourceAsString;
 import static net.solarnetwork.util.SearchFilter.forLDAPSearchFilterString;
 import static org.assertj.core.api.BDDAssertions.and;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,7 +36,6 @@ import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
@@ -49,23 +46,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumAuxiliaryByFilter;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
- * Test cases for the {@link SelectDatumAuxiliary} class.
+ * Test cases for the {@link DeleteDatumAuxiliaryByFilter} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class SelectDatumAuxiliaryTests {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
+public class DeleteDatumAuxiliaryByFilterTests {
 
 	@Mock
 	private Connection con;
@@ -82,45 +75,6 @@ public class SelectDatumAuxiliaryTests {
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
 
-	@Test
-	public void sql_nodesAndSources_absoluteDates() {
-		// GIVEN
-		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeIds(new Long[] { 1L, 2L });
-		filter.setSourceIds(new String[] { "a/*", "b" });
-		filter.setStartDate(start.toInstant());
-		filter.setEndDate(start.plusMonths(1).toInstant());
-
-		// WHEN
-		String sql = new SelectDatumAuxiliary(filter).getSql();
-
-		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-aux-nodesAndSources-dates.sql",
-				TestSqlResources.class));
-	}
-
-	@Test
-	public void sql_nodesAndSourcesAndType_absoluteDates() {
-		// GIVEN
-		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeIds(new Long[] { 1L, 2L });
-		filter.setSourceIds(new String[] { "a/*", "b" });
-		filter.setStartDate(start.toInstant());
-		filter.setEndDate(start.plusMonths(1).toInstant());
-		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
-
-		// WHEN
-		String sql = new SelectDatumAuxiliary(filter).getSql();
-
-		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-aux-nodesAndSourcesAndType-dates.sql", TestSqlResources.class));
-	}
-
 	private void thenSqlEqualsResource(String sql, String resource) {
 		// @formatter:off
 		and.then(sql)
@@ -134,7 +88,7 @@ public class SelectDatumAuxiliaryTests {
 	}
 
 	@Test
-	public void prep_nodesAndSourcesAndType_absoluteDates() throws SQLException {
+	public void nodesAndSourcesAndType_absoluteDates() throws SQLException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -144,8 +98,7 @@ public class SelectDatumAuxiliaryTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
 
-		given(con.prepareStatement(any(), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
+		given(con.prepareStatement(any())).willReturn(stmt);
 
 		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
@@ -156,12 +109,11 @@ public class SelectDatumAuxiliaryTests {
 		stmt.setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
 
 		// WHEN
-		PreparedStatement result = new SelectDatumAuxiliary(filter).createPreparedStatement(con);
+		PreparedStatement result = new DeleteDatumAuxiliaryByFilter(filter).createPreparedStatement(con);
 
 		// THEN
-		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-aux-nodesAndSourcesAndType-dates.sql");
+		then(con).should().prepareStatement(sqlCaptor.capture());
+		thenSqlEqualsResource(sqlCaptor.getValue(), "delete-datum-aux-nodesAndSources-dates.sql");
 
 		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
 		then(nodeIdsArray).should().free();
@@ -173,7 +125,7 @@ public class SelectDatumAuxiliaryTests {
 	}
 
 	@Test
-	public void prep_nodesAndSourcesAndType_searchFilter_absoluteDates() throws SQLException {
+	public void nodesAndSourcesAndType_searchFilter_absoluteDates() throws SQLException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -184,8 +136,7 @@ public class SelectDatumAuxiliaryTests {
 		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
 		filter.setSearchFilter("(m.foo=bar)");
 
-		given(con.prepareStatement(any(), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
+		given(con.prepareStatement(any())).willReturn(stmt);
 
 		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
@@ -197,13 +148,12 @@ public class SelectDatumAuxiliaryTests {
 		stmt.setString(6, toSqlJsonPath(forLDAPSearchFilterString(filter.getSearchFilter())));
 
 		// WHEN
-		PreparedStatement result = new SelectDatumAuxiliary(filter).createPreparedStatement(con);
+		PreparedStatement result = new DeleteDatumAuxiliaryByFilter(filter).createPreparedStatement(con);
 
 		// THEN
-		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		then(con).should().prepareStatement(sqlCaptor.capture());
 		thenSqlEqualsResource(sqlCaptor.getValue(),
-				"select-datum-aux-nodesAndSourcesAndType-searchFilter-dates.sql");
+				"delete-datum-aux-nodesAndSources-searchFilter-dates.sql");
 
 		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
 		then(nodeIdsArray).should().free();

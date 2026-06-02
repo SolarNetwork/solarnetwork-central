@@ -30,7 +30,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 

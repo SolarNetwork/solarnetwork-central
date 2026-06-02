@@ -35,6 +35,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.ACTIVE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEACTIVATED_AT_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
@@ -66,6 +67,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -104,7 +106,6 @@ import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
-import net.solarnetwork.central.c2c.biz.CommonValidationType;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.SmaCloudDatumStreamService;
@@ -125,18 +126,23 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.NumberUtils;
 import tools.jackson.databind.JsonNode;
@@ -190,6 +196,9 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 	@Mock
 	private DatumEntityDao datumDao;
 
+	@Captor
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
+
 	@Mock
 	private Cache<String, ZoneId> systemTimeZoneCache;
 
@@ -198,9 +207,6 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
-
-	@Captor
-	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now(), UTC);
 
@@ -3764,7 +3770,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(1).toString(),
+					expectedUris.get(1),
 					inv1SourceId,
 					expectedTs1,
 					expectedGen1,
@@ -3782,7 +3788,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(1).toString(),
+					expectedUris.get(1),
 					inv1SourceId,
 					expectedTs3,
 					expectedGen3,
@@ -3791,6 +3797,68 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					3000.0,
 					3600
 					))
+			;
+
+
+		// validate that Mark records created
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for each validation event")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for Inv1 source")
+					.returns(inv1SourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(expectedTs1, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 3600,
+						"dataValueThreshold", 3000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
+							DatumAuxiliary.VALUE_META_KEY, expectedGen1
+						)
+					))
+					;
+
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(expectedTs3, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 3600,
+						"dataValueThreshold", 3000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
+							DatumAuxiliary.VALUE_META_KEY, expectedGen3
+						)
+					))
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -4026,7 +4094,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(1).toString(),
+					expectedUris.get(1),
 					inv1SourceId,
 					expectedTs1,
 					expectedGen1,
@@ -4037,42 +4105,88 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					))
 
 			;
+
+		// validate that Mark records created
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for each validation event")
+			.hasSize(1)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for Inv1 source")
+					.returns(inv1SourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(expectedTs1, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 3600,
+						"dataValueThreshold", 300000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
+							DatumAuxiliary.VALUE_META_KEY, expectedGen1
+						)
+					))
+					;
+			})
+			;
 		// @formatter:on
 	}
 
-	/*-
-	java.lang.AssertionError: [Event data values]
-	Expecting map:
-	{"configId"=8898692900732655469L
-	, "dataValue"=10782938
-	, "dataValueThreshold"=300000.0
-	, "ratedPower"=3600
-	, "source"="/d1700257562d48/18/EnergyAndPowerPv/pvGeneration"
-	, "sourceId"="inv/1"
-	, "duration"=300000
-	, "timestamp"="2025-03-28 10:50:00Z"
-	, "uri"="https://monitoring.smaapis.de/v1/devices/18/measurements/sets/EnergyAndPowerPv/Day?Date=2025-03-28&ReturnEnergyValues=true"
-	, "validationThreshold"=1000.0}
-	
-	
-	 */
-
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> dataValidationEventData(CloudDatumStreamConfiguration ds, String source,
-			String uri, String sourceId, Instant timestamp, Number dataValue, Number timeDiff,
+			URI uri, String sourceId, Instant timestamp, Number dataValue, Number timeDiff,
 			Number validationThreshold, Number dataValueThreshold, Number ratedPower) {
 		// @formatter:off
 		List<Entry<String, Object>> entries = new ArrayList<>(List.of(
 				  entry(CONFIG_ID_DATA_KEY, ds.getConfigId())
 				, entry(SOURCE_DATA_KEY, source)
-				, entry(HTTP_URI_DATA_KEY, uri.toString())
+				, entry(REQUEST_TAG, Map.of(
+						HTTP_URI_DATA_KEY, uri.toString()
+						))
 				, entry(SOURCE_ID_DATA_KEY, sourceId)
-				, entry("timestamp", ISO_DATE_TIME_ALT_UTC.format(timestamp))
+				, entry(DatumAuxiliary.TIMESTAMP_META_KEY, ISO_DATE_TIME_ALT_UTC.format(timestamp))
 				, entry("dataValue", dataValue)
 				, entry(DURATION_DATA_KEY, timeDiff)
 				, entry("validationThreshold",  NumberUtils.bigDecimalForNumber(validationThreshold))
-				, entry("dataValueThreshold", NumberUtils.bigDecimalForNumber(dataValueThreshold))
-				, entry("ratedPower", ratedPower)
+				, entry(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, NumberUtils.bigDecimalForNumber(dataValueThreshold))
+				, entry(DatumAuxiliary.RATED_POWER_META_KEY, ratedPower)
+				));
+		// @formatter:on
+
+		return Map.ofEntries(entries.toArray(Entry[]::new));
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> timeGapValidationEventData(CloudDatumStreamConfiguration ds,
+			String source, URI uri, String sourceId, Instant timestamp, Number timeDiff,
+			Duration dataValueThreshold) {
+		// @formatter:off
+		List<Entry<String, Object>> entries = new ArrayList<>(List.of(
+				  entry(CONFIG_ID_DATA_KEY, ds.getConfigId())
+				, entry(SOURCE_DATA_KEY, source)
+				, entry(REQUEST_TAG, Map.of(
+						HTTP_URI_DATA_KEY, uri.toString()
+						))
+				, entry(SOURCE_ID_DATA_KEY, sourceId)
+				, entry(DatumAuxiliary.TIMESTAMP_META_KEY, ISO_DATE_TIME_ALT_UTC.format(timestamp))
+				, entry(DURATION_DATA_KEY, timeDiff)
+				, entry(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, dataValueThreshold.toString())
 				));
 		// @formatter:on
 
@@ -4214,12 +4328,11 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
 				new DatumProperties());
 		given(datumDao.findFiltered(any()))
-				.willReturn(
-						new BasicObjectDatumStreamFilterResults<>(
-								Map.of(prevDatum.streamId(),
-										emptyMeta(prevDatum.streamId(), inv1SourceId,
-												datumStream.getKind(), nodeId, inv1SourceId)),
-								List.of(prevDatum)));
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(
+						Map.of(prevDatum.streamId(),
+								emptyMeta(prevDatum.streamId(), systemTimeZone.getId(),
+										datumStream.getKind(), nodeId, inv1SourceId)),
+						List.of(prevDatum)));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -4332,17 +4445,36 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			})
 			;
 
-		then(userEventAppenderBiz).should(times(4)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		final Instant timeGapEndTs =
+				LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone).toInstant();
+
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		var events = eventCaptor.getAllValues();
 		and.then(events.get(3))
-			.as("Event tags for control instructions")
+			.as("Event tags for validation error")
+			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+			.as("Event data is JSON object")
+			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Event data values")
+			.containsExactlyInAnyOrderEntriesOf(timeGapValidationEventData(datumStream,
+					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					expectedUris.get(1),
+					inv1SourceId,
+					timeGapEndTs,
+					ChronoUnit.MILLIS.between(prevDatumTs, timeGapEndTs),
+					service.getTimeGapValidationThreshold()
+					))
+			;
+			;
+		and.then(events.get(4))
+			.as("Event tags for validation error")
 			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 			.as("Event data is JSON object")
 			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(1).toString(),
+					expectedUris.get(1),
 					inv1SourceId,
 					failedTs1,
 					failedValue1,
@@ -4351,6 +4483,71 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					3000.0,
 					3600
 					))
+			;
+
+		// validate that Mark records created
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for each validation event")
+			.hasSize(3)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for Inv1 source")
+					.returns(inv1SourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap start event datum")
+					.containsAllEntriesOf(timeGapValidationMetadata(
+							"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId), expectedUris.get(1), null,
+							prevDatumTs, timeGapEndTs, true, null))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for time-gap end event datum")
+					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
+							"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId), expectedUris.get(1), null,
+							prevDatumTs, timeGapEndTs, false,
+							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
+					.as("Correlation ID provided")
+					.containsKey(CORRELATION_ID_DATA_KEY)
+					;
+				and.then(records).element(2, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for data validation event datum")
+					.returns(failedTs1, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 3600,
+						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 3000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
+							DatumAuxiliary.VALUE_META_KEY, failedValue1
+						)
+					))
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -4433,7 +4630,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 						"/%s/%s".formatted(systemId, deviceId), inv1SourceId
 						),
 				CloudDatumStreamService.VALIDATION_IGNORE_SETTING, List.of(
-						CommonValidationType.EnergySpike.getKey()
+						DatumValidationType.EnergySpike.getKey()
 						)
 				));
 		// @formatter:on
@@ -4566,6 +4763,11 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					.returns(expectedSamples4, from(GeneralDatum::getSamples))
 					;
 			})
+			;
+
+		and.then(result.getAuxiliary())
+			.as("No auxiliary records generated when validation disabled")
+			.isNull()
 			;
 		// @formatter:on
 	}
@@ -4760,14 +4962,14 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		var events = eventCaptor.getAllValues();
 		and.then(events.get(1))
-			.as("Event tags for control instructions")
+			.as("Event tags for data validation")
 			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 			.as("Event data is JSON object")
 			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(0).toString(),
+					expectedUris.get(0),
 					inv1SourceId,
 					failedTs1,
 					failedValue1,
@@ -4778,14 +4980,14 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					))
 			;
 		and.then(events.get(2))
-			.as("Event tags for control instructions")
+			.as("Event tags for data valudation")
 			.returns(DATUM_STREAM_DATA_VALIDATION_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 			.as("Event data is JSON object")
 			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(dataValidationEventData(datumStream,
 					"/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-					expectedUris.get(0).toString(),
+					expectedUris.get(0),
 					inv1SourceId,
 					failedTs2,
 					failedValue2,
@@ -4794,6 +4996,109 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					1000.0,
 					6000
 					))
+			;
+
+		// validate that Mark records created
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for each validation event")
+			.hasSize(4)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for Inv1 source")
+					.returns(inv1SourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(failedTs1, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 6000,
+						"dataValueThreshold", 1000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
+							DatumAuxiliary.VALUE_META_KEY, failedValue1
+						)
+					))
+					;
+
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(failedTs2, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 6000,
+						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
+							DatumAuxiliary.VALUE_META_KEY, failedValue2
+						)
+					))
+					;
+
+				and.then(records).element(2, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(LocalDateTime.parse("2025-07-04T13:10:00").atZone(systemTimeZone).toInstant(), from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 6000,
+						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
+							DatumAuxiliary.VALUE_META_KEY, 1103
+						)
+					))
+					;
+
+				and.then(records).element(3, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for validation event datum")
+					.returns(LocalDateTime.parse("2025-07-04T14:10:00").atZone(systemTimeZone).toInstant(), from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
+					.as("Metadata for validation event datum")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
+						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
+						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+						DURATION_DATA_KEY, 300000L,
+						"ratedPower", 6000,
+						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
+						SOURCE_DATA_KEY, Map.of(
+							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
+							DatumAuxiliary.VALUE_META_KEY, 1044
+						)
+					))
+					;
+			})
 			;
 		// @formatter:on
 	}

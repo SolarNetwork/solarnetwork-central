@@ -22,17 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.support.SearchFilterUtils;
@@ -40,15 +36,13 @@ import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.util.SearchFilter;
 
 /**
- * Select for {@link DatumAuxiliaryEntity} instances via a
+ * Delete for {@link DatumAuxiliaryEntity} instances via a
  * {@link DatumAuxiliaryCriteria} filter.
  *
  * @author matt
- * @version 1.2
- * @since 3.8
+ * @version 1.0
  */
-public final class SelectDatumAuxiliary
-		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
+public final class DeleteDatumAuxiliaryByFilter implements PreparedStatementCreator, SqlProvider {
 
 	private final DatumAuxiliaryCriteria filter;
 	private final @Nullable SearchFilter searchFilter;
@@ -61,7 +55,7 @@ public final class SelectDatumAuxiliary
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@code null}
 	 */
-	public SelectDatumAuxiliary(DatumAuxiliaryCriteria filter) {
+	public DeleteDatumAuxiliaryByFilter(DatumAuxiliaryCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.searchFilter = SearchFilter.forLDAPSearchFilterString(filter.getSearchFilter());
@@ -76,65 +70,31 @@ public final class SelectDatumAuxiliary
 		buf.append(")\n");
 	}
 
-	private void sqlSelect(StringBuilder buf) {
-		buf.append("SELECT ");
-		sqlColumns(buf);
-	}
-
-	private void sqlColumns(StringBuilder buf) {
-		buf.append("datum.stream_id,\n");
-		buf.append("datum.ts,\n");
-		buf.append("datum.atype,\n");
-		buf.append("datum.updated,\n");
-		buf.append("datum.notes,\n");
-		buf.append("datum.jdata_af,\n");
-		buf.append("datum.jdata_as,\n");
-		buf.append("datum.jmeta\n");
-	}
-
 	private void sqlFrom(StringBuilder buf) {
-		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.da_datm_aux datum ON datum.stream_id = s.stream_id\n");
+		buf.append("DELETE FROM solardatm.da_datm_aux datum\n");
+		buf.append("USING s\n");
 	}
 
 	private void sqlWhere(StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
-		int idx = 0;
+		where.append("WHERE datum.stream_id = s.stream_id\n");
 		if ( filter.getDatumAuxiliaryType() != null ) {
 			where.append("\tAND datum.atype = ?::solardatm.da_datm_aux_type\n");
 		}
-		idx += filter.hasLocalDateRange()
-				? DatumSqlUtils.whereLocalDateRange(filter, Aggregation.None,
-						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
-				: DatumSqlUtils.whereDateRange(filter, Aggregation.None, where);
+		if ( filter.hasLocalDateRange() ) {
+			DatumSqlUtils.whereLocalDateRange(filter, Aggregation.None,
+					DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
+		} else {
+			DatumSqlUtils.whereDateRange(filter, Aggregation.None, where);
+		}
 		if ( searchFilter != null ) {
 			where.append("\tAND jsonb_path_exists(datum.jmeta, ?::jsonpath)\n");
-			idx += 1;
 		}
-		if ( idx > 0 ) {
-			buf.append("WHERE").append(where.substring(4));
-		}
-	}
-
-	private void sqlOrderBy(StringBuilder buf) {
-		StringBuilder order = new StringBuilder();
-		int idx = 2;
-		if ( filter.hasSorts() ) {
-			idx = orderBySorts(filter.getSorts(),
-					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
-							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
-					order);
-		} else {
-			order.append(", datum.stream_id, ts, atype");
-		}
-		if ( !order.isEmpty() ) {
-			buf.append("ORDER BY ").append(order.substring(idx));
-		}
+		buf.append(where);
 	}
 
 	private void sqlCore(StringBuilder buf) {
 		sqlCte(buf);
-		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
 	}
@@ -143,8 +103,6 @@ public final class SelectDatumAuxiliary
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
-		sqlOrderBy(buf);
-		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 
@@ -166,34 +124,10 @@ public final class SelectDatumAuxiliary
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = prepareCore(con, stmt, 0);
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;
-	}
-
-	@Override
-	public PreparedStatementCreator countPreparedStatementCreator() {
-		return new CountPreparedStatementCreator();
-	}
-
-	private final class CountPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
-
-		@Override
-		public String getSql() {
-			StringBuilder buf = new StringBuilder();
-			sqlCore(buf);
-			return DatumSqlUtils.wrappedCountQuery(buf.toString());
-		}
-
-		@Override
-		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-			PreparedStatement stmt = con.prepareStatement(getSql());
-			prepareCore(con, stmt, 0);
-			return stmt;
-		}
-
 	}
 
 }

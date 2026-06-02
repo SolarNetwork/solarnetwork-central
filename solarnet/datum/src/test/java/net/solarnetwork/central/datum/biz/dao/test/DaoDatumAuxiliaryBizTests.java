@@ -25,24 +25,28 @@ package net.solarnetwork.central.datum.biz.dao.test;
 import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumAuxiliaryBiz;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
@@ -58,6 +62,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -69,34 +74,33 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class DaoDatumAuxiliaryBizTests {
 
 	private static final Long TEST_NODE_ID = 1L;
 	private static final String TEST_SOURCE_ID = "a";
 
+	@Mock
 	private DatumAuxiliaryEntityDao datumAuxiliaryDao;
+
+	@Mock
 	private DatumStreamMetadataDao metaDao;
+
+	@Captor
+	private ArgumentCaptor<ObjectStreamCriteria> metaCriteriaCaptor;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryEntity> entCaptor;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryCriteria> metaFilterCaptor;
 
 	private DatumAuxiliaryBiz biz;
 
-	private void replayAll() {
-		replay(datumAuxiliaryDao, metaDao);
-	}
-
-	private void verifyAll() {
-		verify(datumAuxiliaryDao, metaDao);
-	}
-
 	@BeforeEach
 	public void setup() {
-		datumAuxiliaryDao = EasyMock.createMock(DatumAuxiliaryEntityDao.class);
-		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		biz = new DaoDatumAuxiliaryBiz(datumAuxiliaryDao, metaDao);
-	}
-
-	@AfterEach
-	public void teardown() {
-		verifyAll();
 	}
 
 	private GeneralNodeDatumAuxiliary testGenAux() {
@@ -155,23 +159,22 @@ public class DaoDatumAuxiliaryBizTests {
 		GeneralNodeDatumAuxiliary genAux = testGenAux();
 
 		// look up meta based on node+source
-		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(metaCriteriaCaptor))).andReturn(singleton(meta));
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
 
 		// save converted aux
-		Capture<DatumAuxiliaryEntity> entCaptor = new Capture<>();
 		DatumAuxiliaryPK entId = new DatumAuxiliaryPK(meta.getStreamId(), genAux.getCreated(),
 				DatumAuxiliaryType.Reset);
-		expect(datumAuxiliaryDao.save(capture(entCaptor))).andReturn(entId);
+		given(datumAuxiliaryDao.save(any())).willReturn(entId);
 
 		// WHEN
-		replayAll();
 		biz.storeGeneralNodeDatumAuxiliary(genAux);
 
 		// THEN
+		then(metaDao).should().findDatumStreamMetadata(metaCriteriaCaptor.capture());
 		asssertCriteria(metaCriteriaCaptor.getValue());
+		then(datumAuxiliaryDao).should().save(entCaptor.capture());
 		assertConverted(genAux, entCaptor.getValue());
 	}
 
@@ -182,20 +185,19 @@ public class DaoDatumAuxiliaryBizTests {
 				TEST_SOURCE_ID);
 
 		// look up meta based on node+source
-		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(metaCriteriaCaptor))).andReturn(singleton(meta));
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
 
 		// get by stream
 		DatumAuxiliaryEntity ent = testAuxEntity(id.getCreated(), meta.getStreamId());
-		expect(datumAuxiliaryDao.get(ent.getId())).andReturn(ent);
+		given(datumAuxiliaryDao.get(ent.getId())).willReturn(ent);
 
 		// WHEN
-		replayAll();
 		GeneralNodeDatumAuxiliary genAux = biz.getGeneralNodeDatumAuxiliary(id);
 
 		// THEN
+		then(metaDao).should().findDatumStreamMetadata(metaCriteriaCaptor.capture());
 		asssertCriteria(metaCriteriaCaptor.getValue());
 		assertConverted(genAux, ent);
 	}
@@ -207,27 +209,27 @@ public class DaoDatumAuxiliaryBizTests {
 				TEST_SOURCE_ID);
 
 		// look up meta based on node+source
-		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(metaCriteriaCaptor))).andReturn(singleton(meta));
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
 
 		// get by stream
 		DatumAuxiliaryEntity ent = testAuxEntity(id.getCreated(), meta.getStreamId());
-		expect(datumAuxiliaryDao.get(ent.getId())).andReturn(ent);
-
-		// delete by stream
-		Capture<DatumAuxiliaryEntity> entCaptor = new Capture<>();
-		datumAuxiliaryDao.delete(capture(entCaptor));
+		given(datumAuxiliaryDao.get(ent.getId())).willReturn(ent);
 
 		// WHEN
-		replayAll();
 		biz.removeGeneralNodeDatumAuxiliary(id);
 
 		// THEN
+		then(metaDao).should().findDatumStreamMetadata(metaCriteriaCaptor.capture());
 		asssertCriteria(metaCriteriaCaptor.getValue());
-		assertThat("PK deleted", entCaptor.getValue().getId(), equalTo(
-				new DatumAuxiliaryPK(meta.getStreamId(), id.getCreated(), DatumAuxiliaryType.Reset)));
+		then(datumAuxiliaryDao).should().delete(entCaptor.capture());
+		// @formatter:off
+		and.then(entCaptor.getValue())
+			.as("PK deleted")
+			.returns(new DatumAuxiliaryPK(meta.getStreamId(), id.getCreated(), DatumAuxiliaryType.Reset), from(DatumAuxiliaryEntity::getId))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -240,22 +242,21 @@ public class DaoDatumAuxiliaryBizTests {
 				genAux.getSamplesFinal(), genAux.getSamplesStart());
 
 		// look up meta based on node+source
-		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(metaCriteriaCaptor))).andReturn(singleton(meta));
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
 
 		DatumAuxiliaryPK fromEntId = new DatumAuxiliaryPK(meta.getStreamId(), genAux.getCreated(),
 				DatumAuxiliaryType.Reset);
-		Capture<DatumAuxiliaryEntity> entCaptor = new Capture<>();
-		expect(datumAuxiliaryDao.move(eq(fromEntId), capture(entCaptor))).andReturn(true);
+		given(datumAuxiliaryDao.move(eq(fromEntId), any())).willReturn(true);
 
 		// WHEN
-		replayAll();
 		biz.moveGeneralNodeDatumAuxiliary(genAux.getId(), toGenAux);
 
 		// THEN
+		then(metaDao).should().findDatumStreamMetadata(metaCriteriaCaptor.capture());
 		asssertCriteria(metaCriteriaCaptor.getValue());
+		then(datumAuxiliaryDao).should().move(eq(fromEntId), entCaptor.capture());
 		assertConverted(toGenAux, entCaptor.getValue());
 	}
 
@@ -269,31 +270,28 @@ public class DaoDatumAuxiliaryBizTests {
 				genAux.getSamplesFinal(), genAux.getSamplesStart());
 
 		// look up meta based on node+source (for from)
-		Capture<ObjectStreamCriteria> metaFromCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata metaFrom = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(metaFromCriteriaCaptor)))
-				.andReturn(singleton(metaFrom));
 
 		// look up meta based on node+source (for to)
-		Capture<ObjectStreamCriteria> metaToCriteriaCaptor = new Capture<>();
 		ObjectDatumStreamMetadata metaTo = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, "b");
-		expect(metaDao.findDatumStreamMetadata(capture(metaToCriteriaCaptor)))
-				.andReturn(singleton(metaTo));
+
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(metaFrom))
+				.willReturn(singleton(metaTo));
 
 		DatumAuxiliaryPK fromEntId = new DatumAuxiliaryPK(metaFrom.getStreamId(), genAux.getCreated(),
 				DatumAuxiliaryType.Reset);
-		Capture<DatumAuxiliaryEntity> entCaptor = new Capture<>();
-		expect(datumAuxiliaryDao.move(eq(fromEntId), capture(entCaptor))).andReturn(true);
+		given(datumAuxiliaryDao.move(eq(fromEntId), any())).willReturn(true);
 
 		// WHEN
-		replayAll();
 		biz.moveGeneralNodeDatumAuxiliary(genAux.getId(), toGenAux);
 
 		// THEN
-		asssertCriteria(metaFromCriteriaCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
-		asssertCriteria(metaToCriteriaCaptor.getValue(), TEST_NODE_ID, "b");
+		then(metaDao).should(times(2)).findDatumStreamMetadata(metaCriteriaCaptor.capture());
+		asssertCriteria(metaCriteriaCaptor.getAllValues().get(0), TEST_NODE_ID, TEST_SOURCE_ID);
+		asssertCriteria(metaCriteriaCaptor.getAllValues().get(1), TEST_NODE_ID, "b");
+		then(datumAuxiliaryDao).should().move(eq(fromEntId), entCaptor.capture());
 		assertConverted(toGenAux, entCaptor.getValue());
 	}
 
@@ -302,19 +300,16 @@ public class DaoDatumAuxiliaryBizTests {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
 		DatumAuxiliaryEntity ent = testAuxEntity(Instant.now(), streamId);
-		Capture<DatumAuxiliaryCriteria> filterCaptor = new Capture<>();
 		BasicFilterResults<DatumAuxiliary, DatumAuxiliaryPK> daoResults = new BasicFilterResults<>(
 				singleton(ent));
-		expect(datumAuxiliaryDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+		given(datumAuxiliaryDao.findFiltered(any())).willReturn(daoResults);
 
 		ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, TEST_NODE_ID,
 				TEST_SOURCE_ID);
 
-		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(metaFilterCaptor))).andReturn(singleton(meta));
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
 
 		// WHEN
-		replayAll();
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(TEST_NODE_ID);
 		criteria.setSourceId(TEST_SOURCE_ID);
@@ -324,19 +319,78 @@ public class DaoDatumAuxiliaryBizTests {
 				.findGeneralNodeDatumAuxiliary(criteria, null, null, null);
 
 		// THEN
-		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
-		GeneralNodeDatumAuxiliaryFilterMatch s = results.iterator().next();
-		assertThat("Datum ID returned from meta", s.getId(),
-				equalTo(new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, ent.getTimestamp(), TEST_SOURCE_ID,
-						DatumAuxiliaryType.Reset)));
+		// @formatter:off
+		and.then(results)
+			.hasSize(1)
+			.element(0, InstanceOfAssertFactories.type(GeneralNodeDatumAuxiliaryFilterMatch.class))
+			.returns(new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, ent.getTimestamp(), TEST_SOURCE_ID,
+					DatumAuxiliaryType.Reset), from(GeneralNodeDatumAuxiliaryFilterMatch::getId))
+			;
 
-		asssertCriteria(filterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
 
-		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) filterCaptor.getValue()).clone();
+		then(metaDao).should().findDatumStreamMetadata(metaFilterCaptor.capture());
+		asssertCriteria(metaFilterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) metaFilterCaptor.getValue())
+				.clone();
 		expectedMetaCriteria.setStartDate(null);
 		expectedMetaCriteria.setEndDate(null);
-		assertThat("Same criteria used to find datum, minus date range, used to find meta",
-				metaFilterCaptor.getValue(), equalTo(expectedMetaCriteria));
+		// @formatter:off
+		and.then(metaFilterCaptor.getValue())
+			.as("Same criteria used to find datum, minus date range, used to find meta")
+			.isEqualTo(expectedMetaCriteria)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void find_markType() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		DatumAuxiliaryEntity ent = testAuxEntity(Instant.now(), streamId);
+		BasicFilterResults<DatumAuxiliary, DatumAuxiliaryPK> daoResults = new BasicFilterResults<>(
+				singleton(ent));
+		given(datumAuxiliaryDao.findFiltered(any())).willReturn(daoResults);
+
+		ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, TEST_NODE_ID,
+				TEST_SOURCE_ID);
+
+		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
+
+		// WHEN
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		criteria.setEndDate(criteria.getStartDate().plus(1, ChronoUnit.HOURS));
+		criteria.setDatumAuxiliaryType(DatumAuxiliaryType.Mark);
+		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> results = biz
+				.findGeneralNodeDatumAuxiliary(criteria, null, null, null);
+
+		// THEN
+		// @formatter:off
+		and.then(results)
+			.hasSize(1)
+			.element(0, InstanceOfAssertFactories.type(GeneralNodeDatumAuxiliaryFilterMatch.class))
+			.returns(new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, ent.getTimestamp(), TEST_SOURCE_ID,
+					DatumAuxiliaryType.Reset), from(GeneralNodeDatumAuxiliaryFilterMatch::getId))
+			;
+
+		then(metaDao).should().findDatumStreamMetadata(metaFilterCaptor.capture());
+		asssertCriteria(metaFilterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
+		and.then(metaFilterCaptor.getValue())
+			.returns(criteria.getDatumAuxiliaryType(), from(DatumAuxiliaryCriteria::getDatumAuxiliaryType))
+			;
+
+		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) metaFilterCaptor.getValue())
+				.clone();
+		expectedMetaCriteria.setStartDate(null);
+		expectedMetaCriteria.setEndDate(null);
+		and.then(metaFilterCaptor.getValue())
+			.as("Same criteria used to find datum, minus date range, used to find meta")
+			.isEqualTo(expectedMetaCriteria)
+			;
+		// @formatter:on
 	}
 
 }

@@ -47,12 +47,15 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -81,20 +84,30 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -105,7 +118,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for the {@link DaoCloudDatumStreamRakeService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -134,8 +147,20 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 	@Mock
 	private DatumStreamMetadataDao datumStreamMetadataDao;
 
+	@Captor
+	private ArgumentCaptor<ObjectStreamCriteria> streamMetadataCriteriaCaptor;
+
 	@Mock
 	private DatumEntityDao datumDao;
+
+	@Mock
+	private DatumAuxiliaryEntityDao datumAuxiliaryDao;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryCriteria> datumAuxiliaryFilterCaptor;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryEntity> datumAuxiliaryCaptor;
 
 	@Mock
 	private CloudDatumStreamService datumStreamService;
@@ -177,8 +202,8 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamRakeService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao, datumDao, executor,
-				datumStreamServices::get);
+				taskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao, datumDao,
+				datumAuxiliaryDao, executor, datumStreamServices::get);
 
 	}
 
@@ -391,8 +416,44 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 		// @formatter:on
 	}
 
+	private void thenDeleteAuxiliaryForQueryRanges(final CloudDatumStreamConfiguration datumStream,
+			final Set<String> resolvedSourceIds,
+			final List<DatumAuxiliaryCriteria> capturedAuxiliaryFilters,
+			final List<? extends DateRangeCriteria> queryFilters) {
+		// @formatter:off
+		and.then(capturedAuxiliaryFilters)
+			.as("Delete auxiliary called for each queried datum page")
+			.hasSize(queryFilters.size())
+			.allSatisfy(f -> {
+				and.then(f)
+					.as("Delete filter for Mark type")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryCriteria::getDatumAuxiliaryType))
+					.as("Delete filter has generated metadata search filter")
+					.returns(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER,
+							from(DatumAuxiliaryCriteria::getSearchFilter))
+					.as("Delete filter object kind for Datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryCriteria::getObjectKind))
+					.as("Delete filter for Datum Stream node ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryCriteria::getObjectId))
+					.as("Delete filter for resolved source IDs")
+					.returns(resolvedSourceIds.toArray(String[]::new), from(DatumAuxiliaryCriteria::getSourceIds))
+					;
+			})
+			.satisfies(filters -> {
+				for (int i = 0, len = filters.size(); i < len; i++ ) {
+					and.then(filters).element(i)
+						.as("Start date (page %d) from expected page filter", i)
+						.returns(queryFilters.get(i).getStartDate(), from(DatumAuxiliaryCriteria::getStartDate))
+						.as("End date (page %d) from expected page filter", i)
+						.returns(queryFilters.get(i).getEndDate(), from(DatumAuxiliaryCriteria::getEndDate))
+						;
+				}
+			})
+			;
+	}
+
 	@Test
-	public void executeTask_difference() throws Exception {
+	public void executeTask_difference_generateAuxiliary() throws Exception {
 		// GIVEN
 		// submit task
 		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
@@ -438,8 +499,15 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 		final var datum2 = new GeneralDatum(
 				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(1, HOURS)),
 				new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 34567L), null));
+
+		final List<DatumAuxiliaryRecord> generatedAux = new ArrayList<>(2);
+		generatedAux.addAll(
+				DatumAuxiliary.createTimeGapValidationRecords(DatumValidationType.TimeGap.getKey(),
+						"/foo/bar/prop/val", null, null, datum1.getTimestamp().minus(100, ChronoUnit.HOURS),
+						Duration.ofDays(1), datum1.datumIdent()));
+
 		given(datumStreamService.datum(same(datumStream), any()))
-				.willReturn(new BasicCloudDatumStreamQueryResult(List.of(datum1, datum2)));
+				.willReturn(new BasicCloudDatumStreamQueryResult(null, null, List.of(datum1, datum2), generatedAux));
 
 		// query for existing datum with same time range
 		final BasicObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(
@@ -465,6 +533,22 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 
 		// persist datum with difference
 		given(datumDao.store(any(StreamDatum.class))).willReturn(d2.getId());
+
+		// resolve source IDs
+		final Set<String> resolvedSourceIds = Set.of(datumStream.getSourceId());
+		given(datumStreamService.datumStreamSourceIds(datumStream)).willReturn(resolvedSourceIds);
+
+		// delete generated auxiliary for query time range
+		given(datumAuxiliaryDao.deleteFiltered(any())).willReturn(0L);
+
+		// persist auxiliary, after looking up stream ID
+		given(datumStreamMetadataDao.findDatumStreamMetadataIds(any()))
+				.willReturn(List.of(new ObjectDatumStreamMetadataId(meta1.getStreamId(), meta1.getKind(),
+						meta1.getObjectId(), meta1.getSourceId())));
+
+		given(datumAuxiliaryDao.save(any())).will(inv -> {
+			return inv.getArgument(0, DatumAuxiliaryEntity.class).getId();
+		});
 
 		// update task details
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
@@ -504,6 +588,55 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.isEqualTo(d2)
 			.as("StreamDatum properties populated from datum")
 			.returns(DatumProperties.propertiesFrom(datum2, meta1), from(StreamDatum::getProperties))
+			;
+
+		// delete generated auxiliary for query range
+		then(datumAuxiliaryDao).should().deleteFiltered(datumAuxiliaryFilterCaptor.capture());
+		thenDeleteAuxiliaryForQueryRanges(datumStream, resolvedSourceIds, datumAuxiliaryFilterCaptor.getAllValues(),
+				queryFilterCaptor.getAllValues());
+
+		// datum stream metadata query for expected kind/node/sources
+		then(datumStreamMetadataDao).should().findDatumStreamMetadataIds(streamMetadataCriteriaCaptor.capture());
+		and.then(streamMetadataCriteriaCaptor.getValue())
+			.as("Stream metadata filter object kind for Datum Stream kind")
+			.returns(datumStream.getKind(), from(ObjectStreamCriteria::getObjectKind))
+			.as("Stream metadata filter for Datum Stream node ID")
+			.returns(datumStream.getObjectId(), from(ObjectStreamCriteria::getNodeId))
+			.as("Stream metadata filter for resolved source IDs")
+			.returns(resolvedSourceIds.toArray(String[]::new), from(ObjectStreamCriteria::getSourceIds))
+			;
+
+		then(datumAuxiliaryDao).should(times(2)).save(datumAuxiliaryCaptor.capture());
+		and.then(datumAuxiliaryCaptor.getAllValues())
+			.allSatisfy(aux -> {
+				and.then(aux)
+					.as("Auxiliary stream ID resolved from stream metadata query results")
+					.returns(meta1.getStreamId(), from(DatumAuxiliaryEntity::getStreamId))
+					.as("Auxiliary type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryEntity::getType))
+					.extracting(DatumAuxiliaryEntity::getMetadata)
+					.as("Mark is generated by SolarNetwork")
+					.returns(DatumAuxiliary.GENERATED_BY_SOLARNETWORK, from(e -> e.getInfoString(DatumAuxiliary.GENERATED_BY_META_KEY)))
+					.as("Mark type is data validation")
+					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
+					.as("Mark sub-type is time-gap")
+					.returns(DatumValidationType.TimeGap.getKey(), from(e -> e.getInfoString(DatumAuxiliary.SUB_TYPE_META_KEY)))
+					;
+			})
+			.satisfies(records -> {
+				for (int i = 0; i < generatedAux.size(); i++ ) {
+					final var expected = generatedAux.get(i);
+					and.then(records).element(i)
+						.as("Generated aux %d timestamp saved as-is", i)
+						.returns(expected.getTimestamp(), from(DatumAuxiliaryEntity::getTimestamp))
+						.as("Generated aux %d notes saved as-is", i)
+						.returns(expected.getNotes(), from(DatumAuxiliaryEntity::getNotes))
+						.as("Generated aux %d metadata saved as-is", i)
+						.returns(expected.getMetadata(), from(DatumAuxiliaryEntity::getMetadata))
+						;
+
+				}
+			})
 			;
 
 		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));

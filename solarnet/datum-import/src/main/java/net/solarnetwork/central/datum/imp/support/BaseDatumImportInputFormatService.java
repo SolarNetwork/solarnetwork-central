@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.imp.support;
 
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 
 /**
@@ -31,13 +33,14 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * {@link DatumImportInputFormatService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseDatumImportInputFormatService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider implements DatumImportInputFormatService {
 
 	private @Nullable String inputFilenameExtension;
 	private @Nullable String inputContentType;
+	private @Nullable DatumAuxiliaryEntityDao datumAuxiliaryDao;
 
 	/**
 	 * Constructor.
@@ -65,6 +68,45 @@ public abstract class BaseDatumImportInputFormatService extends
 
 	public final void setInputContentType(@Nullable String inputContentType) {
 		this.inputContentType = inputContentType;
+	}
+
+	/**
+	 * Delete datum auxiliary matching a filter.
+	 *
+	 * @param filter
+	 *        the filter
+	 * @return the number of auxiliary records deleted; if
+	 *         {@link #getDatumAuxiliaryDao()} is {@code null} this will return
+	 *         {@code 0} without throwing an exception
+	 * @since 2.1
+	 */
+	protected long deleteDatumAuxiliary(DatumAuxiliaryCriteria filter) {
+		final var dao = getDatumAuxiliaryDao();
+		if ( dao == null ) {
+			return 0L;
+		}
+		return dao.deleteFiltered(filter);
+	}
+
+	/**
+	 * Get the datum auxiliary DAO.
+	 *
+	 * @return the DAO, or {@code null}
+	 * @since 2.1
+	 */
+	public final @Nullable DatumAuxiliaryEntityDao getDatumAuxiliaryDao() {
+		return datumAuxiliaryDao;
+	}
+
+	/**
+	 * Set the datum auxiliary DAO.
+	 *
+	 * @param datumAuxiliaryDao
+	 *        the DAO to set
+	 * @since 2.1
+	 */
+	public final void setDatumAuxiliaryDao(@Nullable DatumAuxiliaryEntityDao datumAuxiliaryDao) {
+		this.datumAuxiliaryDao = datumAuxiliaryDao;
 	}
 
 }
