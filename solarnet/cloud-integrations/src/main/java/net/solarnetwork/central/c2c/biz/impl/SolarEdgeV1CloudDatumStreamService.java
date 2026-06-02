@@ -1137,7 +1137,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		          },
 		 */
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.meterRefs;
-		final SortedMap<DatumIdentity, GeneralDatum> result = new TreeMap<>();
+		final Map<String, SortedMap<DatumIdentity, GeneralDatum>> resultBySource = new TreeMap<>();
 		final MutableBoolean datumIsNew = new MutableBoolean(false);
 		for ( JsonNode json : new JsonNode[] { powerJson, energyJson } ) {
 			@SuppressWarnings("ReferenceEquality")
@@ -1168,6 +1168,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts)
 							.toIdentity();
 					datumIsNew.setFalse();
+					final SortedMap<DatumIdentity, GeneralDatum> result = resultBySource
+							.computeIfAbsent(sourceId, _ -> new TreeMap<>());
 					GeneralDatum d = result.computeIfAbsent(datumId, _ -> {
 						datumIsNew.setTrue();
 						return new GeneralDatum(datumId, new DatumSamples());
@@ -1221,7 +1223,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				}
 			}
 		}
-		return result.values().stream().filter(d -> !d.isEmpty()).toList();
+		return resultBySource.values().stream().flatMap(m -> m.values().stream())
+				.filter(d -> !d.isEmpty()).toList();
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")

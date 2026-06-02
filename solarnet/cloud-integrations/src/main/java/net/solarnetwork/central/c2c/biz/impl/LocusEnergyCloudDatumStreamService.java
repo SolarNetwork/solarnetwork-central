@@ -633,7 +633,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 			final ConcurrentMap<String, Instant> greatestTimestampPerComponent = new ConcurrentHashMap<>(
 					fieldNamesByComponent.size(), 0.9f, 2);
-			final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = new ConcurrentSkipListMap<>();
+			final ConcurrentMap<String, ConcurrentNavigableMap<DatumIdentity, GeneralDatum>> datumBySource = new ConcurrentSkipListMap<>();
 
 			final Duration timeGapThreshold = (!ignoredValidations.contains(TimeGap.getKey())
 					? resolveTimeGapValidationThreshold(datumStream)
@@ -680,6 +680,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 									datumIsNew.setFalse();
 									final DatumIdentity datumId = ds.datumId(ts).toIdentity();
+									final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
+											.computeIfAbsent(datumId.getSourceId(),
+													_ -> new ConcurrentSkipListMap<>());
 									final GeneralDatum datum = datumByTime.computeIfAbsent(datumId,
 											k -> {
 												datumIsNew.setTrue();
@@ -763,7 +766,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, datumByTime.values(),
+			var r = evaluateExpressions(datumStream, exprProps,
+					datumBySource.values().stream().flatMap(m -> m.values().stream()).toList(),
 					mapping.getConfigId(), integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;

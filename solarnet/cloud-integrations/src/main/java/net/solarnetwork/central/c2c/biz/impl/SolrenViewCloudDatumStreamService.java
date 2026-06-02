@@ -467,7 +467,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					? resolveTimeGapValidationThreshold(datumStream)
 					: null);
 
-			final SortedMap<DatumIdentity, GeneralDatum> datum = new TreeMap<>();
+			final Map<String, SortedMap<DatumIdentity, GeneralDatum>> datum = new TreeMap<>();
 			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
 			usedQueryFilter.setStartDate(startDate);
 
@@ -499,7 +499,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				page++;
 			}
 
-			Collection<GeneralDatum> r = datum.values();
+			Collection<GeneralDatum> r = datum.values().stream().flatMap(m -> m.values().stream())
+					.toList();
 
 			BasicQueryFilter nextQueryFilter = null;
 			if ( usedQueryFilter.getEndDate() != null
@@ -767,7 +768,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private Void parseDatum(RequestEntity<Void> request, CloudDatumStreamConfiguration datumStream,
 			Long siteId, @Nullable String body, Instant ts,
-			SortedMap<DatumIdentity, GeneralDatum> datumByTime,
+			Map<String, SortedMap<DatumIdentity, GeneralDatum>> datumBySource,
 			Map<String, List<ValueRef>> refsByComponent, @Nullable Duration timeGapThreshold,
 			List<DatumAuxiliaryRecord> auxiliary) {
 		if ( body == null ) {
@@ -813,6 +814,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					datumStream.getObjectId(), sourceId, ts);
 
 			datumIsNew.setFalse();
+			final SortedMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
+					.computeIfAbsent(sourceId, _ -> new TreeMap<>());
 			final GeneralDatum datum = datumByTime.computeIfAbsent(datumId, _ -> {
 				datumIsNew.setTrue();
 				return new GeneralDatum(datumId, new DatumSamples());

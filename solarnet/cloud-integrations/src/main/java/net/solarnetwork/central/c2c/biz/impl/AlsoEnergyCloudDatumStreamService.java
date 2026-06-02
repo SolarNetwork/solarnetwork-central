@@ -355,7 +355,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
-			final SortedMap<DatumIdentity, DatumSamples> dataMap = new TreeMap<>();
+			final Map<String, SortedMap<DatumIdentity, DatumSamples>> dataBySource = new TreeMap<>();
 
 			for ( Entry<UserLongCompositePK, List<ValueRef>> e : hardwareGroups.entrySet() ) {
 				final ZonedDateTime siteStartDate = startDate.atZone(zone);
@@ -388,23 +388,25 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 									.buildAndExpand().toUri();
 							// @formatter:on
 						}, (req, res) -> parseDatum(req, res.getBody(), e.getValue(), ds, sourceIdMap,
-								dataMap, ignoredValidations, auxiliary));
+								dataBySource, ignoredValidations, auxiliary));
 			}
 
 			// generate a map of the latest-available timestamp per stream; afterwards the earliest
 			// value overall can be used as the resolved "latest datum" date
 			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
-			List<GeneralDatum> resultDatum = dataMap.entrySet().stream().filter(e -> {
-				if ( e.getValue().isEmpty() ) {
-					return false;
-				}
-				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(
-						e.getKey().getKind(), e.getKey().getObjectId(), e.getKey().getSourceId());
-				Instant ts = e.getKey().getTimestamp();
-				greatestTimestampPerStream.compute(streamPk,
-						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
-				return true;
-			}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
+			List<GeneralDatum> resultDatum = dataBySource.values().stream()
+					.flatMap(e -> e.entrySet().stream()).filter(e -> {
+						if ( e.getValue().isEmpty() ) {
+							return false;
+						}
+						ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(
+								e.getKey().getKind(), e.getKey().getObjectId(),
+								e.getKey().getSourceId());
+						Instant ts = e.getKey().getTimestamp();
+						greatestTimestampPerStream.compute(streamPk,
+								(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						return true;
+					}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
@@ -686,7 +688,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private Void parseDatum(RequestEntity<List<Map<String, Object>>> request, @Nullable JsonNode body,
 			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
-			@Nullable Map<String, String> sourceIdMap, SortedMap<DatumIdentity, DatumSamples> dataMap,
+			@Nullable Map<String, String> sourceIdMap,
+			Map<String, SortedMap<DatumIdentity, DatumSamples>> dataBySource,
 			Set<String> ignoredValidations, List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 		{
@@ -750,6 +753,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					DatumIdentity datumId = datumId(datumStream.getKind(), datumStream.getObjectId(),
 							sourceId, ts).toIdentity();
 					datumIsNew.setFalse();
+					final SortedMap<DatumIdentity, DatumSamples> dataMap = dataBySource
+							.computeIfAbsent(sourceId, _ -> new TreeMap<>());
 					dataMap.computeIfAbsent(datumId, _ -> {
 						datumIsNew.setTrue();
 						return new DatumSamples();
