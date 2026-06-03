@@ -28,6 +28,7 @@ import static java.time.Period.ZERO;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
@@ -620,7 +621,7 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 					.as("Mark type is data validation")
 					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
 					.as("Mark sub-type is time-gap")
-					.returns(DatumValidationType.TimeGap.getKey(), from(e -> e.getInfoString(DatumAuxiliary.SUB_TYPE_META_KEY)))
+					.returns(new String[] { TIME_GAP_VALIDATION_TYPE }, from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
 					;
 			})
 			.satisfies(records -> {

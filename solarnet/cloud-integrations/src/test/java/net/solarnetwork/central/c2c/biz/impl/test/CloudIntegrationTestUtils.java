@@ -50,6 +50,82 @@ public final class CloudIntegrationTestUtils implements CloudIntegrationsUserEve
 	/**
 	 * Create an expected metadata map for a time-gap validation record.
 	 *
+	 * @return the metadata map
+	 */
+	public static Map<String, Object> energySpikeValidationMetadata() {
+		// @formatter:off
+		return new HashMap<String, Object>(Map.of(
+				  DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK
+				, DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE
+				, DatumAuxiliary.SUB_TYPES_META_KEY, new String[] { DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE }
+				));
+		// @formatter:on
+	}
+
+	/**
+	 * Create an expected property metadata map for an energy-spike validation.
+	 *
+	 * @param sourceRef
+	 *        the source reference
+	 * @param requestUri
+	 *        the request URI
+	 * @param requestBody
+	 *        the optional request body
+	 * @param energyValue
+	 *        the failed energy value
+	 * @param duration
+	 *        the amount of time associated with the energy value
+	 * @param dataValueThreshold
+	 *        the data value threshold
+	 * @param ratedPower
+	 *        the rated device power, if known
+	 * @return the metadata map
+	 */
+	public static Map<String, Object> energySpikeValidationPropertyMetadata(String sourceRef,
+			URI requestUri, @Nullable Object requestBody, Number energyValue, Number duration,
+			Number dataValueThreshold, @Nullable Number ratedPower) {
+		// @formatter:off
+		final var sourceMap = new HashMap<String, Object>(Map.of(
+				DatumAuxiliary.REFERENCE_META_KEY, sourceRef,
+				DatumAuxiliary.URI_META_KEY, requestUri,
+				DatumAuxiliary.VALUE_META_KEY, energyValue
+				));
+		// @formatter:on
+		if ( requestBody != null ) {
+			sourceMap.put(DatumAuxiliary.PARAMETERS_META_KEY, requestBody);
+		}
+		// @formatter:off
+		final Map<String, Object> result = new HashMap<>( Map.of(
+				DURATION_DATA_KEY, duration,
+				DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, dataValueThreshold,
+				SOURCE_DATA_KEY, sourceMap
+			));
+		if (ratedPower != null ) {
+			result.put("ratedPower", ratedPower);
+		}
+		return result;
+		// @formatter:on
+	}
+
+	/**
+	 * Create an expected metadata map for a time-gap validation record.
+	 *
+	 * @return the metadata map
+	 */
+	public static Map<String, Object> timeGapValidationMetadata() {
+		// @formatter:off
+		return new HashMap<String, Object>(Map.of(
+				  DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK
+				, DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE
+				, DatumAuxiliary.SUB_TYPES_META_KEY, new String[] { DatumValidationType.TIME_GAP_VALIDATION_TYPE }
+				));
+		// @formatter:on
+	}
+
+	/**
+	 * Create an expected property metadata map for a time-gap validation
+	 * record.
+	 *
 	 * @param sourceRef
 	 *        the source reference
 	 * @param requestUri
@@ -67,7 +143,7 @@ public final class CloudIntegrationTestUtils implements CloudIntegrationsUserEve
 	 *        the correlation ID to include, if known
 	 * @return the metadata map
 	 */
-	public static Map<String, Object> timeGapValidationMetadata(String sourceRef, URI requestUri,
+	public static Map<String, Object> timeGapValidationPropertyMetadata(String sourceRef, URI requestUri,
 			@Nullable Object requestBody, Instant prevDatumTs, Instant datumTs, boolean startPosition,
 			@Nullable String correlationId) {
 		final var sourceMap = new HashMap<String, Object>(Map.of(DatumAuxiliary.REFERENCE_META_KEY,
@@ -79,10 +155,7 @@ public final class CloudIntegrationTestUtils implements CloudIntegrationsUserEve
 
 		// @formatter:off
 		final var result = new HashMap<String, Object>(Map.of(
-				  DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK
-				, DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE
-				, DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.TimeGap.getKey()
-				, DatumAuxiliary.POSITION_META_KEY, (startPosition
+				  DatumAuxiliary.POSITION_META_KEY, (startPosition
 						? DatumAuxiliary.START_POSITION
 						: DatumAuxiliary.END_POSITION)
 				, DURATION_DATA_KEY, ChronoUnit.MILLIS.between(prevDatumTs, datumTs)

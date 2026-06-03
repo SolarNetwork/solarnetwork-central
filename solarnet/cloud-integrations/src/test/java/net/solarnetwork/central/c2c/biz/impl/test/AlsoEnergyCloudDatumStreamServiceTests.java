@@ -31,8 +31,10 @@ import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationSe
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Avg;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Last;
 import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -1592,25 +1594,45 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 					.as("Timestamp for time-gap start validation event datum")
 					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap start event datum")
-					.containsAllEntriesOf(timeGapValidationMetadata(
-							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, true, null))
-					.as("Correlation ID provided")
-					.containsKey(CORRELATION_ID_DATA_KEY)
 					;
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap end validation event datum")
 					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap end event datum")
-					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
-							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, false,
-							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
-			})
-			;
+				})
+				;
 		// @formatter:on
 	}
 
@@ -1838,26 +1860,48 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 					;
 			})
 			.satisfies(records -> {
+				final Instant timeGapStartTs = prevDatumTs;
+				final Instant timeGapEndTs = firstDatumTs;
+
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap start validation event datum")
-					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap start event datum")
-					.containsAllEntriesOf(timeGapValidationMetadata(
-							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, prevDatumTs, firstDatumTs, true, null))
-					.as("Correlation ID provided")
-					.containsKey(CORRELATION_ID_DATA_KEY)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap end validation event datum")
-					.returns(firstDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap end event datum")
-					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
-							"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, prevDatumTs, firstDatumTs, false,
-							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									"/%s/%s".formatted(siteId, hardwareId), expectedUri, expectedBody, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 			})
 			;

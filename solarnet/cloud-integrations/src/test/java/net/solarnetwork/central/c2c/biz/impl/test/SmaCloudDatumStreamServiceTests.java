@@ -35,13 +35,18 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.energySpikeValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.energySpikeValidationPropertyMetadata;
 import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.ACTIVE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEACTIVATED_AT_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -142,7 +147,6 @@ import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.NumberUtils;
 import tools.jackson.databind.JsonNode;
@@ -3817,46 +3821,41 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					;
 			})
 			.satisfies(records -> {
+				final String deviceRef = "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId);
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(expectedTs1, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 3600,
-						"dataValueThreshold", 3000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
-							DatumAuxiliary.VALUE_META_KEY, expectedGen1
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, expectedGen1, 300000L, 3000.0, 3600))
+							;
+					})
 					;
 
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(expectedTs3, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 3600,
-						"dataValueThreshold", 3000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
-							DatumAuxiliary.VALUE_META_KEY, expectedGen3
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, expectedGen3, 300000L, 3000.0, 3600))
+							;
+					})
 					;
 			})
 			;
@@ -4123,25 +4122,23 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					;
 			})
 			.satisfies(records -> {
+				final String deviceRef = "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId);
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(expectedTs1, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 3600,
-						"dataValueThreshold", 300000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
-							DatumAuxiliary.VALUE_META_KEY, expectedGen1
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, expectedGen1, 300000L, 300000.0, 3600))
+							;
+					})
 					;
 			})
 			;
@@ -4502,50 +4499,65 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					;
 			})
 			.satisfies(records -> {
+				final String deviceRef = "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId);
+				final Instant timeGapStartTs = prevDatumTs;
+
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap start validation event datum")
-					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap start event datum")
-					.containsAllEntriesOf(timeGapValidationMetadata(
-							"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId), expectedUris.get(1), null,
-							prevDatumTs, timeGapEndTs, true, null))
-					.as("Correlation ID provided")
-					.containsKey(CORRELATION_ID_DATA_KEY)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap end validation event datum")
 					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap end event datum")
-					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(
-							"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId), expectedUris.get(1), null,
-							prevDatumTs, timeGapEndTs, false,
-							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)))
-					.as("Correlation ID provided")
-					.containsKey(CORRELATION_ID_DATA_KEY)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 				and.then(records).element(2, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for data validation event datum")
 					.returns(failedTs1, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 3600,
-						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 3000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(1),
-							DatumAuxiliary.VALUE_META_KEY, failedValue1
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(1), null, failedValue1, 300000L, 3000.0, 3600))
+							;
+					})
 					;
 			})
 			;
@@ -5015,88 +5027,77 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					;
 			})
 			.satisfies(records -> {
+				final String deviceRef = "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId);
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(failedTs1, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 6000,
-						"dataValueThreshold", 1000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
-							DatumAuxiliary.VALUE_META_KEY, failedValue1
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, failedValue1, 300000L, 1000.0, 6000))
+							;
+					})
 					;
 
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(failedTs2, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 6000,
-						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
-							DatumAuxiliary.VALUE_META_KEY, failedValue2
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, failedValue2, 300000L, 1000.0, 6000))
+							;
+					})
 					;
 
 				and.then(records).element(2, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(LocalDateTime.parse("2025-07-04T13:10:00").atZone(systemTimeZone).toInstant(), from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 6000,
-						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
-							DatumAuxiliary.VALUE_META_KEY, 1103
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, 1103, 300000L, 1000.0, 6000))
+							;
+					})
 					;
 
 				and.then(records).element(3, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for validation event datum")
 					.returns(LocalDateTime.parse("2025-07-04T14:10:00").atZone(systemTimeZone).toInstant(), from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for validation event datum")
-					.containsExactlyInAnyOrderEntriesOf(Map.of(
-						DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-						DatumAuxiliary.SUB_TYPE_META_KEY, DatumValidationType.EnergySpike.getKey(),
-						DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-						DURATION_DATA_KEY, 300000L,
-						"ratedPower", 6000,
-						DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, 1000.0,
-						SOURCE_DATA_KEY, Map.of(
-							DatumAuxiliary.REFERENCE_META_KEY, "/%s/16/EnergyAndPowerPv/pvGeneration".formatted(systemId),
-							DatumAuxiliary.URI_META_KEY, expectedUris.get(0),
-							DatumAuxiliary.VALUE_META_KEY, 1044
-						)
-					))
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(ENERGY_SPIKE_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for energy-spike event datum")
+							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, 1044, 300000L, 1000.0, 6000))
+							;
+					})
 					;
 			})
 			;

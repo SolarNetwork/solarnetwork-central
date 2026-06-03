@@ -43,7 +43,9 @@ import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.LIST_SYSTEMS_URL;
 import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -124,7 +126,6 @@ import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -1709,26 +1710,48 @@ public class FroniusCloudDatumStreamServiceTests implements CloudIntegrationsUse
 					;
 			})
 			.satisfies(records -> {
+				final Instant timeGapStartTs = prevDatumTs;
+				final Instant timeGapEndTs = firstDatumTs;
+
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap start validation event datum")
-					.returns(prevDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap start event datum")
-					.containsAllEntriesOf(timeGapValidationMetadata(deviceRef, expectedUris.get(0),
-							null, prevDatumTs, firstDatumTs, true, null))
-					.as("Correlation ID provided")
-					.containsKey(CORRELATION_ID_DATA_KEY)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap end validation event datum")
-					.returns(firstDatumTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
 					.extracting(DatumAuxiliaryRecord::getMetadata)
-					.extracting(GeneralDatumMetadata::getInfo, map(String.class, Object.class))
-					.as("Metadata for time-gap end event datum")
-					.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata(deviceRef, expectedUris.get(0),
-							null, prevDatumTs, firstDatumTs, false,
-							records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(CORRELATION_ID_DATA_KEY)) )
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 			})
 			;

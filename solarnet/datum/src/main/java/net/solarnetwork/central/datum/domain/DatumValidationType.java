@@ -44,7 +44,7 @@ public enum DatumValidationType implements KeyedValue {
 	 * </p>
 	 *
 	 */
-	EnergySpike("energy-spike"),
+	EnergySpike(DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE),
 
 	/**
 	 * Validate datum stream time gaps.
@@ -53,9 +53,15 @@ public enum DatumValidationType implements KeyedValue {
 	 * This validation looks for unexpected gaps of time in the datum stream.
 	 * </p>
 	 */
-	TimeGap("time-gap"),
+	TimeGap(DatumValidationType.TIME_GAP_VALIDATION_TYPE),
 
 	;
+
+	/** The energy spike validation type key value. */
+	public static final String ENERGY_SPIKE_VALIDATION_TYPE = "energy-spike";
+
+	/** The time gap validation type key value. */
+	public static final String TIME_GAP_VALIDATION_TYPE = "time-gap";
 
 	/**
 	 * A mapping of all common validation type keys to associated enum
