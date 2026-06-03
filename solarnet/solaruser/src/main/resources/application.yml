@@ -20,6 +20,10 @@ app:
       disk-max-size-mb: 0
   c2c:
     cache:
+      also-energy-site-inventory:
+        ttl: 3600
+        heap-max-entries: 1000
+        disk-max-size-mb: 5
       datum-stream-meta-cache:
         ttl: 900
         heap-max-entries: 5000

@@ -59,6 +59,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -174,6 +175,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 	@Captor
 	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
 
+	@Mock
+	private Cache<Long, CloudDataValue[]> siteInventoryCache;
+
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
 	private CloudIntegrationsExpressionService expressionService;
@@ -191,6 +195,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
+
+		service.setSiteInventoryCache(siteInventoryCache);
+
 	}
 
 	private static String componentValueRef(Long siteId, Long hardwareId, String fieldName, String fn) {
@@ -405,6 +412,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
+
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
@@ -511,16 +527,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 		prop1.setScale(0);
 		prop1.setEnabled(true);
 
-		final String fieldName2 = "KWh";
-		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
-				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
-		prop2.setMultiplier(new BigDecimal("1000"));
-		prop2.setScale(0);
-		prop2.setEnabled(true);
-
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
-				.willReturn(List.of(prop1, prop2));
+				.willReturn(List.of(prop1));
 
 		// configure datum stream
 		final Long nodeId = randomLong();
@@ -552,6 +560,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 		final var res = new ResponseEntity<JsonNode>(HttpStatus.NO_CONTENT);
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
+
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
@@ -570,8 +587,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 							)), from(RequestEntity::getUrl))
 			.as("Request body contains criteria")
 			.returns(List.of(
-				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
-				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name())
 				), from(RequestEntity::getBody))
 			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
@@ -664,6 +680,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 				utf8StringResource("alsoenergy-bindata-02.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
 
 		// WHEN
 		var filter = new BasicQueryFilter();
@@ -839,6 +864,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 				utf8StringResource("alsoenergy-bindata-03.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
 
 		// WHEN
 		var filter = new BasicQueryFilter();
@@ -1019,6 +1053,22 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 				utf8StringResource("alsoenergy-bindata-04.json", getClass()), ObjectNode.class);
 		final var res2 = new ResponseEntity<JsonNode>(resJson2, HttpStatus.OK);
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res1).willReturn(res2);
+
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId1)).willReturn(service
+				.parseSiteHardware(siteId1,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId1, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
+		given(siteInventoryCache.get(siteId2)).willReturn(service
+				.parseSiteHardware(siteId2,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId2, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
 
 		// WHEN
 		// set clock to near data request, to work with maximum lag setting (default 3h)
@@ -1241,6 +1291,22 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 			.willReturn(res2);
 		// @formatter:on
 
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId1)).willReturn(service
+				.parseSiteHardware(siteId1,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId1, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
+		given(siteInventoryCache.get(siteId2)).willReturn(service
+				.parseSiteHardware(siteId2,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId2, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
+
 		// WHEN
 		// set clock to 1y past data date, to exceed maximum lag setting (default 3h)
 		clock.setInstant(Instant.parse("2025-12-30T00:00:00Z"));
@@ -1392,6 +1458,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 
 		final ZonedDateTime startTs = ZonedDateTime.parse("2024-11-21T10:00:00+00:00");
 		final ZonedDateTime endTs = startTs.plusDays(5);
+
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1637,6 +1712,15 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 
 		final ZonedDateTime startTs = ZonedDateTime.parse("2024-11-21T10:00:00+00:00");
 		final ZonedDateTime endTs = startTs.plusDays(5);
+
+		// get site devices for data validation
+		given(siteInventoryCache.get(siteId)).willReturn(service
+				.parseSiteHardware(siteId,
+						getObjectFromJSON(
+								utf8StringResource("alsoenergy-hardware-02.json.tmpl", getClass())
+										.formatted(hardwareId, 23456),
+								JsonNode.class))
+				.toArray(CloudDataValue[]::new));
 
 		// WHEN
 		final var filter = new BasicQueryFilter();

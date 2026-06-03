@@ -182,6 +182,12 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
 	/**
+	 * A cache of SolarEdge site IDs to associated inventory information. This
+	 * is used to resolve the available device identifiers for a given site.
+	 */
+	private @Nullable Cache<Long, CloudDataValue[]> siteInventoryCache;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param userEventAppenderBiz
@@ -263,7 +269,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				"integration");
 		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = siteHardware(integration, filters.get(SITE_ID_FILTER).toString(), filters);
+			result = siteHardware(integration, Long.valueOf(filters.get(SITE_ID_FILTER).toString()),
+					filters);
 		} else {
 			// list available sites
 			result = sites(integration);
@@ -330,8 +337,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
-			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,
-					sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
+			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(
+					integration, ds, sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
 
 			BasicQueryFilter nextQueryFilter = null;
 
@@ -451,7 +458,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
-			final String siteId, final Map<String, ?> filters) {
+			final Long siteId, final Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
@@ -489,8 +496,17 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return result;
 	}
 
+	/**
+	 * Parse a site hardware JSON response.
+	 *
+	 * @param siteId
+	 *        the site ID
+	 * @param json
+	 *        the JSON to parse
+	 * @return the parsed inventory
+	 */
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSiteHardware(final String siteId,
+	public static List<CloudDataValue> parseSiteHardware(final Long siteId,
 			final @Nullable JsonNode json) {
 		if ( json == null ) {
 			return List.of();
@@ -551,6 +567,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		      }
 		    },
 		*/
+		final String siteIdent = siteId.toString();
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode deviceNode : json.path("hardware") ) {
 			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
@@ -574,14 +591,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 				List<CloudDataValue> aggs = new ArrayList<>(AlsoEnergyFieldFunction.values().length);
 				for ( AlsoEnergyFieldFunction fn : AlsoEnergyFieldFunction.values() ) {
-					aggs.add(dataValue(List.of(siteId, id, fieldName, fn.name()),
+					aggs.add(dataValue(List.of(siteIdent, id, fieldName, fn.name()),
 							fieldName + " " + fn.name()));
 				}
 
-				fields.add(intermediateDataValue(List.of(siteId, id, fieldName), fieldName, null, aggs));
+				fields.add(
+						intermediateDataValue(List.of(siteIdent, id, fieldName), fieldName, null, aggs));
 			}
 
-			result.add(intermediateDataValue(List.of(siteId, id), name, meta, fields));
+			result.add(intermediateDataValue(List.of(siteIdent, id), name, meta, fields));
 		}
 		return result;
 	}
@@ -651,7 +669,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private Map<UserLongCompositePK, List<ValueRef>> resolveHardwareGroups(
-			CloudDatumStreamConfiguration datumStream, @Nullable Collection<String> sourceValueRefs,
+			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
+			@Nullable Collection<String> sourceValueRefs,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
@@ -675,8 +694,19 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					fn = AlsoEnergyFieldFunction.Last;
 				}
 
-				var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
-				List<ValueRef> valueRefs = result.computeIfAbsent(
+				// verify against site inventory
+				final CloudDataValue[] siteInventory = resolveSiteInventory(integration, siteId);
+				if ( siteInventory != null ) {
+					CloudDataValue match = CloudDataValue.findFirst(siteInventory,
+							List.of(siteId.toString(), hardwareId.toString(), fieldName, fn.name()));
+					if ( match == null ) {
+						// not available so skip
+						continue;
+					}
+				}
+
+				final var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
+				final List<ValueRef> valueRefs = result.computeIfAbsent(
 						new UserLongCompositePK(siteId, hardwareId), _ -> new ArrayList<>(8));
 				if ( !valueRefs.contains(valueRef) ) {
 					valueRefs.add(valueRef);
@@ -793,4 +823,50 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return datumStream.getSourceId() + ref.hardwareRef;
 	}
 
+	private CloudDataValue @Nullable [] resolveSiteInventory(CloudIntegrationConfiguration integration,
+			Long siteId) {
+		assert integration != null && siteId != null;
+		final var cache = getSiteInventoryCache();
+
+		CloudDataValue[] result = (cache != null ? cache.get(siteId) : null);
+		if ( result != null ) {
+			return result;
+		}
+
+		List<CloudDataValue> response = siteHardware(integration, siteId,
+				Map.of(SITE_ID_FILTER, siteId));
+		if ( response != null ) {
+			result = response.toArray(CloudDataValue[]::new);
+			if ( cache != null ) {
+				cache.put(siteId, result);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get the site inventory cache.
+	 *
+	 * @return the cache
+	 * @since 2.1
+	 */
+	public final @Nullable Cache<Long, CloudDataValue[]> getSiteInventoryCache() {
+		return siteInventoryCache;
+	}
+
+	/**
+	 * Set the site inventory cache.
+	 *
+	 * <p>
+	 * This cache can be provided to help with device lookup by site. ID.
+	 * </p>
+	 *
+	 * @param siteInventoryCache
+	 *        the cache to set
+	 * @since 2.1
+	 */
+	public final void setSiteInventoryCache(@Nullable Cache<Long, CloudDataValue[]> siteInventoryCache) {
+		this.siteInventoryCache = siteInventoryCache;
+	}
 }
