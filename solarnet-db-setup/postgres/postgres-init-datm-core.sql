@@ -71,7 +71,7 @@ CREATE TABLE solardatm.da_datm (
 CREATE UNIQUE INDEX IF NOT EXISTS da_datm_pkey ON solardatm.da_datm (stream_id, ts DESC);
 
 -- datum aux table
-CREATE TYPE solardatm.da_datm_aux_type AS ENUM ('Reset', 'Mark');
+CREATE TYPE solardatm.da_datm_aux_type AS ENUM ('Reset', 'Mark', 'Annotation', 'Flag', 'Note');
 
 CREATE TABLE solardatm.da_datm_aux (
 	stream_id	UUID NOT NULL,
