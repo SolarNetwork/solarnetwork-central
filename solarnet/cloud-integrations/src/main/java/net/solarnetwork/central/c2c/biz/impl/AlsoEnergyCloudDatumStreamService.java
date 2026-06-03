@@ -90,6 +90,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -247,6 +248,18 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	@Override
 	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
 		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { DatumValidationType.TimeGap.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
 	}
 
 	@Override
