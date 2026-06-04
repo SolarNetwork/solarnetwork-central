@@ -2462,8 +2462,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			;
 
 		and.then(result)
-			.as("Datum x1 device x7 day x225 + 1 (prev day) datum parsed from HTTP responses")
-			.hasSize(1576)
+			.as("Datum x1 device x7 day x223 + 1 (prev day) datum parsed from HTTP responses")
+			.hasSize(1562)
 			.allSatisfy(d -> {
 				and.then(d)
 					.as("Datum kind is from DatumStream configuration")
@@ -3499,7 +3499,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		and.then(result)
 			.as("Datum for entire day parsed from HTTP responses")
-			.hasSize(219)
+			.hasSize(217)
 			.allSatisfy(d -> {
 				and.then(d)
 					.as("Datum kind is from DatumStream configuration")
@@ -3525,7 +3525,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					.returns(expectedSamples1, from(GeneralDatum::getSamples))
 					;
 
-				final int index2 = 218;
+				final int index2 = 216;
 				final Instant expectedTs2 = LocalDateTime.parse("2025-03-02T00:00:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
 						"dcPower_a", 0.1f,
@@ -4454,7 +4454,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(timeGapValidationEventData(datumStream,
-					"/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId),
+					"/%s/18".formatted(systemId),
 					expectedUris.get(1),
 					inv1SourceId,
 					timeGapEndTs,
@@ -4499,7 +4499,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 					;
 			})
 			.satisfies(records -> {
-				final String deviceRef = "/%s/18/EnergyAndPowerPv/pvGeneration".formatted(systemId);
+				final String deviceRef = "/%s/18".formatted(systemId);
+				final String spikeRef = deviceRef + "/EnergyAndPowerPv/pvGeneration";
 				final Instant timeGapStartTs = prevDatumTs;
 
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
@@ -4555,7 +4556,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							.asInstanceOf(map(String.class, Object.class))
 							.as("Property metadata for energy-spike event datum")
 							.containsExactlyInAnyOrderEntriesOf(energySpikeValidationPropertyMetadata(
-									deviceRef, expectedUris.get(1), null, failedValue1, 300000L, 3000.0, 3600))
+									spikeRef, expectedUris.get(1), null, failedValue1, 300000L, 3000.0, 3600))
 							;
 					})
 					;

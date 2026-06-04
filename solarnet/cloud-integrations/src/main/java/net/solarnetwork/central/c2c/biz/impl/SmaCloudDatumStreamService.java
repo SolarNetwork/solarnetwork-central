@@ -888,6 +888,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				? resolveTimeGapValidationThreshold(ds)
 				: null);
 
+		final String deviceRef = "/%s/%s".formatted(systemId, deviceId);
+
 		// use the resolution value as the fallback time value between readings, i.e. for the first reading of the day
 		long tickSeconds = 0;
 		if ( maxPower != null ) {
@@ -925,14 +927,14 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			}
 
 			// only track time-gap validation on new datum
+			final SortedMap<Instant, GeneralDatum> datumBySource = resultDatum.computeIfAbsent(sourceId,
+					_ -> new TreeMap<>());
 			final var datumIsNew = new MutableBoolean(false);
-			final GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
-					.computeIfAbsent(ts, k -> {
-						datumIsNew.setTrue();
-						return new GeneralDatum(
-								DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
-								new DatumSamples());
-					});
+			final GeneralDatum datum = datumBySource.computeIfAbsent(ts, k -> {
+				datumIsNew.setTrue();
+				return new GeneralDatum(DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
+						new DatumSamples());
+			});
 			for ( ValueRef ref : valueRefs ) {
 				JsonNode measurementNode = dataNode.path(ref.measurement.name());
 				if ( measurementNode == null || measurementNode.isNull()
@@ -940,21 +942,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					continue;
 				}
 				Object propVal = ref.measurement.parser().apply(measurementNode);
-
-				if ( maxPower != null && (prevTs != null || tickSeconds > 0)
-						&& ref.measurementSet.name().startsWith("Energy")
-						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
-						&& propVal instanceof Number gen ) {
-					auxiliary.addAll(validateEnergyDataValue(ds, request,
-							ref.property.getValueReference(), refParameters, gen, maxPower,
-							energyValidationThreshold,
-							prevTs != null ? prevTs : ts.minusSeconds(tickSeconds), datum.datumIdent()));
-				}
-
-				if ( datumIsNew.booleanValue() && timeGapDuration != null && prevTs != null ) {
-					auxiliary.addAll(validateTimeGap(ds, request, ref.property.getValueReference(),
-							refParameters, timeGapDuration, prevTs, datum.datumIdent()));
-				}
 
 				if ( propVal instanceof Map<?, ?> m ) {
 					for ( Entry<?, ?> e : m.entrySet() ) {
@@ -965,6 +952,26 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				} else {
 					populateSampleProp(datum, ref, propVal, null);
 				}
+
+				if ( maxPower != null && (prevTs != null || tickSeconds > 0)
+						&& ref.measurementSet.name().startsWith("Energy")
+						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
+						&& propVal instanceof Number gen ) {
+					auxiliary.addAll(validateEnergyDataValue(ds, request,
+							ref.property.getValueReference(), refParameters, gen, maxPower,
+							energyValidationThreshold,
+							prevTs != null ? prevTs : ts.minusSeconds(tickSeconds), datum.datumIdent()));
+				}
+			}
+
+			if ( datum.isEmpty() ) {
+				datumBySource.remove(ts);
+				continue;
+			}
+
+			if ( datumIsNew.booleanValue() && timeGapDuration != null && prevTs != null ) {
+				auxiliary.addAll(validateTimeGap(ds, request, deviceRef, refParameters, timeGapDuration,
+						prevTs, datum.datumIdent()));
 			}
 
 			prevTs = datum.getTimestamp();
