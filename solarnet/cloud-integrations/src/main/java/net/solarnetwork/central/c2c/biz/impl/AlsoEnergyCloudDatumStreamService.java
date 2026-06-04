@@ -795,9 +795,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				if ( propVal != null ) {
 					DatumIdentity datumId = datumId(datumStream.getKind(), datumStream.getObjectId(),
 							sourceId, ts).toIdentity();
-					datumIsNew.setFalse();
 					final SortedMap<DatumIdentity, DatumSamples> dataMap = dataBySource
 							.computeIfAbsent(sourceId, _ -> new TreeMap<>());
+					datumIsNew.setFalse();
 					dataMap.computeIfAbsent(datumId, _ -> {
 						datumIsNew.setTrue();
 						return new DatumSamples();

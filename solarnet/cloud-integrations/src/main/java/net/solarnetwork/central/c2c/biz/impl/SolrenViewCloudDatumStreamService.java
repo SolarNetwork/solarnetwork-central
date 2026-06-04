@@ -826,38 +826,38 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			final DatumIdentity datumId = new DatumIdent(datumStream.getKind(),
 					datumStream.getObjectId(), sourceId, ts);
 
-			datumIsNew.setFalse();
 			final SortedMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
 					.computeIfAbsent(sourceId, _ -> new TreeMap<>());
+			datumIsNew.setFalse();
 			final GeneralDatum datum = datumByTime.computeIfAbsent(datumId, _ -> {
 				datumIsNew.setTrue();
 				return new GeneralDatum(datumId, new DatumSamples());
 			});
 			parseDatumProperties(n, componentId, datum, refsByComponent);
 
-			if ( timeGapThreshold != null && datumIsNew.booleanValue() ) {
-				Instant prevTs = null;
-				var localPrevDatum = datumByTime.headMap(datumId);
-				if ( !localPrevDatum.isEmpty() ) {
-					var prevDatum = localPrevDatum.lastEntry().getValue();
-					if ( datumId.getKind() == prevDatum.getKind()
-							&& datumId.getObjectId().equals(prevDatum.getObjectId())
-							&& datumId.getSourceId().equals(prevDatum.getSourceId()) ) {
-						prevTs = prevDatum.datumIdent().getTimestamp();
-					}
-				}
-				if ( prevTs == null ) {
-					final var prevDatum = lookupPreviousDatum(datumStream, datumId.getSourceId(), ts);
-					if ( prevDatum != null ) {
-						prevTs = prevDatum.getTimestamp();
-					}
-				}
-				if ( prevTs != null ) {
-					auxiliary.addAll(validateTimeGap(datumStream, request, componentRef, null,
-							timeGapThreshold, prevTs, datumId));
+			if ( datumIsNew.isFalse() || timeGapThreshold == null ) {
+				continue;
+			}
+			Instant prevTs = null;
+			var localPrevDatum = datumByTime.headMap(datumId);
+			if ( !localPrevDatum.isEmpty() ) {
+				var prevDatum = localPrevDatum.lastEntry().getValue();
+				if ( datumId.getKind() == prevDatum.getKind()
+						&& datumId.getObjectId().equals(prevDatum.getObjectId())
+						&& datumId.getSourceId().equals(prevDatum.getSourceId()) ) {
+					prevTs = prevDatum.datumIdent().getTimestamp();
 				}
 			}
-
+			if ( prevTs == null ) {
+				final var prevDatum = lookupPreviousDatum(datumStream, datumId.getSourceId(), ts);
+				if ( prevDatum != null ) {
+					prevTs = prevDatum.getTimestamp();
+				}
+			}
+			if ( prevTs != null ) {
+				auxiliary.addAll(validateTimeGap(datumStream, request, componentRef, null,
+						timeGapThreshold, prevTs, datumId));
+			}
 		}
 
 		return null;

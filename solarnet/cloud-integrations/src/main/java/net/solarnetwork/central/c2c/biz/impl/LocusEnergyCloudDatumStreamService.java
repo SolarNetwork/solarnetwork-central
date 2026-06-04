@@ -681,82 +681,77 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 							final ObjectNode json = nonnull(res.getBody(), "Response body");
 							final MutableBoolean datumIsNew = new MutableBoolean(false);
 							for ( JsonNode dataNode : json.path("data") ) {
-								if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
+								if ( !(dataNode instanceof ObjectNode o && o.has("ts")) ) {
+									continue;
+								}
 
-									final Instant ts;
-									try {
-										ts = Instant.parse(o.get("ts").asString());
-									} catch ( DateTimeParseException dtpe ) {
-										// ignore and continue
-										continue;
-									}
+								final Instant ts;
+								try {
+									ts = Instant.parse(o.get("ts").asString());
+								} catch ( DateTimeParseException dtpe ) {
+									// ignore and continue
+									continue;
+								}
 
-									datumIsNew.setFalse();
-									final DatumIdentity datumId = ds.datumId(ts).toIdentity();
-									final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
-											.computeIfAbsent(datumId.getSourceId(),
-													_ -> new ConcurrentSkipListMap<>());
-									final GeneralDatum datum = datumByTime.computeIfAbsent(datumId,
-											k -> {
-												datumIsNew.setTrue();
-												return new GeneralDatum(k, new DatumSamples());
-											});
-									final DatumSamples samples = datum.getSamples();
+								final DatumIdentity datumId = ds.datumId(ts).toIdentity();
+								final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
+										.computeIfAbsent(datumId.getSourceId(),
+												_ -> new ConcurrentSkipListMap<>());
+								datumIsNew.setFalse();
+								final GeneralDatum datum = datumByTime.computeIfAbsent(datumId, k -> {
+									datumIsNew.setTrue();
+									return new GeneralDatum(k, new DatumSamples());
+								});
+								final DatumSamples samples = datum.getSamples();
 
-									boolean foundProp = false;
-									for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-										String fieldName = fieldNamesByProperty.get(property.getId());
+								boolean foundProp = false;
+								for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+									String fieldName = fieldNamesByProperty.get(property.getId());
 
-										JsonNode val = o.get(fieldName);
-										if ( val != null ) {
-											DatumSamplesType propType = property.getPropertyType();
-											Object propVal = parseJsonDatumPropertyValue(val, propType);
-											propVal = property.applyValueTransforms(propVal);
-											if ( propVal != null ) {
-												synchronized ( samples ) {
-													samples.putSampleValue(propType,
-															property.getPropertyName(), propVal);
-												}
-												if ( !foundProp ) {
-													foundProp = true;
-													// track the greatest timestamp per component to support multi-stream lag
-													greatestTimestampPerComponent.compute(
-															reqEntry.getKey(),
-															(_, v) -> v == null || ts.compareTo(v) > 0
-																	? ts
-																	: v);
-												}
+									JsonNode val = o.get(fieldName);
+									if ( val != null ) {
+										DatumSamplesType propType = property.getPropertyType();
+										Object propVal = parseJsonDatumPropertyValue(val, propType);
+										propVal = property.applyValueTransforms(propVal);
+										if ( propVal != null ) {
+											synchronized ( samples ) {
+												samples.putSampleValue(propType,
+														property.getPropertyName(), propVal);
+											}
+											if ( !foundProp ) {
+												foundProp = true;
+												// track the greatest timestamp per component to support multi-stream lag
+												greatestTimestampPerComponent.compute(reqEntry.getKey(),
+														(_, v) -> v == null || ts.compareTo(v) > 0 ? ts
+																: v);
 											}
 										}
 									}
+								}
 
-									if ( timeGapThreshold != null && foundProp
-											&& datumIsNew.booleanValue() ) {
-										Instant prevTs = null;
-										var localPrevDatum = datumByTime.headMap(datumId);
-										if ( !localPrevDatum.isEmpty() ) {
-											var prevDatum = localPrevDatum.lastEntry().getValue();
-											if ( datumId.getKind() == prevDatum.getKind()
-													&& datumId.getObjectId()
-															.equals(prevDatum.getObjectId())
-													&& datumId.getSourceId()
-															.equals(prevDatum.getSourceId()) ) {
-												prevTs = prevDatum.datumIdent().getTimestamp();
-											}
-										}
-										if ( prevTs == null ) {
-											final var prevDatum = lookupPreviousDatum(datumStream,
-													datumId.getSourceId(), ts);
-											if ( prevDatum != null ) {
-												prevTs = prevDatum.getTimestamp();
-											}
-										}
-										if ( prevTs != null ) {
-											auxiliary.addAll(
-													validateTimeGap(datumStream, req, componentRef, null,
-															timeGapThreshold, prevTs, datumId));
-										}
+								if ( datumIsNew.isFalse() || !foundProp || timeGapThreshold == null ) {
+									continue;
+								}
+								Instant prevTs = null;
+								var localPrevDatum = datumByTime.headMap(datumId);
+								if ( !localPrevDatum.isEmpty() ) {
+									var prevDatum = localPrevDatum.lastEntry().getValue();
+									if ( datumId.getKind() == prevDatum.getKind()
+											&& datumId.getObjectId().equals(prevDatum.getObjectId())
+											&& datumId.getSourceId().equals(prevDatum.getSourceId()) ) {
+										prevTs = prevDatum.datumIdent().getTimestamp();
 									}
+								}
+								if ( prevTs == null ) {
+									final var prevDatum = lookupPreviousDatum(datumStream,
+											datumId.getSourceId(), ts);
+									if ( prevDatum != null ) {
+										prevTs = prevDatum.getTimestamp();
+									}
+								}
+								if ( prevTs != null ) {
+									auxiliary.addAll(validateTimeGap(datumStream, req, componentRef,
+											null, timeGapThreshold, prevTs, datumId));
 								}
 							}
 							return null;
