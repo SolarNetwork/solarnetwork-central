@@ -1020,12 +1020,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		List<GeneralDatum> result = new ArrayList<>(8);
 		Instant prevTs = null;
 		for ( JsonNode telem : json.findValue("telemetries") ) {
-			String dateVal = nonEmptyString(telem.path("date").asString());
+			final String dateVal = nonEmptyString(telem.path("date").asString());
 			if ( dateVal == null ) {
 				continue;
 			}
-			Instant ts = timestampFmt.parse(dateVal, Instant::from);
-			GeneralDatum d = new GeneralDatum(
+			final Instant ts = timestampFmt.parse(dateVal, Instant::from);
+			final GeneralDatum d = new GeneralDatum(
 					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
 					new DatumSamples());
 			for ( String componentId : new String[] { WILDCARD_IDENTIFIER, inverterId } ) {
@@ -1093,22 +1093,23 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					}
 				}
 			}
-			if ( !d.isEmpty() ) {
-				if ( timeGapThreshold != null ) {
-					if ( prevTs == null ) {
-						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-						if ( prevDatum != null ) {
-							prevTs = prevDatum.getTimestamp();
-						}
-					}
-					if ( prevTs != null ) {
-						auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-								timeGapThreshold, prevTs, d.datumIdent()));
+			if ( d.isEmpty() ) {
+				continue;
+			}
+			if ( timeGapThreshold != null ) {
+				if ( prevTs == null ) {
+					final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+					if ( prevDatum != null ) {
+						prevTs = prevDatum.getTimestamp();
 					}
 				}
-				result.add(d);
-				prevTs = ts;
+				if ( prevTs != null ) {
+					auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
+							timeGapThreshold, prevTs, d.datumIdent()));
+				}
 			}
+			result.add(d);
+			prevTs = ts;
 		}
 		return result;
 	}
@@ -1176,14 +1177,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						continue;
 					}
 					// force align date
-					Instant ts = resolution.truncateDate(timestampFmt.parse(dateVal, Instant::from));
-					DatumIdentity datumId = DatumId
+					final Instant ts = resolution
+							.truncateDate(timestampFmt.parse(dateVal, Instant::from));
+					final DatumIdentity datumId = DatumId
 							.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts)
 							.toIdentity();
-					datumIsNew.setFalse();
 					final SortedMap<DatumIdentity, GeneralDatum> result = resultBySource
 							.computeIfAbsent(sourceId, _ -> new TreeMap<>());
-					GeneralDatum d = result.computeIfAbsent(datumId, _ -> {
+					datumIsNew.setFalse();
+					final GeneralDatum d = result.computeIfAbsent(datumId, _ -> {
 						datumIsNew.setTrue();
 						return new GeneralDatum(datumId, new DatumSamples());
 					});
@@ -1211,27 +1213,28 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							}
 						}
 					}
-					if ( datumIsNew.booleanValue() && timeGapThreshold != null ) {
-						Instant prevTs = null;
-						final var headMap = result.headMap(datumId);
-						if ( !headMap.isEmpty() ) {
-							var prevDatumId = headMap.lastKey();
-							if ( prevDatumId != null && datumId.getKind() == prevDatumId.getKind()
-									&& datumId.getObjectId().equals(prevDatumId.getObjectId())
-									&& datumId.getSourceId().equals(prevDatumId.getSourceId()) ) {
-								prevTs = prevDatumId.getTimestamp();
-							}
+					if ( d.isEmpty() || datumIsNew.isFalse() || timeGapThreshold == null ) {
+						continue;
+					}
+					Instant prevTs = null;
+					final var headMap = result.headMap(datumId);
+					if ( !headMap.isEmpty() ) {
+						var prevDatumId = headMap.lastKey();
+						if ( prevDatumId != null && datumId.getKind() == prevDatumId.getKind()
+								&& datumId.getObjectId().equals(prevDatumId.getObjectId())
+								&& datumId.getSourceId().equals(prevDatumId.getSourceId()) ) {
+							prevTs = prevDatumId.getTimestamp();
 						}
-						if ( prevTs == null ) {
-							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-							if ( prevDatum != null ) {
-								prevTs = prevDatum.getTimestamp();
-							}
+					}
+					if ( prevTs == null ) {
+						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
 						}
-						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-									timeGapThreshold, prevTs, d.datumIdent()));
-						}
+					}
+					if ( prevTs != null ) {
+						auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
+								timeGapThreshold, prevTs, d.datumIdent()));
 					}
 				}
 			}
@@ -1289,12 +1292,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 			Instant prevTs = null;
 			for ( JsonNode telem : battery.path("telemetries") ) {
-				String dateVal = nonEmptyString(telem.path("timeStamp").asString());
+				final String dateVal = nonEmptyString(telem.path("timeStamp").asString());
 				if ( dateVal == null ) {
 					continue;
 				}
-				Instant ts = timestampFmt.parse(dateVal, Instant::from);
-				GeneralDatum d = new GeneralDatum(
+				final Instant ts = timestampFmt.parse(dateVal, Instant::from);
+				final GeneralDatum d = new GeneralDatum(
 						DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
 						new DatumSamples());
 				for ( String componentId : new String[] { WILDCARD_IDENTIFIER, batteryId } ) {
@@ -1327,22 +1330,23 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						}
 					}
 				}
-				if ( !d.isEmpty() ) {
-					if ( timeGapThreshold != null ) {
-						if ( prevTs == null ) {
-							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-							if ( prevDatum != null ) {
-								prevTs = prevDatum.getTimestamp();
-							}
-						}
-						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-									timeGapThreshold, prevTs, d.datumIdent()));
+				if ( d.isEmpty() ) {
+					continue;
+				}
+				if ( timeGapThreshold != null ) {
+					if ( prevTs == null ) {
+						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
 						}
 					}
-					result.add(d);
-					prevTs = ts;
+					if ( prevTs != null ) {
+						auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
+								timeGapThreshold, prevTs, d.datumIdent()));
+					}
 				}
+				result.add(d);
+				prevTs = ts;
 			}
 		}
 		return result;
