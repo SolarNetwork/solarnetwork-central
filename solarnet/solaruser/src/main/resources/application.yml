@@ -23,7 +23,7 @@ app:
       also-energy-site-inventory:
         ttl: 3600
         heap-max-entries: 1000
-        disk-max-size-mb: 5
+        disk-max-size-mb: 0
       datum-stream-meta-cache:
         ttl: 900
         heap-max-entries: 5000
@@ -53,7 +53,7 @@ app:
       sma-system-inventory:
         ttl: 3600
         heap-max-entries: 1000
-        disk-max-size-mb: 5
+        disk-max-size-mb: 0
       sma-system-tz:
         tti: 3600
         ttl: 0
@@ -62,7 +62,7 @@ app:
       solaredge-site-inventory:
         ttl: 3600
         heap-max-entries: 1000
-        disk-max-size-mb: 5
+        disk-max-size-mb: 0
       solaredge-site-tz:
         tti: 3600
         ttl: 0
