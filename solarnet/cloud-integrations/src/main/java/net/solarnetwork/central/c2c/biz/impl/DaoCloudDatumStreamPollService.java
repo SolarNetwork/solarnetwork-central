@@ -637,7 +637,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			final Instant startDate = usedFilter != null && usedFilter.getStartDate() != null
 					? usedFilter.getStartDate()
 					: queryStartDate;
-			final Instant endDate = usedFilter != null && usedFilter.getStartDate() != null
+			final Instant endDate = usedFilter != null && usedFilter.getEndDate() != null
 					? usedFilter.getEndDate()
 					: queryEndDate;
 
