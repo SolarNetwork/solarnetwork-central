@@ -186,6 +186,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 						expectedMaxEnergy / energyValidationThreshold, ratedPower);
 		log.warn(errMsg);
 
+		final URI reqUri = restOpsHelper.maskedUri(request.getUrl());
+
 		final var eventParams = new LinkedHashMap<String, Object>(8);
 		eventParams.put(SOURCE_DATA_KEY, sourceRef);
 		eventParams.put(SOURCE_ID_DATA_KEY, datumIdent.getSourceId());
@@ -197,7 +199,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 		eventParams.put(DatumAuxiliary.RATED_POWER_META_KEY, ratedPower);
 
 		final var reqParams = new LinkedHashMap<>(2);
-		reqParams.put(HTTP_URI_DATA_KEY, request.getUrl());
+		reqParams.put(HTTP_URI_DATA_KEY, reqUri);
 		if ( request.getBody() != null ) {
 			reqParams.put(HTTP_BODY_DATA_KEY, request.getBody());
 		}
@@ -209,7 +211,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 
 		// generate validation Mark
 		return DatumAuxiliary.createDataValueOverThresholdFactorValidationRecords("Energy reading",
-				DatumValidationType.EnergySpike.getKey(), sourceRef, request.getUrl(), request.getBody(),
+				DatumValidationType.EnergySpike.getKey(), sourceRef, reqUri, request.getBody(),
 				energyValue, energyValidationThreshold, expectedMaxEnergy, ratedPower,
 				secondsDiff * 1000L, datumIdent);
 	}
@@ -252,6 +254,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 				timeGapThreshold.toString());
 		log.warn(errMsg);
 
+		final URI reqUri = restOpsHelper.maskedUri(request.getUrl());
+
 		final var eventParams = new LinkedHashMap<String, Object>(8);
 		eventParams.put(SOURCE_DATA_KEY, sourceRef);
 		eventParams.put(SOURCE_ID_DATA_KEY, datumIdent.getSourceId());
@@ -260,7 +264,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 		eventParams.put(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, timeGapThreshold.toString());
 
 		final var reqParams = new LinkedHashMap<>(2);
-		reqParams.put(HTTP_URI_DATA_KEY, request.getUrl());
+		reqParams.put(HTTP_URI_DATA_KEY, reqUri);
 		if ( request.getBody() != null ) {
 			reqParams.put(HTTP_BODY_DATA_KEY, request.getBody());
 		}
@@ -272,7 +276,16 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 
 		// generate validation Mark
 		return DatumAuxiliary.createTimeGapValidationRecords(DatumValidationType.TimeGap.getKey(),
-				sourceRef, request.getUrl(), request.getBody(), prevTs, timeGapThreshold, datumIdent);
+				sourceRef, reqUri, request.getBody(), prevTs, timeGapThreshold, datumIdent);
+	}
+
+	/**
+	 * Get the REST helper.
+	 *
+	 * @return the REST helper
+	 */
+	public final RestOperationsHelper getRestOpsHelper() {
+		return restOpsHelper;
 	}
 
 	/**

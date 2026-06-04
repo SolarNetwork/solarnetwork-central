@@ -1844,6 +1844,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 			.satisfies(records -> {
 				final Instant timeGapStartTs = prevDatumTs;
 				final Instant timeGapEndTs = firstDatumTs;
+				final URI expectedUri = service.getRestOpsHelper().maskedUri(expectedInverterUri);
 
 				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
 					.as("Timestamp for time-gap start validation event datum")
@@ -1858,7 +1859,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 							.asInstanceOf(map(String.class, Object.class))
 							.as("Property metadata for time-gap start event datum")
 							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
-									deviceRef, expectedInverterUri, null, timeGapStartTs, timeGapEndTs, true, null))
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, true, null))
 							.as("Correlation ID provided")
 							.containsKey(CORRELATION_ID_DATA_KEY)
 							;
@@ -1877,7 +1878,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 							.asInstanceOf(map(String.class, Object.class))
 							.as("Property metadata for time-gap start event datum")
 							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
-									deviceRef, expectedInverterUri, null, timeGapStartTs, timeGapEndTs, false,
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, false,
 									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
 											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
 							.as("Correlation ID provided")

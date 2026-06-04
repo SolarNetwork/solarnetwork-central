@@ -35,6 +35,8 @@ import java.time.InstantSource;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -46,12 +48,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.domain.CommonUserEvents;
@@ -72,7 +77,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
@@ -89,6 +94,14 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * </p>
 	 */
 	public static final String USER_EVENT_APPENDER_RUNTIME = "userEventAppender";
+
+	/**
+	 * The value to use for masked query parameter values.
+	 * 
+	 * @see #maskedUri(URI)
+	 * @since 2.1
+	 */
+	public static final String SENSITIVE_QUERY_PARAM_MASKED_VALUE = "*****";
 
 	/** A clock. */
 	protected final InstantSource clock;
@@ -120,6 +133,13 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * {@code userServiceKey} configured.
 	 */
 	private @Nullable UserServiceAuditor userServiceAuditor;
+
+	/**
+	 * An optional set of query parameter names to redact from events.
+	 * 
+	 * @since 2.1
+	 */
+	private @Nullable Set<String> sensitiveQueryParameterNames;
 
 	/**
 	 * Constructor.
@@ -317,7 +337,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			if ( req.getMethod() != null ) {
 				eventData.put(HTTP_METHOD_DATA_KEY, req.getMethod().toString());
 			}
-			eventData.put(HTTP_URI_DATA_KEY, req.getUrl().toString());
+			eventData.put(HTTP_URI_DATA_KEY, maskedUri(req.getUrl()).toString());
 			if ( req.getBody() != null ) {
 				eventData.put(HTTP_BODY_DATA_KEY, req.getBody() instanceof String s ? s
 						: JsonUtils.getTreeFromObject(req.getBody()));
@@ -424,6 +444,45 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 				eventAppender.addEvent(userId, event(tags, eventMsg, getJSONString(eventData)));
 			}
 		}
+	}
+
+	/**
+	 * Mask sensitive query parameter values.
+	 * 
+	 * <p>
+	 * Any query parameters whose names are found in
+	 * {@link #getSensitiveQueryParameterNames()} will have their associated
+	 * value replaced by {@link #SENSITIVE_QUERY_PARAM_MASKED_VALUE}.
+	 * </p>
+	 * 
+	 * @param uri
+	 *        the URI to mask
+	 * @return the masked URI
+	 * @see #setSensitiveQueryParameterNames(Set)
+	 * @since 2.1
+	 */
+	public URI maskedUri(URI uri) {
+		if ( sensitiveQueryParameterNames == null || sensitiveQueryParameterNames.isEmpty()
+				|| uri.getRawQuery() == null ) {
+			return uri;
+		}
+		UriComponentsBuilder b = UriComponentsBuilder.fromUri(uri);
+		MultiValueMap<String, String> queryParams = b.build(true).getQueryParams();
+		MultiValueMap<String, String> maskedParams = null;
+		for ( Entry<String, List<String>> e : queryParams.entrySet() ) {
+			for ( String sensitiveName : sensitiveQueryParameterNames ) {
+				if ( sensitiveName.compareToIgnoreCase(e.getKey()) == 0 ) {
+					if ( maskedParams == null ) {
+						maskedParams = new LinkedMultiValueMap<>(queryParams.size());
+					}
+					maskedParams.put(e.getKey(), List.of(SENSITIVE_QUERY_PARAM_MASKED_VALUE));
+				}
+			}
+		}
+		if ( maskedParams == null ) {
+			return uri;
+		}
+		return b.replaceQueryParams(maskedParams).build(true).toUri();
 	}
 
 	private void populateResponseBodyEventData(ResponseEntity<?> result, Map<String, Object> eventData) {
@@ -569,6 +628,28 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 */
 	public final void setAllowLocalHosts(boolean allowLocalHosts) {
 		this.allowLocalHosts = allowLocalHosts;
+	}
+
+	/**
+	 * Get the sensitive query parameter names.
+	 * 
+	 * @return the sensitive names, or {@code null}
+	 * @since 2.1
+	 */
+	public final @Nullable Set<String> getSensitiveQueryParameterNames() {
+		return sensitiveQueryParameterNames;
+	}
+
+	/**
+	 * Set the sensitive query parameter names.
+	 * 
+	 * @param sensitiveQueryParameterNames
+	 *        the names to set
+	 * @since 2.1
+	 */
+	public final void setSensitiveQueryParameterNames(
+			@Nullable Set<String> sensitiveQueryParameterNames) {
+		this.sensitiveQueryParameterNames = sensitiveQueryParameterNames;
 	}
 
 }
