@@ -1213,7 +1213,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							}
 						}
 					}
-					if ( d.isEmpty() || datumIsNew.isFalse() || timeGapThreshold == null ) {
+					if ( d.isEmpty() ) {
+						result.remove(datumId);
+						continue;
+					}
+					if ( datumIsNew.isFalse() || timeGapThreshold == null ) {
 						continue;
 					}
 					Instant prevTs = null;
@@ -1239,8 +1243,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				}
 			}
 		}
-		return resultBySource.values().stream().flatMap(m -> m.values().stream())
-				.filter(d -> !d.isEmpty()).toList();
+		return resultBySource.values().stream().flatMap(m -> m.values().stream()).toList();
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
