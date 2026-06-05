@@ -44,6 +44,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEACTIVATED_AT_
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.RATED_POWER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
@@ -338,7 +339,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 								"startDate", Instant.parse("2021-11-03T00:00:00Z")
 								));
 						expectedMeta.putAll(Map.of(
-								"peakPower", 184000,
+								CloudDataValue.RATED_POWER_METADATA, 184000,
 						        "acNominalPower", 184000,
 						        "dcPowerInputMax", 216000,
 						        "co2SavingsFactor", 649,
@@ -375,7 +376,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 								"startDate", Instant.parse("2023-10-11T00:00:00Z")
 								));
 						expectedMeta.putAll(Map.of(
-								"peakPower", 0,
+								CloudDataValue.RATED_POWER_METADATA, 0,
 						        "acNominalPower", 0,
 						        "dcPowerInputMax", 0,
 						        "co2SavingsFactor", 400
@@ -510,7 +511,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							"active", true,
 							"productId", 9099,
 							"type", "Solar Inverters",
-							"generatorPower", 6000,
+							RATED_POWER_METADATA, 6000,
 							"generatorPowerDc", 6000
 							))
 					;
@@ -623,7 +624,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							ACTIVE_METADATA, true,
 							"productId", 9099,
 							"type", "Solar Inverters",
-							"generatorPower", 6000,
+							RATED_POWER_METADATA, 6000,
 							"generatorPowerDc", 6000
 							))
 					;
@@ -647,7 +648,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 								.atZone(systemTimeZone).toInstant(),
 							"productId", 9098,
 							"type", "Solar Inverters",
-							"generatorPower", 5000,
+							RATED_POWER_METADATA, 5000,
 							"generatorPowerDc", 5000
 							))
 					;

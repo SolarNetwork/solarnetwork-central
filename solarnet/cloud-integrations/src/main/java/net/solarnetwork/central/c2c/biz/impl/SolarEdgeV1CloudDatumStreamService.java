@@ -35,6 +35,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_N
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.RATED_POWER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
@@ -460,6 +461,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 			populateNonEmptyValue(siteNode, "activationStatus", "activationStatus", meta);
 			populateNonEmptyValue(siteNode, "notes", "notes", meta);
+			if ( siteNode.hasNonNull("peakPower") ) {
+				double power = siteNode.path("peakPower").asDouble(0.0);
+				if ( power > 0 ) {
+					meta.put(RATED_POWER_METADATA, power * 1000.0);
+				}
+			}
 
 			result.add(intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta));
 		}

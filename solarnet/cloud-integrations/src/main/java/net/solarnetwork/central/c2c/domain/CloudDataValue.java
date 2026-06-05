@@ -164,6 +164,13 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	public static final String REPLACED_BY_METADATA = "replacedBy";
 
 	/**
+	 * Standard metadata key for a rated (peak) power value, in watts.
+	 *
+	 * @since 1.9
+	 */
+	public static final String RATED_POWER_METADATA = "ratedPower";
+
+	/**
 	 * A wildcard identifier value.
 	 *
 	 * @since 1.1

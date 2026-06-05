@@ -194,13 +194,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	public static final String RETURN_ENERGY_VALUES_PARAM = "ReturnEnergyValues";
 
 	/**
-	 * A data value metadata key for device generator (rated) power, in W.
-	 *
-	 * @since 2.2
-	 */
-	public static final String DEVICE_GENERATOR_POWER_DATA_KEY = "generatorPower";
-
-	/**
 	 * A measurement set key for PV generation, to use during validation.
 	 *
 	 * @since 2.2
@@ -424,7 +417,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		JsonNode instNode = json.path("installation");
 		populateTimestampValue(instNode, "startUpUtc", CloudDataValue.START_DATE_METADATA, meta,
 				s -> LocalDateTime.parse(s).toInstant(ZoneOffset.UTC));
-		populateNumberValue(instNode, "peakPower", "peakPower", meta);
+		populateNumberValue(instNode, "peakPower", CloudDataValue.RATED_POWER_METADATA, meta);
 		populateNumberValue(instNode, "acNominalPower", "acNominalPower", meta);
 		populateNumberValue(instNode, "dcPowerInputMax", "dcPowerInputMax", meta);
 		populateNumberValue(instNode, "co2SavingsFactor", "co2SavingsFactor", meta);
@@ -505,7 +498,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 			populateNonEmptyValue(devNode, "type", "type", meta);
 			populateNumberValue(devNode, "productId", "productId", meta);
-			populateNumberValue(devNode, "generatorPower", DEVICE_GENERATOR_POWER_DATA_KEY, meta);
+			populateNumberValue(devNode, "generatorPower", CloudDataValue.RATED_POWER_METADATA, meta);
 			populateNumberValue(devNode, "generatorPowerDc", "generatorPowerDc", meta);
 
 			result.add(intermediateDataValue(List.of(systemId, id), name, meta, null));
@@ -1215,7 +1208,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		for ( CloudDataValue dv : systemInventory ) {
 			if ( deviceId.equals(dv.getIdentifiers().getLast()) ) {
 				Map<String, ?> m = dv.getMetadata();
-				return CollectionUtils.getMapInteger(DEVICE_GENERATOR_POWER_DATA_KEY, m);
+				return CollectionUtils.getMapInteger(CloudDataValue.RATED_POWER_METADATA, m);
 			}
 		}
 		return null;
