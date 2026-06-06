@@ -66,8 +66,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -109,14 +107,15 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
-import net.solarnetwork.domain.datum.DatumId.DatumIdent;
-import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.DatumStreamId;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -480,7 +479,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					? resolveTimeGapValidationThreshold(datumStream)
 					: null);
 
-			final Map<String, SortedMap<DatumIdentity, GeneralDatum>> datum = new TreeMap<>();
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
 			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
 			usedQueryFilter.setStartDate(startDate);
 
@@ -505,15 +504,14 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 								.buildAndExpand(siteId, periodStartDate, periodEndDate)
 								.toUri();
 						// @formatter:on
-					}, (req, res) -> parseDatum(req, ds, siteId, res.getBody(), periodStartDate, datum,
-							refsByComponent, timeGapDuration, auxiliary));
+					}, (req, res) -> parseDatum(req, ds, siteId, res.getBody(), periodStartDate,
+							streamBuffer, refsByComponent, timeGapDuration, auxiliary));
 				}
 				startDate = periodEndDate;
 				page++;
 			}
 
-			Collection<GeneralDatum> r = datum.values().stream().flatMap(m -> m.values().stream())
-					.toList();
+			Collection<GeneralDatum> r = streamBuffer.datum(GeneralDatum::new);
 
 			BasicQueryFilter nextQueryFilter = null;
 			if ( usedQueryFilter.getEndDate() != null
@@ -780,8 +778,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private Void parseDatum(RequestEntity<Void> request, CloudDatumStreamConfiguration datumStream,
-			Long siteId, @Nullable String body, Instant ts,
-			Map<String, SortedMap<DatumIdentity, GeneralDatum>> datumBySource,
+			Long siteId, @Nullable String body, Instant ts, OrderedDatumSamplesBuffer streamBuffer,
 			Map<String, List<ValueRef>> refsByComponent, @Nullable Duration timeGapThreshold,
 			List<DatumAuxiliaryRecord> auxiliary) {
 		if ( body == null ) {
@@ -823,40 +820,26 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			final String componentRef = "/%s/%s".formatted(siteId, componentId);
 
-			final DatumIdentity datumId = new DatumIdent(datumStream.getKind(),
-					datumStream.getObjectId(), sourceId, ts);
+			final DatumStreamIdentity streamId = new DatumStreamId(datumStream.getKind(),
+					datumStream.getObjectId(), sourceId).toIdentity();
 
-			final SortedMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
-					.computeIfAbsent(sourceId, _ -> new TreeMap<>());
 			datumIsNew.setFalse();
-			final GeneralDatum datum = datumByTime.computeIfAbsent(datumId, _ -> {
-				datumIsNew.setTrue();
-				return new GeneralDatum(datumId, new DatumSamples());
-			});
-			parseDatumProperties(n, componentId, datum, refsByComponent);
+			final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
+			parseDatumProperties(n, componentId, samples, refsByComponent);
 
 			if ( datumIsNew.isFalse() || timeGapThreshold == null ) {
 				continue;
 			}
-			Instant prevTs = null;
-			var localPrevDatum = datumByTime.headMap(datumId);
-			if ( !localPrevDatum.isEmpty() ) {
-				var prevDatum = localPrevDatum.lastEntry().getValue();
-				if ( datumId.getKind() == prevDatum.getKind()
-						&& datumId.getObjectId().equals(prevDatum.getObjectId())
-						&& datumId.getSourceId().equals(prevDatum.getSourceId()) ) {
-					prevTs = prevDatum.datumIdent().getTimestamp();
-				}
-			}
+			Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
 			if ( prevTs == null ) {
-				final var prevDatum = lookupPreviousDatum(datumStream, datumId.getSourceId(), ts);
+				final var prevDatum = lookupPreviousDatum(datumStream, streamId.getSourceId(), ts);
 				if ( prevDatum != null ) {
 					prevTs = prevDatum.getTimestamp();
 				}
 			}
 			if ( prevTs != null ) {
 				auxiliary.addAll(validateTimeGap(datumStream, request, componentRef, null,
-						timeGapThreshold, prevTs, datumId));
+						timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 			}
 		}
 
@@ -883,7 +866,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return datumStream.getSourceId() + '/' + (i + 1);
 	}
 
-	private void parseDatumProperties(Node componentNode, String componentId, GeneralDatum datum,
+	private void parseDatumProperties(Node componentNode, String componentId, DatumSamples samples,
 			Map<String, List<ValueRef>> refsByComponent) {
 		assert refsByComponent != null;
 
@@ -932,7 +915,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 
 			if ( propVal != null ) {
-				datum.getSamples().putSampleValue(propType, ref.property.getPropertyName(), propVal);
+				samples.putSampleValue(propType, ref.property.getPropertyName(), propVal);
 			}
 		}
 	}

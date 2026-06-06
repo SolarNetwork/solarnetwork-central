@@ -31,7 +31,8 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.domain.datum.DatumId.datumId;
+import static net.solarnetwork.central.support.OrderedDatumSamplesBuffer.greatestTimestamp;
+import static net.solarnetwork.central.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -47,15 +48,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -92,14 +90,15 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
-import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamId;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -375,7 +374,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
-			final Map<String, SortedMap<DatumIdentity, DatumSamples>> dataBySource = new TreeMap<>();
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
 
 			for ( Entry<UserLongCompositePK, List<ValueRef>> e : hardwareGroups.entrySet() ) {
 				final ZonedDateTime siteStartDate = startDate.atZone(zone);
@@ -408,47 +407,41 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 									.buildAndExpand().toUri();
 							// @formatter:on
 						}, (req, res) -> parseDatum(req, res.getBody(), e.getValue(), ds, sourceIdMap,
-								dataBySource, ignoredValidations, auxiliary));
+								streamBuffer, ignoredValidations, auxiliary));
 			}
 
 			// generate a map of the latest-available timestamp per stream; afterwards the earliest
 			// value overall can be used as the resolved "latest datum" date
-			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
-			List<GeneralDatum> resultDatum = dataBySource.values().stream()
-					.flatMap(e -> e.entrySet().stream()).filter(e -> {
-						if ( e.getValue().isEmpty() ) {
-							return false;
-						}
-						ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(
-								e.getKey().getKind(), e.getKey().getObjectId(),
-								e.getKey().getSourceId());
-						Instant ts = e.getKey().getTimestamp();
-						greatestTimestampPerStream.compute(streamPk,
-								(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
-						return true;
-					}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
+			Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
+					.greatestTimestampPerStream();
+			List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
 			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
 			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
 					&& !greatestTimestampPerStream.isEmpty() ) {
-				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
-						.min(Instant::compareTo).get();
-				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
-						.max(Instant::compareTo).get();
-				Instant greatestDatumTimestamp = (leastGreatestTimestampPerStream
-						.isBefore(greatestTimestampAcrossStreams)
-						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag) < 0 ? leastGreatestTimestampPerStream
-										: greatestTimestampAcrossStreams);
-				Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
-				if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
-					if ( nextQueryFilter == null ) {
-						nextQueryFilter = new BasicQueryFilter();
-						nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
+				Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
+						greatestTimestampPerStream.values());
+				Instant greatestTimestampAcrossStreams = greatestTimestamp(
+						greatestTimestampPerStream.values());
+				if ( leastGreatestTimestampAcrossStreams != null
+						&& greatestTimestampAcrossStreams != null ) {
+					Instant greatestDatumTimestamp = (leastGreatestTimestampAcrossStreams
+							.isBefore(greatestTimestampAcrossStreams)
+							&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
+									.compareTo(multiStreamMaximumLag) < 0
+											? leastGreatestTimestampAcrossStreams
+											: greatestTimestampAcrossStreams);
+					Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
+					if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
+						if ( nextQueryFilter == null ) {
+							nextQueryFilter = new BasicQueryFilter();
+							nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
+						}
+						nextQueryFilter
+								.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
 					}
-					nextQueryFilter.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
 				}
 			}
 
@@ -731,8 +724,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private Void parseDatum(RequestEntity<List<Map<String, Object>>> request, @Nullable JsonNode body,
 			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
-			@Nullable Map<String, String> sourceIdMap,
-			Map<String, SortedMap<DatumIdentity, DatumSamples>> dataBySource,
+			@Nullable Map<String, String> sourceIdMap, OrderedDatumSamplesBuffer streamBuffer,
 			Set<String> ignoredValidations, List<DatumAuxiliaryRecord> auxiliary) {
 		/*- EXAMPLE JSON:
 		{
@@ -793,25 +785,16 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				Object propVal = parseJsonDatumPropertyValue(valNode, ref.property.getPropertyType());
 				propVal = ref.property.applyValueTransforms(propVal);
 				if ( propVal != null ) {
-					DatumIdentity datumId = datumId(datumStream.getKind(), datumStream.getObjectId(),
-							sourceId, ts).toIdentity();
-					final SortedMap<DatumIdentity, DatumSamples> dataMap = dataBySource
-							.computeIfAbsent(sourceId, _ -> new TreeMap<>());
+					DatumStreamIdentity streamId = new DatumStreamId(datumStream.getKind(),
+							datumStream.getObjectId(), sourceId).toIdentity();
 					datumIsNew.setFalse();
-					dataMap.computeIfAbsent(datumId, _ -> {
-						datumIsNew.setTrue();
-						return new DatumSamples();
-					}).putSampleValue(ref.property.getPropertyType(), ref.property.getPropertyName(),
-							propVal);
+					final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
+					samples.putSampleValue(ref.property.getPropertyType(),
+							ref.property.getPropertyName(), propVal);
 					if ( datumIsNew.booleanValue() && timeGapThreshold != null ) {
 						// time gap validation for new datum
-						var prevDataMap = dataMap.headMap(datumId);
-						DatumIdentity prevDatumId = (!prevDataMap.isEmpty() ? prevDataMap.lastKey()
-								: null);
-						Instant prevTs = null;
-						if ( prevDatumId != null ) {
-							prevTs = prevDatumId.getTimestamp();
-						} else {
+						Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
+						if ( prevTs == null ) {
 							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
 							if ( prevDatum != null ) {
 								prevTs = prevDatum.getTimestamp();
@@ -819,7 +802,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						}
 						if ( prevTs != null ) {
 							auxiliary.addAll(validateTimeGap(datumStream, request, ref.hardwareRef, null,
-									timeGapThreshold, prevTs, datumId));
+									timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 						}
 					}
 				}

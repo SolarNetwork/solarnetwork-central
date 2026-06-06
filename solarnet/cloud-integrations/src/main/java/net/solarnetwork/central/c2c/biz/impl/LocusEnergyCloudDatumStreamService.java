@@ -63,7 +63,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
@@ -103,13 +102,14 @@ import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.central.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
-import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
@@ -646,7 +646,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 			final ConcurrentMap<String, Instant> greatestTimestampPerComponent = new ConcurrentHashMap<>(
 					fieldNamesByComponent.size(), 0.9f, 2);
-			final ConcurrentMap<String, ConcurrentNavigableMap<DatumIdentity, GeneralDatum>> datumBySource = new ConcurrentSkipListMap<>();
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer(
+					new ConcurrentSkipListMap<>(), _ -> new ConcurrentSkipListMap<>());
 
 			final Duration timeGapThreshold = (!ignoredValidations.contains(TimeGap.getKey())
 					? resolveTimeGapValidationThreshold(datumStream)
@@ -693,16 +694,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 									continue;
 								}
 
-								final DatumIdentity datumId = ds.datumId(ts).toIdentity();
-								final ConcurrentNavigableMap<DatumIdentity, GeneralDatum> datumByTime = datumBySource
-										.computeIfAbsent(datumId.getSourceId(),
-												_ -> new ConcurrentSkipListMap<>());
+								final DatumStreamIdentity streamId = ds.streamId().toIdentity();
 								datumIsNew.setFalse();
-								final GeneralDatum datum = datumByTime.computeIfAbsent(datumId, k -> {
-									datumIsNew.setTrue();
-									return new GeneralDatum(k, new DatumSamples());
-								});
-								final DatumSamples samples = datum.getSamples();
+								final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts,
+										datumIsNew);
 
 								boolean foundProp = false;
 								for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
@@ -729,29 +724,25 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 									}
 								}
 
+								if ( samples.isEmpty() ) {
+									streamBuffer.removeTimestamp(streamId, ts, samples);
+									continue;
+								}
+
 								if ( datumIsNew.isFalse() || !foundProp || timeGapThreshold == null ) {
 									continue;
 								}
-								Instant prevTs = null;
-								var localPrevDatum = datumByTime.headMap(datumId);
-								if ( !localPrevDatum.isEmpty() ) {
-									var prevDatum = localPrevDatum.lastEntry().getValue();
-									if ( datumId.getKind() == prevDatum.getKind()
-											&& datumId.getObjectId().equals(prevDatum.getObjectId())
-											&& datumId.getSourceId().equals(prevDatum.getSourceId()) ) {
-										prevTs = prevDatum.datumIdent().getTimestamp();
-									}
-								}
+								Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
 								if ( prevTs == null ) {
 									final var prevDatum = lookupPreviousDatum(datumStream,
-											datumId.getSourceId(), ts);
+											streamId.getSourceId(), ts);
 									if ( prevDatum != null ) {
 										prevTs = prevDatum.getTimestamp();
 									}
 								}
 								if ( prevTs != null ) {
 									auxiliary.addAll(validateTimeGap(datumStream, req, componentRef,
-											null, timeGapThreshold, prevTs, datumId));
+											null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 								}
 							}
 							return null;
@@ -774,8 +765,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps,
-					datumBySource.values().stream().flatMap(m -> m.values().stream()).toList(),
+			var r = evaluateExpressions(datumStream, exprProps, streamBuffer.datum(GeneralDatum::new),
 					mapping.getConfigId(), integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;
