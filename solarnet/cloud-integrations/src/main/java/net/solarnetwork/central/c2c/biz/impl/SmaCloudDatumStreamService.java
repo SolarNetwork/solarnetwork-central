@@ -960,8 +960,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				auxiliary.addAll(validateTimeGap(ds, request, deviceRef, refParameters, timeGapDuration,
 						prevTs, streamId.datumIdentity(ts)));
 			}
-
-			prevTs = ts;
 		}
 
 		return List.of();
