@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.support.test;
+package net.solarnetwork.central.datum.support.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.support.OrderedDatumSamplesBuffer;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamId.DatumStreamIdent;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
