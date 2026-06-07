@@ -146,13 +146,6 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	String DATA_VALIDATION_TYPE = "data-validation";
 
 	/**
-	 * A type metadata value for time gaps.
-	 *
-	 * @since 2.1
-	 */
-	String TIME_GAP_TYPE = "time-gap";
-
-	/**
 	 * A generated-by value for SolarNetwork.
 	 *
 	 * @since 2.1
@@ -329,7 +322,7 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 			@Nullable Map<String, Object> source) {
 		var result = new GeneralDatumMetadata();
 		result.putInfoValue(TYPE_META_KEY, DATA_VALIDATION_TYPE);
-		result.putInfoValue(SUB_TYPES_META_KEY, new String[] { validationType });
+		result.putInfoValue(SUB_TYPES_META_KEY, List.of(validationType));
 		result.putInfoValue(GENERATED_BY_META_KEY, generatedBy);
 		if ( source != null ) {
 			result.putInfoValue(validationType, SOURCE_META_KEY, source);

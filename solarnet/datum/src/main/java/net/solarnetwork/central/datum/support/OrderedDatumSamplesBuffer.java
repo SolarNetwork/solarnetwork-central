@@ -22,14 +22,24 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
+import static net.solarnetwork.central.domain.CommonUserEvents.CORRELATION_ID_DATA_KEY;
+import static net.solarnetwork.central.domain.CommonUserEvents.DURATION_DATA_KEY;
+import static net.solarnetwork.util.CollectionUtils.getMapLong;
+import static net.solarnetwork.util.CollectionUtils.getMapString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,11 +47,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
+import net.solarnetwork.domain.datum.BasicDatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
-import net.solarnetwork.util.ObjectUtils;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * An ordered collection of datum samples, grouped by stream identity.
@@ -53,33 +68,10 @@ public class OrderedDatumSamplesBuffer {
 
 	private final SortedMap<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> buffer;
 	private final Function<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> streamBufferCreator;
+	private final SortedMap<DatumStreamIdentity, SortedMap<Instant, List<DatumAuxiliaryRecord>>> auxiliary;
+	private final Function<DatumStreamIdentity, SortedMap<Instant, List<DatumAuxiliaryRecord>>> streamAuxiliaryCreator;
+	private final Function<Instant, List<DatumAuxiliaryRecord>> datumAuxiliaryCreator;
 	private final @Nullable Lock lock;
-
-	/**
-	 * Create a thread-safe buffer.
-	 *
-	 * <p>
-	 * This will use {@link ConcurrentSkipListMap} implementations for the
-	 * buffer.
-	 * </p>
-	 *
-	 * @return the new buffer instance
-	 */
-	public static OrderedDatumSamplesBuffer newConcurrentBuffer() {
-		return new OrderedDatumSamplesBuffer(new ConcurrentSkipListMap<>(),
-				_ -> new ConcurrentSkipListMap<>());
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * <p>
-	 * {@link TreeMap} will be used, so the instance will not be thread-safe.
-	 * </p>
-	 */
-	public OrderedDatumSamplesBuffer() {
-		this(new TreeMap<>(), _ -> new TreeMap<>());
-	}
 
 	/**
 	 * Get the least timestamp from a collection.
@@ -121,6 +113,32 @@ public class OrderedDatumSamplesBuffer {
 	 * Constructor.
 	 *
 	 * <p>
+	 * {@link TreeMap} will be used, and concurrent mode will be disabled.
+	 * </p>
+	 */
+	public OrderedDatumSamplesBuffer() {
+		this(false);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * {@link TreeMap} will be used.
+	 * </p>
+	 *
+	 * @param concurrent
+	 *        {@code true} to use locking for concurrent access
+	 */
+	public OrderedDatumSamplesBuffer(boolean concurrent) {
+		this(new TreeMap<>(), _ -> new TreeMap<>(), new TreeMap<>(), _ -> new TreeMap<>(),
+				_ -> new ArrayList<>(2), concurrent);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
 	 * For a thread-safe instance {@code buffer} could be
 	 * {@link ConcurrentSkipListMap} and {@code streamBufferCreator} should then
 	 * return instances of that as well.
@@ -130,15 +148,30 @@ public class OrderedDatumSamplesBuffer {
 	 *        the buffer to use
 	 * @param streamBufferCreator
 	 *        the stream-buffer creator function to use
+	 * @param auxiliary
+	 *        the auxiliary buffer to use
+	 * @param streamAuxiliaryCreator
+	 *        the stream-auxiliary creator function to use
+	 * @param datumAuxiliaryCreator
+	 *        the datum-auxiliary creator function to use
+	 * @param concurrent
+	 *        {@code true} to use locking for concurrent access
 	 */
 	public OrderedDatumSamplesBuffer(
 			SortedMap<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> buffer,
-			Function<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> streamBufferCreator) {
+			Function<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> streamBufferCreator,
+			SortedMap<DatumStreamIdentity, SortedMap<Instant, List<DatumAuxiliaryRecord>>> auxiliary,
+			Function<DatumStreamIdentity, SortedMap<Instant, List<DatumAuxiliaryRecord>>> streamAuxiliaryCreator,
+			Function<Instant, List<DatumAuxiliaryRecord>> datumAuxiliaryCreator, boolean concurrent) {
 		super();
-		this.buffer = ObjectUtils.requireNonNullArgument(buffer, "buffer");
-		this.streamBufferCreator = ObjectUtils.requireNonNullArgument(streamBufferCreator,
-				"streamBufferCreator");
-		this.lock = (buffer instanceof ConcurrentMap<?, ?> ? new ReentrantLock() : null);
+		this.buffer = requireNonNullArgument(buffer, "buffer");
+		this.streamBufferCreator = requireNonNullArgument(streamBufferCreator, "streamBufferCreator");
+		this.auxiliary = requireNonNullArgument(auxiliary, "auxiliary");
+		this.streamAuxiliaryCreator = requireNonNullArgument(streamAuxiliaryCreator,
+				"streamAuxiliaryCreator");
+		this.datumAuxiliaryCreator = requireNonNullArgument(datumAuxiliaryCreator,
+				"datumAuxiliaryCreator");
+		this.lock = (concurrent ? new ReentrantLock() : null);
 	}
 
 	/**
@@ -310,11 +343,267 @@ public class OrderedDatumSamplesBuffer {
 	 */
 	public SortedMap<DatumStreamIdentity, Instant> greatestTimestampPerStream() {
 		final SortedMap<DatumStreamIdentity, Instant> result = new TreeMap<>();
-		for ( Entry<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> e : buffer.entrySet() ) {
-			if ( !e.getValue().isEmpty() ) {
-				result.put(e.getKey(), e.getValue().lastKey());
+		if ( lock != null ) {
+			lock.lock();
+		}
+		try {
+			for ( Entry<DatumStreamIdentity, SortedMap<Instant, DatumSamples>> e : buffer.entrySet() ) {
+				if ( !e.getValue().isEmpty() ) {
+					result.put(e.getKey(), e.getValue().lastKey());
+				}
+			}
+		} finally {
+			if ( lock != null ) {
+				lock.unlock();
 			}
 		}
+		return result;
+	}
+
+	/**
+	 * Add auxiliary records to a datum stream.
+	 *
+	 * @param streamId
+	 *        the stream ID to add the records to
+	 * @param records
+	 *        the records to add
+	 */
+	public void addAuxiliary(DatumStreamIdentity streamId, List<DatumAuxiliaryRecord> records) {
+		if ( records == null || records.isEmpty() ) {
+			return;
+		}
+		if ( lock != null ) {
+			lock.lock();
+		}
+		try {
+			final SortedMap<Instant, List<DatumAuxiliaryRecord>> streamMap = auxiliary
+					.computeIfAbsent(streamId, streamAuxiliaryCreator);
+			for ( DatumAuxiliaryRecord record : records ) {
+				streamMap.computeIfAbsent(record.getTimestamp(), datumAuxiliaryCreator).add(record);
+			}
+		} finally {
+			if ( lock != null ) {
+				lock.unlock();
+			}
+		}
+	}
+
+	private static final String TIME_GAP_DURATION_META_PATH = "/pm/%s/%s"
+			.formatted(DatumValidationType.TIME_GAP_VALIDATION_TYPE, DURATION_DATA_KEY);
+
+	private static final String TIME_GAP_CORRELATION_ID_META_PATH = "/pm/%s/%s"
+			.formatted(DatumValidationType.TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY);
+
+	/**
+	 * Test if any auxiliary records are available.
+	 *
+	 * @return {@code true} if {@link #auxiliary()} would return a non-empty
+	 *         list.
+	 *         </p>
+	 */
+	public boolean hasAuxiliary() {
+		if ( lock != null ) {
+			lock.lock();
+		}
+		try {
+			for ( SortedMap<Instant, List<DatumAuxiliaryRecord>> streamRecords : auxiliary.values() ) {
+				for ( List<DatumAuxiliaryRecord> tsRecords : streamRecords.values() ) {
+					if ( !tsRecords.isEmpty() ) {
+						return true;
+					}
+				}
+			}
+			return false;
+		} finally {
+			if ( lock != null ) {
+				lock.unlock();
+			}
+		}
+	}
+
+	/**
+	 * Get an optional auxiliary list.
+	 *
+	 * @return the auxiliary returned by {@link #auxiliary()}, or {@code null}
+	 *         if that returns an empty list
+	 */
+	public @Nullable List<DatumAuxiliaryRecord> auxiliaryOrNull() {
+		final List<DatumAuxiliaryRecord> result = auxiliary();
+		return (!result.isEmpty() ? result : null);
+	}
+
+	/**
+	 * Get the list of available auxiliary records.
+	 *
+	 * <p>
+	 * Multiple {@code Mark} auxiliary records per datum identity will be
+	 * consolidated into a single auxiliary record.
+	 * </p>
+	 *
+	 * @return the list of auxiliary records, never {@code null}
+	 */
+	public List<DatumAuxiliaryRecord> auxiliary() {
+		if ( lock != null ) {
+			lock.lock();
+		}
+		if ( auxiliary.isEmpty() ) {
+			return List.of();
+		}
+		final List<DatumAuxiliaryRecord> result = new ArrayList<>(2);
+		try {
+			for ( Entry<DatumStreamIdentity, SortedMap<Instant, List<DatumAuxiliaryRecord>>> streamEntry : auxiliary
+					.entrySet() ) {
+				final DatumStreamIdentity streamId = streamEntry.getKey();
+				final SortedMap<Instant, List<DatumAuxiliaryRecord>> streamAux = streamEntry.getValue();
+				if ( streamAux.isEmpty() ) {
+					continue;
+				}
+
+				// keep track of de-duplicated time-gap record events
+				final Set<String> correlationIdsToIgnore = new HashSet<>(4);
+
+				for ( Entry<Instant, List<DatumAuxiliaryRecord>> tsEntry : streamAux.entrySet() ) {
+					final Instant ts = tsEntry.getKey();
+					final List<DatumAuxiliaryRecord> tsRecords = tsEntry.getValue();
+					if ( tsRecords.isEmpty() ) {
+						continue;
+					}
+
+					// have to consolidate all Mark records into a single record;
+					final StringBuilder tsNotes = new StringBuilder();
+					final GeneralDatumMetadata tsMeta = new GeneralDatumMetadata();
+					final Set<String> tsSubTypes = new TreeSet<>();
+					final Map<String, DatumAuxiliaryRecord> tsRecordsByType = new TreeMap<>();
+
+					// extract shortest duration time-gap record
+					Long tsTimeGapDuration = null;
+
+					for ( DatumAuxiliaryRecord record : tsRecords ) {
+						final GeneralDatumMetadata meta = record.getMetadata();
+						if ( DatumAuxiliaryType.Mark != record.getType() ) {
+							// not Mark, so no further processing done
+							result.add(record);
+							continue;
+						}
+						if ( meta == null || meta.isEmpty() ) {
+							// no metadata, so skip
+							continue;
+						}
+						final Object subTypesVal = meta.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY);
+						if ( !(subTypesVal instanceof List<?> subTypes) ) {
+							// no sub-types, so ignore
+							continue;
+						}
+
+						// consolidate sub-type data
+						for ( Object subType : subTypes ) {
+							final Map<String, Map<String, Object>> pm = meta.getPropertyInfo();
+							if ( pm == null || pm.isEmpty() ) {
+								continue;
+							}
+							if ( TIME_GAP_VALIDATION_TYPE.equals(subType) ) {
+								final Map<String, Object> timeGapMeta = pm.get(TIME_GAP_VALIDATION_TYPE);
+								final String correlationId = getMapString(CORRELATION_ID_DATA_KEY,
+										timeGapMeta);
+								if ( correlationId == null ) {
+									throw new IllegalStateException(
+											"%s %d [%s] auxiliary @ %s time gap correlation ID metadata missing at [%s] path."
+													.formatted(record.getKind(), record.getObjectId(),
+															record.getSourceId(), record.getTimestamp(),
+															TIME_GAP_CORRELATION_ID_META_PATH));
+								} else if ( correlationIdsToIgnore.contains(correlationId) ) {
+									continue;
+								}
+								final String position = getMapString(DatumAuxiliary.POSITION_META_KEY,
+										timeGapMeta);
+								if ( DatumAuxiliary.START_POSITION.equals(position) ) {
+									// for time-gap start, accept the shortest-duration gap only
+									final Long timeGapDuration = getMapLong(DURATION_DATA_KEY,
+											timeGapMeta);
+									if ( timeGapDuration == null ) {
+										// no time gap duration
+										throw new IllegalStateException(
+												"%s %d [%s] auxiliary @ %s time gap duration metadata missing at [%s] path."
+														.formatted(record.getKind(),
+																record.getObjectId(),
+																record.getSourceId(),
+																record.getTimestamp(),
+																TIME_GAP_DURATION_META_PATH));
+									}
+									if ( tsTimeGapDuration == null
+											|| timeGapDuration < tsTimeGapDuration ) {
+										if ( tsRecordsByType.containsKey(TIME_GAP_VALIDATION_TYPE) ) {
+											final String discardedCorrelationId = nonnull(
+													getMapString(CORRELATION_ID_DATA_KEY, nonnull(
+															nonnull(nonnull(
+																	tsRecordsByType.get(
+																			TIME_GAP_VALIDATION_TYPE),
+																	"Time gap validation").getMetadata(),
+																	"Metadata").getPropertyInfo(),
+															"Property info")
+																	.get(TIME_GAP_VALIDATION_TYPE)),
+													"Correlation ID");
+											correlationIdsToIgnore.add(discardedCorrelationId);
+										}
+										tsTimeGapDuration = timeGapDuration;
+										tsRecordsByType.put(subType.toString(), record);
+									}
+								}
+							}
+							if ( tsRecordsByType.containsKey(subType) ) {
+								// ignore duplicate sub type
+								continue;
+							}
+
+							tsRecordsByType.put(subType.toString(), record);
+						}
+					}
+
+					// process time-gap data, include only the shortest duration
+					for ( Entry<String, DatumAuxiliaryRecord> auxEntry : tsRecordsByType.entrySet() ) {
+						final String subType = auxEntry.getKey();
+						final DatumAuxiliaryRecord record = auxEntry.getValue();
+
+						tsSubTypes.add(subType);
+
+						// consolidate property info
+						Map<String, Map<String, Object>> tsPm = tsMeta.getPropertyInfo();
+						if ( tsPm == null ) {
+							tsPm = new TreeMap<>();
+							tsMeta.setPropertyInfo(tsPm);
+						}
+						tsPm.put(subType,
+								nonnull(nonnull(record.getMetadata(), "Metadata").getPropertyInfo(),
+										"Property info").get(subType));
+
+						// consolidate notes
+						if ( record.getNotes() != null && !record.getNotes().isEmpty() ) {
+							if ( !tsNotes.isEmpty() ) {
+								tsNotes.append(' ');
+							}
+							tsNotes.append(record.getNotes());
+						}
+					}
+
+					if ( tsSubTypes.isEmpty() || tsMeta.isEmpty() ) {
+						continue;
+					}
+					tsMeta.putInfoValue(DatumAuxiliary.TYPE_META_KEY,
+							DatumAuxiliary.DATA_VALIDATION_TYPE);
+					tsMeta.putInfoValue(DatumAuxiliary.GENERATED_BY_META_KEY,
+							DatumAuxiliary.GENERATED_BY_SOLARNETWORK);
+					tsMeta.putInfoValue(DatumAuxiliary.SUB_TYPES_META_KEY, List.copyOf(tsSubTypes));
+					result.add(new BasicDatumAuxiliaryRecord(DatumAuxiliaryType.Mark,
+							streamId.datumIdentity(ts), (!tsNotes.isEmpty() ? tsNotes.toString() : null),
+							null, null, tsMeta));
+				}
+			}
+		} finally {
+			if ( lock != null ) {
+				lock.unlock();
+			}
+		}
+
 		return result;
 	}
 
