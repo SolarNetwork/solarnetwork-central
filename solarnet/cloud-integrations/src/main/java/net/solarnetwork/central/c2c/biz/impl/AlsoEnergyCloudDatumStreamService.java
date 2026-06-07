@@ -94,7 +94,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamId;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
@@ -346,7 +345,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			// validation support
 			final Set<String> ignoredValidations = ds
 					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
-			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
 			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(
@@ -407,7 +405,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 									.buildAndExpand().toUri();
 							// @formatter:on
 						}, (req, res) -> parseDatum(req, res.getBody(), e.getValue(), ds, sourceIdMap,
-								streamBuffer, ignoredValidations, auxiliary));
+								streamBuffer, ignoredValidations));
 			}
 
 			// generate a map of the latest-available timestamp per stream; afterwards the earliest
@@ -450,7 +448,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList(), !auxiliary.isEmpty() ? auxiliary : null);
+					r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 
@@ -725,7 +723,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	private Void parseDatum(RequestEntity<List<Map<String, Object>>> request, @Nullable JsonNode body,
 			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, OrderedDatumSamplesBuffer streamBuffer,
-			Set<String> ignoredValidations, List<DatumAuxiliaryRecord> auxiliary) {
+			Set<String> ignoredValidations) {
 		/*- EXAMPLE JSON:
 		{
 		  "info": [
@@ -801,8 +799,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 							}
 						}
 						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, ref.hardwareRef, null,
-									timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
+							streamBuffer.addAuxiliary(streamId,
+									validateTimeGap(datumStream, request, ref.hardwareRef, null,
+											timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 						}
 					}
 				}

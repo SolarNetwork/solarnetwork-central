@@ -63,7 +63,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
@@ -106,7 +105,6 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
@@ -642,12 +640,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			// validation support
 			final Set<String> ignoredValidations = ds
 					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
-			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 			final ConcurrentMap<String, Instant> greatestTimestampPerComponent = new ConcurrentHashMap<>(
 					fieldNamesByComponent.size(), 0.9f, 2);
-			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer(
-					new ConcurrentSkipListMap<>(), _ -> new ConcurrentSkipListMap<>());
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer(true);
 
 			final Duration timeGapThreshold = (!ignoredValidations.contains(TimeGap.getKey())
 					? resolveTimeGapValidationThreshold(datumStream)
@@ -741,8 +737,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 									}
 								}
 								if ( prevTs != null ) {
-									auxiliary.addAll(validateTimeGap(datumStream, req, componentRef,
-											null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
+									streamBuffer.addAuxiliary(streamId,
+											validateTimeGap(datumStream, req, componentRef, null,
+													timeGapThreshold, prevTs,
+													streamId.datumIdentity(ts)));
 								}
 							}
 							return null;
@@ -806,7 +804,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter,
-					r.stream().sorted().map(Datum.class::cast).toList(), auxiliary);
+					r.stream().sorted().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 }

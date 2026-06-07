@@ -97,7 +97,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamId;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
@@ -644,9 +643,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// have to combine measurement set queries into datum instances by source ID, date
 		final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
 
-		// collect mark records
-		final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
-
 		final Set<String> ignoredValidations = ds.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
 
 		// query cache of device max energy per tick, for data validation
@@ -700,7 +696,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						}, (req, res) -> parseDeviceDatum(integration, devPlan.systemId,
 								devPlan.deviceId, req, res.getBody(), deviceMaxPower, ignoredValidations,
 								usedQueryFilter, devPlan.zone, measurementSetEntry.getValue(), ds,
-								streamIdent, streamBuffer, auxiliary));
+								streamIdent, streamBuffer));
 					}
 				}
 			}
@@ -737,7 +733,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,
-				r.stream().map(Datum.class::cast).toList(), !auxiliary.isEmpty() ? auxiliary : null);
+				r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 	}
 
 	/**
@@ -817,7 +813,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			Map<String, Integer> deviceMaxPower, Set<String> ignoredValidations,
 			CloudDatumStreamQueryFilter filter, ZoneId zone, List<ValueRef> valueRefs,
 			CloudDatumStreamConfiguration ds, DatumStreamIdentity streamId,
-			OrderedDatumSamplesBuffer streamBuffer, List<DatumAuxiliaryRecord> auxiliary) {
+			OrderedDatumSamplesBuffer streamBuffer) {
 		/*- EXAMPLE JSON:
 		{
 		  "plant": {
@@ -943,7 +939,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 						&& ref.measurementSet.name().startsWith("Energy")
 						&& PV_GENERATION_MEASUREMENT_KEY.equals(ref.measurement.name())
 						&& propVal instanceof Number gen ) {
-					auxiliary.addAll(
+					streamBuffer.addAuxiliary(streamId,
 							validateEnergyDataValue(ds, request, ref.property.getValueReference(),
 									refParameters, gen, maxPower, energyValidationThreshold,
 									prevTs != null ? prevTs : ts.minusSeconds(tickSeconds),
@@ -957,8 +953,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			}
 
 			if ( datumIsNew.booleanValue() && timeGapDuration != null && prevTs != null ) {
-				auxiliary.addAll(validateTimeGap(ds, request, deviceRef, refParameters, timeGapDuration,
-						prevTs, streamId.datumIdentity(ts)));
+				streamBuffer.addAuxiliary(streamId, validateTimeGap(ds, request, deviceRef,
+						refParameters, timeGapDuration, prevTs, streamId.datumIdentity(ts)));
 			}
 		}
 

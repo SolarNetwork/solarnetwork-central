@@ -159,10 +159,9 @@ public interface CloudDatumStreamService
 	 *
 	 * @since 2.3
 	 */
-	public static final String GENERATED_AUXILIARY_SEARCH_FILTER = "(&(m/%s=%s)(|(m/%s=%s)(m/%s=%s)))"
-			.formatted(DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
-					DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE,
-					DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.TIME_GAP_TYPE);
+	public static final String GENERATED_AUXILIARY_SEARCH_FILTER = "(&(m/%s=%s)(m/%s=%s))".formatted(
+			DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK,
+			DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE);
 
 	/**
 	 * Get a localized collection of the available data value filter criteria.

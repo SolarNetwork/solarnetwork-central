@@ -27,6 +27,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
@@ -57,7 +58,7 @@ public final class CloudIntegrationTestUtils implements CloudIntegrationsUserEve
 		return new HashMap<String, Object>(Map.of(
 				  DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK
 				, DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE
-				, DatumAuxiliary.SUB_TYPES_META_KEY, new String[] { DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE }
+				, DatumAuxiliary.SUB_TYPES_META_KEY, List.of(DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE)
 				));
 		// @formatter:on
 	}
@@ -117,7 +118,7 @@ public final class CloudIntegrationTestUtils implements CloudIntegrationsUserEve
 		return new HashMap<String, Object>(Map.of(
 				  DatumAuxiliary.GENERATED_BY_META_KEY, DatumAuxiliary.GENERATED_BY_SOLARNETWORK
 				, DatumAuxiliary.TYPE_META_KEY, DatumAuxiliary.DATA_VALIDATION_TYPE
-				, DatumAuxiliary.SUB_TYPES_META_KEY, new String[] { DatumValidationType.TIME_GAP_VALIDATION_TYPE }
+				, DatumAuxiliary.SUB_TYPES_META_KEY, List.of(DatumValidationType.TIME_GAP_VALIDATION_TYPE)
 				));
 		// @formatter:on
 	}

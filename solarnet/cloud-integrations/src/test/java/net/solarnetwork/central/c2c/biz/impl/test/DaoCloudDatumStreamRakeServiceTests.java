@@ -621,7 +621,7 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 					.as("Mark type is data validation")
 					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
 					.as("Mark sub-type is time-gap")
-					.returns(new String[] { TIME_GAP_VALIDATION_TYPE }, from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
+					.returns(List.of(TIME_GAP_VALIDATION_TYPE), from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
 					;
 			})
 			.satisfies(records -> {

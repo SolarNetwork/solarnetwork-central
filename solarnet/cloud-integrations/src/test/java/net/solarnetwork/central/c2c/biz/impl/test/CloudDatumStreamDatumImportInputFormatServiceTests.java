@@ -676,7 +676,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 					.as("Mark type is data validation")
 					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
 					.as("Mark sub-types is time-gap")
-					.returns(new String[] {timeGapValidationType}, from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
+					.returns(List.of(timeGapValidationType), from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
 					;
 			})
 			.satisfies(records -> {

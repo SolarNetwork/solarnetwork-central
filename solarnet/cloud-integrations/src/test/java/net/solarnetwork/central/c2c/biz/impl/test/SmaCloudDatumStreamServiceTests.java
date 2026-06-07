@@ -5106,4 +5106,294 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void datum_timeJump_powerEnergyMismatch() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final String systemId = randomString();
+		final String deviceId = "18";
+
+		service.setDatumDao(datumDao);
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final String invSourceId = "inv/1";
+
+		// configure datum stream mapping
+
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream mapping properties, for energy and power
+
+		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
+		final String prop1MeasurementName = "pvGeneration";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final SmaMeasurementSetType prop2MeasuermentSet = SmaMeasurementSetType.PowerAc;
+		final String prop2MeasurementName = "activePower";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts", Reference,
+				placeholderValueRef(prop2MeasuermentSet, prop2MeasurementName));
+		prop2.setScale(1);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+
+		final Long nodeId = randomLong();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId("unused");
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						"/%s/%s".formatted(systemId, deviceId), invSourceId),
+				CloudDatumStreamService.VALIDATION_IGNORE_SETTING, List.of(
+						DatumValidationType.ENERGY_SPIKE_VALIDATION_TYPE)));
+		// @formatter:on
+
+		// configure expected HTTP responses
+
+		// HTTP request system time zone info (first check cache)
+
+		final ZoneId systemTimeZone = ZoneId.of("America/New_York"); // from sma-plant-01.json
+
+		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
+
+		final List<URI> expectedUris = new ArrayList<>();
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		final ResponseEntity<JsonNode> systemDetailsRes = new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK);
+
+		// HTTP request measurement set data for each day in filter range, per device per measurement set
+
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		final LocalDate day = LocalDate.parse("2025-03-28");
+
+		final UriComponentsBuilder b = fromUri(BASE_URI)
+				.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
+				.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
+
+		// We have manufactured a time gap for the the first datum on this day.
+		// The EnergyAndPowerPv-ReturnEnergyValues-07 first reading is at 07:00, but
+		// the PowerAc-07 first reading is at 06:50. Because the Energy data is read
+		// first, the time gap initially looks to go until 7am, but when we read
+		// the Power we realize the time gap should be until 6:50.
+
+		expectedUris.add(b
+				.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
+						prop1MeasuermentSet.shouldReturnEnergyValues())
+				.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey()).toUri());
+		responses.add(new ResponseEntity<>(getObjectFromJSON(
+				utf8StringResource("sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-07.json",
+						getClass()),
+				JsonNode.class), OK));
+
+		expectedUris.add(b
+				.replaceQueryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
+						prop2MeasuermentSet.shouldReturnEnergyValues())
+				.buildAndExpand(deviceId, prop2MeasuermentSet.getKey(), SmaPeriod.Day.getKey()).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-device-data-Day-PowerAc-07.json", getClass()),
+						JsonNode.class),
+				OK));
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(systemDetailsRes,
+				responses.toArray(ResponseEntity[]::new));
+
+		// lookup previous datum for first datum in result set
+		final Instant timeGapEndTs = LocalDateTime.parse("2025-03-28T06:50:00").atZone(systemTimeZone)
+				.toInstant();
+		final Instant timeGapStartTs = LocalDateTime.parse("2025-03-01T06:50:00").atZone(systemTimeZone)
+				.toInstant();
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), timeGapStartTs), null,
+				new DatumProperties());
+		given(datumDao.findFiltered(any()))
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(
+						Map.of(prevDatum.streamId(),
+								emptyMeta(prevDatum.streamId(), systemTimeZone.getId(),
+										datumStream.getKind(), nodeId, invSourceId)),
+						List.of(prevDatum)));
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
+		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+
+		// cache system time zone
+		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
+
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses")
+			.hasSize(79)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					;
+			})
+			.satisfies(list -> {
+				and.then(list)
+					.satisfies(invList -> {
+						final int index1 = 4;
+						final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T07:10:00").atZone(systemTimeZone).toInstant();
+						final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
+								"watts", 46.8f,
+								"wh", 4), null, null);
+
+						and.then(invList).element(index1, type(GeneralDatum.class))
+							.as("Datum %d has expected date", index1)
+							.returns(expectedTs1, from(Datum::getTimestamp))
+							.as("Datum %d has expected sample data, combined from measurement set HTTP requests", index1)
+							.returns(expectedSamples1, from(GeneralDatum::getSamples))
+							;
+
+						final int index2 = 70;
+						final Instant expectedTs2 = LocalDateTime.parse("2025-03-28T12:40:00").atZone(systemTimeZone).toInstant();
+						final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
+								"watts", 4969.9f,
+								"wh", 413), null, null);
+
+						and.then(invList).element(index2, type(GeneralDatum.class))
+							.as("Datum %d has expected date", index2)
+							.returns(expectedTs2, from(Datum::getTimestamp))
+							.as("datum %d has expected sample data, combined from measurement set HTTP requests", index2)
+							.returns(expectedSamples2, from(GeneralDatum::getSamples))
+							;
+					})
+					;
+			})
+			;
+		// validate that Mark records created
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for each validation event")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for Inv1 source")
+					.returns(invSourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				final String deviceRef = "/%s/18".formatted(systemId);
+
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(2), null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(2), null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
 }

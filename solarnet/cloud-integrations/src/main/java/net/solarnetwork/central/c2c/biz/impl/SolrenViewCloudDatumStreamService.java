@@ -111,7 +111,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamId;
@@ -473,7 +472,6 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			// validation support
 			final Set<String> ignoredValidations = ds
 					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
-			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 			final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
 					? resolveTimeGapValidationThreshold(datumStream)
@@ -505,7 +503,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 								.toUri();
 						// @formatter:on
 					}, (req, res) -> parseDatum(req, ds, siteId, res.getBody(), periodStartDate,
-							streamBuffer, refsByComponent, timeGapDuration, auxiliary));
+							streamBuffer, refsByComponent, timeGapDuration));
 				}
 				startDate = periodEndDate;
 				page++;
@@ -529,7 +527,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList(), auxiliary);
+					r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 
@@ -779,8 +777,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private Void parseDatum(RequestEntity<Void> request, CloudDatumStreamConfiguration datumStream,
 			Long siteId, @Nullable String body, Instant ts, OrderedDatumSamplesBuffer streamBuffer,
-			Map<String, List<ValueRef>> refsByComponent, @Nullable Duration timeGapThreshold,
-			List<DatumAuxiliaryRecord> auxiliary) {
+			Map<String, List<ValueRef>> refsByComponent, @Nullable Duration timeGapThreshold) {
 		if ( body == null ) {
 			return null;
 		}
@@ -838,8 +835,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				}
 			}
 			if ( prevTs != null ) {
-				auxiliary.addAll(validateTimeGap(datumStream, request, componentRef, null,
-						timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
+				streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request, componentRef,
+						null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 			}
 		}
 

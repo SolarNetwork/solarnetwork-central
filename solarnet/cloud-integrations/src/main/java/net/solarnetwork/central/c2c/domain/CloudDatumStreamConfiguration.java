@@ -177,7 +177,7 @@ public final class CloudDatumStreamConfiguration
 	 * @since 1.3
 	 */
 	public DatumStreamId streamId() {
-		return new DatumStreamId(kind, objectId, sourceId);
+		return DatumStreamId.datumStreamId(kind, objectId, sourceId);
 	}
 
 	/**
