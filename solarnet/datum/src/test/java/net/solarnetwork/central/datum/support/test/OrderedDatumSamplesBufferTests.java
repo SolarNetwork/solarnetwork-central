@@ -71,8 +71,16 @@ public class OrderedDatumSamplesBufferTests {
 	}
 
 	private OrderedDatumSamplesBuffer newBuffer() {
-		return new OrderedDatumSamplesBuffer(data, _ -> new TreeMap<>(), auxiliary, _ -> new TreeMap<>(),
-				_ -> new ArrayList<>(2), false);
+		// @formatter:off
+		return new OrderedDatumSamplesBuffer(
+			  data
+			, OrderedDatumSamplesBuffer::newSampleMap
+			, auxiliary
+			, OrderedDatumSamplesBuffer::newAuxiliaryMap
+			, OrderedDatumSamplesBuffer::newAuxiliaryList
+			, false
+		);
+		// @formatter:on
 	}
 
 	@Test

@@ -110,6 +110,40 @@ public class OrderedDatumSamplesBuffer {
 	}
 
 	/**
+	 * Create a new sample map.
+	 *
+	 * @param streamIdent
+	 *        the stream identity the map is for (unused)
+	 * @return the map
+	 */
+	public static SortedMap<Instant, DatumSamples> newSampleMap(DatumStreamIdentity streamIdent) {
+		return new TreeMap<>();
+	}
+
+	/**
+	 * Create a new auxiliary map.
+	 *
+	 * @param streamIdent
+	 *        the stream identity the map is for (unused)
+	 * @return the map
+	 */
+	public static SortedMap<Instant, List<DatumAuxiliaryRecord>> newAuxiliaryMap(
+			DatumStreamIdentity streamIdent) {
+		return new TreeMap<>();
+	}
+
+	/**
+	 * Create a new auxiliary list.
+	 *
+	 * @param timestamp
+	 *        the timestamp the list is for (unused)
+	 * @return the list
+	 */
+	public static List<DatumAuxiliaryRecord> newAuxiliaryList(Instant timestamp) {
+		return new ArrayList<>(2);
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * <p>
@@ -131,8 +165,16 @@ public class OrderedDatumSamplesBuffer {
 	 *        {@code true} to use locking for concurrent access
 	 */
 	public OrderedDatumSamplesBuffer(boolean concurrent) {
-		this(new TreeMap<>(), _ -> new TreeMap<>(), new TreeMap<>(), _ -> new TreeMap<>(),
-				_ -> new ArrayList<>(2), concurrent);
+		// @formatter:off
+		this(
+			  new TreeMap<>()
+			, OrderedDatumSamplesBuffer::newSampleMap
+			, new TreeMap<>()
+			, OrderedDatumSamplesBuffer::newAuxiliaryMap
+			, OrderedDatumSamplesBuffer::newAuxiliaryList
+			, concurrent
+		);
+		// @formatter:on
 	}
 
 	/**
