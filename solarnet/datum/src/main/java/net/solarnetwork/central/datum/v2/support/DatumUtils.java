@@ -749,6 +749,7 @@ public final class DatumUtils {
 	}
 
 	private static void populate(DatumAuxiliary datum, GeneralNodeDatumAuxiliary aux) {
+		aux.setNotes(datum.getNotes());
 		if ( datum.getSamplesFinal() != null ) {
 			DatumSamples s = new DatumSamples();
 			s.setAccumulating(datum.getSamplesFinal().getAccumulating());
