@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
@@ -52,7 +53,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -96,7 +96,6 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
@@ -713,47 +712,15 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var r = evaluateExpressions(ds, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
-			List<Datum> finalResult = new ArrayList<>(r.size());
-			for ( GeneralDatum d : r ) {
-				if ( d.getKind() == null || d.getObjectId() == null || d.getSourceId() == null
-						|| d.getSourceId() == null || d.getTimestamp() == null ) {
-					continue;
-				}
-				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
-						d.getObjectId(), d.getSourceId());
-				Instant ts = d.getTimestamp();
-				greatestTimestampPerStream.compute(streamPk,
-						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
-				finalResult.add(d);
-			}
-			finalResult.sort(null);
-
-			// latest datum might not have been reported yet; check latest datum date (per stream), and if
-			// less than expected date make that the next query start date
-			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
-			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
-					&& greatestTimestampPerStream.size() > 1 ) {
-				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
-						.min(Instant::compareTo).get();
-				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
-						.max(Instant::compareTo).get();
-				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
-						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag) < 0 ) {
-					if ( nextQueryFilter == null ) {
-						nextQueryFilter = new BasicQueryFilter();
-					}
-					nextQueryFilter.setStartDate(leastGreatestTimestampPerStream);
-				}
-			}
+			nextQueryFilter = resolveNextQueryFilterForMultiStreamLag(ds, streamBuffer, nextQueryFilter,
+					null, UTC, filterEndDate, endDate);
 
 			var usedFilter = new BasicQueryFilter();
 			usedFilter.setStartDate(startDate);
 			usedFilter.setEndDate(endDate);
 
-			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter, finalResult,
-					streamBuffer.auxiliaryOrNull());
+			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter,
+					r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 

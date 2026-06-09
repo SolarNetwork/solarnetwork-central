@@ -30,8 +30,6 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaResolution.FiveMinute;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
-import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.greatestTimestamp;
-import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -608,26 +606,25 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		final QueryPlan plan = resolveQueryPlan(integration, ds, sourceIdMap, valueProps);
 
-		final Instant filterStartDate = FiveMinute.tickStart(
-				queryPeriod != SmaPeriod.Recent
-						? requireNonNullArgument(requireNonNullArgument(filter, "filter").getStartDate(),
-								"filter.startDate")
-						: clock.instant(),
-				UTC);
-		final Instant filterEndDate = FiveMinute.tickStart(
-				queryPeriod != SmaPeriod.Recent
-						? requireNonNullArgument(requireNonNullArgument(filter, "filter").getEndDate(),
-								"filter.endDate")
-						: filterStartDate.plus(1, DAYS),
-				UTC);
+		final Instant filterStartDate = (queryPeriod != SmaPeriod.Recent
+				? requireNonNullArgument(requireNonNullArgument(filter, "filter").getStartDate(),
+						"filter.startDate")
+				: clock.instant());
+		final Instant filterEndDate = (queryPeriod != SmaPeriod.Recent
+				? requireNonNullArgument(requireNonNullArgument(filter, "filter").getEndDate(),
+						"filter.startDate")
+				: filterStartDate.plus(1, DAYS));
+
+		final Instant startDate = FiveMinute.tickStart(filterStartDate, UTC);
+		final Instant endDate = FiveMinute.tickStart(filterEndDate, UTC);
 
 		BasicQueryFilter nextQueryFilter = null;
 		if ( queryPeriod != SmaPeriod.Recent ) {
-			if ( Duration.between(filterStartDate, filterEndDate).compareTo(maxFilterTimeRange) > 0 ) {
-				Instant nextStartDate = filterStartDate.plus(maxFilterTimeRange);
+			if ( Duration.between(startDate, endDate).compareTo(maxFilterTimeRange) > 0 ) {
+				Instant nextStartDate = startDate.plus(maxFilterTimeRange);
 				Instant nextEndDate = nextStartDate.plus(maxFilterTimeRange);
-				if ( nextEndDate.isAfter(filterEndDate) ) {
-					nextEndDate = filterEndDate;
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
 				}
 				nextQueryFilter = new BasicQueryFilter();
 				nextQueryFilter.setStartDate(nextStartDate);
@@ -636,9 +633,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		}
 
 		final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
-		usedQueryFilter.setStartDate(filterStartDate);
-		usedQueryFilter
-				.setEndDate(nextQueryFilter != null ? nextQueryFilter.getStartDate() : filterEndDate);
+		usedQueryFilter.setStartDate(startDate);
+		usedQueryFilter.setEndDate(nextQueryFilter != null ? nextQueryFilter.getStartDate() : endDate);
 
 		// have to combine measurement set queries into datum instances by source ID, date
 		final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
@@ -708,28 +704,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		var r = evaluateExpressions(ds, exprProps, allDatum, mapping.getConfigId(),
 				integration.getConfigId());
 
-		// latest datum might not have been reported yet; check latest datum date (per stream), and if
-		// less than expected date make that the next query start date
-		final Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
-				.greatestTimestampPerStream();
-		final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
-		if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
-				&& greatestTimestampPerStream.size() > 1 ) {
-			Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
-					greatestTimestampPerStream.values());
-			Instant greatestTimestampAcrossStreams = greatestTimestamp(
-					greatestTimestampPerStream.values());
-			if ( leastGreatestTimestampAcrossStreams != null && greatestTimestampAcrossStreams != null
-					&& leastGreatestTimestampAcrossStreams.isBefore(greatestTimestampAcrossStreams)
-					&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
-							.compareTo(multiStreamMaximumLag) < 0 ) {
-				if ( nextQueryFilter == null ) {
-					nextQueryFilter = new BasicQueryFilter();
-				}
-				nextQueryFilter.setStartDate(
-						FiveMinute.nextTickStart(leastGreatestTimestampAcrossStreams, UTC));
-			}
-		}
+		nextQueryFilter = resolveNextQueryFilterForMultiStreamLag(ds, streamBuffer, nextQueryFilter,
+				FiveMinute.getTickAmount(), UTC, filterEndDate, endDate);
 
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,

@@ -23,7 +23,10 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.nextTickStart;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.greatestTimestamp;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
@@ -37,7 +40,9 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -69,6 +74,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -77,6 +83,7 @@ import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -90,6 +97,7 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
@@ -111,7 +119,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -1115,6 +1123,65 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public static Duration multiStreamMaximumLag(CloudDatumStreamConfiguration datumStream) {
 		return nonnull(datumStream.servicePropertyDuration(MULTI_STREAM_MAXIMUM_LAG_SETTING,
 				DEFAULT_MULTI_STREAM_MAXIMUM_LAG), "Multi-stream maximum lag");
+	}
+
+	/**
+	 * Resolve a "next" query filter using the multi-stream maximum lag
+	 * settings.
+	 *
+	 * @param ds
+	 *        the datum stream
+	 * @param streamBuffer
+	 *        the stream buffer containing the current data
+	 * @param nextQueryFilter
+	 *        the current "next" query filter, if any
+	 * @param tickAmount
+	 *        the data time tick duration
+	 * @param zone
+	 *        the system time zone
+	 * @param requestedEndDate
+	 *        the original filter end date given
+	 * @param resolvedEndDate
+	 *        the actually used end date resolved from {@code requestedEndDate}
+	 * @return the "next" query filter to use
+	 * @see BaseCloudDatumStreamService#multiStreamMaximumLag(CloudDatumStreamConfiguration)
+	 * @since 2.4
+	 */
+	public @Nullable BasicQueryFilter resolveNextQueryFilterForMultiStreamLag(
+			final CloudDatumStreamConfiguration ds, final OrderedDatumSamplesBuffer streamBuffer,
+			final @Nullable BasicQueryFilter nextQueryFilter, @Nullable TemporalAmount tickAmount,
+			final ZoneId zone, Instant requestedEndDate, Instant resolvedEndDate) {
+		BasicQueryFilter result = nextQueryFilter;
+
+		// latest datum might not have been reported yet; check latest datum date (per stream), and if
+		// less than expected date make that the next query start date
+		final Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
+				.greatestTimestampPerStream();
+
+		final int streamCount = greatestTimestampPerStream.size();
+
+		// use the multi-stream max lag constraint
+		final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+
+		if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0 && streamCount > 0 ) {
+			Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
+					greatestTimestampPerStream.values());
+			Instant greatestTimestampAcrossStreams = greatestTimestamp(
+					greatestTimestampPerStream.values());
+
+			if ( leastGreatestTimestampAcrossStreams != null && greatestTimestampAcrossStreams != null
+					&& (streamCount == 1 || leastGreatestTimestampAcrossStreams
+							.isBefore(greatestTimestampAcrossStreams))
+					&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
+							.compareTo(multiStreamMaximumLag) < 0 ) {
+				if ( result == null ) {
+					result = new BasicQueryFilter();
+				}
+				result.setStartDate(
+						nextTickStart(tickAmount, leastGreatestTimestampAcrossStreams, zone));
+			}
+		}
+		return result;
 	}
 
 	/**

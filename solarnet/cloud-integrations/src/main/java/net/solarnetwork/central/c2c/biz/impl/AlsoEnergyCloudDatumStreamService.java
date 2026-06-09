@@ -30,8 +30,6 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
-import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.greatestTimestamp;
-import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -408,40 +406,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 								streamBuffer, ignoredValidations));
 			}
 
-			// generate a map of the latest-available timestamp per stream; afterwards the earliest
-			// value overall can be used as the resolved "latest datum" date
-			Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
-					.greatestTimestampPerStream();
 			List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
-			// latest datum might not have been reported yet; check latest datum date (per stream), and if
-			// less than expected date make that the next query start date
-			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
-			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
-					&& !greatestTimestampPerStream.isEmpty() ) {
-				Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
-						greatestTimestampPerStream.values());
-				Instant greatestTimestampAcrossStreams = greatestTimestamp(
-						greatestTimestampPerStream.values());
-				if ( leastGreatestTimestampAcrossStreams != null
-						&& greatestTimestampAcrossStreams != null ) {
-					Instant greatestDatumTimestamp = (leastGreatestTimestampAcrossStreams
-							.isBefore(greatestTimestampAcrossStreams)
-							&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
-									.compareTo(multiStreamMaximumLag) < 0
-											? leastGreatestTimestampAcrossStreams
-											: greatestTimestampAcrossStreams);
-					Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
-					if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
-						if ( nextQueryFilter == null ) {
-							nextQueryFilter = new BasicQueryFilter();
-							nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
-						}
-						nextQueryFilter
-								.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
-					}
-				}
-			}
+			nextQueryFilter = resolveNextQueryFilterForMultiStreamLag(ds, streamBuffer, nextQueryFilter,
+					resolution.getTickAmount(), zone, filterEndDate, endDate);
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),

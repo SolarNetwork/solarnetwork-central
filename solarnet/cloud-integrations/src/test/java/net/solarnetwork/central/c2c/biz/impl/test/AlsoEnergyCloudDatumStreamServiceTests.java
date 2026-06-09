@@ -876,6 +876,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 								JsonNode.class))
 				.toArray(CloudDataValue[]::new));
 
+		// set clock to near data request, to work with maximum lag setting (default 3h)
+		clock.setInstant(Instant.parse("2024-12-30T22:00:00Z"));
+
 		// WHEN
 		var filter = new BasicQueryFilter();
 		filter.setStartDate(clock.instant().minus(10, MINUTES));
@@ -1369,10 +1372,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 		and.then(result)
 			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
 			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
-			.as("Next query filter returned")
-			.isNotNull()
-			.as("21:54 returned, as +1min after the greatest timestamp across all streams")
-			.returns(Instant.parse("2024-12-30T21:54:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("Next query filter not returned because within lag")
+			.isNull()
 			;
 
 		// @formatter:on
