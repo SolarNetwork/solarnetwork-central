@@ -51,7 +51,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 
@@ -81,6 +81,7 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
 				sensitiveKeyProvider);
+		setSensitiveQueryParameterNames(Set.of(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM));
 	}
 
 	@Override

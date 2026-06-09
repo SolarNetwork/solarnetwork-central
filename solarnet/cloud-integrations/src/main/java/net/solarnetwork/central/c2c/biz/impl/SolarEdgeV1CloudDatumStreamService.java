@@ -35,6 +35,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_N
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.RATED_POWER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
@@ -44,6 +45,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.domain.datum.DatumStreamId.datumStreamId;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -58,7 +60,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -67,8 +68,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -98,14 +97,15 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
-import net.solarnetwork.domain.datum.DatumId;
-import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamId.DatumStreamIdent;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -315,6 +315,18 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { DatumValidationType.TimeGap.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
+	}
+
+	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
 		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 		List<LocalizedServiceInfo> result = new ArrayList<>(2);
@@ -447,6 +459,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 			populateNonEmptyValue(siteNode, "activationStatus", "activationStatus", meta);
 			populateNonEmptyValue(siteNode, "notes", "notes", meta);
+			if ( siteNode.hasNonNull("peakPower") ) {
+				double power = siteNode.path("peakPower").asDouble(0.0);
+				if ( power > 0 ) {
+					meta.put(RATED_POWER_METADATA, power * 1000.0);
+				}
+			}
 
 			result.add(intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta));
 		}
@@ -809,13 +827,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			// validation support
 			final Set<String> ignoredValidations = ds
 					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
-			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
+			final var streamBuffer = new OrderedDatumSamplesBuffer();
 
 			final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
 					? resolveTimeGapValidationThreshold(datumStream)
 					: null);
 
-			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
 			final Map<Long, SiteQueryPlan> queryPlans = resolveSiteQueryPlans(integration, ds,
 					sourceIdMap, valueProps);
 
@@ -852,8 +869,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				// inverter data
 				if ( queryPlan.inverterIds != null && !queryPlan.inverterIds.isEmpty() ) {
 					for ( String inverterId : queryPlan.inverterIds ) {
-						List<GeneralDatum> datum = restOpsHelper.httpGet("List inverter data",
-								integration, JsonNode.class,
+						restOpsHelper.httpGet("List inverter data", integration, JsonNode.class,
 								_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 										.path(EQUIPMENT_DATA_URL_TEMPLATE)
 										.queryParam("startTime", startDateParam)
@@ -861,10 +877,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 										.buildAndExpand(queryPlan.siteId, inverterId).toUri(),
 								(req, res) -> parseInverterDatum(req, res.getBody(), queryPlan,
 										inverterId, ds, sourceIdMap, timestampFmt, timeGapDuration,
-										auxiliary));
-						if ( datum != null ) {
-							resultDatum.addAll(datum);
-						}
+										streamBuffer));
 					}
 				}
 
@@ -882,7 +895,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
 							(_, res) -> nonnull(res.getBody(), "Response body"));
-					Collection<GeneralDatum> datum = restOpsHelper.httpGet("List meter energy data", integration,
+					restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
 							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(METERS_URL_TEMPLATE)
@@ -895,28 +908,25 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 								final JsonNode meterEnergy = nonnull(res.getBody(), "Response body");
 								return parseMeterDatum(req, meterPower, meterEnergy, queryPlan,
 										ds, sourceIdMap, timestampFmt, resolution, timeGapDuration,
-										auxiliary);
+										streamBuffer);
 							});
 					// @formatter:on
-					if ( datum != null ) {
-						resultDatum.addAll(datum);
-					}
 				}
 
 				// battery data
 				if ( queryPlan.includeBatteries ) {
-					List<GeneralDatum> datum = restOpsHelper.httpGet("List battery data", integration,
-							JsonNode.class,
+					restOpsHelper.httpGet("List battery data", integration, JsonNode.class,
 							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(STORAGE_DATA_URL_TEMPLATE)
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam).buildAndExpand(queryPlan.siteId)
 									.toUri(),
 							(req, res) -> parseBatteryDatum(req, res.getBody(), queryPlan, ds,
-									sourceIdMap, timestampFmt, timeGapDuration, auxiliary));
-					resultDatum.addAll(datum);
+									sourceIdMap, timestampFmt, timeGapDuration, streamBuffer));
 				}
 			}
+
+			final List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -956,15 +966,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, finalResult,
-					auxiliary);
+					streamBuffer.auxiliaryOrNull());
 		});
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private List<GeneralDatum> parseInverterDatum(RequestEntity<Void> request, @Nullable JsonNode json,
+	private Void parseInverterDatum(RequestEntity<Void> request, @Nullable JsonNode json,
 			SiteQueryPlan queryPlan, String inverterId, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
-			@Nullable Duration timeGapThreshold, List<DatumAuxiliaryRecord> auxiliary) {
+			@Nullable Duration timeGapThreshold, OrderedDatumSamplesBuffer streamBuffer) {
 		/*- EXAMPLE JSON:
 		{
 		  "data": {
@@ -994,27 +1004,26 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		      },
 		 */
 		if ( json == null ) {
-			return List.of();
+			return null;
 		}
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.inverterRefs;
 		final String sourceId = resolveSourceId(datumStream, queryPlan, SolarEdgeDeviceType.Inverter,
 				inverterId, sourceIdMap);
 		if ( sourceId == null ) {
-			return List.of();
+			return null;
 		}
+		final DatumStreamIdentity streamId = new DatumStreamIdent(datumStream.getKind(),
+				datumStream.getObjectId(), sourceId);
 		final String deviceRef = "/%d/%s/%s".formatted(queryPlan.siteId,
 				SolarEdgeDeviceType.Inverter.getKey(), inverterId);
-		List<GeneralDatum> result = new ArrayList<>(8);
 		Instant prevTs = null;
 		for ( JsonNode telem : json.findValue("telemetries") ) {
-			String dateVal = nonEmptyString(telem.path("date").asString());
+			final String dateVal = nonEmptyString(telem.path("date").asString());
 			if ( dateVal == null ) {
 				continue;
 			}
-			Instant ts = timestampFmt.parse(dateVal, Instant::from);
-			GeneralDatum d = new GeneralDatum(
-					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
-					new DatumSamples());
+			final Instant ts = timestampFmt.parse(dateVal, Instant::from);
+			final DatumSamples s = streamBuffer.getOrCreate(streamId, ts);
 			for ( String componentId : new String[] { WILDCARD_IDENTIFIER, inverterId } ) {
 				if ( !componentRefs.containsKey(componentId) ) {
 					continue;
@@ -1075,36 +1084,37 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							ref.property.getPropertyType());
 					propVal = ref.property.applyValueTransforms(propVal);
 					if ( propVal != null ) {
-						d.getSamples().putSampleValue(ref.property.getPropertyType(),
-								ref.property.getPropertyName(), propVal);
+						s.putSampleValue(ref.property.getPropertyType(), ref.property.getPropertyName(),
+								propVal);
 					}
 				}
 			}
-			if ( !d.isEmpty() ) {
-				if ( timeGapThreshold != null ) {
-					if ( prevTs == null ) {
-						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-						if ( prevDatum != null ) {
-							prevTs = prevDatum.getTimestamp();
-						}
-					}
-					if ( prevTs != null ) {
-						auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-								timeGapThreshold, prevTs, d.datumIdent()));
+			if ( s.isEmpty() ) {
+				streamBuffer.removeTimestamp(streamId, ts, s);
+				continue;
+			}
+			if ( timeGapThreshold != null ) {
+				if ( prevTs == null ) {
+					final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+					if ( prevDatum != null ) {
+						prevTs = prevDatum.getTimestamp();
 					}
 				}
-				result.add(d);
-				prevTs = ts;
+				if ( prevTs != null ) {
+					streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request, deviceRef,
+							null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
+				}
 			}
+			prevTs = ts;
 		}
-		return result;
+		return null;
 	}
 
-	private Collection<GeneralDatum> parseMeterDatum(RequestEntity<Void> request, JsonNode powerJson,
-			JsonNode energyJson, SiteQueryPlan queryPlan, CloudDatumStreamConfiguration datumStream,
+	private Void parseMeterDatum(RequestEntity<Void> request, JsonNode powerJson, JsonNode energyJson,
+			SiteQueryPlan queryPlan, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
 			SolarEdgeResolution resolution, @Nullable Duration timeGapThreshold,
-			List<DatumAuxiliaryRecord> auxiliary) {
+			OrderedDatumSamplesBuffer streamBuffer) {
 		/*- EXAMPLE JSON (Power):
 		{
 		  "powerDetails": {
@@ -1137,7 +1147,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		          },
 		 */
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.meterRefs;
-		final SortedMap<DatumIdentity, GeneralDatum> result = new TreeMap<>();
 		final MutableBoolean datumIsNew = new MutableBoolean(false);
 		for ( JsonNode json : new JsonNode[] { powerJson, energyJson } ) {
 			@SuppressWarnings("ReferenceEquality")
@@ -1163,15 +1172,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						continue;
 					}
 					// force align date
-					Instant ts = resolution.truncateDate(timestampFmt.parse(dateVal, Instant::from));
-					DatumIdentity datumId = DatumId
-							.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts)
-							.toIdentity();
-					datumIsNew.setFalse();
-					GeneralDatum d = result.computeIfAbsent(datumId, _ -> {
-						datumIsNew.setTrue();
-						return new GeneralDatum(datumId, new DatumSamples());
-					});
+					final Instant ts = resolution
+							.truncateDate(timestampFmt.parse(dateVal, Instant::from));
+					final DatumStreamIdentity streamId = datumStreamId(datumStream.getKind(),
+							datumStream.getObjectId(), sourceId).toIdentity();
+					final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
 					for ( String componentId : new String[] { WILDCARD_IDENTIFIER, meterId } ) {
 						if ( !componentRefs.containsKey(componentId) ) {
 							continue;
@@ -1191,46 +1196,42 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									ref.property.getPropertyType());
 							propVal = ref.property.applyValueTransforms(propVal);
 							if ( propVal != null ) {
-								d.getSamples().putSampleValue(ref.property.getPropertyType(),
+								samples.putSampleValue(ref.property.getPropertyType(),
 										ref.property.getPropertyName(), propVal);
 							}
 						}
 					}
-					if ( datumIsNew.booleanValue() && timeGapThreshold != null ) {
-						Instant prevTs = null;
-						final var headMap = result.headMap(datumId);
-						if ( !headMap.isEmpty() ) {
-							var prevDatumId = headMap.lastKey();
-							if ( prevDatumId != null && datumId.getKind() == prevDatumId.getKind()
-									&& datumId.getObjectId().equals(prevDatumId.getObjectId())
-									&& datumId.getSourceId().equals(prevDatumId.getSourceId()) ) {
-								prevTs = prevDatumId.getTimestamp();
-							}
+					if ( samples.isEmpty() ) {
+						streamBuffer.removeTimestamp(streamId, ts, samples);
+						continue;
+					}
+					if ( datumIsNew.isFalse() || timeGapThreshold == null ) {
+						continue;
+					}
+					Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
+					if ( prevTs == null ) {
+						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
 						}
-						if ( prevTs == null ) {
-							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-							if ( prevDatum != null ) {
-								prevTs = prevDatum.getTimestamp();
-							}
-						}
-						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-									timeGapThreshold, prevTs, d.datumIdent()));
-						}
+					}
+					if ( prevTs != null ) {
+						streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request,
+								deviceRef, null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 					}
 				}
 			}
 		}
-		return result.values().stream().filter(d -> !d.isEmpty()).toList();
+		return null;
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private List<GeneralDatum> parseBatteryDatum(RequestEntity<Void> request, @Nullable JsonNode json,
+	private Void parseBatteryDatum(RequestEntity<Void> request, @Nullable JsonNode json,
 			SiteQueryPlan queryPlan, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
-			@Nullable Duration timeGapThreshold, List<DatumAuxiliaryRecord> auxiliary) {
+			@Nullable Duration timeGapThreshold, OrderedDatumSamplesBuffer streamBuffer) {
 		if ( json == null ) {
-			return List.of();
+			return null;
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -1256,7 +1257,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		          },
 		 */
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.batteryRefs;
-		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode battery : json.findValue("batteries") ) {
 			String batteryId = nonEmptyString(battery.path("serialNumber").asString());
 			if ( batteryId == null ) {
@@ -1270,17 +1270,17 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 			final String deviceRef = "/%d/%s/%s".formatted(queryPlan.siteId,
 					SolarEdgeDeviceType.Battery.getKey(), batteryId);
+			final DatumStreamIdentity streamId = datumStreamId(datumStream.getKind(),
+					datumStream.getObjectId(), sourceId).toIdentity();
 
 			Instant prevTs = null;
 			for ( JsonNode telem : battery.path("telemetries") ) {
-				String dateVal = nonEmptyString(telem.path("timeStamp").asString());
+				final String dateVal = nonEmptyString(telem.path("timeStamp").asString());
 				if ( dateVal == null ) {
 					continue;
 				}
-				Instant ts = timestampFmt.parse(dateVal, Instant::from);
-				GeneralDatum d = new GeneralDatum(
-						DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
-						new DatumSamples());
+				final Instant ts = timestampFmt.parse(dateVal, Instant::from);
+				final DatumSamples s = streamBuffer.getOrCreate(streamId, ts);
 				for ( String componentId : new String[] { WILDCARD_IDENTIFIER, batteryId } ) {
 					if ( !componentRefs.containsKey(componentId) ) {
 						continue;
@@ -1306,30 +1306,31 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 								ref.property.getPropertyType());
 						propVal = ref.property.applyValueTransforms(propVal);
 						if ( propVal != null ) {
-							d.getSamples().putSampleValue(ref.property.getPropertyType(),
+							s.putSampleValue(ref.property.getPropertyType(),
 									ref.property.getPropertyName(), propVal);
 						}
 					}
 				}
-				if ( !d.isEmpty() ) {
-					if ( timeGapThreshold != null ) {
-						if ( prevTs == null ) {
-							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
-							if ( prevDatum != null ) {
-								prevTs = prevDatum.getTimestamp();
-							}
-						}
-						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, deviceRef, null,
-									timeGapThreshold, prevTs, d.datumIdent()));
+				if ( s.isEmpty() ) {
+					streamBuffer.removeTimestamp(streamId, ts, s);
+					continue;
+				}
+				if ( timeGapThreshold != null ) {
+					if ( prevTs == null ) {
+						final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
 						}
 					}
-					result.add(d);
-					prevTs = ts;
+					if ( prevTs != null ) {
+						streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request,
+								deviceRef, null, timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
+					}
 				}
+				prevTs = ts;
 			}
 		}
-		return result;
+		return null;
 	}
 
 	private static boolean useIndexBasedSourceIds(CloudDatumStreamConfiguration datumStream,

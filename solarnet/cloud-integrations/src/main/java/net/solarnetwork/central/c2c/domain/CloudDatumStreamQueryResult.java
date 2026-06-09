@@ -35,8 +35,6 @@ import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
  */
 public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 
-	String GENERATOR_MARK_AUXILIARY_META_KEY = "TODO";
-
 	/**
 	 * Test if there are no results available.
 	 *

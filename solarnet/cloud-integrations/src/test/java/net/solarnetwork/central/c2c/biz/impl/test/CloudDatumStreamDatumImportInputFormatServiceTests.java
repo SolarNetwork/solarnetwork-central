@@ -660,6 +660,8 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 			.returns(resolvedSourceIds.toArray(String[]::new), from(ObjectStreamCriteria::getSourceIds))
 			;
 
+		final String timeGapValidationType = DatumValidationType.TimeGap.getKey();
+
 		then(datumAuxiliaryDao).should(times(2)).save(datumAuxiliaryEntityCaptor.capture());
 		and.then(datumAuxiliaryEntityCaptor.getAllValues())
 			.allSatisfy(aux -> {
@@ -673,8 +675,8 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 					.returns(DatumAuxiliary.GENERATED_BY_SOLARNETWORK, from(e -> e.getInfoString(DatumAuxiliary.GENERATED_BY_META_KEY)))
 					.as("Mark type is data validation")
 					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
-					.as("Mark sub-type is time-gap")
-					.returns(DatumValidationType.TimeGap.getKey(), from(e -> e.getInfoString(DatumAuxiliary.SUB_TYPE_META_KEY)))
+					.as("Mark sub-types is time-gap")
+					.returns(List.of(timeGapValidationType), from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
 					;
 			})
 			.satisfies(records -> {

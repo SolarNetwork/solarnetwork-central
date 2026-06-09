@@ -30,8 +30,9 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.greatestTimestamp;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.domain.datum.DatumId.datumId;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -47,15 +48,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,15 +88,16 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
-import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamId;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -182,6 +181,12 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
 	/**
+	 * A cache of SolarEdge site IDs to associated inventory information. This
+	 * is used to resolve the available device identifiers for a given site.
+	 */
+	private @Nullable Cache<Long, CloudDataValue[]> siteInventoryCache;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param userEventAppenderBiz
@@ -244,6 +249,18 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { DatumValidationType.TimeGap.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
+	}
+
+	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
 		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 		List<LocalizedServiceInfo> result = new ArrayList<>(2);
@@ -263,7 +280,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				"integration");
 		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = siteHardware(integration, filters.get(SITE_ID_FILTER).toString(), filters);
+			result = siteHardware(integration, Long.valueOf(filters.get(SITE_ID_FILTER).toString()),
+					filters);
 		} else {
 			// list available sites
 			result = sites(integration);
@@ -327,11 +345,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			// validation support
 			final Set<String> ignoredValidations = ds
 					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
-			final List<DatumAuxiliaryRecord> auxiliary = new ArrayList<>(8);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
-			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,
-					sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
+			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(
+					integration, ds, sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
 
 			BasicQueryFilter nextQueryFilter = null;
 
@@ -355,7 +372,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
-			final SortedMap<DatumIdentity, DatumSamples> dataMap = new TreeMap<>();
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
 
 			for ( Entry<UserLongCompositePK, List<ValueRef>> e : hardwareGroups.entrySet() ) {
 				final ZonedDateTime siteStartDate = startDate.atZone(zone);
@@ -388,45 +405,41 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 									.buildAndExpand().toUri();
 							// @formatter:on
 						}, (req, res) -> parseDatum(req, res.getBody(), e.getValue(), ds, sourceIdMap,
-								dataMap, ignoredValidations, auxiliary));
+								streamBuffer, ignoredValidations));
 			}
 
 			// generate a map of the latest-available timestamp per stream; afterwards the earliest
 			// value overall can be used as the resolved "latest datum" date
-			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
-			List<GeneralDatum> resultDatum = dataMap.entrySet().stream().filter(e -> {
-				if ( e.getValue().isEmpty() ) {
-					return false;
-				}
-				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(
-						e.getKey().getKind(), e.getKey().getObjectId(), e.getKey().getSourceId());
-				Instant ts = e.getKey().getTimestamp();
-				greatestTimestampPerStream.compute(streamPk,
-						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
-				return true;
-			}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
+			Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
+					.greatestTimestampPerStream();
+			List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
 			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
 			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
 					&& !greatestTimestampPerStream.isEmpty() ) {
-				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
-						.min(Instant::compareTo).get();
-				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
-						.max(Instant::compareTo).get();
-				Instant greatestDatumTimestamp = (leastGreatestTimestampPerStream
-						.isBefore(greatestTimestampAcrossStreams)
-						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag) < 0 ? leastGreatestTimestampPerStream
-										: greatestTimestampAcrossStreams);
-				Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
-				if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
-					if ( nextQueryFilter == null ) {
-						nextQueryFilter = new BasicQueryFilter();
-						nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
+				Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
+						greatestTimestampPerStream.values());
+				Instant greatestTimestampAcrossStreams = greatestTimestamp(
+						greatestTimestampPerStream.values());
+				if ( leastGreatestTimestampAcrossStreams != null
+						&& greatestTimestampAcrossStreams != null ) {
+					Instant greatestDatumTimestamp = (leastGreatestTimestampAcrossStreams
+							.isBefore(greatestTimestampAcrossStreams)
+							&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
+									.compareTo(multiStreamMaximumLag) < 0
+											? leastGreatestTimestampAcrossStreams
+											: greatestTimestampAcrossStreams);
+					Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
+					if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
+						if ( nextQueryFilter == null ) {
+							nextQueryFilter = new BasicQueryFilter();
+							nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
+						}
+						nextQueryFilter
+								.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
 					}
-					nextQueryFilter.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
 				}
 			}
 
@@ -435,7 +448,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList(), !auxiliary.isEmpty() ? auxiliary : null);
+					r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 
@@ -449,7 +462,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
-			final String siteId, final Map<String, ?> filters) {
+			final Long siteId, final Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
@@ -487,8 +500,17 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return result;
 	}
 
+	/**
+	 * Parse a site hardware JSON response.
+	 *
+	 * @param siteId
+	 *        the site ID
+	 * @param json
+	 *        the JSON to parse
+	 * @return the parsed inventory
+	 */
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSiteHardware(final String siteId,
+	public static List<CloudDataValue> parseSiteHardware(final Long siteId,
 			final @Nullable JsonNode json) {
 		if ( json == null ) {
 			return List.of();
@@ -549,6 +571,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		      }
 		    },
 		*/
+		final String siteIdent = siteId.toString();
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode deviceNode : json.path("hardware") ) {
 			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
@@ -572,14 +595,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 				List<CloudDataValue> aggs = new ArrayList<>(AlsoEnergyFieldFunction.values().length);
 				for ( AlsoEnergyFieldFunction fn : AlsoEnergyFieldFunction.values() ) {
-					aggs.add(dataValue(List.of(siteId, id, fieldName, fn.name()),
+					aggs.add(dataValue(List.of(siteIdent, id, fieldName, fn.name()),
 							fieldName + " " + fn.name()));
 				}
 
-				fields.add(intermediateDataValue(List.of(siteId, id, fieldName), fieldName, null, aggs));
+				fields.add(
+						intermediateDataValue(List.of(siteIdent, id, fieldName), fieldName, null, aggs));
 			}
 
-			result.add(intermediateDataValue(List.of(siteId, id), name, meta, fields));
+			result.add(intermediateDataValue(List.of(siteIdent, id), name, meta, fields));
 		}
 		return result;
 	}
@@ -649,7 +673,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private Map<UserLongCompositePK, List<ValueRef>> resolveHardwareGroups(
-			CloudDatumStreamConfiguration datumStream, @Nullable Collection<String> sourceValueRefs,
+			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
+			@Nullable Collection<String> sourceValueRefs,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
@@ -673,8 +698,19 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					fn = AlsoEnergyFieldFunction.Last;
 				}
 
-				var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
-				List<ValueRef> valueRefs = result.computeIfAbsent(
+				// verify against site inventory
+				final CloudDataValue[] siteInventory = resolveSiteInventory(integration, siteId);
+				if ( siteInventory != null ) {
+					CloudDataValue match = CloudDataValue.findFirst(siteInventory,
+							List.of(siteId.toString(), hardwareId.toString(), fieldName, fn.name()));
+					if ( match == null ) {
+						// not available so skip
+						continue;
+					}
+				}
+
+				final var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
+				final List<ValueRef> valueRefs = result.computeIfAbsent(
 						new UserLongCompositePK(siteId, hardwareId), _ -> new ArrayList<>(8));
 				if ( !valueRefs.contains(valueRef) ) {
 					valueRefs.add(valueRef);
@@ -686,8 +722,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private Void parseDatum(RequestEntity<List<Map<String, Object>>> request, @Nullable JsonNode body,
 			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
-			@Nullable Map<String, String> sourceIdMap, SortedMap<DatumIdentity, DatumSamples> dataMap,
-			Set<String> ignoredValidations, List<DatumAuxiliaryRecord> auxiliary) {
+			@Nullable Map<String, String> sourceIdMap, OrderedDatumSamplesBuffer streamBuffer,
+			Set<String> ignoredValidations) {
 		/*- EXAMPLE JSON:
 		{
 		  "info": [
@@ -747,31 +783,25 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				Object propVal = parseJsonDatumPropertyValue(valNode, ref.property.getPropertyType());
 				propVal = ref.property.applyValueTransforms(propVal);
 				if ( propVal != null ) {
-					DatumIdentity datumId = datumId(datumStream.getKind(), datumStream.getObjectId(),
-							sourceId, ts).toIdentity();
+					DatumStreamIdentity streamId = new DatumStreamId(datumStream.getKind(),
+							datumStream.getObjectId(), sourceId).toIdentity();
 					datumIsNew.setFalse();
-					dataMap.computeIfAbsent(datumId, _ -> {
-						datumIsNew.setTrue();
-						return new DatumSamples();
-					}).putSampleValue(ref.property.getPropertyType(), ref.property.getPropertyName(),
-							propVal);
+					final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
+					samples.putSampleValue(ref.property.getPropertyType(),
+							ref.property.getPropertyName(), propVal);
 					if ( datumIsNew.booleanValue() && timeGapThreshold != null ) {
 						// time gap validation for new datum
-						var prevDataMap = dataMap.headMap(datumId);
-						DatumIdentity prevDatumId = (!prevDataMap.isEmpty() ? prevDataMap.lastKey()
-								: null);
-						Instant prevTs = null;
-						if ( prevDatumId != null ) {
-							prevTs = prevDatumId.getTimestamp();
-						} else {
+						Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
+						if ( prevTs == null ) {
 							final var prevDatum = lookupPreviousDatum(datumStream, sourceId, ts);
 							if ( prevDatum != null ) {
 								prevTs = prevDatum.getTimestamp();
 							}
 						}
 						if ( prevTs != null ) {
-							auxiliary.addAll(validateTimeGap(datumStream, request, ref.hardwareRef, null,
-									timeGapThreshold, prevTs, datumId));
+							streamBuffer.addAuxiliary(streamId,
+									validateTimeGap(datumStream, request, ref.hardwareRef, null,
+											timeGapThreshold, prevTs, streamId.datumIdentity(ts)));
 						}
 					}
 				}
@@ -788,4 +818,50 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return datumStream.getSourceId() + ref.hardwareRef;
 	}
 
+	private CloudDataValue @Nullable [] resolveSiteInventory(CloudIntegrationConfiguration integration,
+			Long siteId) {
+		assert integration != null && siteId != null;
+		final var cache = getSiteInventoryCache();
+
+		CloudDataValue[] result = (cache != null ? cache.get(siteId) : null);
+		if ( result != null ) {
+			return result;
+		}
+
+		List<CloudDataValue> response = siteHardware(integration, siteId,
+				Map.of(SITE_ID_FILTER, siteId));
+		if ( response != null ) {
+			result = response.toArray(CloudDataValue[]::new);
+			if ( cache != null ) {
+				cache.put(siteId, result);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get the site inventory cache.
+	 *
+	 * @return the cache
+	 * @since 2.1
+	 */
+	public final @Nullable Cache<Long, CloudDataValue[]> getSiteInventoryCache() {
+		return siteInventoryCache;
+	}
+
+	/**
+	 * Set the site inventory cache.
+	 *
+	 * <p>
+	 * This cache can be provided to help with device lookup by site. ID.
+	 * </p>
+	 *
+	 * @param siteInventoryCache
+	 *        the cache to set
+	 * @since 2.1
+	 */
+	public final void setSiteInventoryCache(@Nullable Cache<Long, CloudDataValue[]> siteInventoryCache) {
+		this.siteInventoryCache = siteInventoryCache;
+	}
 }

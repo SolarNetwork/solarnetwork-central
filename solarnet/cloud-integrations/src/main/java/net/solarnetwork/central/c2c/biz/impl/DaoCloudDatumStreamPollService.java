@@ -430,11 +430,12 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 				return taskInfo;
 			}
 
-			final Instant queryTimestamp = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+			final Instant queryStartDate = taskInfo.getStartAt();
+			final Instant queryEndDate = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 
 			final var filter = new BasicQueryFilter();
-			filter.setStartDate(taskInfo.getStartAt());
-			filter.setEndDate(queryTimestamp);
+			filter.setStartDate(queryStartDate);
+			filter.setEndDate(queryEndDate);
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
 					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
@@ -498,7 +499,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 						}
 					} else {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
-							final StreamDatum sDatum = datumStreamDatum(datumId, datum, queryTimestamp,
+							final StreamDatum sDatum = datumStreamDatum(datumId, datum, queryEndDate,
 									streamMetaCache);
 							if ( sDatum != null ) {
 								datumDao.store(sDatum);
@@ -537,7 +538,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			}
 
 			// deal with auxiliary datum
-			maintainAuxiliaryRecords(datumStream, datumStreamService, filter, polledDatum);
+			maintainAuxiliaryRecords(datumStream, datumStreamService, queryStartDate, queryEndDate,
+					polledDatum);
 
 			// calculate the next execution time based on the datum stream schedule
 			var now = clock.instant();
@@ -619,7 +621,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 		}
 
 		private void maintainAuxiliaryRecords(CloudDatumStreamConfiguration datumStream,
-				CloudDatumStreamService datumStreamService, CloudDatumStreamQueryFilter filter,
+				CloudDatumStreamService datumStreamService, Instant queryStartDate, Instant queryEndDate,
 				@Nullable CloudDatumStreamQueryResult polledDatum) {
 			if ( polledDatum == null || datumStream.getKind() != ObjectDatumKind.Node ) {
 				return;
@@ -628,9 +630,16 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			if ( sourceIds.isEmpty() ) {
 				return;
 			}
-			final CloudDatumStreamQueryFilter queryFilter = (polledDatum.getUsedQueryFilter() != null
+			final CloudDatumStreamQueryFilter usedFilter = (polledDatum.getUsedQueryFilter() != null
 					? polledDatum.getUsedQueryFilter()
-					: filter);
+					: null);
+
+			final Instant startDate = usedFilter != null && usedFilter.getStartDate() != null
+					? usedFilter.getStartDate()
+					: queryStartDate;
+			final Instant endDate = usedFilter != null && usedFilter.getEndDate() != null
+					? usedFilter.getEndDate()
+					: queryEndDate;
 
 			// clear out any existing generated auxiliary for query date range
 			var auxFilter = new BasicDatumCriteria();
@@ -638,8 +647,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			auxFilter.setObjectKind(datumStream.getKind());
 			auxFilter.setNodeId(datumStream.getObjectId());
 			auxFilter.setSourceIds(sourceIds.toArray(String[]::new));
-			auxFilter.setStartDate(nonnull(queryFilter.getStartDate(), "Start date"));
-			auxFilter.setEndDate(nonnull(queryFilter.getEndDate(), "End date"));
+			auxFilter.setStartDate(startDate);
+			auxFilter.setEndDate(endDate);
 			auxFilter.setSearchFilter(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER);
 			long deleteCount = datumAuxiliaryDao.deleteFiltered(auxFilter);
 			if ( deleteCount > 0 ) {

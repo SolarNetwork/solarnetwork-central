@@ -72,7 +72,6 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
@@ -465,9 +464,11 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			}
 
 			while ( queryStartDate.isBefore(maxDate) && !queryEndDate.isAfter(maxDate) ) {
+				final Instant filterStartDate = queryStartDate.toInstant();
+				final Instant filterEndDate = queryEndDate.toInstant();
 				final var filter = new BasicQueryFilter();
-				filter.setStartDate(queryStartDate.toInstant());
-				filter.setEndDate(queryEndDate.toInstant());
+				filter.setStartDate(filterStartDate);
+				filter.setEndDate(filterEndDate);
 
 				final var queryTimestamp = clock.instant();
 
@@ -543,8 +544,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 							// query for existing datum
 							existingDatum.clear();
 							existingDatum.putAll(existingDatum(datumStream.getUserId(), datumId,
-									nonnull(filter.getStartDate(), "Start date"),
-									nonnull(filter.getEndDate(), "End date")));
+									filterStartDate, filterEndDate));
 						}
 
 						Datum existing = existingDatum.get(datumId);
@@ -568,14 +568,14 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 					// if we made any updates, re-import auxiliary
 					if ( iterationUpdateCount > 0 ) {
-						maintainAuxiliaryRecords(datumStream, datumStreamService, filter, rakedDatum);
+						maintainAuxiliaryRecords(datumStream, datumStreamService, filterStartDate,
+								filterEndDate, rakedDatum);
 					}
 				}
 
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
-								progressEventData(execTime, nonnull(filter.getStartDate(), "start"),
-										nonnull(filter.getEndDate(), "end"), updateCounts)));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_RAKE_PROGRESS_TAGS, null,
+						progressEventData(execTime, filterStartDate, filterEndDate, updateCounts)));
 
 				// iterate to next day
 				queryStartDate = queryEndDate;
@@ -687,7 +687,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 		}
 
 		private void maintainAuxiliaryRecords(CloudDatumStreamConfiguration datumStream,
-				CloudDatumStreamService datumStreamService, CloudDatumStreamQueryFilter filter,
+				CloudDatumStreamService datumStreamService, Instant queryStartDate, Instant queryEndDate,
 				CloudDatumStreamQueryResult rakedDatum) {
 			if ( datumStream.getKind() != ObjectDatumKind.Node ) {
 				return;
@@ -696,14 +696,15 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			if ( sourceIds.isEmpty() ) {
 				return;
 			}
+
 			// clear out any existing generated auxiliary for query date range
 			var auxFilter = new BasicDatumCriteria();
 			auxFilter.setDatumAuxiliaryType(DatumAuxiliaryType.Mark);
 			auxFilter.setObjectKind(datumStream.getKind());
 			auxFilter.setNodeId(datumStream.getObjectId());
 			auxFilter.setSourceIds(sourceIds.toArray(String[]::new));
-			auxFilter.setStartDate(nonnull(filter.getStartDate(), "Start date"));
-			auxFilter.setEndDate(nonnull(filter.getEndDate(), "End date"));
+			auxFilter.setStartDate(queryStartDate);
+			auxFilter.setEndDate(queryEndDate);
 			auxFilter.setSearchFilter(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER);
 			long deleteCount = datumAuxiliaryDao.deleteFiltered(auxFilter);
 			if ( deleteCount > 0 ) {

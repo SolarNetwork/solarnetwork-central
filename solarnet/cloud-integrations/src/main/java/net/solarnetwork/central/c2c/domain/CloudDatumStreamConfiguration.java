@@ -42,6 +42,7 @@ import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.DateTimeUtils;
 import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumStreamId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.CollectionUtils;
 
@@ -56,7 +57,7 @@ import net.solarnetwork.util.CollectionUtils;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured", "datumStreamId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name",
@@ -167,6 +168,16 @@ public final class CloudDatumStreamConfiguration
 	public boolean isFullyConfigured() {
 		return datumStreamMappingId != null && kind != null && objectId != null && sourceId != null
 				&& !sourceId.isEmpty();
+	}
+
+	/**
+	 * Create a datum stream ID.
+	 *
+	 * @return the ID
+	 * @since 1.3
+	 */
+	public DatumStreamId streamId() {
+		return DatumStreamId.datumStreamId(kind, objectId, sourceId);
 	}
 
 	/**

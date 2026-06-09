@@ -431,10 +431,14 @@ BEGIN
 			jdata_as = EXCLUDED.jdata_as,
 			jmeta = EXCLUDED.jmeta;
 
-	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-	SELECT stream_id, ts_start, 'h' AS agg_kind
-	FROM solardatm.calc_stale_datm(sid, ddate)
-	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	IF aux_type = 'Reset'::solardatm.da_datm_aux_type THEN
+		-- insert stale record for updated row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calc_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+
+	END IF;
 END
 $$;
 
@@ -456,10 +460,13 @@ BEGIN
 	DELETE FROM solardatm.da_datm_aux
 	WHERE stream_id = sid AND ts = ddate AND atype = aux_type;
 
-	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-	SELECT stream_id, ts_start, 'h' AS agg_kind
-	FROM solardatm.calc_stale_datm(sid, ddate)
-	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	IF aux_type = 'Reset'::solardatm.da_datm_aux_type THEN
+		-- insert stale record for deleted row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calc_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	END IF;
 END
 $$;
 
@@ -503,11 +510,13 @@ BEGIN
 	GET DIAGNOSTICS del_count = ROW_COUNT;
 
 	IF del_count > 0 THEN
-		-- insert stale record for deleted row
-		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid_from, ts_from)
-		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		IF aux_type_from = 'Reset'::solardatm.da_datm_aux_type OR atype_to = 'Reset'::solardatm.da_datm_aux_type THEN
+			-- insert stale record for deleted row
+			INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+			SELECT stream_id, ts_start, 'h' AS agg_kind
+			FROM solardatm.calc_stale_datm(sid_from, ts_from)
+			ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		END IF;
 
 		-- insert new row
 		INSERT INTO solardatm.da_datm_aux (stream_id, ts, atype, notes, jdata_af, jdata_as, jmeta)
@@ -519,11 +528,13 @@ BEGIN
 				jdata_as = EXCLUDED.jdata_as,
 				jmeta = EXCLUDED.jmeta;
 
-		-- insert stale record for new row
-		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid_to, ts_to)
-		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		IF aux_type_from = 'Reset'::solardatm.da_datm_aux_type OR atype_to = 'Reset'::solardatm.da_datm_aux_type THEN
+			-- insert stale record for new row
+			INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+			SELECT stream_id, ts_start, 'h' AS agg_kind
+			FROM solardatm.calc_stale_datm(sid_to, ts_to)
+			ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		END IF;
 	END IF;
 
 	RETURN (del_count > 0);

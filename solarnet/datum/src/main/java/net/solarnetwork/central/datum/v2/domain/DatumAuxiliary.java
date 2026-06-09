@@ -61,11 +61,11 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	String TYPE_META_KEY = "type";
 
 	/**
-	 * A metadata key for a sub-type classification.
+	 * A metadata key for a sub-type classification list.
 	 *
 	 * @since 2.1
 	 */
-	String SUB_TYPE_META_KEY = "subType";
+	String SUB_TYPES_META_KEY = "subTypes";
 
 	/**
 	 * A metadata key for the identity of the system that created this record.
@@ -144,13 +144,6 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 * @since 2.1
 	 */
 	String DATA_VALIDATION_TYPE = "data-validation";
-
-	/**
-	 * A type metadata value for time gaps.
-	 *
-	 * @since 2.1
-	 */
-	String TIME_GAP_TYPE = "time-gap";
 
 	/**
 	 * A generated-by value for SolarNetwork.
@@ -329,10 +322,10 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 			@Nullable Map<String, Object> source) {
 		var result = new GeneralDatumMetadata();
 		result.putInfoValue(TYPE_META_KEY, DATA_VALIDATION_TYPE);
-		result.putInfoValue(SUB_TYPE_META_KEY, validationType);
+		result.putInfoValue(SUB_TYPES_META_KEY, List.of(validationType));
 		result.putInfoValue(GENERATED_BY_META_KEY, generatedBy);
 		if ( source != null ) {
-			result.putInfoValue(SOURCE_META_KEY, source);
+			result.putInfoValue(validationType, SOURCE_META_KEY, source);
 		}
 		return result;
 	}
@@ -386,9 +379,10 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 				dataValidationMetadata(validationType,
 						dataValidationSourceMap(sourceRef, requestUri, requestParameters, dataValue)));
 		final GeneralDatumMetadata meta = nonnull(mark.getMetadata(), "Metadata");
-		meta.putInfoValue(CommonUserEvents.DURATION_DATA_KEY, duration);
-		meta.putInfoValue(DatumAuxiliary.RATED_POWER_META_KEY, ratedPower);
-		meta.putInfoValue(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, dataValueThreshold);
+		meta.putInfoValue(validationType, CommonUserEvents.DURATION_DATA_KEY, duration);
+		meta.putInfoValue(validationType, DatumAuxiliary.RATED_POWER_META_KEY, ratedPower);
+		meta.putInfoValue(validationType, DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY,
+				dataValueThreshold);
 		return List.of(mark);
 	}
 
@@ -431,21 +425,25 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 						datumIdent.getSourceId(), prevTs),
 				markNote, dataValidationMetadata(validationType, sourceMap));
 		final GeneralDatumMetadata startMeta = nonnull(startMark.getMetadata(), "Metadata");
-		startMeta.putInfoValue(CommonUserEvents.CORRELATION_ID_DATA_KEY, correlationId);
-		startMeta.putInfoValue(DatumAuxiliary.POSITION_META_KEY, DatumAuxiliary.START_POSITION);
-		startMeta.putInfoValue(DatumAuxiliary.TIMESTAMP_META_KEY, datumIdent.getTimestamp());
-		startMeta.putInfoValue(CommonUserEvents.DURATION_DATA_KEY, timeDiffMs);
-		startMeta.putInfoValue(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY,
+		startMeta.putInfoValue(validationType, CommonUserEvents.CORRELATION_ID_DATA_KEY, correlationId);
+		startMeta.putInfoValue(validationType, DatumAuxiliary.POSITION_META_KEY,
+				DatumAuxiliary.START_POSITION);
+		startMeta.putInfoValue(validationType, DatumAuxiliary.TIMESTAMP_META_KEY,
+				datumIdent.getTimestamp());
+		startMeta.putInfoValue(validationType, CommonUserEvents.DURATION_DATA_KEY, timeDiffMs);
+		startMeta.putInfoValue(validationType, DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY,
 				timeGapThreshold.toString());
 
 		final var endMark = BasicDatumAuxiliaryRecord.createMark(datumIdent, markNote,
 				dataValidationMetadata(validationType, sourceMap));
 		final GeneralDatumMetadata endMeta = nonnull(endMark.getMetadata(), "Metadata");
-		endMeta.putInfoValue(CommonUserEvents.CORRELATION_ID_DATA_KEY, correlationId);
-		endMeta.putInfoValue(DatumAuxiliary.POSITION_META_KEY, DatumAuxiliary.END_POSITION);
-		endMeta.putInfoValue(DatumAuxiliary.TIMESTAMP_META_KEY, prevTs);
-		endMeta.putInfoValue(CommonUserEvents.DURATION_DATA_KEY, timeDiffMs);
-		endMeta.putInfoValue(DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY, timeGapThreshold.toString());
+		endMeta.putInfoValue(validationType, CommonUserEvents.CORRELATION_ID_DATA_KEY, correlationId);
+		endMeta.putInfoValue(validationType, DatumAuxiliary.POSITION_META_KEY,
+				DatumAuxiliary.END_POSITION);
+		endMeta.putInfoValue(validationType, DatumAuxiliary.TIMESTAMP_META_KEY, prevTs);
+		endMeta.putInfoValue(validationType, CommonUserEvents.DURATION_DATA_KEY, timeDiffMs);
+		endMeta.putInfoValue(validationType, DatumAuxiliary.DATA_VALUE_THRESHOLD_META_KEY,
+				timeGapThreshold.toString());
 
 		return List.of(startMark, endMark);
 	}
