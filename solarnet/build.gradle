@@ -6,7 +6,7 @@ buildscript {
 }
 
 plugins {
-	id 'net.ltgt.errorprone' version '5.0.0' apply false
+	id 'net.ltgt.errorprone' version '5.1.0' apply false
 }
 
 ext {
@@ -147,8 +147,8 @@ subprojects {
 				'net.javacrumbs.json-unit:json-unit-assertj:5.1.0',
 				'org.junit.platform:junit-platform-launcher'
 		
-		errorprone 'com.google.errorprone:error_prone_core:2.45.0'
-		errorprone 'com.uber.nullaway:nullaway:0.13.1'
+		errorprone 'com.google.errorprone:error_prone_core:2.50.0'
+		errorprone 'com.uber.nullaway:nullaway:0.13.6'
 	}
 
 	configurations {
