@@ -26,6 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -42,7 +44,7 @@ import net.solarnetwork.service.ProgressListener;
  * Base class for {@link ImportContext} implementations.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public abstract class BaseDatumImportInputFormatServiceImportContext implements ImportContext {
 
@@ -121,15 +123,16 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * determined.
 	 * </p>
 	 *
-	 * @return the character set name, never {@code null}
+	 * @return the character set, never {@code null}
+	 * @since 2.2
 	 */
-	protected String getResourceCharset() {
-		String charset = "UTF-8";
+	protected Charset getResourceCharset() {
+		Charset charset = StandardCharsets.UTF_8;
 		if ( resource != null && resource.getContentType() != null ) {
 			MimeType mime = MimeType.valueOf(resource.getContentType());
 			String csParam = mime.getParameter("charset");
 			if ( csParam != null ) {
-				charset = csParam;
+				charset = Charset.forName(csParam, charset);
 			}
 		}
 		return charset;

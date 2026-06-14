@@ -153,6 +153,7 @@ public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
 		}
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private Object enforceFilterPolicy(ProceedingJoinPoint pjp, Long userId,
 			ObjectDatumStreamAliasFilter filter) throws Throwable {
 		var filterToUse = policyEnforcerCheck(filter);

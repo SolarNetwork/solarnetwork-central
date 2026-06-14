@@ -211,8 +211,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 		}
 
 		private void schedule() {
-			@SuppressWarnings("unused")
-			ScheduledFuture<?> unused = scheduleJob(key, task, trigger);
+			ScheduledFuture<?> _ = scheduleJob(key, task, trigger);
 			complete(null);
 		}
 	}

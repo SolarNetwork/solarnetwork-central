@@ -74,7 +74,7 @@ public final class SearchFilterUtils {
 	 *        the filter
 	 * @return the JSON Path expression
 	 */
-	@SuppressWarnings({ "StatementSwitchToExpressionSwitch", "NullAway" })
+	@SuppressWarnings({ "StatementSwitchToExpressionSwitch", "ReferenceEquality", "NullAway" })
 	public static @Nullable String toSqlJsonPath(@Nullable SearchFilter filter) {
 		if ( filter == null ) {
 			return null;

@@ -44,6 +44,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.SortedMap;
@@ -289,9 +290,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 							taskInfo.getServiceProperties());
 					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 0L;
 					var errMsg = "Error executing rake task.";
-					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-							MESSAGE_DATA_KEY,
-							(Object) (e instanceof RemoteServiceException ? e : t).getMessage(),
+					var exMsg = (e instanceof RemoteServiceException ? e : t).getMessage();
+					Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
+							MESSAGE_DATA_KEY, Objects.requireNonNullElse(exMsg, ""),
 							ERROR_COUNT_DATA_KEY, errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
@@ -378,8 +379,8 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 							"Refusing to execute datum stream {} rake task {} because task owner {} does not own node {}",
 							taskInfo.getDatumStreamId(), taskIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
-					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
-							(Object) objectId);
+					Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
+							SOURCE_DATA_KEY, objectId);
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
@@ -421,8 +422,8 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			if ( datumStreamService == null ) {
 				// service no longer supported?...
 				var errMsg = "Configured Datum Stream service not available.";
-				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
-						(Object) datumStream.getServiceIdentifier());
+				Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
+						SOURCE_DATA_KEY, datumStream.getServiceIdentifier());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
@@ -503,8 +504,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 									"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling rake task.",
 									datumStreamIdent, objectId, datum.getObjectId());
 							var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
-							var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-									SOURCE_DATA_KEY, (Object) datum.getObjectId(), "expected", objectId);
+							Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY,
+									taskInfo.getConfigId(), SOURCE_DATA_KEY, datum.getObjectId(),
+									"expected", objectId);
 							taskInfo.setMessage(errMsg);
 							taskInfo.putServiceProps(errData);
 							taskInfo.setState(Completed); // stop processing job
@@ -521,8 +523,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 									"Datum stream {} configured with kind {} but produced datum with kind {}: cancelling rake task.",
 									datumStreamIdent, kind, datumKind);
 							var errMsg = "Access denied to datum with kind different from datum stream configuration.";
-							var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-									SOURCE_DATA_KEY, (Object) datumKind, "expected", kind);
+							Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY,
+									taskInfo.getConfigId(), SOURCE_DATA_KEY, datumKind, "expected",
+									kind);
 							taskInfo.setMessage(errMsg);
 							taskInfo.putServiceProps(errData);
 							taskInfo.setState(Completed); // stop processing job
@@ -611,8 +614,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 				log.warn("Failed to reset datum stream {} rake task {} @ {} starting @ {}",
 						taskInfo.getDatumStreamId(), taskIdent, taskInfo.getExecuteAt(), startDate);
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), EXECUTE_AT_DATA_KEY,
-						taskInfo.getExecuteAt(), START_AT_DATA_KEY, startDate.toInstant());
+				Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
+						EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
+						startDate.toInstant());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 			} else {

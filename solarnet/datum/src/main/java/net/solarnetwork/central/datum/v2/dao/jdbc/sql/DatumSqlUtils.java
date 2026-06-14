@@ -2008,6 +2008,7 @@ public final class DatumSqlUtils {
 
 			private @Nullable SearchFilter root = null;
 
+			@SuppressWarnings("ReferenceEquality")
 			@Override
 			public boolean visit(SearchFilter node, @Nullable SearchFilter parentNode) {
 				if ( parentNode == null ) {
@@ -2072,6 +2073,7 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public static int prepareMetadataSearchFilter(@Nullable SearchFilter filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter == null ) {

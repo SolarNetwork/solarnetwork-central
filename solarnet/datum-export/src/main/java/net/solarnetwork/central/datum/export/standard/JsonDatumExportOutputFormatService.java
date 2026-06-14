@@ -112,6 +112,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 			super(config);
 		}
 
+		@SuppressWarnings("ReferenceEquality")
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
 			setEstimatedResultCount(estimatedResultCount);

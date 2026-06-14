@@ -99,6 +99,7 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 	 * @throws Throwable
 	 *         if any error occurs
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findNodeMetadata(filter)")
 	public FilterResults<SolarNodeMetadataFilterMatch, Long> findNodeMetadataAccessCheck(
 			ProceedingJoinPoint pjp, SolarNodeMetadataFilter filter) throws Throwable {

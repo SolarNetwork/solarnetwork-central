@@ -210,8 +210,8 @@ public class SSLContextFactory implements PingTest {
 			try {
 				entry = keyStore.getEntry(alias, null);
 			} catch ( UnrecoverableKeyException e ) {
-				entry = keyStore.getEntry(alias, new KeyStore.PasswordProtection(
-						keystorePassword == null ? null : keystorePassword.toCharArray()));
+				entry = keyStore.getEntry(alias,
+						new KeyStore.PasswordProtection(keystorePassword.toCharArray()));
 			}
 			if ( entry instanceof PrivateKeyEntry keyEntry ) {
 				Certificate[] certs = keyEntry.getCertificateChain();

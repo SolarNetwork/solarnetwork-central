@@ -145,6 +145,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws NullPointerException
 	 *         if the specified element is null
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean offer(E e) {
 		final ReentrantLock lock = this.lock;
@@ -225,6 +226,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws InterruptedException
 	 *         if interrupted while waiting
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public E take() throws InterruptedException {
 		final ReentrantLock lock = this.lock;
@@ -275,6 +277,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws InterruptedException
 	 *         if interrupted while waiting
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public @Nullable E poll(long timeout, TimeUnit unit) throws InterruptedException {
 		long nanos = unit.toNanos(timeout);
@@ -372,6 +375,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		return drainTo(c, Integer.MAX_VALUE);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
 		Objects.requireNonNull(c);
@@ -523,7 +527,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	/**
 	 * Identity-based version for use in Itr.remove.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "ReferenceEquality" })
 	void removeEQ(Object o) {
 		final ReentrantLock lock = this.lock;
 		lock.lock();

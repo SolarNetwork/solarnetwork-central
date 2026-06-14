@@ -38,6 +38,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.TreeMap;
@@ -295,7 +296,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 							taskInfo.getServiceProperties());
 					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 1L;
 					var errMsg = "Error executing poll task.";
-					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage(), ERROR_COUNT_DATA_KEY,
+					Map<String, Object> errData = Map.of(MESSAGE_DATA_KEY,
+							Objects.requireNonNullElse(t.getMessage(), ""), ERROR_COUNT_DATA_KEY,
 							errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
@@ -376,7 +378,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 							"Refusing to execute datum stream {} poll task because task owner {} does not own node {}",
 							datumStreamIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
-					var errData = Map.of(SOURCE_DATA_KEY, (Object) objectId);
+					Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, objectId);
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
@@ -392,7 +394,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 				return taskInfo;
@@ -402,7 +404,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			final Trigger schedule = triggerForSchedule(datumStream);
 			if ( schedule == null ) {
 				var errMsg = "Datum Stream service schedule not provided or usable.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getSchedule());
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumStream.getSchedule());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
@@ -420,7 +422,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 			if ( datumStreamService == null ) {
 				// service no longer supported?...
 				var errMsg = "Configured Datum Stream service not available.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getServiceIdentifier());
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY,
+						datumStream.getServiceIdentifier());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
@@ -464,8 +467,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 								"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling poll task.",
 								datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
 						var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
-						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumId.getObjectId(), "expected",
-								objectId);
+						Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumId.getObjectId(),
+								"expected", objectId);
 						taskInfo.setMessage(errMsg);
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
@@ -481,7 +484,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 								"Datum stream {} configured with kind {} but produced datum with kind {}: cancelling rake task.",
 								datumStreamIdent, kind, datumKind);
 						var errMsg = "Access denied to datum with kind different from datum stream configuration.";
-						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumKind, "expected", kind);
+						Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumKind, "expected",
+								kind);
 						taskInfo.setMessage(errMsg);
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
@@ -578,8 +582,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 				log.warn("Failed to reset poll task {} @ {} starting @ {}", datumStreamIdent,
 						taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
-						taskInfo.getStartAt());
+				Map<String, Object> errData = Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(),
+						START_AT_DATA_KEY, taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 			} else {
