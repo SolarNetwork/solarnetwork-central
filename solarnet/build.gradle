@@ -136,7 +136,7 @@ subprojects {
 		]
 	}
 		
-	ext['netty.version'] = '4.2.10.Final'
+	ext['netty.version'] = '4.2.15.Final'
 	//ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
