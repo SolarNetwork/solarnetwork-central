@@ -552,6 +552,12 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 						Datum existing = existingDatum.get(datumId);
 						if ( existing == null || differ(datum, existing) ) {
+							if ( log.isTraceEnabled() ) {
+								log.trace(
+										"Datum stream {} rake {} on {} found difference: existing = {}; found = {}",
+										datumStreamIdent, taskInfo.getOffset(),
+										queryStartDate.toLocalDate(), existing, datum);
+							}
 							if ( datum instanceof StreamDatum d ) {
 								datumDao.store(d);
 							} else {
