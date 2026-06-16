@@ -352,6 +352,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			Instant startDate = resolution.tickStart(filterStartDate, zone);
 			Instant endDate = resolution.tickStart(filterEndDate, zone);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = resolution.nextTickStart(endDate, zone);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = resolution
 						.tickStart(startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2)), zone);

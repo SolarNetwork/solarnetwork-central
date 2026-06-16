@@ -616,7 +616,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				: filterStartDate.plus(1, DAYS));
 
 		final Instant startDate = FiveMinute.tickStart(filterStartDate, UTC);
-		final Instant endDate = FiveMinute.tickStart(filterEndDate, UTC);
+		Instant endDate = FiveMinute.tickStart(filterEndDate, UTC);
+		if ( endDate.isBefore(filterEndDate) ) {
+			endDate = FiveMinute.nextTickStart(endDate, UTC);
+		}
 
 		BasicQueryFilter nextQueryFilter = null;
 		if ( queryPeriod != SmaPeriod.Recent ) {

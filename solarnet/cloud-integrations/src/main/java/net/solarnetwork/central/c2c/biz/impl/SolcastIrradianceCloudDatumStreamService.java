@@ -247,6 +247,9 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = CloudIntegrationsUtils.nextTickStart(resolution, endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {

@@ -817,6 +817,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			Instant startDate = FifteenMinute.tickStart(filterStartDate, UTC);
 			Instant endDate = FifteenMinute.tickStart(filterEndDate, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = FifteenMinute.nextTickStart(endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = FifteenMinute
 						.tickStart(startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2)), UTC);

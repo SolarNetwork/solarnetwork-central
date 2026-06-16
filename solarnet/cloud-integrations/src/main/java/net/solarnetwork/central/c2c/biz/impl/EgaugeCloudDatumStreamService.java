@@ -334,6 +334,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = CloudIntegrationsUtils.nextTickStart(granularity, endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {
