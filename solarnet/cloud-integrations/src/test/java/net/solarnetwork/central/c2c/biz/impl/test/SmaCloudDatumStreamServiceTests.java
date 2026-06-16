@@ -971,8 +971,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
@@ -1200,8 +1200,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
@@ -1445,8 +1445,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
@@ -1659,8 +1659,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(3, DAYS));
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plus(3, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
@@ -1867,7 +1867,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(filter.getStartDate().plus(3, DAYS));
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -2841,8 +2841,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 		// WHEN
 		service.setMaxFilterTimeRange(Duration.ofDays(3));
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(5, DAYS));
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plus(5, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
@@ -2871,18 +2871,20 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 			.as("Used query filter provided")
 			.isNotNull()
 			.as("Used query start date is filter start date")
-			.returns(filter.getStartDate(), from(DateRangeCriteria::getStartDate))
+			.returns(startDay.atStartOfDay(systemTimeZone).toInstant(), from(DateRangeCriteria::getStartDate))
 			.as("Used query end date is filter end date truncated to max filter range")
-			.returns(filter.getStartDate().plus(service.getMaxFilterTimeRange()), from(DateRangeCriteria::getEndDate))
+			.returns(startDay.atStartOfDay(systemTimeZone).plus(service.getMaxFilterTimeRange()).toInstant(),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
 			.as("Next query filter provided")
 			.isNotNull()
 			.as("Next query start date is filter start date + max filter range")
-			.returns(filter.getStartDate().plus(service.getMaxFilterTimeRange()), from(DateRangeCriteria::getStartDate))
+			.returns(startDay.atStartOfDay(systemTimeZone).plus(service.getMaxFilterTimeRange()).toInstant(),
+					from(DateRangeCriteria::getStartDate))
 			.as("Next query end date is filter start date + max filter range + remaining 2 days")
-			.returns(filter.getStartDate().plus(5, DAYS), from(DateRangeCriteria::getEndDate))
+			.returns(startDay.atStartOfDay(systemTimeZone).plus(5, DAYS).toInstant(), from(DateRangeCriteria::getEndDate))
 			;
 
 
@@ -3057,8 +3059,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 
 		// setup clock to be near end of requested data period (within lag tolerance)
 		clock.setInstant(LocalDateTime.parse("2025-03-28T13:30:00").atZone(systemTimeZone).toInstant());
@@ -3267,8 +3269,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 
 		// setup clock to be far after end of requested data period (outside lag tolerance)
 		clock.setInstant(filter.getEndDate().plus(365L, DAYS));
@@ -3472,7 +3474,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -3671,7 +3673,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -3992,7 +3994,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -4334,7 +4336,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -4689,7 +4691,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -4906,7 +4908,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).toInstant());
+		filter.setStartDate(startDay.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
 		filter.setEndDate(startDay.atStartOfDay(systemTimeZone).plusDays(1).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -5264,8 +5266,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
-		filter.setStartDate(day.atStartOfDay(systemTimeZone).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, DAYS));
+		filter.setStartDate(day.atStartOfDay(systemTimeZone).plusMinutes(1).toInstant());
+		filter.setEndDate(day.atStartOfDay(systemTimeZone).plus(1, DAYS).toInstant());
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
