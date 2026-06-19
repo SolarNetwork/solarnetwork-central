@@ -23,6 +23,7 @@ SELECT cds.user_id
 	, cin.cname AS int_name
 	, cin.sident AS int_sident
 	, cin.sprops AS int_sprops
+	, cdsr.id AS rake_id
 	, cdsr.status AS rake_status
 	, cdsr.exec_at AS rake_exec_at
 	, cdsr.start_offset AS rake_start_offset
