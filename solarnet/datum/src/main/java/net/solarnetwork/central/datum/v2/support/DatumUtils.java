@@ -320,8 +320,8 @@ public final class DatumUtils {
 		c.setOffset(o);
 
 		// if tags provided, use those unless metadataFilter was already provided
-		if ( c.getSearchFilter() == null
-				|| c.getSearchFilter().isEmpty() && tags != null && tags.length > 0 ) {
+		if ( (c.getSearchFilter() == null || c.getSearchFilter().isEmpty()) && tags != null
+				&& tags.length > 0 ) {
 			c.setSearchFilter(generateTagsSearchFilter(tags));
 		}
 
