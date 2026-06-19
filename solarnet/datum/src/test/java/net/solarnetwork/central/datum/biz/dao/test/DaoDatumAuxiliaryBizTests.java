@@ -51,12 +51,12 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
@@ -144,6 +144,17 @@ public class DaoDatumAuxiliaryBizTests {
 		assertThat("Criteria node ID", metaCriteria.getNodeId(), equalTo(nodeId));
 		assertThat("Criteria source ID", metaCriteria.getSourceId(), equalTo(sourceId));
 		assertThat("Criteria obj kind", metaCriteria.getObjectKind(), equalTo(ObjectDatumKind.Node));
+	}
+
+	private void asssertCriteria(ObjectMetadataCriteria metaCriteria, UUID streamId) {
+		// @formatter:off
+		and.then(metaCriteria)
+			.as("Kind is node always")
+			.returns(ObjectDatumKind.Node, from(ObjectMetadataCriteria::getObjectKind))
+			.as("Stream ID as expected")
+			.returns(streamId, from(ObjectMetadataCriteria::getStreamId))
+			;
+		// @formatter:on
 	}
 
 	private void assertConverted(GeneralNodeDatumAuxiliary genAux, DatumAuxiliaryEntity ent) {
@@ -307,7 +318,7 @@ public class DaoDatumAuxiliaryBizTests {
 		ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, TEST_NODE_ID,
 				TEST_SOURCE_ID);
 
-		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
+		given(metaDao.findStreamMetadata(any())).willReturn(meta);
 
 		// WHEN
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -328,18 +339,8 @@ public class DaoDatumAuxiliaryBizTests {
 			;
 
 
-		then(metaDao).should().findDatumStreamMetadata(metaFilterCaptor.capture());
-		asssertCriteria(metaFilterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
-
-		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) metaFilterCaptor.getValue())
-				.clone();
-		expectedMetaCriteria.setStartDate(null);
-		expectedMetaCriteria.setEndDate(null);
-		// @formatter:off
-		and.then(metaFilterCaptor.getValue())
-			.as("Same criteria used to find datum, minus date range, used to find meta")
-			.isEqualTo(expectedMetaCriteria)
-			;
+		then(metaDao).should().findStreamMetadata(metaFilterCaptor.capture());
+		asssertCriteria(metaFilterCaptor.getValue(), streamId);
 		// @formatter:on
 	}
 
@@ -355,7 +356,7 @@ public class DaoDatumAuxiliaryBizTests {
 		ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, TEST_NODE_ID,
 				TEST_SOURCE_ID);
 
-		given(metaDao.findDatumStreamMetadata(any())).willReturn(singleton(meta));
+		given(metaDao.findStreamMetadata(any())).willReturn(meta);
 
 		// WHEN
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -376,20 +377,8 @@ public class DaoDatumAuxiliaryBizTests {
 					DatumAuxiliaryType.Reset), from(GeneralNodeDatumAuxiliaryFilterMatch::getId))
 			;
 
-		then(metaDao).should().findDatumStreamMetadata(metaFilterCaptor.capture());
-		asssertCriteria(metaFilterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
-		and.then(metaFilterCaptor.getValue())
-			.returns(criteria.getDatumAuxiliaryType(), from(DatumAuxiliaryCriteria::getDatumAuxiliaryType))
-			;
-
-		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) metaFilterCaptor.getValue())
-				.clone();
-		expectedMetaCriteria.setStartDate(null);
-		expectedMetaCriteria.setEndDate(null);
-		and.then(metaFilterCaptor.getValue())
-			.as("Same criteria used to find datum, minus date range, used to find meta")
-			.isEqualTo(expectedMetaCriteria)
-			;
+		then(metaDao).should().findStreamMetadata(metaFilterCaptor.capture());
+		asssertCriteria(metaFilterCaptor.getValue(), streamId);
 		// @formatter:on
 	}
 
