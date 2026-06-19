@@ -840,6 +840,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 			Instant startDate = resolution.truncateDate(filterStartDate);
 			Instant endDate = resolution.truncateDate(filterEndDate);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = resolution.nextDate(endDate);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {

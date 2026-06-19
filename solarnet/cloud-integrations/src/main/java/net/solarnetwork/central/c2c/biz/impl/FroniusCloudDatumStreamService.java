@@ -660,6 +660,9 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			Instant startDate = filterStartDate.truncatedTo(HOURS);
 			Instant endDate = filterEndDate.truncatedTo(HOURS);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = endDate.plus(1, HOURS);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_FILTER_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_FILTER_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {

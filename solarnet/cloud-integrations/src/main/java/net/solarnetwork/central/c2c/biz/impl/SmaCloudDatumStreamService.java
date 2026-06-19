@@ -616,7 +616,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				: filterStartDate.plus(1, DAYS));
 
 		final Instant startDate = FiveMinute.tickStart(filterStartDate, UTC);
-		final Instant endDate = FiveMinute.tickStart(filterEndDate, UTC);
+		Instant endDate = FiveMinute.tickStart(filterEndDate, UTC);
+		if ( endDate.isBefore(filterEndDate) ) {
+			endDate = FiveMinute.nextTickStart(endDate, UTC);
+		}
 
 		BasicQueryFilter nextQueryFilter = null;
 		if ( queryPeriod != SmaPeriod.Recent ) {
@@ -652,11 +655,16 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					.atZone(zone);
 			final ZonedDateTime endTs = nonnull(usedQueryFilter.getEndDate(), "End date").atZone(zone);
 
+			// the starting query day should be shifted earlier if startTs is exactly at start of day
+			final LocalDate startDay = (startTs.truncatedTo(DAYS).toInstant().equals(filterStartDate)
+					? startTs.minusDays(1).toLocalDate()
+					: startTs.toLocalDate());
+
 			// the final query day includes the endTs day, unless that is exactly at start of day
 			final LocalDate endDay = endTs.toLocalDate()
 					.plusDays(endTs.truncatedTo(DAYS).isBefore(endTs) ? 1 : 0);
 
-			for ( LocalDate day = startTs.toLocalDate(); day.isBefore(endDay); day = day.plusDays(1) ) {
+			for ( LocalDate day = startDay; day.isBefore(endDay); day = day.plusDays(1) ) {
 				final String queryDay = day.toString();
 				final Interval queryDayRange = Interval.of(day.atStartOfDay(zone).toInstant(),
 						day.plusDays(1).atStartOfDay(zone).toInstant());

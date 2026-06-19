@@ -752,8 +752,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -1237,8 +1238,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -1358,8 +1360,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -1834,7 +1837,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, FifteenMinute.nextTickStart(FifteenMinute.tickStart(
+						filter.getEndDate(), UTC), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
 		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
@@ -1894,8 +1898,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2005,7 +2010,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, FifteenMinute.nextTickStart(FifteenMinute.tickStart(
+						filter.getEndDate(), UTC), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
 		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
@@ -2029,8 +2035,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2134,7 +2141,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, FifteenMinute.nextTickStart(
+						FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
 		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
@@ -2158,8 +2166,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2270,7 +2279,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.queryParam(START_AT_PARAM,
 						FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(END_AT_PARAM,
-						FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
+						FifteenMinute
+								.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC)
+								.getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 		final JsonNode meterResJson = getObjectFromJSON(
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
@@ -2394,8 +2405,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2568,8 +2580,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is 15min tick of filter end date")
-			.returns(FifteenMinute.tickStart(filter.getEndDate(), UTC), from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is next 15min tick of filter end date")
+			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
+					from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())

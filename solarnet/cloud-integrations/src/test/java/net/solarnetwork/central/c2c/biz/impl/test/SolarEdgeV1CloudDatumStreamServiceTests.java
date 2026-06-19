@@ -1156,7 +1156,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 		final var siteDetailsRes = new ResponseEntity<JsonNode>(siteDetailsJson, HttpStatus.OK);
 
 		// expected date range is clock-aligned
-		final ZonedDateTime expectedEndDate = endAt.atZone(siteTimeZone).truncatedTo(ChronoUnit.HOURS);
+		final ZonedDateTime expectedEndDate = endAt.atZone(siteTimeZone).truncatedTo(ChronoUnit.HOURS)
+				.plus(SolarEdgeResolution.FifteenMinute.getTickDuration());
 		final ZonedDateTime expectedStartDate = startAt.atZone(siteTimeZone);
 		final DateTimeFormatter timestampFmt = ISO_DATE_OPT_TIME_ALT.withZone(siteTimeZone);
 
