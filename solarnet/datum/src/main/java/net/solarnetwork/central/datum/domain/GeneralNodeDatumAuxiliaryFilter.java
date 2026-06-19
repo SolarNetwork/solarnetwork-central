@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
+import net.solarnetwork.central.domain.MetadataFilter;
 import net.solarnetwork.central.domain.NodeFilter;
 import net.solarnetwork.central.domain.OptimizedQueryFilter;
 
@@ -31,10 +32,11 @@ import net.solarnetwork.central.domain.OptimizedQueryFilter;
  * Filter API for {@link GeneralNodeDatumAuxiliary}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.35
  */
-public interface GeneralNodeDatumAuxiliaryFilter extends NodeFilter, SourceFilter, UserFilter,
-		DateRangeFilter, LocalDateRangeFilter, DatumAuxiliaryFilter, OptimizedQueryFilter {
+public interface GeneralNodeDatumAuxiliaryFilter
+		extends NodeFilter, SourceFilter, UserFilter, DateRangeFilter, LocalDateRangeFilter,
+		DatumAuxiliaryFilter, MetadataFilter, OptimizedQueryFilter {
 
 }
