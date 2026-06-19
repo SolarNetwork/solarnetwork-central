@@ -291,9 +291,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 0L;
 					var errMsg = "Error executing rake task.";
 					var exMsg = (e instanceof RemoteServiceException ? e : t).getMessage();
-					Map<String, Object> errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-							MESSAGE_DATA_KEY, Objects.requireNonNullElse(exMsg, ""),
-							ERROR_COUNT_DATA_KEY, errorCount);
+					Map<String, Object> errData = Map.of(CONFIG_ID_DATA_KEY, taskInfo.getDatumStreamId(),
+							CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), MESSAGE_DATA_KEY,
+							Objects.requireNonNullElse(exMsg, ""), ERROR_COUNT_DATA_KEY, errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
@@ -325,8 +325,8 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 								e.toString());
 						taskInfo.setState(Completed);
 					}
-					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
-							taskInfo.id(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
+							eventForUserRelatedKey(null, INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} rake task {} info with expected state {} with details: {}",
