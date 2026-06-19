@@ -319,7 +319,11 @@ public final class DatumUtils {
 		c.setMax(m);
 		c.setOffset(o);
 
-		c.setSearchFilter(generateTagsSearchFilter(tags));
+		// if tags provided, use those unless metadataFilter was already provided
+		if ( c.getSearchFilter() == null
+				|| c.getSearchFilter().isEmpty() && tags != null && tags.length > 0 ) {
+			c.setSearchFilter(generateTagsSearchFilter(tags));
+		}
 
 		return c;
 	}
