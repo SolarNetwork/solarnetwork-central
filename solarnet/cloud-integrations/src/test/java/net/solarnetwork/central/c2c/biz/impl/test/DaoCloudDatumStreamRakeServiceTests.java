@@ -28,6 +28,7 @@ import static java.time.Period.ZERO;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
@@ -40,6 +41,7 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,6 +62,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -71,6 +74,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamRakeService;
@@ -1351,6 +1357,86 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 		and.then(resultTask)
 			.as("Result task is same as passed to DAO for update")
 			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_http429() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant sod = clock.instant().truncatedTo(ChronoUnit.DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId(), Claimed, clock.instant(), clock.instant().truncatedTo(HOURS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream
+		final var ex = HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS,
+				"Too many requests.", new HttpHeaders(), null, null);
+		given(datumStreamService.datum(same(datumStream), any())).willThrow(ex);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
+				datumStream.getConfigId(), Claimed, sod, Period.ofDays(1));
+
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		thenExceptionOfType(ExecutionException.class).isThrownBy(() -> {
+			result.get(1, TimeUnit.MINUTES);
+		}).withCauseInstanceOf(HttpClientErrorException.class);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Task execute date pushed by one minute")
+			.returns(clock.instant().plus(1, MINUTES), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Message generated for failed execution")
+			.returns("Error executing rake task.", from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Service properties generated for failed execution")
+			.returns(Map.of(
+					CONFIG_ID_DATA_KEY, task.getDatumStreamId(),
+					CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+					ERROR_COUNT_DATA_KEY, 0L,
+					MESSAGE_DATA_KEY, ex.getMessage()
+				), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
 		// @formatter:on
