@@ -24,7 +24,6 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -216,7 +215,7 @@ public interface CommonUserEvents {
 	 */
 	static LogEventInfo eventForUserRelatedKey(@Nullable UserRelatedCompositeKey<?> configId,
 			List<String> baseTags, @Nullable String message, String @Nullable... extraTags) {
-		Map<String, Object> data = new HashMap<>(4);
+		Map<String, Object> data = new LinkedHashMap<>(4);
 		populateUserRelatedKeyEventParameters(configId, data);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
