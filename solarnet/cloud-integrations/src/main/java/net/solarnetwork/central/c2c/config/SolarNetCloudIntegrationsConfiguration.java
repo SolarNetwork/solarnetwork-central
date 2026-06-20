@@ -99,8 +99,9 @@ public interface SolarNetCloudIntegrationsConfiguration {
 				final var hce = ExceptionUtils.throwableOfType(t, HttpClientErrorException.class);
 				if ( hce != null && (HttpStatus.UNAUTHORIZED.isSameCodeAs(hce.getStatusCode())
 						|| HttpStatus.FORBIDDEN.isSameCodeAs(hce.getStatusCode())
-						|| HttpStatus.NOT_FOUND.isSameCodeAs(hce.getStatusCode())) ) {
-					// do not retry for auth error or not found
+						|| HttpStatus.NOT_FOUND.isSameCodeAs(hce.getStatusCode())
+						|| HttpStatus.TOO_MANY_REQUESTS.isSameCodeAs(hce.getStatusCode())) ) {
+					// do not retry for auth error or not found or too many
 					return false;
 				}
 
