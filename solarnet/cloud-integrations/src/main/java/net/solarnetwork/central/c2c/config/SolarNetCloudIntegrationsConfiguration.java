@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.config;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.support.RetrySettings;
@@ -97,10 +98,12 @@ public interface SolarNetCloudIntegrationsConfiguration {
 		return new RetryTemplate(settings.toPolicy(builder -> {
 			builder.predicate(t -> {
 				final var hce = ExceptionUtils.throwableOfType(t, HttpClientErrorException.class);
-				if ( hce != null && (HttpStatus.UNAUTHORIZED.isSameCodeAs(hce.getStatusCode())
-						|| HttpStatus.FORBIDDEN.isSameCodeAs(hce.getStatusCode())
-						|| HttpStatus.NOT_FOUND.isSameCodeAs(hce.getStatusCode())
-						|| HttpStatus.TOO_MANY_REQUESTS.isSameCodeAs(hce.getStatusCode())) ) {
+				final HttpStatusCode status = (hce != null ? hce.getStatusCode() : null);
+				if ( status != null && (HttpStatus.UNAUTHORIZED.isSameCodeAs(status)
+						|| HttpStatus.FORBIDDEN.isSameCodeAs(status)
+						|| HttpStatus.NOT_FOUND.isSameCodeAs(status)
+						|| HttpStatus.UNPROCESSABLE_CONTENT.isSameCodeAs(status)
+						|| HttpStatus.TOO_MANY_REQUESTS.isSameCodeAs(status)) ) {
 					// do not retry for auth error or not found or too many
 					return false;
 				}
