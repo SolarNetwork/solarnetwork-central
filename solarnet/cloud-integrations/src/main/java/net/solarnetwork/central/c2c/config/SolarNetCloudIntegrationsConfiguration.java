@@ -24,7 +24,6 @@ package net.solarnetwork.central.c2c.config;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.core.retry.RetryTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
@@ -99,12 +98,8 @@ public interface SolarNetCloudIntegrationsConfiguration {
 			builder.predicate(t -> {
 				final var hce = ExceptionUtils.throwableOfType(t, HttpClientErrorException.class);
 				final HttpStatusCode status = (hce != null ? hce.getStatusCode() : null);
-				if ( status != null && (HttpStatus.UNAUTHORIZED.isSameCodeAs(status)
-						|| HttpStatus.FORBIDDEN.isSameCodeAs(status)
-						|| HttpStatus.NOT_FOUND.isSameCodeAs(status)
-						|| HttpStatus.UNPROCESSABLE_CONTENT.isSameCodeAs(status)
-						|| HttpStatus.TOO_MANY_REQUESTS.isSameCodeAs(status)) ) {
-					// do not retry for auth error or not found or too many
+				if ( status != null && status.is4xxClientError() ) {
+					// do not retry for 4xx response
 					return false;
 				}
 
