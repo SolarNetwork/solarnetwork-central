@@ -1426,15 +1426,15 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 			.isEqualTo(task)
 			.as("Update task state to Queued to run again")
 			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
-			.as("Task execute date pushed by one minute")
-			.returns(clock.instant().plus(1, MINUTES), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Task execute date pushed by one hour")
+			.returns(clock.instant().truncatedTo(MINUTES).plus(1, HOURS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
 			.as("Message generated for failed execution")
 			.returns("Error executing rake task.", from(CloudDatumStreamRakeTaskEntity::getMessage))
 			.as("Service properties generated for failed execution")
 			.returns(Map.of(
 					CONFIG_ID_DATA_KEY, task.getDatumStreamId(),
 					CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-					ERROR_COUNT_DATA_KEY, 0L,
+					ERROR_COUNT_DATA_KEY, 1L,
 					MESSAGE_DATA_KEY, ex.getMessage()
 				), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;

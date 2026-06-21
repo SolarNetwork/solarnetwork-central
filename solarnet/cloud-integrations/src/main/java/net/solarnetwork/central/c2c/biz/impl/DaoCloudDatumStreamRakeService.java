@@ -288,7 +288,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 					}
 					var prevErrorCount = getMapLong(ERROR_COUNT_DATA_KEY,
 							taskInfo.getServiceProperties());
-					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 0L;
+					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 1L;
 					var errMsg = "Error executing rake task.";
 					var exMsg = (e instanceof RemoteServiceException ? e : t).getMessage();
 					Map<String, Object> errData = Map.of(CONFIG_ID_DATA_KEY, taskInfo.getDatumStreamId(),
@@ -306,9 +306,9 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 									e.toString());
 							taskInfo.setState(Queued);
 							if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
-								// bump date into future by 1 minute so we do not immediately try to process again
-								taskInfo.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.SECONDS)
-										.plus(1, ChronoUnit.MINUTES));
+								// bump date into future by 1 hour so we do not immediately try to process again
+								taskInfo.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.MINUTES)
+										.plus(1, ChronoUnit.HOURS));
 							}
 						} else {
 							log.info(
