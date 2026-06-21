@@ -833,6 +833,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				nextQueryFilter.setStartDate(endDate);
 				nextQueryFilter.setEndDate(nextEndDate);
 			}
+			if ( endDate.isAfter(clock.instant()) ) {
+				endDate = clock.instant();
+			}
 
 			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
 			usedQueryFilter.setStartDate(startDate);
