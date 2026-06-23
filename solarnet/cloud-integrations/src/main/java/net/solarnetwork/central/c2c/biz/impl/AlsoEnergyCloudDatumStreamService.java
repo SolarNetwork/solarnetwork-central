@@ -373,6 +373,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
+			if ( !endDate.isAfter(startDate) ) {
+				return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, List.of());
+			}
+
 			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
 
 			for ( Entry<UserLongCompositePK, List<ValueRef>> e : hardwareGroups.entrySet() ) {
