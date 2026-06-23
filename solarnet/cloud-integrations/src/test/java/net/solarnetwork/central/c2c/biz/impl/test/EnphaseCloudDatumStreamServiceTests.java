@@ -1837,8 +1837,7 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM, FifteenMinute.nextTickStart(FifteenMinute.tickStart(
-						filter.getEndDate(), UTC), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, clock.instant().getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
 		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
@@ -1898,9 +1897,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is next 15min tick of filter end date")
-			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
-					from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is capped at clock date")
+			.returns(clock.instant(), from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2010,8 +2008,7 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM, FifteenMinute.nextTickStart(FifteenMinute.tickStart(
-						filter.getEndDate(), UTC), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, clock.instant().getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
 		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
@@ -2035,9 +2032,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is next 15min tick of filter end date")
-			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
-					from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is capped at clock time")
+			.returns(clock.instant(), from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
@@ -2256,6 +2252,9 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 		filter.setStartDate(Instant.ofEpochSecond(1741088700L));
 		filter.setEndDate(Instant.ofEpochSecond(1741093333L));
 
+		// set time to 15m after latest datum in data
+		clock.setInstant(Instant.ofEpochSecond(1741093200L));
+
 		// list inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -2278,11 +2277,8 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM,
 						FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
-				.queryParam(END_AT_PARAM,
-						FifteenMinute
-								.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC)
-								.getEpochSecond())
-				.buildAndExpand(systemId).toUri();
+				.queryParam(END_AT_PARAM, clock.instant().getEpochSecond()).buildAndExpand(systemId)
+				.toUri();
 		final JsonNode meterResJson = getObjectFromJSON(
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
 				ObjectNode.class);
@@ -2290,8 +2286,6 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(inverterRes).willReturn(meterRes);
 
 		// WHEN
-		// set time to 15m after latest datum in data
-		clock.setInstant(Instant.ofEpochSecond(1741093200L));
 
 		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
@@ -2405,9 +2399,7 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 			.isNotNull()
 			.as("Used query start date is 15min tick of filter start date")
 			.returns(FifteenMinute.tickStart(filter.getStartDate(), UTC), from(DateRangeCriteria::getStartDate))
-			.as("Used query end date is next 15min tick of filter end date")
-			.returns(FifteenMinute.nextTickStart(FifteenMinute.tickStart(filter.getEndDate(), UTC), UTC),
-					from(DateRangeCriteria::getEndDate))
+			.as("Used query end date is capped at clock date", from(DateRangeCriteria::getEndDate))
 			;
 
 		and.then(result.getNextQueryFilter())
