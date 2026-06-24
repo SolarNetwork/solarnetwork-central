@@ -401,8 +401,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			}
 			BigDecimal[] sv = (statValues != null && statValues.length > idx ? statValues[idx] : null);
 			int arrayLen = (sv != null ? sv.length : 0);
-			if ( (type == Instantaneous || (!reading && type == Accumulating)) && values != null
-					&& values.length > idx ) {
+			if ( (type == Instantaneous || (!reading && type == Accumulating && arrayLen == 0))
+					&& values != null && values.length > idx ) {
 				arrayLen++;
 			}
 			if ( arrayLen > 0 ) {
