@@ -25,7 +25,10 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static java.util.Collections.unmodifiableMap;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.AZIMUTH_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.RELATED_IDENTIFIER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.TILT_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
@@ -47,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -107,7 +111,7 @@ import tools.jackson.databind.JsonNode;
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -134,6 +138,34 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 * </p>
 	 */
 	public static final String SITE_HARDWARE_URL_TEMPLATE = "/sites/{siteId}/hardware";
+
+	/**
+	 * Site hardware URI parameter name to include disabled hardware.
+	 *
+	 * @since 2.2
+	 */
+	public static final String INCLUDE_DISABLED_HARDWARE_PARAM = "includeDisabledHardware";
+
+	/**
+	 * Site hardware URI parameter name to include device configuration.
+	 *
+	 * @since 2.2
+	 */
+	public static final String INCLUDE_DEVICE_CONFIG_PARAM = "includeDeviceConfig";
+
+	/**
+	 * Site hardware URI parameter name to include archived fields.
+	 *
+	 * @since 2.2
+	 */
+	public static final String INCLUDE_ARCHIVED_FIELDS_PARAM = "includeArchivedFields";
+
+	/**
+	 * A site hardware flag value for "in enabled"
+	 *
+	 * @since 2.2
+	 */
+	public static final String IS_ENABLED_FLAG = "IsEnabled";
 
 	/** The URI path to query for data. */
 	public static final String BIN_DATA_URL = "/v2/data/bindata";
@@ -442,8 +474,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)
-						.queryParam("includeArchivedFields", true)
-						.queryParam("includeDeviceConfig", true)
+						.queryParam(INCLUDE_ARCHIVED_FIELDS_PARAM, true)
+						.queryParam(INCLUDE_DEVICE_CONFIG_PARAM, true)
+						.queryParam(INCLUDE_DISABLED_HARDWARE_PARAM, true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
 				(_, res) -> parseSiteHardware(siteId, res.getBody()));
@@ -560,9 +593,43 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			final String name = deviceNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
-			JsonNode configNode = deviceNode.path("config");
+
+			final JsonNode configNode = deviceNode.path("config");
 			populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
 			populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
+
+			final long outputHardwareId = configNode.path("outputHardwareId").asLong(0L);
+			if ( outputHardwareId > 0 ) {
+				meta.put(RELATED_IDENTIFIER_METADATA, outputHardwareId);
+			}
+
+			final JsonNode flagsNode = deviceNode.path("flags");
+			final Set<String> flags = new LinkedHashSet<>(4);
+			if ( flagsNode.isArray() && !flagsNode.isEmpty() ) {
+				for ( JsonNode flagNode : flagsNode ) {
+					if ( flagNode.isString() ) {
+						String flag = flagNode.stringValue();
+						if ( flag != null && !flag.isEmpty() ) {
+							flags.add(flag);
+						}
+					}
+				}
+			}
+			meta.put(CloudDataValue.ACTIVE_METADATA, flags.contains(IS_ENABLED_FLAG));
+			if ( !flags.isEmpty() ) {
+				meta.put("flags", flags);
+			}
+
+			final JsonNode inverterConfigsNode = configNode.path("inverterConfig");
+			if ( inverterConfigsNode.isArray() && inverterConfigsNode.size() == 1 ) {
+				final JsonNode inverterConfigNode = inverterConfigsNode.path(0);
+				double ratedAcPower = inverterConfigNode.path("ratedAcPower").asDouble(0.0);
+				if ( ratedAcPower > 0.0 ) {
+					meta.put(CloudDataValue.RATED_POWER_METADATA, ratedAcPower * 1000.0);
+				}
+				populateNumberValue(inverterConfigNode, "azimuth", AZIMUTH_METADATA, meta);
+				populateNumberValue(inverterConfigNode, "tilt", TILT_METADATA, meta);
+			}
 
 			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
 			for ( JsonNode fieldNode : fieldsNode ) {

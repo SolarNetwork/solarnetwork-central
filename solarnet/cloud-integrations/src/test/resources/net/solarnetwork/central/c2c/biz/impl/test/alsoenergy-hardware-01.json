@@ -62,8 +62,8 @@
         "baudRate": 9600,
         "comType": "Rs485_2Wire",
         "name": "SolarEdge SE100K Inverter",
-        "outputHardwareId": 315520,
-        "weatherStationId": 315586,
+        "outputHardwareId": 12345,
+        "weatherStationId": 54321,
         "inverterConfig": [
           {
             "ratedAcPower": 100.0,

@@ -60,6 +60,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +84,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -266,8 +268,13 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 			.as("HTTP method is GET")
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
-			.returns(BASE_URI.resolve(SITE_HARDWARE_URL_TEMPLATE.replace("{siteId}", siteId.toString())
-					+ "?includeArchivedFields=true&includeDeviceConfig=true"), from(RequestEntity::getUrl))
+			.returns(UriComponentsBuilder.fromUri(BASE_URI)
+					.path(SITE_HARDWARE_URL_TEMPLATE)
+					.queryParam(AlsoEnergyCloudDatumStreamService.INCLUDE_ARCHIVED_FIELDS_PARAM, true)
+					.queryParam(AlsoEnergyCloudDatumStreamService.INCLUDE_DEVICE_CONFIG_PARAM, true)
+					.queryParam(AlsoEnergyCloudDatumStreamService.INCLUDE_DISABLED_HARDWARE_PARAM, true)
+					.buildAndExpand(siteId)
+					.toUri(), from(RequestEntity::getUrl))
 			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
@@ -277,8 +284,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 			.as("Results provided")
 			.hasSize(2)
 			.satisfies(devices -> {
-				and.then(devices)
-					.element(0)
+				and.then(devices).element(0)
 					.as("Identifiers from response")
 					.returns(List.of(siteId.toString(), "12345"), from(CloudDataValue::getIdentifiers))
 					.as("Device name from response")
@@ -287,8 +293,10 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 					.returns(null, from(CloudDataValue::getReference))
 					.as("Metadata from response")
 					.returns(Map.of("functionCode", "PM"
-							, "serial", "20647"
+							, CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA, "20647"
 							, "deviceType", "ProductionPowerMeter"
+							, CloudDataValue.ACTIVE_METADATA, true
+							, "flags", Set.of("IsEnabled")
 							), from(CloudDataValue::getMetadata))
 					.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
 					.as("Has 2 field children")
@@ -318,6 +326,62 @@ public class AlsoEnergyCloudDatumStreamServiceTests implements CloudIntegrations
 										.returns("KW %s".formatted(fn.name()), from(CloudDataValue::getName))
 										.as("Feference for function object")
 										.returns("/%s/12345/KW/%s".formatted(siteId, fn.name()),
+												from(CloudDataValue::getReference))
+										.as("No metadata for function")
+										.returns(null, CloudDataValue::getMetadata)
+										.as("No children for function")
+										.returns(null, CloudDataValue::getChildren)
+										;
+								}
+							})
+							;
+					})
+					;
+				and.then(devices).element(1)
+					.as("Identifiers from response")
+					.returns(List.of(siteId.toString(), "23456"), from(CloudDataValue::getIdentifiers))
+					.as("Device name from response")
+					.returns("SolarEdge SE100K Inverter", from(CloudDataValue::getName))
+					.as("No reference for device object")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("Metadata from response")
+					.returns(Map.of("functionCode", "PV"
+							, "deviceType", "Inverter"
+							, CloudDataValue.ACTIVE_METADATA, true
+							, "flags", Set.of("IsEnabled")
+							, CloudDataValue.RELATED_IDENTIFIER_METADATA, 12345L
+							, CloudDataValue.RATED_POWER_METADATA, 100000.0
+							, CloudDataValue.AZIMUTH_METADATA, 45
+							, CloudDataValue.TILT_METADATA, 10
+							), from(CloudDataValue::getMetadata))
+					.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+					.as("Has 2 field children")
+					.hasSize(2)
+					.satisfies(fields -> {
+						and.then(fields)
+							.element(0)
+							.as("Identifiers from response")
+							.returns(List.of(siteId.toString(), "23456", "KwAC"), from(CloudDataValue::getIdentifiers))
+							.as("Field name from response")
+							.returns("KwAC", from(CloudDataValue::getName))
+							.as("No reference for field object")
+							.returns(null, from(CloudDataValue::getReference))
+							.as("No metadata for field object")
+							.returns(null, from(CloudDataValue::getMetadata))
+							.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+							.as("Has field function children")
+							.hasSize(AlsoEnergyFieldFunction.values().length)
+							.satisfies(functions -> {
+								for ( int i =0, len = AlsoEnergyFieldFunction.values().length; i < len; i++ ) {
+									var fn = AlsoEnergyFieldFunction.values()[i];
+									and.then(functions).element(i)
+										.as("Identifiers from response")
+										.returns(List.of(siteId.toString(), "23456", "KwAC", fn.name()),
+												from(CloudDataValue::getIdentifiers))
+										.as("Function name is field + function")
+										.returns("KwAC %s".formatted(fn.name()), from(CloudDataValue::getName))
+										.as("Feference for function object")
+										.returns("/%s/23456/KwAC/%s".formatted(siteId, fn.name()),
 												from(CloudDataValue::getReference))
 										.as("No metadata for function")
 										.returns(null, CloudDataValue::getMetadata)
