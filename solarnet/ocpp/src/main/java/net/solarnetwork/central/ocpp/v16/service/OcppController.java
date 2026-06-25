@@ -249,8 +249,7 @@ public class OcppController extends BaseOcppController {
 				? (Long) instr.chargePointIdentity.getUserIdentifier()
 				: null);
 		final Long nodeId = nonnull(instr.getNodeId(), "Node ID");
-		final InstructionState instrState = nonnull(instr.getInstruction().getState(),
-				"Instruction state");
+		final InstructionState instrState = instr.getInstruction().getState();
 
 		final ActionMessageProcessor<JsonNode, Void> handler = getInstructionHandler();
 		if ( handler != null ) {

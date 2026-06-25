@@ -141,7 +141,7 @@ public class SearchFilterUtilsTests {
 	}
 
 	@Test
-	public void sqlJsonPath_invalidNotEqual() {
+	public void sqlJsonPath_notEqual() {
 		// GIVEN
 		SearchFilter f = SearchFilter
 				.forLDAPSearchFilterString("(&(action=StartTransaction)(message.idTag!=nzbus0002))");
@@ -151,7 +151,7 @@ public class SearchFilterUtilsTests {
 
 		// THEN
 		assertThat("Invalid != path", result, is(
-				equalTo("$ ? (@.action == \"StartTransaction\" && @.message.idTag! == \"nzbus0002\")")));
+				equalTo("$ ? (@.action == \"StartTransaction\" && @.message.idTag != \"nzbus0002\")")));
 	}
 
 	@Test
