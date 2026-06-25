@@ -24,6 +24,7 @@ package net.solarnetwork.central.support.test;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
+import java.time.Period;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
@@ -33,7 +34,7 @@ import net.solarnetwork.central.support.DateTimeUtils;
  * Test cases for the {@link DateTimeUtils} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DateTimeUtilsTests {
 
@@ -137,6 +138,39 @@ public class DateTimeUtilsTests {
 		final var start = "2020-05-15T11:38:00Z";
 		then(DateTimeUtils.intervalMap(Map.of("foo", "%s/".formatted(start))))
 				.containsOnly(Map.entry("foo", Interval.startingAt(Instant.parse(start))));
+	}
+
+	@Test
+	public void comparePeriods_equal() {
+		// GIVEN
+		final Period l = Period.of(1, 2, 3);
+		final Period r = Period.of(1, 2, 3);
+
+		// THEN
+		then(DateTimeUtils.comparePeriods(l, r)).isEqualTo(0);
+		then(DateTimeUtils.comparePeriods(r, l)).isEqualTo(0);
+	}
+
+	@Test
+	public void comparePeriods_equal_normalized() {
+		// GIVEN
+		final Period l = Period.of(0, 12, 0);
+		final Period r = Period.of(1, 0, 0);
+
+		// THEN
+		then(DateTimeUtils.comparePeriods(l, r)).isEqualTo(0);
+		then(DateTimeUtils.comparePeriods(r, l)).isEqualTo(0);
+	}
+
+	@Test
+	public void comparePeriods_less() {
+		// GIVEN
+		final Period l = Period.of(0, 1, 2);
+		final Period r = Period.of(1, 2, 3);
+
+		// THEN
+		then(DateTimeUtils.comparePeriods(l, r)).isLessThan(0);
+		then(DateTimeUtils.comparePeriods(r, l)).isGreaterThan(0);
 	}
 
 }

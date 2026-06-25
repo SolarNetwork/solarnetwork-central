@@ -41,6 +41,7 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -56,6 +57,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -93,6 +96,7 @@ import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.support.DateTimeUtils;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
@@ -103,6 +107,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 import tools.jackson.databind.JsonNode;
@@ -129,6 +134,73 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The setting for time zone identifier. */
 	public static final String TIME_ZONE_SETTING = "tz";
+
+	/**
+	 * The setting for a "granularity periods" mapping.
+	 *
+	 * <p>
+	 * Granularity periods are a mapping of time offsets to associated
+	 * granularity values. The purpose of this is affect the granularity
+	 * requested for historic time periods, because Also Energy does not retain
+	 * raw data indefinitely.
+	 * </p>
+	 *
+	 * <p>
+	 * The format of this property is either a {@code Map<String, String>} or a
+	 * comma-delimited {@code key=value} listing, where the keys are ISO 8601
+	 * period strings and the values are {@link AlsoEnergyGranularity} enum
+	 * names. Each key represents the date <b>after which</b> the associated
+	 * granularity should be applied. Larger periods override smaller periods.
+	 * </p>
+	 *
+	 * <p>
+	 * For example, the {@link #DEFAULT_GRANULARITY_PERIODS} mapping would be
+	 * configured like this, expressed as JSON:
+	 * </p>
+	 *
+	 * <pre>
+	 * {@code{
+	 *   "granularityPeriods": {
+	 *     "P6M": "FiveMinute",
+	 *     "P2Y": "FifteenMinute"
+	 *   }
+	 * }}
+	 * </pre>
+	 *
+	 * <p>
+	 * Alternatively, the same mapping could be expressed as a delimited string
+	 * like this:
+	 * </p>
+	 *
+	 * <pre>
+	 * {@code{
+	 *   "granularityPeriods": "P6M=FiveMinute, P2Y=FifteenMinute"
+	 * }}
+	 * </pre>
+	 *
+	 * <p>
+	 * This mapping means that raw data will be requested for time periods
+	 * within 6 months of the current time, 5-minute data for time periods
+	 * between 6 months and 2 years, and then 15-minute data for anything older
+	 * than 2 years.
+	 * </p>
+	 *
+	 * @since 2.2
+	 */
+	public static final String GRANULARITY_PERIODS_SETTING = "granularityPeriods";
+
+	/**
+	 * The {@code granularityPeriods} setting default value.
+	 *
+	 * @since 2.2
+	 */
+	public static final SortedMap<Period, AlsoEnergyGranularity> DEFAULT_GRANULARITY_PERIODS;
+	static {
+		var periodMap = new TreeMap<Period, AlsoEnergyGranularity>(DateTimeUtils::comparePeriods);
+		periodMap.put(Period.ofMonths(6), AlsoEnergyGranularity.FiveMinute);
+		periodMap.put(Period.ofYears(2), AlsoEnergyGranularity.FifteenMinute);
+		DEFAULT_GRANULARITY_PERIODS = Collections.unmodifiableSortedMap(periodMap);
+	}
 
 	/**
 	 * The URI path to list the hardware for a given site.
@@ -324,7 +396,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
 		final ZoneId zone = resolveTimeZone(datumStream, null);
-		final AlsoEnergyGranularity granularity = resolveGranularity(datumStream, null);
+		final AlsoEnergyGranularity granularity = resolveGranularity(datumStream, null, null, null,
+				null);
 
 		final Instant endDate;
 		final Instant startDate;
@@ -368,7 +441,11 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			final ZoneId zone = resolveTimeZone(datumStream, filter.getParameters());
 
-			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters());
+			final SortedMap<Period, AlsoEnergyGranularity> granularityPeriods = resolveGranularityPeriods(
+					datumStream);
+
+			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters(),
+					granularityPeriods, filterStartDate, zone);
 
 			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
@@ -387,6 +464,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			if ( endDate.isBefore(filterEndDate) ) {
 				endDate = resolution.nextTickStart(endDate, zone);
 			}
+
+			endDate = adjustEndDateForGranularityPeriods(granularityPeriods, startDate, endDate, zone);
+
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = resolution
 						.tickStart(startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2)), zone);
@@ -650,8 +730,25 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return result;
 	}
 
-	private AlsoEnergyGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
-			@Nullable Map<String, ?> parameters) {
+	/**
+	 * Resolve the appropriate granularity to use.
+	 *
+	 * @param datumStream
+	 *        the datum stream
+	 * @param parameters
+	 *        optional parameters to override the datum stream settings
+	 * @param granularityPeriods
+	 *        the granularity periods to constrain the result to
+	 * @param timestamp
+	 *        the timestamp to constrain the result to
+	 * @param zone
+	 *        the site zone to use for granularity period evaluation
+	 * @return the granularity to use
+	 */
+	public AlsoEnergyGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, ?> parameters,
+			@Nullable SortedMap<Period, AlsoEnergyGranularity> granularityPeriods,
+			@Nullable Instant timestamp, @Nullable ZoneId zone) {
 		AlsoEnergyGranularity result = null;
 		try {
 			String settingVal = null;
@@ -665,6 +762,26 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 		} catch ( IllegalArgumentException e ) {
 			// ignore
+		}
+		if ( result == null ) {
+			result = AlsoEnergyGranularity.Raw;
+		}
+		if ( granularityPeriods != null && timestamp != null && zone != null ) {
+			// constrain based on granularity periods
+			final ZonedDateTime date = result.tickStart(timestamp, zone).atZone(zone);
+			final ZonedDateTime now = clock.instant().atZone(zone);
+			AlsoEnergyGranularity periodGranularity = null;
+			for ( Entry<Period, AlsoEnergyGranularity> entry : granularityPeriods.reversed()
+					.entrySet() ) {
+				if ( now.minus(entry.getKey()).isAfter(date)
+						&& entry.getValue().compareTo(result) > 0 ) {
+					periodGranularity = entry.getValue();
+					break;
+				}
+			}
+			if ( periodGranularity != null ) {
+				result = periodGranularity;
+			}
 		}
 		return (result != null ? result : AlsoEnergyGranularity.Raw);
 	}
@@ -880,6 +997,65 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		}
 
 		return result;
+	}
+
+	/**
+	 * Resolve the granularity periods to use on a given datum stream.
+	 *
+	 * @param datumStream
+	 *        the configuration to extract the operational range mapping from
+	 * @return the mapping, falling back to {@link #DEFAULT_GRANULARITY_PERIODS}
+	 *         if not configured on the datum stream
+	 * @since 2.2
+	 * @see #GRANULARITY_PERIODS_SETTING
+	 */
+	public SortedMap<Period, AlsoEnergyGranularity> resolveGranularityPeriods(
+			CloudDatumStreamConfiguration datumStream) {
+		final Map<String, String> periodMapping = datumStream
+				.servicePropertyStringMap(GRANULARITY_PERIODS_SETTING);
+		SortedMap<Period, AlsoEnergyGranularity> result = null;
+		if ( periodMapping != null && !periodMapping.isEmpty() ) {
+			Map<Period, AlsoEnergyGranularity> mapped = CollectionUtils.transformMap(periodMapping, null,
+					(k, _) -> {
+						return Period.parse(k).normalized();
+					}, (_, v) -> {
+						return AlsoEnergyGranularity.fromValue(v);
+					});
+			if ( mapped != null ) {
+				result = new TreeMap<>(DateTimeUtils::comparePeriods);
+				result.putAll(mapped);
+			}
+		}
+		return (result != null && !result.isEmpty() ? result : DEFAULT_GRANULARITY_PERIODS);
+	}
+
+	/**
+	 * Adjust a query end date using granularity periods.
+	 *
+	 * @param granularityPeriods
+	 *        the granularity periods
+	 * @param startDate
+	 *        the query start date
+	 * @param endDate
+	 *        the query end date
+	 * @param zone
+	 *        the time zone
+	 * @return the end date to use
+	 */
+	public Instant adjustEndDateForGranularityPeriods(
+			SortedMap<Period, AlsoEnergyGranularity> granularityPeriods, Instant startDate,
+			Instant endDate, ZoneId zone) {
+		final ZonedDateTime start = startDate.atZone(zone);
+		final ZonedDateTime end = endDate.atZone(zone);
+		final ZonedDateTime now = clock.instant().atZone(zone);
+		for ( Entry<Period, AlsoEnergyGranularity> entry : granularityPeriods.entrySet() ) {
+			ZonedDateTime periodEndDate = now.minus(entry.getKey());
+			if ( start.compareTo(periodEndDate) != end.compareTo(periodEndDate) ) {
+				// not within same period, so clamp end to period end
+				return entry.getValue().tickStart(periodEndDate.toInstant(), zone);
+			}
+		}
+		return endDate;
 	}
 
 	/**

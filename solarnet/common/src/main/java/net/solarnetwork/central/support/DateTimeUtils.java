@@ -23,6 +23,8 @@
 package net.solarnetwork.central.support;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -132,6 +134,21 @@ public final class DateTimeUtils {
 
 		}
 		return (result.isEmpty() ? null : result);
+	}
+
+	/**
+	 * Compare two periods.
+	 * 
+	 * @param l
+	 *        the first period
+	 * @param r
+	 *        the secodn period
+	 * @return {@code 0} if {@code l == r}; a value less than {@code 0} if
+	 *         {@code l.isBefore(r)}; a value greater than {@code 0} if
+	 *         {@code l.isAfter(r)}
+	 */
+	public static int comparePeriods(Period l, Period r) {
+		return LocalDate.EPOCH.plus(l).compareTo(LocalDate.EPOCH.plus(r));
 	}
 
 }
