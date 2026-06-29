@@ -33,6 +33,7 @@ import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.ControlCriteria;
 import net.solarnetwork.central.common.dao.IdentifiableCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.central.common.dao.TaskCriteria;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.ClaimableJobState;
 import net.solarnetwork.dao.DateRangeCriteria;
@@ -92,6 +93,7 @@ public class BasicFilter extends BasicCoreCriteria
 			setDatumStreamMappingIds(f.getDatumStreamMappingIds());
 			setCloudControlIds(f.getCloudControlIds());
 			setControlIds(f.getControlIds());
+			setTaskIds(f.getTaskIds());
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
 			setServiceIdentifiers(f.getServiceIdentifiers());
@@ -112,6 +114,9 @@ public class BasicFilter extends BasicCoreCriteria
 			}
 			if ( criteria instanceof ControlCriteria f ) {
 				setControlIds(f.getControlIds());
+			}
+			if ( criteria instanceof TaskCriteria f ) {
+				setTaskIds(f.getTaskIds());
 			}
 			if ( criteria instanceof IndexCriteria f ) {
 				setIndexes(f.getIndexes());
