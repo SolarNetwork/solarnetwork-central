@@ -389,6 +389,20 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
+	public @Nullable ClaimableJobState getClaimableJobState() {
+		return CloudDatumStreamPollTaskFilter.super.getClaimableJobState();
+	}
+
+	/**
+	 * Set the claimable job state.
+	 *
+	 * @param state
+	 */
+	public void setClaimableJobState(@Nullable BasicClaimableJobState state) {
+		setClaimableJobStates(state != null ? new BasicClaimableJobState[] { state } : null);
+	}
+
+	@Override
 	public final BasicClaimableJobState @Nullable [] getClaimableJobStates() {
 		return claimableJobStates;
 	}
@@ -431,6 +445,21 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
+	}
+
+	@Override
+	public @Nullable String getServiceIdentifier() {
+		return CloudIntegrationFilter.super.getServiceIdentifier();
+	}
+
+	/**
+	 * Set the service identifier.
+	 *
+	 * @param serviceIdentifier
+	 *        the identifier to set
+	 */
+	public void setServiceIdentifier(@Nullable String serviceIdentifier) {
+		setServiceIdentifiers(serviceIdentifiers != null ? new String[] { serviceIdentifier } : null);
 	}
 
 	@Override
