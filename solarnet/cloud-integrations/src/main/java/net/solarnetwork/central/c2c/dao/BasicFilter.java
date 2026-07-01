@@ -397,6 +397,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * Set the claimable job state.
 	 *
 	 * @param state
+	 *        the state to set
 	 */
 	public void setClaimableJobState(@Nullable BasicClaimableJobState state) {
 		setClaimableJobStates(state != null ? new BasicClaimableJobState[] { state } : null);
