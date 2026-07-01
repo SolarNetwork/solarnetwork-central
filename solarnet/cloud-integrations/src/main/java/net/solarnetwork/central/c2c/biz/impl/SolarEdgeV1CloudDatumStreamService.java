@@ -60,7 +60,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -359,7 +358,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			// list available sites
 			result = sites(integration);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
@@ -390,10 +389,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		};
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -471,10 +469,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result;
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<CloudDataValue> parseSiteInventory(final Long siteId, final @Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -692,7 +689,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return List.of(
+		return Arrays.asList(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Total active power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "DCV"), "DC voltage"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "GndRes"), "Ground fault resistance"),
@@ -745,7 +742,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		// power extracted from /site/{siteId}/powerDetails
 		// lifetime energy extracted from /site/{siteId}/meters
 		// @formatter:off
-		return List.of(
+		return Arrays.asList(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWh"), "Lifetime energy")
 				);
@@ -769,7 +766,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return List.of(
+		return Arrays.asList(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "State"), "Battery state"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWhExp"), "Lifetime energy discharged"),
@@ -973,7 +970,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		});
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private Void parseInverterDatum(RequestEntity<Void> request, @Nullable JsonNode json,
 			SiteQueryPlan queryPlan, String inverterId, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
@@ -1228,7 +1224,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return null;
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private Void parseBatteryDatum(RequestEntity<Void> request, @Nullable JsonNode json,
 			SiteQueryPlan queryPlan, CloudDatumStreamConfiguration datumStream,
 			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,

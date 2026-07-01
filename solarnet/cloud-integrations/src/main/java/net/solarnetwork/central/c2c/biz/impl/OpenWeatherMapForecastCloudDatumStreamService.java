@@ -139,11 +139,10 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 		});
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
 			CloudDatumStreamConfiguration datumStream) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		List<GeneralDatum> result = new ArrayList<>(40);
 		for ( JsonNode forecastNode : json.path("list") ) {

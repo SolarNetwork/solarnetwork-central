@@ -52,7 +52,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -297,7 +296,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			// list available systems
 			result = systems(integration);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 

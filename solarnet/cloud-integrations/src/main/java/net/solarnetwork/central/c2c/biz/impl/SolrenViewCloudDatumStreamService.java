@@ -59,7 +59,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -371,7 +370,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			result = componentsForSite(integration, filters.get(SITE_ID_FILTER), filters);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 

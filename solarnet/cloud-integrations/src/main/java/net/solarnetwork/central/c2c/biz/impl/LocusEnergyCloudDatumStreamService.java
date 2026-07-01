@@ -53,7 +53,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -293,7 +292,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		} else {
 			result = sitesForPartner(integration);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
@@ -306,10 +305,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				(_, res) -> parseSites(res.getBody()));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(@Nullable ObjectNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -369,10 +367,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				(_, res) -> parseComponents(res.getBody()));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseComponents(@Nullable ObjectNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -434,11 +431,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				(_, res) -> parseNodes(res.getBody(), siteId, compId));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseNodes(@Nullable ObjectNode json, String siteId,
 			String compId) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{

@@ -339,10 +339,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return result;
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	public static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{

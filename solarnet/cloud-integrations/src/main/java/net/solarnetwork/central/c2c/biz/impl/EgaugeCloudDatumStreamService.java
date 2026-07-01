@@ -277,7 +277,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
 				"datumStream.serviceProperties.deviceId");
 		List<CloudDataValue> result = deviceRegisters(integration, datumStream, deviceId);
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
@@ -390,10 +390,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				(_, res) -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, @Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -621,7 +620,6 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return Instant.ofEpochSecond(secs.longValue(), nanos.longValue());
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private Void parseDatum(RequestEntity<?> request, @Nullable JsonNode json,
 			CloudDatumStreamConfiguration datumStream, String deviceId,
 			Map<String, List<ValueRef>> refsByRegisterName, Set<String> ignoredValidations,

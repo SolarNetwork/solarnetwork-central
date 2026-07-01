@@ -388,7 +388,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			// list available sites
 			result = sites(integration);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
@@ -562,10 +562,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				(_, res) -> parseSiteHardware(siteId, res.getBody()));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -597,11 +596,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 *        the JSON to parse
 	 * @return the parsed inventory
 	 */
-	@SuppressWarnings("MixedMutabilityReturnType")
 	public static List<CloudDataValue> parseSiteHardware(final Long siteId,
 			final @Nullable JsonNode json) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
