@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.security;
 import static net.solarnetwork.central.oscp.security.OscpSecurityUtils.jwtTokenIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.net.URL;
 import java.util.Collection;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -84,9 +85,16 @@ public class ExternalSystemJwtAuthenticationConverter
 	@Override
 	public AbstractAuthenticationToken convert(Jwt jwt) {
 		Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
+		URL issuer = jwt.getIssuer();
+		if ( issuer == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no issuer).");
+		}
 		String principalClaimValue = jwt.getClaimAsString(this.principalClaimName);
+		if ( principalClaimValue == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no principal claim).");
+		}
 
-		String token = jwtTokenIdentifier(jwt.getIssuer(), principalClaimValue);
+		String token = jwtTokenIdentifier(issuer, principalClaimValue);
 
 		UserLongCompositePK authId = dao.idForToken(token, true);
 		if ( authId == null ) {
