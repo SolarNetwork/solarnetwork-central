@@ -61,6 +61,7 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.web.RateLimitExceededException;
@@ -72,7 +73,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  *
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 @RestControllerAdvice
 @Order(1000)
@@ -476,21 +477,24 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @param response
+	 *        the response
 	 * @return an error response object
 	 * @since 1.5
 	 */
 	@ExceptionHandler(HttpMessageConversionException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
-			WebRequest request) {
+	public @Nullable Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
+			WebRequest request, Locale locale, HttpServletResponse response) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
-			if ( "org.apache.catalina.connector.ClientAbortException"
-					.equals(cause.getClass().getName()) ) {
-				log.debug("ClientAbortException in request {}", requestDescription(request), e);
-				return error("WEB.00201", "Client abort.");
+			if ( cause instanceof ClientAbortException cae ) {
+				handleClientAbortException(cae, request, null);
+				return null;
 			}
 		}
 
@@ -511,17 +515,21 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
+	 * @param response
+	 *        the response
+	 * @param servletRequest
+	 *        unused, but signals that the request has been completely handled
+	 *        by this method
 	 * @since 1.12
 	 */
 	@ExceptionHandler(HttpMessageNotWritableException.class)
 	public void handleHttpMessageNotWritableException(HttpMessageNotWritableException e,
-			WebRequest request) {
+			WebRequest request, HttpServletResponse response, @Nullable ServletRequest servletRequest) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
-			if ( "org.apache.catalina.connector.ClientAbortException"
-					.equals(cause.getClass().getName()) ) {
-				log.debug("ClientAbortException in request {}", requestDescription(request), e);
+			if ( cause instanceof ClientAbortException cae ) {
+				handleClientAbortException(cae, request, servletRequest);
 				return;
 			} else if ( cause instanceof IOException ) {
 				log.debug("IOException in request {}", requestDescription(request), e);
@@ -547,8 +555,8 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(ClientAbortException.class)
 	public void handleClientAbortException(ClientAbortException e, WebRequest request,
-			ServletRequest servletRequest) {
-		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
+			@Nullable ServletRequest servletRequest) {
+		log.info("ClientAbortException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request));
 	}
 
@@ -633,6 +641,57 @@ public class WebServiceGlobalControllerSupport {
 		log.warn("RateLimitExceededException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request));
 		return error("WEB.10000", e.getMessage());
+	}
+
+	/**
+	 * Handle an exception directly, without using a response HTTP converter.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the locale
+	 * @param response
+	 *        the response
+	 * @param servletRequest
+	 *        unused, but signals that the request has been completely handled
+	 *        by this method
+	 * @since 1.13
+	 */
+	public void handleExceptionInternally(final Exception e, final WebRequest request,
+			final Locale locale, final HttpServletResponse response,
+			final @Nullable ServletRequest servletRequest) {
+		HttpStatus responseStatusCode = null;
+		String responseMessage = null;
+		if ( e instanceof TransientDataAccessException tdae ) {
+			Result<?> result = handleTransientDataAccessException(tdae, request, locale);
+			responseStatusCode = HttpStatus.TOO_MANY_REQUESTS;
+			responseMessage = result.getMessage();
+		} else {
+			Throwable cause = e;
+			while ( cause.getCause() != null ) {
+				cause = cause.getCause();
+				if ( "org.apache.catalina.connector.ClientAbortException"
+						.equals(cause.getClass().getName()) ) {
+					log.debug("ClientAbortException in request {}", requestDescription(request), e);
+					return;
+				}
+			}
+			log.warn("{} in request {}; user [{}]: {}", e.getClass().getSimpleName(),
+					requestDescription(request), userPrincipalName(request), e.toString());
+		}
+		if ( responseStatusCode != null && !response.isCommitted() ) {
+			try {
+				if ( responseMessage != null ) {
+					response.sendError(responseStatusCode.value(), responseMessage);
+				} else {
+					response.sendError(responseStatusCode.value());
+				}
+			} catch ( Exception e2 ) {
+				log.warn("Error sending HTTP response error {}: {}", responseStatusCode, e2.toString());
+			}
+		}
 	}
 
 }

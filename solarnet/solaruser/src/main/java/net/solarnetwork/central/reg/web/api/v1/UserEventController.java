@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventBiz;
@@ -50,6 +52,7 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import tools.jackson.databind.ObjectMapper;
 
@@ -64,6 +67,7 @@ import tools.jackson.databind.ObjectMapper;
 @RequestMapping(value = { "/api/v1/sec/user/events" })
 public class UserEventController {
 
+	private final WebServiceGlobalControllerSupport support;
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final PropertySerializerRegistrar propertySerializerRegistrar;
@@ -73,6 +77,8 @@ public class UserEventController {
 	/**
 	 * Constructor.
 	 *
+	 * @param support
+	 *        the support to use
 	 * @param userEventBiz
 	 *        the UserEventBiz to use
 	 * @param objectMapper
@@ -83,11 +89,12 @@ public class UserEventController {
 	 *        the registrar to use (may be {@code null}
 	 */
 	@Autowired
-	public UserEventController(UserEventBiz userEventBiz,
+	public UserEventController(WebServiceGlobalControllerSupport support, UserEventBiz userEventBiz,
 			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
 			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
+		this.support = requireNonNullArgument(support, "support");
 		this.userEventBiz = requireNonNullArgument(userEventBiz, "userEventBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
@@ -101,14 +108,25 @@ public class UserEventController {
 	 *        the query criteria
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
 	 * @param response
 	 *        the HTTP response
 	 */
 	@ResponseBody
 	@RequestMapping(value = "", method = RequestMethod.GET)
-	public void listUserEvents(final BasicUserEventFilter cmd,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response,
-			BindingResult validationResult) throws IOException {
+	public void listUserEvents(
+	// @formatter:off
+			final BasicUserEventFilter cmd,
+			final @RequestHeader(HttpHeaders.ACCEPT) String accept,
+			final WebRequest request,
+			final Locale locale,
+			final HttpServletResponse response,
+			final BindingResult validationResult
+			// @formatter:on
+	) throws IOException {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -121,6 +139,8 @@ public class UserEventController {
 				acceptTypes, response, new OutputSerializationSupportContext<>(objectMapper,
 						cborObjectMapper, UserEventSerializer.INSTANCE, propertySerializerRegistrar))) {
 			userEventBiz.findFilteredUserEvents(cmd, processor);
+		} catch ( Exception e ) {
+			support.handleExceptionInternally(e, request, locale, response, null);
 		}
 	}
 
