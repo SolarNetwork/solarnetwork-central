@@ -14,7 +14,6 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common Test'
-version = '4.1.0'
 
 base {
 	archivesName = 'solarnet-common-test'

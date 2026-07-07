@@ -16,7 +16,6 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common Web'
-version = '4.0.2'
 
 base {
 	archivesName = 'solarnet-common-web'
