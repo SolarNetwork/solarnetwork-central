@@ -45,6 +45,7 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -195,6 +196,47 @@ public class WebServiceGlobalControllerSupport {
 			msg = "Data integrity violation";
 			msgKey = "error.dao.transientDataAccess";
 			code = "DAO.00200";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return error(code, msg);
+	}
+
+	/**
+	 * Handle transient data access exceptions.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.13
+	 */
+	@ExceptionHandler(UncategorizedSQLException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Result<?> handleUncategorizedSQLException(UncategorizedSQLException e, WebRequest request,
+			Locale locale) {
+		log.warn("UncategorizedSQLException in request {}; user [{}]: {}", requestDescription(request),
+				userPrincipalName(request), e.toString());
+		final Throwable cause = e.getMostSpecificCause();
+		final String causeMessageLc = (cause.getMessage() != null
+				? cause.getMessage().toLowerCase(Locale.ROOT)
+				: "");
+		String msg;
+		String msgKey;
+		String code;
+		if ( causeMessageLc.contains("connection is closed") ) {
+			var tdare = new TransientDataAccessResourceException("Connection closed", cause);
+			return handleTransientDataAccessException(tdare, request, locale);
+		} else {
+			msg = "Unknown SQL error";
+			msgKey = "error.dao.unknownSqlException";
+			code = "DAO.00207";
 		}
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
