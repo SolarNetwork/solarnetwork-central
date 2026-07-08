@@ -224,13 +224,14 @@ public class WebServiceGlobalControllerSupport {
 		log.warn("UncategorizedSQLException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.toString());
 		final Throwable cause = e.getMostSpecificCause();
-		final String causeMessageLc = (cause.getMessage() != null ? cause.getMessage().toLowerCase()
+		final String causeMessageLc = (cause.getMessage() != null
+				? cause.getMessage().toLowerCase(Locale.ROOT)
 				: "");
 		String msg;
 		String msgKey;
 		String code;
 		if ( causeMessageLc.contains("connection is closed") ) {
-			var tdare = new TransientDataAccessResourceException(cause.getMessage(), cause);
+			var tdare = new TransientDataAccessResourceException("Connection closed", cause);
 			return handleTransientDataAccessException(tdare, request, locale);
 		} else {
 			msg = "Unknown SQL error";
