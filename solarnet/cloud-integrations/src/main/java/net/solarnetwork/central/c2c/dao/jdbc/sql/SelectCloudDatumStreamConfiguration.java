@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -85,13 +87,23 @@ public final class SelectCloudDatumStreamConfiguration
 	}
 
 	private void sqlCore(StringBuilder buf) {
+		if ( filter.hasSourceCriteria() ) {
+			buf.append("""
+					WITH sources AS (
+						SELECT ?::text[] AS source_ids
+					)
+					""");
+		}
 		buf.append("""
 				SELECT cds.user_id, cds.id, cds.created, cds.modified, cds.enabled
 					, cds.cname, cds.sident
 					, cds.map_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
 					, cds.sprops
-				FROM solardin.cin_datum_stream cds
-				""");
+				FROM solardin.cin_datum_stream cds""");
+		if ( filter.hasSourceCriteria() ) {
+			buf.append(", sources");
+		}
+		buf.append('\n');
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -109,6 +121,62 @@ public final class SelectCloudDatumStreamConfiguration
 		if ( filter.hasNodeCriteria() ) {
 			where.append("\tAND cds.kind = '").append(ObjectDatumKind.Node.getKey()).append("'\n");
 			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
+		}
+		if ( filter.hasSourceCriteria() ) {
+			boolean pattern = false;
+			for ( String sourceId : filter.sourceIds() ) {
+				if ( DatumUtils.WILDCARD_PATTERN_MATCHER.isPattern(sourceId) ) {
+					pattern = true;
+					break;
+				}
+			}
+			where.append("\tAND (\n");
+			if ( pattern ) {
+				where.append(
+						"""
+									cds.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+									OR (
+										jsonb_typeof(sprops->'sourceIdMap') = 'object'
+										AND EXISTS (
+											SELECT TRUE
+											FROM jsonb_array_elements_text(jsonb_path_query_array(sprops->'sourceIdMap', '$.*')) AS m_source_id
+											WHERE m_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+										)
+									)
+									OR 	(
+										jsonb_typeof(sprops->'virtualSourceIds') = 'array'
+										AND jsonb_array_length(sprops->'virtualSourceIds') > 0
+										AND EXISTS (
+											SELECT TRUE
+											FROM jsonb_array_elements_text(cds.sprops->'virtualSourceIds') AS v_source_id
+											WHERE v_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+										)
+									)
+								""");
+			} else {
+				where.append(
+						"""
+									cds.source_id = ANY(sources.source_ids)
+									OR (
+										jsonb_typeof(sprops->'sourceIdMap') = 'object'
+										AND EXISTS (
+											SELECT TRUE
+											FROM jsonb_array_elements_text(jsonb_path_query_array(sprops->'sourceIdMap', '$.*')) AS m_source_id
+											WHERE m_source_id = ANY(sources.source_ids)
+										)
+									)
+									OR 	(
+										jsonb_typeof(sprops->'virtualSourceIds') = 'array'
+										AND jsonb_array_length(sprops->'virtualSourceIds') > 0
+										AND EXISTS (
+											SELECT TRUE
+											FROM jsonb_array_elements_text(cds.sprops->'virtualSourceIds') AS v_source_id
+											WHERE v_source_id = ANY(sources.source_ids)
+										)
+									)
+								""");
+			}
+			where.append(")\n");
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -132,6 +200,9 @@ public final class SelectCloudDatumStreamConfiguration
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( filter.hasSourceCriteria() ) {
+			p = prepareArrayParameter(con, stmt, p, filter.getSourceIds());
+		}
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}
