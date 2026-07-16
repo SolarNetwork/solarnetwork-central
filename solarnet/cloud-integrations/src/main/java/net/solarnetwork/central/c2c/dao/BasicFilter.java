@@ -33,6 +33,7 @@ import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.ControlCriteria;
 import net.solarnetwork.central.common.dao.IdentifiableCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.central.common.dao.NameCriteria;
 import net.solarnetwork.central.common.dao.TaskCriteria;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.ClaimableJobState;
@@ -43,7 +44,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
@@ -59,6 +60,7 @@ public class BasicFilter extends BasicCoreCriteria
 	private Integer @Nullable [] indexes;
 	private BasicClaimableJobState @Nullable [] claimableJobStates;
 	private String @Nullable [] serviceIdentifiers;
+	private String @Nullable [] names;
 	private @Nullable Instant startDate;
 	private @Nullable Instant endDate;
 
@@ -97,6 +99,7 @@ public class BasicFilter extends BasicCoreCriteria
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
 			setServiceIdentifiers(f.getServiceIdentifiers());
+			setNames(f.getNames());
 			setStartDate(f.getStartDate());
 			setEndDate(f.getEndDate());
 		} else {
@@ -139,6 +142,9 @@ public class BasicFilter extends BasicCoreCriteria
 			if ( criteria instanceof IdentifiableCriteria f ) {
 				setServiceIdentifiers(f.getServiceIdentifiers());
 			}
+			if ( criteria instanceof NameCriteria f ) {
+				setNames(f.getNames());
+			}
 			if ( criteria instanceof DateRangeCriteria f ) {
 				setStartDate(f.getStartDate());
 				setEndDate(f.getEndDate());
@@ -158,6 +164,7 @@ public class BasicFilter extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(indexes);
 		result = prime * result + Arrays.hashCode(claimableJobStates);
 		result = prime * result + Arrays.hashCode(serviceIdentifiers);
+		result = prime * result + Arrays.hashCode(names);
 		result = prime * result + Objects.hash(startDate, endDate);
 		return result;
 	}
@@ -180,7 +187,8 @@ public class BasicFilter extends BasicCoreCriteria
 				&& Arrays.equals(controlIds, other.controlIds) && Arrays.equals(indexes, other.indexes)
 				&& Arrays.equals(claimableJobStates, other.claimableJobStates)
 				&& Arrays.equals(serviceIdentifiers, other.serviceIdentifiers)
-				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
+				&& Arrays.equals(names, other.names) && Objects.equals(startDate, other.startDate)
+				&& Objects.equals(endDate, other.endDate);
 	}
 
 	@Override
@@ -196,6 +204,7 @@ public class BasicFilter extends BasicCoreCriteria
 				|| (indexes != null && indexes.length > 0)
 				|| (integrationIds != null && integrationIds.length > 0)
 				|| (serviceIdentifiers != null && serviceIdentifiers.length > 0)
+				|| (names != null && names.length > 0)
 				|| startDate != null
 				|| (taskIds != null && taskIds.length > 0)
 				;
@@ -477,6 +486,38 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public final void setServiceIdentifiers(String @Nullable [] serviceIdentifiers) {
 		this.serviceIdentifiers = serviceIdentifiers;
+	}
+
+	@Override
+	public @Nullable String getName() {
+		return CloudIntegrationFilter.super.getName();
+	}
+
+	/**
+	 * Set the service identifier.
+	 *
+	 * @param name
+	 *        the identifier to set
+	 * @since 1.7
+	 */
+	public void setName(@Nullable String name) {
+		setNames(name != null ? new String[] { name } : null);
+	}
+
+	@Override
+	public final String @Nullable [] getNames() {
+		return names;
+	}
+
+	/**
+	 * Set the names.
+	 *
+	 * @param names
+	 *        the names to set
+	 * @since 1.7
+	 */
+	public final void setNames(String @Nullable [] names) {
+		this.names = names;
 	}
 
 	@Override

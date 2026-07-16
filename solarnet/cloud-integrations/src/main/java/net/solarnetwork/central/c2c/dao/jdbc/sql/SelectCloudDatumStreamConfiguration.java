@@ -24,7 +24,11 @@ package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedLikeSubstringParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereEqual;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedLike;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Support for SELECT for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class SelectCloudDatumStreamConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -117,6 +121,12 @@ public final class SelectCloudDatumStreamConfiguration
 		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cds.map_id", where);
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			idx += whereEqual(filter.getEnabled(), "cds.enabled", where);
+		}
+		if ( filter.hasNameCriteria() ) {
+			idx += whereOptimizedLike(filter.getNames(), "cds.cname", where);
 		}
 		if ( filter.hasNodeCriteria() ) {
 			where.append("\tAND cds.kind = '").append(ObjectDatumKind.Node.getKey()).append("'\n");
@@ -211,6 +221,12 @@ public final class SelectCloudDatumStreamConfiguration
 		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			p = prepareParameter(stmt, p, filter.getEnabled());
+		}
+		if ( filter.hasNameCriteria() ) {
+			p = prepareOptimizedLikeSubstringParameter(stmt, p, filter.getNames());
 		}
 		if ( filter.hasNodeCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());

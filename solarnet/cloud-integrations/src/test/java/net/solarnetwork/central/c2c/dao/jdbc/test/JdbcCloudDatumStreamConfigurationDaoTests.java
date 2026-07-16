@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +64,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamConfigurationDao} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -160,7 +161,8 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.as("Row modification date")
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
 			.as("Row name")
-			.containsEntry("cname", conf.getName())
+			// the name citext column returned as PGObject
+			.hasEntrySatisfying("cname", n -> then(n.toString()).isEqualTo(conf.getName()))
 			.as("Row service ID")
 			.containsEntry("sident", conf.getServiceIdentifier())
 			.as("Row datum stream mapping ID")
@@ -678,6 +680,154 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.containsExactlyElementsOf(expectedConfs)
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forEnabled() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> conf.setEnabled(RNG.nextBoolean()));
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final boolean randomEnabled = RNG.nextBoolean();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setEnabled(randomEnabled);
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomEnabled == e.isEnabled())
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + enabled flag returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final String randomSubstring = keySubstrings.get(RNG.nextInt(keySubstrings.size()))
+				.toLowerCase(Locale.ENGLISH);
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(randomSubstring);
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(randomSubstring))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName_reservedCharacter() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("100% Fresh", "100 Percent Fresh", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(keySubstrings.getFirst().toLowerCase(Locale.ENGLISH));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(filter.getName()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring with reserved characters returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forNames() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNames(new String[] { keySubstrings.getFirst().toLowerCase(Locale.ENGLISH),
+				keySubstrings.getLast().toLowerCase(Locale.ENGLISH) });
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			final String lcName = e.getName().toLowerCase(Locale.ENGLISH);
+			for ( String name : filter.getNames() ) {
+				if ( lcName.contains(name) ) {
+					return true;
+				}
+			}
+			return false;
+		}).toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring returned").containsExactly(expected);
 	}
 
 }

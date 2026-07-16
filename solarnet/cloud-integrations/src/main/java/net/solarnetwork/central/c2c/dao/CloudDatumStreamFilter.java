@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import net.solarnetwork.central.common.dao.EnabledCriteria;
+import net.solarnetwork.central.common.dao.NameCriteria;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.SourceCriteria;
 
@@ -32,6 +34,6 @@ import net.solarnetwork.central.common.dao.SourceCriteria;
  * @version 1.2
  */
 public interface CloudDatumStreamFilter extends CloudIntegrationsFilter, CloudDatumStreamCriteria,
-		CloudDatumStreamMappingCriteria, NodeCriteria, SourceCriteria {
+		CloudDatumStreamMappingCriteria, NodeCriteria, SourceCriteria, NameCriteria, EnabledCriteria {
 
 }

@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -147,7 +148,8 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 			.as("Row modification date")
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
 			.as("Row name")
-			.containsEntry("cname", conf.getName())
+			// the name citext column returned as PGObject
+			.hasEntrySatisfying("cname", n -> then(n.toString()).isEqualTo(conf.getName()))
 			.as("Row service ID")
 			.containsEntry("sident", conf.getServiceIdentifier())
 			.as("Row service properties")
@@ -291,6 +293,180 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		CloudIntegrationConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId())).toArray(CloudIntegrationConfiguration[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forEnabled() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final boolean randomEnabled = RNG.nextBoolean();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setEnabled(randomEnabled);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomEnabled == e.isEnabled())
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for enabled critertia returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final String randomSubstring = keySubstrings.get(RNG.nextInt(keySubstrings.size()))
+				.toLowerCase(Locale.ENGLISH);
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(randomSubstring);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(randomSubstring))
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substring returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName_reservedCharacter() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("100% Fresh", "100 Percent Fresh", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(keySubstrings.getFirst().toLowerCase(Locale.ENGLISH));
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(filter.getName()))
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substring with reserved character returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forNames() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNames(new String[] { keySubstrings.getFirst().toLowerCase(Locale.ENGLISH),
+				keySubstrings.getLast().toLowerCase(Locale.ENGLISH) });
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			final String lcName = e.getName().toLowerCase(Locale.ENGLISH);
+			for ( String name : filter.getNames() ) {
+				if ( lcName.contains(name) ) {
+					return true;
+				}
+			}
+			return false;
+		}).toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substrings returned").containsExactly(expected);
 	}
 
 	@Test

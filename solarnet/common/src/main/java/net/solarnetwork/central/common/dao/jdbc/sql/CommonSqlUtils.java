@@ -33,6 +33,7 @@ import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -45,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  */
 public final class CommonSqlUtils {
 
@@ -850,6 +851,82 @@ public final class CommonSqlUtils {
 	}
 
 	/**
+	 * Generate SQL {@literal WHERE} criteria for a simple equality comparison.
+	 *
+	 * @param object
+	 *        the column value to match
+	 * @param colName
+	 *        the SQL column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.10
+	 */
+	public static int whereEqual(@Nullable Object object, String colName, StringBuilder buf) {
+		int paramCount = 0;
+		if ( object != null ) {
+			buf.append("\tAND ").append(colName).append(" = ?\n");
+			paramCount = 1;
+		}
+		return paramCount;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria for a {@literal LIKE} comparison.
+	 *
+	 * @param object
+	 *        the column value to match
+	 * @param colName
+	 *        the SQL column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.10
+	 */
+	public static int whereLike(@Nullable Object object, String colName, StringBuilder buf) {
+		int paramCount = 0;
+		if ( object != null ) {
+			buf.append("\tAND ").append(colName).append(" LIKE ?\n");
+			paramCount = 1;
+		}
+		return paramCount;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria for a {@literal LIKE} comparison
+	 * against one or more values.
+	 *
+	 * <p>
+	 * If {@code array} contains exactly one value, the generated SQL will use a
+	 * simple {@code LIKE} comparison. Otherwise, an {@code LIKE ANY()}
+	 * comparison will be generated.
+	 * </p>
+	 *
+	 * @param array
+	 *        the array value to match
+	 * @param colName
+	 *        the array SQL column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.10
+	 */
+	public static int whereOptimizedLike(Object @Nullable [] array, String colName, StringBuilder buf) {
+		int paramCount = 0;
+		if ( array != null && array.length > 0 ) {
+			buf.append("\tAND ").append(colName).append(" LIKE ");
+			if ( array.length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
+			paramCount = 1;
+		}
+		return paramCount;
+	}
+
+	/**
 	 * Generate SQL {@literal WHERE} criteria for a date range.
 	 *
 	 * <p>
@@ -1065,6 +1142,548 @@ public final class CommonSqlUtils {
 			}
 		}
 		return (appended ? 2 : 0);
+	}
+
+	/**
+	 * Pattern for matching SQL LIKE pattern reserved characters.
+	 * 
+	 * @since 2.10
+	 */
+	public static final Pattern LIKE_PATTERN_RESERVED = Pattern.compile("([_%\\\\])");
+
+	/**
+	 * Escape reserved SQL LIKE pattern characters.
+	 * 
+	 * @param value
+	 *        the value to escape
+	 * @return the escaped value, or {@code null} if {@code value} is
+	 *         {@code null}
+	 * @since 2.10
+	 */
+	public static @Nullable String safeLikeValue(@Nullable String value) {
+		if ( value == null ) {
+			return null;
+		}
+		Matcher m = LIKE_PATTERN_RESERVED.matcher(value);
+		StringBuilder buf = new StringBuilder();
+		while ( m.find() ) {
+			String c = m.group(1);
+			m.appendReplacement(buf, "\\\\" + c);
+		}
+		m.appendTail(buf);
+		return buf.toString();
+	}
+
+	/**
+	 * Prepare a SQL query parameter.
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param sqlType
+	 *        the SQL type, as in {@link java.sql.Types}
+	 * @param value
+	 *        the object to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareObjectParameter(PreparedStatement stmt, int parameterOffset, int sqlType,
+			@Nullable Object value, boolean setNull) throws SQLException {
+		if ( value != null ) {
+			stmt.setObject(++parameterOffset, value, sqlType);
+		} else if ( setNull ) {
+			stmt.setNull(++parameterOffset, sqlType);
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query string parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#VARCHAR} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String value, boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.VARCHAR, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query string parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#VARCHAR} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String value) throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query boolean parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#BOOLEAN} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable Boolean value, boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.BOOLEAN, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query boolean parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#BOOLEAN} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable Boolean value) throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query integer parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#INTEGER} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable Integer value, boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.INTEGER, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query integer parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#INTEGER} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable Integer value) throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query long parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#BIGINT} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset, @Nullable Long value,
+			boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.BIGINT, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query long parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#BIGINT} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset, @Nullable Long value)
+			throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query UUID parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#OTHER} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset, @Nullable UUID value,
+			boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.OTHER, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query UUID parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#OTHER} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset, @Nullable UUID value)
+			throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query decimal parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#NUMERIC} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable BigDecimal value, boolean setNull) throws SQLException {
+		return prepareObjectParameter(stmt, parameterOffset, Types.NUMERIC, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query decimal parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#NUMERIC} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable BigDecimal value) throws SQLException {
+		return prepareParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query LIKE substring match parameter.
+	 * 
+	 * <p>
+	 * The SQL type {@link Types#VARCHAR} will be used.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set; if non-empty then it will be wrapped with
+	 *        {@code "%"} characters for a full substring match
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String value, boolean setNull) throws SQLException {
+		if ( value != null && !value.isEmpty() ) {
+			value = '%' + CommonSqlUtils.safeLikeValue(value) + '%';
+		}
+		return prepareObjectParameter(stmt, parameterOffset, Types.VARCHAR, value, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query LIKE substring match parameter.
+	 *
+	 * <p>
+	 * The SQL type {@link Types#VARCHAR} will be used.
+	 * </p>
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set; if non-empty then it will be wrapped with
+	 *        {@code "%"} characters for a full substring match
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String value) throws SQLException {
+		return prepareLikeSubstringParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query LIKE substring match array parameter.
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String @Nullable [] value, boolean setNull) throws SQLException {
+		@Nullable
+		String[] newValue = value;
+		if ( value != null ) {
+			newValue = new String[value.length];
+			for ( int i = 0; i < newValue.length; i++ ) {
+				if ( value[i] == null ) {
+					continue;
+				}
+				newValue[i] = '%' + CommonSqlUtils.safeLikeValue(value[i]) + '%';
+			}
+		}
+		return CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, parameterOffset, "text",
+				newValue, setNull);
+	}
+
+	/**
+	 * Prepare a SQL query LIKE substring match array parameter.
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 */
+	public static int prepareLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String @Nullable [] value) throws SQLException {
+		return prepareLikeSubstringParameter(stmt, parameterOffset, value, false);
+	}
+
+	/**
+	 * Prepare a SQL query LIKE substring match array parameter.
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@code null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 * @see CommonSqlUtils#whereOptimizedLike(Object[], String, StringBuilder)
+	 */
+	public static int prepareOptimizedLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String @Nullable [] value, boolean setNull) throws SQLException {
+		if ( value != null && value.length == 1 ) {
+			return prepareLikeSubstringParameter(stmt, parameterOffset, value[0], setNull);
+		}
+		return prepareLikeSubstringParameter(stmt, parameterOffset, value, setNull);
+	}
+
+	/**
+	 * Prepare an optimized SQL query LIKE substring match array parameter.
+	 *
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.10
+	 * @see CommonSqlUtils#whereOptimizedLike(Object[], String, StringBuilder)
+	 */
+	public static int prepareOptimizedLikeSubstringParameter(PreparedStatement stmt, int parameterOffset,
+			@Nullable String @Nullable [] value) throws SQLException {
+		return prepareOptimizedLikeSubstringParameter(stmt, parameterOffset, value, false);
 	}
 
 }
