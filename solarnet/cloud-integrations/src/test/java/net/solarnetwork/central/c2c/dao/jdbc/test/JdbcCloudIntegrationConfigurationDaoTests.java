@@ -631,7 +631,8 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 				.filter(e -> userId.equals(e.getUserId())
 						&& Arrays.binarySearch(randomServiceIdents, e.getServiceIdentifier()) >= 0)
 				.toArray(CloudIntegrationConfiguration[]::new);
-		then(results).as("Results for single user returned").containsExactlyInAnyOrder(expected);
+		then(results).as("Results for user + service identifiers returned")
+				.containsExactlyInAnyOrder(expected);
 	}
 
 	@Test
