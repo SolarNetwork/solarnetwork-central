@@ -103,11 +103,19 @@ public final class SelectCloudDatumStreamConfiguration
 					, cds.cname, cds.sident
 					, cds.map_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
 					, cds.sprops
-				FROM solardin.cin_datum_stream cds""");
+				FROM solardin.cin_datum_stream cds
+				""");
 		if ( filter.hasSourceCriteria() ) {
-			buf.append(", sources");
+			buf.append("""
+					INNER JOIN sources ON TRUE
+					""");
 		}
-		buf.append('\n');
+		if ( filter.hasIntegrationCriteria() ) {
+			buf.append("""
+					INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.id = cds.map_id
+					""");
+
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -115,6 +123,9 @@ public final class SelectCloudDatumStreamConfiguration
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getUserIds(), "cds.user_id", where);
+		}
+		if ( filter.hasIntegrationCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "cdsm.int_id", where);
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
@@ -218,6 +229,9 @@ public final class SelectCloudDatumStreamConfiguration
 		}
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+		}
+		if ( filter.hasIntegrationCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());

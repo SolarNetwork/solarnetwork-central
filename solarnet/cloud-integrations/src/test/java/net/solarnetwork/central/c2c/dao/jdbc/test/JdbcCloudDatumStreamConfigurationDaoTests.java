@@ -362,6 +362,37 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 	}
 
 	@Test
+	public void findFiltered_forIntegration() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 2;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
+
+		// WHEN
+		final CloudDatumStreamConfiguration randomConf = confs.get(RNG.nextInt(confs.size()));
+		final CloudDatumStreamMappingConfiguration randomMapping = datumStreamMappingDao.get(
+				new UserLongCompositePK(randomConf.getUserId(), randomConf.getDatumStreamMappingId()));
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setIntegrationId(randomMapping.getIntegrationId());
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId()) && datumStreamMappingDao
+						.get(new UserLongCompositePK(e.getUserId(), e.getDatumStreamMappingId()))
+						.getIntegrationId().equals(filter.getIntegrationId()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for single mapping returned").containsExactly(expected);
+	}
+
+	@Test
 	public void findFiltered_forNode() throws Exception {
 		// GIVEN
 		final int count = 3;

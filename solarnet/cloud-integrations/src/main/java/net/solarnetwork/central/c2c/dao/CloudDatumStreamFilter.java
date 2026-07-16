@@ -34,8 +34,8 @@ import net.solarnetwork.central.common.dao.SourceCriteria;
  * @author matt
  * @version 1.2
  */
-public interface CloudDatumStreamFilter
-		extends CloudIntegrationsFilter, CloudDatumStreamCriteria, CloudDatumStreamMappingCriteria,
-		NodeCriteria, SourceCriteria, IdentifiableCriteria, NameCriteria, EnabledCriteria {
+public interface CloudDatumStreamFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria,
+		CloudDatumStreamCriteria, CloudDatumStreamMappingCriteria, NodeCriteria, SourceCriteria,
+		IdentifiableCriteria, NameCriteria, EnabledCriteria {
 
 }
