@@ -345,13 +345,14 @@ CREATE TABLE solardin.cin_integration (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	cname			CHARACTER VARYING(64) NOT NULL,
+	cname			citext NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
 	sprops			jsonb,
 	CONSTRAINT cin_integration_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT cin_integration_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT cin_integration_cname_len CHECK (length(cname) <= 64)
 );
 
 
@@ -440,7 +441,7 @@ CREATE TABLE solardin.cin_datum_stream (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	cname			CHARACTER VARYING(64) NOT NULL,
+	cname			citext NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
 	map_id			BIGINT,
 	schedule 		CHARACTER VARYING(64),
@@ -454,7 +455,8 @@ CREATE TABLE solardin.cin_datum_stream (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT cin_datum_stream_map_fk FOREIGN KEY (user_id, map_id)
 		REFERENCES solardin.cin_datum_stream_map (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE SET NULL (map_id)
+		ON UPDATE NO ACTION ON DELETE SET NULL (map_id),
+	CONSTRAINT cin_datum_stream_cname_len CHECK (length(cname) <= 64)
 );
 
 
