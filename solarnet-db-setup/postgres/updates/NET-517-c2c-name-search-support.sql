@@ -2,8 +2,14 @@ DROP VIEW solardin.cin_datum_stream_info;
 DROP VIEW solardin.cin_datum_stream_prop_info;
 DROP VIEW solardin.cin_datum_stream_rake_info;
 
-ALTER TABLE solardin.cin_datum_stream ALTER COLUMN cname TYPE citext;
-ALTER TABLE solardin.cin_integration ALTER COLUMN cname TYPE citext;
+ALTER TABLE solardin.cin_datum_stream
+	ALTER COLUMN cname TYPE citext,
+	ADD CONSTRAINT cin_datum_stream_cname_len CHECK (length(cname) <= 64)
+	;
+ALTER TABLE solardin.cin_integration
+	ALTER COLUMN cname TYPE citext,
+	ADD CONSTRAINT cin_integration_cname_len CHECK (length(cname) <= 64)
+	;
 
 
 CREATE VIEW solardin.cin_datum_stream_info AS
