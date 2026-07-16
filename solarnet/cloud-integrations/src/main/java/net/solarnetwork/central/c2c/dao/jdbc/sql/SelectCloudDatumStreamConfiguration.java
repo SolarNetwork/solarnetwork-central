@@ -119,6 +119,9 @@ public final class SelectCloudDatumStreamConfiguration
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
 		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getServiceIdentifiers(), "cds.sident", where);
+		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cds.map_id", where);
 		}
@@ -218,6 +221,9 @@ public final class SelectCloudDatumStreamConfiguration
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
+		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServiceIdentifiers());
 		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());

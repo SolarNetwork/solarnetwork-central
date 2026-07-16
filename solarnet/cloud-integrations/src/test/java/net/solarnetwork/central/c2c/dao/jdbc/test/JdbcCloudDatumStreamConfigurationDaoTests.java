@@ -830,4 +830,38 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		then(results).as("Results for user + name substring returned").containsExactly(expected);
 	}
 
+	@Test
+	public void findFiltered_forServiceIdentifiers() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keyIdentifiers = List.of(randomString(), randomString(), randomString());
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> conf
+						.setServiceIdentifier(keyIdentifiers.get(RNG.nextInt(keyIdentifiers.size()))));
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final Set<String> randomIdentifiers = Set.of(keyIdentifiers.getFirst(),
+				keyIdentifiers.getLast());
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setServiceIdentifiers(randomIdentifiers.toArray(String[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& randomIdentifiers.contains(e.getServiceIdentifier()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + service identifier returned").containsExactly(expected);
+	}
+
 }
