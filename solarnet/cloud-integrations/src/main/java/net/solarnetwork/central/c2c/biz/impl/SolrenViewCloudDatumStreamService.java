@@ -822,6 +822,10 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			datumIsNew.setFalse();
 			final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
 			parseDatumProperties(n, componentId, samples, refsByComponent);
+			if ( samples.isEmpty() ) {
+				streamBuffer.removeTimestamp(streamId, ts, samples);
+				continue;
+			}
 
 			if ( datumIsNew.isFalse() || timeGapThreshold == null ) {
 				continue;

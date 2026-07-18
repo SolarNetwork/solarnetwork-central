@@ -946,6 +946,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 					final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts, datumIsNew);
 					samples.putSampleValue(ref.property.getPropertyType(),
 							ref.property.getPropertyName(), propVal);
+					if ( samples.isEmpty() ) {
+						streamBuffer.removeTimestamp(streamId, ts, samples);
+						continue;
+					}
 					if ( datumIsNew.booleanValue() && timeGapThreshold != null ) {
 						// time gap validation for new datum
 						Instant prevTs = streamBuffer.previousTimestamp(streamId, ts);
