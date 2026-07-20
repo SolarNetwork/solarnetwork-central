@@ -51,6 +51,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDa
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -63,7 +64,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamMappingConfigurationDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -394,6 +395,165 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 
 		// THEN
 		then(results).as("Results for node IDs returned").containsExactlyElementsOf(expected);
+	}
+
+	@Test
+	public void mergeServiceProps_mode_simple() {
+		// GIVEN
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"other", randomString()
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("foo", randomString(), "baz", randomString());
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.Simple, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"other", conf.getServiceProperties().get("other"),
+				"foo", newProps.get("foo"),
+				"baz", newProps.get("baz")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursive() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.RecursiveObjects,
+				newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursiveArrays() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id,
+				MergeMode.RecursiveObjectsAndArrays, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects and arrays")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a1", "a2")
+			))
+			;
+		// @formatter:on
 	}
 
 }

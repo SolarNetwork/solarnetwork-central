@@ -27,6 +27,7 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterableDao;
@@ -35,12 +36,13 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CloudIntegrationConfigurationDao
 		extends GenericCompositeKey2Dao<CloudIntegrationConfiguration, UserLongCompositePK, Long, Long>,
 		FilterableDao<CloudIntegrationConfiguration, UserLongCompositePK, CloudIntegrationFilter>,
-		UserModifiableEnabledStatusDao<CloudIntegrationFilter> {
+		UserModifiableEnabledStatusDao<CloudIntegrationFilter>,
+		ModifiableServicePropertiesDao<UserLongCompositePK> {
 
 	/**
 	 * Convenient method to find the integration associated with a datum stream.

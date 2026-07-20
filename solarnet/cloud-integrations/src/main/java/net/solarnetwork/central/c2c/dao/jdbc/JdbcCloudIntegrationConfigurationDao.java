@@ -26,6 +26,8 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +45,9 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationOAuthAuth
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
+import net.solarnetwork.central.common.dao.jdbc.sql.UpdateMergeServiceProperties;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -51,7 +55,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudIntegrationConfigurationDao}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationConfigurationDao {
 
@@ -170,6 +174,24 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	public boolean mergeServiceProperties(UserLongCompositePK id, Map<String, ?> serviceProperties) {
 		var sql = new UpdateCloudIntegrationMergeServiceProperties(id, serviceProperties);
 		return jdbcOps.update(sql) > 0;
+	}
+
+	@Override
+	public Map<String, Object> mergeServiceProperties(UserLongCompositePK id, MergeMode mode,
+			Map<String, ?> serviceProperties) {
+		var sql = UpdateMergeServiceProperties.common2Column(TABLE_NAME, id, mode, serviceProperties);
+		Map<String, Object> result = jdbcOps.execute(sql, (PreparedStatement ps) -> {
+			if ( ps.execute() ) {
+				try (ResultSet rs = ps.getResultSet()) {
+					if ( rs.next() ) {
+						String sprops = rs.getString(1);
+						return JsonUtils.getStringMap(sprops);
+					}
+				}
+			}
+			return null;
+		});
+		return result;
 	}
 
 }

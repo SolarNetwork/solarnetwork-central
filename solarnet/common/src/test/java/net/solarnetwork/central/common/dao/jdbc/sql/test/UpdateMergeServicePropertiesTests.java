@@ -44,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateMergeServiceProperties;
-import net.solarnetwork.central.common.dao.jdbc.sql.UpdateMergeServiceProperties.MergeMode;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 

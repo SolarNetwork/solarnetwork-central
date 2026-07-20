@@ -31,6 +31,7 @@ import java.util.function.IntFunction;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
@@ -72,20 +73,6 @@ public class UpdateMergeServiceProperties implements PreparedStatementCreator, S
 
 	/** A common column name for the entity ID. */
 	public static final String ENTITY_ID_COLUMN_NAME = "id";
-
-	/**
-	 * A merge mode enumeration.
-	 */
-	public enum MergeMode {
-		/** A simple merge of top-level properties only. */
-		Simple,
-
-		/** A recursive merge of objects. */
-		RecursiveObjects,
-
-		/** A recusrive merge of objects and arrays. */
-		RecursiveObjectsAndArrays,
-	}
 
 	/**
 	 * A common {@code (user_id, id)} composite key column naming function.
@@ -178,6 +165,7 @@ public class UpdateMergeServiceProperties implements PreparedStatementCreator, S
 			}
 			buf.append(idColumnNameProvider.apply(i)).append(" = ?\n");
 		}
+		buf.append("RETURNING ").append(servicePropertiesColumnName);
 		return buf.toString();
 	}
 

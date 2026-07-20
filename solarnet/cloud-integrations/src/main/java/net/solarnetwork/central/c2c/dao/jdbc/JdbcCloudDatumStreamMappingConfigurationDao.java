@@ -28,8 +28,11 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
@@ -40,7 +43,9 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamMappingCo
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
+import net.solarnetwork.central.common.dao.jdbc.sql.UpdateMergeServiceProperties;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -48,7 +53,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudDatumStreamMappingConfigurationDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamMappingConfigurationDao
 		implements CloudDatumStreamMappingConfigurationDao {
@@ -144,6 +149,24 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 		var pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id");
 		var sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public Map<String, Object> mergeServiceProperties(UserLongCompositePK id, MergeMode mode,
+			Map<String, ?> serviceProperties) {
+		var sql = UpdateMergeServiceProperties.common2Column(TABLE_NAME, id, mode, serviceProperties);
+		Map<String, Object> result = jdbcOps.execute(sql, (PreparedStatement ps) -> {
+			if ( ps.execute() ) {
+				try (ResultSet rs = ps.getResultSet()) {
+					if ( rs.next() ) {
+						String sprops = rs.getString(1);
+						return JsonUtils.getStringMap(sprops);
+					}
+				}
+			}
+			return null;
+		});
+		return result;
 	}
 
 }
