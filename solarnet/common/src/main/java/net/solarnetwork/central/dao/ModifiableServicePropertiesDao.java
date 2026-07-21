@@ -42,7 +42,7 @@ public interface ModifiableServicePropertiesDao<K extends Comparable<K>> {
 		/** A recursive merge of objects. */
 		RecursiveObjects,
 
-		/** A recusrive merge of objects and arrays. */
+		/** A recursive merge of objects and arrays. */
 		RecursiveObjectsAndArrays,
 	}
 
