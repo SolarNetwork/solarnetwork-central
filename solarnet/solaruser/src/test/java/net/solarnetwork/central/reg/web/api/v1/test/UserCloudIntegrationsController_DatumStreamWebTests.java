@@ -86,7 +86,7 @@ import tools.jackson.databind.ObjectMapper;
  * {@link UserCloudIntegrationsControlsController} datum stream actions.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc

@@ -404,7 +404,7 @@ public class UserCloudIntegrationsController {
 		return success(biz.saveConfiguration(id, input));
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}",
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/serviceProperties",
 			method = RequestMethod.PATCH)
 	public Result<Map<String, ?>> mergeCloudDatumStreamMappingConfigurationServiceProperties(
 			@PathVariable Long datumStreamMappingId,
