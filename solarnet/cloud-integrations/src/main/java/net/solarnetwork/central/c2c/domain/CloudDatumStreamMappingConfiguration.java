@@ -38,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.service.ServiceConfiguration;
 
 /**
  * Cloud datum stream mapping configuration.
@@ -48,7 +49,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @see CloudDatumStreamPropertyConfiguration
  */
 @JsonIgnoreProperties({ "id", "enabled", "fullyConfigured", "datumStreamMappingId" })
@@ -57,7 +58,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 public final class CloudDatumStreamMappingConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
-		CloudDatumStreamMappingIdRelated {
+		CloudDatumStreamMappingIdRelated, ServiceConfiguration {
 
 	@Serial
 	private static final long serialVersionUID = -5099340175851992871L;
@@ -323,6 +324,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the service properties
 	 */
+	@Override
 	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}

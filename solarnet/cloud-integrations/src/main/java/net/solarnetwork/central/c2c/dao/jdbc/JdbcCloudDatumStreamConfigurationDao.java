@@ -174,7 +174,7 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 			}
 			return null;
 		});
-		return result;
+		return (result != null ? result : Map.of());
 	}
 
 }

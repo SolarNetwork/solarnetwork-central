@@ -166,7 +166,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 			}
 			return null;
 		});
-		return result;
+		return (result != null ? result : Map.of());
 	}
 
 }

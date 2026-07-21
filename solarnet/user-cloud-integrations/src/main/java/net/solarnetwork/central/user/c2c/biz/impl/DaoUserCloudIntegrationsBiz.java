@@ -32,6 +32,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REF
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.CollectionUtils.getMapString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.sha256MaskedMap;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.ArrayList;
@@ -93,6 +94,8 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -102,6 +105,7 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
@@ -115,6 +119,8 @@ import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.service.IdentifiableConfiguration;
+import net.solarnetwork.service.ServiceConfiguration;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -500,6 +506,57 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
 
 		return requireNonNullObject(digestSensitiveInformation(result), config.id());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public <C extends CloudIntegrationsConfigurationEntity<C, K> & ServiceConfiguration, K extends UserRelatedCompositeKey<K>> Map<String, ?> mergeConfigurationServiceProperties(
+			final K id, final MergeMode mode, final Map<String, Object> serviceProperties,
+			Class<C> configurationClass) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(mode, "mode");
+		requireNonNullArgument(serviceProperties, "serviceProperties");
+		if ( !id.userIdIsAssigned() ) {
+			throw new IllegalArgumentException("The userId must be provided.");
+		}
+
+		//@SuppressWarnings("unchecked")
+		final ModifiableServicePropertiesDao<K> propsDao = servicePropertiesDao(configurationClass);
+		final GenericDao<C, K> dao = genericDao(configurationClass);
+
+		final C config = requireNonNullObject(dao.get(id), id);
+		final Set<String> secureKeys = (config instanceof IdentifiableConfiguration identConfig
+				? serviceSecureKeys.get(identConfig.getServiceIdentifier())
+				: null);
+
+		// handle OAuth raw token values
+		Map<String, Object> oauthTokenProperties = null;
+		if ( config.hasServiceProperty(OAUTH_CLIENT_ID_SETTING, String.class)
+				&& serviceProperties.get(OAUTH_ACCESS_TOKEN_SETTING) != null
+				&& serviceProperties.get(OAUTH_REFRESH_TOKEN_SETTING) != null ) {
+			oauthTokenProperties = new LinkedHashMap<>(3);
+			oauthTokenProperties.put(OAUTH_CLIENT_ID_SETTING,
+					config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+			oauthTokenProperties.put(OAUTH_ACCESS_TOKEN_SETTING,
+					serviceProperties.get(OAUTH_ACCESS_TOKEN_SETTING));
+			oauthTokenProperties.put(OAUTH_REFRESH_TOKEN_SETTING,
+					serviceProperties.get(OAUTH_REFRESH_TOKEN_SETTING));
+		}
+
+		final Map<String, Object> propsToMerge = SecurityUtils.encryptedMap(serviceProperties,
+				secureKeys, textEncryptor);
+
+		if ( propsToMerge == null ) {
+			return Map.of();
+		}
+
+		final Map<String, Object> result = propsDao.mergeServiceProperties(id, mode, propsToMerge);
+
+		if ( oauthTokenProperties != null && config instanceof UserIdentifiableSystem oauthConfig ) {
+			saveOAuthTokens(oauthConfig, oauthTokenProperties);
+		}
+
+		return requireNonNullObject(sha256MaskedMap(result, secureKeys), id);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -941,6 +998,23 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (FilterableDao<C, K, F>) controlDao;
 		} else if ( CloudDatumStreamSettingsEntity.class.isAssignableFrom(clazz) ) {
 			result = (FilterableDao<C, K, F>) datumStreamSettingsDao;
+		}
+		if ( result != null ) {
+			return result;
+		}
+		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> ModifiableServicePropertiesDao<K> servicePropertiesDao(
+			Class<C> clazz) {
+		ModifiableServicePropertiesDao<K> result = null;
+		if ( CloudIntegrationConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (ModifiableServicePropertiesDao<K>) integrationDao;
+		} else if ( CloudDatumStreamConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (ModifiableServicePropertiesDao<K>) datumStreamDao;
+		} else if ( CloudDatumStreamMappingConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (ModifiableServicePropertiesDao<K>) datumStreamMappingDao;
 		}
 		if ( result != null ) {
 			return result;

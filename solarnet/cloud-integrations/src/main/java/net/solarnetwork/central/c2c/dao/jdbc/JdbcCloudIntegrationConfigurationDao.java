@@ -191,7 +191,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 			}
 			return null;
 		});
-		return result;
+		return (result != null ? result : Map.of());
 	}
 
 }
