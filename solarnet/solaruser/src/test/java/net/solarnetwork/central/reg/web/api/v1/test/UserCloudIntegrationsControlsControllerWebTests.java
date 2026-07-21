@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserCloudIntegrationsClontrolsControllerWebTests.java - 17/12/2025 12:07:44 pm
+ * UserCloudIntegrationsControlsControllerWebTests.java - 17/12/2025 12:07:44 pm
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -79,7 +79,7 @@ import tools.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
-public class UserCloudIntegrationsClontrolsControllerWebTests
+public class UserCloudIntegrationsControlsControllerWebTests
 		extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final Clock clock = Clock.tickMillis(ZoneOffset.UTC);
