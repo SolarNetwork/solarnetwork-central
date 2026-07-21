@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -60,6 +61,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -272,6 +274,18 @@ public class UserCloudIntegrationsController {
 		return success(biz.saveConfiguration(id, input));
 	}
 
+	@RequestMapping(value = "/integrations/{integrationId}/serviceProperties",
+			method = RequestMethod.PATCH)
+	public Result<Map<String, ?>> mergeCloudIntegrationConfigurationServiceProperties(
+			@PathVariable Long integrationId,
+			@RequestParam(value = "mode", required = false, defaultValue = "Simple") MergeMode mode,
+			@RequestBody Map<String, Object> serviceProperties) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
+		return success(biz.mergeConfigurationServiceProperties(id, mode, serviceProperties,
+				CloudIntegrationConfiguration.class));
+	}
+
 	@RequestMapping(value = "/integrations/{integrationId}/enabled/{enabled}",
 			method = RequestMethod.POST)
 	public Result<CloudIntegrationConfiguration> enableCloudIntegrationConfiguration(
@@ -391,6 +405,18 @@ public class UserCloudIntegrationsController {
 	}
 
 	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}",
+			method = RequestMethod.PATCH)
+	public Result<Map<String, ?>> mergeCloudDatumStreamMappingConfigurationServiceProperties(
+			@PathVariable Long datumStreamMappingId,
+			@RequestParam(value = "mode", required = false, defaultValue = "Simple") MergeMode mode,
+			@RequestBody Map<String, Object> serviceProperties) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamMappingId);
+		return success(biz.mergeConfigurationServiceProperties(id, mode, serviceProperties,
+				CloudDatumStreamMappingConfiguration.class));
+	}
+
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}",
 			method = RequestMethod.DELETE)
 	public Result<Void> deleteCloudDatumStreamMappingConfiguration(
 			@PathVariable Long datumStreamMappingId) {
@@ -506,6 +532,18 @@ public class UserCloudIntegrationsController {
 		final UserCloudIntegrationsBiz biz = biz();
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
 		return success(biz.saveConfiguration(id, input));
+	}
+
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/serviceProperties",
+			method = RequestMethod.PATCH)
+	public Result<Map<String, ?>> mergeCloudDatumStreamConfigurationServiceProperties(
+			@PathVariable Long datumStreamId,
+			@RequestParam(value = "mode", required = false, defaultValue = "Simple") MergeMode mode,
+			@RequestBody Map<String, Object> serviceProperties) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		return success(biz.mergeConfigurationServiceProperties(id, mode, serviceProperties,
+				CloudDatumStreamConfiguration.class));
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/enabled/{enabled}",
