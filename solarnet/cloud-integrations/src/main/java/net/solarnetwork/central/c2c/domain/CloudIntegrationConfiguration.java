@@ -42,7 +42,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "fullyConfigured" })
+@JsonIgnoreProperties({ "id", "fullyConfigured", "integrationId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "serviceIdentifier",
 		"serviceProperties" })
 public final class CloudIntegrationConfiguration
@@ -50,7 +50,7 @@ public final class CloudIntegrationConfiguration
 		implements
 		CloudIntegrationsConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
-		UserIdentifiableSystem {
+		UserIdentifiableSystem, CloudIntegrationIdRelated {
 
 	/**
 	 * A system identifier component included in {@link #systemIdentifier()}.
@@ -110,6 +110,11 @@ public final class CloudIntegrationConfiguration
 	@Override
 	public boolean isFullyConfigured() {
 		return true; // can't really tell with this one
+	}
+
+	@Override
+	public Long getIntegrationId() {
+		return getConfigId();
 	}
 
 	@Override

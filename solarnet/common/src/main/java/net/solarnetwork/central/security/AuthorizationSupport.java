@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class AuthorizationSupport {
 
@@ -331,6 +331,38 @@ public class AuthorizationSupport {
 	 */
 	public void requireUnrestrictedSecurityPolicy() {
 		if ( !SecurityUtils.policyIsUnrestricted(getActiveSecurityPolicy()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
+	}
+
+	/**
+	 * Require the active user to not have any node ID restriction in a security
+	 * policy.
+	 * 
+	 * @since 2.2
+	 */
+	public void requireUnrestrictedNodeSecurityPolicy() {
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+		if ( policy.getNodeIds() != null && !policy.getNodeIds().isEmpty() ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
+	}
+
+	/**
+	 * Require the active user to not have any source ID restriction in a
+	 * security policy.
+	 * 
+	 * @since 2.2
+	 */
+	public void requireUnrestrictedSourceSecurityPolicy() {
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+		if ( policy.getSourceIds() != null && !policy.getSourceIds().isEmpty() ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
 		}
 	}

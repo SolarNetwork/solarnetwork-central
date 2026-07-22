@@ -58,7 +58,7 @@ import net.solarnetwork.service.ServiceConfiguration;
 public final class CloudDatumStreamMappingConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
-		CloudDatumStreamMappingIdRelated, ServiceConfiguration {
+		CloudDatumStreamMappingIdRelated, CloudIntegrationIdRelated, ServiceConfiguration {
 
 	@Serial
 	private static final long serialVersionUID = -5099340175851992871L;
@@ -221,6 +221,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the integration ID
 	 */
+	@Override
 	public final Long getIntegrationId() {
 		return integrationId;
 	}

@@ -55,7 +55,7 @@ public class CloudControlConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudControlConfiguration, UserLongCompositePK>
 		implements CloudIntegrationsConfigurationEntity<CloudControlConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudControlConfiguration, UserLongCompositePK>,
-		UserIdentifiableSystem {
+		UserIdentifiableSystem, CloudIntegrationIdRelated {
 
 	/**
 	 * A system identifier component included in {@link #systemIdentifier()}.
@@ -264,6 +264,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the integration ID
 	 */
+	@Override
 	public final Long getIntegrationId() {
 		return integrationId;
 	}
