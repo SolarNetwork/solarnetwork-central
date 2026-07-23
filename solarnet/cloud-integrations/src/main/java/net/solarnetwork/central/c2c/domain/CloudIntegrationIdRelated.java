@@ -1,7 +1,7 @@
 /* ==================================================================
- * CloudDatumStreamMappingIdRelated.java - 18/12/2025 8:59:20 am
+ * CloudIntegrationIdRelated.java - 22/07/2026 4:28:35 pm
  *
- * Copyright 2025 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -22,51 +22,47 @@
 
 package net.solarnetwork.central.c2c.domain;
 
-import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.EntityConstants;
 
 /**
- * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
- * entity by way of a configuration ID.
+ * API for objects related to an {@link CloudIntegrationConfiguration} entity by
+ * way of a configuration ID.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface CloudDatumStreamMappingIdRelated {
+public interface CloudIntegrationIdRelated {
 
 	/**
-	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
-	 * {@code configId}.
+	 * Get the integration ID.
 	 *
-	 * @return the datum stream mapping ID
+	 * @return the integration ID
 	 */
-	@Nullable
-	Long getDatumStreamMappingId();
+	Long getIntegrationId();
 
 	/**
-	 * Test if a datum stream mapping ID is available.
+	 * Test if a datum stream ID is available.
 	 *
-	 * @return {@code true} if a datum stream mapping ID is available
+	 * @return {@code true} if a datum stream ID is available
 	 */
-	default boolean hasDatumStreamMappingId() {
-		return EntityConstants.isAssigned(getDatumStreamMappingId());
+	default boolean hasIntegrationId() {
+		return EntityConstants.isAssigned(getIntegrationId());
 	}
 
 	/**
-	 * Get the datum stream mapping ID.
+	 * Get the integration ID.
 	 *
 	 * <p>
 	 * This method is designed to be used after a call to
-	 * {@link #hasDatumStreamMappingId()} returns {@code true}, to avoid
-	 * nullness warnings.
+	 * {@link #hasIntegrationId()} returns {@code true}, to avoid nullness
+	 * warnings.
 	 * </p>
 	 *
-	 * @return the datum stream mapping ID (presumed non-null)
-	 * @since 1.1
+	 * @return the integration ID (presumed non-null)
 	 */
 	@SuppressWarnings("NullAway")
-	default Long datumStreamMappingId() {
-		return getDatumStreamMappingId();
+	default Long integrationId() {
+		return getIntegrationId();
 	}
 
 }
