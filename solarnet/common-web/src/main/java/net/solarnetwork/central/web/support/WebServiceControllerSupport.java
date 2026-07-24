@@ -302,7 +302,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleJsonParseException(JacksonException e, WebRequest request) {
-		log.debug("JsonProcessingException in request {}", requestDescription(request), e);
+		log.debug("JacksonException in request {}", requestDescription(request), e);
 		return error(null, "Malformed JSON: " + e.getOriginalMessage());
 	}
 
