@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -40,7 +41,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudDatumStreamRakeTaskEntity} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectCloudDatumStreamRakeTaskEntity
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -84,13 +85,15 @@ public class SelectCloudDatumStreamRakeTaskEntity
 	}
 
 	private void sqlCore(StringBuilder buf) {
+		CloudIntegrationsSqlUtils.withCloudDatumStreamSourceIdsFilter(filter, buf);
 		buf.append("""
 				SELECT cdsrt.user_id, cdsrt.id
 					, cdsrt.ds_id, cdsrt.status, cdsrt.exec_at, cdsrt.start_offset, cdsrt.message
 					, cdsrt.sprops
 				FROM solardin.cin_datum_stream_rake_task cdsrt
 				""");
-		if ( filter.hasNodeCriteria() ) {
+		CloudIntegrationsSqlUtils.joinCloudDatumStreamSourceIdsFilter(filter, buf);
+		if ( filter.hasNodeCriteria() || filter.hasSourceCriteria() ) {
 			buf.append("""
 					INNER JOIN solardin.cin_datum_stream cds ON cds.user_id = cdsrt.user_id
 						AND cds.kind = 'n' AND cds.id = cdsrt.ds_id
@@ -116,6 +119,7 @@ public class SelectCloudDatumStreamRakeTaskEntity
 		if ( filter.hasNodeCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
 		}
+		CloudIntegrationsSqlUtils.whereCloudDatumStreamHasSourceIds(filter, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -138,6 +142,9 @@ public class SelectCloudDatumStreamRakeTaskEntity
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( filter.hasSourceCriteria() ) {
+			p = prepareArrayParameter(con, stmt, p, filter.getSourceIds());
+		}
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}

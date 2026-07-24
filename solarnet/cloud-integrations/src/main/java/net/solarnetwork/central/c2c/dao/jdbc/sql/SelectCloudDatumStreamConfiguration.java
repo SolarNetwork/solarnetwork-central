@@ -40,7 +40,6 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -91,13 +90,7 @@ public final class SelectCloudDatumStreamConfiguration
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		if ( filter.hasSourceCriteria() ) {
-			buf.append("""
-					WITH sources AS (
-						SELECT ?::text[] AS source_ids
-					)
-					""");
-		}
+		CloudIntegrationsSqlUtils.withCloudDatumStreamSourceIdsFilter(filter, buf);
 		buf.append("""
 				SELECT cds.user_id, cds.id, cds.created, cds.modified, cds.enabled
 					, cds.cname, cds.sident
@@ -105,11 +98,7 @@ public final class SelectCloudDatumStreamConfiguration
 					, cds.sprops
 				FROM solardin.cin_datum_stream cds
 				""");
-		if ( filter.hasSourceCriteria() ) {
-			buf.append("""
-					INNER JOIN sources ON TRUE
-					""");
-		}
+		CloudIntegrationsSqlUtils.joinCloudDatumStreamSourceIdsFilter(filter, buf);
 		if ( filter.hasIntegrationCriteria() ) {
 			buf.append("""
 					INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.id = cds.map_id
@@ -146,62 +135,7 @@ public final class SelectCloudDatumStreamConfiguration
 			where.append("\tAND cds.kind = '").append(ObjectDatumKind.Node.getKey()).append("'\n");
 			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
 		}
-		if ( filter.hasSourceCriteria() ) {
-			boolean pattern = false;
-			for ( String sourceId : filter.sourceIds() ) {
-				if ( DatumUtils.WILDCARD_PATTERN_MATCHER.isPattern(sourceId) ) {
-					pattern = true;
-					break;
-				}
-			}
-			where.append("\tAND (\n");
-			if ( pattern ) {
-				where.append(
-						"""
-									cds.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
-									OR (
-										jsonb_typeof(sprops->'sourceIdMap') = 'object'
-										AND EXISTS (
-											SELECT TRUE
-											FROM jsonb_array_elements_text(jsonb_path_query_array(sprops->'sourceIdMap', '$.*')) AS m_source_id
-											WHERE m_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
-										)
-									)
-									OR 	(
-										jsonb_typeof(sprops->'virtualSourceIds') = 'array'
-										AND jsonb_array_length(sprops->'virtualSourceIds') > 0
-										AND EXISTS (
-											SELECT TRUE
-											FROM jsonb_array_elements_text(cds.sprops->'virtualSourceIds') AS v_source_id
-											WHERE v_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
-										)
-									)
-								""");
-			} else {
-				where.append(
-						"""
-									cds.source_id = ANY(sources.source_ids)
-									OR (
-										jsonb_typeof(sprops->'sourceIdMap') = 'object'
-										AND EXISTS (
-											SELECT TRUE
-											FROM jsonb_array_elements_text(jsonb_path_query_array(sprops->'sourceIdMap', '$.*')) AS m_source_id
-											WHERE m_source_id = ANY(sources.source_ids)
-										)
-									)
-									OR 	(
-										jsonb_typeof(sprops->'virtualSourceIds') = 'array'
-										AND jsonb_array_length(sprops->'virtualSourceIds') > 0
-										AND EXISTS (
-											SELECT TRUE
-											FROM jsonb_array_elements_text(cds.sprops->'virtualSourceIds') AS v_source_id
-											WHERE v_source_id = ANY(sources.source_ids)
-										)
-									)
-								""");
-			}
-			where.append(")\n");
-		}
+		CloudIntegrationsSqlUtils.whereCloudDatumStreamHasSourceIds(filter, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}

@@ -23,11 +23,14 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.time.Instant.now;
+import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamRakeTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamRakeTaskEntity;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.within;
@@ -97,11 +100,26 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		return entity;
 	}
 
+	@FunctionalInterface
+	public static interface DatumStreamPopulatorCallback {
+
+		void populate(CloudDatumStreamConfiguration conf);
+
+	}
+
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
 			Map<String, Object> props) {
+		return createDatumStream(userId, datumStreamMappingId, props, null);
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
+			Map<String, Object> props, DatumStreamPopulatorCallback callback) {
 		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
 				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
 				randomString(), randomString(), props);
+		if ( callback != null ) {
+			callback.populate(conf);
+		}
 		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
 		return entity;
 	}
@@ -376,6 +394,252 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 					&& randomNodeIds.contains(ds.getObjectId())).findAny().isPresent();
 		}).toArray(CloudDatumStreamRakeTaskEntity[]::new);
 		then(results).as("Results for single user and node IDs returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndSources() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<CloudDatumStreamRakeTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, Map.of(randomString(),
+								randomSourceId(), randomString(), randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					for ( Period p : List.of(Period.ofDays(1), Period.ofDays(10)) ) {
+						// @formatter:off
+						CloudDatumStreamRakeTaskEntity entity = newCloudDatumStreamRakeTaskEntity(
+								userId,
+								datumStream.getConfigId(),
+								BasicClaimableJobState.Queued,
+								Instant.now(),
+								p,
+								randomString(),
+								null
+								);
+						// @formatter:on
+						confs.add(dao.get(dao.save(entity)));
+					}
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final Set<String> randomSourceIds = new HashSet<>(3);
+		while ( randomSourceIds.size() < 3 ) {
+			CloudDatumStreamConfiguration conf = userDatumStreams
+					.get(RNG.nextInt(userDatumStreams.size()));
+			final List<String> sources = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING).values()
+					.stream().toList();
+			randomSourceIds.add(sources.get(RNG.nextInt(sources.size())));
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceIds(randomSourceIds.toArray(String[]::new));
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( randomSourceIds.contains(mapped) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamRakeTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamRakeTaskEntity[]::new);
+		then(results).as("Results for single user and source ID prefix returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndSourcePattern() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+		final List<CloudDatumStreamRakeTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+								Map.of(randomString(), randomPrefix + randomSourceId(), randomString(),
+										randomPrefix + randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					for ( Period p : List.of(Period.ofDays(1), Period.ofDays(10)) ) {
+						// @formatter:off
+						CloudDatumStreamRakeTaskEntity entity = newCloudDatumStreamRakeTaskEntity(
+								userId,
+								datumStream.getConfigId(),
+								BasicClaimableJobState.Queued,
+								Instant.now(),
+								p,
+								randomString(),
+								null
+								);
+						// @formatter:on
+						confs.add(dao.get(dao.save(entity)));
+					}
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( mapped.startsWith(randomSourceIdPrefix) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamRakeTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamRakeTaskEntity[]::new);
+		then(results).as("Results for single user and source ID prefix returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndNodesAndSources() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+		final List<CloudDatumStreamRakeTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+								Map.of(randomString(), randomPrefix + randomSourceId(), randomString(),
+										randomPrefix + randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					for ( Period p : List.of(Period.ofDays(1), Period.ofDays(10)) ) {
+						// @formatter:off
+						CloudDatumStreamRakeTaskEntity entity = newCloudDatumStreamRakeTaskEntity(
+								userId,
+								datumStream.getConfigId(),
+								BasicClaimableJobState.Queued,
+								Instant.now(),
+								p,
+								randomString(),
+								null
+								);
+						// @formatter:on
+						confs.add(dao.get(dao.save(entity)));
+					}
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+		final Set<Long> randomNodeIds = new HashSet<>(3);
+		while ( randomNodeIds.size() < 3 ) {
+			randomNodeIds.add(userDatumStreams.get(RNG.nextInt(userDatumStreams.size())).getObjectId());
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			if ( !randomNodeIds.contains(conf.getObjectId()) ) {
+				return false;
+			}
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( mapped.startsWith(randomSourceIdPrefix) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamRakeTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamRakeTaskEntity[]::new);
+		then(results).as("Results for single user and nodes source ID prefix returned")
+				.containsExactly(expected);
 	}
 
 	@Test
