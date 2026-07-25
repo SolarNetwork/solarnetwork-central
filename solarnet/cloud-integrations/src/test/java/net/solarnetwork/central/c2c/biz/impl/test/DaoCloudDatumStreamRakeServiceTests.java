@@ -49,6 +49,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -306,6 +307,184 @@ public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUse
 				datumStream.getSourceId(), new String[] { "watts" }, new String[] { "wattHours" }, null);
 		final var d1 = new DatumEntity(meta1.getStreamId(), datum1.getTimestamp(), now(),
 				DatumProperties.propertiesFrom(datum1, meta1));
+		final var d2 = new DatumEntity(meta1.getStreamId(), datum2.getTimestamp(), now(),
+				DatumProperties.propertiesFrom(datum2, meta1));
+		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
+				Map.of(meta1.getStreamId(), meta1), List.of(d1, d2)));
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
+				datumStream.getConfigId(), Claimed, sod, Period.ofDays(1));
+
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamRakeTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamService).should().datum(same(datumStream), queryFilterCaptor.capture());
+		and.then(queryFilterCaptor.getValue())
+			.as("The query start date is the day offset from 'now'")
+			.returns(sod.minus(1, DAYS), from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("The query end date is the current date")
+			.returns(sod, from(CloudDatumStreamQueryFilter::getEndDate))
+			;
+
+		then(datumDao).should().findFiltered(datumFilterCaptor.capture());
+		and.then(datumFilterCaptor.getValue())
+			.as("The existing datum query is for stream object ID")
+			.returns(meta1.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("The existing datum query is for the stream source ID")
+			.returns(meta1.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("The existing datum query start date is the same as in the query filter")
+			.returns(sod.minus(1, DAYS), from(DatumCriteria::getStartDate))
+			.as("The existing datum query end date is the same as in the query filter")
+			.returns(sod, from(DatumCriteria::getEndDate))
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Update task execute date to start of 'tomorrow'")
+			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("No message generated for successful execution")
+			.returns(null, from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("No service properties generated for successful execution")
+			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getAllValues())
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
+			.satisfies(events -> {
+				and.then(events).element(0)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake tags provided in event")
+					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task progress event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(2)
+					.as("Task success reset event generated")
+					.isNotNull()
+					.as("Rake tags provided in event")
+					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+			})
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_syntheticDifference() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant sod = clock.instant().truncatedTo(ChronoUnit.DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId(), Claimed, clock.instant(), clock.instant().truncatedTo(HOURS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream
+		final var datum1 = new GeneralDatum(
+				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod),
+				new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 23456L), null));
+		final var datum2 = new GeneralDatum(
+				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(1, HOURS)),
+				new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 34567L), null));
+		given(datumStreamService.datum(same(datumStream), any()))
+				.willReturn(new BasicCloudDatumStreamQueryResult(List.of(datum1, datum2)));
+
+		// query for existing datum with same time range
+		final BasicObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(
+				UUID.randomUUID(), "UTC", ObjectDatumKind.Node, datumStream.getObjectId(),
+				datumStream.getSourceId(), new String[] { "watts" }, new String[] { "wattHours" }, null);
+
+		// make the existing d1 datum properties different, but tagged with synthetic
+		final var d1p = DatumProperties.propertiesFrom(datum1, meta1);
+		d1p.setInstantaneous(new BigDecimal[] { new BigDecimal("999") });
+		d1p.setTags(new String[] { Datum.SYNTHETIC_TAG });
+		final var d1 = new DatumEntity(meta1.getStreamId(), datum1.getTimestamp(), now(), d1p);
+
 		final var d2 = new DatumEntity(meta1.getStreamId(), datum2.getTimestamp(), now(),
 				DatumProperties.propertiesFrom(datum2, meta1));
 		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
