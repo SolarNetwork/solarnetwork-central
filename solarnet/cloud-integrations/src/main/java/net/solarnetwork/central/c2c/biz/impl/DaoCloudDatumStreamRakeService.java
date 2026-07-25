@@ -778,9 +778,13 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 	}
 
-	private static boolean differ(Datum datum, Datum datum2) {
+	private static boolean differ(Datum datum, Datum existing) {
 		DatumSamplesOperations s1 = datum.asSampleOperations();
-		DatumSamplesOperations s2 = datum2.asSampleOperations();
+		DatumSamplesOperations s2 = existing.asSampleOperations();
+		if ( s2.hasTag(Datum.SYNTHETIC_TAG) ) {
+			// always return false, so synthetic data is not replaced
+			return false;
+		}
 		return s1.differsNumericallyFrom(s2, StringUtils::numberValue, NumberUtils::bigDecimalForNumber);
 	}
 
