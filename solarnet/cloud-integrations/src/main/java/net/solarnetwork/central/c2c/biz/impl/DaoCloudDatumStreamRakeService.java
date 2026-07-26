@@ -551,7 +551,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 						}
 
 						Datum existing = existingDatum.get(datumId);
-						if ( existing == null || differ(datum, existing) ) {
+						if ( existing == null || shouldReplace(existing, datum) ) {
 							if ( log.isTraceEnabled() ) {
 								log.trace(
 										"Datum stream {} rake {} on {} found difference: existing = {}; found = {}",
@@ -778,7 +778,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 	}
 
-	private static boolean differ(Datum datum, Datum existing) {
+	private static boolean shouldReplace(Datum existing, Datum datum) {
 		DatumSamplesOperations s1 = datum.asSampleOperations();
 		DatumSamplesOperations s2 = existing.asSampleOperations();
 		if ( s2.hasTag(Datum.SYNTHETIC_TAG) ) {
