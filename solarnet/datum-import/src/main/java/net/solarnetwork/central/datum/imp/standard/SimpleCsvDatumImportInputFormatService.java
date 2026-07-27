@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.imp.standard;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -106,7 +105,8 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 			return null;
 		}
 		Map<String, Object> result = new LinkedHashMap<>(4);
-		for ( final int i : columns ) {
+		for ( Integer column : columns ) {
+			final int i = column - 1;
 			String val = (i < row.getFieldCount() ? row.getField(i) : null);
 			Number n = StringUtils.numberValue(val);
 			if ( n != null || val != null ) {
@@ -122,11 +122,16 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 			return null;
 		}
 		Set<String> result = new LinkedHashSet<>(4);
-		for ( final int i : columns ) {
+		for ( Integer column : columns ) {
+			final int i = column - 1;
 			String val = (i < row.getFieldCount() ? row.getField(i) : null);
 			if ( val != null ) {
-				String[] tags = val.trim().split("\\s*,\\s*");
-				Collections.addAll(result, tags);
+				String[] tags = val.trim().split("\\s*,\\s*", 0);
+				for ( String tag : tags ) {
+					if ( !tag.isBlank() ) {
+						result.add(tag);
+					}
+				}
 			}
 		}
 		return (result.isEmpty() ? null : result);

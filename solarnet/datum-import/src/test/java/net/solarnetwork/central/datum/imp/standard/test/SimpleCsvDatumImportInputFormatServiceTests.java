@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.standard.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -55,6 +57,7 @@ import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.standard.CsvDatumImportInputProperties;
 import net.solarnetwork.central.datum.imp.standard.SimpleCsvDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -186,6 +189,178 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 		assertThat("Progress complete", progress.get(progress.size() - 1), equalTo((Double) 1.0));
 
 		assertThat("Datum parsed", count, equalTo(6));
+	}
+
+	@Test
+	public void parse_allTypes() throws IOException {
+		// GIVEN
+		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
+		config.setTimeZoneId("UTC");
+		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
+		serviceProps.put("instantaneousDataColumns", "D");
+		serviceProps.put("accumulatingDataColumns", "E");
+		serviceProps.put("statusDataColumns", "F");
+		serviceProps.put("tagDataColumns", "G");
+		config.setServiceProps(serviceProps);
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-simple-data-07.csv", getClass()), "text/csv;charset=utf-8");
+
+		DateTimeFormatter dateFormat = DateTimeFormatter
+				.ofPattern(CsvDatumImportInputProperties.DEFAULT_DATE_FORMAT).withZone(ZoneOffset.UTC);
+
+		// WHEN
+		List<Double> progress = new ArrayList<>(8);
+		int count = 0;
+		try (ImportContext ctx = service.createImportContext(config, resource,
+				new ProgressListener<DatumImportService>() {
+
+					@Override
+					public void progressChanged(DatumImportService context, double amountComplete) {
+						assertThat("Context is service", context, sameInstance(service));
+						progress.add(amountComplete);
+					}
+				})) {
+			for ( GeneralNodeDatum d : ctx ) {
+				count++;
+				// @formatter:off
+				then(d)
+					.as("Node ID %d", count)
+					.returns(1L, from(GeneralNodeDatum::getNodeId))
+					.as("Source ID %d", count)
+					.returns("/DE/G1/B600/GEN/1", from(GeneralNodeDatum::getSourceId))
+					.extracting(GeneralNodeDatum::getSamples)
+					.as("Samples %d", count)
+					.isNotNull()
+					;
+				// @formatter:on
+				switch (count) {
+					case 1:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:30:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 11899), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78434365), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "a"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(null, from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+					case 2:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:35:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 9843), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78436074), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "b"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(Set.of("bonkers"), from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+					case 3:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:40:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 6934), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78437105), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "c"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(null, from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+					case 4:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:45:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 27314), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78438990), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "a"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(null, from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+					case 5:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:50:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 13630), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78440411), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "b"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(null, from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+					case 6:
+						// @formatter:off
+						then(d)
+							.as("date %d", count)
+							.returns(dateFormat.parse("2017-04-17 14:55:00", Instant::from), from(GeneralNodeDatum::getCreated))
+							.extracting(GeneralNodeDatum::getSamples)
+							.as("i data %d", count)
+							.returns(Map.of("watts", 8740), from(DatumSamples::getInstantaneous))
+							.as("a data %d", count)
+							.returns(Map.of("wattHours", 78441320), from(DatumSamples::getAccumulating))
+							.as("s data %d", count)
+							.returns(Map.of("phase", "c"), from(DatumSamples::getStatus))
+							.as("tags %d", count)
+							.returns(Set.of("crackers"), from(DatumSamples::getTags))
+							;
+						// @formatter:on
+						break;
+
+				}
+			}
+		}
+
+		// THEN
+		// @formatter:off
+		then(progress)
+			.as("Progress was made")
+			.isNotEmpty()
+			.as("Progress complete")
+			.last()
+			.isEqualTo(1.0)
+			;
+		then(count)
+			.as("Datum all parsed")
+			.isEqualTo(6)
+			;
+		// @formatter:on
 	}
 
 	@Test
