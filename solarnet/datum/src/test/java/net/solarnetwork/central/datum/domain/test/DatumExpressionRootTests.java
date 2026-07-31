@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.domain.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -48,6 +50,8 @@ import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -262,6 +266,70 @@ public class DatumExpressionRootTests {
 	}
 
 	@Test
+	public void latestProp() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, 0)).willReturn(latestDatum);
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		// WHEN
+		final Integer result = expressionService.evaluateExpression(
+				"latestProp('%s', 'foo')".formatted(sourceId), null, root, null, Integer.class);
+
+		final Integer noDatum = expressionService.evaluateExpression(
+				"latestProp('does not exist', 'foo')", null, root, null, Integer.class);
+
+		final Integer fallback = expressionService.evaluateExpression(
+				"latestProp('%s', 'nah', -1)".formatted(sourceId), null, root, null, Integer.class);
+
+		// THEN
+		and.then(result).as("Latest prop evaluated")
+				.isEqualTo(latestDatum.getSampleInteger(Instantaneous, "foo"));
+		and.then(noDatum).as("No datum latest prop evaluated to null").isNull();
+		and.then(fallback).as("Unknown latest prop evaluated to fallback").isEqualTo(-1);
+	}
+
+	@Test
+	public void latestProp_time() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 0))
+				.willReturn(latestDatum);
+
+		// WHEN
+
+		final Integer result = expressionService.evaluateExpression(
+				"latestProp('%s', timestamp, 'foo')".formatted(sourceId), null, root, null,
+				Integer.class);
+
+		final Integer noDatum = expressionService.evaluateExpression(
+				"latestProp('does not exist', timestamp)", null, root, null, Integer.class);
+
+		final Integer fallback = expressionService.evaluateExpression(
+				"latestProp('%s', timestamp, 'nah', -1)".formatted(sourceId), null, root, null,
+				Integer.class);
+
+		// THEN
+		and.then(result).as("Latest datum evaluated")
+				.isEqualTo(latestDatum.getSampleInteger(Instantaneous, "foo"));
+		and.then(noDatum).as("No datum latest prop evaluated to null").isNull();
+		and.then(fallback).as("Unknown latest prop evaluated to fallback").isEqualTo(-1);
+	}
+
+	@Test
 	public void offsetDatum() {
 		// GIVEN
 		final Long userId = randomLong();
@@ -319,6 +387,74 @@ public class DatumExpressionRootTests {
 
 		and.then(result).as("Latest datum evaluated")
 				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void offsetProp() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final int offset = randomInt();
+		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, offset)).willReturn(offsetDatum);
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		// WHEN
+		final Integer result = expressionService.evaluateExpression(
+				"offsetProp('%s', %d, 'foo')".formatted(sourceId, offset), null, root, null,
+				Integer.class);
+
+		final Integer noDatum = expressionService.evaluateExpression(
+				"offsetProp('does not exist', 0, 'foo')", null, root, null, Integer.class);
+
+		final Integer fallback = expressionService.evaluateExpression(
+				"offsetProp('%s', %d, 'nah', -1)".formatted(sourceId, offset), null, root, null,
+				Integer.class);
+
+		// THEN
+		and.then(result).as("Latest datum evaluated")
+				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
+		and.then(noDatum).as("Missing datum evaluated as null").isNull();
+		and.then(fallback).as("Missing property evaluated to fallback").isEqualTo(-1);
+	}
+
+	@Test
+	public void offsetProp_time() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final int offset = randomInt();
+		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), offset))
+				.willReturn(offsetDatum);
+
+		// WHEN
+
+		final Integer result = expressionService.evaluateExpression(
+				"offsetProp('%s', %d, timestamp, 'foo')".formatted(sourceId, offset), null, root, null,
+				Integer.class);
+
+		final Integer noDatum = expressionService.evaluateExpression(
+				"offsetProp('nah', 0, timestamp, 'foo')", null, root, null, Integer.class);
+
+		final Integer fallback = expressionService.evaluateExpression(
+				"offsetProp('%s', %d, timestamp, 'nah', -1)".formatted(sourceId, offset), null, root,
+				null, Integer.class);
+
+		// THEN
+		and.then(result).as("Latest datum evaluated")
+				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
+		and.then(noDatum).as("Missing datum evaluated as null").isNull();
+		and.then(fallback).as("Missing property evaluated to fallback").isEqualTo(-1);
 	}
 
 	@Test
@@ -783,8 +919,17 @@ public class DatumExpressionRootTests {
 			: 0
 			""";
 
-	@Test
-	public void simpleVirtualMeter_start() {
+	private static final String SIMPLE_VIRTUAL_METER2 = """
+			has('irradiance') && offsetProp(1, timestamp, 'irradianceHours') != null
+			? offset(1, timestamp).irradianceHours + round(
+				(secondsBetween(offset(1, timestamp).timestamp, timestamp) / 3600.0)
+					* avg({offsetProp(1, timestamp, 'irradiance', 0), irradiance}))
+			: offsetProp(1, timestamp, 'irradianceHours', 0)
+			""";
+
+	@ParameterizedTest
+	@ValueSource(strings = { SIMPLE_VIRTUAL_METER, SIMPLE_VIRTUAL_METER2 })
+	public void simpleVirtualMeter_start(final String expr) {
 		// GIVEN
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
@@ -803,15 +948,15 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
 
 		// WHEN
-		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
-				Long.class);
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
 
 		// THEN
 		and.then(result).as("irradianceHours calculated at start as 0").isEqualTo(0L);
 	}
 
-	@Test
-	public void simpleVirtualMeter_middle() {
+	@ParameterizedTest
+	@ValueSource(strings = { SIMPLE_VIRTUAL_METER, SIMPLE_VIRTUAL_METER2 })
+	public void simpleVirtualMeter_middle(final String expr) {
 		// GIVEN
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
@@ -830,15 +975,15 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
 
 		// WHEN
-		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
-				Long.class);
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
 
 		// THEN
 		and.then(result).as("irradianceHours is previous + (30/2) == 20").isEqualTo(20L);
 	}
 
-	@Test
-	public void simpleVirtualMeter_currNoIrradiance() {
+	@ParameterizedTest
+	@ValueSource(strings = { SIMPLE_VIRTUAL_METER, SIMPLE_VIRTUAL_METER2 })
+	public void simpleVirtualMeter_currNoIrradiance(final String expr) {
 		// GIVEN
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
@@ -857,15 +1002,15 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
 
 		// WHEN
-		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
-				Long.class);
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
 
 		// THEN
 		and.then(result).as("irradianceHours is previous as no irradiance available").isEqualTo(5L);
 	}
 
-	@Test
-	public void simpleVirtualMeter_prevNoIrradiance() {
+	@ParameterizedTest
+	@ValueSource(strings = { SIMPLE_VIRTUAL_METER, SIMPLE_VIRTUAL_METER2 })
+	public void simpleVirtualMeter_prevNoIrradiance(final String expr) {
 		// GIVEN
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
@@ -884,11 +1029,189 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
 
 		// WHEN
-		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
-				Long.class);
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
 
 		// THEN
 		and.then(result).as("irradianceHours is previous + 20/2 == 15L").isEqualTo(15L);
+	}
+
+	// original hard-coded source IDs expression
+	private static final String AGG_VIRTUAL_METER = """
+			sourceId.contains('/GEN/')
+			? sum({
+				(hasLatest('/INV/1', timestamp) && latest('/INV/1', timestamp).props['wattHours'] != null)
+					? latest('/INV/1', timestamp).props['wattHours']
+					: 0,
+				(hasLatest('/INV/2', timestamp) && latest('/INV/2', timestamp).props['wattHours'] != null)
+					? latest('/INV/2', timestamp).props['wattHours']
+					: 0,
+				(hasLatest('/INV/3', timestamp) && latest('/INV/3', timestamp).props['wattHours'] != null)
+					? latest('/INV/3', timestamp).props['wattHours']
+					: 0
+				})
+			: null
+			""";
+
+	// take hard-coded list of source IDs and project latest wattHours prop from each using
+	private static final String AGG_VIRTUAL_METER2 = """
+			sourceId.contains('/GEN/')
+			? sum({'/INV/1', '/INV/2', '/INV/3'}.![
+				#root.hasLatest(#this, #root.timestamp) && #root.latest(#this, #root.timestamp).props['wattHours'] != null
+					? #root.latest(#this, #root.timestamp).props['wattHours']
+					: 0])
+			: null
+			""";
+
+	// take hard-coded list of source IDs and project latest wattHours prop from each using latestProp()
+	private static final String AGG_VIRTUAL_METER3 = """
+			sourceId.contains('/GEN/')
+			? sum({'/INV/1', '/INV/2', '/INV/3'}.![
+				#root.latestProp(#this, #root.timestamp, 'wattHours', 0)
+				])
+			: null
+			""";
+
+	// take input parameter list of source IDs, filter by "INV", and project latest wattHours prop from each using latestProp()
+	private static final String AGG_VIRTUAL_METER4 = """
+			sourceId.contains('/GEN/')
+			? sum(dsSources.?[#this.contains("INV")].![#root.latestProp(#this, #root.timestamp, 'wattHours', 0)])
+			: null
+			""";
+
+	private static final List<String> DS_SOURCES = List.of("/GEN/100", "/INV/1", "/INV/2", "/INV/3",
+			"/WEA/1", "/BAT/1");
+
+	@ParameterizedTest
+	@ValueSource(
+			strings = { AGG_VIRTUAL_METER, AGG_VIRTUAL_METER2, AGG_VIRTUAL_METER3, AGG_VIRTUAL_METER4 })
+	public void aggVirtualMeter_wrongSource(final String expr) {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final Instant ts = Instant.now();
+
+		// our virtual source
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, "/OTHER/1", ts,
+				new DatumSamples(null, null, null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
+				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
+				userSecretProvider);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
+
+		// THEN
+		and.then(result).as("Other source resolves to null").isNull();
+	}
+
+	@ParameterizedTest
+	@ValueSource(
+			strings = { AGG_VIRTUAL_METER, AGG_VIRTUAL_METER2, AGG_VIRTUAL_METER3, AGG_VIRTUAL_METER4 })
+	public void aggVirtualMeter_allSourcesAvailable(final String expr) {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final Instant ts = Instant.now();
+
+		// our virtual source
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, "/GEN/1", ts,
+				new DatumSamples(null, null, null));
+
+		// sources to aggregate
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, "/INV/1", ts,
+				new DatumSamples(null, Map.of("wattHours", 20), null));
+		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, "/INV/2", ts.minus(1, MINUTES),
+				new DatumSamples(null, Map.of("wattHours", 10), null));
+		final GeneralDatum d3 = GeneralDatum.nodeDatum(nodeId, "/INV/3", ts.minus(1, SECONDS),
+				new DatumSamples(null, Map.of("wattHours", 5), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
+				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
+				userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/2", ts, 0)).willReturn(d2);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/3", ts, 0)).willReturn(d3);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
+
+		// THEN
+		and.then(result).as("wattHours calculated as sum").isEqualTo(35L);
+	}
+
+	@ParameterizedTest
+	@ValueSource(
+			strings = { AGG_VIRTUAL_METER, AGG_VIRTUAL_METER2, AGG_VIRTUAL_METER3, AGG_VIRTUAL_METER4 })
+	public void aggVirtualMeter_someSourceMissing(final String expr) {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final Instant ts = Instant.now();
+
+		// our virtual source
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, "/GEN/1", ts,
+				new DatumSamples(null, null, null));
+
+		// sources to aggregate
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, "/INV/1", ts,
+				new DatumSamples(null, Map.of("wattHours", 20), null));
+		final GeneralDatum d3 = GeneralDatum.nodeDatum(nodeId, "/INV/3", ts.minus(1, SECONDS),
+				new DatumSamples(null, Map.of("wattHours", 5), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
+				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
+				userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/2", ts, 0)).willReturn(null);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/3", ts, 0)).willReturn(d3);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
+
+		// THEN
+		and.then(result).as("wattHours calculated as sum even with missing source").isEqualTo(25L);
+	}
+
+	@ParameterizedTest
+	@ValueSource(
+			strings = { AGG_VIRTUAL_METER, AGG_VIRTUAL_METER2, AGG_VIRTUAL_METER3, AGG_VIRTUAL_METER4 })
+	public void aggVirtualMeter_somePropMissing(final String expr) {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final Instant ts = Instant.now();
+
+		// our virtual source
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, "/GEN/1", ts,
+				new DatumSamples(null, null, null));
+
+		// sources to aggregate
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, "/INV/1", ts,
+				new DatumSamples(null, Map.of("whatIsThis", 20), null));
+		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, "/INV/2", ts.minus(1, MINUTES),
+				new DatumSamples(null, Map.of("wattHours", 10), null));
+		final GeneralDatum d3 = GeneralDatum.nodeDatum(nodeId, "/INV/3", ts.minus(1, SECONDS),
+				new DatumSamples(null, Map.of("wattHours", 5), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
+				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
+				userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/2", ts, 0)).willReturn(d2);
+		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/3", ts, 0)).willReturn(d3);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
+
+		// THEN
+		and.then(result).as("wattHours calculated as sum even when property missing").isEqualTo(15L);
 	}
 
 }
