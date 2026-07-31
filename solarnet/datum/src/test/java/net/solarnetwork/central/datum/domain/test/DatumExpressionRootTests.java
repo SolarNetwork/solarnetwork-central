@@ -1074,7 +1074,7 @@ public class DatumExpressionRootTests {
 	// take input parameter list of source IDs, filter by "INV", and project latest wattHours prop from each using latestProp()
 	private static final String AGG_VIRTUAL_METER4 = """
 			sourceId.contains('/GEN/')
-			? sum(dsSources.?[#this.contains("INV")].![#root.latestProp(#this, #root.timestamp, 'wattHours', 0)])
+			? sum(allSourceIds.?[#this.contains("INV")].![#root.latestProp(#this, #root.timestamp, 'wattHours', 0)])
 			: null
 			""";
 
@@ -1095,8 +1095,8 @@ public class DatumExpressionRootTests {
 				new DatumSamples(null, null, null));
 
 		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
-				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
-				userSecretProvider);
+				Map.of("allSourceIds", DS_SOURCES), null, datumStreamsAccessor, null, null,
+				httpOperations, userSecretProvider);
 
 		// WHEN
 		Long result = expressionService.evaluateExpression(expr, null, root, null, Long.class);
@@ -1127,8 +1127,8 @@ public class DatumExpressionRootTests {
 				new DatumSamples(null, Map.of("wattHours", 5), null));
 
 		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
-				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
-				userSecretProvider);
+				Map.of("allSourceIds", DS_SOURCES), null, datumStreamsAccessor, null, null,
+				httpOperations, userSecretProvider);
 
 		// get offset earlier datum
 		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);
@@ -1162,8 +1162,8 @@ public class DatumExpressionRootTests {
 				new DatumSamples(null, Map.of("wattHours", 5), null));
 
 		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
-				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
-				userSecretProvider);
+				Map.of("allSourceIds", DS_SOURCES), null, datumStreamsAccessor, null, null,
+				httpOperations, userSecretProvider);
 
 		// get offset earlier datum
 		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);
@@ -1199,8 +1199,8 @@ public class DatumExpressionRootTests {
 				new DatumSamples(null, Map.of("wattHours", 5), null));
 
 		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(),
-				Map.of("dsSources", DS_SOURCES), null, datumStreamsAccessor, null, null, httpOperations,
-				userSecretProvider);
+				Map.of("allSourceIds", DS_SOURCES), null, datumStreamsAccessor, null, null,
+				httpOperations, userSecretProvider);
 
 		// get offset earlier datum
 		given(datumStreamsAccessor.offset(Node, nodeId, "/INV/1", ts, 0)).willReturn(d1);

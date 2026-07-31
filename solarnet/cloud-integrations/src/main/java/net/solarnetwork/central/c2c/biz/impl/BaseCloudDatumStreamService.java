@@ -45,11 +45,13 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -65,6 +67,7 @@ import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
+import org.threeten.extra.Interval;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -119,7 +122,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -224,6 +227,46 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			MULTI_STREAM_MAXIMUM_LAG_SETTING, DEFAULT_MULTI_STREAM_MAXIMUM_LAG.toString());
+
+	/**
+	 * The expression parameter name for a datum stream mapping configuration
+	 * ID.
+	 *
+	 * @since 2.5
+	 */
+	public static final String DATUM_STREAM_MAPPING_ID_PARAM = "datumStreamMappingId";
+
+	/**
+	 * The expression parameter name for an integration configuration ID.
+	 *
+	 * @since 2.5
+	 */
+	public static final String INTEGRATION_ID_PARAM = "integrationId";
+
+	/**
+	 * The expression parameter name for the resolved set of all source IDs
+	 * configured on a datum stream.
+	 *
+	 * <p>
+	 * This will include the mapped source IDs and virtual source IDs, all with
+	 * placeholders resolved.
+	 * </p>
+	 *
+	 * @since 2.5
+	 */
+	public static final String ALL_SOURCE_IDS_PARAM = "allSourceIds";
+
+	/**
+	 * The expression parameter name for the resolved set of mapped source IDs
+	 * configured on a datum stream.
+	 *
+	 * <p>
+	 * This will include just the mapped source IDs, with placeholders resolved.
+	 * </p>
+	 *
+	 * @since 2.5
+	 */
+	public static final String MAPPED_SOURCE_IDS_PARAM = "mappedSourceIds";
 
 	/** A clock to use. */
 	protected final Clock clock;
@@ -514,22 +557,57 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			return datum;
 		}
 
-		final Map<String, ?> params;
-		if ( parameters == null ) {
-			params = Map.of("datumStreamMappingId", mappingId, "integrationId", integrationId);
-		} else {
-			var tmp = new LinkedHashMap<String, Object>(parameters);
-			tmp.put("datumStreamMappingId", mappingId);
-			tmp.put("integrationId", integrationId);
-			params = tmp;
+		final Map<String, Object> params = new LinkedHashMap<>(8);
+		if ( parameters != null ) {
+			params.putAll(parameters);
 		}
+		params.put(DATUM_STREAM_MAPPING_ID_PARAM, mappingId);
+		params.put(INTEGRATION_ID_PARAM, integrationId);
 
 		final var placeholders = datumStream.servicePropertyStringMap(PLACEHOLDERS_SERVICE_PROPERTY);
+
+		// include complete set of source IDs
+		final Set<String> allSourceIds = new HashSet<>(8);
+		params.put(ALL_SOURCE_IDS_PARAM, allSourceIds);
+
+		// include sourceIdMap source IDs as parameter, if available
+		final Set<String> mappedSourceIds = datumStreamSourceIds(datumStream);
+		if ( mappedSourceIds != null ) {
+			Set<String> sources = new HashSet<>(mappedSourceIds.size());
+			for ( String s : mappedSourceIds ) {
+				String sourceId = expandTemplateString(s, placeholders);
+				sources.add(sourceId);
+				allSourceIds.add(sourceId);
+			}
+			params.put(MAPPED_SOURCE_IDS_PARAM, sources);
+		}
 
 		final List<String> virtualSourceIds = datumStream
 				.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
+
+		// include virtual source ID list as parameter, if available
+		if ( virtualSourceIds != null ) {
+			Set<String> virtual = new HashSet<>(virtualSourceIds.size());
+			for ( String s : virtualSourceIds ) {
+				String sourceId = expandTemplateString(s, placeholders);
+				virtual.add(sourceId);
+				allSourceIds.add(sourceId);
+			}
+			params.put(VIRTUAL_SOURCE_IDS_SETTING, virtual);
+		}
+
+		if ( mappedSourceIds == null && datumStream.getSourceId() != null ) {
+			allSourceIds.add(expandTemplateString(datumStream.getSourceId(), placeholders));
+		}
+
+		// include operational date ranges, if available
+		final Map<String, Interval> rangeMapping = datumStream
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping != null ) {
+			params.put(OPERATIONAL_DATE_RANGES_SETTING, rangeMapping);
+		}
 
 		final Collection<GeneralDatum> expressionDatum;
 		if ( virtualDatum != null && virtualSourceIds != null ) {
