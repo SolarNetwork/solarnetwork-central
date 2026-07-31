@@ -634,9 +634,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the timestamp to reference the offset from
 	 * @param key
 	 *        the property name to extract
-	 * @param fallback
-	 *        the value to return if the property is not available
-	 * @return the matching datum, or {@code fallback} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.2
 	 */
 	public @Nullable Object offsetProp(@Nullable String sourceId, int offset,
@@ -725,8 +723,6 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @param key
 	 *        the property name to extract
-	 * @param fallback
-	 *        the value to return if the property is not available
 	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.2
 	 */
@@ -809,8 +805,6 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the timestamp to reference the offset from
 	 * @param key
 	 *        the property name to extract
-	 * @param fallback
-	 *        the value to return if the property is not available
 	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.2
 	 */
