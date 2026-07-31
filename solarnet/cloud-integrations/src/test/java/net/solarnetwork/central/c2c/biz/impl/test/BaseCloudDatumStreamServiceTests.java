@@ -501,19 +501,21 @@ public class BaseCloudDatumStreamServiceTests {
 						Map.of("/pv1", "/inv/1", "/pv2", "/inv/2", "/bat1", "/bat/1")));
 
 		final var exprProp1 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
-				Instant.now(), Instantaneous, "w", SpelExpression,
-				"""
+				Instant.now(), Instantaneous, "w", SpelExpression, """
 						sourceId.contains('/gen/')
-						? avg(allSourceIds.?[#this.contains("inv")].![#root.latestProp(#this, #root.timestamp, 'w', 0)])
+						? avg(allSourceIds
+							.?[#this.contains("inv")]
+							.![#root.latestProp(#this, #root.timestamp, 'w', 0)])
 						: null
 						""");
 		exprProp1.setEnabled(true);
 
 		final var exprProp2 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 1,
-				Instant.now(), Accumulating, "wh", SpelExpression,
-				"""
+				Instant.now(), Accumulating, "wh", SpelExpression, """
 						sourceId.contains('/gen/')
-						? sum(allSourceIds.?[#this.contains("inv")].![#root.latestProp(#this, #root.timestamp, 'wh', 0)])
+						? sum(allSourceIds
+							.?[#this.contains("inv")]
+							.![#root.latestProp(#this, #root.timestamp, 'wh', 0)])
 						: null
 						""");
 		exprProp2.setEnabled(true);
