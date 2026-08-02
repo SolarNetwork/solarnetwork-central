@@ -47,8 +47,8 @@ import net.solarnetwork.domain.Unique;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "userId", "nodeId", "name", "idAndName", "description", "locationId", "timeZone",
-		"requiresAuthorization", "created" })
+@JsonPropertyOrder({ "userId", "nodeId", "name", "idAndName", "description", "locationId", "country",
+		"timeZone", "requiresAuthorization", "created" })
 public record UserNodeInfo(
 // @formatter:off
 		  Long nodeId
@@ -58,6 +58,7 @@ public record UserNodeInfo(
 		, Instant created
 		, boolean requiresAuthorization
 		, Long locationId
+		, String country
 		, ZoneId timeZone
 		// @formatter:on
 ) implements UserIdRelated, Unique<Long>, Serializable {
@@ -82,7 +83,8 @@ public record UserNodeInfo(
 		}
 		return new UserNodeInfo(userNode.id(), userNode.getUserId(), userNode.getName(),
 				userNode.getDescription(), nonnull(userNode.getCreated(), "Created"),
-				userNode.isRequiresAuthorization(), nodeLocation.id(), zone);
+				userNode.isRequiresAuthorization(), nodeLocation.id(),
+				nonnull(nodeLocation.getCountry(), "Country"), zone);
 	}
 
 	@JsonIgnore

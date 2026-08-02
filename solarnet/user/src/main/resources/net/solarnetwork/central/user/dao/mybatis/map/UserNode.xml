@@ -167,6 +167,7 @@
 			<arg column="user_node_created" javaType="java.time.Instant"/>
 			<arg column="user_node_private" javaType="_boolean"/>
 			<arg column="sn_node_loc_id" javaType="Long"/>
+			<arg column="sn_loc_country" javaType="String"/>
 			<arg column="sn_loc_time_zone" javaType="java.time.ZoneId"/>
 		</constructor>
 	</resultMap>
