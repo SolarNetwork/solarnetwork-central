@@ -225,6 +225,7 @@
 						<when test="item.sortKey == &quot;name&quot;">COALESCE(un.disp_name, n.node_name) COLLATE solarcommon.naturalsort</when>
 						<when test="item.sortKey == &quot;node&quot;">un.node_id</when>
 						<when test="item.sortKey == &quot;user&quot;">un.user_id</when>
+						<when test="item.sortKey == &quot;zone&quot;">l.time_zone</when>
 						<otherwise>un.node_id</otherwise>
 					</choose>
 					<if test="item.descending">DESC</if>

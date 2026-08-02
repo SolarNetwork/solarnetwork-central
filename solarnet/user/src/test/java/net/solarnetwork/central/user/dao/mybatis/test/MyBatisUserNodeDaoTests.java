@@ -769,18 +769,15 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void findFiltered_userAndTimeZone_sortByCreated() {
+	public void findFiltered_user_sortByCreated() {
 		// GIVEN
 		final List<UserNode> entities = populateTestEntities();
 
 		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
 
 		// WHEN
-		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
-
 		final var filter = new BasicUserNodeFilter();
 		filter.setUserId(randomUserId);
-		filter.setLocation(location);
 		filter.setOrderBy(List.of("created"));
 
 		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
@@ -788,7 +785,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// THEN
 		// @formatter:off
 		final UserNodeInfo[] expected = entities.stream()
-				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.filter(e -> randomUserId.equals(e.getUserId()))
 				.map(UserNodeInfo::forUserNode)
 				.sorted(Comparator.comparing(UserNodeInfo::created))
 				.toArray(UserNodeInfo[]::new)
@@ -802,18 +799,15 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void findFiltered_userAndTimeZone_sortByNodeDescending() {
+	public void findFiltered_user_sortByNodeDescending() {
 		// GIVEN
 		final List<UserNode> entities = populateTestEntities();
 
 		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
 
 		// WHEN
-		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
-
 		final var filter = new BasicUserNodeFilter();
 		filter.setUserId(randomUserId);
-		filter.setLocation(location);
 		filter.setOrderBy(List.of("node~"));
 
 		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
@@ -821,7 +815,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// THEN
 		// @formatter:off
 		final UserNodeInfo[] expected = entities.stream()
-				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.filter(e -> randomUserId.equals(e.getUserId()))
 				.map(UserNodeInfo::forUserNode)
 				.sorted(Comparator.comparing(UserNodeInfo::nodeId).reversed())
 				.toArray(UserNodeInfo[]::new)
@@ -835,18 +829,15 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void findFiltered_userAndTimeZone_sortByName() {
+	public void findFiltered_user_sortByName() {
 		// GIVEN
 		final List<UserNode> entities = populateTestEntities();
 
 		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
 
 		// WHEN
-		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
-
 		final var filter = new BasicUserNodeFilter();
 		filter.setUserId(randomUserId);
-		filter.setLocation(location);
 		filter.setOrderBy(List.of("name"));
 
 		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
@@ -854,9 +845,39 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// THEN
 		// @formatter:off
 		final UserNodeInfo[] expected = entities.stream()
-				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.filter(e -> randomUserId.equals(e.getUserId()))
 				.map(UserNodeInfo::forUserNode)
 				.sorted(Comparator.comparing(UserNodeInfo::name, CASE_INSENSITIVE_NATURAL_SORT))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByTimeZone() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("zone"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(r -> r.timeZone().getId()))
 				.toArray(UserNodeInfo[]::new)
 				;
 
