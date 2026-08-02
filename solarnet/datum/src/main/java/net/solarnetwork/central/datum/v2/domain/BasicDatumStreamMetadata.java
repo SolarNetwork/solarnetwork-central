@@ -35,7 +35,7 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
  * Implementation of {@link DatumStreamMetadata}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 2.8
  */
 public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializable {
@@ -150,38 +150,6 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 		return timeZoneId;
 	}
 
-	/**
-	 * Get the total number of instantaneous, accumulating, and status property
-	 * names.
-	 *
-	 * @return the total number of properties
-	 */
-	public int getPropertyNamesLength() {
-		return getInstantaneousLength() + getAccumulatingLength() + getStatusLength();
-	}
-
-	@Override
-	public String @Nullable [] getPropertyNames() {
-		final int iLen = getInstantaneousLength();
-		final int aLen = getAccumulatingLength();
-		final int sLen = getStatusLength();
-		final int len = iLen + aLen + sLen;
-		if ( len < 1 ) {
-			return null;
-		}
-		String[] result = new String[len];
-		if ( iLen > 0 ) {
-			System.arraycopy(instantaneousProperties, 0, result, 0, iLen);
-		}
-		if ( aLen > 0 ) {
-			System.arraycopy(accumulatingProperties, 0, result, iLen, aLen);
-		}
-		if ( sLen > 0 ) {
-			System.arraycopy(statusProperties, 0, result, iLen + aLen, sLen);
-		}
-		return result;
-	}
-
 	@Override
 	public String @Nullable [] propertyNamesForType(DatumSamplesType type) {
 		if ( type == null ) {
@@ -193,33 +161,6 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 			case Status -> statusProperties;
 			default -> null;
 		};
-	}
-
-	/**
-	 * Get the instantaneous property names array length.
-	 *
-	 * @return the number of instantaneous property names
-	 */
-	public int getInstantaneousLength() {
-		return (instantaneousProperties != null ? instantaneousProperties.length : 0);
-	}
-
-	/**
-	 * Get the accumulating property names array length.
-	 *
-	 * @return the number of accumulating property names
-	 */
-	public int getAccumulatingLength() {
-		return (accumulatingProperties != null ? accumulatingProperties.length : 0);
-	}
-
-	/**
-	 * Get the status property names array length.
-	 *
-	 * @return the number of status property names
-	 */
-	public int getStatusLength() {
-		return (statusProperties != null ? statusProperties.length : 0);
 	}
 
 }
