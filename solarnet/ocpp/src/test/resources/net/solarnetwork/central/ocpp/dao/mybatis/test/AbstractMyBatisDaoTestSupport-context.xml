@@ -21,6 +21,7 @@
 			<list>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.ZoneIdTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">
