@@ -30,11 +30,13 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
+import net.solarnetwork.central.user.dao.UserNodeFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
@@ -43,7 +45,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * API for registered user tasks.
  *
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public interface UserBiz {
 
@@ -70,6 +72,18 @@ public interface UserBiz {
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
 	List<UserNode> getUserNodes(Long userId) throws AuthorizationException;
+
+	/**
+	 * Find user node information matching a search filter.
+	 * 
+	 * @param userId
+	 *        the id of the user to get the information records for
+	 * @param filter
+	 *        the search criteria
+	 * @return the filter results
+	 * @since 4.1
+	 */
+	FilterResults<UserNodeInfo, Long> findUserNodeInfos(Long userId, UserNodeFilter filter);
 
 	/**
 	 * Get a specific node belonging to a specific user.

@@ -28,17 +28,20 @@ import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for UserNode objects.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
-public interface UserNodeDao extends GenericDao<UserNode, Long> {
+public interface UserNodeDao
+		extends GenericDao<UserNode, Long>, FilterableDao<UserNodeInfo, Long, UserNodeFilter> {
 
 	/**
 	 * Find a list of all UserNode objects for a particular user.

@@ -51,6 +51,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
+import net.solarnetwork.central.user.dao.BasicUserNodeFilter;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
@@ -58,11 +59,13 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.dao.UserNodeFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -75,7 +78,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -142,6 +145,14 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> getUserNodes(Long userId) {
 		return userNodeDao.findUserNodesAndCertificatesForUser(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<UserNodeInfo, Long> findUserNodeInfos(Long userId, UserNodeFilter filter) {
+		final var f = new BasicUserNodeFilter(filter);
+		f.setUserId(requireNonNullArgument(userId, "userId"));
+		return userNodeDao.findFiltered(f);
 	}
 
 	@Override
