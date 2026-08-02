@@ -36,7 +36,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class CommonDbTestUtils {
 
@@ -159,11 +159,34 @@ public final class CommonDbTestUtils {
 	 * @param archived
 	 *        {@literal true} to make the node "archived"
 	 */
-	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId, String name,
-			boolean requiresAuth, boolean archived) {
+	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId,
+			@Nullable String name, boolean requiresAuth, boolean archived) {
+		insertUserNode(jdbcTemplate, userId, nodeId, name, null, requiresAuth, archived);
+	}
+
+	/**
+	 * Insert a new user-node mapping.
+	 *
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param name
+	 *        the name
+	 * @param requiresAuth
+	 *        {@literal true} for a "private" node
+	 * @param archived
+	 *        {@literal true} to make the node "archived"
+	 * @since 1.3
+	 */
+	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId,
+			@Nullable String name, @Nullable String description, boolean requiresAuth,
+			boolean archived) {
 		jdbcTemplate.update(
-				"insert into solaruser.user_node (user_id,node_id,disp_name,private,archived) values (?,?,?,?,?)",
-				userId, nodeId, name, requiresAuth, archived);
+				"insert into solaruser.user_node (user_id,node_id,disp_name,description,private,archived) values (?,?,?,?,?,?)",
+				userId, nodeId, name, description, requiresAuth, archived);
 	}
 
 	/**
