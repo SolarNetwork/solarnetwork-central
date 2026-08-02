@@ -47,7 +47,7 @@ import net.solarnetwork.domain.Unique;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "userId", "nodeId", "name", "description", "locationId", "timeZone",
+@JsonPropertyOrder({ "userId", "nodeId", "name", "idAndName", "description", "locationId", "timeZone",
 		"requiresAuthorization", "created" })
 public record UserNodeInfo(
 // @formatter:off
