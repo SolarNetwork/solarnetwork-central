@@ -235,6 +235,12 @@
 				un.node_id
 			</otherwise>
 		</choose>
+		<if test="filter.max != null">
+			LIMIT #{filter.max}
+		</if>
+		<if test="filter.offset != null">
+			OFFSET #{filter.offset}
+		</if>
 	</select>
 
 </mapper>

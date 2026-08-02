@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -662,6 +664,40 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		then(results)
 			.as("Results for user returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(longs = { 0, 3, 6, 9 })
+	public void findFiltered_user_pages(long offset) {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setMax(3);
+		filter.setOffset(offset);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.sorted()
+				.skip(offset)
+				.limit(filter.getMax())
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Result page for user returned")
 			.containsExactly(expected)
 			;
 		// @formatter:on
