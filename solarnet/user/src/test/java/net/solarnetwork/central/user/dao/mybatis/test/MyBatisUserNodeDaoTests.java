@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,6 +37,7 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -756,6 +758,105 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
 				.sorted()
 				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndTimeZone_sortByCreated() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+		filter.setOrderBy(List.of("created"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::created))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndTimeZone_sortByNodeDescending() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+		filter.setOrderBy(List.of("node~"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::nodeId).reversed())
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndTimeZone_sortByName() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+		filter.setOrderBy(List.of("name"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::name, CASE_INSENSITIVE_NATURAL_SORT))
 				.toArray(UserNodeInfo[]::new)
 				;
 
