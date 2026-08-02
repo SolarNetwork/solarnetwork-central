@@ -297,6 +297,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				&& !policyNodeIds.isEmpty() ) {
 			// no node IDs provided, set to policy node IDs
 			nodeIds = policyNodeIds.toArray(Long[]::new);
+			filtered = true;
 		}
 
 		if ( nodeIds != null && nodeIds.length > 0 ) {
