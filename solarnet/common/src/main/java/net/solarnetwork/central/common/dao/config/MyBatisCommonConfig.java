@@ -22,17 +22,19 @@
 
 package net.solarnetwork.central.common.dao.config;
 
+import java.time.ZoneId;
 import java.util.UUID;
 import org.apache.ibatis.type.TypeHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler;
+import net.solarnetwork.central.dao.mybatis.type.ZoneIdTypeHandler;
 
 /**
  * Configuration for MyBatis.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class MyBatisCommonConfig {
@@ -40,6 +42,11 @@ public class MyBatisCommonConfig {
 	@Bean
 	public TypeHandler<UUID> uuidTypeHandler() {
 		return new UUIDTypeHandler();
+	}
+
+	@Bean
+	public TypeHandler<ZoneId> zoneIdTypeHandler() {
+		return new ZoneIdTypeHandler();
 	}
 
 }
