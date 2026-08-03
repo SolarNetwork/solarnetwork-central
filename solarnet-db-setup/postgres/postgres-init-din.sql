@@ -739,7 +739,7 @@ $$
 	)
 	-- select and lock all q rows within identified group
 	, gt AS (
-		SELECT t.user_id, t.id, t.exec_at
+		SELECT t.user_id, t.id, t.exec_at, t.start_offset
 		FROM solardin.cin_datum_stream_rake_task t
 		INNER JOIN g ON g.user_id = t.user_id AND g.ds_id = t.ds_id
 		WHERE t.status = 'q'
@@ -749,7 +749,7 @@ $$
 	, t AS (
 		SELECT user_id, id, exec_at
 		FROM gt
-		ORDER BY exec_at, id
+		ORDER BY exec_at, start_offset DESC
 		LIMIT 1
 	)
 	UPDATE solardin.cin_datum_stream_rake_task

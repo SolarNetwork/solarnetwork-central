@@ -1167,6 +1167,52 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	}
 
 	@Test
+	public void claimTask_withinDatumStreamGroup_oldestOffsetFirst() {
+		// GIVEN
+		insert();
+
+		// add other for same datum stream; purposefully make sure offset order != id order,
+		// to make sure query returns largest offset, not ID
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
+				last.getDatumStreamId(),
+				BasicClaimableJobState.Queued,
+				last.getExecuteAt(),
+				Period.ofDays(21),
+				randomString(),
+				null)
+				;
+		CloudDatumStreamRakeTaskEntity conf3 = newCloudDatumStreamRakeTaskEntity(userId,
+				last.getDatumStreamId(),
+				BasicClaimableJobState.Queued,
+				last.getExecuteAt(),
+				Period.ofDays(7),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		conf2 = dao.get(dao.save(conf2));
+		conf3 = dao.get(dao.save(conf3));
+
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
+
+		// THEN
+		CloudDatumStreamRakeTaskEntity expected = conf2.clone();
+		expected.setState(BasicClaimableJobState.Claimed);
+
+		// @formatter:off
+		then(result)
+			.as("Retrieved entity matches")
+			.isEqualTo(expected)
+			.matches(c -> c.isSameAs(expected), "Claimed entity has largest offset and is Claimed state")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void claimTask_withinDatumStreamGroup_differentGroup() {
 		// GIVEN
 		insert();
