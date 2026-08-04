@@ -333,6 +333,64 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	}
 
 	@Test
+	public void findFiltered_forUserAndDatumStreamAndState() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 2;
+		final int rakeCount = 4;
+		final List<CloudDatumStreamRakeTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final Long streamId = createDatumStream(userId, mappingId, Map.of("bim", "bam"))
+							.getConfigId();
+					for ( int r = 0; r < rakeCount; r++ ) {
+						// @formatter:off
+						CloudDatumStreamRakeTaskEntity entity = newCloudDatumStreamRakeTaskEntity(
+								userId,
+								streamId,
+								BasicClaimableJobState.values()[r % (BasicClaimableJobState.values().length - 1) + 1],
+								Instant.now(),
+								Period.ofDays(r + 1),
+								randomString(),
+								null
+								);
+						// @formatter:on
+						var pk = dao.save(entity);
+						confs.add(dao.get(pk));
+					}
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamRakeTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setDatumStreamId(randomConf.getDatumStreamId());
+		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Claimed,
+				BasicClaimableJobState.Executing });
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamRakeTaskEntity[] expected = confs
+				.stream().filter(
+						e -> randomConf.getUserId().equals(e.getUserId())
+								&& randomConf.getDatumStreamId().equals(e.getDatumStreamId())
+								&& EnumSet.of(BasicClaimableJobState.Claimed,
+										BasicClaimableJobState.Executing).contains(e.getState()))
+				.toArray(CloudDatumStreamRakeTaskEntity[]::new);
+		then(results).as("Results for single user and datum stream and specified states returned")
+				.containsExactly(expected);
+	}
+
+	@Test
 	public void findFiltered_forUserAndNode() throws Exception {
 		final int userCount = 2;
 		final int integrationCount = 2;
