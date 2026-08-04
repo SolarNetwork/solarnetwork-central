@@ -60,8 +60,10 @@ import org.springframework.web.client.RestClientResponseException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
@@ -69,6 +71,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -85,7 +88,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
@@ -103,7 +108,7 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollService,
 		ServiceLifecycleObserver, CloudIntegrationsUserEvents, DatumImportUserEvents {
@@ -142,6 +147,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final CloudDatumStreamPollTaskDao taskDao;
+	private final CloudDatumStreamRakeTaskDao rakeTaskDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 	private final DatumStreamMetadataDao datumStreamMetadataDao;
@@ -167,6 +173,8 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 	 *        the node ownership DAO
 	 * @param taskDao
 	 *        the task DAO
+	 * @param rakeTaskDao
+	 *        the rake task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
 	 * @param datumStreamSettingsDao
@@ -188,7 +196,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
-			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamRakeTaskDao rakeTaskDao, CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao,
 			DatumStreamMetadataDao datumStreamMetadataDao, DatumWriteOnlyDao datumDao,
 			DatumAuxiliaryEntityDao datumAuxiliaryDao, ExecutorService executor,
@@ -198,6 +206,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.rakeTaskDao = requireNonNullArgument(rakeTaskDao, "rakeTaskDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamSettingsDao = requireNonNullArgument(datumStreamSettingsDao,
 				"datumStreamSettingsDao");
@@ -387,6 +396,33 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
+			}
+
+			// verify no rake task is executing, so the two tasks do not overlap
+			final var rakeTaskFilter = new BasicFilter();
+			rakeTaskFilter.setClaimableJobStates(new BasicClaimableJobState[] {
+					BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing });
+			rakeTaskFilter.setDatumStreamId(datumStream.getDatumStreamId());
+			FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> activeRakeTasks = rakeTaskDao
+					.findFiltered(rakeTaskFilter);
+			if ( activeRakeTasks != null && activeRakeTasks.getReturnedResultCount() > 0 ) {
+				final CloudDatumStreamRakeTaskEntity rakeTask = nonnull(activeRakeTasks.firstResult(),
+						"Rake task");
+				log.debug(
+						"Refusing to execute datum stream {} poll task because rake task {} is currently active",
+						taskInfo.getDatumStreamId(), rakeTask.ident());
+				var errMsg = "Rake task active.";
+				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, (Object) rakeTask.getConfigId(),
+						DATE_OFFSET_DATA_KEY, rakeTask.getOffset().toString());
+				taskInfo.setExecuteAt(
+						execTime.plus(fastRescheduleAmount).truncatedTo(ChronoUnit.SECONDS));
+				taskInfo.setMessage(errMsg);
+				taskInfo.putServiceProps(errData);
+				taskInfo.setState(Queued);
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
+				taskDao.updateTask(taskInfo, startState);
+				return taskInfo;
 			}
 
 			// save task state to Executing

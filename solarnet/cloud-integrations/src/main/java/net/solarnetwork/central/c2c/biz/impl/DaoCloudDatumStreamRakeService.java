@@ -395,19 +395,18 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			// start with a single day range, offset from execute date
 			final ZonedDateTime startDate = taskInfo.getExecuteAt().atZone(rakeZone).truncatedTo(DAYS)
 					.minus(taskInfo.getOffset());
-			final ZonedDateTime endDate = startDate.plusDays(1);
 
 			// verify poll task is after the rake end date, so the two tasks do not overlap
 			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.id());
 			if ( pollTask != null && pollTask.getStartAt() != null
-					&& endDate.isAfter(pollTask.getStartAt().atZone(rakeZone)) ) {
+					&& !startDate.isBefore(pollTask.getStartAt().atZone(rakeZone)) ) {
 				log.debug(
-						"Refusing to execute datum stream {} rake task {} because end date {} is after stream's poll task start date {}",
-						taskInfo.getDatumStreamId(), taskIdent, endDate.toInstant(),
+						"Refusing to execute datum stream {} rake task {} because start date {} is after stream's poll task start date {}",
+						taskInfo.getDatumStreamId(), taskIdent, startDate.toInstant(),
 						pollTask.getStartAt());
-				var errMsg = "Rake task date is after poll task start.";
-				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "endDate",
-						(Object) endDate.toInstant(), "startDate", pollTask.getStartAt());
+				var errMsg = "Rake task start date is after poll task start.";
+				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "startDate",
+						(Object) startDate.toInstant(), "pollStartDate", pollTask.getStartAt());
 				taskInfo.setExecuteAt(
 						clock.instant().atZone(rakeZone).truncatedTo(DAYS).plusDays(1).toInstant());
 				taskInfo.setMessage(errMsg);
@@ -459,12 +458,10 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			final Map<ObjectDatumStreamMetadataId, MutableInt> updateCounts = new LinkedHashMap<>();
 
 			ZonedDateTime queryStartDate = startDate;
-			ZonedDateTime queryEndDate = startDate.plusDays(1);
-			if ( queryEndDate.isAfter(maxDate) ) {
-				queryEndDate = maxDate;
-			}
 
-			while ( queryStartDate.isBefore(maxDate) && !queryEndDate.isAfter(maxDate) ) {
+			while ( queryStartDate.isBefore(maxDate) ) {
+				final ZonedDateTime queryEndDate = (queryStartDate.plusDays(1).isAfter(maxDate) ? maxDate
+						: queryStartDate.plusDays(1));
 				final Instant filterStartDate = queryStartDate.toInstant();
 				final Instant filterEndDate = queryEndDate.toInstant();
 				final var filter = new BasicQueryFilter();
@@ -588,10 +585,6 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 				// iterate to next day
 				queryStartDate = queryEndDate;
-				queryEndDate = queryStartDate.plusDays(1);
-				if ( queryEndDate.isAfter(maxDate) ) {
-					queryEndDate = maxDate;
-				}
 
 				if ( iterationUpdateCount < 1 ) {
 					// no difference found, so stop
@@ -666,10 +659,11 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 
 		private ZonedDateTime maxDate(ZoneId rakeZone,
 				@Nullable CloudDatumStreamPollTaskEntity pollTask) {
-			var max = clock.instant().atZone(rakeZone).truncatedTo(DAYS);
-			if ( pollTask != null && pollTask.getStartAt() != null
-					&& pollTask.getStartAt().isAfter(max.toInstant()) ) {
-				max = pollTask.getStartAt().atZone(rakeZone).truncatedTo(DAYS);
+			final ZonedDateTime max;
+			if ( pollTask != null && pollTask.getStartAt() != null ) {
+				max = pollTask.getStartAt().atZone(rakeZone);
+			} else {
+				max = clock.instant().atZone(rakeZone).truncatedTo(DAYS);
 			}
 			return max;
 		}

@@ -37,6 +37,8 @@ import static net.solarnetwork.domain.datum.DatumId.nodeId;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.within;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -48,6 +50,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -78,12 +81,15 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -104,6 +110,7 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
@@ -140,6 +147,9 @@ public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUse
 
 	@Mock
 	private CloudDatumStreamPollTaskDao taskDao;
+
+	@Mock
+	private CloudDatumStreamRakeTaskDao rakeTaskDao;
 
 	@Mock
 	private CloudDatumStreamConfigurationDao datumStreamDao;
@@ -192,6 +202,9 @@ public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUse
 	@Captor
 	private ArgumentCaptor<LogEventInfo> logEventCaptor;
 
+	@Captor
+	private ArgumentCaptor<CloudDatumStreamRakeTaskFilter> rakeTaskFilterCaptor;
+
 	private DaoCloudDatumStreamPollService service;
 
 	@BeforeEach
@@ -202,8 +215,8 @@ public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUse
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamPollService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, datumStreamDao, datumStreamSettingsDao, datumStreamMetadataDao, datumDao,
-				datumAuxiliaryDao, executor, datumStreamServices::get);
+				taskDao, rakeTaskDao, datumStreamDao, datumStreamSettingsDao, datumStreamMetadataDao,
+				datumDao, datumAuxiliaryDao, executor, datumStreamServices::get);
 		service.setFluxPublisher(fluxProcessor);
 
 	}
@@ -1738,6 +1751,125 @@ public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUse
 			.isInstanceOf(ExecutionException.class)
 			.cause()
 			.isSameAs(remoteServiceException)
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_rakeConflict() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// verify rake task
+		final CloudDatumStreamRakeTaskEntity rakeTask = new CloudDatumStreamRakeTaskEntity(TEST_USER_ID,
+				randomLong(), hour, datumStream.getConfigId(), Executing, hour, Period.ofDays(3));
+		given(rakeTaskDao.findFiltered(any())).willReturn(new BasicFilterResults<>(List.of(rakeTask)));
+
+		// update task details back to Queued with error data
+		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(rakeTaskDao).should().findFiltered(rakeTaskFilterCaptor.capture());
+		and.then(rakeTaskFilterCaptor.getValue())
+			.as("Search rake tasks for given datum stream")
+			.returns(datumStream.getConfigId(), from(CloudDatumStreamRakeTaskFilter::getDatumStreamId))
+			.as("Search rake tasks for active state")
+			.returns(new BasicClaimableJobState[] { BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing },
+					from(CloudDatumStreamRakeTaskFilter::getClaimableJobStates));
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Claimed));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Task start date is unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Error detail service properties generated with rake task details")
+			.returns(Map.of(
+						CONFIG_SUB_ID_DATA_KEY, rakeTask.getConfigId(),
+						DATE_OFFSET_DATA_KEY, rakeTask.getOffset().toString()),
+					from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			.satisfies(t -> {
+				and.then(t.getExecuteAt())
+					.as("Update task execute date to +1min")
+					.isCloseTo(clock.instant().plus(service.getFastRescheduleAmount()), within(1, ChronoUnit.MINUTES))
+					;
+				and.then(t.getMessage())
+					.as("Message generated about rake conflict")
+					.containsIgnoringCase("rake task active")
+					;
+			})
+			;
+
+		then(userEventAppenderBiz).should(times(1)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getAllValues())
+			.as("Event for reset generated")
+			.hasSize(1)
+			.satisfies(events -> {
+				and.then(events).element(0)
+					.as("Task reset event generated")
+					.isNotNull()
+					.as("Error poll tags provided in event")
+					.returns(INTEGRATION_POLL_ERROR_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.extracting(e -> JsonUtils.getStringMap(e.getData()), map(String.class, Object.class))
+					.as("Rake task details provided in event data")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, rakeTask.getConfigId(),
+							DATE_OFFSET_DATA_KEY, rakeTask.getOffset().toString()
+						)
+					)
+					;
+			})
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
 			;
 
 		// @formatter:on
