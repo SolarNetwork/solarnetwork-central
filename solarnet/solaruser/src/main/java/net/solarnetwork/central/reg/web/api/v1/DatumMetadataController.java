@@ -103,9 +103,10 @@ public class DatumMetadataController {
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable Long nodeId, @PathVariable String sourceId, DatumFilterCommand criteria) {
-		DatumFilterCommand filter = new DatumFilterCommand();
+		final var filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
+		filter.setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = datumMetadataBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());

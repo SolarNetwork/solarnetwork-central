@@ -145,9 +145,10 @@ public class DatumMetadataController {
 
 	private FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findForNodeAndSource(
 			Long nodeId, String sourceId, DatumFilterCommand criteria) {
-		DatumFilterCommand filter = new DatumFilterCommand();
+		final var filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
+		filter.setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 		return datumMetadataBiz.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 				criteria.getOffset(), criteria.getMax());
 	}
