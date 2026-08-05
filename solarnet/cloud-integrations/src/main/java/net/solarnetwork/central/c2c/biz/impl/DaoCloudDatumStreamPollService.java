@@ -400,6 +400,7 @@ public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollServi
 
 			// verify no rake task is executing, so the two tasks do not overlap
 			final var rakeTaskFilter = new BasicFilter();
+			rakeTaskFilter.setUserId(datumStream.getUserId());
 			rakeTaskFilter.setClaimableJobStates(new BasicClaimableJobState[] {
 					BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing });
 			rakeTaskFilter.setDatumStreamId(datumStream.getDatumStreamId());
