@@ -1811,6 +1811,8 @@ public class DaoCloudDatumStreamPollServiceTests implements CloudIntegrationsUse
 		// @formatter:off
 		then(rakeTaskDao).should().findFiltered(rakeTaskFilterCaptor.capture());
 		and.then(rakeTaskFilterCaptor.getValue())
+			.as("Search rake tasks include user ID criteria")
+			.returns(datumStream.getUserId(), from(CloudDatumStreamRakeTaskFilter::getUserId))
 			.as("Search rake tasks for given datum stream")
 			.returns(datumStream.getConfigId(), from(CloudDatumStreamRakeTaskFilter::getDatumStreamId))
 			.as("Search rake tasks for active state")
