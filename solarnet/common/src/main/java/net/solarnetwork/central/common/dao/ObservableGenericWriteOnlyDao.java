@@ -79,7 +79,7 @@ public class ObservableGenericWriteOnlyDao<T, K> implements GenericWriteOnlyDao<
 				try {
 					Future<?> f = observer.apply(entity);
 					if ( observerTimeoutMs > 0 ) {
-						f.get(observerTimeoutMs, TimeUnit.MINUTES);
+						f.get(observerTimeoutMs, TimeUnit.MILLISECONDS);
 					}
 				} catch ( TimeoutException | InterruptedException e ) {
 					// move on
