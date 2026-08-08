@@ -904,7 +904,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// WHEN
 		final var filter = new BasicUserNodeFilter();
 		filter.setUserId(randomUserId);
-		filter.setOrderBy(List.of("zone"));
+		filter.setOrderBy(List.of("zone", "node"));
 
 		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
 
@@ -913,7 +913,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final UserNodeInfo[] expected = entities.stream()
 				.filter(e -> randomUserId.equals(e.getUserId()))
 				.map(UserNodeInfo::forUserNode)
-				.sorted(Comparator.comparing(r -> r.timeZone().getId()))
+				.sorted(Comparator.comparing((UserNodeInfo r) -> r.timeZone().getId()).thenComparing(UserNodeInfo::nodeId))
 				.toArray(UserNodeInfo[]::new)
 				;
 
