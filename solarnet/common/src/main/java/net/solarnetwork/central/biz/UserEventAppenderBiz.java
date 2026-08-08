@@ -138,8 +138,8 @@ public interface UserEventAppenderBiz {
 		if ( !(t instanceof MessageSizeLimitExceeded sle) ) {
 			return null;
 		}
-		// create new error UserEvent with smaller payload to try again
 
+		// create new error UserEvent with smaller payload to try again
 		return new UserEvent(event.id(), event.getTags(),
 				"Unable to publish event because the payload length %s exceeds the maximum allowed %d."
 						.formatted(sle.getMessageSize(), sle.getMaximumSize()),
