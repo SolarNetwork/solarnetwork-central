@@ -96,7 +96,7 @@ public class UserEventConfig {
 	@Qualifier(SOLARFLUX)
 	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
-		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
+		return new MqttJsonPublisher<>("SolarFlux UserEvent", solarFluxObjectMapper,
 				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 

@@ -114,9 +114,9 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 
 		MqttConnection conn = mqttConnection.get();
 		if ( conn == null || !conn.isEstablished() ) {
-			log.debug("MQTT client not avaialable for publishing [{}] to SolarFlux", item);
+			log.debug("{} MQTT client not avaialable for publishing [{}]", getDisplayName(), item);
 			return CompletableFuture
-					.failedFuture(new RemoteServiceException("Not connected to SolarFlux"));
+					.failedFuture(new RemoteServiceException("Not connected to " + getDisplayName()));
 		}
 
 		try {
@@ -135,7 +135,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			log.error("Error publishing {} to SolarFlux topic {}: {}", item, topic, root, e);
+			log.error("Error publishing {} to {} topic {}: {}", item, getDisplayName(), topic, root, e);
 			return CompletableFuture.failedFuture(e);
 		}
 	}
