@@ -39,6 +39,58 @@ import net.solarnetwork.central.test.CommonTestUtils;
 public class UserEventAppenderBizTests {
 
 	@Test
+	public void taggedTopic() {
+		// GIVEN
+		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+				new String[] { "a", "b", "c" }, "Test message.", "{}");
+
+		// WHEN
+		final String result = UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(event);
+
+		// THEN
+		then(result).isEqualTo("user/%d/event/a/b/c".formatted(event.getUserId()));
+	}
+
+	@Test
+	public void taggedTopic_oneTag() {
+		// GIVEN
+		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+				new String[] { "a" }, "Test message.", "{}");
+
+		// WHEN
+		final String result = UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(event);
+
+		// THEN
+		then(result).isEqualTo("user/%d/event/a".formatted(event.getUserId()));
+	}
+
+	@Test
+	public void taggedErrorTopic() {
+		// GIVEN
+		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+				new String[] { "a", "b", "c" }, "Test message.", "{}");
+
+		// WHEN
+		final String result = UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_TOPIC_FN.apply(event, null);
+
+		// THEN
+		then(result).isEqualTo("user/%d/event/a/error/b/c".formatted(event.getUserId()));
+	}
+
+	@Test
+	public void taggedErrorTopic_oneTag() {
+		// GIVEN
+		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+				new String[] { "a" }, "Test message.", "{}");
+
+		// WHEN
+		final String result = UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_TOPIC_FN.apply(event, null);
+
+		// THEN
+		then(result).isEqualTo("user/%d/event/a/error".formatted(event.getUserId()));
+	}
+
+	@Test
 	public void reducedSizeData() {
 		// GIVEN
 		final String largeContent = CommonTestUtils.utf8StringResource("large-event-data-01.json",

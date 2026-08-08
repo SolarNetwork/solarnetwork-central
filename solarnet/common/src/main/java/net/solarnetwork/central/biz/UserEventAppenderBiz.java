@@ -116,14 +116,18 @@ public interface UserEventAppenderBiz {
 		buf.append(event.getUserId()).append("/event");
 
 		final String[] tags = event.getTags();
-		for ( String tag : tags ) {
+		for ( int i = 0; i < tags.length; i++ ) {
+			if ( i == 1 ) {
+				buf.append('/');
+				buf.append(CommonUserEvents.ERROR_TAG);
+			}
 			buf.append('/');
-			buf.append(tag);
+			buf.append(tags[i]);
 		}
-		if ( !buf.isEmpty() ) {
+		if ( tags.length < 2 ) {
 			buf.append('/');
+			buf.append(CommonUserEvents.ERROR_TAG);
 		}
-		buf.append(CommonUserEvents.ERROR_TAG);
 		return buf.toString();
 	};
 
