@@ -55,7 +55,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	private final ObjectMapper objectMapper;
 	private final Function<T, @Nullable String> topicFn;
 	private final @Nullable BiFunction<T, Throwable, @Nullable String> errorTopicFn;
-	private final @Nullable BiFunction<T, Throwable, @Nullable ?> errorItemFn;
+	private final @Nullable BiFunction<T, Throwable, ? extends @Nullable Object> errorItemFn;
 
 	private @Nullable Duration errorTimeout = DEFAULT_ERROR_TIMEOUT;
 
@@ -105,7 +105,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	public MqttJsonPublisher(String name, ObjectMapper objectMapper,
 			Function<T, @Nullable String> topicFn, boolean retained, MqttQos publishQos,
 			@Nullable BiFunction<T, Throwable, @Nullable String> errorTopicFn,
-			@Nullable BiFunction<T, Throwable, @Nullable ?> errorItemFn) {
+			@Nullable BiFunction<T, Throwable, ? extends @Nullable Object> errorItemFn) {
 		setDisplayName(requireNonNullArgument(name, "name"));
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.topicFn = requireNonNullArgument(topicFn, "topicFn");

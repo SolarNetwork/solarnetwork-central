@@ -163,7 +163,8 @@ public interface UserEventAppenderBiz {
 		}
 		pruneMap(data, maximumSize);
 		String result = JsonUtils.getJSONString(data);
-		if ( data.isEmpty() || result.getBytes(StandardCharset.UTF_8).length > maximumSize ) {
+		if ( data.isEmpty() || result == null
+				|| result.getBytes(StandardCharset.UTF_8).length > maximumSize ) {
 			result = """
 					{"message":"Content too large to preserve."}""";
 		}
@@ -186,7 +187,7 @@ public interface UserEventAppenderBiz {
 			}
 			// track individual map values, dropping any that put us over the maximumSize
 			final String val = JsonUtils.getJSONString(e.getValue().toString());
-			len += val.getBytes(StandardCharsets.UTF_8).length;
+			len += (val != null ? val.getBytes(StandardCharsets.UTF_8).length : 0);
 			if ( runningTotal + len < maximumSize ) {
 				runningTotal += len;
 				continue;
