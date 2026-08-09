@@ -713,7 +713,7 @@ public class DaoCloudDatumStreamRakeService implements CloudDatumStreamRakeServi
 			long deleteCount = datumAuxiliaryDao.deleteFiltered(auxFilter);
 			if ( deleteCount > 0 ) {
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), DATUM_IMPORT_TAGS,
+						datumStream.getId(), INTEGRATION_RAKE_TAGS,
 						"Deleted %d generated Mark datum auxiliary records.".formatted(deleteCount),
 						// @formatter:off
 									Map.of(START_AT_DATA_KEY, auxFilter.getStartDate()
