@@ -23,6 +23,8 @@
 package net.solarnetwork.central.biz.test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.solarnetwork.codec.jackson.CborUtils.CBOR_OBJECT_MAPPER;
+import static net.solarnetwork.codec.jackson.JsonUtils.JSON_OBJECT_MAPPER;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -100,7 +102,43 @@ public class UserEventAppenderBizTests {
 				new String[] { "a", "b", "c" }, "Test message.", largeContent);
 
 		// WHEN
-		final String result = UserEventAppenderBiz.limitedSizeEventData(event, 8192);
+		final String result = UserEventAppenderBiz.limitedSizeEventData(JSON_OBJECT_MAPPER, event, 8192);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Data has been altered.")
+			.isNotEqualTo(largeContent)
+			.asInstanceOf(JSON)
+			.isObject()
+			.isEqualTo("""
+					{
+						  "cp":        "chgr02A"
+						, "messageId": "9e850331-0000-0000-0000-b6ee304b2b29"
+						, "action":    "StopTransaction"
+						, "message": {
+							  "transactionId": 621397
+							, "timestamp":     "2026-08-06T21:43:12.000Z"
+							, "meterStop":     83866817
+							, "reason":        "EVDisconnected"
+						}
+					}
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void reducedSizeData_cbor() {
+		// GIVEN
+		final String largeContent = CommonTestUtils.utf8StringResource("large-event-data-01.json",
+				getClass());
+
+		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+				new String[] { "a", "b", "c" }, "Test message.", largeContent);
+
+		// WHEN
+		final String result = UserEventAppenderBiz.limitedSizeEventData(CBOR_OBJECT_MAPPER, event, 8192);
 
 		// THEN
 		// @formatter:off
@@ -136,7 +174,7 @@ public class UserEventAppenderBizTests {
 				new String[] { "a", "b", "c" }, "Test message.", largeContent);
 
 		// WHEN
-		final String result = UserEventAppenderBiz.limitedSizeEventData(event, 8192);
+		final String result = UserEventAppenderBiz.limitedSizeEventData(JSON_OBJECT_MAPPER, event, 8192);
 
 		// THEN
 		// @formatter:off
