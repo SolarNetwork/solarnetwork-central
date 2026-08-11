@@ -88,7 +88,7 @@ public class MqttJsonPublisher_UserEventTests extends MqttServerSupport {
 		publisher = new MqttJsonPublisher<>("UserEvent Test", objectMapper,
 				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce,
 				UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_TOPIC_FN,
-				UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_ITEM_FN);
+				UserEventAppenderBiz.solarFluxTaggedErrorTopicFn(objectMapper));
 
 		publisher.setMqttStats(mqttStats);
 
