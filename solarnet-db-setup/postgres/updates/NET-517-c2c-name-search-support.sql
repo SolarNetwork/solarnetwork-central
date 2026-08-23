@@ -1,6 +1,6 @@
-DROP VIEW solardin.cin_datum_stream_info;
-DROP VIEW solardin.cin_datum_stream_prop_info;
-DROP VIEW solardin.cin_datum_stream_rake_info;
+DROP VIEW IF EXISTS solardin.cin_datum_stream_info;
+DROP VIEW IF EXISTS solardin.cin_datum_stream_prop_info;
+DROP VIEW IF EXISTS solardin.cin_datum_stream_rake_info;
 
 ALTER TABLE solardin.cin_datum_stream
 	ALTER COLUMN cname TYPE citext,
