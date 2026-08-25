@@ -109,7 +109,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -142,6 +142,18 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * </p>
 	 */
 	public static final String SYSTEM_DEVICES_PATH_TEMPLATE = "/v1/plants/{systemId}/devices/lean";
+
+	/**
+	 * The URI path to list the devices for a given system not yet ported to
+	 * ennexOS (SunnyPortal classic).
+	 *
+	 * <p>
+	 * Accepts a single {@code {systemId}} parameter.
+	 * </p>
+	 *
+	 * @since 2.5
+	 */
+	public static final String CLASSIC_SYSTEM_DEVICES_PATH_TEMPLATE = "/v1/plants/{systemId}/devices";
 
 	/**
 	 * The URI path to list the measurement sets for a given device.
@@ -427,12 +439,20 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return List.of(intermediateDataValue(List.of(id), name, meta, children));
 	}
 
+	private static final Pattern UUID_PATTERN = Pattern.compile(
+			"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", Pattern.CASE_INSENSITIVE);
+
+	private boolean isClassicSystem(String systemId) {
+		return UUID_PATTERN.matcher(systemId).matches();
+	}
+
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
 			final String systemId, Map<String, ?> filters) {
+		final boolean classic = isClassicSystem(systemId);
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
-						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
+						.path(classic ? CLASSIC_SYSTEM_DEVICES_PATH_TEMPLATE : SYSTEM_DEVICES_PATH_TEMPLATE)
 						.queryParam("WithDeactivatedDevices", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on

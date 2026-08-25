@@ -521,6 +521,121 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 	}
 
 	@Test
+	public void dataValues_system_classic() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final String systemId = UUID.randomUUID().toString(); // classic systems use UUID pattern
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("sma-devices-classic-01.json", getClass()), ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// look up time zone for deactivatedAt
+		final ZoneId systemTimeZone = ZoneId.of("Europe/Berlin");
+		given(systemTimeZoneCache.get(systemId)).willReturn(systemTimeZone);
+
+		// WHEN
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
+				Map.of(SmaCloudDatumStreamService.SYSTEM_ID_FILTER, systemId));
+
+		// THEN
+		// @formatter:off
+		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		and.then(authRequestCaptor.getValue())
+			.as("OAuth request provided")
+			.isNotNull()
+			.as("No OAuth2AuthorizedClient provided")
+			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
+			.as("Client registration ID is configuration system identifier")
+			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list system devices")
+			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
+					.path(SmaCloudDatumStreamService.CLASSIC_SYSTEM_DEVICES_PATH_TEMPLATE)
+					.queryParam("WithDeactivatedDevices", true)
+					.buildAndExpand(systemId)
+					.toUri(), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		and.then(results)
+			.as("Result generated for system")
+			.hasSize(1)
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.as("Name provided")
+					.returns("SB 3000TL-30", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(List.of(systemId, "302453"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata provided")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							DEACTIVATED_AT_METADATA, LocalDateTime.parse("2019-04-07T12:30:02")
+							.atZone(systemTimeZone).toInstant(),
+							DEVICE_MODEL_METADATA, "SB4.0-1AV-41",
+							MANUFACTURER_METADATA, "SMA Solar Technology AG",
+							ACTIVE_METADATA, false,
+							DEVICE_SERIAL_NUMBER_METADATA, "2005890720",
+							RATED_POWER_METADATA, 4000,
+							"productId", 9403,
+							"type", "Solar Inverters",
+							"generatorPowerDc", 4000
+							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void dataValues_system_deactivatedInverter() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
