@@ -160,15 +160,19 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		c.setUserId(userId);
 
 		final Instant endDate;
+		final Duration startOffset;
 		if ( oldestDatum != null && oldestDatum.getTimestamp() != null
 				&& (timestamp == null || !timestamp.isBefore(oldestDatum.getTimestamp())) ) {
 			endDate = oldestDatum.getTimestamp(); // < existing
+			startOffset = maxStartDateDuration;
 		} else if ( timestamp != null ) {
 			endDate = timestamp.plusMillis(1); // <= timestamp
+			startOffset = maxStartDateDuration.plusMillis(1);
 		} else {
 			endDate = clock.instant().plusMillis(1); // <= now
+			startOffset = maxStartDateDuration.plusMillis(1);
 		}
-		c.setStartDate(endDate.minus(maxStartDateDuration));
+		c.setStartDate(endDate.minus(startOffset));
 		c.setEndDate(endDate);
 
 		// set max to 1 < max < maxAllowed

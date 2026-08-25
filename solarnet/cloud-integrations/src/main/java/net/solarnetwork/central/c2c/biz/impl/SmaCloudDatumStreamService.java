@@ -109,7 +109,7 @@ import tools.jackson.databind.JsonNode;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -600,8 +600,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		}
 
 		final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
-		final Map<String, Map<String, Interval>> systemDeviceOperationalRanges = resolveOperationalRanges(
-				ds);
+		final Map<String, Map<String, Interval>> systemDeviceOperationalRanges = resolve2LevelOperationalRanges(
+				ds, DEVICE_VALUE_REF_PATTERN);
 
 		final QueryPlan plan = resolveQueryPlan(integration, ds, sourceIdMap, valueProps);
 
@@ -717,33 +717,6 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,
 				r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
-	}
-
-	/**
-	 * Convert an operational range mapping into a nested system/device/interval
-	 * mapping.
-	 *
-	 * @param ds
-	 *        the configuration to extract the operational range mapping from
-	 * @return the mapping, or {@code null} if not available
-	 */
-	private @Nullable Map<String, Map<String, Interval>> resolveOperationalRanges(
-			CloudDatumStreamConfiguration ds) {
-		final Map<String, Interval> rangeMapping = ds
-				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
-		if ( rangeMapping == null ) {
-			return null;
-		}
-		final int sizeHint = rangeMapping.size();
-		final Map<String, Map<String, Interval>> result = new LinkedHashMap<>(sizeHint);
-		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
-			Matcher m = DEVICE_VALUE_REF_PATTERN.matcher(e.getKey());
-			if ( m.find() ) {
-				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint)).put(m.group(2),
-						e.getValue());
-			}
-		}
-		return (!result.isEmpty() ? result : null);
 	}
 
 	/**

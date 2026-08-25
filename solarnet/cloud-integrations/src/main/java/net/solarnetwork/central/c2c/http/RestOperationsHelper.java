@@ -38,6 +38,7 @@ import org.springframework.core.retry.RetryOperations;
 import org.springframework.core.retry.Retryable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -56,6 +57,9 @@ import net.solarnetwork.service.RemoteServiceException;
  * @version 2.1
  */
 public class RestOperationsHelper extends BasicHttpOperations {
+
+	/** A JSON media type list, suitable for an HTTP Accept header. */
+	public static final List<MediaType> ACCEPT_JSON = List.of(MediaType.APPLICATION_JSON);
 
 	/** The sensitive key encryptor. */
 	protected final TextEncryptor encryptor;

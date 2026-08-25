@@ -50,12 +50,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
@@ -122,7 +125,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -871,6 +874,43 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Populate a number JSON field value onto a map, adjusting the scale and
+	 * narrowing the output.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is a number
+	 * @param map
+	 *        the map to populate with the number
+	 * @param shift
+	 *        a number of decimal points to shift the number to the right (to
+	 *        adjust the scaling); negative values will shift to the left
+	 * @param narrow
+	 *        a maximum power-of-two size to try to narrow the value to
+	 * @see NumberUtils#narrow(BigDecimal, int)
+	 * @since 2.6
+	 */
+	public static void populateNumberValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map, int shift, int narrow) {
+		JsonNode field = node.path(fieldName);
+		BigDecimal n = null;
+		if ( field.isNumber() ) {
+			n = field.asDecimal(null);
+		} else if ( field.isString() ) {
+			n = NumberUtils.bigDecimalForNumber(StringUtils.numberValue(field.asString()));
+		}
+		if ( n != null ) {
+			if ( shift != 0 ) {
+				n = n.movePointRight(shift);
+			}
+			map.put(key, NumberUtils.narrow(n, 2));
+		}
+	}
+
+	/**
 	 * Parse a JSON datum property value.
 	 *
 	 * @param val
@@ -1259,6 +1299,73 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Convert an operational range mapping into a double-nested identifier
+	 * mapping.
+	 *
+	 * @param ds
+	 *        the configuration to extract the operational range mapping from
+	 * @param regex
+	 *        a regular expression to both validate and extract the two
+	 *        identifiers for the returned double hierarchy; the expression must
+	 *        provide at least 2 groups, which will be used to extract the two
+	 *        level keys
+	 * @return the mapping, or {@code null} if not available
+	 * @since 2.6
+	 */
+	public static @Nullable Map<String, Map<String, Interval>> resolve2LevelOperationalRanges(
+			final CloudDatumStreamConfiguration ds, final Pattern regex) {
+		final Map<String, Interval> rangeMapping = ds
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping == null ) {
+			return null;
+		}
+		final int sizeHint = rangeMapping.size();
+		final Map<String, Map<String, Interval>> result = new LinkedHashMap<>(sizeHint);
+		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
+			Matcher m = regex.matcher(e.getKey());
+			if ( m.find() && m.groupCount() >= 2 ) {
+				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint)).put(m.group(2),
+						e.getValue());
+			}
+		}
+		return (!result.isEmpty() ? result : null);
+	}
+
+	/**
+	 * Convert an operational range mapping into a triple-nested identifier
+	 * mapping.
+	 *
+	 * @param ds
+	 *        the configuration to extract the operational range mapping from
+	 * @param regex
+	 *        a regular expression to both validate and extract the three
+	 *        identifiers for the returned triple hierarchy; the expression must
+	 *        provide at least 3 groups, which will be used to extract the three
+	 *        level keys
+	 * @return the mapping, or {@code null} if not available
+	 * @since 2.6
+	 */
+	public static @Nullable Map<String, Map<String, Map<String, Interval>>> resolve3LevelOperationalRanges(
+			final CloudDatumStreamConfiguration ds, final Pattern regex) {
+		final Map<String, Interval> rangeMapping = ds
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping == null ) {
+			return null;
+		}
+		final int sizeHint = rangeMapping.size();
+		final Map<String, Map<String, Map<String, Interval>>> result = new LinkedHashMap<>(sizeHint);
+		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
+			Matcher m = regex.matcher(e.getKey());
+			if ( m.find() && m.groupCount() >= 3 ) {
+				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint))
+						.computeIfAbsent(m.group(2), _ -> new LinkedHashMap<>(sizeHint))
+						.put(m.group(3), e.getValue());
+			}
+		}
+		return (!result.isEmpty() ? result : null);
 	}
 
 	/**

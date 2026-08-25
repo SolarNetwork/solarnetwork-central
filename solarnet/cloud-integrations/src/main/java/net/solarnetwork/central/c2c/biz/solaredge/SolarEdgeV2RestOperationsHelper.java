@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolcastRestOperationsHelper.java - 30/10/2024 6:00:12 am
+ * SolarEdgeV2RestOperationsHelper.java - 12 Aug 2026 8:24:15 am
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.biz.impl;
+package net.solarnetwork.central.c2c.biz.solaredge;
 
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import java.net.URI;
@@ -32,6 +32,7 @@ import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -43,13 +44,20 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
- * Extension of {@link RestOperationsHelper} with support for Solcast style
- * authentication.
+ * Extension of {@link RestOperationsHelper} with support for SolarEdge V2 style
+ * fleet (API key) authentication.
  *
  * @author matt
- * @version 1.3
+ * @version 1.0
  */
-public class SolcastRestOperationsHelper extends RestOperationsHelper {
+public class SolarEdgeV2RestOperationsHelper extends RestOperationsHelper {
+
+	/**
+	 * A JSON and {@code application/problem+json} media type list, suitable for
+	 * an HTTP Accept header.
+	 */
+	public static final List<MediaType> ACCEPT_JSON_AND_PROBLEM_JSON = List
+			.of(MediaType.APPLICATION_JSON, MediaType.valueOf("application/problem+json"));
 
 	/**
 	 * Constructor.
@@ -71,7 +79,7 @@ public class SolcastRestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SolcastRestOperationsHelper(InstantSource clock, Logger log,
+	public SolarEdgeV2RestOperationsHelper(InstantSource clock, Logger log,
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
 			List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
@@ -84,17 +92,18 @@ public class SolcastRestOperationsHelper extends RestOperationsHelper {
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
 		return super.httpGet(description, configuration, responseType, (headers) -> {
+			String apiKey = null;
 			if ( configuration instanceof IdentifiableConfiguration c
 					&& c.hasServiceProperty(API_KEY_SETTING) ) {
 				final var decrypted = configuration.copyWithId(configuration.getId());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-				final String apiKey = ((IdentifiableConfiguration) decrypted)
-						.serviceProperty(API_KEY_SETTING, String.class);
-				if ( apiKey != null ) {
-					headers.setBearerAuth(apiKey);
-				}
+				apiKey = ((IdentifiableConfiguration) decrypted).serviceProperty(API_KEY_SETTING,
+						String.class);
 			}
-			headers.setAccept(ACCEPT_JSON);
+			if ( apiKey != null ) {
+				headers.set(SolarEdgeV2CloudIntegrationService.API_KEY_HEADER, apiKey);
+			}
+			headers.setAccept(ACCEPT_JSON_AND_PROBLEM_JSON);
 			return setup.apply(headers);
 		}, handler);
 	}
