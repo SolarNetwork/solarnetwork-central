@@ -326,7 +326,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			BasicLocation norm = BasicLocation
 					.normalizedLocation(requireNonNullArgument(info.getLocation(), "info.location"));
 			if ( !norm.hasLocationCriteria() || norm.getCountry() == null || norm.getTimeZoneId() == null
-					|| norm.getStateOrProvince() == null || norm.getLocality() == null ) {
+					|| (norm.getRegion() == null && norm.getStateOrProvince() == null)
+					|| norm.getLocality() == null ) {
 				throw new IllegalArgumentException(
 						"Location details must be provided, i.e. country, zone, stateOrProvince, locality, etc.");
 			}
