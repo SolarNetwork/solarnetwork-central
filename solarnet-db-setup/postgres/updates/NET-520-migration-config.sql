@@ -2,7 +2,7 @@
  * FUNCTION solarcommon.db_migration_get_tag()
  *
  * Get the current DB migration tag.
- 
+
  * @return the migration tag (if one is set)
  */
 CREATE OR REPLACE FUNCTION solarcommon.db_migration_get_tag()
@@ -12,7 +12,6 @@ $$
 	FROM solarcommon.app_setting
 	WHERE skey = 'db'
 	AND stype = 'migration'
-	LIMIT 1
 $$;
 
 /**************************************************************************************************
