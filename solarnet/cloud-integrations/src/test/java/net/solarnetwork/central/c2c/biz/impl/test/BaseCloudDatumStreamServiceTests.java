@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.VIRTUAL_SOURCE_IDS_SETTING;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
@@ -594,6 +595,57 @@ public class BaseCloudDatumStreamServiceTests {
 					from(GeneralDatum::getId))
 			.as("Samples are avg() and sum() of inv1d2 + inv2d2")
 			.returns(new DatumSamples(Map.of("w", 345), Map.of("wh", 1086), null), from(GeneralDatum::getSamples))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void evaluateExpressions_mapResult() {
+		// GIVEN
+		final var service = serviceWithExpressionSupport();
+
+		final var userId = randomLong();
+		final var nodeId = randomLong();
+		final var sourceId = randomString();
+		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
+		final var mappingId = randomLong();
+
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, now(),
+				randomString(), randomString(), ObjectDatumKind.Node);
+
+		final Integer a = randomInt();
+		final Integer b = randomInt();
+
+		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0, now(),
+				Instantaneous, "unused", SpelExpression, """
+						{
+							'a': %d,
+							'b': %d
+						}
+						""".formatted(a, b));
+		exprProp.setEnabled(true);
+
+		final var datum = GeneralDatum.nodeDatum(nodeId, sourceId,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), new DatumSamples());
+
+		// WHEN
+		service.evaluateExpressions(datumStream, List.of(exprProp), List.of(datum), mappingId,
+				integrationId);
+
+		// THEN
+		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
+		then(datumStreamMetadataCache).shouldHaveNoInteractions();
+		then(datumStreamMappingDao).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(datum.getSampleInteger(exprProp.getPropertyType(), "a"))
+			.as("Datum populated with value from expression Map result")
+			.isEqualTo(a)
+			;
+		and.then(datum.getSampleInteger(exprProp.getPropertyType(), "b"))
+			.as("Datum populated with value from expression Map result")
+			.isEqualTo(b)
 			;
 		// @formatter:on
 	}

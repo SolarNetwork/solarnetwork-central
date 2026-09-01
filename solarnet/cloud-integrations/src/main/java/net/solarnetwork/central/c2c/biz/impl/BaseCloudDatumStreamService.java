@@ -721,26 +721,34 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					"Error evaluating datum stream property expression.",
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
 		}
-		if ( val != null ) {
-			Object propVal = switch (config.getPropertyType()) {
-				case Accumulating, Instantaneous -> {
-					// convert to number
-					if ( val instanceof Number ) {
-						yield val;
-					} else {
-						try {
-							yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
-						} catch ( IllegalArgumentException e ) {
-							yield null;
-						}
+		if ( val instanceof Map<?, ?> m ) {
+			for ( Entry<?, ?> e : m.entrySet() ) {
+				populatePropertyValue(config, d, e.getKey().toString(), e.getValue());
+			}
+		} else if ( val != null ) {
+			populatePropertyValue(config, d, config.getPropertyName(), val);
+		}
+	}
+
+	private static void populatePropertyValue(CloudDatumStreamPropertyConfiguration config,
+			MutableDatum d, String propName, Object val) {
+		Object propVal = switch (config.getPropertyType()) {
+			case Accumulating, Instantaneous -> {
+				// convert to number
+				if ( val instanceof Number ) {
+					yield val;
+				} else {
+					try {
+						yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+					} catch ( IllegalArgumentException e ) {
+						yield null;
 					}
 				}
-				case Status, Tag, Metadata -> val.toString();
-			};
-			propVal = config.applyValueTransforms(propVal);
-			d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
-					config.getPropertyName(), propVal);
-		}
+			}
+			case Status, Tag, Metadata -> val.toString();
+		};
+		propVal = config.applyValueTransforms(propVal);
+		d.asMutableSampleOperations().putSampleValue(config.getPropertyType(), propName, propVal);
 	}
 
 	/**
