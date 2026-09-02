@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.security;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +35,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +50,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.codec.Hex;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -57,7 +63,7 @@ import net.solarnetwork.util.CollectionUtils;
  * Security helper methods.
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public class SecurityUtils {
 
@@ -767,6 +773,49 @@ public class SecurityUtils {
 				&& policy.getMinLocationPrecision() == null && policy.getNodeIds() == null
 				&& policy.getNodeMetadataPaths() == null && policy.getSourceIds() == null
 				&& policy.getUserMetadataPaths() == null;
+	}
+
+	/**
+	 * Create a system secret key.
+	 * 
+	 * <p>
+	 * This uses the {@code PBKDF2WithHmacSHA1} algorithm with 1000 iterations
+	 * and a 256 key length.
+	 * </p>
+	 * 
+	 * @param password
+	 *        the password
+	 * @param salt
+	 *        the salt
+	 * @return the key
+	 * @since 3.3
+	 */
+	public static SecretKey systemSecretKey(String password, CharSequence salt) {
+		// these settings from deprecated Spring Security AesBytesEncryptor, used for backwards compatibility
+		return newSecretKey("PBKDF2WithHmacSHA1",
+				new PBEKeySpec(password.toCharArray(), Hex.decode(salt), 1024, 256));
+	}
+
+	/**
+	 * Generate a SecretKey.
+	 * 
+	 * @param algorithm
+	 *        the algorithm to use, for example {@code PBKDF2WithHmacSHA1}
+	 * @param keySpec
+	 *        the key specification
+	 * @throws IllegalArgumentException
+	 *         if the key cannot be created
+	 * @since 3.3
+	 */
+	public static SecretKey newSecretKey(String algorithm, PBEKeySpec keySpec) {
+		try {
+			SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm);
+			return factory.generateSecret(keySpec);
+		} catch ( NoSuchAlgorithmException ex ) {
+			throw new IllegalArgumentException("Not a valid encryption algorithm", ex);
+		} catch ( InvalidKeySpecException ex ) {
+			throw new IllegalArgumentException("Not a valid secret key", ex);
+		}
 	}
 
 }

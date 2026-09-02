@@ -23,10 +23,9 @@
 package net.solarnetwork.central.security;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm.GCM;
 import java.util.Base64;
 import org.springframework.security.crypto.codec.Utf8;
-import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
+import org.springframework.security.crypto.encrypt.AesGcmBytesEncryptor;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.service.PasswordEncoder;
@@ -67,7 +66,9 @@ public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncrypto
 	 * @return the encryptor
 	 */
 	public static PrefixedTextEncryptor aesTextEncryptor(String password, CharSequence salt) {
-		AesBytesEncryptor delegate = new AesBytesEncryptor(password, salt, null, GCM);
+		BytesEncryptor delegate = AesGcmBytesEncryptor
+				.withSecretKey(SecurityUtils.systemSecretKey(password, salt)).build();
+
 		return new PrefixedTextEncryptor("{AES}", delegate);
 	}
 
