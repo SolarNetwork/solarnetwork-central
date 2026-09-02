@@ -49,6 +49,7 @@ import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -56,11 +57,11 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
-		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
-		"combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "propertyNames",
+		"partialAggregation", "partialAggregationKey", "readingType", "datumAuxiliaryType",
+		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "propertyNames",
 		"instantaneousPropertyNames", "accumulatingPropertyNames", "statusPropertyNames", "rollupTypes",
 		"rollupTypeKeys", "tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate",
 		"localStartDate", "localEndDate", "max", "offset", "sorts", "type", "location",
@@ -91,6 +92,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private @Nullable Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
 	private @Nullable Boolean includeStreamAliases;
+
+	private @Nullable DatumAuxiliaryType datumAuxiliaryType;
 
 	private @Nullable CombiningType combiningType;
 	private @Nullable Map<Long, Set<Long>> nodeIdMappings;
@@ -202,6 +205,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( other instanceof StreamAliasFilter f ) {
 			setIncludeStreamAliases(f.getIncludeStreamAliases());
 		}
+		if ( other instanceof DatumAuxiliaryFilter f ) {
+			setDatumAuxiliaryType(f.getDatumAuxiliaryType());
+		}
 	}
 
 	@Override
@@ -219,6 +225,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( readingType != null ) {
 			builder.append("readingType=");
 			builder.append(readingType);
+			builder.append(", ");
+		}
+		if ( datumAuxiliaryType != null ) {
+			builder.append("datumAuxiliaryType=");
+			builder.append(datumAuxiliaryType);
 			builder.append(", ");
 		}
 		if ( startDate != null ) {
@@ -369,6 +380,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( readingType != null ) {
 			filter.put("readingType", readingType.toString());
 		}
+		if ( datumAuxiliaryType != null ) {
+			filter.put("datumAuxiliaryType", datumAuxiliaryType.toString());
+		}
 		if ( combiningType != null ) {
 			filter.put("combiningType", combiningType.toString());
 		}
@@ -406,9 +420,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(datumRollupTypes);
-		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
-				endDate, localEndDate, localStartDate, location, max, nodeIdMappings, offset, sorts,
-				sourceIdMappings, startDate, type, includeStreamAliases);
+		result = prime * result + Objects.hash(aggregation, readingType, datumAuxiliaryType,
+				combiningType, dataPath, endDate, localEndDate, localStartDate, location, max,
+				nodeIdMappings, offset, sorts, sourceIdMappings, startDate, type, includeStreamAliases);
 		result = prime * result + Boolean.hashCode(mostRecent);
 		result = prime * result + Boolean.hashCode(withoutTotalResultsCount);
 		result = prime * result + Arrays.hashCode(propertyNames);
@@ -431,23 +445,32 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( !super.equals(obj) || !(obj instanceof DatumFilterCommand other) ) {
 			return false;
 		}
-		return aggregation == other.aggregation && combiningType == other.combiningType
-				&& readingType == other.readingType && Objects.equals(dataPath, other.dataPath)
+		// @formatter:off
+		return aggregation == other.aggregation
+				&& combiningType == other.combiningType
+				&& readingType == other.readingType
+				&& datumAuxiliaryType == other.datumAuxiliaryType
+				&& Objects.equals(dataPath, other.dataPath)
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate)
 				&& Objects.equals(localEndDate, other.localEndDate)
 				&& Objects.equals(localStartDate, other.localStartDate)
-				&& Objects.equals(location, other.location) && Objects.equals(max, other.max)
-				&& mostRecent == other.mostRecent && Objects.equals(nodeIdMappings, other.nodeIdMappings)
-				&& Objects.equals(offset, other.offset) && Objects.equals(sorts, other.sorts)
+				&& Objects.equals(location, other.location)
+				&& Objects.equals(max, other.max)
+				&& mostRecent == other.mostRecent
+				&& Objects.equals(nodeIdMappings, other.nodeIdMappings)
+				&& Objects.equals(offset, other.offset)
+				&& Objects.equals(sorts, other.sorts)
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
-				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
+				&& Objects.equals(startDate, other.startDate)
+				&& Objects.equals(type, other.type)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount
 				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
 				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
 				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
 				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
+		// @formatter:on
 	}
 
 	@JsonIgnore
@@ -1226,6 +1249,28 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
 		this.includeStreamAliases = includeStreamAliases;
+	}
+
+	/**
+	 * Get the datum auxiliary type.
+	 *
+	 * @return the type
+	 * @since 2.11
+	 */
+	@Override
+	public @Nullable DatumAuxiliaryType getDatumAuxiliaryType() {
+		return datumAuxiliaryType;
+	}
+
+	/**
+	 * Set the datum auxiliary type.
+	 *
+	 * @param datumAuxiliaryType
+	 *        the type to set
+	 * @since 2.11
+	 */
+	public void setDatumAuxiliaryType(@Nullable DatumAuxiliaryType datumAuxiliaryType) {
+		this.datumAuxiliaryType = datumAuxiliaryType;
 	}
 
 }

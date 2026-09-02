@@ -169,6 +169,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		this.content.reset();
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private void finishContentStream() throws IOException {
 		if ( !cacheStreamFinished && cacheStream != content && outputStreamException == null ) {
 			try {
@@ -308,6 +309,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	private static class ResponsePrintWriter extends PrintWriter {
 
+		@SuppressWarnings("JdkObsolete")
 		private ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
 				throws UnsupportedEncodingException {
 			super(new OutputStreamWriter(os, characterEncoding));

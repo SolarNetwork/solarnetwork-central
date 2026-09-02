@@ -70,7 +70,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  *
  * <p>
  * The goal of this DAO is to persist entities directly into a delegate
- * {@link DatumWriteOnlyDao} (the delegate is presumed to actually persist the
+ * {@link GenericWriteOnlyDao} (the delegate is presumed to actually persist the
  * entities) by way of a configurable number of "writer" threads. This limits
  * the number of entities being persisted concurrently. Datum to be persisted
  * are added to an internal work queue, which should be configured with a finite

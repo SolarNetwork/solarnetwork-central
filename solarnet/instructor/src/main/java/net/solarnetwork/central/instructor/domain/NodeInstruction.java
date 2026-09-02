@@ -202,7 +202,7 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 		}
 
 		@Override
-		public @Nullable InstructionState getInstructionState() {
+		public InstructionState getInstructionState() {
 			return instruction.getState();
 		}
 

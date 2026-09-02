@@ -24,6 +24,7 @@ package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.USER_EVENTS;
 import static net.solarnetwork.central.jobs.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -73,7 +74,7 @@ import tools.jackson.databind.module.SimpleModule;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -92,8 +93,10 @@ public class UserEventConfig {
 	@Qualifier(SOLARFLUX)
 	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
-		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce);
+		return new MqttJsonPublisher<>("SolarFlux UserEvent", solarFluxObjectMapper,
+				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce,
+				UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_TOPIC_FN,
+				UserEventAppenderBiz.solarFluxTaggedErrorTopicFn(solarFluxObjectMapper));
 	}
 
 	@Profile("!logging-user-event-appender")
@@ -169,7 +172,7 @@ public class UserEventConfig {
 						LoggerFactory.getLogger(SqsOverflowQueue.class), settings.getStatFrequency());
 
 				var collector = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "UserEventQueue-SQS",
-						settings.newAsyncClient(), settings.getUrl(),
+						settings.newAsyncClient(), nonnull(settings.getUrl(), "SQS URL"),
 						new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
 						new LinkedHashSetBlockingQueue<>(9), userEventAppenderDao, ENTITY_CODEC);
 				collector.setPingTestName("SQS UserEvent Collector");

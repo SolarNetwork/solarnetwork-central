@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
  * Primary key for a general node datum auxiliary entity.

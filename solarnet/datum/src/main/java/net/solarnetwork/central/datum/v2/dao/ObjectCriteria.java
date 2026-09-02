@@ -29,10 +29,20 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Search criteria for object related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface ObjectCriteria {
+
+	/**
+	 * Test if object criteria is available.
+	 *
+	 * @return {@code true} if both an object ID and object kind are available
+	 * @since 1.1
+	 */
+	default boolean hasObjectCriteria() {
+		return (getObjectId() != null && getObjectKind() != null);
+	}
 
 	/**
 	 * Get the first object ID.
@@ -50,11 +60,43 @@ public interface ObjectCriteria {
 	}
 
 	/**
+	 * Get the first object ID.
+	 *
+	 * <p>
+	 * This method is a nullness-check shortcut, for example to be used after
+	 * {@link #hasObjectCriteria()} returns {@code true}.
+	 * </p>
+	 *
+	 * @return the object ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long objectId() {
+		return getObjectId();
+	}
+
+	/**
 	 * Get an array of object IDs.
 	 *
 	 * @return array of object IDs (may be {@code null})
 	 */
 	Long @Nullable [] getObjectIds();
+
+	/**
+	 * Get the object IDs.
+	 *
+	 * <p>
+	 * This method is a nullness-check shortcut, for example to be used after
+	 * {@link #hasObjectCriteria()} returns {@code true}.
+	 * </p>
+	 *
+	 * @return the object IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] objectIds() {
+		return getObjectIds();
+	}
 
 	/**
 	 * Get the kind of object.
@@ -63,5 +105,21 @@ public interface ObjectCriteria {
 	 */
 	@Nullable
 	ObjectDatumKind getObjectKind();
+
+	/**
+	 * Get the object kind.
+	 *
+	 * <p>
+	 * This method is a nullness-check shortcut, for example to be used after
+	 * {@link #hasObjectCriteria()} returns {@code true}.
+	 * </p>
+	 *
+	 * @return the object kind (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default ObjectDatumKind objectKind() {
+		return getObjectKind();
+	}
 
 }

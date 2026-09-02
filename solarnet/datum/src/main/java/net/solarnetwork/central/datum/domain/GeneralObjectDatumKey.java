@@ -25,15 +25,16 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serializable;
 import java.time.Instant;
 import net.solarnetwork.central.domain.EntityConstants;
+import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general datum key, suitable for node and location datum.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public interface GeneralObjectDatumKey extends Cloneable, Serializable {
+public interface GeneralObjectDatumKey extends Cloneable, Serializable, DatumIdentity {
 
 	/**
 	 * An "unassigned" object ID value.
@@ -47,6 +48,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the object kind
 	 */
+	@Override
 	ObjectDatumKind getKind();
 
 	/**
@@ -54,6 +56,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the object ID, or {@code null}
 	 */
+	@Override
 	Long getObjectId();
 
 	/**
@@ -78,6 +81,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the timestamp
 	 */
+	@Override
 	Instant getTimestamp();
 
 	/**
@@ -89,6 +93,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the source ID
 	 */
+	@Override
 	String getSourceId();
 
 }

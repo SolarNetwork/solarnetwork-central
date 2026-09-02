@@ -41,7 +41,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.7
+ * @version 1.10
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -115,6 +115,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	public static final String ACTIVE_METADATA = "active";
 
 	/**
+	 * Standard metadata key for an activation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String ACTIVATED_AT_METADATA = "activatedAt";
+
+	/**
+	 * Standard metadata key for a deactivation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String DEACTIVATED_AT_METADATA = "deactivatedAt";
+
+	/**
 	 * Standard metadata key for an azimuth angle value, in degrees.
 	 *
 	 * @since 1.6
@@ -148,6 +162,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @since 1.7
 	 */
 	public static final String REPLACED_BY_METADATA = "replacedBy";
+
+	/**
+	 * Standard metadata key for a rated (peak) power value, in watts.
+	 *
+	 * @since 1.9
+	 */
+	public static final String RATED_POWER_METADATA = "ratedPower";
+
+	/**
+	 * Standard metadata key for a related identifier.
+	 *
+	 * @since 1.10
+	 */
+	public static final String RELATED_IDENTIFIER_METADATA = "relatedIdentifier";
 
 	/**
 	 * A wildcard identifier value.
@@ -328,6 +356,26 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	}
 
 	/**
+	 * Search for the first value with a given set of identifiers.
+	 *
+	 * @param values
+	 *        the values to search
+	 * @param identifiers
+	 *        the identifiers to search for
+	 * @return the first matching value, or {@code null}
+	 * @since 1.9
+	 */
+	public static @Nullable CloudDataValue findFirst(CloudDataValue[] values, List<String> identifiers) {
+		for ( int i = 0; i < values.length; i++ ) {
+			var result = values[i].findFirst(identifiers);
+			if ( result != null ) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param identifiers
@@ -388,6 +436,42 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 			return 1;
 		}
 		return 0;
+	}
+
+	/**
+	 * Search for the first value with a given set of identifiers.
+	 *
+	 * @param identifiers
+	 *        the identifiers to search for
+	 * @return the first matching value, or {@code null}
+	 * @since 1.9
+	 */
+	public @Nullable CloudDataValue findFirst(List<String> identifiers) {
+		if ( this.identifiers.equals(identifiers) ) {
+			return this;
+		}
+		if ( this.identifiers.size() < identifiers.size() ) {
+			boolean prefixMatch = true;
+			for ( int i = 0, max = this.identifiers.size(); prefixMatch && i < max; i++ ) {
+				if ( !this.identifiers.get(i).equals(identifiers.get(i)) ) {
+					prefixMatch = false;
+				}
+			}
+			if ( !prefixMatch ) {
+				// abort
+				return null;
+			}
+		}
+		Collection<CloudDataValue> children = getChildren();
+		if ( children != null ) {
+			for ( CloudDataValue child : children ) {
+				var result = child.findFirst(identifiers);
+				if ( result != null ) {
+					return result;
+				}
+			}
+		}
+		return null;
 	}
 
 	@Override

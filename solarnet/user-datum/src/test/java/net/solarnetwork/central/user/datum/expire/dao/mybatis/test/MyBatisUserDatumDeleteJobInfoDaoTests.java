@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.expire.dao.mybatis.test;
 
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,8 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.dao.mybatis.MyBatisUserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
@@ -203,14 +204,14 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	@Test
 	public void deleteForUserMatchingId() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()), null);
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()), null);
 		assertThat("Delete count", count, equalTo(1));
 	}
 
 	@Test
 	public void deleteForUserMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -218,7 +219,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	@Test
 	public void deleteForUserMatchingAll() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -234,7 +235,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
 
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getUuid()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 
@@ -424,6 +425,40 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		DatumDeleteJobInfo info = dao.get(this.info.getId());
 		assertThat("Progress not updated", info.getPercentComplete(), equalTo(0.0));
 		assertThat("Loaded not updated", info.getResult(), nullValue());
+	}
+
+	public void claimQueuedJob_none() {
+		// GIVEN
+
+		// WHEN
+		DatumDeleteJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		// @formatter:off
+		then(claimed)
+			.as("No job claimed when no jobs present")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claimQueuedJob_oneInQueuedState() {
+		// GIVEN
+		storeNew();
+		info.setJobState(DatumDeleteJobState.Queued);
+		dao.save(info);
+
+		// WHEN
+		DatumDeleteJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		// @formatter:off
+		then(claimed)
+			.as("Job claimed when queued job present")
+			.isEqualTo(info)
+			;
+		// @formatter:on
 	}
 
 }

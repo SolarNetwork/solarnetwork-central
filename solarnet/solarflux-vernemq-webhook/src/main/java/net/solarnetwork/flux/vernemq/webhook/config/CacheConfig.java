@@ -19,9 +19,11 @@ package net.solarnetwork.flux.vernemq.webhook.config;
 
 import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,7 +49,7 @@ public class CacheConfig {
 	public static final String ACTOR_CACHE_NAME = "Actor";
 
 	@Autowired(required = false)
-	private javax.cache.CacheManager cacheManager;
+	private @Nullable CacheManager cacheManager;
 
 	@Value("${cache.actor.ttl:900}")
 	private int actorCacheSeconds = 900;

@@ -465,3 +465,70 @@ PARTITION OF solarcommon.bucket
 CREATE TABLE solarcommon.bucket_3
 PARTITION OF solarcommon.bucket
 FOR VALUES WITH (MODULUS 3, REMAINDER 2);
+
+
+/**************************************************************************************************
+ * FUNCTION solarcommon.jsonb_recursive_merge(jsonb,jsonb,BOOLEAN)
+ *
+ * Recursively merge JSON objects and arrays (if merge_arrays is TRUE).
+ *
+ * @param A the "source" JSON
+ * @param B the JSON to merge
+ * @param merge_arrays if TRUE then also merge arrays, otherwise replace them with values from B
+ * @return the merged JSON
+ */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_recursive_merge(A jsonb, B jsonb, merge_arrays BOOLEAN DEFAULT FALSE)
+RETURNS jsonb LANGUAGE SQL AS
+$$
+	SELECT jsonb_object_agg(
+		COALESCE(ka, kb),
+		CASE
+			WHEN va ISNULL THEN vb
+			WHEN vb ISNULL THEN va
+			WHEN merge_arrays AND jsonb_typeof(va) = 'array' AND jsonb_typeof(vb) = 'array' THEN va || vb
+			WHEN jsonb_typeof(va) <> 'object' OR jsonb_typeof(vb) <> 'object' THEN vb
+			ELSE solarcommon.jsonb_recursive_merge(va, vb, merge_arrays)
+		END
+	)
+	FROM jsonb_each(A) ta(ka, va)
+	FULL JOIN jsonb_each(B) tb(kb, vb) ON ka = kb
+$$;
+
+/**************************************************************************************************
+ * FUNCTION solarcommon.db_migration_get_tag()
+ *
+ * Get the current DB migration tag.
+
+ * @return the migration tag (if one is set)
+ */
+CREATE OR REPLACE FUNCTION solarcommon.db_migration_get_tag()
+	RETURNS TEXT LANGUAGE SQL STABLE AS
+$$
+	SELECT svalue
+	FROM solarcommon.app_setting
+	WHERE skey = 'db'
+	AND stype = 'migration'
+$$;
+
+/**************************************************************************************************
+ * FUNCTION solarcommon.db_migration_set_tag()
+ *
+ * Mark a DB migration with a specific tag.
+ *
+ * @param tag the tag to set
+ * @return the updated app_setting row with the tag set
+ */
+CREATE OR REPLACE FUNCTION solarcommon.db_migration_set_tag(tag text)
+	RETURNS SETOF solarcommon.app_setting LANGUAGE SQL VOLATILE ROWS 1 AS
+$$
+	INSERT INTO solarcommon.app_setting (skey, stype, svalue)
+	VALUES ('db', 'migration', tag)
+	ON CONFLICT (skey, stype) DO UPDATE
+	SET modified = CURRENT_TIMESTAMP
+		, svalue = EXCLUDED.svalue
+	RETURNING app_setting.created
+		, app_setting.modified
+		, app_setting.skey
+		, app_setting.stype
+		, app_setting.svalue
+$$;

@@ -147,6 +147,7 @@ public class JCacheContentCachingService
 		return new PingTestResult(true, "Cache active.", statMap);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private void handleCacheEntryEvent(
 			Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events) {
 		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {

@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserCloudIntegrationsClontrolsControllerWebTests.java - 17/12/2025 12:07:44 pm
+ * UserCloudIntegrationsController_IntegrationWebTests.java - 21/07/2026 2:37:13 pm
  *
- * Copyright 2025 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -29,25 +29,20 @@ import static net.solarnetwork.central.reg.config.WebSecurityConfig.CLOUD_INTEGR
 import static net.solarnetwork.central.security.SecurityTokenStatus.Active;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
-import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserRoles;
-import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,16 +57,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.reg.web.api.v1.UserCloudIntegrationsControlsController;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
-import net.solarnetwork.central.user.c2c.domain.CloudControlConfigurationInput;
-import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Web API level integration tests for the
- * {@link UserCloudIntegrationsControlsController} class.
+ * FIXME
+ *
+ * <p>
+ * TODO
+ * </p>
  *
  * @author matt
  * @version 1.0
@@ -79,7 +75,7 @@ import tools.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
-public class UserCloudIntegrationsClontrolsControllerWebTests
+public class UserCloudIntegrationsController_IntegrationWebTests
 		extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final Clock clock = Clock.tickMillis(ZoneOffset.UTC);
@@ -103,68 +99,60 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 		setupTestLocation();
 	}
 
-	private List<Long> createUserNodes(final int count) {
-		List<Long> result = new ArrayList<>(count);
-		for ( int i = 0; i < count; i++ ) {
-			Long nodeId = randomLong();
-			setupTestNode(nodeId);
-			insertUserNode(jdbcTemplate, userId, nodeId, true);
-			result.add(nodeId);
-		}
-		return result;
-	}
-
-	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
-			String name, String serviceId, Map<String, Object> serviceProps) {
-		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant(), name, serviceId);
-		conf.setModified(conf.getCreated());
-		conf.setServiceProps(serviceProps);
-		conf.setEnabled(true);
-		return conf;
-	}
-
-	private CloudIntegrationConfiguration createIntegration(Long userId, Map<String, Object> props) {
+	private CloudIntegrationConfiguration createIntegration(Long userId,
+			Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
 				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-
+		conf.setServiceProps(serviceProps);
 		return integrationDao.get(integrationDao.save(conf));
 	}
 
 	@Test
-	public void createControl_asUnrestrictedToken() throws Exception {
+	public void mergeServiceProperties_simple() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
 
-		final List<Long> nodeIds = createUserNodes(3);
-		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+		// @formatter:off
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
 
-		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		final CloudIntegrationConfiguration integration = createIntegration(userId, initialProps);
 
-		final CloudControlConfigurationInput input = new CloudControlConfigurationInput();
-		input.setEnabled(true);
-		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
-		input.setIntegrationId(integration.getConfigId());
-		input.setNodeId(reqNodeId);
-		input.setControlId(randomString());
-		input.setControlReference(randomString());
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
 		// WHEN
 		final Instant now = Instant.now();
 
-		// WHEN
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/integrations/%d/serviceProperties"
+				.formatted(integration.getConfigId());
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.PATCH.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/controls")
+				.path(uriPath)
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -172,15 +160,14 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/controls")
+				patch(uriPath)
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
 				.content(reqJson)
 				.contentType(MediaType.APPLICATION_JSON)
 			)
-			.andExpect(status().isCreated())
-			.andExpect(header().exists(HttpHeaders.LOCATION))
+			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andReturn()
 			.getResponse()
@@ -194,118 +181,78 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 			.containsEntry("success", true)
 			.node("data")
 			.isObject()
-			.as("ID assigned")
-			.containsKey("configId")
-			.as("Control created for given node ID")
+			.hasSize(5)
 			.contains(
-				entry("nodeId", reqNodeId),
-				entry("userId", userId),
-				entry("integrationId", integration.getConfigId())
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
 			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(1)
+					.containsEntry("N1", 1)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.containsExactly("A1")
+					;
+			})
 			;
 		// @formatter:on
 	}
 
 	@Test
-	public void createControl_asUnrestrictedToken_invalidNodeId() throws Exception {
+	public void mergeServiceProperties_recursive() throws Exception {
 		// GIVEN
+		final MergeMode mode = MergeMode.RecursiveObjects;
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
 
-		createUserNodes(3);
-		final Long reqNodeId = -1L;
-
-		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
-
-		final CloudControlConfigurationInput input = new CloudControlConfigurationInput();
-		input.setEnabled(true);
-		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
-		input.setIntegrationId(integration.getConfigId());
-		input.setNodeId(reqNodeId);
-		input.setControlId(randomString());
-		input.setControlReference(randomString());
-
-		final String reqJson = objectMapper.writeValueAsString(input);
-
-		// WHEN
-		final Instant now = Instant.now();
-
-		// WHEN
 		// @formatter:off
-		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
-				.host("localhost")
-				.path("/api/v1/sec/user/c2c/controls")
-				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-				.contentSha256(DigestUtils.sha256(reqJson))
-				.useSnDate(true).date(now)
-				.saveSigningKey(tokenSecret);
-		final String authHeader = auth.build();
-
-		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/controls")
-				.header(HttpHeaders.AUTHORIZATION, authHeader)
-				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
-				.accept(MediaType.APPLICATION_JSON)
-				.content(reqJson)
-				.contentType(MediaType.APPLICATION_JSON)
-			)
-			.andExpect(status().isForbidden())
-			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-			.andReturn()
-			.getResponse()
-			.getContentAsString()
-			;
-
-		then(result)
-			.asInstanceOf(JSON)
-			.isObject()
-			.as("Success result")
-			.containsEntry("success", false)
-			.node("data")
-			.as("No data returned on forbidden response")
-			.isAbsent()
-			;
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
 		// @formatter:on
-	}
 
-	@Test
-	public void createControl_asRestrictedToken_allowed() throws Exception {
-		// GIVEN
-		final List<Long> nodeIds = createUserNodes(3);
+		final CloudIntegrationConfiguration integration = createIntegration(userId, initialProps);
 
-		final String tokenId = randomString(20);
-		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
-				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
-						.withNodeIds(Set.of(nodeIds.toArray(Long[]::new))).build()));
-
-		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
-
-		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
-
-		final CloudControlConfigurationInput input = new CloudControlConfigurationInput();
-		input.setEnabled(true);
-		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
-		input.setIntegrationId(integration.getConfigId());
-		input.setNodeId(reqNodeId);
-		input.setControlId(randomString());
-		input.setControlReference(randomString());
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
 		// WHEN
 		final Instant now = Instant.now();
 
-		// WHEN
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/integrations/%d/serviceProperties"
+				.formatted(integration.getConfigId());
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.PATCH.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/controls")
+				.path(uriPath)
+				.queryParams(Map.of("mode", mode.name()))
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -313,15 +260,15 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/controls")
+				patch(uriPath)
+				.queryParam("mode", mode.name())
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
 				.content(reqJson)
 				.contentType(MediaType.APPLICATION_JSON)
 			)
-			.andExpect(status().isCreated())
-			.andExpect(header().exists(HttpHeaders.LOCATION))
+			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andReturn()
 			.getResponse()
@@ -335,53 +282,83 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 			.containsEntry("success", true)
 			.node("data")
 			.isObject()
-			.as("ID assigned")
-			.containsKey("configId")
-			.as("Control created for given node ID")
+			.hasSize(5)
 			.contains(
-				entry("nodeId", reqNodeId),
-				entry("userId", userId),
-				entry("integrationId", integration.getConfigId())
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
 			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(2)
+					.as("Object is recursively merged")
+					.containsOnly(
+						entry("n1", 1),
+						entry("N1", 1)
+					)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.as("Array is replaced")
+					.containsExactly("A1")
+					;
+			})
 			;
 		// @formatter:on
 	}
 
 	@Test
-	public void createControl_asRestrictedToken_deniedByPolicy() throws Exception {
+	public void mergeServiceProperties_recursiveArrays() throws Exception {
 		// GIVEN
-		final List<Long> nodeIds = createUserNodes(3);
-
+		final MergeMode mode = MergeMode.RecursiveObjectsAndArrays;
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
-				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
-						.withNodeIds(Set.of(nodeIds.get(0), nodeIds.get(2))).build()));
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
 
-		final Long reqNodeId = nodeIds.get(1); // not in policy
+		// @formatter:off
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
 
-		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		final CloudIntegrationConfiguration integration = createIntegration(userId, initialProps);
 
-		final CloudControlConfigurationInput input = new CloudControlConfigurationInput();
-		input.setEnabled(true);
-		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
-		input.setIntegrationId(integration.getConfigId());
-		input.setNodeId(reqNodeId);
-		input.setControlId(randomString());
-		input.setControlReference(randomString());
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
 		// WHEN
 		final Instant now = Instant.now();
 
-		// WHEN
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/integrations/%s/serviceProperties"
+				.formatted(integration.getConfigId());
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.PATCH.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/controls")
+				.path(uriPath)
+				.queryParams(Map.of("mode", mode.name()))
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -389,14 +366,15 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/controls")
+				patch(uriPath)
+				.queryParam("mode", mode.name())
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
 				.content(reqJson)
 				.contentType(MediaType.APPLICATION_JSON)
 			)
-			.andExpect(status().isForbidden())
+			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andReturn()
 			.getResponse()
@@ -407,10 +385,36 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 			.asInstanceOf(JSON)
 			.isObject()
 			.as("Success result")
-			.containsEntry("success", false)
+			.containsEntry("success", true)
 			.node("data")
-			.as("No data returned on forbidden response")
-			.isAbsent()
+			.isObject()
+			.hasSize(5)
+			.contains(
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
+			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(2)
+					.as("Object is recursively merged")
+					.containsOnly(
+						entry("n1", 1),
+						entry("N1", 1)
+					)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(2)
+					.as("Array is recursively merged")
+					.containsExactly("a1", "A1")
+					;
+			})
 			;
 		// @formatter:on
 	}

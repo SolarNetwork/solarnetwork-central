@@ -51,7 +51,7 @@ public class Instruction extends BaseEntity {
 	private @Nullable String topic;
 	private @Nullable Instant instructionDate;
 	private @Nullable Instant statusDate;
-	private @Nullable InstructionState state = InstructionState.Unknown;
+	private InstructionState state;
 	private @Nullable List<InstructionParameter> parameters;
 	private @Nullable Map<String, Object> resultParameters;
 	private @Nullable Instant expirationDate;
@@ -62,7 +62,7 @@ public class Instruction extends BaseEntity {
 	 * Default constructor.
 	 */
 	public Instruction() {
-		super();
+		this(null, null);
 	}
 
 	/**
@@ -77,6 +77,7 @@ public class Instruction extends BaseEntity {
 		super();
 		this.topic = topic;
 		this.instructionDate = instructionDate;
+		this.state = InstructionState.Unknown;
 	}
 
 	/**
@@ -212,7 +213,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the state
 	 */
-	public final @Nullable InstructionState getState() {
+	public final InstructionState getState() {
 		return state;
 	}
 
@@ -223,7 +224,7 @@ public class Instruction extends BaseEntity {
 	 *        the state to set
 	 */
 	public final void setState(@Nullable InstructionState state) {
-		this.state = state;
+		this.state = (state != null ? state : InstructionState.Unknown);
 	}
 
 	/**

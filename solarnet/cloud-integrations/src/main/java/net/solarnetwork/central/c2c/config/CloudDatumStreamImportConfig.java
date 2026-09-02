@@ -31,30 +31,43 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.CloudDatumStreamDatumImportInputFormatService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 
 /**
  * Configuration for cloud datum stream import.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
 public class CloudDatumStreamImportConfig {
 
 	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Autowired
+	private DatumAuxiliaryEntityDao datumAuxiliaryDao;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
 
 	@Bean
 	public DatumImportInputFormatService cloudDatumStreamDatumImportInputFormatService(
 			Collection<CloudDatumStreamService> datumStreamServices) {
 		var dsMap = datumStreamServices.stream()
 				.collect(toMap(CloudDatumStreamService::getId, identity()));
-		var service = new CloudDatumStreamDatumImportInputFormatService(datumStreamDao, dsMap::get);
+		var service = new CloudDatumStreamDatumImportInputFormatService(userEventAppenderBiz,
+				datumStreamDao, datumAuxiliaryDao, datumStreamMetadataDao, dsMap::get);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(CloudDatumStreamDatumImportInputFormatService.class.getName());

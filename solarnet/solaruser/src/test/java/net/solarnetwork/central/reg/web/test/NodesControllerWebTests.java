@@ -42,6 +42,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -104,8 +106,13 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		return result;
 	}
 
-	@Test
-	public void listAllNodes_allReturnedWithUnrestrictedToken() throws Exception {
+	private static String nodeIdPropName(final String apiPath) {
+		return apiPath.endsWith("/find") ? "nodeId" : "id";
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/find" })
+	public void findNodes_allReturnedWithUnrestrictedToken(final String apiPath) throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
@@ -123,7 +130,7 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
 				.method(HttpMethod.GET.name())
 				.host("localhost")
-				.path("/api/v1/sec/nodes")
+				.path(apiPath)
 				.useSnDate(true).date(now)
 				.saveSigningKey(tokenSecret);
 		String authHeader = auth.build();
@@ -134,11 +141,11 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 				expectedNodesJson.append(',');
 			}
 			expectedNodesJson.append("""
-					{"id":%d}
-					""".formatted(nodeId));
+					{"%s":%d}
+					""".formatted(nodeIdPropName(apiPath), nodeId));
 		}
 
-		mvc.perform(get("/api/v1/sec/nodes")
+		mvc.perform(get(apiPath)
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
@@ -154,8 +161,10 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		// @formatter:on
 	}
 
-	@Test
-	public void listAllNodes_policyOverlapReturnedWithRestrictedToken() throws Exception {
+	@ParameterizedTest
+	@ValueSource(strings = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/find" })
+	public void findNodes_policyOverlapReturnedWithRestrictedToken(final String apiPath)
+			throws Exception {
 		// GIVEN
 		final int nodeCount = 3;
 		final List<Long> nodeIds = setupTestNodes(nodeCount);
@@ -174,12 +183,12 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
 				.method(HttpMethod.GET.name())
 				.host("localhost")
-				.path("/api/v1/sec/nodes")
+				.path(apiPath)
 				.useSnDate(true).date(now)
 				.saveSigningKey(tokenSecret);
 		String authHeader = auth.build();
 
-		mvc.perform(get("/api/v1/sec/nodes")
+		mvc.perform(get(apiPath)
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
@@ -188,10 +197,13 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(content().json("""
 					{"success":true, "data":{"results":[
-						{"id":%d},
-						{"id":%d}
+						{"%s":%d},
+						{"%s":%d}
 					]}}
-					""".formatted(nodeIds.get(1), nodeIds.get(2)), JsonCompareMode.LENIENT))
+					""".formatted(
+							  nodeIdPropName(apiPath), nodeIds.get(1)
+							, nodeIdPropName(apiPath), nodeIds.get(2)
+						), JsonCompareMode.LENIENT))
 			;
 		// @formatter:on
 	}

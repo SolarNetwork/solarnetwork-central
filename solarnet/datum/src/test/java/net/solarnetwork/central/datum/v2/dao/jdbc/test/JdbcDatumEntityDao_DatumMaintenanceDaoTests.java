@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -863,6 +865,50 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	public void findDatumRecordCounts_typical() {
 		// GIVEN
 		setupTestNode();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 1, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.truncatedTo(DAYS).toLocalDateTime());
+		filter.setLocalEndDate(start.truncatedTo(DAYS).plusMonths(1).toLocalDateTime());
+		DatumRecordCounts counts = dao.countDatumRecords(filter);
+
+		// THEN
+		assertDatumRecordCounts("Counts", counts,
+				datumRecordCounts(counts.getTimestamp(), 6L, 3L, 3, 1));
+
+		// @formatter:off
+		then(DatumDbUtils.listAggregateDatum(jdbcTemplate, Hour))
+			.as("Hour aggregates created for non-exact-hour datum")
+			.hasSize(3)
+			.extracting(AggregateDatum::getTimestamp)
+			.containsExactly(
+				start.truncatedTo(HOURS).toInstant(),
+				start.truncatedTo(HOURS).plusDays(1).toInstant(),
+				start.truncatedTo(HOURS).plusDays(2).toInstant()
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findDatumRecordCounts_exactHours() {
+		// GIVEN
+		setupTestNode();
 		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
 		for ( int i = 0; i < 3; i++ ) {
 			ZonedDateTime dayStart = start.plusDays(i);
@@ -881,17 +927,70 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setSourceId(TEST_SOURCE_ID);
-		filter.setLocalStartDate(start.toLocalDateTime());
-		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
+		filter.setLocalStartDate(start.truncatedTo(DAYS).toLocalDateTime());
+		filter.setLocalEndDate(start.truncatedTo(DAYS).plusMonths(1).toLocalDateTime());
 		DatumRecordCounts counts = dao.countDatumRecords(filter);
 
 		// THEN
 		assertDatumRecordCounts("Counts", counts,
-				datumRecordCounts(counts.getTimestamp(), 6L, 3L, 3, 1));
+				datumRecordCounts(counts.getTimestamp(), 6L, 5L, 3, 1));
+
+		// @formatter:off
+		then(DatumDbUtils.listAggregateDatum(jdbcTemplate, Hour))
+			.as("Extra 'prior hour' aggregates created for exact-hour datum")
+			.hasSize(5)
+			.extracting(AggregateDatum::getTimestamp)
+			.containsExactly(
+				start.toInstant(),
+				start.plusDays(1).minusHours(1).toInstant(),
+				start.plusDays(1).toInstant(),
+				start.plusDays(2).minusHours(1).toInstant(),
+				start.plusDays(2).toInstant()
+			)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void findDatumRecordCounts_partialHours() {
+		// GIVEN
+		setupTestNode();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 1, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.toLocalDateTime().plusMinutes(30));
+		filter.setLocalEndDate(start.plusDays(2).plusMinutes(30).toLocalDateTime());
+		DatumRecordCounts counts = dao.countDatumRecords(filter);
+
+		// THEN
+		assertDatumRecordCounts("Counts", counts,
+				datumRecordCounts(counts.getTimestamp(), 4L, 1L, 1, 0));
+
+		// @formatter:off
+		then(DatumDbUtils.listAggregateDatum(jdbcTemplate, Hour))
+			.as("Hour aggregates created for non-exact-hour datum")
+			.hasSize(3)
+			.extracting(AggregateDatum::getTimestamp)
+			.containsExactly(
+				start.truncatedTo(HOURS).toInstant(),
+				start.truncatedTo(HOURS).plusDays(1).toInstant(),
+				start.truncatedTo(HOURS).plusDays(2).toInstant()
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findDatumRecordCounts_partialHours_exactHours() {
 		// GIVEN
 		setupTestNode();
 		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
@@ -912,7 +1011,22 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		// THEN
 		assertDatumRecordCounts("Counts", counts,
-				datumRecordCounts(counts.getTimestamp(), 4L, 1L, 1, 0));
+				datumRecordCounts(counts.getTimestamp(), 4L, 3L, 1, 0));
+
+		// @formatter:off
+		then(DatumDbUtils.listAggregateDatum(jdbcTemplate, Hour))
+			.as("Extra 'prior hour' aggregates created for exact-hour datum")
+			.hasSize(5)
+			.extracting(AggregateDatum::getTimestamp)
+			.containsExactly(
+				start.toInstant(),
+				start.plusDays(1).minusHours(1).toInstant(),
+				start.plusDays(1).toInstant(),
+				start.plusDays(2).minusHours(1).toInstant(),
+				start.plusDays(2).toInstant()
+			)
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -929,7 +1043,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 				TEST_TZ_ALT);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
 
-		final LocalDateTime start = LocalDateTime.of(2018, 11, 1, 0, 0, 0, 0);
+		final LocalDateTime start = LocalDateTime.of(2018, 11, 1, 0, 1, 0, 0);
 		for ( int i = 0; i < 3; i++ ) {
 			ZonedDateTime dayStart = start.plusDays(i).atZone(ZoneId.of(meta_1.getTimeZoneId()));
 			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
@@ -960,7 +1074,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	public void deleteFiltered_typical() {
 		// GIVEN
 		setupTestNode();
-		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 1, 0, 0, ZoneId.of(TEST_TZ));
 		for ( int i = 0; i < 3; i++ ) {
 			ZonedDateTime dayStart = start.plusDays(i);
 			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
@@ -995,19 +1109,22 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		List<AggregateDatum> hourData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Hour);
 		assertThat("Remaining hour count", hourData, hasSize(2));
-		assertThat("Hour 1 date", hourData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Hour 1 date", hourData.get(0).getTimestamp(),
+				equalTo(ts.truncatedTo(HOURS).toInstant()));
 		assertThat("Hour 2 date", hourData.get(1).getTimestamp(),
-				equalTo(ts3.truncatedTo(ChronoUnit.HOURS).toInstant()));
+				equalTo(ts3.truncatedTo(HOURS).toInstant()));
 
 		List<AggregateDatum> dayData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
 		assertThat("Remaining day count", dayData, hasSize(2));
-		assertThat("Day 1 date", dayData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Day 1 date", dayData.get(0).getTimestamp(),
+				equalTo(ts.truncatedTo(DAYS).toInstant()));
 		assertThat("Day 2 date", dayData.get(1).getTimestamp(),
-				equalTo(ts3.truncatedTo(ChronoUnit.DAYS).toInstant()));
+				equalTo(ts3.truncatedTo(DAYS).toInstant()));
 
 		List<AggregateDatum> monData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month);
 		assertThat("Remaining month count", monData, hasSize(1));
-		assertThat("Month 1 date", monData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Month 1 date", monData.get(0).getTimestamp(),
+				equalTo(ts.truncatedTo(DAYS).toInstant()));
 	}
 
 	@Test

@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao;
 
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterableDao;
@@ -32,11 +33,12 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamConfigurationDao
 		extends GenericCompositeKey2Dao<CloudDatumStreamConfiguration, UserLongCompositePK, Long, Long>,
 		FilterableDao<CloudDatumStreamConfiguration, UserLongCompositePK, CloudDatumStreamFilter>,
-		UserModifiableEnabledStatusDao<CloudDatumStreamFilter> {
+		UserModifiableEnabledStatusDao<CloudDatumStreamFilter>,
+		ModifiableServicePropertiesDao<UserLongCompositePK> {
 
 }

@@ -23,7 +23,10 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.nextTickStart;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.greatestTimestamp;
+import static net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer.leastTimestamp;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
@@ -37,25 +40,37 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryOperations;
+import org.springframework.core.retry.Retryable;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
+import org.threeten.extra.Interval;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -65,6 +80,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -73,9 +89,12 @@ import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -84,15 +103,19 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
@@ -102,10 +125,24 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.6
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
+
+	/**
+	 * The {@code energyValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final double DEFAULT_ENERGY_VALIDATION_THRESHOLD = 10.0;
+
+	/**
+	 * The {@code timeGapValidationThreshold} property default value.
+	 *
+	 * @since 2.3
+	 */
+	public static final Duration DEFAULT_TIME_GAP_VALIDATION_THRESHOLD = Duration.ofDays(3);
 
 	/**
 	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
@@ -130,6 +167,40 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			VIRTUAL_SOURCE_IDS_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code OPERATIONAL_DATE_RANGES_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier OPERATIONAL_DATE_RANGES_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OPERATIONAL_DATE_RANGES_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code VALIDATION_IGNORE_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier VALIDATION_IGNORE_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			VALIDATION_IGNORE_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code ENERGY_VALIDATION_THRESHOLD_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier ENERGY_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			ENERGY_VALIDATION_THRESHOLD_SETTING,
+			String.valueOf((long) DEFAULT_ENERGY_VALIDATION_THRESHOLD));
+
+	/**
+	 * A setting specifier for the
+	 * {@code TIME_GAP_VALIDATION_THRESHOLD_SETTING}.
+	 *
+	 * @since 2.3
+	 */
+	public static final TextFieldSettingSpecifier TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			TIME_GAP_VALIDATION_THRESHOLD_SETTING, DEFAULT_TIME_GAP_VALIDATION_THRESHOLD.toString());
 
 	/**
 	 * The default duration used if the
@@ -160,6 +231,46 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public static final TextFieldSettingSpecifier MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			MULTI_STREAM_MAXIMUM_LAG_SETTING, DEFAULT_MULTI_STREAM_MAXIMUM_LAG.toString());
 
+	/**
+	 * The expression parameter name for a datum stream mapping configuration
+	 * ID.
+	 *
+	 * @since 2.5
+	 */
+	public static final String DATUM_STREAM_MAPPING_ID_PARAM = "datumStreamMappingId";
+
+	/**
+	 * The expression parameter name for an integration configuration ID.
+	 *
+	 * @since 2.5
+	 */
+	public static final String INTEGRATION_ID_PARAM = "integrationId";
+
+	/**
+	 * The expression parameter name for the resolved set of all source IDs
+	 * configured on a datum stream.
+	 *
+	 * <p>
+	 * This will include the mapped source IDs and virtual source IDs, all with
+	 * placeholders resolved.
+	 * </p>
+	 *
+	 * @since 2.5
+	 */
+	public static final String ALL_SOURCE_IDS_PARAM = "allSourceIds";
+
+	/**
+	 * The expression parameter name for the resolved set of mapped source IDs
+	 * configured on a datum stream.
+	 *
+	 * <p>
+	 * This will include just the mapped source IDs, with placeholders resolved.
+	 * </p>
+	 *
+	 * @since 2.5
+	 */
+	public static final String MAPPED_SOURCE_IDS_PARAM = "mappedSourceIds";
+
 	/** A clock to use. */
 	protected final Clock clock;
 
@@ -182,6 +293,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	private @Nullable DatumStreamMetadataDao datumStreamMetadataDao;
 	private @Nullable QueryAuditor queryAuditor;
 	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+	private @Nullable RetryOperations retryOps;
+	private double energyValidationThreshold = DEFAULT_ENERGY_VALIDATION_THRESHOLD;
+	private Duration timeGapValidationThreshold = DEFAULT_TIME_GAP_VALIDATION_THRESHOLD;
 
 	/**
 	 * Constructor.
@@ -446,22 +560,57 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			return datum;
 		}
 
-		final Map<String, ?> params;
-		if ( parameters == null ) {
-			params = Map.of("datumStreamMappingId", mappingId, "integrationId", integrationId);
-		} else {
-			var tmp = new LinkedHashMap<String, Object>(parameters);
-			tmp.put("datumStreamMappingId", mappingId);
-			tmp.put("integrationId", integrationId);
-			params = tmp;
+		final Map<String, Object> params = new LinkedHashMap<>(8);
+		if ( parameters != null ) {
+			params.putAll(parameters);
 		}
+		params.put(DATUM_STREAM_MAPPING_ID_PARAM, mappingId);
+		params.put(INTEGRATION_ID_PARAM, integrationId);
 
 		final var placeholders = datumStream.servicePropertyStringMap(PLACEHOLDERS_SERVICE_PROPERTY);
+
+		// include complete set of source IDs
+		final Set<String> allSourceIds = new HashSet<>(8);
+		params.put(ALL_SOURCE_IDS_PARAM, allSourceIds);
+
+		// include sourceIdMap source IDs as parameter, if available
+		final Set<String> mappedSourceIds = datumStreamSourceIds(datumStream);
+		if ( mappedSourceIds != null ) {
+			Set<String> sources = new HashSet<>(mappedSourceIds.size());
+			for ( String s : mappedSourceIds ) {
+				String sourceId = expandTemplateString(s, placeholders);
+				sources.add(sourceId);
+				allSourceIds.add(sourceId);
+			}
+			params.put(MAPPED_SOURCE_IDS_PARAM, sources);
+		}
 
 		final List<String> virtualSourceIds = datumStream
 				.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
+
+		// include virtual source ID list as parameter, if available
+		if ( virtualSourceIds != null ) {
+			Set<String> virtual = new HashSet<>(virtualSourceIds.size());
+			for ( String s : virtualSourceIds ) {
+				String sourceId = expandTemplateString(s, placeholders);
+				virtual.add(sourceId);
+				allSourceIds.add(sourceId);
+			}
+			params.put(VIRTUAL_SOURCE_IDS_SETTING, virtual);
+		}
+
+		if ( mappedSourceIds == null && datumStream.getSourceId() != null ) {
+			allSourceIds.add(expandTemplateString(datumStream.getSourceId(), placeholders));
+		}
+
+		// include operational date ranges, if available
+		final Map<String, Interval> rangeMapping = datumStream
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping != null ) {
+			params.put(OPERATIONAL_DATE_RANGES_SETTING, rangeMapping);
+		}
 
 		final Collection<GeneralDatum> expressionDatum;
 		if ( virtualDatum != null && virtualSourceIds != null ) {
@@ -472,7 +621,6 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				}
 				for ( MutableDatum d : datum ) {
 					virtualDatum.computeIfAbsent(d.getTimestamp(), _ -> {
-						@SuppressWarnings("null")
 						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
 						for ( String virtualSourceId : virtualSourceIds ) {
 							String sourceId = expandTemplateString(virtualSourceId, placeholders);
@@ -573,26 +721,34 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					"Error evaluating datum stream property expression.",
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
 		}
-		if ( val != null ) {
-			Object propVal = switch (config.getPropertyType()) {
-				case Accumulating, Instantaneous -> {
-					// convert to number
-					if ( val instanceof Number ) {
-						yield val;
-					} else {
-						try {
-							yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
-						} catch ( IllegalArgumentException e ) {
-							yield null;
-						}
+		if ( val instanceof Map<?, ?> m ) {
+			for ( Entry<?, ?> e : m.entrySet() ) {
+				populatePropertyValue(config, d, e.getKey().toString(), e.getValue());
+			}
+		} else if ( val != null ) {
+			populatePropertyValue(config, d, config.getPropertyName(), val);
+		}
+	}
+
+	private static void populatePropertyValue(CloudDatumStreamPropertyConfiguration config,
+			MutableDatum d, String propName, Object val) {
+		Object propVal = switch (config.getPropertyType()) {
+			case Accumulating, Instantaneous -> {
+				// convert to number
+				if ( val instanceof Number ) {
+					yield val;
+				} else {
+					try {
+						yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+					} catch ( IllegalArgumentException e ) {
+						yield null;
 					}
 				}
-				case Status, Tag, Metadata -> val.toString();
-			};
-			propVal = config.applyValueTransforms(propVal);
-			d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
-					config.getPropertyName(), propVal);
-		}
+			}
+			case Status, Tag, Metadata -> val.toString();
+		};
+		propVal = config.applyValueTransforms(propVal);
+		d.asMutableSampleOperations().putSampleValue(config.getPropertyType(), propName, propVal);
 	}
 
 	/**
@@ -655,11 +811,12 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the map to populate with the {@link Instant} value
 	 * @param parser
 	 *        the function to use for parsing the timestamp value into an
-	 *        {@link Instant}
+	 *        {@link Instant}; if the function returns {@code null} then no
+	 *        value will be added to {@code map}
 	 * @since 1.14
 	 */
 	public static void populateTimestampValue(JsonNode node, String fieldName, String key,
-			Map<String, Object> map, Function<String, Instant> parser) {
+			Map<String, Object> map, Function<String, @Nullable Instant> parser) {
 		JsonNode field = node.path(fieldName);
 		if ( field.isMissingNode() ) {
 			return;
@@ -669,7 +826,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			map.put(key, Instant.ofEpochMilli(field.asLong()));
 		}
 		try {
-			map.put(key, parser.apply(field.asString()));
+			var ts = parser.apply(field.asString());
+			if ( ts != null ) {
+				map.put(key, ts);
+			}
 		} catch ( DateTimeParseException e ) {
 			// ignore
 		}
@@ -722,6 +882,43 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Populate a number JSON field value onto a map, adjusting the scale and
+	 * narrowing the output.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is a number
+	 * @param map
+	 *        the map to populate with the number
+	 * @param shift
+	 *        a number of decimal points to shift the number to the right (to
+	 *        adjust the scaling); negative values will shift to the left
+	 * @param narrow
+	 *        a maximum power-of-two size to try to narrow the value to
+	 * @see NumberUtils#narrow(BigDecimal, int)
+	 * @since 2.6
+	 */
+	public static void populateNumberValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map, int shift, int narrow) {
+		JsonNode field = node.path(fieldName);
+		BigDecimal n = null;
+		if ( field.isNumber() ) {
+			n = field.asDecimal(null);
+		} else if ( field.isString() ) {
+			n = NumberUtils.bigDecimalForNumber(StringUtils.numberValue(field.asString()));
+		}
+		if ( n != null ) {
+			if ( shift != 0 ) {
+				n = n.movePointRight(shift);
+			}
+			map.put(key, NumberUtils.narrow(n, 2));
+		}
+	}
+
+	/**
 	 * Parse a JSON datum property value.
 	 *
 	 * @param val
@@ -751,8 +948,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					yield val.floatValue();
 				} else {
 					try {
+
 						yield narrow(parseNumber(val.asString(), BigDecimal.class), 2);
-					} catch ( IllegalArgumentException e ) {
+					} catch (
+
+					IllegalArgumentException e ) {
 						yield null;
 					}
 				}
@@ -893,6 +1093,151 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Execute a task with retry.
+	 *
+	 * <p>
+	 * If no {@link RetryOperations} is configured via
+	 * {@link #setRetryOps(RetryOperations)} then this method will simply
+	 * execute the task directly, without any retry semantics.
+	 * </p>
+	 *
+	 * @param <R>
+	 *        the task result type
+	 * @param task
+	 *        the task to execute
+	 * @return the task result
+	 * @throws RemoteServiceException
+	 *         if an exception is thrown, after exhausting all retries
+	 * @since 2.2
+	 */
+	protected <R extends @Nullable Object> R doRemoteServiceCallWithRetry(String name,
+			Supplier<R> task) {
+		return doRemoteServiceCallWithRetry(new Retryable<R>() {
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public R execute() throws Throwable {
+				return task.get();
+			}
+
+		});
+	}
+
+	/**
+	 * Execute a task with retry.
+	 *
+	 * <p>
+	 * If no {@link RetryOperations} is configured via
+	 * {@link #setRetryOps(RetryOperations)} then this method will simply
+	 * execute the task directly, without any retry semantics.
+	 * </p>
+	 *
+	 * @param <R>
+	 *        the task result type
+	 * @param retryable
+	 *        the task to execute
+	 * @return the task result
+	 * @throws RemoteServiceException
+	 *         if an exception is thrown, after exhausting all retries
+	 * @since 2.2
+	 */
+	protected <R extends @Nullable Object> R doRemoteServiceCallWithRetry(Retryable<R> retryable) {
+		final RetryOperations ops = getRetryOps();
+		try {
+			if ( ops == null ) {
+				// do it
+				return retryable.execute();
+			} else {
+				return ops.execute(retryable);
+			}
+		} catch ( RetryException e ) {
+			Throwable t = e.getLastException();
+			String msg = "Giving up [%s] after %d tries; last exception: %s"
+					.formatted(retryable.getName(), e.getRetryCount() + 1, t.getMessage());
+			throw new RemoteServiceException(msg, t);
+		} catch ( RemoteServiceException e ) {
+			throw e;
+		} catch ( Throwable e ) {
+			throw new RemoteServiceException(
+					"Failed to execute [%s]: %s".formatted(retryable.getName(), e.getMessage()), e);
+		}
+	}
+
+	/**
+	 * Query for datum just before a given timestamp.
+	 *
+	 * @param datumStream
+	 *        the datum stream configuration
+	 * @param sourceId
+	 *        the source ID
+	 * @param ts
+	 *        the timestamp to find a previous datum from
+	 * @return the datum, if available
+	 * @since 2.3
+	 */
+	protected @Nullable Datum lookupPreviousDatum(CloudDatumStreamConfiguration datumStream,
+			String sourceId, Instant ts) {
+		final DatumEntityDao datumDao = getDatumDao();
+		if ( datumDao != null ) {
+			var prevFilter = new BasicDatumCriteria();
+			prevFilter.setObjectKind(datumStream.getKind());
+			if ( datumStream.getKind() == ObjectDatumKind.Location ) {
+				prevFilter.setLocationId(datumStream.getObjectId());
+			} else {
+				prevFilter.setNodeId(datumStream.getObjectId());
+			}
+			prevFilter.setSourceId(sourceId);
+			prevFilter.setEndDate(ts);
+			prevFilter.setMostRecent(true);
+			var prevResults = datumDao.findFiltered(prevFilter);
+			if ( prevResults.getReturnedResultCount() > 0 ) {
+				return prevResults.iterator().next();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Resolve the energy validation threshold for a datum stream.
+	 *
+	 * @param datumStream
+	 *        the datum stream to resolve the
+	 *        {@link #ENERGY_VALIDATION_THRESHOLD_SETTING} for
+	 * @return the setting value, falling back to
+	 *         {@link #getEnergyValidationThreshold()} if the setting is not
+	 *         available on the datum stream
+	 * @since 2.3
+	 */
+	protected double resolveEnergyValidationThreshold(CloudDatumStreamConfiguration datumStream) {
+		final Double result = CollectionUtils.getMapDouble(ENERGY_VALIDATION_THRESHOLD_SETTING,
+				datumStream.getServiceProperties());
+		if ( result != null ) {
+			return result;
+		}
+		return getEnergyValidationThreshold();
+	}
+
+	/**
+	 * Resolve the time gap validation threshold for a datum stream.
+	 *
+	 * @param datumStream
+	 *        the datum stream to resolve the
+	 *        {@link #TIME_GAP_VALIDATION_THRESHOLD_SETTING} for
+	 * @return the setting value, falling back to
+	 *         {@link #getTimeGapValidationThreshold()} if the setting is not
+	 *         available on the datum stream
+	 * @since 2.3
+	 */
+	protected Duration resolveTimeGapValidationThreshold(CloudDatumStreamConfiguration datumStream) {
+		return nonnull(datumStream.servicePropertyDuration(TIME_GAP_VALIDATION_THRESHOLD_SETTING,
+				getTimeGapValidationThreshold()), "Time gap validation threshold");
+	}
+
+	/**
 	 * Get the "multiple datum stream" maximum lag setting for a datum stream.
 	 *
 	 * @param datumStream
@@ -903,6 +1248,132 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public static Duration multiStreamMaximumLag(CloudDatumStreamConfiguration datumStream) {
 		return nonnull(datumStream.servicePropertyDuration(MULTI_STREAM_MAXIMUM_LAG_SETTING,
 				DEFAULT_MULTI_STREAM_MAXIMUM_LAG), "Multi-stream maximum lag");
+	}
+
+	/**
+	 * Resolve a "next" query filter using the multi-stream maximum lag
+	 * settings.
+	 *
+	 * @param ds
+	 *        the datum stream
+	 * @param streamBuffer
+	 *        the stream buffer containing the current data
+	 * @param nextQueryFilter
+	 *        the current "next" query filter, if any
+	 * @param tickAmount
+	 *        the data time tick duration
+	 * @param zone
+	 *        the system time zone
+	 * @param requestedEndDate
+	 *        the original filter end date given
+	 * @param resolvedEndDate
+	 *        the actually used end date resolved from {@code requestedEndDate}
+	 * @return the "next" query filter to use
+	 * @see BaseCloudDatumStreamService#multiStreamMaximumLag(CloudDatumStreamConfiguration)
+	 * @since 2.4
+	 */
+	public @Nullable BasicQueryFilter resolveNextQueryFilterForMultiStreamLag(
+			final CloudDatumStreamConfiguration ds, final OrderedDatumSamplesBuffer streamBuffer,
+			final @Nullable BasicQueryFilter nextQueryFilter, @Nullable TemporalAmount tickAmount,
+			final ZoneId zone, Instant requestedEndDate, Instant resolvedEndDate) {
+		BasicQueryFilter result = nextQueryFilter;
+
+		// latest datum might not have been reported yet; check latest datum date (per stream), and if
+		// less than expected date make that the next query start date
+		final Map<DatumStreamIdentity, Instant> greatestTimestampPerStream = streamBuffer
+				.greatestTimestampPerStream();
+
+		final int streamCount = greatestTimestampPerStream.size();
+
+		// use the multi-stream max lag constraint
+		final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+
+		if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0 && streamCount > 0 ) {
+			Instant leastGreatestTimestampAcrossStreams = leastTimestamp(
+					greatestTimestampPerStream.values());
+			Instant greatestTimestampAcrossStreams = greatestTimestamp(
+					greatestTimestampPerStream.values());
+
+			if ( leastGreatestTimestampAcrossStreams != null && greatestTimestampAcrossStreams != null
+					&& (streamCount == 1 || leastGreatestTimestampAcrossStreams
+							.isBefore(greatestTimestampAcrossStreams))
+					&& Duration.between(leastGreatestTimestampAcrossStreams, clock.instant())
+							.compareTo(multiStreamMaximumLag) < 0 ) {
+				if ( result == null ) {
+					result = new BasicQueryFilter();
+				}
+				result.setStartDate(
+						nextTickStart(tickAmount, leastGreatestTimestampAcrossStreams, zone));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Convert an operational range mapping into a double-nested identifier
+	 * mapping.
+	 *
+	 * @param ds
+	 *        the configuration to extract the operational range mapping from
+	 * @param regex
+	 *        a regular expression to both validate and extract the two
+	 *        identifiers for the returned double hierarchy; the expression must
+	 *        provide at least 2 groups, which will be used to extract the two
+	 *        level keys
+	 * @return the mapping, or {@code null} if not available
+	 * @since 2.6
+	 */
+	public static @Nullable Map<String, Map<String, Interval>> resolve2LevelOperationalRanges(
+			final CloudDatumStreamConfiguration ds, final Pattern regex) {
+		final Map<String, Interval> rangeMapping = ds
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping == null ) {
+			return null;
+		}
+		final int sizeHint = rangeMapping.size();
+		final Map<String, Map<String, Interval>> result = new LinkedHashMap<>(sizeHint);
+		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
+			Matcher m = regex.matcher(e.getKey());
+			if ( m.find() && m.groupCount() >= 2 ) {
+				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint)).put(m.group(2),
+						e.getValue());
+			}
+		}
+		return (!result.isEmpty() ? result : null);
+	}
+
+	/**
+	 * Convert an operational range mapping into a triple-nested identifier
+	 * mapping.
+	 *
+	 * @param ds
+	 *        the configuration to extract the operational range mapping from
+	 * @param regex
+	 *        a regular expression to both validate and extract the three
+	 *        identifiers for the returned triple hierarchy; the expression must
+	 *        provide at least 3 groups, which will be used to extract the three
+	 *        level keys
+	 * @return the mapping, or {@code null} if not available
+	 * @since 2.6
+	 */
+	public static @Nullable Map<String, Map<String, Map<String, Interval>>> resolve3LevelOperationalRanges(
+			final CloudDatumStreamConfiguration ds, final Pattern regex) {
+		final Map<String, Interval> rangeMapping = ds
+				.servicePropertyIntervalMap(OPERATIONAL_DATE_RANGES_SETTING);
+		if ( rangeMapping == null ) {
+			return null;
+		}
+		final int sizeHint = rangeMapping.size();
+		final Map<String, Map<String, Map<String, Interval>>> result = new LinkedHashMap<>(sizeHint);
+		for ( Entry<String, Interval> e : rangeMapping.entrySet() ) {
+			Matcher m = regex.matcher(e.getKey());
+			if ( m.find() && m.groupCount() >= 3 ) {
+				result.computeIfAbsent(m.group(1), _ -> new LinkedHashMap<>(sizeHint))
+						.computeIfAbsent(m.group(2), _ -> new LinkedHashMap<>(sizeHint))
+						.put(m.group(3), e.getValue());
+			}
+		}
+		return (!result.isEmpty() ? result : null);
 	}
 
 	/**
@@ -994,6 +1465,96 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public final void setDatumStreamMetadataCache(
 			@Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache) {
 		this.datumStreamMetadataCache = datumStreamMetadataCache;
+	}
+
+	/**
+	 * Get a retry API.
+	 *
+	 * @return the retry API
+	 * @since 2.2
+	 */
+	public final @Nullable RetryOperations getRetryOps() {
+		return retryOps;
+	}
+
+	/**
+	 * Set a retry API.
+	 *
+	 * @param retryOps
+	 *        the retry API to set
+	 * @since 2.2
+	 */
+	public final void setRetryOps(@Nullable RetryOperations retryOps) {
+		this.retryOps = retryOps;
+		didSetRetryOps(retryOps);
+	}
+
+	/**
+	 * Called after the {@code retryOps} property is configured.
+	 *
+	 * @param retryOps
+	 *        the operations that was configured
+	 * @since 2.2
+	 */
+	protected void didSetRetryOps(@Nullable RetryOperations retryOps) {
+		// extending classes can override
+	}
+
+	/**
+	 * Get the energy validation threshold.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_ENERGY_VALIDATION_THRESHOLD}
+	 * @since 2.3
+	 */
+	public final double getEnergyValidationThreshold() {
+		return energyValidationThreshold;
+	}
+
+	/**
+	 * Set the energy validation threshold.
+	 *
+	 * <p>
+	 * This value represents a multiplication factor by which an energy value
+	 * exceeds the expected maximum energy value for its time period.
+	 * </p>
+	 *
+	 * @param energyValidationThreshold
+	 *        the threshold to set
+	 * @since 2.3
+	 */
+	public final void setEnergyValidationThreshold(double energyValidationThreshold) {
+		this.energyValidationThreshold = energyValidationThreshold;
+	}
+
+	/**
+	 * Get the time gap validation threshold.
+	 *
+	 * <p>
+	 * This value represents a duration between two datum that must be met to
+	 * trigger a "time gap" style validation event.
+	 * </p>
+	 *
+	 * @return the duration
+	 * @since 2.3
+	 */
+	public final Duration getTimeGapValidationThreshold() {
+		return timeGapValidationThreshold;
+	}
+
+	/**
+	 * Set the time gap validation threshold.
+	 *
+	 * @param timeGapValidationThreshold
+	 *        the value to use; if {@code null} then
+	 *        {@link #DEFAULT_TIME_GAP_VALIDATION_THRESHOLD} will be used
+	 *        instead
+	 * @since 2.3
+	 */
+	public final void setTimeGapValidationThreshold(Duration timeGapValidationThreshold) {
+		this.timeGapValidationThreshold = (timeGapValidationThreshold != null
+				? timeGapValidationThreshold
+				: DEFAULT_TIME_GAP_VALIDATION_THRESHOLD);
 	}
 
 }

@@ -140,14 +140,14 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment
 		thenExceptionOfType(DataIntegrityViolationException.class)
 				.as("Should throw DataIntegrigtyViolationException from lack of funds in payment.")
-				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getId(),
+				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(),
 						invoice.getId().getId(), new BigDecimal("0.01")));
 	}
 
@@ -169,7 +169,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, $1 short amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
 				dollarShortAmount);
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -182,7 +182,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		paymentDao.save(payment2);
 		getSqlSessionTemplate().flushStatements();
 
-		addInvoicePayment(invoice.getAccountId(), payment2.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment2.getId().getUuid(), invoice.getId().getId(),
 				payment2.getAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), invoice.getTotalAmount());
 	}
@@ -203,7 +203,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -231,14 +231,14 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// increase payment amount > invoice payments (this is OK)
 		BigDecimal newPaymentAmount = new BigDecimal("100.10");
 		jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
-				newPaymentAmount, payment.getId().getId());
+				newPaymentAmount, payment.getId().getUuid());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), newPaymentAmount);
 	}
 
@@ -259,14 +259,14 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment to same invoice using that extra dollar
 		thenExceptionOfType(DataIntegrityViolationException.class).as(
 				"Should throw DataIntegrigtyViolationException from paying more than invoice amount.")
-				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getId(),
+				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(),
 						invoice.getId().getId(), BigDecimal.ONE));
 	}
 

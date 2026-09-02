@@ -114,7 +114,7 @@ CREATE TABLE solardin.din_endpoint (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT din_endpoint_xform_fk FOREIGN KEY (user_id, xform_id)
 		REFERENCES solardin.din_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (xform_id)
 );
 
 
@@ -266,10 +266,10 @@ CREATE TABLE solardin.inin_endpoint (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT inin_endpoint_req_xform_fk FOREIGN KEY (user_id, req_xform_id)
 		REFERENCES solardin.inin_req_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
+		ON UPDATE NO ACTION ON DELETE SET NULL (req_xform_id),
 	CONSTRAINT inin_endpoint_res_xform_fk FOREIGN KEY (user_id, res_xform_id)
 		REFERENCES solardin.inin_res_xform (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (res_xform_id)
 );
 
 
@@ -345,13 +345,14 @@ CREATE TABLE solardin.cin_integration (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	cname			CHARACTER VARYING(64) NOT NULL,
+	cname			citext NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
 	sprops			jsonb,
 	CONSTRAINT cin_integration_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT cin_integration_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT cin_integration_cname_len CHECK (length(cname) <= 64)
 );
 
 
@@ -440,7 +441,7 @@ CREATE TABLE solardin.cin_datum_stream (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	cname			CHARACTER VARYING(64) NOT NULL,
+	cname			citext NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
 	map_id			BIGINT,
 	schedule 		CHARACTER VARYING(64),
@@ -454,7 +455,8 @@ CREATE TABLE solardin.cin_datum_stream (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT cin_datum_stream_map_fk FOREIGN KEY (user_id, map_id)
 		REFERENCES solardin.cin_datum_stream_map (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE SET NULL (map_id),
+	CONSTRAINT cin_datum_stream_cname_len CHECK (length(cname) <= 64)
 );
 
 
@@ -565,6 +567,7 @@ SELECT cds.user_id
 	, cdsm.int_id
 	, cin.enabled AS int_enabled
 	, cin.cname AS int_name
+	, cin.sident AS int_sident
 	, cin.sprops AS int_sprops
 	, cdsp.status AS poll_status
 	, cdsp.exec_at AS poll_exec_at
@@ -602,6 +605,7 @@ SELECT cds.user_id
 	, cin.enabled AS int_enabled
 	, cdsm.int_id
 	, cin.cname AS int_name
+	, cin.sident AS int_sident
 	, cin.sprops AS int_sprops
 	, cdsp.status AS poll_status
 	, cdsp.exec_at AS poll_exec_at
@@ -624,6 +628,44 @@ LEFT OUTER JOIN solardin.cin_datum_stream_prop cdsprop ON cdsprop.map_id = cdsm.
 ;
 
 
+/**
+ * VIEW solardin.cin_datum_stream_rake_info
+ *
+ * View of datum streams combined with mapping, integration, and rake tasks.
+ */
+CREATE VIEW solardin.cin_datum_stream_rake_info AS
+SELECT cds.user_id
+	, cds.id
+	, cds.created
+	, cds.modified
+	, cds.enabled
+	, cds.cname
+	, cds.sident
+	, cds.schedule
+	, cds.kind
+	, cds.obj_id
+	, cds.source_id
+	, cds.sprops
+	, cds.map_id
+	, cdsm.cname AS map_name
+	, cdsm.int_id
+	, cin.enabled AS int_enabled
+	, cin.cname AS int_name
+	, cin.sident AS int_sident
+	, cin.sprops AS int_sprops
+	, cdsr.id AS rake_id
+	, cdsr.status AS rake_status
+	, cdsr.exec_at AS rake_exec_at
+	, cdsr.start_offset AS rake_start_offset
+	, cdsr.message AS rake_message
+	, cdsr.sprops AS rake_sprops
+FROM solardin.cin_datum_stream cds
+LEFT OUTER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.id = cds.map_id AND cdsm.user_id = cds.user_id
+LEFT OUTER JOIN solardin.cin_integration cin ON cin.id = cdsm.int_id AND cin.user_id = cdsm.user_id
+LEFT OUTER JOIN solardin.cin_datum_stream_rake_task cdsr ON cdsr.ds_id = cds.id AND cdsr.user_id = cds.user_id
+;
+
+
 /**************************************************************************************************
  * FUNCTION solardin.claim_datum_stream_poll_task()
  *
@@ -631,32 +673,35 @@ LEFT OUTER JOIN solardin.cin_datum_stream_prop cdsprop ON cdsprop.map_id = cdsm.
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
  * based on the exec_at column.
  *
+ * The exec_at column will also be updated to CURRENT_TIMESTAMP, although its original value will
+ * be returned.
+ *
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solardin.claim_datum_stream_poll_task()
-	RETURNS SETOF solardin.cin_datum_stream_poll_task LANGUAGE plpgsql VOLATILE ROWS 1 AS
+	RETURNS SETOF solardin.cin_datum_stream_poll_task LANGUAGE SQL VOLATILE ROWS 1 AS
 $$
-DECLARE
-	rec solardin.cin_datum_stream_poll_task;
-
-	-- include ORDER BY here to encourage cin_datum_stream_poll_task_exec_idx to be used
-	curs CURSOR FOR SELECT * FROM solardin.cin_datum_stream_poll_task
-			WHERE status = 'q'
-			AND exec_at <= CURRENT_TIMESTAMP
-			ORDER BY exec_at
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solardin.cin_datum_stream_poll_task SET status = 'p' WHERE CURRENT OF curs;
-		rec.status = 'p';
-		RETURN NEXT rec;
-	END IF;
-	CLOSE curs;
-	RETURN;
-END
+	WITH t AS (
+		SELECT t.user_id, t.ds_id, t.exec_at
+		FROM solardin.cin_datum_stream_poll_task t
+		WHERE t.status = 'q'
+		AND t.exec_at <= CURRENT_TIMESTAMP
+		ORDER BY t.exec_at
+		LIMIT 1
+		FOR NO KEY UPDATE SKIP LOCKED
+	)
+	UPDATE solardin.cin_datum_stream_poll_task
+	SET status = 'p', exec_at = CURRENT_TIMESTAMP
+	FROM t
+	WHERE cin_datum_stream_poll_task.user_id = t.user_id
+	AND cin_datum_stream_poll_task.ds_id = t.ds_id
+	RETURNING cin_datum_stream_poll_task.user_id
+		, cin_datum_stream_poll_task.ds_id
+		, cin_datum_stream_poll_task.status
+		, t.exec_at
+		, cin_datum_stream_poll_task.start_at
+		, cin_datum_stream_poll_task.message
+		, cin_datum_stream_poll_task.sprops
 $$;
 
 
@@ -668,38 +713,58 @@ $$;
  * based on the exec_at column, and only one task at a time per ds_id group can be claimed or
  * executing ('p' or 'e' status).
  *
+ * The exec_at column will also be updated to CURRENT_TIMESTAMP, although its original value will
+ * be returned.
+ *
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solardin.claim_datum_stream_rake_task()
-	RETURNS SETOF solardin.cin_datum_stream_rake_task LANGUAGE plpgsql VOLATILE ROWS 1 AS
+	RETURNS SETOF solardin.cin_datum_stream_rake_task LANGUAGE SQL VOLATILE ROWS 1 AS
 $$
-DECLARE
-	rec solardin.cin_datum_stream_rake_task;
-
-	-- include ORDER BY here to encourage cin_datum_stream_rake_task_exec_idx to be used
-	curs CURSOR FOR SELECT * FROM solardin.cin_datum_stream_rake_task t
-			WHERE t.status = 'q'
-			AND t.exec_at <= CURRENT_TIMESTAMP
-			AND NOT EXISTS (
-				SELECT id FROM solardin.cin_datum_stream_rake_task g
-				WHERE g.user_id = t.user_id
-				AND g.ds_id = t.ds_id
-				AND g.status IN ('p', 'e')
-			)
-			ORDER BY t.exec_at
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solardin.cin_datum_stream_rake_task SET status = 'p' WHERE CURRENT OF curs;
-		rec.status = 'p';
-		RETURN NEXT rec;
-	END IF;
-	CLOSE curs;
-	RETURN;
-END
+	-- identify a datum source group with a q task but without any p,e tasks within it
+	WITH g AS (
+		SELECT t.user_id, t.ds_id
+		FROM solardin.cin_datum_stream_rake_task t
+		WHERE t.status = 'q'
+		AND t.exec_at <= CURRENT_TIMESTAMP
+		AND NOT EXISTS (
+			SELECT id FROM solardin.cin_datum_stream_rake_task g
+			WHERE g.user_id = t.user_id
+			AND g.ds_id = t.ds_id
+			AND g.status IN ('p', 'e')
+		)
+		ORDER BY t.exec_at
+		LIMIT 1
+		FOR NO KEY UPDATE SKIP LOCKED
+	)
+	-- select and lock all q rows within identified group
+	, gt AS (
+		SELECT t.user_id, t.id, t.exec_at, t.start_offset
+		FROM solardin.cin_datum_stream_rake_task t
+		INNER JOIN g ON g.user_id = t.user_id AND g.ds_id = t.ds_id
+		WHERE t.status = 'q'
+		FOR NO KEY UPDATE
+	)
+	-- update the oldest available task to p
+	, t AS (
+		SELECT user_id, id, exec_at
+		FROM gt
+		ORDER BY exec_at, start_offset DESC
+		LIMIT 1
+	)
+	UPDATE solardin.cin_datum_stream_rake_task
+	SET status = 'p', exec_at = CURRENT_TIMESTAMP
+	FROM t
+	WHERE cin_datum_stream_rake_task.user_id = t.user_id
+	AND cin_datum_stream_rake_task.id = t.id
+	RETURNING cin_datum_stream_rake_task.user_id
+		, cin_datum_stream_rake_task.id
+		, cin_datum_stream_rake_task.ds_id
+		, cin_datum_stream_rake_task.status
+		, t.exec_at
+		, cin_datum_stream_rake_task.start_offset
+		, cin_datum_stream_rake_task.message
+		, cin_datum_stream_rake_task.sprops
 $$;
 
 

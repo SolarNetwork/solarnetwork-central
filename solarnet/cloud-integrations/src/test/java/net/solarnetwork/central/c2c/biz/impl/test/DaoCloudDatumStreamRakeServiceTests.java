@@ -28,13 +28,12 @@ import static java.time.Period.ZERO;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.INTEGRATION_RAKE_TAGS;
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
-import static net.solarnetwork.central.domain.CommonUserEvents.CONFIG_ID_DATA_KEY;
-import static net.solarnetwork.central.domain.CommonUserEvents.CONFIG_SUB_ID_DATA_KEY;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
@@ -42,6 +41,7 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -49,20 +49,26 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
+import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,6 +76,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamRakeService;
@@ -81,34 +90,48 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Test cases for the {@link DaoCloudDatumStreamRakeService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DaoCloudDatumStreamRakeServiceTests {
+public class DaoCloudDatumStreamRakeServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 	private static final String TEST_DATUM_STREAM_SERVICE_IDENTIFIER = randomString();
@@ -131,7 +154,22 @@ public class DaoCloudDatumStreamRakeServiceTests {
 	private CloudDatumStreamConfigurationDao datumStreamDao;
 
 	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Captor
+	private ArgumentCaptor<ObjectStreamCriteria> streamMetadataCriteriaCaptor;
+
+	@Mock
 	private DatumEntityDao datumDao;
+
+	@Mock
+	private DatumAuxiliaryEntityDao datumAuxiliaryDao;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryCriteria> datumAuxiliaryFilterCaptor;
+
+	@Captor
+	private ArgumentCaptor<DatumAuxiliaryEntity> datumAuxiliaryCaptor;
 
 	@Mock
 	private CloudDatumStreamService datumStreamService;
@@ -155,6 +193,9 @@ public class DaoCloudDatumStreamRakeServiceTests {
 	private ArgumentCaptor<Datum> datumCaptor;
 
 	@Captor
+	private ArgumentCaptor<StreamDatum> streamDatumCaptor;
+
+	@Captor
 	private ArgumentCaptor<Identity<GeneralNodeDatumPK>> generalNodeDatumCaptor;
 
 	@Captor
@@ -170,7 +211,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamRakeService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, pollTaskDao, datumStreamDao, datumDao, executor, datumStreamServices::get);
+				taskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao, datumDao,
+				datumAuxiliaryDao, executor, datumStreamServices::get);
 
 	}
 
@@ -319,40 +361,57 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for start/reset generated")
-			.hasSize(2)
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 				and.then(events).element(1)
+					.as("Task progress event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 0
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 			})
@@ -367,7 +426,7 @@ public class DaoCloudDatumStreamRakeServiceTests {
 	}
 
 	@Test
-	public void executeTask_difference() throws Exception {
+	public void executeTask_syntheticDifference() throws Exception {
 		// GIVEN
 		// submit task
 		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
@@ -420,19 +479,17 @@ public class DaoCloudDatumStreamRakeServiceTests {
 		final BasicObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(
 				UUID.randomUUID(), "UTC", ObjectDatumKind.Node, datumStream.getObjectId(),
 				datumStream.getSourceId(), new String[] { "watts" }, new String[] { "wattHours" }, null);
-		final var d1 = new DatumEntity(meta1.getStreamId(), datum1.getTimestamp(), now(),
-				DatumProperties.propertiesFrom(datum1, meta1));
+
+		// make the existing d1 datum properties different, but tagged with synthetic
+		final var d1p = DatumProperties.propertiesFrom(datum1, meta1);
+		d1p.setInstantaneous(new BigDecimal[] { new BigDecimal("999") });
+		d1p.setTags(new String[] { Datum.SYNTHETIC_TAG });
+		final var d1 = new DatumEntity(meta1.getStreamId(), datum1.getTimestamp(), now(), d1p);
+
 		final var d2 = new DatumEntity(meta1.getStreamId(), datum2.getTimestamp(), now(),
 				DatumProperties.propertiesFrom(datum2, meta1));
-
-		// now tweak wattHours value to be different from what cloud says
-		d2.getProperties().setAccumulating(decimalArray("0"));
-
 		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
 				Map.of(meta1.getStreamId(), meta1), List.of(d1, d2)));
-
-		// persist datum with difference
-		given(datumDao.store(any(Datum.class))).willReturn(d2.getId());
 
 		// update task details
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
@@ -466,10 +523,307 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(sod, from(DatumCriteria::getEndDate))
 			;
 
-		then(datumDao).should().store(datumCaptor.capture());
-		and.then(datumCaptor.getValue())
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Update task execute date to start of 'tomorrow'")
+			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("No message generated for successful execution")
+			.returns(null, from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("No service properties generated for successful execution")
+			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getAllValues())
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
+			.satisfies(events -> {
+				and.then(events).element(0)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake tags provided in event")
+					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task progress event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(2)
+					.as("Task success reset event generated")
+					.isNotNull()
+					.as("Rake tags provided in event")
+					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							"configId", datumStream.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 0
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+			})
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	private void thenDeleteAuxiliaryForQueryRanges(final CloudDatumStreamConfiguration datumStream,
+			final Set<String> resolvedSourceIds,
+			final List<DatumAuxiliaryCriteria> capturedAuxiliaryFilters,
+			final List<? extends DateRangeCriteria> queryFilters) {
+		// @formatter:off
+		and.then(capturedAuxiliaryFilters)
+			.as("Delete auxiliary called for each queried datum page")
+			.hasSize(queryFilters.size())
+			.allSatisfy(f -> {
+				and.then(f)
+					.as("Delete filter for Mark type")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryCriteria::getDatumAuxiliaryType))
+					.as("Delete filter has generated metadata search filter")
+					.returns(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER,
+							from(DatumAuxiliaryCriteria::getSearchFilter))
+					.as("Delete filter object kind for Datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryCriteria::getObjectKind))
+					.as("Delete filter for Datum Stream node ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryCriteria::getObjectId))
+					.as("Delete filter for resolved source IDs")
+					.returns(resolvedSourceIds.toArray(String[]::new), from(DatumAuxiliaryCriteria::getSourceIds))
+					;
+			})
+			.satisfies(filters -> {
+				for (int i = 0, len = filters.size(); i < len; i++ ) {
+					and.then(filters).element(i)
+						.as("Start date (page %d) from expected page filter", i)
+						.returns(queryFilters.get(i).getStartDate(), from(DatumAuxiliaryCriteria::getStartDate))
+						.as("End date (page %d) from expected page filter", i)
+						.returns(queryFilters.get(i).getEndDate(), from(DatumAuxiliaryCriteria::getEndDate))
+						;
+				}
+			})
+			;
+	}
+
+	@Test
+	public void executeTask_difference_generateAuxiliary() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant sod = clock.instant().truncatedTo(ChronoUnit.DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId(), Claimed, clock.instant(), clock.instant().truncatedTo(HOURS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream
+		final var datum1 = new GeneralDatum(
+				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod),
+				new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 23456L), null));
+		final var datum2 = new GeneralDatum(
+				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(1, HOURS)),
+				new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 34567L), null));
+
+		final List<DatumAuxiliaryRecord> generatedAux = new ArrayList<>(2);
+		generatedAux.addAll(
+				DatumAuxiliary.createTimeGapValidationRecords(DatumValidationType.TimeGap.getKey(),
+						"/foo/bar/prop/val", null, null, datum1.getTimestamp().minus(100, ChronoUnit.HOURS),
+						Duration.ofDays(1), datum1.datumIdent()));
+
+		given(datumStreamService.datum(same(datumStream), any()))
+				.willReturn(new BasicCloudDatumStreamQueryResult(null, null, List.of(datum1, datum2), generatedAux));
+
+		// query for existing datum with same time range
+		final BasicObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(
+				UUID.randomUUID(), "UTC", ObjectDatumKind.Node, datumStream.getObjectId(),
+				datumStream.getSourceId(), new String[] { "watts" }, new String[] { "wattHours" }, null);
+		final var d1 = new DatumEntity(meta1.getStreamId(), datum1.getTimestamp(), now(),
+				DatumProperties.propertiesFrom(datum1, meta1));
+		final var d2 = new DatumEntity(meta1.getStreamId(), datum2.getTimestamp(), now(),
+				DatumProperties.propertiesFrom(datum2, meta1));
+
+		// now tweak wattHours value to be different from what cloud says
+		d2.getProperties().setAccumulating(decimalArray("0"));
+
+		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
+				Map.of(meta1.getStreamId(), meta1), List.of(d1, d2)));
+
+		// look up stream for datum
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
+		streamCriteria.setNodeId(meta1.getObjectId());
+		streamCriteria.setSourceId(meta1.getSourceId());
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(meta1);
+
+		// persist datum with difference
+		given(datumDao.store(any(StreamDatum.class))).willReturn(d2.getId());
+
+		// resolve source IDs
+		final Set<String> resolvedSourceIds = Set.of(datumStream.getSourceId());
+		given(datumStreamService.datumStreamSourceIds(datumStream)).willReturn(resolvedSourceIds);
+
+		// delete generated auxiliary for query time range
+		given(datumAuxiliaryDao.deleteFiltered(any())).willReturn(0L);
+
+		// persist auxiliary, after looking up stream ID
+		given(datumStreamMetadataDao.findDatumStreamMetadataIds(any()))
+				.willReturn(List.of(new ObjectDatumStreamMetadataId(meta1.getStreamId(), meta1.getKind(),
+						meta1.getObjectId(), meta1.getSourceId())));
+
+		given(datumAuxiliaryDao.save(any())).will(inv -> {
+			return inv.getArgument(0, DatumAuxiliaryEntity.class).getId();
+		});
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
+				datumStream.getConfigId(), Claimed, sod, Period.ofDays(1));
+
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamRakeTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamService).should().datum(same(datumStream), queryFilterCaptor.capture());
+		and.then(queryFilterCaptor.getValue())
+			.as("The query start date is the day offset from 'now'")
+			.returns(sod.minus(1, DAYS), from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("The query end date is the current date")
+			.returns(sod, from(CloudDatumStreamQueryFilter::getEndDate))
+			;
+
+		then(datumDao).should().findFiltered(datumFilterCaptor.capture());
+		and.then(datumFilterCaptor.getValue())
+			.as("The existing datum query is for stream object ID")
+			.returns(meta1.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("The existing datum query is for the stream source ID")
+			.returns(meta1.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("The existing datum query start date is the same as in the query filter")
+			.returns(sod.minus(1, DAYS), from(DatumCriteria::getStartDate))
+			.as("The existing datum query end date is the same as in the query filter")
+			.returns(sod, from(DatumCriteria::getEndDate))
+			;
+
+		then(datumDao).should().store(streamDatumCaptor.capture());
+		and.then(streamDatumCaptor.getValue())
 			.as("Datum with difference persisted")
-			.isSameAs(datum2)
+			.isEqualTo(d2)
+			.as("StreamDatum properties populated from datum")
+			.returns(DatumProperties.propertiesFrom(datum2, meta1), from(StreamDatum::getProperties))
+			;
+
+		// delete generated auxiliary for query range
+		then(datumAuxiliaryDao).should().deleteFiltered(datumAuxiliaryFilterCaptor.capture());
+		thenDeleteAuxiliaryForQueryRanges(datumStream, resolvedSourceIds, datumAuxiliaryFilterCaptor.getAllValues(),
+				queryFilterCaptor.getAllValues());
+
+		// datum stream metadata query for expected kind/node/sources
+		then(datumStreamMetadataDao).should().findDatumStreamMetadataIds(streamMetadataCriteriaCaptor.capture());
+		and.then(streamMetadataCriteriaCaptor.getValue())
+			.as("Stream metadata filter object kind for Datum Stream kind")
+			.returns(datumStream.getKind(), from(ObjectStreamCriteria::getObjectKind))
+			.as("Stream metadata filter for Datum Stream node ID")
+			.returns(datumStream.getObjectId(), from(ObjectStreamCriteria::getNodeId))
+			.as("Stream metadata filter for resolved source IDs")
+			.returns(resolvedSourceIds.toArray(String[]::new), from(ObjectStreamCriteria::getSourceIds))
+			;
+
+		then(datumAuxiliaryDao).should(times(2)).save(datumAuxiliaryCaptor.capture());
+		and.then(datumAuxiliaryCaptor.getAllValues())
+			.allSatisfy(aux -> {
+				and.then(aux)
+					.as("Auxiliary stream ID resolved from stream metadata query results")
+					.returns(meta1.getStreamId(), from(DatumAuxiliaryEntity::getStreamId))
+					.as("Auxiliary type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryEntity::getType))
+					.extracting(DatumAuxiliaryEntity::getMetadata)
+					.as("Mark is generated by SolarNetwork")
+					.returns(DatumAuxiliary.GENERATED_BY_SOLARNETWORK, from(e -> e.getInfoString(DatumAuxiliary.GENERATED_BY_META_KEY)))
+					.as("Mark type is data validation")
+					.returns(DatumAuxiliary.DATA_VALIDATION_TYPE, from(e -> e.getInfoString(DatumAuxiliary.TYPE_META_KEY)))
+					.as("Mark sub-type is time-gap")
+					.returns(List.of(TIME_GAP_VALIDATION_TYPE), from(e -> e.getInfo(DatumAuxiliary.SUB_TYPES_META_KEY)))
+					;
+			})
+			.satisfies(records -> {
+				for (int i = 0; i < generatedAux.size(); i++ ) {
+					final var expected = generatedAux.get(i);
+					and.then(records).element(i)
+						.as("Generated aux %d timestamp saved as-is", i)
+						.returns(expected.getTimestamp(), from(DatumAuxiliaryEntity::getTimestamp))
+						.as("Generated aux %d notes saved as-is", i)
+						.returns(expected.getNotes(), from(DatumAuxiliaryEntity::getNotes))
+						.as("Generated aux %d metadata saved as-is", i)
+						.returns(expected.getMetadata(), from(DatumAuxiliaryEntity::getMetadata))
+						;
+
+				}
+			})
 			;
 
 		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
@@ -488,41 +842,61 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
 			.as("Events for start/reset generated")
-			.hasSize(2)
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 				and.then(events).element(1)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datum2.getSourceId(), 1
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 1,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datum2.getSourceId(), 1
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
@@ -657,41 +1031,61 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for start/reset generated")
-			.hasSize(2)
+			.as("Events for start/progress/reset generated")
+			.hasSize(3)
 			.satisfies(events -> {
 				and.then(events).element(0)
 					.as("Task start event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 				and.then(events).element(1)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datum2.getSourceId(), 1
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(2)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
-							"datumUpdateCount", 1,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 1,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datum2.getSourceId(), 1
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
@@ -795,10 +1189,16 @@ public class DaoCloudDatumStreamRakeServiceTests {
 				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(meta1.getStreamId(), meta1),
 						existingDatum3));
 
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
+		streamCriteria.setNodeId(meta1.getObjectId());
+		streamCriteria.setSourceId(meta1.getSourceId());
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(meta1);
+
 		// persist datum with difference (missing)
 		final List<Datum> allCloudDatum = List.of(cloudDatum1, cloudDatum2).stream()
 				.flatMap(l -> l.stream()).toList();
-		var datumDaoStoreGiven = given(datumDao.store(any(Datum.class)));
+		var datumDaoStoreGiven = given(datumDao.store(any(StreamDatum.class)));
 		for ( Datum d : allCloudDatum ) {
 			datumDaoStoreGiven = datumDaoStoreGiven
 					.willReturn(new DatumPK(meta1.getStreamId(), d.getTimestamp()));
@@ -886,8 +1286,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		final int datumUpdateCount = 4;
 
-		then(datumDao).should(times(datumUpdateCount)).store(datumCaptor.capture());
-		and.then(datumCaptor.getAllValues())
+		then(datumDao).should(times(datumUpdateCount)).store(streamDatumCaptor.capture());
+		and.then(streamDatumCaptor.getAllValues())
 			.as("Missing datum persisted")
 			.hasSize(datumUpdateCount)
 			;
@@ -908,74 +1308,102 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should(times(4)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
 		and.then(logEventCaptor.getAllValues())
-			.as("Events for 3 iterations + final result generated")
-			.hasSize(4)
+			.as("Events for start + 3 iterations + final result generated")
+			.hasSize(5)
 			.satisfies(events -> {
 				and.then(events)
+				.as("Task start event generated")
+				.element(0)
+				.as("Rake tags provided in event")
+				.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+				.as("Task dates provided in event data")
+				.returns(Map.of(
+						CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+						CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+						DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+						EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+						STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+					), from(e -> JsonUtils.getStringMap(e.getData())))
+				;
+
+				and.then(events)
 					.as("Task iteration 1 start event generated")
-					.element(0)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(1)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 2,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 2
+									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 				and.then(events)
 					.as("Task iteration 2 start event generated")
-					.element(1)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(2)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 4
+									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 				and.then(events)
 					.as("Task iteration 3 start event generated")
-					.element(2)
-					.as("Poll tags provided in event")
-					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.element(3)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
-							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 4
+									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 
 
-				and.then(events).element(3)
+				and.then(events).element(4)
 					.as("Task success reset event generated")
 					.isNotNull()
-					.as("Poll tags provided in event")
+					.as("Rake tags provided in event")
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
 							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
-							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
-							"datumUpdateCount", 4,
-							"datumUpdateCountBySource", Map.of(
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
 									datumStream.getSourceId(), 4
 									)
 						), from(e -> JsonUtils.getStringMap(e.getData())))
@@ -1010,7 +1438,7 @@ public class DaoCloudDatumStreamRakeServiceTests {
 		datumStream.setSourceId(randomString());
 
 		// update task state to "queued"
-		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
+		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
 
 		// WHEN
 		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
@@ -1021,6 +1449,18 @@ public class DaoCloudDatumStreamRakeServiceTests {
 		and.thenThrownBy(() -> service.executeTask(task), "Task fails to execute")
 			.as("The exception cause is the one thrown by the submit() call")
 			.isSameAs(rejectedException)
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Claimed));
+		and.then(taskCaptor.getValue())
+			.as("Update state of given task")
+			.isEqualTo(task)
+			.as("Only state changed to Queued in updated task")
+			.returns(true, from(t -> {
+				var expected = task.clone();
+				expected.setState(Queued);
+				return t.isSameAs(expected);
+			}))
 			;
 		// @formatter:on
 	}
@@ -1084,14 +1524,418 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Update task execute date to start of 'tomorrow'")
 			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.satisfies(t -> {
+				and.then(t.getMessage())
+					.as("Message generated for failed execution")
+					.containsIgnoringCase("poll task start")
+					;
+			})
+			.extracting(CloudDatumStreamRakeTaskEntity::getServiceProperties, InstanceOfAssertFactories.map(String.class, Object.class))
+			.as("Service properties generated for failed execution")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+					CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+					"startDate", task.getExecuteAt().atZone(UTC).truncatedTo(DAYS).minus(task.getOffset()).toInstant(),
+					"pollStartDate", pollTask.getStartAt()
+				))
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_http429() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant sod = clock.instant().truncatedTo(ChronoUnit.DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId(), Claimed, clock.instant(), clock.instant().truncatedTo(HOURS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream
+		final var ex = HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS,
+				"Too many requests.", new HttpHeaders(), null, null);
+		given(datumStreamService.datum(same(datumStream), any())).willThrow(ex);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId(), now(),
+				datumStream.getConfigId(), Claimed, sod, Period.ofDays(1));
+
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		thenExceptionOfType(ExecutionException.class).isThrownBy(() -> {
+			result.get(1, TimeUnit.MINUTES);
+		}).withCauseInstanceOf(HttpClientErrorException.class);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Task execute date pushed by one hour")
+			.returns(clock.instant().truncatedTo(MINUTES).plus(1, HOURS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
 			.as("Message generated for failed execution")
-			.returns("Rake task date is after poll task start.", from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.returns("Error executing rake task.", from(CloudDatumStreamRakeTaskEntity::getMessage))
 			.as("Service properties generated for failed execution")
 			.returns(Map.of(
+					CONFIG_ID_DATA_KEY, task.getDatumStreamId(),
 					CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
-					"endDate", sod,
-					"startDate", pollTask.getStartAt()
+					ERROR_COUNT_DATA_KEY, 1L,
+					MESSAGE_DATA_KEY, ex.getMessage()
 				), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_iterateUntilSame_upToPollTaskStartDate() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant now = clock.instant();
+		final Instant sod = now.truncatedTo(DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId(), Claimed, now, now.truncatedTo(HOURS).minus(12, HOURS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		final var task = new CloudDatumStreamRakeTaskEntity(TEST_USER_ID, randomLong(), now(),
+				datumStream.getConfigId(), Claimed, sod, Period.ofDays(3));
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(task.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream, over 3 iterations (days)
+		final List<Datum> cloudDatum1 = List.of(
+				new GeneralDatum(nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod),
+						new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 23456L), null)),
+				new GeneralDatum(
+						nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(1, HOURS)),
+						new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 34567L), null)));
+		final List<Datum> cloudDatum2 = List.of(
+				new GeneralDatum(
+						nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(1, DAYS)),
+						new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 45678L), null)),
+				new GeneralDatum(
+						nodeId(datumStream.getObjectId(), datumStream.getSourceId(),
+								sod.plus(1, DAYS).plus(1, HOURS)),
+						new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 56789L), null)));
+		final List<Datum> cloudDatum3 = List.of(
+				new GeneralDatum(
+						nodeId(datumStream.getObjectId(), datumStream.getSourceId(), sod.plus(2, DAYS)),
+						new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 67890L), null)),
+				new GeneralDatum(
+						nodeId(datumStream.getObjectId(), datumStream.getSourceId(),
+								sod.plus(2, DAYS).plus(1, HOURS)),
+						new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 78901L), null)));
+		given(datumStreamService.datum(same(datumStream), any()))
+				.willReturn(new BasicCloudDatumStreamQueryResult(cloudDatum1))
+				.willReturn(new BasicCloudDatumStreamQueryResult(cloudDatum2))
+				.willReturn(new BasicCloudDatumStreamQueryResult(cloudDatum3));
+
+		// query for existing datum with same time range
+		final BasicObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(
+				UUID.randomUUID(), "UTC", ObjectDatumKind.Node, datumStream.getObjectId(),
+				datumStream.getSourceId(), new String[] { "watts" }, new String[] { "wattHours" }, null);
+		final List<net.solarnetwork.central.datum.v2.domain.Datum> existingDatum1 = List.of(); // missing day 1
+		final List<net.solarnetwork.central.datum.v2.domain.Datum> existingDatum2 = List.of(); // missing day 2
+		final List<net.solarnetwork.central.datum.v2.domain.Datum> existingDatum3 = cloudDatum3.stream()
+				.map(d -> (net.solarnetwork.central.datum.v2.domain.Datum) new DatumEntity(
+						meta1.getStreamId(), d.getTimestamp(), now(),
+						DatumProperties.propertiesFrom(d, meta1)))
+				.toList();
+
+		given(datumDao.findFiltered(any()))
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(meta1.getStreamId(), meta1),
+						existingDatum1))
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(meta1.getStreamId(), meta1),
+						existingDatum2))
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(meta1.getStreamId(), meta1),
+						existingDatum3));
+
+		final var streamCriteria = new BasicDatumCriteria();
+		streamCriteria.setObjectKind(ObjectDatumKind.Node);
+		streamCriteria.setNodeId(meta1.getObjectId());
+		streamCriteria.setSourceId(meta1.getSourceId());
+		given(datumStreamMetadataDao.findStreamMetadata(streamCriteria)).willReturn(meta1);
+
+		// persist datum with difference (missing)
+		final List<Datum> allCloudDatum = List.of(cloudDatum1, cloudDatum2).stream()
+				.flatMap(l -> l.stream()).toList();
+		var datumDaoStoreGiven = given(datumDao.store(any(StreamDatum.class)));
+		for ( Datum d : allCloudDatum ) {
+			datumDaoStoreGiven = datumDaoStoreGiven
+					.willReturn(new DatumPK(meta1.getStreamId(), d.getTimestamp()));
+		}
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamRakeTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamService).should(times(3)).datum(same(datumStream), queryFilterCaptor.capture());
+		and.then(queryFilterCaptor.getAllValues())
+			.satisfies(l -> {
+				and.then(l)
+					.as("Iteration 1")
+					.element(0)
+					.as("The query start date is the day offset from execAt")
+					.returns(sod.minus(3, DAYS), from(CloudDatumStreamQueryFilter::getStartDate))
+					.as("The query end date is 1 day after start date")
+					.returns(sod.minus(2, DAYS), from(CloudDatumStreamQueryFilter::getEndDate))
+					;
+				and.then(l)
+					.as("Iteration 2")
+					.element(1)
+					.as("The query start date is the start of next iteration day")
+					.returns(sod.minus(2, DAYS), from(CloudDatumStreamQueryFilter::getStartDate))
+					.as("The query end date is 1 day after start date")
+					.returns(sod.minus(1, DAYS), from(CloudDatumStreamQueryFilter::getEndDate))
+					;
+				and.then(l)
+					.as("Iteration 3")
+					.element(2)
+					.as("The query start date is the start of next iteration day")
+					.returns(sod.minus(1, DAYS), from(CloudDatumStreamQueryFilter::getStartDate))
+					.as("The query end date is the poll task start date (caught up)")
+					.returns(pollTask.getStartAt(), from(CloudDatumStreamQueryFilter::getEndDate))
+					;
+			})
+			;
+
+		then(datumDao).should(times(3)).findFiltered(datumFilterCaptor.capture());
+		and.then(datumFilterCaptor.getAllValues())
+			.allSatisfy(c -> {
+				and.then(c)
+					.as("The existing datum query is for stream object ID")
+					.returns(meta1.getObjectId(), from(DatumCriteria::getNodeId))
+					.as("The existing datum query is for the stream source ID")
+					.returns(meta1.getSourceId(), from(DatumCriteria::getSourceId))
+					;
+			})
+			.satisfies(l -> {
+				and.then(l)
+					.as("Iteration 1")
+					.element(0)
+					.as("The existing datum query start date is the same as in the query filter")
+					.returns(sod.minus(3, DAYS), from(DatumCriteria::getStartDate))
+					.as("The existing datum query end date is the same as in the query filter")
+					.returns(sod.minus(2, DAYS), from(DatumCriteria::getEndDate))
+					;
+				and.then(l)
+					.as("Iteration 2")
+					.element(1)
+					.as("The existing datum query start date is the same as in the query filter")
+					.returns(sod.minus(2, DAYS), from(DatumCriteria::getStartDate))
+					.as("The existing datum query end date is the same as in the query filter")
+					.returns(sod.minus(1, DAYS), from(DatumCriteria::getEndDate))
+					;
+				and.then(l)
+					.as("Iteration 3")
+					.element(2)
+					.as("The existing datum query start date is the same as in the query filter")
+					.returns(sod.minus(1, DAYS), from(DatumCriteria::getStartDate))
+					.as("The existing datum query end date is the same as in the query filter")
+					.returns(pollTask.getStartAt(), from(DatumCriteria::getEndDate))
+					;
+			})
+			;
+
+		final int datumUpdateCount = 4;
+
+		then(datumDao).should(times(datumUpdateCount)).store(streamDatumCaptor.capture());
+		and.then(streamDatumCaptor.getAllValues())
+			.as("Missing datum persisted")
+			.hasSize(datumUpdateCount)
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Update task execute date to start of 'tomorrow'")
+			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Update count generated for successful execution")
+			.returns("Updated %d datum.".formatted(datumUpdateCount), from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("No service properties generated for successful execution")
+			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		then(userEventAppenderBiz).should(times(5)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getAllValues())
+			.as("Events for start + 3 iterations + final result generated")
+			.hasSize(5)
+			.satisfies(events -> {
+				and.then(events)
+				.as("Task start event generated")
+				.element(0)
+				.as("Rake tags provided in event")
+				.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+				.as("Task dates provided in event data")
+				.returns(Map.of(
+						CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+						CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+						DATE_OFFSET_DATA_KEY, task.getOffset().toString(),
+						EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+						STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+					), from(e -> JsonUtils.getStringMap(e.getData())))
+				;
+
+				and.then(events)
+					.as("Task iteration 1 start event generated")
+					.element(1)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(3, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(2, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 2,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 2
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events)
+					.as("Task iteration 2 start event generated")
+					.element(2)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(2, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 4
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events)
+					.as("Task iteration 3 start event generated")
+					.element(3)
+					.as("Rake progress tags provided in event")
+					.returns(INTEGRATION_RAKE_PROGRESS_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(pollTask.getStartAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 4
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+
+				and.then(events).element(4)
+					.as("Task success reset event generated")
+					.isNotNull()
+					.as("Rake tags provided in event")
+					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+							EXECUTE_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
+							START_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(sod.minus(3, DAYS)),
+							END_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(pollTask.getStartAt()),
+							STARTED_AT_DATA_KEY, ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							DATUM_COUNT_DATA_KEY, 4,
+							DATUM_COUNT_BY_SOURCE_DATA_KEY, Map.of(
+									datumStream.getSourceId(), 4
+									)
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+			})
 			;
 
 		and.then(resultTask)

@@ -118,6 +118,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeDatumFilter(Filter filter) {
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "nodeDatumFilter(filter)", argNames = "pjp,filter")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
 		final boolean isQueryBiz = (pjp.getTarget() instanceof QueryBiz);

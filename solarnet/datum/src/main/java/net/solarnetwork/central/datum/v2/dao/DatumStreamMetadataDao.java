@@ -41,12 +41,30 @@ public interface DatumStreamMetadataDao {
 	/**
 	 * Get the metadata associated with a datum stream.
 	 *
+	 * <p>
+	 * The criteria must include values that uniquely identify a single datum
+	 * stream, one of:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>a {@link ObjectMetadataCriteria#getStreamId() stream ID}</li>
+	 * <li>a {@link ObjectMetadataCriteria#getObjectKind() stream kind},
+	 * {@link ObjectMetadataCriteria#getObjectId() object ID}, and
+	 * {@link ObjectMetadataCriteria#getSourceId() source ID}</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * If a stream ID is provided, all other criteria will be ignored.
+	 * </p>
+	 *
 	 * @param filter
 	 *        the search filter
 	 * @return the metadata, or {@code null} if not available
+	 * @throws IllegalStateException
+	 *         if insufficient criteria is provided
 	 */
 	@Nullable
-	ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter);
+	ObjectDatumStreamMetadata findStreamMetadata(ObjectMetadataCriteria filter);
 
 	/**
 	 * Find all available object datum stream metadata for a given search

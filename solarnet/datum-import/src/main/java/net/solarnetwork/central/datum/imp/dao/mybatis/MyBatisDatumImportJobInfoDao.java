@@ -30,19 +30,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * MyBatis implementation of {@link DatumImportJobInfoDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImportJobInfo, UserUuidPK>
 		implements DatumImportJobInfoDao {

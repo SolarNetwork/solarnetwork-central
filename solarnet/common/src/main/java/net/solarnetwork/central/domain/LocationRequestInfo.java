@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.Location;
 
@@ -31,7 +32,7 @@ import net.solarnetwork.domain.Location;
  * Location request information.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 @JsonPropertyOrder({ "locationId", "sourceId", "features", "location" })
@@ -50,6 +51,32 @@ public class LocationRequestInfo implements Cloneable {
 			// should not be here
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Get the region or state or province value.
+	 * 
+	 * @return the region, or state or province, or {@code null} if neither are
+	 *         configured
+	 * @since 1.1
+	 */
+	@JsonIgnore
+	public final @Nullable String getRegionOrStateOrProvince() {
+		final Location location = getLocation();
+		if ( location == null ) {
+			return null;
+		}
+		String s = location.getRegion();
+		if ( s != null && !s.isEmpty() ) {
+			return s;
+		}
+
+		s = location.getStateOrProvince();
+		if ( s != null && !s.isEmpty() ) {
+			return s;
+		}
+
+		return null;
 	}
 
 	/**

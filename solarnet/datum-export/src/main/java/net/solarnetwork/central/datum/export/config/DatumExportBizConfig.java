@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.config;
 
+import java.time.Clock;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +33,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -83,11 +85,14 @@ public class DatumExportBizConfig implements SolarNetDatumExportConfiguration {
 	@Autowired
 	private TextEncryptor textEncryptor;
 
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumExportBiz datumExportBiz() {
-		DaoDatumExportBiz biz = new DaoDatumExportBiz(datumExportTaskInfoDao, datumEntityDao,
-				taskScheduler, taskExecutor, textEncryptor, datumExportOutputFormatServices,
-				datumExportDestinationServices, transactionTemplate);
+		DaoDatumExportBiz biz = new DaoDatumExportBiz(Clock.systemUTC(), userEventAppenderBiz,
+				datumExportTaskInfoDao, datumEntityDao, taskScheduler, taskExecutor, textEncryptor,
+				datumExportOutputFormatServices, datumExportDestinationServices, transactionTemplate);
 		biz.setQueryAuditor(queryAuditor);
 		biz.setCompletedTaskMinimumCacheTime(completedTaskMinimumCacheTime);
 		biz.setEventPublisher(eventPublisher);

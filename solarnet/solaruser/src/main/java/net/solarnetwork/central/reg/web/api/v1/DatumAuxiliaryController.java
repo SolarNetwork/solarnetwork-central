@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
@@ -44,6 +43,7 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
  * Web controller for datum auxiliary record management.
@@ -130,6 +130,10 @@ public class DatumAuxiliaryController {
 			DatumFilterCommand criteria) {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		criteria.setUserId(userId);
+		if ( criteria.getDatumAuxiliaryType() == null ) {
+			// default to Reset
+			criteria.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
+		}
 		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> results = datumAuxiliaryBiz
 				.findGeneralNodeDatumAuxiliary(criteria, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());

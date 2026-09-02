@@ -434,6 +434,7 @@ public class JdbcAuthService implements AuthService {
 	 * {@code username} must be {@literal solarnode} (case insensitive).
 	 * </p>
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public Response authorizeRequest(PublishRequest request) {
 		final String username = request.getUsername();
@@ -467,14 +468,14 @@ public class JdbcAuthService implements AuthService {
 			return Response.OK;
 		}
 
-	// @formatter:off
-    PublishModifiers mods = PublishModifiers.builder()
-        .withTopic(result.getTopic())
-        .withQos(result.getQos())
-        .withPayload(result.getPayload())
-        .withRetain(result.getRetain())
-        .build();
-    // @formatter:on
+		// @formatter:off
+	    PublishModifiers mods = PublishModifiers.builder()
+	        .withTopic(result.getTopic())
+	        .withQos(result.getQos())
+	        .withPayload(result.getPayload())
+	        .withRetain(result.getRetain())
+	        .build();
+	    // @formatter:on
 		return new Response(mods);
 	}
 
@@ -487,6 +488,7 @@ public class JdbcAuthService implements AuthService {
 	 * associated token.
 	 * </p>
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public Response authorizeRequest(SubscribeRequest request) {
 		final String tokenId = request.getUsername();

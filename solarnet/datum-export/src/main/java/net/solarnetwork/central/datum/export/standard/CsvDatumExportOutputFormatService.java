@@ -245,6 +245,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return !props.isIncludeHeader();
 		}
 
+		@SuppressWarnings("ReferenceEquality")
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
 			temporaryFile = createTemporaryResource(config);

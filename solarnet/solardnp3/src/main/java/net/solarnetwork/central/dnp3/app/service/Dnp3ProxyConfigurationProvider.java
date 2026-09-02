@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.automatak.dnp3.DNP3Manager;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -97,8 +99,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	private final DatumEntityDao datumDao;
 	private final UserEventAppenderBiz userEventAppenderBiz;
 
-	private Executor taskExecutor;
-	private Cache<Long, KeyStore> userTrustStoreCache;
+	private @Nullable Executor taskExecutor;
+	private @Nullable Cache<Long, KeyStore> userTrustStoreCache;
 
 	/**
 	 * Constructor.
@@ -154,7 +156,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	}
 
 	@Override
-	public ProxyConnectionSettings authorize(ProxyConnectionRequest request)
+	public @Nullable ProxyConnectionSettings authorize(ProxyConnectionRequest request)
 			throws AuthorizationException {
 		final List<X509Certificate> clientIdentity = requireNonNullArgument(request, "request")
 				.principalIdentity();
@@ -241,7 +243,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		private int port = 0;
 		private int datumLoadCount = 0;
 
-		private OutstationService server;
+		private @Nullable OutstationService server;
 
 		private DynamicConnectionSettings(ProxyConnectionRequest request, ServerAuthConfiguration auth,
 				KeyStore trustStore) {
@@ -307,7 +309,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
 					SESSION_TAGS, "Server starting with %d and %d control configurations.", START_TAG));
 
-			server = new OutstationService(manager, userEventAppenderBiz, instructorBiz, auth,
+			var server = new OutstationService(manager, userEventAppenderBiz, instructorBiz, auth,
 					destinationHost(), newPort, mConfigs, cConfigs);
 			server.setTaskExecutor(taskExecutor);
 			server.serviceDidStartup();
@@ -356,6 +358,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			}
 
 			port = newPort;
+			this.server = server;
 		}
 
 		@Override
@@ -384,11 +387,15 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		@Override
 		public void handleResultItem(StreamDatum resultItem) throws IOException {
 			final OutstationService server = this.server;
-			if ( server == null ) {
+			final ObjectDatumStreamMetadataProvider metadataProvider = getMetadataProvider();
+			if ( server == null || metadataProvider == null ) {
 				return;
 			}
-			ObjectDatumStreamMetadata meta = getMetadataProvider()
+			final ObjectDatumStreamMetadata meta = metadataProvider
 					.metadataForStreamId(resultItem.getStreamId());
+			if ( meta == null ) {
+				return;
+			}
 			ObjectDatum d = ObjectDatum.forStreamDatum(resultItem, auth.getUserId(),
 					DatumId.nodeId(meta.getObjectId(), meta.getSourceId(), resultItem.getTimestamp()),
 					meta);
@@ -403,7 +410,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 *
 	 * @return the taskExecutor
 	 */
-	public Executor getTaskExecutor() {
+	public final @Nullable Executor getTaskExecutor() {
 		return taskExecutor;
 	}
 
@@ -413,7 +420,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * @param taskExecutor
 	 *        the taskExecutor to set
 	 */
-	public void setTaskExecutor(Executor taskExecutor) {
+	public final void setTaskExecutor(@Nullable Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 
@@ -422,7 +429,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 *
 	 * @return the cache
 	 */
-	public Cache<Long, KeyStore> getUserTrustStoreCache() {
+	public final @Nullable Cache<Long, KeyStore> getUserTrustStoreCache() {
 		return userTrustStoreCache;
 	}
 
@@ -432,7 +439,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * @param userTrustStoreCache
 	 *        the userTrustStoreCache to set
 	 */
-	public void setUserTrustStoreCache(Cache<Long, KeyStore> userTrustStoreCache) {
+	public final void setUserTrustStoreCache(@Nullable Cache<Long, KeyStore> userTrustStoreCache) {
 		this.userTrustStoreCache = userTrustStoreCache;
 	}
 

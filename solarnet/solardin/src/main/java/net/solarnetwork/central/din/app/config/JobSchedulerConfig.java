@@ -60,7 +60,7 @@ public class JobSchedulerConfig {
 		for ( ManagedJob job : managedJobs ) {
 			Trigger trigger = nonnull(
 					triggerForExpression(job.getSchedule(), TimeUnit.MILLISECONDS, false),
-					"Job %s schedule".formatted(job.getId()));
+					"Job %s schedule", job.getId());
 			var _ = manager.scheduleJob(job.getGroupId(), job.getId(), job, trigger);
 		}
 		return manager;

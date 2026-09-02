@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice payment entity.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class InvoicePayment extends BasicEntity<UserUuidPK>
 		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
@@ -80,22 +80,6 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	/**
 	 * Constructor.
 	 *
-	 * @param accountId
-	 *        the account ID
-	 * @param paymentId
-	 *        the payment ID
-	 * @param invoiceId
-	 *        the invoice ID
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
-	 */
-	public InvoicePayment(Long accountId, UUID paymentId, Long invoiceId) {
-		this(new UserUuidPK(), accountId, paymentId, invoiceId, Instant.now());
-	}
-
-	/**
-	 * Constructor.
-	 *
 	 * @param id
 	 *        the ID
 	 * @param accountId
@@ -107,12 +91,11 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if {@code accountId}, {@code paymentId}, {@code invoiceId} is
-	 *         {@code null}
+	 *         if any argument except {@code created} is {@code null}
 	 */
-	public InvoicePayment(@Nullable UserUuidPK id, Long accountId, UUID paymentId, Long invoiceId,
+	public InvoicePayment(UserUuidPK id, Long accountId, UUID paymentId, Long invoiceId,
 			@Nullable Instant created) {
-		super(id, created);
+		super(requireNonNullArgument(id, "id"), created);
 		this.accountId = requireNonNullArgument(accountId, "accountId");
 		this.paymentId = requireNonNullArgument(paymentId, "paymentId");
 		this.invoiceId = requireNonNullArgument(invoiceId, "invoiceId");
@@ -134,11 +117,10 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if {@code accountId}, {@code paymentId}, {@code invoiceId} is
-	 *         {@code null}
+	 *         if any argument except {@code created} is {@code null}
 	 */
-	public InvoicePayment(@Nullable UUID id, @Nullable Long userId, Long accountId, UUID paymentId,
-			Long invoiceId, @Nullable Instant created) {
+	public InvoicePayment(UUID id, Long userId, Long accountId, UUID paymentId, Long invoiceId,
+			@Nullable Instant created) {
 		this(new UserUuidPK(userId, id), accountId, paymentId, invoiceId, created);
 	}
 
@@ -195,13 +177,13 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	@Override
 	public boolean hasId() {
-		UserUuidPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		final UserUuidPK id = id();
+		return (id.userIdIsAssigned() && id.uuidIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		return nonnull(nonnull(getId(), "id").getUserId(), "userId");
+		return id().getUserId();
 	}
 
 	/**

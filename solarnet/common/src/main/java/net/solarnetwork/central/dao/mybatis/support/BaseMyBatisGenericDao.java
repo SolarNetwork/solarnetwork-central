@@ -268,6 +268,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 		return results;
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public K save(T datum) {
 		final K id = datum.getId();

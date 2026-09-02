@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 

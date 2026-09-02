@@ -61,6 +61,7 @@ import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -148,6 +149,70 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 					.isSameAs(parameters)
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void wattHours_32bitFloatMath() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long integrationId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		// populate a "wh" float
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "wh", 3.0f);
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "prevWattHours", 41577468);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				now(), Accumulating, "wattHours", SpelExpression, "wh + prevWattHours");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		// WHEN
+		DatumExpressionRoot root = service.createDatumExpressionRoot(userId, integrationId, datum,
+				parameters, null, null, null);
+		final Object result = service.evaluateDatumPropertyExpression(config, root, null, Object.class);
+
+		// THEN
+		// @formatter:off
+		thenObject(result)
+			.as("32-bit float + integer does 32-bit float addition to arrive at unexpected result (not 41577471)")
+			.isEqualTo(41577470f)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void wattHours_32bitFloatMath_floor() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long integrationId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		// populate a "wh" float
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "wh", 3.0f);
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "prevWattHours", 41577468);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				now(), Accumulating, "wattHours", SpelExpression, "floor(wh) + prevWattHours");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		// WHEN
+		DatumExpressionRoot root = service.createDatumExpressionRoot(userId, integrationId, datum,
+				parameters, null, null, null);
+		final Object result = service.evaluateDatumPropertyExpression(config, root, null, Object.class);
+
+		// THEN
+		// @formatter:off
+		thenObject(result)
+			.as("floor(32-bit float) + integer does BigDecimal addition to arrive at expected result")
+			.isEqualTo(new BigDecimal("41577471"))
 			;
 		// @formatter:on
 	}

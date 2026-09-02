@@ -55,6 +55,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -184,7 +185,7 @@ public class DaoDataCollectorBizTests {
 		DatumPK datumPk = new DatumPK(d.getStreamId(), d.getTimestamp());
 
 		// lookup stream metadata
-		Capture<StreamMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectMetadataCriteria> metaCriteriaCaptor = new Capture<>();
 		expect(metaDao.findStreamMetadata(capture(metaCriteriaCaptor))).andReturn(meta);
 
 		// save datum

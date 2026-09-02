@@ -50,28 +50,22 @@ CREATE INDEX user_node_instr_task_exec_idx ON solaruser.user_node_instr_task
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solaruser.claim_node_instr_task()
-	RETURNS SETOF solaruser.user_node_instr_task LANGUAGE plpgsql VOLATILE ROWS 1 AS
+	RETURNS SETOF solaruser.user_node_instr_task LANGUAGE SQL VOLATILE ROWS 1 AS
 $$
-DECLARE
-	rec solaruser.user_node_instr_task;
-
-	-- include ORDER BY here to encourage user_instr_task_exec_idx to be used
-	curs CURSOR FOR SELECT * FROM solaruser.user_node_instr_task t
-			WHERE t.status = 'q'
-			AND t.enabled
-			AND t.exec_at <= CURRENT_TIMESTAMP
-			ORDER BY t.exec_at
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solaruser.user_node_instr_task SET status = 'p' WHERE CURRENT OF curs;
-		rec.status = 'p';
-		RETURN NEXT rec;
-	END IF;
-	CLOSE curs;
-	RETURN;
-END
+	WITH t AS (
+		SELECT t.user_id, t.id
+		FROM solaruser.user_node_instr_task t
+		WHERE t.status = 'q'
+		AND t.enabled
+		AND t.exec_at <= CURRENT_TIMESTAMP
+		ORDER BY t.exec_at
+		LIMIT 1
+		FOR NO KEY UPDATE SKIP LOCKED
+	)
+	UPDATE solaruser.user_node_instr_task
+	SET status = 'p'
+	FROM t
+	WHERE user_node_instr_task.user_id = t.user_id
+	AND user_node_instr_task.id = t.id
+	RETURNING user_node_instr_task.*
 $$;

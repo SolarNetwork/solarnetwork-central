@@ -154,4 +154,93 @@
 			node_id
 	</select>
 
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="UserNodeInfoResult" type="net.solarnetwork.central.user.domain.UserNodeInfo">
+		<constructor>
+			<idArg column="user_node_node_id" javaType="Long"/>
+			<arg column="user_node_user_id" javaType="Long"/>
+			<arg column="uni_disp_name" javaType="String"/>
+			<arg column="user_node_description" javaType="String"/>
+			<arg column="user_node_created" javaType="java.time.Instant"/>
+			<arg column="user_node_private" javaType="_boolean"/>
+			<arg column="sn_node_loc_id" javaType="Long"/>
+			<arg column="sn_loc_country" javaType="String"/>
+			<arg column="sn_loc_time_zone" javaType="java.time.ZoneId"/>
+		</constructor>
+	</resultMap>
+
+	<sql id="fragment-findall-UserNodeInfo-where">
+		<where>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND un.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.userIds != null and filter.userIds.length > 0">
+				AND un.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.names != null and filter.names.length > 0">
+				AND (
+					   un.disp_name ~* ANY(#{filter.names,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+					OR un.description ~* ANY(#{filter.names,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+					OR n.node_name ~* ANY(#{filter.names,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+				)
+			</if>
+			<if test="filter.locationIds != null and filter.locationIds.length > 0">
+				AND n.loc_id = ANY(#{filter.locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.location != null">
+				<if test="filter.location.country != null">
+					AND l.country = #{filter.location.country,javaType=string,jdbcType=VARCHAR}
+				</if>
+				<if test="filter.location.timeZoneId != null">
+					AND l.time_zone = #{filter.location.timeZoneId,javaType=string,jdbcType=VARCHAR}
+				</if>
+			</if>
+			AND un.archived = FALSE
+		</where>
+	</sql>
+
+	<select id="findall-UserNode-UserNodeInfo" parameterType="net.solarnetwork.central.user.dao.UserNodeFilter" resultMap="UserNodeInfoResult">
+		SELECT 
+			<include refid="fragment-UserNode-full-result"/>
+			, COALESCE(un.disp_name, n.node_name) AS uni_disp_name
+			, n.loc_id AS sn_node_loc_id
+			, l.country AS sn_loc_country
+			, l.time_zone AS sn_loc_time_zone
+		FROM
+			solaruser.user_node un
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = un.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		<include refid="fragment-findall-UserNodeInfo-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+				 	<choose>
+						<when test="item.sortKey == &quot;created&quot;">un.created</when>
+						<when test="item.sortKey == &quot;name&quot;">COALESCE(un.disp_name, n.node_name) COLLATE solarcommon.naturalsort</when>
+						<when test="item.sortKey == &quot;node&quot;">un.node_id</when>
+						<when test="item.sortKey == &quot;user&quot;">un.user_id</when>
+						<when test="item.sortKey == &quot;zone&quot;">l.time_zone</when>
+						<otherwise>un.node_id</otherwise>
+					</choose>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				un.node_id
+			</otherwise>
+		</choose>
+		<if test="filter.max != null">
+			LIMIT #{filter.max}
+		</if>
+		<if test="filter.offset != null">
+			OFFSET #{filter.offset}
+		</if>
+	</select>
+
 </mapper>

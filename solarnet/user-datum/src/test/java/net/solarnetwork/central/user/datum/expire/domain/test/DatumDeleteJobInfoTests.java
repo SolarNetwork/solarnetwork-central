@@ -28,7 +28,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.then;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
@@ -54,7 +54,7 @@ public class DatumDeleteJobInfoTests {
 			.asInstanceOf(JSON)
 			.isObject()
 			.containsOnly(
-				entry("id", info.getId().getId().toString()),
+				entry("id", info.getId().getUuid().toString()),
 				entry("userId", info.getUserId()),
 				entry("jobId", info.getJobId()),
 				entry("jobDuration", info.getJobDuration().toString()),

@@ -26,6 +26,8 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Executing;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.NumberUtils.down;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
@@ -34,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,9 +71,9 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -95,17 +98,20 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.datum.imp.domain.DatumImportUserEvents;
 import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
@@ -124,10 +130,10 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
-		implements DatumImportJobBiz, ServiceLifecycleObserver {
+		implements DatumImportJobBiz, ServiceLifecycleObserver, DatumImportUserEvents {
 
 	/** The default value for the {@code maxPreviewCount} property. */
 	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
@@ -168,6 +174,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param userEventAppenderBiz
+	 *        the event appender
 	 * @param scheduler
 	 *        the scheduler, to perform periodic cleanup tasks with
 	 * @param executor
@@ -183,10 +193,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-			SolarNodeOwnershipDao nodeOwnershipDao, SecurityTokenDao securityTokenDao,
-			DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
-		super();
+	public DaoDatumImportBiz(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz,
+			TaskScheduler scheduler, AsyncTaskExecutor executor, SolarNodeOwnershipDao nodeOwnershipDao,
+			SecurityTokenDao securityTokenDao, DatumImportJobInfoDao jobInfoDao,
+			DatumEntityDao datumDao) {
+		super(clock, userEventAppenderBiz);
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
@@ -214,7 +225,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			ConcurrentMap<UserUuidPK, DatumImportStatus> map = (ConcurrentMap) taskMap;
 			taskPurgerTask = scheduler.scheduleWithFixedDelay(
-					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), Instant.now(),
+					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), clock.instant(),
 					Duration.ofHours(1));
 		}
 	}
@@ -482,7 +493,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return remove;
 		});
 		return jobInfoDao.findForUser(userId, null).stream().filter(
-				job -> userId.equals(job.getUserId()) && jobIds.contains(job.id().id().toString()))
+				job -> userId.equals(job.getUserId()) && jobIds.contains(job.id().getUuid().toString()))
 				.map(this::taskForJobInfo).collect(toList());
 	}
 
@@ -490,14 +501,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		Resource inputData;
 		if ( info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
-			inputData = new ByteArrayResource(new byte[0], info.getUserId() + "-" + info.id().id());
+			inputData = new ByteArrayResource(new byte[0], info.getUserId() + "-" + info.getUuid());
 		} else {
 			File dataFile = getImportDataFile(info.id());
 			if ( !dataFile.canRead() ) {
 				boolean fetched = fetchImportResource(dataFile);
 				if ( !fetched || !dataFile.canRead() ) {
 					throw new FileNotFoundException(
-							"Data file for job " + info.id().id() + " not found");
+							"Data file for job " + info.id().getUuid() + " not found");
 				}
 			}
 			inputData = new FileSystemResource(dataFile);
@@ -671,6 +682,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		private DatumImportJobInfo info;
 		private @Nullable Future<DatumImportResult> delegate;
 		private @Nullable ExecutorService progressExecutor;
+		private int lastPercentCompleteEvent;
 
 		/**
 		 * Construct from a task info.
@@ -713,13 +725,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		public DatumImportResult call() throws Exception {
 			// update status to indicate we've started
 			info.setPercentComplete(0);
-			info.setStarted(Instant.now());
+			info.setStarted(clock.instant());
 			updateTaskStatus(DatumImportState.Executing);
 
 			try {
 				doImport();
 				String msg = "Loaded " + getLoadedCount() + " datum.";
-				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, Instant.now());
+				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, clock.instant());
 			} catch ( Exception e ) {
 				if ( e instanceof RemoteServiceException ) {
 					// don't bother with stack trace
@@ -765,7 +777,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					}
 				}
 				updateTaskStatus(DatumImportState.Completed, Boolean.FALSE, msg.toString(),
-						Instant.now());
+						clock.instant());
+				userEventAppenderBiz.addEvent(info.getUserId(),
+						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_ERROR_TAGS, msg.toString(),
+								Map.of(DATUM_COUNT_DATA_KEY, info.getLoadedCount())));
 			} finally {
 				if ( info.getImportState() != DatumImportState.Completed ) {
 					updateTaskStatus(DatumImportState.Completed);
@@ -791,7 +806,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				@Nullable String message, @Nullable Instant completionDate) {
 			log.info(
 					"Datum import job {} for user {} transitioned to state {} with success {}; loaded {} datum",
-					info.id().id(), info.getUserId(), state, success, getLoadedCount());
+					info.id().getUuid(), info.getUserId(), state, success, getLoadedCount());
 			info.setImportState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
@@ -860,7 +875,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 			log.info(
 					"Starting datum import job {} for user {} from resource {} and tx mode {}; configuration: {}",
-					info.id().id(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
+					info.id().getUuid(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
+			userEventAppenderBiz.addEvent(info.getUserId(), eventForUserRelatedKey(info.getId(),
+					DATUM_IMPORT_TAGS, "Import datum", importDatumUserEventData(txMode)));
 
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum> loader = datumDao
@@ -895,10 +912,27 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 						info.setLoadedCount(count);
 						if ( progressLogCount > 0 && count % progressLogCount == 0 ) {
 							log.info("Datum import job {} for user {} loaded {} datum with progress {}",
-									info.id().id(), info.getUserId(), count, info.getPercentComplete());
+									info.id().getUuid(), info.getUserId(), count,
+									info.getPercentComplete());
 						}
 					}
 					loader.commit();
+					userEventAppenderBiz.addEvent(info.getUserId(),
+							eventForUserRelatedKey(info.getId(), DATUM_IMPORT_TAGS, "Import datum end",
+									Map.of(DATUM_COUNT_DATA_KEY, loader.getCommittedCount(),
+											DATUM_COUNT_BY_SOURCE_DATA_KEY,
+											loader.committedCountsPerSource())));
+				} catch ( Exception e ) {
+					if ( txMode == LoadingTransactionMode.NoTransaction ) {
+						try {
+							loader.commit();
+						} catch ( Exception e2 ) {
+							log.warn(
+									"Unable to commit datum import job {} statistics for user {} after load exception: {}",
+									info.id().getUuid(), info.getUserId(), e2.toString());
+						}
+					}
+					throw e;
 				} finally {
 					info.setLoadedCount(loader.getCommittedCount());
 				}
@@ -913,16 +947,36 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			}
 		}
 
+		private Map<String, Object> importDatumUserEventData(LoadingTransactionMode txMode) {
+			Map<String, Object> data = new LinkedHashMap<>(4);
+			data.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()));
+			data.put(RESOURCE_DATA_KEY, getImportDataFile(info.id()).getName());
+			data.put(TRANSACTION_MODE_DATA_KEY, txMode.name());
+			if ( info.getTokenId() != null ) {
+				data.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+			}
+			return data;
+		}
+
 		@Override
 		public synchronized void progressChanged(@Nullable DatumImportService context,
 				double amountComplete) {
-			log.trace("Datum import job {} for user {} progress changed: {}", info.id().id(),
+			log.trace("Datum import job {} for user {} progress changed: {}", info.id().getUuid(),
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
 			var _ = progressExecutor()
 					.submit(new ProgressUpdater(info.id(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
+			final int eventBucket = nonnull(down((int) (amountComplete * 100), 10), "Amount complete")
+					.intValue();
+			if ( eventBucket > lastPercentCompleteEvent ) {
+				lastPercentCompleteEvent = eventBucket;
+				userEventAppenderBiz.addEvent(info.getUserId(),
+						eventForUserRelatedKey(info.getId(), DATUM_IMPORT_PROGRESS_TAGS, null,
+								Map.of(PERCENT_COMPLETE_DATA_KEY, amountComplete, DATUM_COUNT_DATA_KEY,
+										info.getLoadedCount())));
+			}
 			postJobStatusChangedEvent(this, info);
 		}
 
@@ -938,7 +992,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public String getJobId() {
-			return info.id().id().toString();
+			return info.id().getUuid().toString();
 		}
 
 		@Override

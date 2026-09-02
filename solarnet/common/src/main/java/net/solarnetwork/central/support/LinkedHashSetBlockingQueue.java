@@ -239,6 +239,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		return drainTo(c, Integer.MAX_VALUE);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
 		if ( c == null ) {

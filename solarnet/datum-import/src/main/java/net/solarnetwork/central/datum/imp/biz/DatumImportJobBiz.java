@@ -25,12 +25,12 @@ package net.solarnetwork.central.datum.imp.biz;
 import java.time.Instant;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * Service API for operations related to datum import jobs.
@@ -40,7 +40,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumImportJobBiz {
 

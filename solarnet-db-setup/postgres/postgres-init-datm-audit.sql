@@ -20,13 +20,24 @@ DECLARE
 	stale 					solardatm.aud_stale_datm;
 	meta					record;
 	tz						TEXT;
-	curs 					CURSOR FOR
-							SELECT * FROM solardatm.aud_stale_datm
-							WHERE aud_kind = kind LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO stale;
+	-- use a limited delete here to immediately lock the row and block future concurrent
+	-- updates that insert same row back into solardatm.aud_stale_datm
+	WITH del AS (
+		SELECT stream_id, ts_start, aud_kind
+		FROM solardatm.aud_stale_datm
+		WHERE aud_kind = kind
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1
+	)
+	DELETE FROM solardatm.aud_stale_datm d
+	USING del
+	WHERE d.stream_id = del.stream_id
+		AND d.ts_start = del.ts_start
+		AND d.aud_kind = del.aud_kind
+	RETURNING d.stream_id, d.ts_start, d.aud_kind
+	INTO stale.stream_id, stale.ts_start, stale.aud_kind;
 
 	IF FOUND THEN
 		-- get stream time zone; will determine if node or location stream
@@ -138,10 +149,8 @@ BEGIN
 		END CASE;
 
 		-- remove processed stale record
-		DELETE FROM solardatm.aud_stale_datm WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
-	CLOSE curs;
 	RETURN result_cnt;
 END;
 $$;
@@ -410,14 +419,25 @@ $$
 DECLARE
 	stale 					solardatm.aud_stale_node;
 	tz						TEXT;
-	curs 					CURSOR FOR
-							SELECT * FROM solardatm.aud_stale_node
-							WHERE aud_kind = kind
-							LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO stale;
+	-- use a limited delete here to immediately lock the row and block future concurrent
+	-- updates that insert same row back into solardatm.aud_stale_node
+	WITH del AS (
+		SELECT node_id, service, ts_start, aud_kind
+		FROM solardatm.aud_stale_node
+		WHERE aud_kind = kind
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1
+	)
+	DELETE FROM solardatm.aud_stale_node d
+	USING del
+	WHERE d.node_id = del.node_id
+		AND d.service = del.service
+		AND d.ts_start = del.ts_start
+		AND d.aud_kind = del.aud_kind
+	RETURNING d.node_id, d.service, d.ts_start, d.aud_kind
+	INTO stale.node_id, stale.service, stale.ts_start, stale.aud_kind;
 
 	IF FOUND THEN
 		-- get node time zone; will determine if node or location stream
@@ -473,11 +493,8 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
-		-- remove processed stale record
-		DELETE FROM solardatm.aud_stale_node WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
-	CLOSE curs;
 	RETURN result_cnt;
 END
 $$;
@@ -602,14 +619,25 @@ $$
 DECLARE
 	stale 					solardatm.aud_stale_user;
 	tz						TEXT;
-	curs 					CURSOR FOR
-							SELECT * FROM solardatm.aud_stale_user
-							WHERE aud_kind = kind
-							LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO stale;
+	-- use a limited delete here to immediately lock the row and block future concurrent
+	-- updates that insert same row back into solardatm.aud_stale_user
+	WITH del AS (
+		SELECT user_id, service, ts_start, aud_kind
+		FROM solardatm.aud_stale_user
+		WHERE aud_kind = kind
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1
+	)
+	DELETE FROM solardatm.aud_stale_user d
+	USING del
+	WHERE d.user_id = del.user_id
+		AND d.service = del.service
+		AND d.ts_start = del.ts_start
+		AND d.aud_kind = del.aud_kind
+	RETURNING d.user_id, d.service, d.ts_start, d.aud_kind
+	INTO stale.user_id, stale.service, stale.ts_start, stale.aud_kind;
 
 	IF FOUND THEN
 		-- get user time zone; will determine if node or location stream
@@ -665,11 +693,8 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
-		-- remove processed stale record
-		DELETE FROM solardatm.aud_stale_user WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
-	CLOSE curs;
 	RETURN result_cnt;
 END
 $$;

@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -131,6 +132,10 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(SOLAREDGE_SITE_TZ)
 	@ConfigurationProperties(prefix = "app.c2c.cache.solaredge-site-tz")
@@ -176,6 +181,7 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
@@ -194,7 +200,7 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 	public CloudIntegrationService solarEdgeV1CloudIntegrationService(
 			@Qualifier(SOLAREDGE) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new SolarEdgeV1CloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolarEdgeV1CloudIntegrationService.class.getName(),

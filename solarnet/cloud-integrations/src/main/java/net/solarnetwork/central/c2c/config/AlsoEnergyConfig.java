@@ -30,15 +30,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -72,6 +75,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
@@ -84,6 +88,7 @@ import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
+import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -100,6 +105,9 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 
 	/** A qualifier for AlsoEnergy configuration. */
 	public static final String ALSO_ENERGY = "also-energy";
+
+	/** A qualifier for AlsoEnergy site inventory configuration. */
+	public static final String ALSO_ENERGY_SITE_INVENTORY = "also-energy-site-inventory";
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppender;
@@ -136,6 +144,9 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
+	@Autowired
+	private CacheManager cacheManager;
+
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
@@ -165,6 +176,25 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
+	@Bean
+	@Qualifier(ALSO_ENERGY_SITE_INVENTORY)
+	@ConfigurationProperties(prefix = "app.c2c.cache.also-energy-site-inventory")
+	public CacheSettings alsoEnergySiteInventoryCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(ALSO_ENERGY_SITE_INVENTORY)
+	public Cache<Long, CloudDataValue[]> alsoEnergySiteInventoryCache(
+			@Qualifier(ALSO_ENERGY_SITE_INVENTORY) CacheSettings settings) {
+		return settings.createCache(cacheManager, Long.class, CloudDataValue[].class,
+				ALSO_ENERGY_SITE_INVENTORY + "-cache");
+	}
 
 	@Bean
 	@Qualifier(ALSO_ENERGY)
@@ -221,7 +251,8 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Bean
 	@Qualifier(ALSO_ENERGY)
 	public CloudDatumStreamService alsoEnergyCloudDatumStreamService(
-			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
+			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
+			@Qualifier(ALSO_ENERGY_SITE_INVENTORY) Cache<Long, CloudDataValue[]> alsoEnergySiteInventoryCache) {
 		var service = new AlsoEnergyCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
@@ -232,11 +263,13 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setSiteInventoryCache(alsoEnergySiteInventoryCache);
 		service.setHttpCache(httpCache);
 		service.setAllowLocalHosts(allowHttpLocalHosts);
 

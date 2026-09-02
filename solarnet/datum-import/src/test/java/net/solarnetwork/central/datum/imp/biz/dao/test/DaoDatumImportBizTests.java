@@ -27,8 +27,11 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz.EMPTY_INPUT_RESOURCE_META;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
@@ -52,6 +55,7 @@ import static org.springframework.util.FileCopyUtils.copyToByteArray;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -59,7 +63,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,9 +95,10 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -108,6 +115,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.datum.imp.domain.DatumImportUserEvents;
 import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
@@ -115,9 +123,12 @@ import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.dao.FilterResults;
@@ -134,13 +145,16 @@ import net.solarnetwork.test.Assertion;
  * @author matt
  * @version 2.4
  */
-public class DaoDatumImportBizTests {
+@SuppressWarnings("static-access")
+public class DaoDatumImportBizTests implements DatumImportUserEvents {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final Long TEST_NODE_ID = -2L;
 	private static final Long TEST_NODE_ID_2 = -3L;
 	private static final String TEST_SOURCE_ID = "test.source";
 
+	private Clock clock;
+	private InMemoryUserEventAppenderBiz userEventAppenderBiz;
 	private TaskScheduler scheduledExecutorService;
 	private AsyncTaskExecutor executorSercvice;
 	private SolarNodeOwnershipDao userNodeDao;
@@ -155,10 +169,12 @@ public class DaoDatumImportBizTests {
 
 	private class TestDaoDatumImportBiz extends DaoDatumImportBiz {
 
-		private TestDaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-				SolarNodeOwnershipDao userNodeDao, SecurityTokenDao securityTokenDao,
-				DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
-			super(scheduler, executor, userNodeDao, securityTokenDao, jobInfoDao, datumDao);
+		private TestDaoDatumImportBiz(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
+				TaskScheduler scheduler, AsyncTaskExecutor executor, SolarNodeOwnershipDao userNodeDao,
+				SecurityTokenDao securityTokenDao, DatumImportJobInfoDao jobInfoDao,
+				DatumEntityDao datumDao) {
+			super(clock, userEventAppenderBiz, scheduler, executor, userNodeDao, securityTokenDao,
+					jobInfoDao, datumDao);
 		}
 
 		@Override
@@ -172,6 +188,8 @@ public class DaoDatumImportBizTests {
 
 	@BeforeEach
 	public void setup() {
+		clock = Clock.systemUTC();
+		userEventAppenderBiz = new InMemoryUserEventAppenderBiz();
 		scheduledExecutorService = EasyMock.createMock(TaskScheduler.class);
 		executorSercvice = EasyMock.createMock(AsyncTaskExecutor.class);
 
@@ -181,8 +199,8 @@ public class DaoDatumImportBizTests {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		resourceStorageService = EasyMock.createMock(ResourceStorageService.class);
 
-		biz = new TestDaoDatumImportBiz(scheduledExecutorService, executorSercvice, userNodeDao,
-				securityTokenDao, jobInfoDao, datumDao);
+		biz = new TestDaoDatumImportBiz(clock, userEventAppenderBiz, scheduledExecutorService,
+				executorSercvice, userNodeDao, securityTokenDao, jobInfoDao, datumDao);
 		biz.setPreviewExecutor(executorSercvice);
 	}
 
@@ -634,7 +652,7 @@ public class DaoDatumImportBizTests {
 		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
 				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
-		String jobId = pk.getId().toString();
+		String jobId = pk.getUuid().toString();
 
 		// when
 		replayAll();
@@ -658,6 +676,12 @@ public class DaoDatumImportBizTests {
 		List<GeneralNodeDatumComponents> previewData = StreamSupport
 				.stream(result.getResults().spliterator(), false).collect(toList());
 		assertThat("Preview data count", previewData, hasSize(10));
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void expectCommittedCountBySource(List<GeneralNodeDatum> data) {
+		Map<String, Long> committedCountBySource = countBySource(data);
+		expect(loadingContext.committedCountsPerSource()).andReturn((Map) committedCountBySource);
 	}
 
 	@Test
@@ -707,7 +731,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -739,6 +765,115 @@ public class DaoDatumImportBizTests {
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
+	}
+
+	private Map<String, Object> startEventData(DatumImportJobInfo info, LoadingTransactionMode txMode) {
+		final Map<String, Object> startData = new LinkedHashMap<>(8);
+		startData.put(CONFIG_ID_DATA_KEY, info.id().getUuid().toString());
+		startData.put(CONFIGURATION_DATA_KEY, JsonUtils.getStringMapFromObject(info.getConfig()));
+		startData.put(RESOURCE_DATA_KEY, "%d-%s".formatted(TEST_USER_ID, info.id().getUuid()));
+		startData.put(TRANSACTION_MODE_DATA_KEY, txMode.name());
+		if ( info.getTokenId() != null ) {
+			startData.put(TOKEN_ID_DATA_KEY, info.getTokenId());
+		}
+		return startData;
+	}
+
+	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			List<GeneralNodeDatum> expected) {
+		thenStartEndEventsGenerated(info, txMode, expected, startEventData(info, txMode),
+				"Import datum end", false);
+	}
+
+	private void thenStartEndErrorEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			List<GeneralNodeDatum> expected, String errorMessage) {
+		thenStartEndEventsGenerated(info, txMode, expected, startEventData(info, txMode), errorMessage,
+				true);
+	}
+
+	private void thenStartEndEventsGenerated(DatumImportJobInfo info, LoadingTransactionMode txMode,
+			List<GeneralNodeDatum> expected, Map<String, Object> startData, String message,
+			boolean error) {
+		// @formatter:off
+		and.then(userEventAppenderBiz.getEvents().stream().filter(evt -> !evt.hasTag(PROGRESS_TAG)).toList())
+			.as("Events for import start/end created")
+			.hasSize(2)
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for import user")
+					.returns(TEST_USER_ID, from(UserEvent::getUserId))
+					;
+			})
+			.satisfies(evts -> {
+				and.then(evts).element(0)
+					.as("Datum import tags provided in event")
+					.returns(DATUM_IMPORT_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for import start")
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(startData)))
+					;
+				and.then(evts).element(1)
+					.as("Datum import tags provided in event")
+					.returns((error
+						? DATUM_IMPORT_ERROR_TAGS
+						: DATUM_IMPORT_TAGS).toArray(String[]::new), from(UserEvent::getTags))
+					.as("Message generated")
+					.returns(message, from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for import end")
+					.isObject()
+					.isEqualTo(json(JsonUtils.getJSONString(error
+							? Map.of(CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
+									DATUM_COUNT_DATA_KEY, expected.size())
+							: Map.of(CONFIG_ID_DATA_KEY, info.id().getUuid().toString(),
+									DATUM_COUNT_DATA_KEY, expected.size(),
+									DATUM_COUNT_BY_SOURCE_DATA_KEY, countBySource(expected)
+						)))
+					)
+					;
+			})
+			;
+		// @formatter:on
+
+		// validate progress (if available)
+		var progressEvents = userEventAppenderBiz.getEvents().stream()
+				.filter(evt -> evt.hasTag(PROGRESS_TAG)).toList();
+		if ( progressEvents.isEmpty() ) {
+			return;
+		}
+		// @formatter:off
+		and.then(progressEvents)
+			.as("Progress events contain expected details")
+			.allSatisfy(evt -> {
+				and.then(evt)
+					.as("Event for import user")
+					.returns(info.getUserId(), from(UserEvent::getUserId))
+					.as("Datum export progress tags provided in event")
+					.returns(DATUM_IMPORT_PROGRESS_TAGS.toArray(String[]::new), from(UserEvent::getTags))
+					.as("No message on progress event")
+					.returns(null, from(UserEvent::getMessage))
+					.extracting(UserEvent::getData, JSON)
+					.as("Job data provided for import end")
+					.isObject()
+					.as("Percent complete data provided")
+					.containsKey(PERCENT_COMPLETE_DATA_KEY)
+					.as("Job ID data provided")
+					.containsEntry(CONFIG_ID_DATA_KEY, info.getUuid().toString())
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	private Map<String, Long> countBySource(List<GeneralNodeDatum> expected) {
+		Map<String, Long> result = new HashMap<>(expected.size());
+		for ( var d : expected ) {
+			result.compute(d.getSourceId(), (_, v) -> (v != null ? v : 0L) + 1L);
+		}
+		return result;
 	}
 
 	@Test
@@ -801,7 +936,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -833,6 +970,8 @@ public class DaoDatumImportBizTests {
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 	}
 
 	@Test
@@ -901,9 +1040,13 @@ public class DaoDatumImportBizTests {
 		assertThat("Import result available", result, notNullValue());
 		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
 		assertThat("Import failed", result.isSuccess(), equalTo(false));
-		assertThat("Import message", result.getMessage(),
-				equalTo("Not authorized to load data for node " + TEST_NODE_ID + "."));
+
+		final String expectedErrorMessage = "Not authorized to load data for node " + TEST_NODE_ID + ".";
+		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, List.of(),
+				expectedErrorMessage);
 	}
 
 	@Test
@@ -972,9 +1115,14 @@ public class DaoDatumImportBizTests {
 		assertThat("Import result available", result, notNullValue());
 		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
 		assertThat("Import failed", result.isSuccess(), equalTo(false));
-		assertThat("Import message", result.getMessage(),
-				equalTo("Not authorized to load data for source " + TEST_SOURCE_ID + "."));
+
+		final String expectedErrorMessage = "Not authorized to load data for source " + TEST_SOURCE_ID
+				+ ".";
+		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, List.of(),
+				expectedErrorMessage);
 	}
 
 	@Test
@@ -1037,7 +1185,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1069,6 +1219,8 @@ public class DaoDatumImportBizTests {
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 	}
 
 	@Test
@@ -1139,7 +1291,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1231,7 +1385,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1243,7 +1399,7 @@ public class DaoDatumImportBizTests {
 		DatumImportResult result = taskCaptor.getValue().call();
 
 		// THEN
-		then(status).as("Status returned").isNotNull();
+		and.then(status).as("Status returned").isNotNull();
 
 		// @formatter:off
 		for ( int i = 0; i < data.size(); i++ ) {
@@ -1257,14 +1413,14 @@ public class DaoDatumImportBizTests {
 				;
 		}
 
-		then(loadingOptionsCaptor.getValue())
+		and.then(loadingOptionsCaptor.getValue())
 			.as("Loading tx mode")
 			.returns(LoadingTransactionMode.SingleTransaction, from(BulkLoadingDao.LoadingOptions::getTransactionMode))
 			.as("Loading batch size")
 			.returns(null, from(BulkLoadingDao.LoadingOptions::getBatchSize))
 			;
 
-		then(result)
+		and.then(result)
 			.as("Import result available")
 			.isNotNull()
 			.satisfies(r -> {
@@ -1280,6 +1436,8 @@ public class DaoDatumImportBizTests {
 			.as("Import loaded count")
 			.returns(committedCount, from(DatumImportResult::getLoadedCount))
 			;
+
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data);
 		// @formatter:on
 	}
 
@@ -1331,7 +1489,9 @@ public class DaoDatumImportBizTests {
 		loadingContext.commit();
 
 		Long committedCount = 5L;
-		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount).times(2);
+
+		expectCommittedCountBySource(data);
 
 		loadingContext.close();
 
@@ -1364,6 +1524,8 @@ public class DaoDatumImportBizTests {
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndEventsGenerated(info, LoadingTransactionMode.BatchTransactions, data);
 	}
 
 	@Test
@@ -1414,9 +1576,13 @@ public class DaoDatumImportBizTests {
 		assertThat("Import result available", result, notNullValue());
 		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
 		assertThat("Import failed", result.isSuccess(), equalTo(false));
-		assertThat("Import message", result.getMessage(),
-				equalTo("Not authorized to load data for node " + TEST_NODE_ID + "."));
+
+		final String expectedErrorMessage = "Not authorized to load data for node " + TEST_NODE_ID + ".";
+		assertThat("Import message", result.getMessage(), equalTo(expectedErrorMessage));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		thenStartEndErrorEventsGenerated(info, LoadingTransactionMode.SingleTransaction, data,
+				expectedErrorMessage);
 	}
 
 	@Test
@@ -1470,7 +1636,7 @@ public class DaoDatumImportBizTests {
 		assertThat("Results count", results, hasSize(1));
 		DatumImportStatus status = results.iterator().next();
 		assertThat("Result is requested info", status.getJobId(),
-				equalTo(info.getId().getId().toString()));
+				equalTo(info.getId().getUuid().toString()));
 	}
 
 	@Test

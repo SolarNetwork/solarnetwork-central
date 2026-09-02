@@ -37,6 +37,7 @@
 		</property>
 		<property name="typeHandlers">
 			<list>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.ZoneIdTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">

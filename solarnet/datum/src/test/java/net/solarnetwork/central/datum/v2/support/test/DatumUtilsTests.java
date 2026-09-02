@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.datum.v2.support.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.BasicLocation.locationOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -52,13 +56,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -70,9 +80,11 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.DateUtils;
@@ -770,6 +782,87 @@ public class DatumUtilsTests {
 
 		// THEN
 		then(c.getIncludeStreamAliases()).as("Include flag copied").isEqualTo(true);
+	}
+
+	@Test
+	public void toGeneralNodeDatumAuxiliary_typical() {
+		// GIVEN
+		final DatumSamples sFinal = new DatumSamples();
+		sFinal.putAccumulatingSampleValue("foo", randomInt());
+		final DatumSamples sStart = new DatumSamples();
+		sStart.putAccumulatingSampleValue("foo", randomInt());
+		final GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", randomString());
+		final String notes = randomString();
+		final DatumAuxiliaryEntity aux = new DatumAuxiliaryEntity(
+				new DatumAuxiliaryPK(UUID.randomUUID(), Instant.now(), DatumAuxiliaryType.Reset),
+				Instant.now().plusSeconds(1), sFinal, sStart, notes, meta);
+		final ObjectDatumStreamMetadata streamMeta = newNodeMeta();
+
+		// WHEN
+		final GeneralNodeDatumAuxiliary result = DatumUtils.toGeneralNodeDatumAuxiliary(aux, streamMeta);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Instance returned")
+			.isNotNull()
+			.as("PK assigned from stream metadata")
+			.returns(new GeneralNodeDatumAuxiliaryPK(streamMeta.getObjectId(), aux.getCreated(), streamMeta.getSourceId(), aux.getType()),
+					from(GeneralNodeDatumAuxiliary::getId))
+			.as("Notes copied")
+			.returns(notes, from(GeneralNodeDatumAuxiliary::getNotes))
+			.as("Samples final copied")
+			.returns(sFinal, from(GeneralNodeDatumAuxiliary::getSamplesFinal))
+			.as("Samples start copied")
+			.returns(sStart, from(GeneralNodeDatumAuxiliary::getSamplesStart))
+			.as("Metadata copied")
+			.returns(meta, from(GeneralNodeDatumAuxiliary::getMeta))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void toGeneralNodeDatumAuxiliaryFilterMatch_typical() {
+		// GIVEN
+		final DatumSamples sFinal = new DatumSamples();
+		sFinal.putAccumulatingSampleValue("foo", randomInt());
+		final DatumSamples sStart = new DatumSamples();
+		sStart.putAccumulatingSampleValue("foo", randomInt());
+		final GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", randomString());
+		final String notes = randomString();
+		final DatumAuxiliaryEntity aux = new DatumAuxiliaryEntity(
+				new DatumAuxiliaryPK(UUID.randomUUID(), Instant.now(), DatumAuxiliaryType.Reset),
+				Instant.now().plusSeconds(1), sFinal, sStart, notes, meta);
+		final ObjectDatumStreamMetadata streamMeta = newNodeMeta();
+		final ZoneId streamZone = ZoneId.of(streamMeta.getTimeZoneId());
+
+		// WHEN
+		final GeneralNodeDatumAuxiliaryFilterMatch result = DatumUtils
+				.toGeneralNodeDatumAuxiliaryFilterMatch(aux, streamMeta);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Instance returned")
+			.isNotNull()
+			.as("PK assigned from stream metadata")
+			.returns(new GeneralNodeDatumAuxiliaryPK(streamMeta.getObjectId(), aux.getCreated(), streamMeta.getSourceId(), aux.getType()),
+					from(GeneralNodeDatumAuxiliaryFilterMatch::getId))
+			.as("Local date assigned based on stream meta time zone")
+			.returns(aux.getCreated().atZone(streamZone).toLocalDate(), from(GeneralNodeDatumAuxiliaryFilterMatch::getLocalDate))
+			.as("Local time assigned based on stream meta time zone")
+			.returns(aux.getCreated().atZone(streamZone).toLocalTime(), from(GeneralNodeDatumAuxiliaryFilterMatch::getLocalTime))
+			.as("Samples final copied")
+			.returns(sFinal.getSampleData(), from(GeneralNodeDatumAuxiliaryFilterMatch::getSampleDataFinal))
+			.as("Samples start copied")
+			.returns(sStart.getSampleData(), from(GeneralNodeDatumAuxiliaryFilterMatch::getSampleDataStart))
+			.asInstanceOf(type(GeneralNodeDatumAuxiliaryMatch.class))
+			.as("Metadata copied")
+			.returns(meta, from(GeneralNodeDatumAuxiliaryMatch::getMeta))
+			;
+		// @formatter:on
 	}
 
 }

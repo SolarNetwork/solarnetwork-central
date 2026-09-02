@@ -45,6 +45,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamIdRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingIdRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRelated;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationIdRelated;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.NodeIdRelated;
@@ -62,7 +63,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security enforcing AOP aspect for {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Aspect
 @Component
@@ -138,6 +139,18 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.list*(..)) && args(userId,filter,entityClass)")
 	public void listForUserIdAndFilterAndClass(Long userId, CloudIntegrationsFilter filter,
 			Class<?> entityClass) {
+	}
+
+	/**
+	 * Match merge methods given a user-related identifier.
+	 *
+	 * @param userKey
+	 *        the user related identifier
+	 * @param entityClass
+	 *        the entity class
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.merge*(..)) && args(userKey,..,entityClass)")
+	public void mergeForUserKeyAndClass(UserIdRelated userKey, Class<?> entityClass) {
 	}
 
 	/**
@@ -422,7 +435,7 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		} else if ( entity instanceof ObjectDatumIdRelated id && id.hasNodeId() ) {
 			requireNodeWriteAccess(id.nodeId());
 		} else if ( entity instanceof CloudDatumStreamIdRelated id && id.hasDatumStreamId() ) {
-			requireDatumStreamWriteAccess(new UserLongCompositePK(userId, id.getDatumStreamId()));
+			requireDatumStreamWriteAccess(new UserLongCompositePK(userId, id.datumStreamId()));
 		} else if ( entity instanceof CloudDatumStreamRelated
 				&& userKey instanceof UserLongCompositePK datumStreamId ) {
 			requireDatumStreamWriteAccess(datumStreamId);
@@ -450,8 +463,10 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before(value = "deleteEntityForUserKeyAndClass(userKey,entityClass)",
-			argNames = "userKey,entityClass")
+	@Before(value = """
+			   deleteEntityForUserKeyAndClass(userKey,entityClass)
+			|| mergeForUserKeyAndClass(userKey,entityClass)
+			""", argNames = "userKey,entityClass")
 	public void deleteEntityForUserKeyAndClassAccessCheck(UserIdRelated userKey, Class<?> entityClass) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 		if ( entityClass == null ) {
@@ -463,6 +478,10 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		} else if ( CloudDatumStreamMappingIdRelated.class.isAssignableFrom(entityClass)
 				&& userKey instanceof UserLongCompositePK mappingId ) {
 			requireDatumStreamMappingWriteAccess(mappingId);
+		} else if ( CloudIntegrationIdRelated.class.isAssignableFrom(entityClass) ) {
+			// require no node/source ID policy because integration has no direct association with either
+			requireUnrestrictedNodeSecurityPolicy();
+			requireUnrestrictedSourceSecurityPolicy();
 		}
 	}
 

@@ -27,17 +27,17 @@ import java.util.Set;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.ClaimableJobDao;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link DatumImportJobInfo} entities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, UserUuidPK>,
 		ClaimableJobDao<Configuration, Long, DatumImportState, DatumImportJobInfo, UserUuidPK> {

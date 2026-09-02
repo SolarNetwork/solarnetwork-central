@@ -20,9 +20,6 @@ DECLARE
 	agg_span 				INTERVAL;
 	dest_name				TEXT;
 
-	curs 					CURSOR FOR
-							SELECT * FROM solardatm.agg_stale_datm
-							WHERE agg_kind = kind LIMIT 1 FOR UPDATE SKIP LOCKED;
 	stale 					solardatm.agg_stale_datm;
 	meta					record;
 	tz						TEXT;
@@ -49,8 +46,22 @@ BEGIN
 			dest_name := 'agg_datm_hourly';
 	END CASE;
 
-	OPEN curs;
-	FETCH NEXT FROM curs INTO stale;
+	-- use a limited delete here to immediately lock the row and block future concurrent
+	-- datum solardatm.store_datum() that inserts same row back into solardatm.agg_stale_datm
+	WITH del AS (
+		SELECT stream_id, ts_start, agg_kind
+		FROM solardatm.agg_stale_datm
+		WHERE agg_kind = kind
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1
+	)
+	DELETE FROM solardatm.agg_stale_datm d
+	USING del
+	WHERE d.stream_id = del.stream_id
+		AND d.ts_start = del.ts_start
+		AND d.agg_kind = del.agg_kind
+	RETURNING d.stream_id, d.ts_start, d.agg_kind
+	INTO stale.stream_id, stale.ts_start, stale.agg_kind;
 
 	IF FOUND THEN
 		-- get stream metadata & time zone; will determine if node or location stream
@@ -169,11 +180,7 @@ BEGIN
 			END IF;
 		END IF;
 
-		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;
-
 		RETURN NEXT result_row;
 	END IF;
-
-	CLOSE curs;
 END;
 $$;

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.5' apply false
+	id 'org.springframework.boot' version '4.1.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,7 +16,6 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '7.4.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -75,6 +74,7 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	implementation 'org.slf4j:jcl-over-slf4j'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
 	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
@@ -101,7 +101,9 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
     testImplementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 

@@ -33,6 +33,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumAuxiliary;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumAuxiliaryByFilter;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.MoveDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
@@ -95,7 +96,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public void delete(DatumAuxiliaryEntity entity) {
-		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.id()), (CallableStatement cs) -> {
+		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.id()), cs -> {
 			cs.execute();
 			return null;
 		});
@@ -114,6 +115,13 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		return executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
+	}
+
+	@Override
+	public long deleteFiltered(DatumAuxiliaryCriteria filter) {
+		return jdbcTemplate.execute(new DeleteDatumAuxiliaryByFilter(filter), ps -> {
+			return ps.executeLargeUpdate();
+		});
 	}
 
 }

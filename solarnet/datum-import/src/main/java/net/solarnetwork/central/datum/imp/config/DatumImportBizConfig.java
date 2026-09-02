@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.config;
 
 import static net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration.DATUM_IMPORT;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -36,6 +37,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -49,7 +51,7 @@ import net.solarnetwork.service.ResourceStorageService;
  * Configuration for datum import services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumImportBizConfig {
@@ -78,6 +80,9 @@ public class DatumImportBizConfig {
 
 	@Autowired
 	private SecurityTokenDao securityTokenDao;
+
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	public static class DatumImportSettings {
 
@@ -187,8 +192,8 @@ public class DatumImportBizConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumImportBiz datumImportBiz(DatumImportSettings settings,
 			@Qualifier(DATUM_IMPORT) AsyncTaskExecutor taskExecutor) {
-		DaoDatumImportBiz biz = new DaoDatumImportBiz(taskScheduler, taskExecutor, userNodeDao,
-				securityTokenDao, jobInfoDao, datumDao);
+		DaoDatumImportBiz biz = new DaoDatumImportBiz(Clock.systemUTC(), userEventAppenderBiz,
+				taskScheduler, taskExecutor, userNodeDao, securityTokenDao, jobInfoDao, datumDao);
 		biz.setMaxPreviewCount(settings.previewMaxCount);
 		biz.setProgressLogCount(settings.progressLogCount);
 		biz.setCompletedTaskMinimumCacheTime(settings.completedTaskMinimumCacheTime);

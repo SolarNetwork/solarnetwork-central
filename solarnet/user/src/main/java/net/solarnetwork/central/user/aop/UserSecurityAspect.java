@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**
@@ -64,6 +66,13 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserBiz.getUserNodes(..))")
 	public void listUserNodesForUserId() {
+	}
+
+	/**
+	 * Match get list of user nodes for user ID.
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserBiz.find*(..)) && args(userId,filter,..)")
+	public void findFilteredForUserId(Long userId, PaginationCriteria filter) {
 	}
 
 	/**
@@ -266,6 +275,36 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			requireNodeReadAccess(result.getNodeId());
 		}
 		return result;
+	}
+
+	/**
+	 * Enforce security policy restrictions when performing a search with a
+	 * filter.
+	 * 
+	 * @param pjp
+	 *        the join point
+	 * @param userId
+	 *        the active user ID
+	 * @param filter
+	 *        the filter
+	 * @return the result
+	 * @throws Throwable
+	 *         if anything goes wrong
+	 */
+	@SuppressWarnings("ReferenceEquality")
+	@Around(value = "findFilteredForUserId(userId,filter)", argNames = "pjp,userId,filter")
+	public Object validateUserIdAndFilter(ProceedingJoinPoint pjp, Long userId,
+			PaginationCriteria filter) throws Throwable {
+		final PaginationCriteria f = nonnull(policyEnforcerCheck(filter), "Filter");
+
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+
+		Object[] args = pjp.getArgs();
+		args[1] = f;
+		return pjp.proceed(args);
+
 	}
 
 }

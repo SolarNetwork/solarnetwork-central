@@ -26,8 +26,10 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.VIRTUAL_SOURCE_IDS_SETTING;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -48,6 +50,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
@@ -470,6 +473,179 @@ public class BaseCloudDatumStreamServiceTests {
 					from(GeneralDatum::getId))
 			.as("Samples are sum() of inv1d2 + inv2d2")
 			.returns(new DatumSamples(Map.of("v1", 690, "v2", 1086), null, null), from(GeneralDatum::getSamples))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void evaluateExpressions_virtualSourceId_sumOfMappedInverterSources() {
+		// GIVEN
+		final var service = serviceWithExpressionSupport();
+
+		final var userId = randomLong();
+		final var nodeId = randomLong();
+		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
+		final var mappingId = randomLong();
+
+		// configure a single /gen/1 source ID
+		final var siteId = randomString();
+		final var virtualSourceId = "/{site}/gen/1";
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, now(),
+				randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+
+		// include sourceIdMap setting, which we'll refer to in the virtual meter expression
+		datumStream.setServiceProps(
+				Map.of(VIRTUAL_SOURCE_IDS_SETTING, virtualSourceId, PLACEHOLDERS_SERVICE_PROPERTY,
+						Map.of("site", siteId), CloudDatumStreamService.SOURCE_ID_MAP_SETTING,
+						Map.of("/pv1", "/inv/1", "/pv2", "/inv/2", "/bat1", "/bat/1")));
+
+		final var exprProp1 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
+				Instant.now(), Instantaneous, "w", SpelExpression, """
+						sourceId.contains('/gen/')
+						? avg(allSourceIds
+							.?[#this.contains("inv")]
+							.![#root.latestProp(#this, #root.timestamp, 'w', 0)])
+						: null
+						""");
+		exprProp1.setEnabled(true);
+
+		final var exprProp2 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 1,
+				Instant.now(), Accumulating, "wh", SpelExpression, """
+						sourceId.contains('/gen/')
+						? sum(allSourceIds
+							.?[#this.contains("inv")]
+							.![#root.latestProp(#this, #root.timestamp, 'wh', 0)])
+						: null
+						""");
+		exprProp2.setEnabled(true);
+
+		// create 2 datum streams, each with 2 datum
+		final var inv1Datum1 = GeneralDatum.nodeDatum(nodeId, "/inv/1",
+				Instant.now().truncatedTo(ChronoUnit.HOURS),
+				new DatumSamples(Map.of("w", 123), Map.of("wh", 321), null));
+		final var inv1Datum2 = GeneralDatum.nodeDatum(nodeId, "/inv/1",
+				inv1Datum1.getTimestamp().plusSeconds(1),
+				new DatumSamples(Map.of("w", 234), Map.of("wh", 432), null));
+
+		final var inv2Datum1 = GeneralDatum.nodeDatum(nodeId, "/inv/2", inv1Datum1.getTimestamp(),
+				new DatumSamples(Map.of("w", 345), Map.of("wh", 543), null));
+		final var inv2Datum2 = GeneralDatum.nodeDatum(nodeId, "/inv/2", inv1Datum2.getTimestamp(),
+				new DatumSamples(Map.of("w", 456), Map.of("wh", 654), null));
+
+		// WHEN
+		var result = service.evaluateExpressions(datumStream, List.of(exprProp1, exprProp2),
+				List.of(inv1Datum1, inv1Datum2, inv2Datum1, inv2Datum2), mappingId, integrationId);
+
+		// THEN
+		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
+		then(datumStreamMetadataCache).shouldHaveNoInteractions();
+		then(datumStreamMappingDao).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Input datum + (virtual datum per timestamp) returned")
+			.hasSize(6)
+			;
+		and.then(result).element(0)
+			.as("Datum order preserved")
+			.isEqualTo(inv1Datum1)
+			.as("Property 'w' unchanged")
+			.returns(inv1Datum1.getSampleInteger(Instantaneous, "w"), from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'wh' unchanged")
+			.returns(inv1Datum1.getSampleInteger(Accumulating, "wh"), from(d -> d.getSampleInteger(Accumulating, "wh")))
+			;
+		and.then(result).element(1)
+			.as("Datum order preserved")
+			.isEqualTo(inv1Datum2)
+			.as("Property 'w' unchanged")
+			.returns(inv1Datum2.getSampleInteger(Instantaneous, "w"), from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'wh' unchanged")
+			.returns(inv1Datum2.getSampleInteger(Accumulating, "wh"), from(d -> d.getSampleInteger(Accumulating, "wh")))
+			;
+		and.then(result).element(2)
+			.as("Datum order preserved")
+			.isEqualTo(inv2Datum1)
+			.as("Property 'w' unchanged")
+			.as("Property 'w' unchanged")
+			.returns(inv2Datum1.getSampleInteger(Instantaneous, "w"), from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'wh' unchanged")
+			.returns(inv2Datum1.getSampleInteger(Accumulating, "wh"), from(d -> d.getSampleInteger(Accumulating, "wh")))
+			;
+		and.then(result).element(3)
+			.as("Datum order preserved")
+			.isEqualTo(inv2Datum2)
+			.as("Property 'w' unchanged")
+			.returns(inv2Datum2.getSampleInteger(Instantaneous, "w"), from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'wh' unchanged")
+			.returns(inv2Datum2.getSampleInteger(Accumulating, "wh"), from(d -> d.getSampleInteger(Accumulating, "wh")))
+			;
+
+		and.then(result).element(4)
+			.as("Virtual datum added for 1st timestamp")
+			.returns(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum1.getTimestamp()),
+					from(GeneralDatum::getId))
+			.as("Samples are avg() and sum() of inv1d1 + inv1d2")
+			.returns(new DatumSamples(Map.of("w", 234), Map.of("wh", 864), null), from(GeneralDatum::getSamples))
+			;
+		and.then(result).element(5)
+			.as("Virtual datum added for 2nd timestamp")
+			.returns(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum2.getTimestamp()),
+					from(GeneralDatum::getId))
+			.as("Samples are avg() and sum() of inv1d2 + inv2d2")
+			.returns(new DatumSamples(Map.of("w", 345), Map.of("wh", 1086), null), from(GeneralDatum::getSamples))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void evaluateExpressions_mapResult() {
+		// GIVEN
+		final var service = serviceWithExpressionSupport();
+
+		final var userId = randomLong();
+		final var nodeId = randomLong();
+		final var sourceId = randomString();
+		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
+		final var mappingId = randomLong();
+
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, now(),
+				randomString(), randomString(), ObjectDatumKind.Node);
+
+		final Integer a = randomInt();
+		final Integer b = randomInt();
+
+		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0, now(),
+				Instantaneous, "unused", SpelExpression, """
+						{
+							'a': %d,
+							'b': %d
+						}
+						""".formatted(a, b));
+		exprProp.setEnabled(true);
+
+		final var datum = GeneralDatum.nodeDatum(nodeId, sourceId,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), new DatumSamples());
+
+		// WHEN
+		service.evaluateExpressions(datumStream, List.of(exprProp), List.of(datum), mappingId,
+				integrationId);
+
+		// THEN
+		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
+		then(datumStreamMetadataCache).shouldHaveNoInteractions();
+		then(datumStreamMappingDao).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(datum.getSampleInteger(exprProp.getPropertyType(), "a"))
+			.as("Datum populated with value from expression Map result")
+			.isEqualTo(a)
+			;
+		and.then(datum.getSampleInteger(exprProp.getPropertyType(), "b"))
+			.as("Datum populated with value from expression Map result")
+			.isEqualTo(b)
 			;
 		// @formatter:on
 	}

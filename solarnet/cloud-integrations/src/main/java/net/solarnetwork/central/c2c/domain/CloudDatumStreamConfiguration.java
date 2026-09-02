@@ -22,12 +22,17 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.central.support.DateTimeUtils.intervalMap;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
+import org.threeten.extra.Interval;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
@@ -35,8 +40,11 @@ import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntit
 import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.support.DateTimeUtils;
 import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumStreamId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.util.CollectionUtils;
 
 /**
  * A cloud datum stream configuration entity.
@@ -49,7 +57,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured", "datumStreamId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name",
@@ -163,6 +171,16 @@ public final class CloudDatumStreamConfiguration
 	}
 
 	/**
+	 * Create a datum stream ID.
+	 *
+	 * @return the ID
+	 * @since 1.3
+	 */
+	public DatumStreamId streamId() {
+		return DatumStreamId.datumStreamId(kind, objectId, sourceId);
+	}
+
+	/**
 	 * Create a datum ID with a given timestamp.
 	 *
 	 * <p>
@@ -245,6 +263,36 @@ public final class CloudDatumStreamConfiguration
 	@Override
 	public final String systemIdentifier() {
 		return systemIdentifierForComponents(CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, getConfigId());
+	}
+
+	/**
+	 * Resolve a string mapping to {@link Interval} instances from a service
+	 * property value.
+	 *
+	 * @param key
+	 *        the service property key to extract
+	 * @return the mapping, or {@code null}
+	 * @since 1.2
+	 * @see DateTimeUtils#intervalMap(Map)
+	 */
+	public @Nullable Map<String, Interval> servicePropertyIntervalMap(@Nullable String key) {
+		return intervalMap(CollectionUtils.mapPropertyStringMap(key, getServiceProperties()));
+	}
+
+	/**
+	 * Resolve a string set from a service property value.
+	 *
+	 * @param key
+	 *        the service property key to extract
+	 * @return the set, never {@code null}
+	 * @since 1.2
+	 */
+	public Set<String> servicePropertyStringSet(@Nullable String key) {
+		List<String> list = CollectionUtils.mapPropertyStringList(key, getServiceProperties());
+		if ( list == null || list.isEmpty() ) {
+			return Set.of();
+		}
+		return Set.copyOf(list);
 	}
 
 	/**

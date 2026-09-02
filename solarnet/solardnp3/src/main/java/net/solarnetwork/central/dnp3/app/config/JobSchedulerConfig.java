@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.app.config;
 
 import static net.solarnetwork.central.scheduler.SchedulerUtils.triggerForExpression;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,9 @@ public class JobSchedulerConfig {
 	public SimpleSchedulerManager schedulerManager() {
 		SimpleSchedulerManager manager = new SimpleSchedulerManager(taskScheduler);
 		for ( ManagedJob job : managedJobs ) {
-			Trigger trigger = triggerForExpression(job.getSchedule(), TimeUnit.MILLISECONDS, false);
+			Trigger trigger = nonnull(
+					triggerForExpression(job.getSchedule(), TimeUnit.MILLISECONDS, false),
+					"Job %s schedule", job.getId());
 			var _ = manager.scheduleJob(job.getGroupId(), job.getId(), job, trigger);
 		}
 		return manager;

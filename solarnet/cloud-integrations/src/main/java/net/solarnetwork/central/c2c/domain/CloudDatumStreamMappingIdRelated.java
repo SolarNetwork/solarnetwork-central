@@ -23,13 +23,14 @@
 package net.solarnetwork.central.c2c.domain;
 
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.domain.EntityConstants;
 
 /**
  * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
  * entity by way of a configuration ID.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamMappingIdRelated {
 
@@ -48,7 +49,24 @@ public interface CloudDatumStreamMappingIdRelated {
 	 * @return {@code true} if a datum stream mapping ID is available
 	 */
 	default boolean hasDatumStreamMappingId() {
-		return (getDatumStreamMappingId() != null);
+		return EntityConstants.isAssigned(getDatumStreamMappingId());
+	}
+
+	/**
+	 * Get the datum stream mapping ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamMappingId()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the datum stream mapping ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long datumStreamMappingId() {
+		return getDatumStreamMappingId();
 	}
 
 }

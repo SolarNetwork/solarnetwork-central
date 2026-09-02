@@ -22,16 +22,25 @@
 
 package net.solarnetwork.central.biz;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
+import com.nimbusds.jose.util.StandardCharset;
+import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.common.mqtt.MessageSizeLimitExceeded;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Service API for appending user events.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface UserEventAppenderBiz {
 
@@ -94,5 +103,112 @@ public interface UserEventAppenderBiz {
 		}
 		return buf.toString();
 	};
+
+	/**
+	 * A function to generate a SolarFlux MQTT error topic from a user event and
+	 * exception.
+	 *
+	 * @since 2.2
+	 */
+	public static final BiFunction<UserEvent, Throwable, @Nullable String> SOLARFLUX_TAGGED_ERROR_TOPIC_FN = (
+			event, _) -> {
+		final StringBuilder buf = new StringBuilder("user/");
+		buf.append(event.getUserId()).append("/event");
+
+		final String[] tags = event.getTags();
+		for ( int i = 0; i < tags.length; i++ ) {
+			if ( i == 1 ) {
+				buf.append('/');
+				buf.append(CommonUserEvents.ERROR_TAG);
+			}
+			buf.append('/');
+			buf.append(tags[i]);
+		}
+		if ( tags.length < 2 ) {
+			buf.append('/');
+			buf.append(CommonUserEvents.ERROR_TAG);
+		}
+		return buf.toString();
+	};
+
+	/**
+	 * Create a function to generate a SolarFlux MQTT error item from a user
+	 * event and exception.
+	 *
+	 * @param mapper
+	 *        the mapper to serialize the event data with, for determining the
+	 *        output message size
+	 * @since 2.2
+	 */
+	public static BiFunction<UserEvent, Throwable, @Nullable UserEvent> solarFluxTaggedErrorTopicFn(
+			final ObjectMapper mapper) {
+		return (event, t) -> {
+			if ( !(t instanceof MessageSizeLimitExceeded sle) ) {
+				return null;
+			}
+
+			// create new error UserEvent with smaller payload to try again
+			return new UserEvent(event.id(), event.getTags(),
+					"Unable to publish event because the payload length %s exceeds the maximum allowed %d."
+							.formatted(sle.getMessageSize(), sle.getMaximumSize()),
+					limitedSizeEventData(mapper, event, (long) (sle.getMaximumSize() * 0.8)));
+		};
+	}
+
+	/**
+	 * Get a reduced-size data map from an event.
+	 * 
+	 * @param mapper
+	 *        the mapper to serialize the event data with, for determining the
+	 *        output message size
+	 * @param event
+	 *        the event to get a reduced size payload from
+	 * @param maximumSize
+	 *        the maximum size of the data payload desired; this should be very
+	 *        approximate, and conservative as the size calculation is not exact
+	 * @return the limited size data map
+	 */
+	public static String limitedSizeEventData(final ObjectMapper mapper, final UserEvent event,
+			final long maximumSize) {
+		Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+		if ( data == null ) {
+			return "";
+		}
+		pruneMap(mapper, data, maximumSize);
+		String result = JsonUtils.getJSONString(data);
+		if ( data.isEmpty() || result == null
+				|| result.getBytes(StandardCharset.UTF_8).length > maximumSize ) {
+			result = """
+					{"message":"Content too large to preserve."}""";
+		}
+		return result;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static void pruneMap(final ObjectMapper mapper, final Map<String, Object> data,
+			final long maximumSize) {
+		long runningTotal = 0;
+		for ( Iterator<Entry<String, Object>> itr = data.entrySet().iterator(); itr.hasNext(); ) {
+			final Entry<String, Object> e = itr.next();
+			final byte[] key = mapper.writeValueAsBytes(e.getKey());
+			int len = (key != null ? key.length : 0);
+			if ( runningTotal + len > maximumSize ) {
+				itr.remove();
+				continue;
+			}
+			if ( e.getValue() instanceof Map<?, ?> map ) {
+				// try to prune nested map
+				pruneMap(mapper, (Map) map, maximumSize - runningTotal - len);
+			}
+			// track individual map values, dropping any that put us over the maximumSize
+			final byte[] val = mapper.writeValueAsBytes(e.getValue());
+			len += (val != null ? val.length : 0);
+			if ( runningTotal + len < maximumSize ) {
+				runningTotal += len;
+				continue;
+			}
+			itr.remove();
+		}
+	}
 
 }

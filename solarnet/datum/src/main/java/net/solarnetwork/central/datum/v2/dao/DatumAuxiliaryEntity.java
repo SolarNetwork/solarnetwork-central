@@ -28,11 +28,11 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.BasicIdentity;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 

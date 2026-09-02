@@ -47,6 +47,7 @@ import java.util.stream.StreamSupport;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
@@ -114,7 +115,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.12
+ * @version 2.13
  * @since 2.8
  */
 public final class DatumUtils {
@@ -169,6 +170,7 @@ public final class DatumUtils {
 			c.setAggregation(f.getAggregation());
 			c.setPartialAggregation(f.getPartialAggregation());
 			c.setReadingType(f.getReadingType());
+			c.setDatumAuxiliaryType(f.getDatumAuxiliaryType());
 			c.setStartDate(f.getStartDate());
 			c.setEndDate(f.getEndDate());
 			c.setLocalStartDate(f.getLocalStartDate());
@@ -263,6 +265,9 @@ public final class DatumUtils {
 			if ( filter instanceof ReadingTypeFilter f ) {
 				c.setReadingType(f.getReadingType());
 			}
+			if ( filter instanceof DatumAuxiliaryFilter f ) {
+				c.setDatumAuxiliaryType(f.getDatumAuxiliaryType());
+			}
 			if ( filter instanceof DateRangeFilter f ) {
 				c.setStartDate(f.getStartDate());
 				c.setEndDate(f.getEndDate());
@@ -314,7 +319,11 @@ public final class DatumUtils {
 		c.setMax(m);
 		c.setOffset(o);
 
-		c.setSearchFilter(generateTagsSearchFilter(tags));
+		// if tags provided, use those unless metadataFilter was already provided
+		if ( (c.getSearchFilter() == null || c.getSearchFilter().isEmpty()) && tags != null
+				&& tags.length > 0 ) {
+			c.setSearchFilter(generateTagsSearchFilter(tags));
+		}
 
 		return c;
 	}
@@ -744,6 +753,7 @@ public final class DatumUtils {
 	}
 
 	private static void populate(DatumAuxiliary datum, GeneralNodeDatumAuxiliary aux) {
+		aux.setNotes(datum.getNotes());
 		if ( datum.getSamplesFinal() != null ) {
 			DatumSamples s = new DatumSamples();
 			s.setAccumulating(datum.getSamplesFinal().getAccumulating());

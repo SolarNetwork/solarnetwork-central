@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -120,6 +121,10 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(OPEN_WEATHER_MAP)
 	public CloudDatumStreamService openWeatherMapWeatherCloudDatumStreamService() {
@@ -134,6 +139,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
@@ -159,6 +165,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
@@ -184,6 +191,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
@@ -200,7 +208,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 	public CloudIntegrationService openWeatherMapCloudIntegrationService(
 			@Qualifier(OPEN_WEATHER_MAP) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new OpenWeatherMapCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(OpenWeatherMapCloudIntegrationService.class.getName(),

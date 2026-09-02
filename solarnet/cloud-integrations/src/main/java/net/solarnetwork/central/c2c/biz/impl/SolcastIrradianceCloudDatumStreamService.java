@@ -37,7 +37,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -247,6 +246,9 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = CloudIntegrationsUtils.nextTickStart(resolution, endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {
@@ -342,8 +344,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		return restOpsHelper.httpGet("List irradiance data", integration, JsonNode.class,
-				_ -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
-						refsByFieldName, resolution, startDate, endDate));
+				_ -> uriBuilder.buildAndExpand().toUri(), (_, res) -> parseDatum(res.getBody(),
+						datumStream, refsByFieldName, resolution, startDate, endDate));
 	}
 
 	/**
@@ -424,12 +426,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		return Math.min(MAX_LIVE_API_OFFSET_HOURS, ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0)));
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
 			CloudDatumStreamConfiguration datumStream, Map<String, ValueRef> refsByFieldName,
 			Duration resolution, Instant minDate, Instant maxDate) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -479,7 +480,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		// Solcast API returns data in reverse time order, so reverse it now
-		Collections.sort(result);
+		result.sort(null);
 
 		return result;
 	}

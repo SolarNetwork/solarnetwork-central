@@ -166,6 +166,47 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 	}
 
 	@Test
+	public void bulkImport_batchTransactions() {
+		try {
+			// GIVEN
+			TestTransaction.end();
+
+			// load 1 hour of data
+			final int datumCount = 59;
+			ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).minusHours(1);
+			List<GeneralNodeDatum> data = createSampleData(datumCount, start);
+
+			// WHEN
+			BasicBulkLoadingOptions options = new BasicBulkLoadingOptions("Test load", 10,
+					LoadingTransactionMode.BatchTransactions, null);
+			bulkLoad(data, options);
+
+			// THEN
+			List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+			log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+			assertThat("Datum rows imported", loaded, hasSize(data.size()));
+
+			List<StaleAggregateDatum> staleHours = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate,
+					Hour);
+			assertThat("Two stale hours recorded", staleHours, hasSize(2));
+			assertStaleAggregateDatum("Stale previous hour", staleHours.get(0),
+					new StaleAggregateDatumEntity(loaded.get(0).getStreamId(),
+							start.minusHours(1).toInstant(), Hour, now()));
+			assertStaleAggregateDatum("Stale hour", staleHours.get(1), new StaleAggregateDatumEntity(
+					loaded.get(0).getStreamId(), start.toInstant(), Hour, now()));
+
+			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
+			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+			assertThat("One audit hour", audits, hasSize(1));
+			assertAuditDatum("Audit hour", audits.get(0), ioAuditDatum(loaded.get(0).getStreamId(),
+					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L, 0L));
+		} finally {
+			// manually clean up transactionally circumvented data import data
+			DatumTestUtils.cleanupDatabase(jdbcTemplate);
+		}
+	}
+
+	@Test
 	public void bulkImport_updateExistingStream() {
 		try {
 			// GIVEN

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.error;
 import static net.solarnetwork.domain.Result.success;
 import java.io.Serial;
@@ -52,15 +53,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.dao.BasicUserNodeFilter;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatus;
 import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -73,7 +75,7 @@ import net.solarnetwork.service.CertificateService;
  * Controller for user nodes web service API.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @GlobalExceptionRestController
 @Controller("v1nodesController")
@@ -113,10 +115,21 @@ public class NodesController {
 	@RequestMapping(value = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/" }, method = RequestMethod.GET)
 	@ResponseBody
 	public Result<FilterResults<UserNode, Long>> getMyNodes() {
-		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
+		List<UserNode> nodes = userBiz.getUserNodes(getCurrentActorUserId());
 		FilterResults<UserNode, Long> result = new BasicFilterResults<>(nodes, (long) nodes.size(), 0L,
 				nodes.size());
 		return success(result);
+	}
+
+	/**
+	 * Get a listing of nodes for the active user matching a search criteria.
+	 *
+	 * @return The list of nodes available to the active user.
+	 */
+	@RequestMapping(value = "/api/v1/sec/nodes/find", method = RequestMethod.GET)
+	@ResponseBody
+	public Result<FilterResults<UserNodeInfo, Long>> findNodes(BasicUserNodeFilter filter) {
+		return success(userBiz.findUserNodeInfos(getCurrentActorUserId(), filter));
 	}
 
 	/**
@@ -129,7 +142,7 @@ public class NodesController {
 	@ResponseBody
 	public Result<FilterResults<UserNodeConfirmation, Long>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz
-				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentActorUserId());
+				.getPendingUserNodeConfirmations(getCurrentActorUserId());
 		FilterResults<UserNodeConfirmation, Long> result = new BasicFilterResults<>(pending,
 				(long) pending.size(), 0L, pending.size());
 		return success(result);
@@ -145,7 +158,7 @@ public class NodesController {
 			method = RequestMethod.GET)
 	@ResponseBody
 	public Result<List<UserNode>> getArchivedNodes() {
-		List<UserNode> nodes = userBiz.getArchivedUserNodes(SecurityUtils.getCurrentActorUserId());
+		List<UserNode> nodes = userBiz.getArchivedUserNodes(getCurrentActorUserId());
 		return success(nodes);
 	}
 
@@ -164,7 +177,7 @@ public class NodesController {
 	@ResponseBody
 	public Result<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
 			@RequestParam("archived") boolean archived) {
-		userBiz.updateUserNodeArchivedStatus(SecurityUtils.getCurrentActorUserId(), nodeIds, archived);
+		userBiz.updateUserNodeArchivedStatus(getCurrentActorUserId(), nodeIds, archived);
 		return success();
 	}
 
@@ -195,8 +208,8 @@ public class NodesController {
 		}
 		final Locale locale = Locale.of(lang, countryCode);
 		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
-		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), keystorePassword,
-				timeZone, locale);
+		NewNodeRequest req = new NewNodeRequest(getCurrentActorUserId(), keystorePassword, timeZone,
+				locale);
 		return success(registrationBiz.createNodeManually(req));
 	}
 
@@ -228,8 +241,7 @@ public class NodesController {
 			method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseEntity<byte[]> viewCert(@PathVariable Long nodeId) {
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(SecurityUtils.getCurrentActorUserId(),
-				nodeId);
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(getCurrentActorUserId(), nodeId);
 		if ( cert == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
@@ -263,8 +275,7 @@ public class NodesController {
 	@ResponseBody
 	public UserNodeCertificate viewCert(@PathVariable Long nodeId,
 			@RequestParam(value = "password") String password) {
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(SecurityUtils.getCurrentActorUserId(),
-				nodeId);
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(getCurrentActorUserId(), nodeId);
 		if ( cert == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
@@ -312,7 +323,7 @@ public class NodesController {
 	@ResponseBody
 	public UserNodeCertificate renewCert(@PathVariable final Long nodeId,
 			@RequestParam("password") final String password) {
-		UserNode userNode = userBiz.getUserNode(SecurityUtils.getCurrentActorUserId(), nodeId);
+		UserNode userNode = userBiz.getUserNode(getCurrentActorUserId(), nodeId);
 		if ( userNode == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}

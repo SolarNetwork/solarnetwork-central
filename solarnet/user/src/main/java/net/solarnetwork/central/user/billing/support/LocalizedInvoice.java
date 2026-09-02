@@ -286,7 +286,8 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 						Collector.of(AggregateLocalizedInvoiceItem.itemOfLocale(locale),
 								AggregateLocalizedInvoiceItem::addItem,
 								AggregateLocalizedInvoiceItem::addItems)))
-				.values().stream().sorted(Comparator.comparing(item -> ordering.indexOf(item.getId())))
+				.values().stream()
+				.sorted(Comparator.comparingInt(item -> ordering.indexOf(item.getId())))
 				.collect(Collectors.toList());
 	}
 

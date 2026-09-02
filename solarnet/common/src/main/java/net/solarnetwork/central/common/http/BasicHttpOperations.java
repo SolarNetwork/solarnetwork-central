@@ -30,9 +30,13 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.time.Clock;
+import java.time.InstantSource;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -44,12 +48,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.domain.CommonUserEvents;
@@ -70,7 +77,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.1
  */
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
@@ -87,6 +94,17 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * </p>
 	 */
 	public static final String USER_EVENT_APPENDER_RUNTIME = "userEventAppender";
+
+	/**
+	 * The value to use for masked query parameter values.
+	 * 
+	 * @see #maskedUri(URI)
+	 * @since 2.1
+	 */
+	public static final String SENSITIVE_QUERY_PARAM_MASKED_VALUE = "*****";
+
+	/** A clock. */
+	protected final InstantSource clock;
 
 	/** A logger. */
 	protected final Logger log;
@@ -117,7 +135,18 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	private @Nullable UserServiceAuditor userServiceAuditor;
 
 	/**
+	 * An optional set of query parameter names to redact from events.
+	 * 
+	 * @since 2.1
+	 */
+	private @Nullable Set<String> sensitiveQueryParameterNames;
+
+	/**
 	 * Constructor.
+	 *
+	 * <p>
+	 * The system clock will be used.
+	 * </p>
 	 *
 	 * @param log
 	 *        the logger
@@ -132,7 +161,31 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 */
 	public BasicHttpOperations(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags) {
+		this(Clock.systemUTC(), log, userEventAppenderBiz, restOps, errorEventTags);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.2
+	 */
+	public BasicHttpOperations(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags) {
 		super();
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.log = requireNonNullArgument(log, "log");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
@@ -153,14 +206,15 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		this.responseLengthTracker = tracker;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <I extends @Nullable Object, O extends @Nullable Object> ResponseEntity<O> http(
+	public <I extends @Nullable Object, O extends @Nullable Object> HttpExchange<I, O> http(
 			HttpMethod method, URI uri, @Nullable HttpHeaders headers, @Nullable I body,
 			Class<O> responseType, @Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri).headers(headers);
-		final RequestEntity<?> req;
+		final RequestEntity<I> req;
 		if ( body == null ) {
-			req = reqBuilder.build();
+			req = (RequestEntity<I>) reqBuilder.build();
 		} else {
 			req = reqBuilder.body(body);
 		}
@@ -185,10 +239,10 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			result = (Result<O>) httpCache.get(cacheableReq);
 		}
 		if ( result == null ) {
-			ResponseEntity<O> res = exchange(() -> req, responseType, context, runtimeData,
+			HttpExchange<Void, O> res = exchange(() -> req, responseType, context, runtimeData,
 					BasicHttpOperations::defaultRequestEventMessage,
 					BasicHttpOperations::defaultRequestErrorEventMessage);
-			result = Result.success(res.getBody());
+			result = Result.success(res.response().getBody());
 			if ( httpCache != null && req instanceof CachableRequestEntity cacheableReq ) {
 				httpCache.put(cacheableReq, result);
 			}
@@ -252,8 +306,8 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        {@link #defaultRequestErrorEventMessage(Throwable)}
 	 * @return the HTTP response entity
 	 */
-	protected final <O extends @Nullable Object> ResponseEntity<O> exchange(
-			final Supplier<RequestEntity<?>> reqProvider, final Class<O> responseType,
+	protected final <I extends @Nullable Object, O extends @Nullable Object> HttpExchange<I, O> exchange(
+			final Supplier<RequestEntity<I>> reqProvider, final Class<O> responseType,
 			final @Nullable Object context, final @Nullable Map<String, ?> runtimeData,
 			final Supplier<String> eventMessageProvider,
 			final Function<Throwable, String> errorEventMessageProvider) {
@@ -276,14 +330,14 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		List<String> tags = eventTags;
 		String eventMsg = eventDescription;
 
-		RequestEntity<?> req = null;
+		RequestEntity<I> req = null;
 		try {
 			req = reqProvider.get();
 
 			if ( req.getMethod() != null ) {
 				eventData.put(HTTP_METHOD_DATA_KEY, req.getMethod().toString());
 			}
-			eventData.put(HTTP_URI_DATA_KEY, req.getUrl().toString());
+			eventData.put(HTTP_URI_DATA_KEY, maskedUri(req.getUrl()).toString());
 			if ( req.getBody() != null ) {
 				eventData.put(HTTP_BODY_DATA_KEY, req.getBody() instanceof String s ? s
 						: JsonUtils.getTreeFromObject(req.getBody()));
@@ -291,12 +345,18 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 
 			validateRequest(req);
 
-			ResponseEntity<O> result = restOps.exchange(req, responseType);
+			final long startAt = clock.millis();
+			ResponseEntity<O> result;
+			try {
+				result = restOps.exchange(req, responseType);
+			} finally {
+				eventData.put(CommonUserEvents.DURATION_DATA_KEY, clock.millis() - startAt);
+			}
 
 			eventData.put(HTTP_STATUS_CODE_DATA_KEY, result.getStatusCode().value());
 			populateResponseBodyEventData(result, eventData);
 
-			return result;
+			return new HttpExchange<>(req, result);
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}",
 					eventDescription, (context != null ? context.getClass().getSimpleName() : null),
@@ -384,6 +444,45 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 				eventAppender.addEvent(userId, event(tags, eventMsg, getJSONString(eventData)));
 			}
 		}
+	}
+
+	/**
+	 * Mask sensitive query parameter values.
+	 * 
+	 * <p>
+	 * Any query parameters whose names are found in
+	 * {@link #getSensitiveQueryParameterNames()} will have their associated
+	 * value replaced by {@link #SENSITIVE_QUERY_PARAM_MASKED_VALUE}.
+	 * </p>
+	 * 
+	 * @param uri
+	 *        the URI to mask
+	 * @return the masked URI
+	 * @see #setSensitiveQueryParameterNames(Set)
+	 * @since 2.1
+	 */
+	public URI maskedUri(URI uri) {
+		if ( sensitiveQueryParameterNames == null || sensitiveQueryParameterNames.isEmpty()
+				|| uri.getRawQuery() == null ) {
+			return uri;
+		}
+		UriComponentsBuilder b = UriComponentsBuilder.fromUri(uri);
+		MultiValueMap<String, String> queryParams = b.build(true).getQueryParams();
+		MultiValueMap<String, String> maskedParams = null;
+		for ( Entry<String, List<String>> e : queryParams.entrySet() ) {
+			for ( String sensitiveName : sensitiveQueryParameterNames ) {
+				if ( sensitiveName.compareToIgnoreCase(e.getKey()) == 0 ) {
+					if ( maskedParams == null ) {
+						maskedParams = new LinkedMultiValueMap<>(queryParams.size());
+					}
+					maskedParams.put(e.getKey(), List.of(SENSITIVE_QUERY_PARAM_MASKED_VALUE));
+				}
+			}
+		}
+		if ( maskedParams == null ) {
+			return uri;
+		}
+		return b.replaceQueryParams(maskedParams).build(true).toUri();
 	}
 
 	private void populateResponseBodyEventData(ResponseEntity<?> result, Map<String, Object> eventData) {
@@ -529,6 +628,28 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 */
 	public final void setAllowLocalHosts(boolean allowLocalHosts) {
 		this.allowLocalHosts = allowLocalHosts;
+	}
+
+	/**
+	 * Get the sensitive query parameter names.
+	 * 
+	 * @return the sensitive names, or {@code null}
+	 * @since 2.1
+	 */
+	public final @Nullable Set<String> getSensitiveQueryParameterNames() {
+		return sensitiveQueryParameterNames;
+	}
+
+	/**
+	 * Set the sensitive query parameter names.
+	 * 
+	 * @param sensitiveQueryParameterNames
+	 *        the names to set
+	 * @since 2.1
+	 */
+	public final void setSensitiveQueryParameterNames(
+			@Nullable Set<String> sensitiveQueryParameterNames) {
+		this.sensitiveQueryParameterNames = sensitiveQueryParameterNames;
 	}
 
 }

@@ -228,7 +228,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
 					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(),
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {
@@ -325,7 +325,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 						req.setBasicAuth(username, password);
 					}
 					return uri;
-				}, r -> nonnull(r.getBody(), "Response body"));
+				}, (_, res) -> nonnull(res.getBody(), "Response body"));
 
 		/*- JSON example:
 			{

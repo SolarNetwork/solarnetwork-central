@@ -44,12 +44,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -88,11 +88,11 @@ import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.ProviderObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumById;
@@ -122,7 +122,6 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
-import net.solarnetwork.central.datum.v2.domain.StreamRange;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
@@ -130,23 +129,26 @@ import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.jdbc.JdbcDatumBulkLoadingContextSupport;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.StringLongMapping;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.2
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -155,17 +157,22 @@ public class JdbcDatumEntityDao
 	/**
 	 * The default value for the {@code bulkLoadJdbcCall} property.
 	 */
-	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{? = call solardatm.store_datum(?, ?, ?, ?, ?, FALSE)}";
+	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = JdbcDatumBulkLoadingSupport.DEFAULT_STORE_DATUM_JDBC_CALL;
+
+	/**
+	 * The default value for the {@code bulkLoadStreamJdbcCall} property.
+	 */
+	public static final String DEFAULT_BULK_LOADING_STREAM_JDBC_CALL = JdbcDatumBulkLoadingSupport.DEFAULT_STORE_STREAM_DATUM_JDBC_CALL;
 
 	/**
 	 * The default value for the {@code bulkLoadMarkStaleJdbcCall} property.
 	 */
-	public static final String DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL = "{call solardatm.mark_stale_datm_hours(?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL = JdbcDatumBulkLoadingSupport.DEFAULT_MARK_STALE_DATUM_HOURS_JDBC_CALL;
 
 	/**
 	 * The default value for the {@code bulkLoadAuditJdbcCall} property.
 	 */
-	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.audit_increment_datum_count(?, ?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = JdbcDatumBulkLoadingSupport.DEFAULT_AUDIT_INCREMENT_DATUM_COUNT_CALL;
 
 	/**
 	 * The {@code maxMinuteAggregationHours} property default value.
@@ -178,9 +185,11 @@ public class JdbcDatumEntityDao
 
 	private final JdbcOperations jdbcTemplate;
 	private @Nullable Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
+	private @Nullable Cache<net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamObjectMetadataCache;
 	private @Nullable PlatformTransactionManager bulkLoadTransactionManager;
 	private @Nullable DataSource bulkLoadDataSource;
 	private String bulkLoadJdbcCall = DEFAULT_BULK_LOADING_JDBC_CALL;
+	private String bulkLoadStreamJdbcCall = DEFAULT_BULK_LOADING_STREAM_JDBC_CALL;
 	private String bulkLoadMarkStaleJdbcCall = DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL;
 	private String bulkLoadAuditJdbcCall = DEFAULT_BULK_LOADING_AUDIT_CALL;
 	private int maxMinuteAggregationHours = DEFAULT_MAX_MINUTE_AGG_HOURS;
@@ -502,27 +511,56 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public @Nullable ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter) {
-		if ( filter.getStreamId() == null ) {
-			throw new IllegalArgumentException("A stream ID is required.");
-		}
-		if ( streamMetadataCache != null ) {
-			ObjectDatumStreamMetadata meta = streamMetadataCache.get(filter.getStreamId());
-			if ( meta != null ) {
-				return meta;
+	public @Nullable ObjectDatumStreamMetadata findStreamMetadata(ObjectMetadataCriteria filter) {
+		List<ObjectDatumStreamMetadata> results = null;
+		net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId key = null;
+		if ( filter.hasStreamCriteria() ) {
+			if ( streamMetadataCache != null ) {
+				ObjectDatumStreamMetadata meta = streamMetadataCache.get(filter.getStreamId());
+				if ( meta != null ) {
+					return meta;
+				}
 			}
+			results = jdbcTemplate.query(new SelectStreamMetadata(filter),
+					ObjectDatumStreamMetadataRowMapper.INSTANCE);
+		} else if ( filter.hasObjectCriteria() && filter.hasSourceCriteria() ) {
+			if ( streamObjectMetadataCache != null ) {
+				key = new net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId(filter.objectKind(),
+						filter.objectId(), filter.sourceId());
+				ObjectDatumStreamMetadata meta = streamObjectMetadataCache.get(key);
+				if ( meta != null ) {
+					return meta;
+				}
+			}
+			ObjectStreamCriteria osc = switch (filter) {
+				case ObjectStreamCriteria c -> c;
+				case PaginationCriteria c -> new BasicDatumCriteria(c);
+				default -> throw new IllegalStateException(
+						"Unsupported filter type [%s]".formatted(filter.getClass()));
+			};
+			results = findDatumStreamMetadataInternal(osc);
+		} else {
+			throw new IllegalArgumentException(
+					"Either a stream ID or kind/ID/source combination is required.");
 		}
-		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(new SelectStreamMetadata(filter),
-				ObjectDatumStreamMetadataRowMapper.INSTANCE);
 		ObjectDatumStreamMetadata meta = (results.isEmpty() ? null : results.getFirst());
-		if ( meta != null && streamMetadataCache != null ) {
-			streamMetadataCache.put(filter.getStreamId(), meta);
+		if ( meta != null ) {
+			if ( streamMetadataCache != null && filter.hasStreamCriteria() ) {
+				streamMetadataCache.put(filter.getStreamId(), meta);
+			} else if ( streamObjectMetadataCache != null && key != null ) {
+				streamObjectMetadataCache.put(key, meta);
+			}
 		}
 		return meta;
 	}
 
 	@Override
 	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
+		return findDatumStreamMetadataInternal(filter);
+	}
+
+	private List<ObjectDatumStreamMetadata> findDatumStreamMetadataInternal(
+			ObjectStreamCriteria filter) {
 		ObjectDatumKind kind = filter.effectiveObjectKind();
 		RowMapper<ObjectDatumStreamMetadata> mapper;
 		if ( filter.hasLocationCriteria() ) {
@@ -776,10 +814,10 @@ public class JdbcDatumEntityDao
 	}
 
 	/**
-	 * A {@link StreamMetadataCriteria} for internal use where the stream ID is
+	 * An {@link ObjectMetadataCriteria} for internal use where the stream ID is
 	 * mutable.
 	 */
-	private static class StreamIdStreamMetadataCriteria implements StreamMetadataCriteria {
+	private static class StreamIdStreamMetadataCriteria implements ObjectMetadataCriteria {
 
 		private final UUID[] streamIds = new UUID[1];
 
@@ -801,6 +839,16 @@ public class JdbcDatumEntityDao
 		@Override
 		public UUID @Nullable [] getStreamIds() {
 			return streamIds;
+		}
+
+		@Override
+		public Long @Nullable [] getObjectIds() {
+			return null;
+		}
+
+		@Override
+		public @Nullable ObjectDatumKind getObjectKind() {
+			return null;
 		}
 
 		@Override
@@ -891,67 +939,53 @@ public class JdbcDatumEntityDao
 		return new BulkLoadingContext(options, exceptionHandler);
 	}
 
-	private class BulkLoadingContext extends JdbcBulkLoadingContextSupport<GeneralNodeDatum> {
+	private class BulkLoadingContext extends JdbcDatumBulkLoadingContextSupport<GeneralNodeDatum> {
 
 		private final Timestamp start;
-
-		private final Map<UUID, BulkLoadStats> streamStats = new HashMap<>(32);
+		private JdbcDatumBulkLoadingSupport support;
+		private @Nullable CallableStatement streamStmt;
 
 		private BulkLoadingContext(LoadingOptions options,
 				LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
 			super(bulkLoadTransactionManager, nonnull(bulkLoadDataSource, "bulkLoadDataSource"),
 					bulkLoadJdbcCall, options, exceptionHandler);
 			start = new Timestamp(System.currentTimeMillis());
+			support = new JdbcDatumBulkLoadingSupport(Clock.systemUTC());
+			support.setDatumStreamMetadataDao(JdbcDatumEntityDao.this);
+			setCountTrackerProvider(StringLongMapping::new);
 		}
 
 		@Override
 		protected PreparedStatement createJdbcStatement(Connection con) throws SQLException {
 			CallableStatement call = (CallableStatement) super.createJdbcStatement(con);
 			call.registerOutParameter(1, Types.OTHER);
+
 			return call;
 		}
 
 		@Override
-		protected boolean doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
+		protected boolean doLoadDatum(GeneralNodeDatum d, PreparedStatement stmt, long index)
 				throws SQLException {
-			stmt.setTimestamp(2, Timestamp.from(d.getCreated()));
-			stmt.setLong(3, nonnull(d.getNodeId(), "nodeId"));
-			stmt.setString(4, d.getSourceId());
-			stmt.setTimestamp(5, d.getPosted() != null ? Timestamp.from(d.getPosted()) : start);
-			stmt.setString(6, d.getSampleJson());
-			stmt.executeUpdate();
-			UUID streamId = uuidFromCall((CallableStatement) stmt, 1);
+			final StreamDatum sd = support.datumStreamDatum(d, new GeneralDatum(d, d.getSamples()));
+			if ( sd != null ) {
+				return support.storeDatum(sd, d.getKind(), streamStmt(stmt.getConnection()),
+						d.getPosted() != null ? Timestamp.from(d.getPosted()) : start);
+			}
+			return support.storeDatum(d, (CallableStatement) stmt, start);
+		}
 
-			// keep track of import min/max date ranges, so they can be updated at end
-			BulkLoadStats stats = streamStats.compute(streamId,
-					(k, v) -> (v != null ? v : new BulkLoadStats(k)));
-			stats.updateStatsForDatum(d);
-
-			return true;
+		private CallableStatement streamStmt(Connection con) throws SQLException {
+			if ( streamStmt != null ) {
+				return streamStmt;
+			}
+			streamStmt = con.prepareCall(bulkLoadStreamJdbcCall);
+			return streamStmt;
 		}
 
 		@Override
 		public void commit() {
-			commitDateRanges();
-			super.commit();
-		}
-
-		private void commitDateRanges() {
-			try (CallableStatement auditStmt = getConnection().prepareCall(bulkLoadAuditJdbcCall);
-					CallableStatement staleStmt = getConnection()
-							.prepareCall(bulkLoadMarkStaleJdbcCall)) {
-				for ( BulkLoadStats stat : streamStats.values() ) {
-					auditStmt.setObject(1, stat.getStreamId(), Types.OTHER);
-					auditStmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-					auditStmt.setInt(3, stat.dcount);
-					auditStmt.setInt(4, stat.pcount);
-					auditStmt.execute();
-
-					staleStmt.setObject(1, stat.getStreamId(), Types.OTHER);
-					staleStmt.setTimestamp(2, Timestamp.from(stat.getStartDate()));
-					staleStmt.setTimestamp(3, Timestamp.from(stat.getEndDate()));
-					staleStmt.execute();
-				}
+			try {
+				support.persistStreamStats(getConnection());
 			} catch ( SQLException e ) {
 				BulkLoadingDao.LoadingExceptionHandler<GeneralNodeDatum> handler = getExceptionHandler();
 				String msg = "Error updating audit/stale datum records.";
@@ -961,61 +995,22 @@ public class JdbcDatumEntityDao
 					log.error(msg, e);
 				}
 			}
-			streamStats.clear();
+			super.commit();
 		}
 
-	}
-
-	/**
-	 * Internal class used to track statistics during bulk import.
-	 */
-	private static class BulkLoadStats extends StreamRange {
-
-		private int dcount;
-		private int pcount;
-
-		private BulkLoadStats(UUID streamId) {
-			super(streamId);
-		}
-
-		/**
-		 * Add statistics for a given datum.
-		 *
-		 * @param d
-		 *        the datum to calculate the datum/property counts from
-		 */
-		private void updateStatsForDatum(GeneralNodeDatum d) {
-			if ( d == null ) {
-				return;
+		@Override
+		public void close() {
+			if ( streamStmt != null ) {
+				try {
+					if ( !streamStmt.isClosed() ) {
+						streamStmt.close();
+					}
+				} catch ( SQLException e ) {
+					log.warn("Error closing bulk loading statement", e);
+				}
+				streamStmt = null;
 			}
-
-			final Instant ts = nonnull(d.getCreated(), "created");
-
-			if ( getStartDate() == null || ts.isBefore(getStartDate()) ) {
-				setStartDate(ts);
-			}
-			if ( getEndDate() == null || ts.isAfter(getEndDate()) ) {
-				setEndDate(ts);
-			}
-
-			dcount += 1;
-			DatumSamples s = d.getSamples();
-			if ( s == null ) {
-				return;
-			}
-			addPropCounts(s.getInstantaneous());
-			addPropCounts(s.getAccumulating());
-			addPropCounts(s.getStatus());
-			Set<String> tags = s.getTags();
-			if ( tags != null ) {
-				pcount += tags.size();
-			}
-		}
-
-		private void addPropCounts(@Nullable Map<?, ?> m) {
-			if ( m != null ) {
-				pcount += m.size();
-			}
+			super.close();
 		}
 
 	}
@@ -1166,6 +1161,50 @@ public class JdbcDatumEntityDao
 	 */
 	public final void setMaxMinuteAggregationHours(int maxMinuteAggregationHours) {
 		this.maxMinuteAggregationHours = maxMinuteAggregationHours;
+	}
+
+	/**
+	 * Get the bulk loading stream JDBC call.
+	 *
+	 * @return the call; defaults to
+	 *         {@link #DEFAULT_BULK_LOADING_STREAM_JDBC_CALL}
+	 * @since 3.1
+	 */
+	public final String getBulkLoadStreamJdbcCall() {
+		return bulkLoadStreamJdbcCall;
+	}
+
+	/**
+	 * Set the bulk loading stream JDBC call.
+	 *
+	 * @param bulkLoadStreamJdbcCall
+	 *        the call to set; if {@code null} then
+	 *        {@link #DEFAULT_BULK_LOADING_STREAM_JDBC_CALL} will be used
+	 * @since 3.1
+	 */
+	public final void setBulkLoadStreamJdbcCall(String bulkLoadStreamJdbcCall) {
+		this.bulkLoadStreamJdbcCall = (bulkLoadStreamJdbcCall != null ? bulkLoadStreamJdbcCall
+				: DEFAULT_BULK_LOADING_STREAM_JDBC_CALL);
+	}
+
+	/**
+	 * Get the stream object metadata cache.
+	 *
+	 * @return the cache, or {@code null}
+	 */
+	public final @Nullable Cache<net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> getStreamObjectMetadataCache() {
+		return streamObjectMetadataCache;
+	}
+
+	/**
+	 * Set the stream object metadata cache.
+	 *
+	 * @param streamObjectMetadataCache
+	 *        the cache to set, or {@code null}
+	 */
+	public final void setStreamObjectMetadataCache(
+			@Nullable Cache<net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamObjectMetadataCache) {
+		this.streamObjectMetadataCache = streamObjectMetadataCache;
 	}
 
 }

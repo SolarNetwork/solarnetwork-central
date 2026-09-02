@@ -74,7 +74,7 @@ import tools.jackson.databind.module.SimpleModule;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -93,8 +93,10 @@ public class UserEventConfig {
 	@Qualifier(SOLARFLUX)
 	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
-		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce);
+		return new MqttJsonPublisher<>("SolarFlux UserEvent", solarFluxObjectMapper,
+				UserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce,
+				UserEventAppenderBiz.SOLARFLUX_TAGGED_ERROR_TOPIC_FN,
+				UserEventAppenderBiz.solarFluxTaggedErrorTopicFn(solarFluxObjectMapper));
 	}
 
 	@Profile("!logging-user-event-appender")

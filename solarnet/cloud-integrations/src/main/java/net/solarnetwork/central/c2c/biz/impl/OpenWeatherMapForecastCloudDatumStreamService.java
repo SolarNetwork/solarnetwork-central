@@ -129,7 +129,7 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 
 			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("Get forecast", integration,
 					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds));
+					(_, res) -> parseDatum(res.getBody(), ds));
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -139,11 +139,10 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 		});
 	}
 
-	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
 			CloudDatumStreamConfiguration datumStream) {
 		if ( json == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		List<GeneralDatum> result = new ArrayList<>(40);
 		for ( JsonNode forecastNode : json.path("list") ) {

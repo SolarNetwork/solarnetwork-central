@@ -169,6 +169,7 @@ public class NettyDynamicProxyServer
 		stopProxyServer();
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public synchronized void registerConfigurationProvider(ProxyConfigurationProvider provider) {
 		requireNonNullArgument(provider, "provider");
@@ -180,6 +181,7 @@ public class NettyDynamicProxyServer
 		providers.add(provider);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public synchronized boolean unregisterConfigurationProvider(ProxyConfigurationProvider provider) {
 		requireNonNullArgument(provider, "provider");

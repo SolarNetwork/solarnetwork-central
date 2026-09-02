@@ -67,8 +67,7 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 				break;
 			}
 			try {
-				@SuppressWarnings("unused")
-				Future<?> unused = service.executeTask(task);
+				Future<?> _ = service.executeTask(task);
 			} catch ( RejectedExecutionException e ) {
 				log.debug("Task [{}] rejected, aborting any more claims", task.getId());
 				remainingIterations.set(0);

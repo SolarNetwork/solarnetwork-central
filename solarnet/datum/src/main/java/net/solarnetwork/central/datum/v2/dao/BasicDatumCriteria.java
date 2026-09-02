@@ -35,7 +35,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.datum.domain.CombiningType;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
@@ -43,13 +42,14 @@ import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria,
@@ -88,6 +88,18 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 */
 	public BasicDatumCriteria() {
 		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 *
+	 * @param criteria
+	 *        the criteria to copy
+	 * @since 1.7
+	 */
+	public BasicDatumCriteria(PaginationCriteria criteria) {
+		super();
+		copyFrom(criteria);
 	}
 
 	@Override

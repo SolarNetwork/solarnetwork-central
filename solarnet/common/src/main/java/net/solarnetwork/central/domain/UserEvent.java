@@ -45,7 +45,7 @@ import net.solarnetwork.util.UuidUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
@@ -144,6 +144,27 @@ public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 	@Override
 	public final @Nullable Instant getCreated() {
 		return UuidUtils.extractTimestamp(getEventId(), UuidUtils.V7_MICRO_COUNT_PRECISION);
+	}
+
+	/**
+	 * Test if a specific tag is set.
+	 * 
+	 * @param tag
+	 *        the tag to look for
+	 * @return {@code true} if the {@code tags} array contains {@code tag}
+	 * @since 2.1
+	 */
+	@SuppressWarnings("InvalidParam")
+	public boolean hasTag(String tag) {
+		if ( tag == null || tags == null || tags.length < 1 ) {
+			return false;
+		}
+		for ( String t : tags ) {
+			if ( t != null && t.equals(tag) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

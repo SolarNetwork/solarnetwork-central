@@ -136,6 +136,7 @@ public class DatumImportController {
 		return datumImportExceptionResponse(e, "DI.00401");
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private static Result<Object> datumImportExceptionResponse(DatumImportException e, String code) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {

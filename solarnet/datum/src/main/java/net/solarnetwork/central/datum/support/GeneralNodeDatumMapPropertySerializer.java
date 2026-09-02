@@ -30,6 +30,7 @@ import net.solarnetwork.central.datum.domain.ReadingDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -46,7 +47,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer {
 
@@ -115,7 +116,14 @@ public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer
 		}
 		for ( Map.Entry<String, ?> me : data.entrySet() ) {
 			if ( !props.containsKey(me.getKey()) && me.getValue() != null ) {
-				props.put(me.getKey(), me.getValue());
+				Object v = me.getValue();
+				// convert floating points to BigDecimal so they can be rendered with toPlainString()
+				Object val = switch (v) {
+					case Float d -> NumberUtils.bigDecimalForNumber(d);
+					case Double d -> NumberUtils.bigDecimalForNumber(d);
+					default -> v;
+				};
+				props.put(me.getKey(), val);
 			}
 		}
 	}

@@ -211,7 +211,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 			BasicClaimableJobState @Nullable... expectedStates) {
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(info.getUserId());
-		filter.setTaskId(filter.getTaskId());
+		filter.setTaskId(info.getConfigId());
 		filter.setClaimableJobStates(expectedStates);
 		var sql = new UpdateCloudDatumStreamRakeTaskEntityState(info.getState(), filter, info);
 		return jdbcOps.update(sql) != 0;

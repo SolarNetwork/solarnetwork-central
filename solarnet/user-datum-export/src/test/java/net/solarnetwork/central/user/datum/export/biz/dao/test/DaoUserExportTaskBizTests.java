@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserExportBizTests.java - 24/04/2018 10:41:30 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,13 +27,11 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.security.SecurityUtils.becomeToken;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.array;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -46,7 +44,10 @@ import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.export.domain.Configuration;
+import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.SecurityToken;
@@ -64,9 +65,9 @@ import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskPK;
 
 /**
  * Test cases for the {@link UserExportBiz} class.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoUserExportTaskBizTests {
 
@@ -125,16 +126,33 @@ public class DaoUserExportTaskBizTests {
 				exportDate.toInstant());
 
 		// then
-		assertThat("Task created", task, notNullValue());
-
-		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
-		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
-		assertThat("Node ID populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
-				arrayContaining(TEST_NODE_ID));
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserDatumExportTaskInfo::getUserId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Hourly, from(UserDatumExportTaskInfo::getScheduleType))
+			.as("Task export date as provided")
+			.returns(exportDate.toInstant(), from(UserDatumExportTaskInfo::getExportDate))
+			.extracting(UserDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -165,19 +183,36 @@ public class DaoUserExportTaskBizTests {
 				exportDate.toInstant());
 
 		// then
-		assertThat("Task created", task, notNullValue());
-
-		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
-		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
-		assertThat("Node ID populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
-				arrayContaining(TEST_NODE_ID));
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
-				.as("Source IDs fiven in filter are resolved")
-				.containsExactlyInAnyOrder(filter.getSourceIds());
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserDatumExportTaskInfo::getUserId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Hourly, from(UserDatumExportTaskInfo::getScheduleType))
+			.as("Task export date as provided")
+			.returns(exportDate.toInstant(), from(UserDatumExportTaskInfo::getExportDate))
+			.extracting(UserDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
+			.extracting(AggregateGeneralNodeDatumFilter::getSourceIds, array(String[].class))
+			.as("Source IDs given in filter are resolved")
+			.containsOnly(filter.getSourceIds())
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -209,19 +244,36 @@ public class DaoUserExportTaskBizTests {
 				exportDate.toInstant());
 
 		// then
-		assertThat("Task created", task, notNullValue());
-
-		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
-		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
-		assertThat("Node ID populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
-				arrayContaining(TEST_NODE_ID, TEST_NODE_ID_2));
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
-				.as("Source IDs fiven in filter are resolved")
-				.containsExactlyInAnyOrder(filter.getSourceIds());
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserDatumExportTaskInfo::getUserId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Hourly, from(UserDatumExportTaskInfo::getScheduleType))
+			.as("Task export date as provided")
+			.returns(exportDate.toInstant(), from(UserDatumExportTaskInfo::getExportDate))
+			.extracting(UserDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID, TEST_NODE_ID_2 }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
+			.extracting(AggregateGeneralNodeDatumFilter::getSourceIds, array(String[].class))
+			.as("Source IDs given in filter are resolved")
+			.containsOnly(filter.getSourceIds())
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -247,18 +299,29 @@ public class DaoUserExportTaskBizTests {
 		then(task)
 			.as("Task created")
 			.isNotNull()
-			.as("Task user ID")
-			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
-			.as("Schedule is Adhoc")
-			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
-			.as("No token")
-			.returns(null, UserAdhocDatumExportTaskInfo::getTokenId)
-			.as("Config name")
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserAdhocDatumExportTaskInfo::getUserId))
+			.as("Task has no token")
+			.returns(null, from(UserAdhocDatumExportTaskInfo::getTokenId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Adhoc, from(UserAdhocDatumExportTaskInfo::getScheduleType))
+			.extracting(UserAdhocDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
 			;
 		// @formatter:on
-		then(task.getConfig().getName()).isEqualTo(config.getName());
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
-				.contains(TEST_NODE_ID);
 	}
 
 	@Test
@@ -285,18 +348,29 @@ public class DaoUserExportTaskBizTests {
 		then(task)
 			.as("Task created")
 			.isNotNull()
-			.as("Task user ID")
-			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
-			.as("Schedule is Adhoc")
-			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
-			.as("Token included")
-			.returns(auth.getToken(), UserAdhocDatumExportTaskInfo::getTokenId)
-			.as("Config name")
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserAdhocDatumExportTaskInfo::getUserId))
+			.as("Task has token")
+			.returns(auth.getToken(), from(UserAdhocDatumExportTaskInfo::getTokenId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Adhoc, from(UserAdhocDatumExportTaskInfo::getScheduleType))
+			.extracting(UserAdhocDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
 			;
 		// @formatter:on
-		then(task.getConfig().getName()).isEqualTo(config.getName());
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
-				.contains(TEST_NODE_ID);
 	}
 
 	@Test
@@ -331,22 +405,32 @@ public class DaoUserExportTaskBizTests {
 		then(task)
 			.as("Task created")
 			.isNotNull()
-			.as("Task user ID")
-			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
-			.as("Schedule is Adhoc")
-			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
-			.as("No token")
-			.returns(auth.getToken(), UserAdhocDatumExportTaskInfo::getTokenId)
-			.as("Config name")
+			.as("Task user ID as provided")
+			.returns(TEST_USER_ID, from(UserAdhocDatumExportTaskInfo::getUserId))
+			.as("Task has token")
+			.returns(auth.getToken(), from(UserAdhocDatumExportTaskInfo::getTokenId))
+			.as("Task schedule as provided")
+			.returns(ScheduleType.Adhoc, from(UserAdhocDatumExportTaskInfo::getScheduleType))
+			.extracting(UserAdhocDatumExportTaskInfo::getConfig)
+			.as("Configuration available")
+			.isNotNull()
+			.as("Configuration name as provided")
+			.returns(config.getName(), from(Configuration::getName))
+			.extracting(Configuration::getDataConfiguration)
+			.as("Data configuration available")
+			.isNotNull()
+			.extracting(DataConfiguration::getDatumFilter)
+			.as("DatumFilter available")
+			.isNotNull()
+			.as("Node ID populated in datum criteria")
+			.returns(new Long[] { TEST_NODE_ID, TEST_NODE_ID_2 }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
+			.as("User ID populated in datum criteria")
+			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
+			.extracting(AggregateGeneralNodeDatumFilter::getSourceIds, array(String[].class))
+			.as("Source IDs given in filter are resolved")
+			.containsOnly(filter.getSourceIds())
 			;
 		// @formatter:on
-		then(task.getConfig().getName()).isEqualTo(config.getName());
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
-				.as("Node IDs given in filter are resolved")
-				.containsExactlyInAnyOrder(TEST_NODE_ID, TEST_NODE_ID_2);
-		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
-				.as("Source IDs fiven in filter are resolved")
-				.containsExactlyInAnyOrder(filter.getSourceIds());
 	}
 
 }

@@ -66,7 +66,14 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 			BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
-	 * Update a specific task.
+	 * Update a specific task's runtime state.
+	 * 
+	 * <p>
+	 * This will update just the properties of the task that are used to track
+	 * the runtime state of the task, such as the {@link BasicClaimableJobState}
+	 * property but also any other property that affect the task's claimable
+	 * status or other runtime aspects of the task.
+	 * </p>
 	 *
 	 * @param info
 	 *        the info to save

@@ -30,7 +30,6 @@ import java.util.Map.Entry;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.domain.Result;
 
@@ -38,7 +37,7 @@ import net.solarnetwork.domain.Result;
  * API for basic HTTP operations.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface HttpOperations {
 
@@ -67,7 +66,7 @@ public interface HttpOperations {
 	 *        implementation specific
 	 * @return the result, never {@code null}
 	 */
-	<I extends @Nullable Object, O> ResponseEntity<O> http(HttpMethod method, URI uri,
+	<I extends @Nullable Object, O> HttpExchange<I, O> http(HttpMethod method, URI uri,
 			@Nullable HttpHeaders headers, @Nullable I body, Class<O> responseType,
 			@Nullable Object context, @Nullable Map<String, ?> runtimeData);
 
@@ -97,8 +96,8 @@ public interface HttpOperations {
 			@Nullable Map<String, ?> runtimeData) {
 		URI u = uri(uri, parameters);
 		HttpHeaders h = headersForMap(headers);
-		ResponseEntity<O> res = http(HttpMethod.GET, u, h, null, responseType, context, runtimeData);
-		return Result.result(res.getBody());
+		HttpExchange<Void, O> res = http(HttpMethod.GET, u, h, null, responseType, context, runtimeData);
+		return Result.result(res.response().getBody());
 	}
 
 	/**

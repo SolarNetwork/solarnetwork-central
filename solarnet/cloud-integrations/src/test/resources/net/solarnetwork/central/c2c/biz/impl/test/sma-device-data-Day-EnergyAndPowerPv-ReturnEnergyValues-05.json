@@ -1,0 +1,36 @@
+{
+  "plant": {
+    "plantId": "11260000",
+    "name": "Site 1",
+    "timezone": "America/New_York"
+  },
+  "device": {
+    "deviceId": "11260000",
+    "name": "WR8KU002 SN:2001200000",
+    "timezone": "America/New_York"
+  },
+  "setType": "EnergyAndPowerPv",
+  "resolution": "FiveMinutes",
+  "set": [
+    {
+      "time": "2025-03-28T06:50:00",
+      "pvGeneration": 10782938.0
+    },
+    {
+      "time": "2025-03-28T06:55:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-28T07:00:00",
+      "pvGeneration": 101.0
+    },
+    {
+      "time": "2025-03-28T07:05:00",
+      "pvGeneration": 101010.0
+    },
+    {
+      "time": "2025-03-28T07:10:00",
+      "pvGeneration": 600.0
+    }
+  ]
+}

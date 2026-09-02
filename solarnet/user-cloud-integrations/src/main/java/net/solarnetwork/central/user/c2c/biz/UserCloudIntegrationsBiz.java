@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -56,12 +57,13 @@ import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.service.ServiceConfiguration;
 
 /**
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -214,8 +216,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param <K>
 	 *        the primary key type
 	 * @param id
-	 *        the ID of the configuration to save; at a minimum the user ID
-	 *        component must be provided
+	 *        the ID of the configuration to merge service properties on
 	 * @param configurationClass
 	 *        the configuration type to update
 	 * @param serviceProperties
@@ -225,6 +226,25 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C mergeConfigurationServiceProperties(
 			K id, Map<String, ?> serviceProperties, Class<C> configurationClass);
+
+	/**
+	 * Merge a set of service properties into an existing entity.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the ID of the configuration to merge service properties on
+	 * @param configurationClass
+	 *        the configuration type to update
+	 * @param serviceProperties
+	 *        the service properties to merge
+	 * @return the saved service properties
+	 * @since 1.9
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K> & ServiceConfiguration, K extends UserRelatedCompositeKey<K>> Map<String, ?> mergeConfigurationServiceProperties(
+			K id, MergeMode mode, Map<String, Object> serviceProperties, Class<C> configurationClass);
 
 	/**
 	 * Update the enabled status of configurations, optionally filtered.

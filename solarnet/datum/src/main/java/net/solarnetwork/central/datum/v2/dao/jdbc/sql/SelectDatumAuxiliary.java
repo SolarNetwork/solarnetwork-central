@@ -28,26 +28,30 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.support.SearchFilterUtils;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.util.SearchFilter;
 
 /**
- * * Select for {@link DatumAuxiliaryEntity} instances via a
+ * Select for {@link DatumAuxiliaryEntity} instances via a
  * {@link DatumAuxiliaryCriteria} filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectDatumAuxiliary
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumAuxiliaryCriteria filter;
+	private final @Nullable SearchFilter searchFilter;
 
 	/**
 	 * Constructor.
@@ -60,6 +64,7 @@ public final class SelectDatumAuxiliary
 	public SelectDatumAuxiliary(DatumAuxiliaryCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
+		this.searchFilter = SearchFilter.forLDAPSearchFilterString(filter.getSearchFilter());
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -102,6 +107,10 @@ public final class SelectDatumAuxiliary
 				? DatumSqlUtils.whereLocalDateRange(filter, Aggregation.None,
 						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
 				: DatumSqlUtils.whereDateRange(filter, Aggregation.None, where);
+		if ( searchFilter != null ) {
+			where.append("\tAND jsonb_path_exists(datum.jmeta, ?::jsonpath)\n");
+			idx += 1;
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -148,6 +157,9 @@ public final class SelectDatumAuxiliary
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
+		}
+		if ( searchFilter != null ) {
+			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
 		}
 		return p;
 	}

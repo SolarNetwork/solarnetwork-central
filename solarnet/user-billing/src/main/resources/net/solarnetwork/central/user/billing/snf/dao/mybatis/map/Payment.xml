@@ -13,7 +13,7 @@
 			, ext_key
 			, ref
 		) VALUES (
-			#{id.id}
+			#{id.uuid}
 			<if test="created != null">,#{created}</if>
 			, #{accountId}
 			, #{paymentType,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
@@ -55,7 +55,7 @@
 		<result property="reference" column="bill_payment_ref"/>
 	</resultMap>
 
-	<select id="get-Payment-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="Payment-FullResult">
+	<select id="get-Payment-for-id" parameterType="net.solarnetwork.central.domain.UserUuidPK" resultMap="Payment-FullResult">
 		SELECT
 			<include refid="fragment-Payment-full-result"/>
 			, acct.user_id AS bill_account_user_id
@@ -64,7 +64,7 @@
 		INNER JOIN 
 			solarbill.bill_account acct ON acct.id = pay.acct_id
 		WHERE
-			pay.id = #{id}
+			pay.id = #{uuid}
 			AND acct.user_id = #{userId}
 	</select>
 

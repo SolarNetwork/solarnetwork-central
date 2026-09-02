@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDa
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -62,7 +64,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudIntegrationConfigurationDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -147,7 +149,8 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 			.as("Row modification date")
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
 			.as("Row name")
-			.containsEntry("cname", conf.getName())
+			// the name citext column returned as PGObject
+			.hasEntrySatisfying("cname", n -> then(n.toString()).isEqualTo(conf.getName()))
 			.as("Row service ID")
 			.containsEntry("sident", conf.getServiceIdentifier())
 			.as("Row service properties")
@@ -294,6 +297,180 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 	}
 
 	@Test
+	public void findFiltered_forEnabled() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final boolean randomEnabled = RNG.nextBoolean();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setEnabled(randomEnabled);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomEnabled == e.isEnabled())
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for enabled critertia returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final String randomSubstring = keySubstrings.get(RNG.nextInt(keySubstrings.size()))
+				.toLowerCase(Locale.ENGLISH);
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(randomSubstring);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(randomSubstring))
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substring returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName_reservedCharacter() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("100% Fresh", "100 Percent Fresh", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(keySubstrings.getFirst().toLowerCase(Locale.ENGLISH));
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(filter.getName()))
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substring with reserved character returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forNames() throws Exception {
+		// GIVEN
+		final int count = 10;
+		final int userCount = 2;
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < count; i++ ) {
+				// put one of the key substrings in the middle of our random names
+				final String name = "%s %s %s".formatted(randomString(),
+						keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, name,
+						randomString(), null);
+				conf.setEnabled(RNG.nextBoolean());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNames(new String[] { keySubstrings.getFirst().toLowerCase(Locale.ENGLISH),
+				keySubstrings.getLast().toLowerCase(Locale.ENGLISH) });
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudIntegrationConfiguration[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			final String lcName = e.getName().toLowerCase(Locale.ENGLISH);
+			for ( String name : filter.getNames() ) {
+				if ( lcName.contains(name) ) {
+					return true;
+				}
+			}
+			return false;
+		}).toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for name substrings returned").containsExactly(expected);
+	}
+
+	@Test
 	public void findFiltered_forDatumStream() {
 		// GIVEN
 		final int userCount = 2;
@@ -344,6 +521,60 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 
 		// THEN
 		then(results).as("Result for integration for datum stream returned")
+				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
+	}
+
+	@Test
+	public void findFiltered_forDatumStreamMapping() {
+		// GIVEN
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int datumStreamCount = 2;
+
+		final List<CloudIntegrationConfiguration> integrations = new ArrayList<>(
+				userCount * integrationCount);
+		final Map<UserLongCompositePK, List<CloudDatumStreamConfiguration>> datumStreamsByIntegrationIds = new LinkedHashMap<>(
+				userCount * integrationCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				CloudIntegrationConfiguration integration = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), null);
+				UserLongCompositePK integrationId = dao.create(userId, integration);
+				integration = integration.copyWithId(integrationId);
+				integrations.add(integration);
+				for ( int d = 0; d < datumStreamCount; d++ ) {
+					CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+							integration.getConfigId());
+					CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+							mapping.getConfigId());
+					datumStreamsByIntegrationIds
+							.computeIfAbsent(integration.getId(), _ -> new ArrayList<>(datumStreamCount))
+							.add(datumStream);
+				}
+			}
+		}
+
+		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
+		allCloudDatumStreamConfigurationData(jdbcTemplate);
+
+		// WHEN
+		var randomIntegration = integrations.get(RNG.nextInt(integrations.size()));
+		var randomDatumStream = datumStreamsByIntegrationIds.get(randomIntegration.getId())
+				.get(RNG.nextInt(datumStreamsByIntegrationIds.get(randomIntegration.getId()).size()));
+
+		log.info("Querying for datum stream {}", randomDatumStream.getConfigId());
+
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomDatumStream.getUserId());
+		filter.setDatumStreamMappingId(randomDatumStream.getDatumStreamMappingId());
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		then(results).as("Result for integration for datum stream mapping returned")
 				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
 	}
 
@@ -401,7 +632,8 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 				.filter(e -> userId.equals(e.getUserId())
 						&& Arrays.binarySearch(randomServiceIdents, e.getServiceIdentifier()) >= 0)
 				.toArray(CloudIntegrationConfiguration[]::new);
-		then(results).as("Results for single user returned").containsExactlyInAnyOrder(expected);
+		then(results).as("Results for user + service identifiers returned")
+				.containsExactlyInAnyOrder(expected);
 	}
 
 	@Test
@@ -764,6 +996,138 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 					))
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_simple() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(),
+				Map.of("foo", randomString(), "baz", randomString(), "other", randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("foo", randomString(), "baz", randomString());
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.Simple, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"other", conf.getServiceProperties().get("other"),
+				"foo", newProps.get("foo"),
+				"baz", newProps.get("baz")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursive() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		// @formatter:off
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(
+						"foo", randomString(),
+						"bar", randomString(),
+						"obj", Map.of(
+								"n1", n1
+							),
+						"ary", List.of("a1")
+				));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.RecursiveObjects,
+				newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursiveArrays() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		// @formatter:off
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(
+						"foo", randomString(),
+						"bar", randomString(),
+						"obj", Map.of(
+								"n1", n1
+							),
+						"ary", List.of("a1")
+				));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id,
+				MergeMode.RecursiveObjectsAndArrays, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects and arrays")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a1", "a2")
+			))
 			;
 		// @formatter:on
 	}

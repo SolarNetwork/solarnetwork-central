@@ -22,15 +22,19 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.support.SearchFilterUtils.toSqlJsonPath;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
-import static org.easymock.EasyMock.aryEq;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static net.solarnetwork.util.SearchFilter.forLDAPSearchFilterString;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,14 +43,17 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
  * Test cases for the {@link SelectDatumAuxiliary} class.
@@ -54,9 +61,26 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class SelectDatumAuxiliaryTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	@Mock
+	private Connection con;
+
+	@Mock
+	private PreparedStatement stmt;
+
+	@Mock
+	private Array nodeIdsArray;
+
+	@Mock
+	private Array sourceIdsArray;
+
+	@Captor
+	private ArgumentCaptor<String> sqlCaptor;
 
 	@Test
 	public void sql_nodesAndSources_absoluteDates() {
@@ -97,6 +121,18 @@ public class SelectDatumAuxiliaryTests {
 				"select-datum-aux-nodesAndSourcesAndType-dates.sql", TestSqlResources.class));
 	}
 
+	private void thenSqlEqualsResource(String sql, String resource) {
+		// @formatter:off
+		and.then(sql)
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace(getResourceAsString(
+					resource,
+					TestSqlResources.class,
+					SQL_COMMENT))
+			;
+		// @formatter:on
+	}
+
 	@Test
 	public void prep_nodesAndSourcesAndType_absoluteDates() throws SQLException {
 		// GIVEN
@@ -108,37 +144,74 @@ public class SelectDatumAuxiliaryTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
 		stmt.setString(3, filter.getDatumAuxiliaryType().name());
 		stmt.setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
 		stmt.setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray);
 		PreparedStatement result = new SelectDatumAuxiliary(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-aux-nodesAndSourcesAndType-dates.sql", TestSqlResources.class));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-aux-nodesAndSourcesAndType-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void prep_nodesAndSourcesAndType_searchFilter_absoluteDates() throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMonths(1).toInstant());
+		filter.setDatumAuxiliaryType(DatumAuxiliaryType.Reset);
+		filter.setSearchFilter("(m.foo=bar)");
+
+		given(con.prepareStatement(any(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
+
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
+
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
+
+		stmt.setString(3, filter.getDatumAuxiliaryType().name());
+		stmt.setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		stmt.setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
+		stmt.setString(6, toSqlJsonPath(forLDAPSearchFilterString(filter.getSearchFilter())));
+
+		// WHEN
+		PreparedStatement result = new SelectDatumAuxiliary(filter).createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"select-datum-aux-nodesAndSourcesAndType-searchFilter-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 }

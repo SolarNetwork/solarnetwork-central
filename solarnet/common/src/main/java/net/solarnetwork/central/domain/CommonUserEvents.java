@@ -24,7 +24,6 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.1
+ * @version 1.6
  */
 public interface CommonUserEvents {
 
@@ -55,6 +54,20 @@ public interface CommonUserEvents {
 
 	/** A user event tag for a response. */
 	String RESPONSE_TAG = "res";
+
+	/**
+	 * User event tag for a progress event.
+	 * 
+	 * @since 1.2
+	 */
+	String PROGRESS_TAG = "progress";
+
+	/**
+	 * User event tag for a validation event.
+	 * 
+	 * @since 1.5
+	 */
+	String VALIDATION_TAG = "validation";
 
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
@@ -87,11 +100,84 @@ public interface CommonUserEvents {
 	String EXECUTE_AT_DATA_KEY = "executeAt";
 
 	/**
+	 * User event data key for a task starting date.
+	 * 
+	 * @since 1.3
+	 */
+	String STARTED_AT_DATA_KEY = "startedAt";
+
+	/**
+	 * User event data key for a start date.
+	 * 
+	 * @since 1.3
+	 */
+	String START_AT_DATA_KEY = "startAt";
+
+	/**
+	 * User event data key for a start date.
+	 * 
+	 * @since 1.3
+	 */
+	String END_AT_DATA_KEY = "endAt";
+
+	/**
+	 * User event data key for a time offset, for example in milliseconds or an
+	 * ISO 8601 duration string.
+	 * 
+	 * @since 1.5
+	 */
+	String DATE_OFFSET_DATA_KEY = "dateOffset";
+
+	/**
 	 * User event data key for a count, such as a task repeat count.
 	 * 
 	 * @since 1.1
 	 */
 	String ERROR_COUNT_DATA_KEY = "errorCount";
+
+	/**
+	 * User event data key for a token ID.
+	 * 
+	 * @since 1.2
+	 */
+	String TOKEN_ID_DATA_KEY = "tokenId";
+
+	/**
+	 * User event data key for a configuration object.
+	 * 
+	 * @since 1.2
+	 */
+	String CONFIGURATION_DATA_KEY = "config";
+
+	/**
+	 * User event data key for a resource name or path.
+	 * 
+	 * @since 1.2
+	 */
+	String RESOURCE_DATA_KEY = "resource";
+
+	/**
+	 * User event data key for a percent complete, from 0 to 1.
+	 * 
+	 * @since 1.2
+	 */
+	String PERCENT_COMPLETE_DATA_KEY = "percentComplete";
+
+	/**
+	 * User event data key for a length of time, either as an ISO 8601 duration
+	 * string or a millisecond number.
+	 * 
+	 * @since 1.5
+	 */
+	String DURATION_DATA_KEY = "duration";
+
+	/**
+	 * An identifier to correlate multiple events together, for example a
+	 * time-gap ID for the start/end events.
+	 *
+	 * @since 1.6
+	 */
+	String CORRELATION_ID_DATA_KEY = "correlationId";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.
@@ -129,7 +215,7 @@ public interface CommonUserEvents {
 	 */
 	static LogEventInfo eventForUserRelatedKey(@Nullable UserRelatedCompositeKey<?> configId,
 			List<String> baseTags, @Nullable String message, String @Nullable... extraTags) {
-		Map<String, Object> data = new HashMap<>(4);
+		Map<String, Object> data = new LinkedHashMap<>(4);
 		populateUserRelatedKeyEventParameters(configId, data);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}

@@ -30,8 +30,8 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.then;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
@@ -57,7 +57,7 @@ public class DatumImportJobInfoTests {
 			.asInstanceOf(JSON)
 			.isObject()
 			.containsOnly(
-				entry("id", info.getId().getId().toString()),
+				entry("id", info.getId().getUuid().toString()),
 				entry("userId", info.getUserId()),
 				entry("importDate", ISO_DATE_TIME_ALT_UTC.format(info.getImportDate())),
 				entry("importStateKey", String.valueOf(info.getImportStateKey())),

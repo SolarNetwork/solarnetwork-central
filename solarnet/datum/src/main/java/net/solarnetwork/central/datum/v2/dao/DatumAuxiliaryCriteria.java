@@ -23,16 +23,21 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
+import net.solarnetwork.central.common.dao.SearchFilterCriteria;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 
 /**
  * Search criteria for datum auxiliary streams.
+ *
+ * <p>
+ * The {@link #getSearchFilter()} value supports LDAP-style metadata filters.
+ * </p>
  *
  * @author matt
  * @version 1.1
  * @since 2.8
  */
-public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria {
+public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria, SearchFilterCriteria {
 
 	/**
 	 * Get an auxiliary type.

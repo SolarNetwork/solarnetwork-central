@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.http.test;
 
 import static net.solarnetwork.central.common.http.HttpOperations.uri;
+import static net.solarnetwork.central.domain.CommonUserEvents.DURATION_DATA_KEY;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -131,13 +133,27 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 			.returns(OK_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 			.as("Event data is JSON object")
 			.extracting(event -> JsonUtils.getStringMap(event.getData()), map(String.class, Object.class))
+			.as("Has expected number of properties")
+			.hasSize(5)
 			.as("Event data values")
-			.containsExactlyInAnyOrderEntriesOf(Map.of(
+			.containsAllEntriesOf(Map.of(
 						HTTP_METHOD_DATA_KEY, HttpMethod.GET.toString(),
 						HTTP_URI_DATA_KEY, url,
 						HTTP_STATUS_CODE_DATA_KEY, 200,
 						HTTP_RESPONSE_BODY_DATA_KEY, res.getBody()
 					))
+			.as("Duration populated")
+			.hasEntrySatisfying(DURATION_DATA_KEY, o -> {
+				and.then(o)
+					.asInstanceOf(InstanceOfAssertFactories.type(Number.class))
+					.satisfies(n -> {
+						and.then(n.longValue())
+							.as("Duration is >= 0")
+							.isGreaterThanOrEqualTo(0L)
+							;
+					})
+					;
+			})
 			;
 		then(userEventAppenderBiz).shouldHaveNoMoreInteractions();
 

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Solcast irradiance types.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public enum SolcastIrradianceType {
 
@@ -206,7 +206,7 @@ public enum SolcastIrradianceType {
 			accumulated value."""),
 
 	/** Snow depth. */
-	SnowDepth("", "Snow depth", "cm", """
+	SnowDepth("snow_depth", "Snow depth", "cm", """
 			The physical snow pack on the ground."""),
 
 	/** Snowfall rate. */

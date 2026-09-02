@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.HOURS;
@@ -30,10 +31,14 @@ import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeDeviceType.Battery;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeDeviceType.Inverter;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeDeviceType.Meter;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeResolution.FifteenMinute;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudDatumStreamService.SITE_ID_FILTER;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -43,7 +48,9 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_ALT;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -80,6 +87,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -87,6 +95,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -98,18 +107,19 @@ import net.solarnetwork.central.c2c.biz.impl.SolarEdgeDeviceType;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeResolution;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService;
+import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
-import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -118,11 +128,16 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.support.RetrySettings;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.service.RemoteServiceException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -134,7 +149,7 @@ import tools.jackson.databind.ObjectMapper;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class SolarEdgeV1CloudDatumStreamServiceTests {
+public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Logger log = LoggerFactory
 			.getLogger(SolarEdgeV1CloudDatumStreamServiceTests.class);
@@ -173,6 +188,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	@Mock
 	private DatumEntityDao datumDao;
 
+	@Captor
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
+
 	@Mock
 	private DatumStreamMetadataDao datumStreamMetadataDao;
 
@@ -204,7 +222,6 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
 
-		service.setDatumDao(datumDao);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 
 		clock.setInstant(Instant.now().truncatedTo(ChronoUnit.DAYS));
@@ -340,9 +357,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -351,6 +368,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					// site details
 					fromUri(BASE_URI)
 						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -359,6 +377,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId)
 						.toUri(),
 
@@ -368,6 +387,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 						.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -377,6 +397,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 						.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId).toUri(),
 
 					// battery data
@@ -384,6 +405,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.STORAGE_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId).toUri()
 			)
 			;
@@ -451,6 +473,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	@Test
 	public void requestLatest_multipleInverters_withExpression() throws IOException {
 		// GIVEN
+		service.setDatumDao(datumDao);
+
 		final Long siteId = randomLong();
 		final String inverterComponentId1 = randomString();
 		final String inverterComponentId2 = randomString();
@@ -527,7 +551,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						"/%s/%s/%s".formatted(siteId, Inverter.getKey(), inverterComponentId1), "INV/1",
 						"/%s/%s/%s".formatted(siteId, Meter.getKey(), meterComponentId), "MET/1",
 						"/%s/%s/%s".formatted(siteId, Inverter.getKey(), inverterComponentId2), "INV/2"
-				)
+				),
+				CloudDatumStreamService.VALIDATION_IGNORE_SETTING, "time-gap"
 		));
 		// @formatter:on
 
@@ -631,9 +656,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -642,6 +667,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					// site details
 					fromUri(BASE_URI)
 						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -650,6 +676,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId1)
 						.toUri(),
 
@@ -658,6 +685,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId2)
 						.toUri(),
 
@@ -667,6 +695,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 						.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -676,6 +705,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 						.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId).toUri()
 			)
 			;
@@ -819,6 +849,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	@Test
 	public void simulation_inverterSumExpression() throws IOException {
 		// GIVEN
+		service.setDatumDao(datumDao);
+
 		final Long siteId = 2883L;
 
 		// the order of these is set to match the order returned by the solaredge-v1-site-inventory-03.json data,
@@ -902,7 +934,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						  },
 						  "placeholders": {
 						    "siteId": 2883
-						  }
+						  },
+						  "validationIgnore": "time-gap"
 						}
 						"""));
 		// @formatter:on
@@ -913,7 +946,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// request site time zone info
 		expectedUris
 				.add(fromUri(BASE_URI).path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
-						.buildAndExpand(siteId).toUri());
+						.queryParam(API_KEY_PARAM, apiKey).buildAndExpand(siteId).toUri());
 		final JsonNode siteDetailsJson = objectMapper
 				.readTree(utf8StringResource("solaredge-v1-site-details-03.json", getClass()));
 		responses.add(new ResponseEntity<JsonNode>(siteDetailsJson, HttpStatus.OK));
@@ -921,26 +954,10 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// request site inventory to resolve inverter ref wildcards
 		expectedUris.add(
 				fromUri(BASE_URI).path(SolarEdgeV1CloudDatumStreamService.SITE_INVENTORY_URL_TEMPLATE)
-						.buildAndExpand(siteId).toUri());
+						.queryParam(API_KEY_PARAM, apiKey).buildAndExpand(siteId).toUri());
 		final JsonNode siteInventoryJson = objectMapper
 				.readTree(utf8StringResource("solaredge-v1-site-inventory-03.json", getClass()));
 		responses.add(new ResponseEntity<JsonNode>(siteInventoryJson, HttpStatus.OK));
-
-		// check change log for each device in inventory
-		for ( String invComponentId : inverterComponentIds ) {
-			expectedUris.add(fromUri(BASE_URI)
-					.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_CHANGELOG_URL_TEMPLATE)
-					.buildAndExpand(siteId, invComponentId).toUri());
-			final JsonNode emptyChangeLog = objectMapper.readTree("""
-					{
-					  "ChangeLog": {
-					    "count": 0,
-					    "list": []
-					  }
-					}
-					""");
-			responses.add(new ResponseEntity<JsonNode>(emptyChangeLog, HttpStatus.OK));
-		}
 
 		// expected date range is clock-aligned
 		final ZonedDateTime expectedEndDate = LocalDateTime.parse("2025-02-27T12:00:00")
@@ -954,7 +971,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 					.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 					.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
-					.buildAndExpand(siteId, invComponentId).toUri());
+					.queryParam(API_KEY_PARAM, apiKey).buildAndExpand(siteId, invComponentId).toUri());
 			final String suffix = invComponentId.split("-")[1];
 			final JsonNode inverterDataJson = objectMapper.readTree(utf8StringResource(
 					"solaredge-v1-inverter-data-03-%s.json".formatted(suffix), getClass()));
@@ -967,7 +984,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 				.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 				.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
-				.buildAndExpand(siteId).toUri());
+				.queryParam(API_KEY_PARAM, apiKey).buildAndExpand(siteId).toUri());
 		final JsonNode meterPowerDataJson = objectMapper
 				.readTree(utf8StringResource("solaredge-v1-meter-power-data-03.json", getClass()));
 		responses.add(new ResponseEntity<JsonNode>(meterPowerDataJson, HttpStatus.OK));
@@ -977,7 +994,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 				.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
 				.queryParam("timeUnit", SolarEdgeResolution.FifteenMinute.getKey())
-				.buildAndExpand(siteId).toUri());
+				.queryParam(API_KEY_PARAM, apiKey).buildAndExpand(siteId).toUri());
 		final JsonNode meterEnergyDataJson = objectMapper
 				.readTree(utf8StringResource("solaredge-v1-meter-energy-data-03.json", getClass()));
 		responses.add(new ResponseEntity<JsonNode>(meterEnergyDataJson, HttpStatus.OK));
@@ -1030,9 +1047,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1139,7 +1156,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final var siteDetailsRes = new ResponseEntity<JsonNode>(siteDetailsJson, HttpStatus.OK);
 
 		// expected date range is clock-aligned
-		final ZonedDateTime expectedEndDate = endAt.atZone(siteTimeZone).truncatedTo(ChronoUnit.HOURS);
+		final ZonedDateTime expectedEndDate = endAt.atZone(siteTimeZone).truncatedTo(ChronoUnit.HOURS)
+				.plus(SolarEdgeResolution.FifteenMinute.getTickDuration());
 		final ZonedDateTime expectedStartDate = startAt.atZone(siteTimeZone);
 		final DateTimeFormatter timestampFmt = ISO_DATE_OPT_TIME_ALT.withZone(siteTimeZone);
 
@@ -1165,9 +1183,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1176,6 +1194,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					// site details
 					fromUri(BASE_URI)
 						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -1184,7 +1203,105 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId)
+						.toUri()
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void withRetry_handleHttp403() throws IOException {
+		// GIVEN
+		// add retry config
+		final var retrySettings = new RetrySettings();
+		retrySettings.setMaxRetries(1L);
+		service.setRetryOps(
+				SolarNetCloudIntegrationsConfiguration.cloudDatumStreamRetryTemplate(retrySettings));
+
+		final Instant endAt = Instant.parse("2025-02-28T02:00:38.696382784Z");
+		final Instant startAt = Instant.parse("2025-02-28T01:30:00Z");
+		clock.setInstant(endAt);
+
+		final Long siteId = randomLong();
+		final String inverterComponentId = randomString();
+		final String apiKey = randomString();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId, "W"));
+		c1p1.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						"/%s/%s/%s".formatted(siteId, Inverter.getKey(), inverterComponentId), "INV/1"
+				)
+		));
+		// @formatter:on
+
+		// request site time zone info; denied
+		final var forbiddenEx = HttpClientErrorException.create("Access Denied", HttpStatus.FORBIDDEN,
+				"403 FORBIDDEN", new HttpHeaders(), "Access Denied".getBytes(UTF_8), UTF_8);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willThrow(forbiddenEx);
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startAt);
+		filter.setEndDate(endAt);
+
+		thenExceptionOfType(RemoteServiceException.class).isThrownBy(() -> {
+			service.datum(datumStream, filter);
+		}).havingRootCause().as("Cause is HTTP 403").isSameAs(forbiddenEx);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(1)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.as("Expected URLs called")
+			.containsExactly(
+					// site details
+					fromUri(BASE_URI)
+						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
+						.buildAndExpand(siteId)
 						.toUri()
 			)
 			;
@@ -1285,9 +1402,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1296,6 +1413,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					// site details
 					fromUri(BASE_URI)
 						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -1304,6 +1422,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId1)
 						.toUri(),
 
@@ -1312,6 +1431,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId2)
 						.toUri()
 			)
@@ -1456,9 +1576,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1467,6 +1587,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					// site details
 					fromUri(BASE_URI)
 						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId)
 						.toUri(),
 
@@ -1475,6 +1596,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId1)
 						.toUri(),
 
@@ -1483,6 +1605,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
 						.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
 						.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+						.queryParam(API_KEY_PARAM, apiKey)
 						.buildAndExpand(siteId, inverterComponentId2)
 						.toUri()
 			)
@@ -1532,10 +1655,13 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	}
 
 	@Test
-	public void dataValue_replacedInverter() throws IOException {
+	public void datum_timeJump() throws IOException {
 		// GIVEN
-		final Long siteId = randomLong();
-		final String inverterComponentId = "7E140000-01"; // from site-inventory-01.json
+		service.setDatumDao(datumDao);
+
+		final Long siteId = 2883L;
+		final String inverterComponentId1 = "7E140000-01";
+		final ZoneId siteTimeZone = ZoneId.of("America/New_York");
 		final String apiKey = randomString();
 
 		// configure integration
@@ -1545,117 +1671,219 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// request site inventory to resolve data values
-		final JsonNode siteInventoryJson = objectMapper
-				.readTree(utf8StringResource("solaredge-v1-site-inventory-01.json", getClass()));
-		final var siteInventoryRes = new ResponseEntity<JsonNode>(siteInventoryJson, HttpStatus.OK);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
-		// check change log for each device in inventory
-		final JsonNode emptyChangeLog = objectMapper
-				.readTree(utf8StringResource("solaredge-v1-changelog-01.json", getClass()));
-		final var emptyChangeLogRes = new ResponseEntity<JsonNode>(emptyChangeLog, HttpStatus.OK);
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
-		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(siteInventoryRes)
-				.willReturn(emptyChangeLogRes);
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				placeholderComponentValueRef(Inverter, "W"));
+		prop1.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// keep in order for test expectations
+		final SequencedMap<String, String> sourceIdMapping = new LinkedHashMap<>(2);
+		final String mappedSourceId = "INV/1";
+		sourceIdMapping.put("/%s/%s/%s".formatted(siteId, Inverter.getKey(), inverterComponentId1),
+				mappedSourceId);
+
+		datumStream
+				.setServiceProps(Map.of(CloudDatumStreamService.SOURCE_ID_MAP_SETTING, sourceIdMapping));
+
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(LocalDateTime.parse("2025-02-27T11:45:00").atZone(siteTimeZone).toInstant());
+		filter.setEndDate(filter.getStartDate().plus(1, HOURS));
+
+		// request site time zone info
+		final JsonNode siteDetailsJson = objectMapper
+				.readTree(utf8StringResource("solaredge-v1-site-details-03.json", getClass()));
+		final var siteDetailsRes = new ResponseEntity<JsonNode>(siteDetailsJson, HttpStatus.OK);
+
+		// expected date range is clock-aligned
+		final ZonedDateTime expectedEndDate = filter.getEndDate().atZone(siteTimeZone);
+		final ZonedDateTime expectedStartDate = filter.getStartDate().atZone(siteTimeZone);
+		final DateTimeFormatter timestampFmt = ISO_DATE_OPT_TIME_ALT.withZone(siteTimeZone);
+
+		// request inverter 1 data
+		final JsonNode inverterDataJson = objectMapper
+				.readTree(utf8StringResource("solaredge-v1-inverter-data-03-01.json", getClass()));
+		final var inverterDataRes = new ResponseEntity<JsonNode>(inverterDataJson, HttpStatus.OK);
+
+		// note response order based on site details plan
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(siteDetailsRes)
+				.willReturn(inverterDataRes);
+
+		// lookup previous datum for first datum in result set
+		final Instant firstDatumTs = timestampFmt.parse("2025-02-27 11:46:04", Instant::from);
+		final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+		final String deviceRef = "/%d/%s/%s".formatted(siteId, SolarEdgeDeviceType.Inverter.getKey(),
+				inverterComponentId1);
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+				new DatumProperties());
+		given(datumDao
+				.findFiltered(any()))
+						.willReturn(
+								new BasicObjectDatumStreamFilterResults<>(
+										Map.of(prevDatum.streamId(),
+												emptyMeta(prevDatum.streamId(), "UTC",
+														datumStream.getKind(), nodeId, mappedSourceId)),
+										List.of(prevDatum)));
 
 		// WHEN
-		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
-				Map.of(SITE_ID_FILTER, siteId));
+
+		// setup clock to be near end of requested data period (within lag tolerance)
+		clock.setInstant(filter.getEndDate().plusSeconds(1));
+
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
 
 		// THEN
 		// @formatter:off
 		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI expectedInverterUri = fromUri(BASE_URI)
+				.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
+				.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
+				.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+				.queryParam(API_KEY_PARAM, apiKey)
+				.buildAndExpand(siteId, inverterComponentId1)
+				.toUri();
 
 		and.then(httpRequestCaptor.getAllValues())
 			.allSatisfy(req -> {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
-					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
+					.extracting(r -> fromUri(r.getUrl()).build(true).getQueryParams().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes API token query parameter")
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_PARAM, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
 			.as("Expected URLs called")
 			.containsExactly(
-					// site inventory
+					// site details
 					fromUri(BASE_URI)
-						.path(SolarEdgeV1CloudDatumStreamService.SITE_INVENTORY_URL_TEMPLATE)
-						.buildAndExpand(siteId).toUri(),
+						.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, apiKey)
+						.buildAndExpand(siteId)
+						.toUri(),
 
-					// change log
-					fromUri(BASE_URI)
-						.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_CHANGELOG_URL_TEMPLATE)
-						.buildAndExpand(siteId, inverterComponentId)
-						.toUri()
+					// inverter 1 data
+					expectedInverterUri
 			)
 			;
 
-		and.then(results)
-			.as("Result generated for inverters")
-			.hasSize(1)
-			.element(0)
-			.returns("Inverters", from(CloudDataValue::getName))
-			.satisfies(d -> {
-				and.then(d.getChildren())
-					.as("Two inverters added (live and replaced)")
-					.hasSize(3)
-					.satisfies(l -> {
-						// live inverter
-						and.then(l).element(0)
-							.as("Name parsed")
-							.returns("Inverter 1", from(CloudDataValue::getName))
-							.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
-							.satisfies(m -> {
-								var expectedMeta = new HashMap<String, Object>(16);
-								expectedMeta.putAll(Map.of(
-										CloudDataValue.MANUFACTURER_METADATA, "SolarEdge",
-										CloudDataValue.DEVICE_MODEL_METADATA, "SE14.4K",
-										CloudDataValue.DEVICE_FIRMWARE_VERSION_METADATA, "DSP1: 1.13.1938, DSP2: 1.13.1938, CPU: 3.2537.0",
-										CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA, inverterComponentId
-										));
-								and.then(m)
-									.as("Metadata extracted")
-									.containsExactlyInAnyOrderEntriesOf(expectedMeta)
-									;
-							})
-							;
+		// lookup prev datum
+		then(datumDao).should().findFiltered(datumCriteriaCaptor.capture());
+		and.then(datumCriteriaCaptor.getValue())
+			.as("Prev datum query is for most recent")
+			.returns(true, from(DatumCriteria::isMostRecent))
+			.as("Prev datum query end date is first datum timestamp")
+			.returns(firstDatumTs, from(DatumCriteria::getEndDate))
+			.as("Prev datum query is for CloudDatumStream kind")
+			.returns(datumStream.getKind(), from(DatumCriteria::getObjectKind))
+			.as("Prev datum query is for CloudDatumStream object (node) ID")
+			.returns(datumStream.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("Prev datum query is for expected source ID")
+			.returns(mappedSourceId, from(DatumCriteria::getSourceId))
+			;
 
-						// 1st replaced
-						and.then(l).element(1)
-							.as("Replaced name is serial number")
-							.returns("6E140000-02", from(CloudDataValue::getName))
-							.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
-							.satisfies(m -> {
-								var expectedMeta = new HashMap<String, Object>(16);
-								expectedMeta.putAll(Map.of(
-										CloudDataValue.REPLACED_BY_METADATA, "/%s/inv/%s".formatted(siteId, inverterComponentId),
-										CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA, "6E140000-02"
-										));
-								and.then(m)
-									.as("Metadata extracted")
-									.containsExactlyInAnyOrderEntriesOf(expectedMeta)
-									;
-							})
-							;
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(3)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum source ID is mapped from DatumStream configuration")
+					.returns("INV/1", from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				// first - inverter 1
+				and.then(list).element(0)
+					.as("Timestamp from inverter data")
+					.returns(firstDatumTs, from(Datum::getTimestamp))
+					.as("Datum samples from inverter data")
+					.returns(new DatumSamples(Map.of("watts", 1557), null, null), from(Datum::asSampleOperations))
+					;
+			})
+			;
 
-						// 2nd replaced
-						and.then(l).element(2)
-							.as("Replaced name is serial number")
-							.returns("6E140000-01", from(CloudDataValue::getName))
-							.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
-							.satisfies(m -> {
-								var expectedMeta = new HashMap<String, Object>(16);
-								expectedMeta.putAll(Map.of(
-										CloudDataValue.REPLACED_BY_METADATA, "/%s/inv/%s".formatted(siteId, inverterComponentId),
-										CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA, "6E140000-01"
-										));
-								and.then(m)
-									.as("Metadata extracted")
-									.containsExactlyInAnyOrderEntriesOf(expectedMeta)
-									;
-							})
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(mappedSourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				final Instant timeGapStartTs = prevDatumTs;
+				final Instant timeGapEndTs = firstDatumTs;
+				final URI expectedUri = service.getRestOpsHelper().maskedUri(expectedInverterUri);
+
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
 							;
 					})
 					;

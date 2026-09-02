@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,18 +35,24 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.central.user.dao.BasicUserNodeFilter;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
@@ -51,15 +61,18 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SimpleLocation;
 
 /**
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -596,4 +609,383 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
 	}
+
+	private List<UserNode> populateTestEntities() {
+		final int userCount = 2;
+		final int locCount = 2;
+		final int nodeCount = 5;
+		final List<UserNode> entities = new ArrayList<>(userCount * locCount * nodeCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int l = 0; l < locCount; l++ ) {
+				final String country = RNG.nextBoolean() ? "NZ" : "US";
+				final String timeZoneId = ("NZ".equals(country) ? "Pacific/Auckland"
+						: "America/New_York");
+				final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, country, timeZoneId);
+				for ( int n = 0; n < nodeCount; n++ ) {
+					final Long nodeId = CommonDbTestUtils.insertNode(jdbcTemplate, locId);
+					final String name = randomString(6) + ' ' + randomString(6);
+					final String desc = randomString(6) + ' ' + randomString(6);
+					final boolean archived = RNG.nextBoolean();
+					CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId, name, desc,
+							RNG.nextBoolean(), archived);
+					if ( !archived ) {
+						final UserNode un = userNodeDao.get(nodeId);
+						entities.add(un);
+					}
+				}
+			}
+		}
+		return entities;
+	}
+
+	@Test
+	public void findFiltered_user() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(longs = { 0, 3, 6, 9 })
+	public void findFiltered_user_pages(long offset) {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setMax(3);
+		filter.setOffset(offset);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.sorted()
+				.skip(offset)
+				.limit(filter.getMax())
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Result page for user returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndNodeIds() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+		final List<Long> randomUserNodeIds = List.copyOf(entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())).map(e -> e.getId()).collect(toSet()));
+		final Set<Long> randomNodeIds = new HashSet<>(2);
+		while ( randomNodeIds.size() < 2 ) {
+			randomNodeIds.add(randomUserNodeIds.get(RNG.nextInt(randomUserNodeIds.size())));
+		}
+
+		// WHEN
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomNodeIds.contains(e.getId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and node IDs returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndCountry() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf("NZ", null, null);
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getCountry().equals(e.getNodeLocation().getCountry()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and country returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndTimeZone() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByCreated() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("created"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::created))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByNodeDescending() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("node~"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::nodeId).reversed())
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByName() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("name"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::name, CASE_INSENSITIVE_NATURAL_SORT))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByTimeZone() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("zone", "node"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing((UserNodeInfo r) -> r.timeZone().getId()).thenComparing(UserNodeInfo::nodeId))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndName_name() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final UserNode randomEntity = entities.get(RNG.nextInt(entities.size()));
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomEntity.getUserId());
+		filter.setName(
+				randomEntity.getName().substring(randomEntity.getName().indexOf(' ') + 1).toUpperCase());
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> e.getUserId().equals(randomEntity.getUserId()) 
+						&& e.getName().toLowerCase().contains(filter.getName().toLowerCase()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and name substring returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndName_description() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final UserNode randomEntity = entities.get(RNG.nextInt(entities.size()));
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomEntity.getUserId());
+		filter.setName(randomEntity.getDescription().substring(randomEntity.getName().indexOf(' ') + 1)
+				.toUpperCase());
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> e.getUserId().equals(randomEntity.getUserId()) 
+						&& e.getDescription().toLowerCase().contains(filter.getName().toLowerCase()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and name substring returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
 }

@@ -26,17 +26,19 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.InstantSource;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.io.TransferrableResource;
@@ -46,16 +48,38 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * Abstract class for basic {@link DatumImportBiz} support.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
+	/** A clock. */
+	protected final InstantSource clock;
+
+	/** The user event appender. */
+	protected final UserEventAppenderBiz userEventAppenderBiz;
+
 	private File workDirectory = defaultWorkDirectory();
 	private @Nullable List<DatumImportInputFormatService> inputServices;
 	private @Nullable AppEventPublisher eventPublisher;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param userEventAppenderBiz
+	 *        the event appender
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public BaseDatumImportBiz(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz) {
+		super();
+		this.clock = requireNonNullArgument(clock, "clock");
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
+	}
 
 	private static File defaultWorkDirectory() {
 		String path = System.getProperty("java.io.tmpdir");
@@ -89,7 +113,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @return the file
 	 */
 	protected File getImportDataFile(UserUuidPK id) {
-		String fileName = id.getUserId() + "-" + (id.hasId() ? id.id().toString() : "");
+		String fileName = id.getUserId() + "-" + (id.uuidIsAssigned() ? id.getUuid().toString() : "");
 		return new File(getWorkDirectory(), fileName);
 	}
 

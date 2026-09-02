@@ -32,10 +32,9 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.domain.BaseClaimableJob;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
@@ -65,13 +64,11 @@ public class DatumImportJobInfo
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null} or the {@code id.userId} property
-	 *         is {@code null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumImportJobInfo(UserUuidPK id, Instant importDate) {
 		super();
 		setId(requireNonNullArgument(id, "id"));
-		requireNonNullArgument(id.getUserId(), "id.userId");
 		this.importDate = requireNonNullArgument(importDate, "importDate");
 	}
 
@@ -97,13 +94,8 @@ public class DatumImportJobInfo
 	}
 
 	@JsonGetter("id")
-	public final @Nullable UUID getUuid() {
-		return id().getId();
-	}
-
-	@JsonSetter("id")
-	public final void setUuid(@Nullable UUID id) {
-		id().setId(id);
+	public final UUID getUuid() {
+		return id().getUuid();
 	}
 
 	@Override

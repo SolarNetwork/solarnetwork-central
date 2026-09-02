@@ -23,10 +23,13 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.VIRTUAL_SOURCE_IDS_SETTING;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -35,7 +38,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +52,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDa
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -59,7 +65,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamConfigurationDao} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -156,7 +162,8 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.as("Row modification date")
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
 			.as("Row name")
-			.containsEntry("cname", conf.getName())
+			// the name citext column returned as PGObject
+			.hasEntrySatisfying("cname", n -> then(n.toString()).isEqualTo(conf.getName()))
 			.as("Row service ID")
 			.containsEntry("sident", conf.getServiceIdentifier())
 			.as("Row datum stream mapping ID")
@@ -236,37 +243,41 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		then(data).as("Row deleted from db").isEmpty();
 	}
 
-	@Test
-	public void findForUser() throws Exception {
-		// GIVEN
-		final int count = 3;
-		final int userCount = 3;
-		final int integrationCount = 3;
-		final int mappingCount = 3;
-		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
+	@FunctionalInterface
+	public static interface DatumStreamPopulatorCallback {
 
-		final Map<String, Object> props = Map.of("foo", "bar");
+		void populate(Long integrationId, CloudDatumStreamConfiguration conf);
 
+	}
+
+	private List<CloudDatumStreamConfiguration> populateCloudDatumStreams(final int userCount,
+			final int integrationCount, final int mappingCount, final int datumSourceCount,
+			DatumStreamPopulatorCallback callback) {
+		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(
+				userCount * integrationCount * mappingCount * datumSourceCount);
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
 				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
+					for ( int ds = 0; ds < datumSourceCount; ds++ ) {
 						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
+						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+								userId,
 								mappingId,
 								randomString(),
 								ObjectDatumKind.Node,
 								randomLong(),
+								randomSourceId(),
 								randomString(),
 								randomString(),
-								randomString(), props)
-								;
+								null
+							);
 						// @formatter:on
+						if ( callback != null ) {
+							callback.populate(integrationId, conf);
+						}
 						UserLongCompositePK id = dao.create(userId, conf);
 						conf = conf.copyWithId(id);
 						confs.add(conf);
@@ -274,9 +285,22 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 				}
 			}
 		}
+		return confs;
+	}
+
+	@Test
+	public void findForUser() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
 
 		// WHEN
-		final Long randomUserId = userIds.get(RNG.nextInt(userIds.size()));
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
 		Collection<CloudDatumStreamConfiguration> results = dao.findAll(randomUserId, null);
 
 		// THEN
@@ -293,40 +317,12 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final int userCount = 3;
 		final int integrationCount = 3;
 		final int mappingCount = 3;
-		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Map.of("foo", "bar");
-
-		for ( int u = 0; u < userCount; u++ ) {
-			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			userIds.add(userId);
-			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
-				for ( int m = 0; m < mappingCount; m++ ) {
-					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
-						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
-								mappingId,
-								randomString(),
-								ObjectDatumKind.Node,
-								randomLong(),
-								randomString(),
-								randomString(),
-								randomString(), props)
-								;
-						// @formatter:on
-						UserLongCompositePK id = dao.create(userId, conf);
-						conf = conf.copyWithId(id);
-						confs.add(conf);
-					}
-				}
-			}
-		}
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
 
 		// WHEN
-		final Long randomUserId = userIds.get(RNG.nextInt(userIds.size()));
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setUserId(randomUserId);
 		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
@@ -346,37 +342,9 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final int userCount = 3;
 		final int integrationCount = 3;
 		final int mappingCount = 3;
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Map.of("foo", "bar");
-
-		for ( int u = 0; u < userCount; u++ ) {
-			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
-				for ( int m = 0; m < mappingCount; m++ ) {
-					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
-						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
-								userId,
-								mappingId,
-								randomString(),
-								ObjectDatumKind.Node,
-								randomLong(),
-								randomString(),
-								randomString(),
-								randomString(),
-								props
-							);
-						// @formatter:on
-						UserLongCompositePK id = dao.create(userId, conf);
-						conf = conf.copyWithId(id);
-						confs.add(conf);
-					}
-				}
-			}
-		}
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
 
 		// WHEN
 		final CloudDatumStreamConfiguration randomConf = confs.get(RNG.nextInt(confs.size()));
@@ -395,43 +363,46 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 	}
 
 	@Test
+	public void findFiltered_forIntegration() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 2;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
+
+		// WHEN
+		final CloudDatumStreamConfiguration randomConf = confs.get(RNG.nextInt(confs.size()));
+		final CloudDatumStreamMappingConfiguration randomMapping = datumStreamMappingDao.get(
+				new UserLongCompositePK(randomConf.getUserId(), randomConf.getDatumStreamMappingId()));
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setIntegrationId(randomMapping.getIntegrationId());
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId()) && datumStreamMappingDao
+						.get(new UserLongCompositePK(e.getUserId(), e.getDatumStreamMappingId()))
+						.getIntegrationId().equals(filter.getIntegrationId()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for single mapping returned").containsExactly(expected);
+	}
+
+	@Test
 	public void findFiltered_forNode() throws Exception {
 		// GIVEN
 		final int count = 3;
 		final int userCount = 3;
 		final int integrationCount = 3;
 		final int mappingCount = 3;
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Map.of("foo", "bar");
-
-		for ( int u = 0; u < userCount; u++ ) {
-			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
-				for ( int m = 0; m < mappingCount; m++ ) {
-					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
-						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
-								userId,
-								mappingId,
-								randomString(),
-								ObjectDatumKind.Node,
-								randomLong(),
-								randomString(),
-								randomString(),
-								randomString(),
-								props
-							);
-						// @formatter:on
-						UserLongCompositePK id = dao.create(userId, conf);
-						conf = conf.copyWithId(id);
-						confs.add(conf);
-					}
-				}
-			}
-		}
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
 
 		// WHEN
 		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
@@ -453,6 +424,649 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		// THEN
 		then(results).as("Results for given node IDs returned")
 				.containsExactlyElementsOf(userRandomConfs);
+	}
+
+	@Test
+	public void findFiltered_forSourceIds() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, null);
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final Map<String, CloudDatumStreamConfiguration> randomSourceIdConfs = new HashMap<>(2);
+		while ( randomSourceIdConfs.size() < 2 ) {
+			final CloudDatumStreamConfiguration randomConf = userConfs
+					.get(RNG.nextInt(userConfs.size()));
+			randomSourceIdConfs.put(randomConf.getSourceId(), randomConf);
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceIds(randomSourceIdConfs.keySet().toArray(String[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final List<CloudDatumStreamConfiguration> expectedConfs = randomSourceIdConfs.values().stream()
+				.sorted().toList();
+		then(results).as("Results for given source IDs returned")
+				.containsExactlyElementsOf(expectedConfs);
+	}
+
+	@Test
+	public void findFiltered_forVirtualSourceIds() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					conf.setSourceId("unused");
+					conf.setServiceProps(Map.of(VIRTUAL_SOURCE_IDS_SETTING,
+							List.of(randomSourceId(), randomSourceId())));
+				});
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final Map<String, CloudDatumStreamConfiguration> randomSourceIdConfs = new HashMap<>(2);
+		while ( randomSourceIdConfs.size() < 2 ) {
+			final CloudDatumStreamConfiguration randomConf = userConfs
+					.get(RNG.nextInt(userConfs.size()));
+			List<String> virtualSourceIds = randomConf
+					.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
+			randomSourceIdConfs.put(virtualSourceIds.get(RNG.nextInt(virtualSourceIds.size())),
+					randomConf);
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceIds(randomSourceIdConfs.keySet().toArray(String[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final List<CloudDatumStreamConfiguration> expectedConfs = randomSourceIdConfs.values().stream()
+				.distinct().sorted().toList();
+		then(results).as("Results for given virtual source IDs returned")
+				.containsExactlyElementsOf(expectedConfs);
+	}
+
+	@Test
+	public void findFiltered_forMappedSourceIds() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					conf.setSourceId("unused");
+					conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+							Map.of(randomString(), randomSourceId(), randomString(), randomSourceId())));
+				});
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final Map<String, CloudDatumStreamConfiguration> randomSourceIdConfs = new HashMap<>(2);
+		while ( randomSourceIdConfs.size() < 2 ) {
+			final CloudDatumStreamConfiguration randomConf = userConfs
+					.get(RNG.nextInt(userConfs.size()));
+			Map<String, String> mappedSourceIds = randomConf
+					.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			List<String> keyList = List.copyOf(mappedSourceIds.keySet());
+			randomSourceIdConfs.put(mappedSourceIds.get(keyList.get(RNG.nextInt(keyList.size()))),
+					randomConf);
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceIds(randomSourceIdConfs.keySet().toArray(String[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final List<CloudDatumStreamConfiguration> expectedConfs = randomSourceIdConfs.values().stream()
+				.sorted().toList();
+		then(results).as("Results for given mapped source IDs returned")
+				.containsExactlyElementsOf(expectedConfs);
+	}
+
+	@Test
+	public void findFiltered_forSourceIds_pattern() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+					conf.setSourceId(randomPrefix + conf.getSourceId());
+				});
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final List<CloudDatumStreamConfiguration> expectedConfs = userConfs.stream()
+			.filter(conf -> conf.getSourceId().startsWith(randomSourceIdPrefix))
+			.sorted()
+			.toList()
+			;
+		then(results)
+			.as("Results for given source IDs returned")
+			.containsExactlyElementsOf(expectedConfs)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forVirtualSourceIds_pattern() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+					conf.setSourceId("unused");
+					conf.setServiceProps(Map.of(VIRTUAL_SOURCE_IDS_SETTING,
+							List.of(randomPrefix + randomSourceId(), randomPrefix + randomSourceId())));
+				});
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final Map<String, CloudDatumStreamConfiguration> randomSourceIdConfs = new HashMap<>(2);
+		while ( randomSourceIdConfs.size() < 2 ) {
+			final CloudDatumStreamConfiguration randomConf = userConfs
+					.get(RNG.nextInt(userConfs.size()));
+			List<String> virtualSourceIds = randomConf
+					.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
+			randomSourceIdConfs.put(virtualSourceIds.get(RNG.nextInt(virtualSourceIds.size())),
+					randomConf);
+		}
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final List<CloudDatumStreamConfiguration> expectedConfs = userConfs.stream()
+			.filter(conf ->  {
+				final List<String> virtuals = conf
+				.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
+				for ( String virtual : virtuals ) {
+					if (virtual.startsWith(randomSourceIdPrefix)) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.sorted()
+			.toList()
+			;
+		then(results)
+			.as("Results for given virtual source IDs returned")
+			.containsExactlyElementsOf(expectedConfs)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forMappedSourceIds_pattern() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+					conf.setSourceId("unused");
+					conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+							Map.of(randomString(), randomPrefix + randomSourceId(), randomString(),
+									randomPrefix + randomSourceId())));
+				});
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final Map<String, CloudDatumStreamConfiguration> randomSourceIdConfs = new HashMap<>(2);
+		while ( randomSourceIdConfs.size() < 2 ) {
+			final CloudDatumStreamConfiguration randomConf = userConfs
+					.get(RNG.nextInt(userConfs.size()));
+			Map<String, String> mappedSourceIds = randomConf
+					.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			List<String> keyList = List.copyOf(mappedSourceIds.keySet());
+			randomSourceIdConfs.put(mappedSourceIds.get(keyList.get(RNG.nextInt(keyList.size()))),
+					randomConf);
+		}
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final List<CloudDatumStreamConfiguration> expectedConfs = userConfs.stream()
+			.filter(conf ->  {
+				final Map<String, String> mappings = conf
+				.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+				for ( String mapped : mappings.values() ) {
+					if (mapped.startsWith(randomSourceIdPrefix)) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.sorted()
+			.toList()
+			;
+		then(results)
+			.as("Results for given mapped source IDs returned")
+			.containsExactlyElementsOf(expectedConfs)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forEnabled() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> conf.setEnabled(RNG.nextBoolean()));
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final boolean randomEnabled = RNG.nextBoolean();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setEnabled(randomEnabled);
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomEnabled == e.isEnabled())
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + enabled flag returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final String randomSubstring = keySubstrings.get(RNG.nextInt(keySubstrings.size()))
+				.toLowerCase(Locale.ENGLISH);
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(randomSubstring);
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(randomSubstring))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forName_reservedCharacter() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("100% Fresh", "100 Percent Fresh", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setName(keySubstrings.getFirst().toLowerCase(Locale.ENGLISH));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& e.getName().toLowerCase().contains(filter.getName()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring with reserved characters returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forNames() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keySubstrings = List.of("AbCdEfG", "HiJkLmN", "OpQrStU");
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> {
+					// put one of the key substrings in the middle of our random names
+					final String name = "%s %s %s".formatted(randomString(),
+							keySubstrings.get(RNG.nextInt(keySubstrings.size())), randomString());
+					conf.setName(name);
+				});
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNames(new String[] { keySubstrings.getFirst().toLowerCase(Locale.ENGLISH),
+				keySubstrings.getLast().toLowerCase(Locale.ENGLISH) });
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			final String lcName = e.getName().toLowerCase(Locale.ENGLISH);
+			for ( String name : filter.getNames() ) {
+				if ( lcName.contains(name) ) {
+					return true;
+				}
+			}
+			return false;
+		}).toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + name substring returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forServiceIdentifiers() throws Exception {
+		// GIVEN
+		final int count = 5;
+		final int userCount = 2;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+
+		// a limited set of key substrings we'll search on
+		final List<String> keyIdentifiers = List.of(randomString(), randomString(), randomString());
+
+		final List<CloudDatumStreamConfiguration> confs = populateCloudDatumStreams(userCount,
+				integrationCount, mappingCount, count, (_, conf) -> conf
+						.setServiceIdentifier(keyIdentifiers.get(RNG.nextInt(keyIdentifiers.size()))));
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final Set<String> randomIdentifiers = Set.of(keyIdentifiers.getFirst(),
+				keyIdentifiers.getLast());
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setServiceIdentifiers(randomIdentifiers.toArray(String[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		final CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())
+						&& randomIdentifiers.contains(e.getServiceIdentifier()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for user + service identifier returned").containsExactly(expected);
+	}
+
+	@Test
+	public void mergeServiceProps_mode_simple() {
+		// GIVEN
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"other", randomString()
+			);
+		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+				userId,
+				null,
+				randomString(),
+				ObjectDatumKind.Node,
+				randomLong(),
+				randomString(),
+				randomString(),
+				randomString(),
+				sprops)
+				;
+		// @formatter:on
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("foo", randomString(), "baz", randomString());
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.Simple, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"other", conf.getServiceProperties().get("other"),
+				"foo", newProps.get("foo"),
+				"baz", newProps.get("baz")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursive() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+				userId,
+				null,
+				randomString(),
+				ObjectDatumKind.Node,
+				randomLong(),
+				randomString(),
+				randomString(),
+				randomString(),
+				sprops)
+				;
+		// @formatter:on
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.RecursiveObjects,
+				newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursiveArrays() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+				userId,
+				null,
+				randomString(),
+				ObjectDatumKind.Node,
+				randomLong(),
+				randomString(),
+				randomString(),
+				randomString(),
+				sprops)
+				;
+		// @formatter:on
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id,
+				MergeMode.RecursiveObjectsAndArrays, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects and arrays")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a1", "a2")
+			))
+			;
+		// @formatter:on
 	}
 
 }

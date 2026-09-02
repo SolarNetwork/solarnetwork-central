@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 import static java.util.Map.entry;
@@ -47,6 +46,9 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
@@ -54,6 +56,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
@@ -65,6 +68,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.ByteUtils;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Test cases for the {@link ObjectMapperStreamDatumFilteredResultsProcessor}
@@ -73,12 +77,18 @@ import tools.jackson.databind.json.JsonMapper;
  * @author matt
  * @version 1.4
  */
+@ParameterizedClass
+@ValueSource(booleans = { false, true }) // for aliased or not
 public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
+
+	@Parameter
+	private boolean useCbor;
 
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		return JsonMapper.shared();
+
+		return (useCbor ? CBORMapper.shared() : JsonMapper.shared());
 	}
 
 	@BeforeEach
@@ -90,6 +100,14 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 			String[] s) {
 		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "Pacific/Auckland",
 				ObjectDatumKind.Node, nodeId, sourceId, i, a, s);
+	}
+
+	private String resultJson(ByteArrayOutputStream out) throws IOException {
+		if ( useCbor ) {
+			return JsonUtils.getJSONString(mapper.readTree(out.toByteArray()));
+		} else {
+			return out.toString(ByteUtils.UTF8);
+		}
 	}
 
 	@Test
@@ -126,7 +144,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(ByteUtils.UTF8);
+		final String json = resultJson(out);
 		assertThat("Datum JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
 				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
@@ -170,7 +188,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -252,7 +270,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -334,7 +352,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -416,12 +434,74 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(ByteUtils.UTF8);
-		assertThat("Aggregate JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
-				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
-				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
-				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[3,100,130],\"foo\",\"wham\",\"bam\"]"
-				+ "]}"));
+		final String json = resultJson(out);
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsEntry("success", true)
+			.hasEntrySatisfying("meta", m -> {
+				then(m).asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.element(0)
+					.isObject()
+					.containsOnly(
+						entry("streamId", meta.getStreamId().toString()),
+						entry("zone", meta.getTimeZoneId()),
+						entry("kind", String.valueOf(meta.getKind().getKey())),
+						entry("objectId", meta.getObjectId()),
+						entry("sourceId", meta.getSourceId()),
+						entry("i", new String[] { "a", "b"}),
+						entry("a", new String[] {"c"}),
+						entry("s", new String[] {"d"})
+					)
+					;
+			})
+			.hasEntrySatisfying("data", d -> {
+				then(d).asInstanceOf(JSON)
+					.isArray()
+					.as("All datum returned")
+					.hasSize(1)
+					.satisfies(l -> {
+						then(l).element(0, JSON)
+							.isArray()
+							.as("Meta index, ts range, and datum properties provided")
+							.containsExactly(
+								0,
+								new Long[] { d1.getTimestamp().toEpochMilli(), null },
+								// 1
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[0],
+									d1.getStatistics().getInstantaneousCount(0),
+									d1.getStatistics().getInstantaneousMinimum(0),
+									d1.getStatistics().getInstantaneousMaximum(0),
+								},
+								// b
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[1],
+									d1.getStatistics().getInstantaneousCount(1),
+									d1.getStatistics().getInstantaneousMinimum(1),
+									d1.getStatistics().getInstantaneousMaximum(1),
+								},
+								// c
+								new BigDecimal[] {
+									d1.getProperties().getAccumulating()[0],
+									d1.getStatistics().getAccumulatingStart(0),
+									d1.getStatistics().getAccumulatingEnd(0)
+								},
+								// d
+								d1.getProperties().getStatus()[0],
+								// tags
+								d1.getProperties().getTags()[0],
+								d1.getProperties().getTags()[1]
+							)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -464,7 +544,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -563,7 +643,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -643,12 +723,72 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(ByteUtils.UTF8);
-		assertThat("Aggregate JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
-				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
-				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
-				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[3],\"foo\",\"wham\",\"bam\"]"
-				+ "]}"));
+		final String json = resultJson(out);
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsEntry("success", true)
+			.hasEntrySatisfying("meta", m -> {
+				then(m).asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.element(0)
+					.isObject()
+					.containsOnly(
+						entry("streamId", meta.getStreamId().toString()),
+						entry("zone", meta.getTimeZoneId()),
+						entry("kind", String.valueOf(meta.getKind().getKey())),
+						entry("objectId", meta.getObjectId()),
+						entry("sourceId", meta.getSourceId()),
+						entry("i", new String[] { "a", "b"}),
+						entry("a", new String[] {"c"}),
+						entry("s", new String[] {"d"})
+					)
+					;
+			})
+			.hasEntrySatisfying("data", d -> {
+				then(d).asInstanceOf(JSON)
+					.isArray()
+					.as("All datum returned")
+					.hasSize(1)
+					.satisfies(l -> {
+						then(l).element(0, JSON)
+							.isArray()
+							.as("Meta index, ts range, and datum properties provided (minus missing accumulating stats")
+							.containsExactly(
+								0,
+								new Long[] { d1.getTimestamp().toEpochMilli(), null },
+								// 1
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[0],
+									d1.getStatistics().getInstantaneousCount(0),
+									d1.getStatistics().getInstantaneousMinimum(0),
+									d1.getStatistics().getInstantaneousMaximum(0),
+								},
+								// b
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[1],
+									d1.getStatistics().getInstantaneousCount(1),
+									d1.getStatistics().getInstantaneousMinimum(1),
+									d1.getStatistics().getInstantaneousMaximum(1),
+								},
+								// c
+								new BigDecimal[] {
+									d1.getProperties().getAccumulating()[0],
+								},
+								// d
+								d1.getProperties().getStatus()[0],
+								// tags
+								d1.getProperties().getTags()[0],
+								d1.getProperties().getTags()[1]
+							)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -685,11 +825,71 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(ByteUtils.UTF8);
-		assertThat("Reading JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
-				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
-				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
-				+ "\"data\":[[0,[1651197060000,1651200660000],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130],null]]}"));
+		final String json = resultJson(out);
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsEntry("success", true)
+			.hasEntrySatisfying("meta", m -> {
+				then(m).asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.element(0)
+					.isObject()
+					.containsOnly(
+						entry("streamId", meta.getStreamId().toString()),
+						entry("zone", meta.getTimeZoneId()),
+						entry("kind", String.valueOf(meta.getKind().getKey())),
+						entry("objectId", meta.getObjectId()),
+						entry("sourceId", meta.getSourceId()),
+						entry("i", new String[] { "a", "b"}),
+						entry("a", new String[] {"c"}),
+						entry("s", new String[] {"d"})
+					)
+					;
+			})
+			.hasEntrySatisfying("data", d -> {
+				then(d).asInstanceOf(JSON)
+					.isArray()
+					.as("All datum returned")
+					.hasSize(1)
+					.satisfies(l -> {
+						then(l).element(0, JSON)
+							.isArray()
+							.as("Meta index, ts range, and datum properties provided")
+							.containsExactly(
+								0,
+								new Long[] { d1.getTimestamp().toEpochMilli(), d1.getEndTimestamp().toEpochMilli() },
+								// 1
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[0],
+									d1.getStatistics().getInstantaneousCount(0),
+									d1.getStatistics().getInstantaneousMinimum(0),
+									d1.getStatistics().getInstantaneousMaximum(0),
+								},
+								// b
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[1],
+									d1.getStatistics().getInstantaneousCount(1),
+									d1.getStatistics().getInstantaneousMinimum(1),
+									d1.getStatistics().getInstantaneousMaximum(1),
+								},
+								// c
+								new BigDecimal[] {
+									d1.getStatistics().getAccumulatingDifference(0),
+									d1.getStatistics().getAccumulatingStart(0),
+									d1.getStatistics().getAccumulatingEnd(0)
+								},
+								// d
+								null
+							)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -728,7 +928,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -821,7 +1021,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		}
 
 		// THEN
-		String json = out.toString(UTF_8);
+		final String json = resultJson(out);
 		// @formatter:off
 		then(json)
 			.asInstanceOf(JSON)
@@ -854,6 +1054,101 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 							.containsExactly(
 								0,
 								new Long[] { d1.getTimestamp().toEpochMilli(), d1.getEndTimestamp().toEpochMilli() }
+							)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void oneStream_reading_missingAccumulatingStats() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		ZonedDateTime start = LocalDateTime.of(2022, 4, 29, 13, 52)
+				.atZone(ZoneId.of("Pacific/Auckland"));
+
+		// @formatter:off
+		ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
+				Aggregation.None, start.plusHours(1).minusMinutes(1).toInstant(),
+				propertiesOf(
+						decimalArray("1.23", "2.34"),
+						decimalArray("3"), null, null),
+				statisticsOf(new BigDecimal[][] {
+					decimalArray("10", "1.0", "2.0"),
+					decimalArray("10", "2.0", "3.0")
+				}, null));
+		// @formatter:on
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1));
+
+		// WHEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper._serializationContext(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+		}
+
+		// THEN
+		final String json = resultJson(out);
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsEntry("success", true)
+			.hasEntrySatisfying("meta", m -> {
+				then(m).asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.element(0)
+					.isObject()
+					.containsOnly(
+						entry("streamId", meta.getStreamId().toString()),
+						entry("zone", meta.getTimeZoneId()),
+						entry("kind", String.valueOf(meta.getKind().getKey())),
+						entry("objectId", meta.getObjectId()),
+						entry("sourceId", meta.getSourceId()),
+						entry("i", new String[] { "a", "b"}),
+						entry("a", new String[] {"c"}),
+						entry("s", new String[] {"d"})
+					)
+					;
+			})
+			.hasEntrySatisfying("data", d -> {
+				then(d).asInstanceOf(JSON)
+					.isArray()
+					.as("All datum returned")
+					.hasSize(1)
+					.satisfies(l -> {
+						then(l).element(0, JSON)
+							.isArray()
+							.as("Meta index, ts range, and datum properties provided, without accumulating as stats missing")
+							.containsExactly(
+								0,
+								new Long[] { d1.getTimestamp().toEpochMilli(), d1.getEndTimestamp().toEpochMilli() },
+								// 1
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[0],
+									d1.getStatistics().getInstantaneousCount(0),
+									d1.getStatistics().getInstantaneousMinimum(0),
+									d1.getStatistics().getInstantaneousMaximum(0),
+								},
+								// b
+								new BigDecimal[] {
+									d1.getProperties().getInstantaneous()[1],
+									d1.getStatistics().getInstantaneousCount(1),
+									d1.getStatistics().getInstantaneousMinimum(1),
+									d1.getStatistics().getInstantaneousMaximum(1),
+								},
+								// c
+								null,
+								// d
+								null
 							)
 							;
 					})

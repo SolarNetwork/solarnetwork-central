@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +52,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * SolarEdge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -62,7 +63,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	public static final String SITES_LIST_URL = "/sites/list";
 
 	/** The user API key authorization HTTP header name. */
-	public static final String API_KEY_HEADER = "X-API-Key";
+	public static final String API_KEY_PARAM = "api_key";
 
 	/** The JSON and {@code problem+json} accept HTTP header value. */
 	public static final String JSON_AND_PROBLEM_ACCEPT_HEADER_VALUE = "application/json, application/problem+json";
@@ -100,14 +101,17 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
 	public SolarEdgeV1CloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
+			InstantSource clock) {
 		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, List.of(), userEventAppenderBiz,
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
-				new SolarEdgeV1RestOperationsHelper(
+				new SolarEdgeV1RestOperationsHelper(clock,
 						LoggerFactory.getLogger(SolarEdgeV1CloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						_ -> SECURE_SETTINGS));
@@ -136,7 +140,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 					_ -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
 							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
-					r -> nonnull(r.getBody(), "Response body"));
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

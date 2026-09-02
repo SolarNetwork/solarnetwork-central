@@ -76,13 +76,7 @@ public final class ExceptionUtils {
 				if ( !buf.isEmpty() ) {
 					buf.append(" ");
 				}
-				// use default message without localization if available, to work around
-				// https://github.com/spring-projects/spring-framework/issues/36609
-				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
-					buf.append(error.getDefaultMessage());
-				} else {
-					buf.append(msgSrc.getMessage(error, locale));
-				}
+				buf.append(msgSrc.getMessage(error, locale));
 			}
 			msg = buf.toString();
 		}
@@ -144,14 +138,7 @@ public final class ExceptionUtils {
 				if ( details == null ) {
 					details = new ArrayList<>(4);
 				}
-				// use default message without localization if available, to work around
-				// https://github.com/spring-projects/spring-framework/issues/36609
-				String msg;
-				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
-					msg = error.getDefaultMessage();
-				} else {
-					msg = msgSrc.getMessage(error, locale);
-				}
+				String msg = msgSrc.getMessage(error, locale);
 				details.add(new ErrorDetail(error.getObjectName(), null, msg));
 			}
 			for ( FieldError error : e.getFieldErrors() ) {
@@ -171,14 +158,7 @@ public final class ExceptionUtils {
 				String rejectedValueDescription = (error.getRejectedValue() != null
 						? error.getRejectedValue().toString()
 						: null);
-				// use default message without localization if available, to work around
-				// https://github.com/spring-projects/spring-framework/issues/36609
-				String msg;
-				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
-					msg = error.getDefaultMessage();
-				} else {
-					msg = msgSrc.getMessage(error, locale);
-				}
+				String msg = msgSrc.getMessage(error, locale);
 				details.add(new ErrorDetail(location, violationCode, rejectedValueDescription, msg));
 			}
 		}

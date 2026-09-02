@@ -21,6 +21,7 @@ SELECT cds.user_id
 	, cdsm.int_id
 	, cin.enabled AS int_enabled
 	, cin.cname AS int_name
+	, cin.sident AS int_sident
 	, cin.sprops AS int_sprops
 	, cdsp.status AS poll_status
 	, cdsp.exec_at AS poll_exec_at
@@ -57,6 +58,7 @@ SELECT cds.user_id
 	, cin.enabled AS int_enabled
 	, cdsm.int_id
 	, cin.cname AS int_name
+	, cin.sident AS int_sident
 	, cin.sprops AS int_sprops
 	, cdsp.status AS poll_status
 	, cdsp.exec_at AS poll_exec_at

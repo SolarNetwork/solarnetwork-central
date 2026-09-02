@@ -41,11 +41,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
-import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
-import org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm;
+import org.springframework.security.crypto.encrypt.AesGcmBytesEncryptor;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.keygen.BytesKeyGenerator;
 import org.springframework.security.crypto.keygen.KeyGenerators;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
@@ -135,7 +135,9 @@ public class SimpleSecretsBiz implements SecretsBiz {
 
 		Path dataPath = dir.resolve(SECRETS_DATA);
 		if ( Files.isReadable(dataPath) ) {
-			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
+			BytesEncryptor encryptor = AesGcmBytesEncryptor
+					.withSecretKey(SecurityUtils.systemSecretKey(password, salt)).ivGenerator(iv)
+					.build();
 			try {
 				byte[] enc = Files.readAllBytes(dataPath);
 				Map<String, Object> map = nonnull(
@@ -203,7 +205,10 @@ public class SimpleSecretsBiz implements SecretsBiz {
 											e -> encoder.encodeToString(e.getValue())))),
 							"{}"),
 					"Metadata");
-			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
+
+			BytesEncryptor encryptor = AesGcmBytesEncryptor
+					.withSecretKey(SecurityUtils.systemSecretKey(password, salt)).ivGenerator(iv)
+					.build();
 			byte[] enc = encryptor.encrypt(json.getBytes(StandardCharsets.UTF_8));
 			Files.write(dataPath, enc);
 		} catch ( IOException e ) {

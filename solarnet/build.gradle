@@ -6,7 +6,7 @@ buildscript {
 }
 
 plugins {
-	id 'net.ltgt.errorprone' version '5.0.0' apply false
+	id 'net.ltgt.errorprone' version '5.1.0' apply false
 }
 
 ext {
@@ -102,16 +102,16 @@ subprojects {
 		myBatisStarterVersion = '4.0.0'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '4.34.0'
-		snCommonExprSpelVersion = '4.2.0'
-		snCommonMqttVersion = '6.1.0'
-		snCommonMqttNettyVersion = '5.1.0'
+		snCommonVersion = '4.50.0'
+		snCommonExprSpelVersion = '4.2.1'
+		snCommonMqttVersion = '6.2.0'
+		snCommonMqttNettyVersion = '5.2.0'
 		snCommonOcppVersion = '6.1.2'
 		snCommonOcpp16JakartaVersion = '6.1.1'
 		snCommonOcpp201Version = '3.1.1'
 		snCommonOcppWebJakartaVersion = '4.2.1'
 		snCommonPkiBcVersion = '4.1.1'
-		snCommonWebJakartaVersion = '2.4.1'
+		snCommonWebJakartaVersion = '2.4.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
 		springdocStarterVersion = '3.0.0'
@@ -136,7 +136,7 @@ subprojects {
 		]
 	}
 		
-	ext['netty.version'] = '4.2.10.Final'
+	ext['netty.version'] = '4.2.17.Final'
 	//ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
@@ -147,8 +147,8 @@ subprojects {
 				'net.javacrumbs.json-unit:json-unit-assertj:5.1.0',
 				'org.junit.platform:junit-platform-launcher'
 		
-		errorprone 'com.google.errorprone:error_prone_core:2.45.0'
-		errorprone 'com.uber.nullaway:nullaway:0.13.1'
+		errorprone 'com.google.errorprone:error_prone_core:2.50.0'
+		errorprone 'com.uber.nullaway:nullaway:0.13.6'
 	}
 
 	configurations {

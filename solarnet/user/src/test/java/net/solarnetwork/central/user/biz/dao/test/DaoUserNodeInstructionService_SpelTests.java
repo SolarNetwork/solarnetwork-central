@@ -233,7 +233,7 @@ public class DaoUserNodeInstructionService_SpelTests implements CommonUserEvents
 			.as("Instruction to queue topic from task topic")
 			.returns(topic, from(Instruction::getTopic))
 			.as("Instruction to queue has no status")
-			.returns(null, from(Instruction::getState))
+			.returns(InstructionState.Unknown, from(Instruction::getState))
 			.extracting(Instruction::getParams, map(String.class, Object.class))
 			.as("Params from task copied to queued instruction")
 			.containsAllEntriesOf(params)

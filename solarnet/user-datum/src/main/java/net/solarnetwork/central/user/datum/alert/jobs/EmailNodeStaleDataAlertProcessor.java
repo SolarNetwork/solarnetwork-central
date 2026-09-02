@@ -626,8 +626,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		}
 		model.put("datumDate", dateFormat.format(datumId.getTimestamp()));
 
-		String subject = messageSource.getMessage(subjectKey, new Object[] { datumId.getNodeId() },
-				locale);
+		String subject = messageSource.getMessage(subjectKey,
+				new Object[] { datumId.getNodeId().toString() }, locale);
 
 		log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(), model);
 		ClasspathResourceMessageTemplateDataSource msg = new ClasspathResourceMessageTemplateDataSource(

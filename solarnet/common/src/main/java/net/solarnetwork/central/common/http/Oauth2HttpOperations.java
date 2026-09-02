@@ -33,7 +33,6 @@ import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
@@ -44,7 +43,7 @@ import net.solarnetwork.service.OptionalService;
  * specific {@link OAuth2ClientIdentity}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class Oauth2HttpOperations implements HttpOperations {
 
@@ -81,7 +80,7 @@ public class Oauth2HttpOperations implements HttpOperations {
 	}
 
 	@Override
-	public <I extends @Nullable Object, O> ResponseEntity<O> http(HttpMethod method, URI uri,
+	public <I extends @Nullable Object, O> HttpExchange<I, O> http(HttpMethod method, URI uri,
 			@Nullable HttpHeaders headers, @Nullable I body, Class<O> responseType,
 			@Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		final Cache<UserLongCompositePK, Lock> lockCache = service(locksCache);

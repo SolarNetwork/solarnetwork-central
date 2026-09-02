@@ -45,7 +45,8 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * @version 2.0
  * @since 1.35
  */
-@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "localDate", "localTime" })
+@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "localDate", "localTime", "updated",
+		"notes", "final", "start", "meta" })
 public class GeneralNodeDatumAuxiliaryMatch extends GeneralNodeDatumAuxiliary
 		implements GeneralNodeDatumAuxiliaryFilterMatch {
 

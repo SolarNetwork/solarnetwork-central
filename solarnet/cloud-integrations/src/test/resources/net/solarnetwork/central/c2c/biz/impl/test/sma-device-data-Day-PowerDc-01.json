@@ -17,15 +17,15 @@
       "dcPowerInput": [
         {
           "index": "A",
-          "value": 0.0
+          "value": 1.0
         },
         {
           "index": "B",
-          "value": 0.0
+          "value": 2.0
         },
         {
           "index": "C",
-          "value": 0.0
+          "value": 3.0
         }
       ],
       "dcVoltageInput": [
@@ -9965,15 +9965,15 @@
       "dcPowerInput": [
         {
           "index": "A",
-          "value": 0.0
+          "value": 0.1
         },
         {
           "index": "B",
-          "value": 0.0
+          "value": 0.2
         },
         {
           "index": "C",
-          "value": 0.0
+          "value": 0.3
         }
       ],
       "dcVoltageInput": [

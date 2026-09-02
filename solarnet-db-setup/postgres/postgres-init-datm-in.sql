@@ -1,7 +1,7 @@
 /**
  * Calculate "stale datum" rows for a given datum primary key that has changed.
  *
- * This function will return 1-3 rows representing stale rows that must be re-calculated.
+ * This function will return 1-4 rows representing stale rows that must be re-calculated.
  * It is designed so that the results can be inserted into `solardatm.agg_stale_datm`, like:
  *
  * 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
@@ -20,28 +20,41 @@ CREATE OR REPLACE FUNCTION solardatm.calc_stale_datm(
 	) RETURNS TABLE (
 		stream_id	UUID,
 		ts_start 	TIMESTAMP WITH TIME ZONE
-	) LANGUAGE SQL STABLE ROWS 3 AS
+	) LANGUAGE SQL STABLE ROWS 4 AS
 $$
-	WITH b AS (
+	WITH prev_datum_hour AS (
+		SELECT date_trunc('hour', d.ts) AS ts
+		FROM solardatm.da_datm d
+		WHERE d.stream_id = sid
+			AND d.ts < ts_in
+			AND d.ts > ts_in - tolerance
+		ORDER BY d.stream_id, d.ts DESC
+		LIMIT 1
+	)
+	, b AS (
+		-- prev datum hour
+		(
+			SELECT ts FROM prev_datum_hour
+		)
 		-- curr hour
+		UNION ALL
 		(
 			SELECT date_trunc('hour', ts_in) AS ts
 		)
+		-- prev hour, if datum exactly on hour and prev datum exists
 		UNION ALL
-		-- prev hour
 		(
-			SELECT date_trunc('hour', d.ts) AS ts
-			FROM solardatm.da_datm d
-			WHERE d.stream_id = sid
-				AND d.ts < ts_in
-				AND d.ts > ts_in - tolerance
-			ORDER BY d.stream_id, d.ts DESC
-			LIMIT 1
+			SELECT date_trunc('hour', ts_in) - INTERVAL 'PT1H' AS ts
+			FROM prev_datum_hour
+			WHERE date_trunc('hour', ts_in) = ts_in
 		)
 		UNION ALL
-		-- next hour
+		-- next datum hour, or next datum hour - 1 if next datum exactly on hour
 		(
-			SELECT date_trunc('hour', d.ts) AS ts
+			SELECT CASE WHEN date_trunc('hour', d.ts) = d.ts
+				THEN d.ts - INTERVAL 'PT1H'
+				ELSE date_trunc('hour', d.ts)
+				END AS ts
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts > ts_in
@@ -50,7 +63,7 @@ $$
 			LIMIT 1
 		)
 	)
-	SELECT DISTINCT sid, ts FROM b
+	SELECT DISTINCT ON (ts) sid, ts FROM b
 $$;
 
 
@@ -219,7 +232,6 @@ DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
 	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
 	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatm.json_datum_prop_count(jdata_json);
 	is_insert 			BOOLEAN 					:= false;
 
 	sid 	UUID;
@@ -253,7 +265,8 @@ BEGIN
 
 	IF track THEN
 		-- add to audit datum in count
-		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, jdata_prop_count, is_insert);
+		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1,
+			solardatm.json_datum_prop_count(jdata_json), is_insert);
 
 		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
@@ -317,27 +330,27 @@ BEGIN
 	RETURNING (xmax = 0)
 	INTO is_insert;
 
-	-- get count of non-null properties
-	SELECT n.cnt + t.cnt FROM
-	(
-		SELECT count(*) AS cnt FROM (
-			SELECT v FROM unnest(idata) v
-			UNION ALL
-			SELECT v FROM unnest(adata) v
-		) n
-		WHERE v IS NOT NULL
-	) n,
-	(
-		SELECT count(*) AS cnt FROM (
-			SELECT v from unnest(sdata) v
-			UNION ALL
-			SELECT v from unnest(tdata) v
-		) t
-		WHERE v IS NOT NULL
-	) t
-	INTO prop_count;
-
 	IF track THEN
+		-- get count of non-null properties
+		SELECT n.cnt + t.cnt FROM
+		(
+			SELECT count(*) AS cnt FROM (
+				SELECT v FROM unnest(idata) v
+				UNION ALL
+				SELECT v FROM unnest(adata) v
+			) n
+			WHERE v IS NOT NULL
+		) n,
+		(
+			SELECT count(*) AS cnt FROM (
+				SELECT v from unnest(sdata) v
+				UNION ALL
+				SELECT v from unnest(tdata) v
+			) t
+			WHERE v IS NOT NULL
+		) t
+		INTO prop_count;
+
 		-- add to audit datum in count
 		PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, prop_count, is_insert);
 
@@ -418,10 +431,14 @@ BEGIN
 			jdata_as = EXCLUDED.jdata_as,
 			jmeta = EXCLUDED.jmeta;
 
-	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-	SELECT stream_id, ts_start, 'h' AS agg_kind
-	FROM solardatm.calc_stale_datm(sid, ddate)
-	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	IF aux_type = 'Reset'::solardatm.da_datm_aux_type THEN
+		-- insert stale record for updated row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calc_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+
+	END IF;
 END
 $$;
 
@@ -443,10 +460,13 @@ BEGIN
 	DELETE FROM solardatm.da_datm_aux
 	WHERE stream_id = sid AND ts = ddate AND atype = aux_type;
 
-	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-	SELECT stream_id, ts_start, 'h' AS agg_kind
-	FROM solardatm.calc_stale_datm(sid, ddate)
-	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	IF aux_type = 'Reset'::solardatm.da_datm_aux_type THEN
+		-- insert stale record for deleted row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calc_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	END IF;
 END
 $$;
 
@@ -490,11 +510,13 @@ BEGIN
 	GET DIAGNOSTICS del_count = ROW_COUNT;
 
 	IF del_count > 0 THEN
-		-- insert stale record for deleted row
-		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid_from, ts_from)
-		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		IF aux_type_from = 'Reset'::solardatm.da_datm_aux_type OR atype_to = 'Reset'::solardatm.da_datm_aux_type THEN
+			-- insert stale record for deleted row
+			INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+			SELECT stream_id, ts_start, 'h' AS agg_kind
+			FROM solardatm.calc_stale_datm(sid_from, ts_from)
+			ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		END IF;
 
 		-- insert new row
 		INSERT INTO solardatm.da_datm_aux (stream_id, ts, atype, notes, jdata_af, jdata_as, jmeta)
@@ -506,11 +528,13 @@ BEGIN
 				jdata_as = EXCLUDED.jdata_as,
 				jmeta = EXCLUDED.jmeta;
 
-		-- insert stale record for new row
-		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid_to, ts_to)
-		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		IF aux_type_from = 'Reset'::solardatm.da_datm_aux_type OR atype_to = 'Reset'::solardatm.da_datm_aux_type THEN
+			-- insert stale record for new row
+			INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+			SELECT stream_id, ts_start, 'h' AS agg_kind
+			FROM solardatm.calc_stale_datm(sid_to, ts_to)
+			ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+		END IF;
 	END IF;
 
 	RETURN (del_count > 0);

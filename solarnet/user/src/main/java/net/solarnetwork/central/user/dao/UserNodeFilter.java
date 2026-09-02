@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumAuxiliaryType.java - 1/02/2019 4:31:45 pm
+ * UserNodeFilter.java - 2 Aug 2026 6:37:36 am
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,17 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.user.dao;
+
+import net.solarnetwork.central.common.dao.LocationCriteria;
+import net.solarnetwork.central.common.dao.NameCriteria;
+import net.solarnetwork.central.common.dao.NodeCriteria;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * Enumeration of auxiliary datum types.
+ * Filter API for user node entities.
  * 
  * @author matt
  * @version 1.0
  */
-public enum DatumAuxiliaryType {
-
-	/** A data stream "reset" event, such as when hardware is replaced. */
-	Reset;
+public interface UserNodeFilter extends UserCriteria, NodeCriteria, NameCriteria, LocationCriteria,
+		PaginationCriteria, OptimizedQueryCriteria {
 
 }

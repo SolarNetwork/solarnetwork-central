@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -29,20 +30,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.dao.UserNodeFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link UserNodeDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
+public class MyBatisUserNodeDao
+		extends BaseMyBatisFilterableDaoSupport<UserNode, Long, UserNodeInfo, UserNodeFilter>
+		implements UserNodeDao {
 
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNode-for-User";
@@ -106,7 +113,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * Default constructor.
 	 */
 	public MyBatisUserNodeDao() {
-		super(UserNode.class, Long.class);
+		super(UserNode.class, Long.class, UserNodeInfo.class);
 	}
 
 	@Override
@@ -196,6 +203,13 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	public Set<Long> findNodeIdsForToken(String tokenId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_TOKEN, tokenId, null, null);
 		return (ids == null || ids.isEmpty() ? Collections.emptySet() : new LinkedHashSet<>(ids));
+	}
+
+	@Override
+	public FilterResults<UserNodeInfo, Long> findFiltered(UserNodeFilter filter,
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		return doFindFiltered(filter, sorts, offset, max);
 	}
 
 }

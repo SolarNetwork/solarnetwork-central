@@ -24,7 +24,7 @@ package net.solarnetwork.central.user.datum.expire.biz;
 
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobStatus;
 

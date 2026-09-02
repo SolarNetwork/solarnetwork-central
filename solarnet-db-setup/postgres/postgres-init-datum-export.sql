@@ -52,25 +52,22 @@ $BODY$;
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solarnet.claim_datum_export_task()
-  RETURNS solarnet.sn_datum_export_task LANGUAGE plpgsql VOLATILE AS
-$BODY$
-DECLARE
-	rec solarnet.sn_datum_export_task;
-	curs CURSOR FOR SELECT * FROM solarnet.sn_datum_export_task
-			WHERE status = 'q'
-			ORDER BY created ASC, ID ASC
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solarnet.sn_datum_export_task SET status = 'p' WHERE CURRENT OF curs;
-	END IF;
-	CLOSE curs;
-	RETURN rec;
-END;
-$BODY$;
+	RETURNS solarnet.sn_datum_export_task LANGUAGE SQL VOLATILE AS
+$$
+	WITH t AS (
+		SELECT id
+		FROM solarnet.sn_datum_export_task
+		WHERE status = 'q'
+		ORDER BY created ASC, id ASC
+		LIMIT 1
+		FOR UPDATE SKIP LOCKED
+	)
+	UPDATE solarnet.sn_datum_export_task
+	SET status = 'p'
+	FROM t
+	WHERE sn_datum_export_task.id = t.id
+	RETURNING sn_datum_export_task.*
+$$;
 
 /**************************************************************************************************
  * FUNCTION solarnet.purge_completed_datum_export_tasks(timestamp with time zone)

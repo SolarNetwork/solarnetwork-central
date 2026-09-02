@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisPaymentDao;

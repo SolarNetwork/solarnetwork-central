@@ -22,8 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedLikeSubstringParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereEqual;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedLike;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Support for SELECT for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class SelectCloudDatumStreamConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -85,6 +90,7 @@ public final class SelectCloudDatumStreamConfiguration
 	}
 
 	private void sqlCore(StringBuilder buf) {
+		CloudIntegrationsSqlUtils.withCloudDatumStreamSourceIdsFilter(filter, buf);
 		buf.append("""
 				SELECT cds.user_id, cds.id, cds.created, cds.modified, cds.enabled
 					, cds.cname, cds.sident
@@ -92,6 +98,13 @@ public final class SelectCloudDatumStreamConfiguration
 					, cds.sprops
 				FROM solardin.cin_datum_stream cds
 				""");
+		CloudIntegrationsSqlUtils.joinCloudDatumStreamSourceIdsFilter(filter, buf);
+		if ( filter.hasIntegrationCriteria() ) {
+			buf.append("""
+					INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.id = cds.map_id
+					""");
+
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -100,16 +113,29 @@ public final class SelectCloudDatumStreamConfiguration
 		if ( filter.hasUserCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getUserIds(), "cds.user_id", where);
 		}
+		if ( filter.hasIntegrationCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "cdsm.int_id", where);
+		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
 		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getServiceIdentifiers(), "cds.sident", where);
+		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cds.map_id", where);
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			idx += whereEqual(filter.getEnabled(), "cds.enabled", where);
+		}
+		if ( filter.hasNameCriteria() ) {
+			idx += whereOptimizedLike(filter.getNames(), "cds.cname", where);
 		}
 		if ( filter.hasNodeCriteria() ) {
 			where.append("\tAND cds.kind = '").append(ObjectDatumKind.Node.getKey()).append("'\n");
 			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
 		}
+		CloudIntegrationsSqlUtils.whereCloudDatumStreamHasSourceIds(filter, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -132,14 +158,29 @@ public final class SelectCloudDatumStreamConfiguration
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( filter.hasSourceCriteria() ) {
+			p = prepareArrayParameter(con, stmt, p, filter.getSourceIds());
+		}
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+		}
+		if ( filter.hasIntegrationCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
 		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServiceIdentifiers());
+		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			p = prepareParameter(stmt, p, filter.getEnabled());
+		}
+		if ( filter.hasNameCriteria() ) {
+			p = prepareOptimizedLikeSubstringParameter(stmt, p, filter.getNames());
 		}
 		if ( filter.hasNodeCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());

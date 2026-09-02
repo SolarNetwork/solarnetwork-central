@@ -42,7 +42,9 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
 import net.solarnetwork.service.PingTest;
 
@@ -50,7 +52,7 @@ import net.solarnetwork.service.PingTest;
  * Cloud integrations datum stream rake configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -72,7 +74,13 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 	private CloudDatumStreamConfigurationDao datumStreamDao;
 
 	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired
 	private DatumEntityDao datumDao;
+
+	@Autowired
+	private DatumAuxiliaryEntityDao datumAuxiliaryDao;
 
 	@ConfigurationProperties(prefix = "app.c2c.ds-rake.executor")
 	@Qualifier(CLOUD_INTEGRATIONS_RAKE)
@@ -104,8 +112,8 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 		var dsMap = datumStreamServices.stream()
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity()));
 		var service = new DaoCloudDatumStreamRakeService(Clock.systemUTC(), userEventAppenderBiz,
-				nodeOwnershipDao, rakeTaskDao, pollTaskDao, datumStreamDao, datumDao,
-				taskExecutor.getThreadPoolExecutor(), dsMap::get);
+				nodeOwnershipDao, rakeTaskDao, pollTaskDao, datumStreamDao, datumStreamMetadataDao,
+				datumDao, datumAuxiliaryDao, taskExecutor.getThreadPoolExecutor(), dsMap::get);
 		return service;
 	}
 

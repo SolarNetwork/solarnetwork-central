@@ -155,6 +155,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		}
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findAuxiliary(filter)", argNames = "pjp,filter")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp,
 			GeneralNodeDatumAuxiliaryFilter filter) throws Throwable {

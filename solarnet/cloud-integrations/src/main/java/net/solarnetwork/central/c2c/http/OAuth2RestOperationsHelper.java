@@ -32,12 +32,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -53,7 +55,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * {@link OAuth2AuthorizedClientManager} support.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
@@ -66,13 +68,6 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
 	/** The OAuth client manager. */
 	protected final OAuth2AuthorizedClientManager oauthClientManager;
-
-	/**
-	 * The clock to use.
-	 *
-	 * @since 1.1
-	 */
-	protected final InstantSource clock;
 
 	/**
 	 * An optional cache of locks to synchronize access token requests per
@@ -203,9 +198,9 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache,
 			@Nullable Map<String, String> extraServicePropertyHeaders) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
-		this.clock = requireNonNullArgument(clock, "clock");
 		this.integrationLocksCache = integrationLocksCache;
 		this.extraServicePropertyHeaders = extraServicePropertyHeaders;
 	}
@@ -214,7 +209,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
 			String description, HttpMethod method, @Nullable B body, C configuration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<B>, ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
 				final var decrypted = integration.copyWithId(integration.id());

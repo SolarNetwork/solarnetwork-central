@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -32,24 +35,38 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.SequencedCollection;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportUserEvents;
 import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
 import net.solarnetwork.central.datum.support.DatumUtils;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.RemoteServiceException;
@@ -67,10 +84,18 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * configuration.
  * </p>
  *
+ * <p>
+ * This service will delete generated {@link DatumAuxiliaryEntity} for the time
+ * range and node/source IDs given in each datum query issued. Then any records
+ * returned by a given query's
+ * {@link CloudDatumStreamQueryResult#getAuxiliary()} will be persisted.
+ * </p>
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImportInputFormatService {
+public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImportInputFormatService
+		implements CloudIntegrationsUserEvents, DatumImportUserEvents {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds-import";
@@ -109,24 +134,39 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 		SETTINGS = List.of(datumStreamId, startDate, endDate, retries);
 	}
 
+	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
+	private final DatumAuxiliaryEntityDao datumAuxiliaryDao;
+	private final DatumStreamMetadataDao datumStreamMetadataDao;
 	private final Function<String, @Nullable CloudDatumStreamService> datumStreamServiceProvider;
 
 	/**
 	 * Constructor.
 	 *
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumAuxiliaryDao
+	 *        the datum auxiliary DAO
+	 * @param datumStreamMetadataDao
+	 *        the datum stream metadata DAO
 	 * @param datumStreamServiceProvider
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamDatumImportInputFormatService(CloudDatumStreamConfigurationDao datumStreamDao,
+	public CloudDatumStreamDatumImportInputFormatService(UserEventAppenderBiz userEventAppenderBiz,
+			CloudDatumStreamConfigurationDao datumStreamDao, DatumAuxiliaryEntityDao datumAuxiliaryDao,
+			DatumStreamMetadataDao datumStreamMetadataDao,
 			Function<String, @Nullable CloudDatumStreamService> datumStreamServiceProvider) {
 		super(SERVICE_IDENTIFIER);
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumAuxiliaryDao = requireNonNullArgument(datumAuxiliaryDao, "datumAuxiliaryDao");
+		this.datumStreamMetadataDao = requireNonNullArgument(datumStreamMetadataDao,
+				"datumStreamMetadataDao");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
 				"datumStreamServiceProvider");
 	}
@@ -156,6 +196,8 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 		private final CloudDatumStreamService service;
 		private final CloudDatumStreamConfiguration datumStream;
+		private final BasicDatumCriteria auxFilter = new BasicDatumCriteria();
+		private @Nullable Map<String, UUID> sourceToStreamIds;
 
 		/**
 		 * Constructor.
@@ -213,11 +255,42 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 			// set estimated count to seconds between start/end dates
 			setEstimatedResultCount(ChronoUnit.SECONDS.between(startDate, endDate));
+
+			// for node streams, support auxiliary records
+			if ( datumStream.getKind() == ObjectDatumKind.Node ) {
+				auxFilter.setDatumAuxiliaryType(DatumAuxiliaryType.Mark);
+				auxFilter.setSearchFilter(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER);
+				auxFilter.setObjectKind(datumStream.getKind());
+				auxFilter.setNodeId(datumStream.getObjectId());
+
+				Set<String> sourceIds = service.datumStreamSourceIds(datumStream);
+				if ( sourceIds != null ) {
+					auxFilter.setSourceIds(sourceIds.toArray(String[]::new));
+				}
+			}
 		}
 
 		@Override
 		public Iterator<GeneralNodeDatum> iterator() {
 			return new DatumStreamImportContextIterator();
+		}
+
+		private Map<String, UUID> sourceToStreamIds() {
+			if ( sourceToStreamIds != null ) {
+				return sourceToStreamIds;
+			}
+
+			// copy aux filter for node/source IDs but clear out other criteria
+			var filter = new BasicDatumCriteria();
+			filter.setObjectKind(auxFilter.getObjectKind());
+			filter.setNodeId(auxFilter.getNodeId());
+			filter.setSourceIds(auxFilter.getSourceIds());
+
+			sourceToStreamIds = stream(
+					datumStreamMetadataDao.findDatumStreamMetadataIds(filter).spliterator(), false)
+							.collect(toMap(ObjectDatumStreamMetadataId::getSourceId,
+									ObjectDatumStreamMetadataId::getStreamId, (_, r) -> r));
+			return sourceToStreamIds;
 		}
 
 		private class DatumStreamImportContextIterator implements Iterator<GeneralNodeDatum> {
@@ -282,10 +355,36 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 						}
 					}
 				}
+
+				// clear out any generated auxiliary records over the query time range
+				final var usedFilter = (results != null && results.getUsedQueryFilter() != null
+						? results.getUsedQueryFilter()
+						: f);
+
+				if ( auxFilter.hasSourceCriteria() ) {
+					auxFilter.setStartDate(usedFilter.getStartDate());
+					auxFilter.setEndDate(usedFilter.getEndDate());
+					long deleteCount = datumAuxiliaryDao.deleteFiltered(auxFilter);
+					if ( deleteCount > 0 ) {
+						userEventAppenderBiz.addEvent(datumStream.getUserId(),
+								eventForUserRelatedKey(datumStream.getId(), DATUM_IMPORT_TAGS,
+										"Deleted %d generated Mark datum auxiliary records."
+												.formatted(deleteCount),
+										// @formatter:off
+										Map.of(START_AT_DATA_KEY, auxFilter.getStartDate()
+											, END_AT_DATA_KEY, auxFilter.getEndDate()
+											, NODE_ID_DATA_KEY, auxFilter.getNodeId()
+											, SOURCE_ID_DATA_KEY, auxFilter.getSourceIds()
+										// @formatter:on
+										)));
+					}
+				}
+
 				if ( results == null ) {
 					return Collections.emptyIterator();
 				}
-				var nextFilter = results.getNextQueryFilter();
+
+				final var nextFilter = results.getNextQueryFilter();
 				if ( nextFilter != null && nonnull(nextFilter.getStartDate(), "Next start date")
 						.isAfter(f.getStartDate()) ) {
 					// update progress based on the seconds between the overall start date and the next start date
@@ -297,6 +396,22 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				} else {
 					filter = null;
 				}
+
+				// save any auxiliary records returned
+				final SequencedCollection<DatumAuxiliaryRecord> auxiliary = results.getAuxiliary();
+				if ( auxiliary != null ) {
+					final Map<String, UUID> sourceToStreamIds = sourceToStreamIds();
+					for ( DatumAuxiliaryRecord aux : auxiliary ) {
+						final UUID streamId = sourceToStreamIds.get(aux.getSourceId());
+						if ( streamId != null ) {
+							final var entity = new DatumAuxiliaryEntity(streamId, aux.getTimestamp(),
+									aux.getType(), Instant.now(), aux.getSamplesFinal(),
+									aux.getSamplesStart(), aux.getNotes(), aux.getMetadata());
+							datumAuxiliaryDao.save(entity);
+						}
+					}
+				}
+
 				return results.iterator();
 			}
 

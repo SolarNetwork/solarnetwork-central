@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -39,7 +40,10 @@ import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesOperations;
 
 /**
  * Generalized node-based datum.
@@ -53,6 +57,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * @version 3.0
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
+@JsonIgnoreProperties({ "kind", "objectId", "timestamp" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
 		GeneralObjectDatum<GeneralNodeDatumPK>, CopyingIdentity<GeneralNodeDatum, GeneralNodeDatumPK> {
 
@@ -118,11 +123,30 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		other.samples = (samples != null ? new DatumSamples(samples) : new DatumSamples());
 	}
 
+	@Override
+	public Datum copyWithSamples(DatumSamplesOperations samples) {
+		var gd = new GeneralNodeDatum(id);
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
+	@Override
+	public Datum copyWithId(DatumId id) {
+		var ident = id.toIdentity();
+		var gd = new GeneralNodeDatum(
+				new GeneralNodeDatumPK(ident.getObjectId(), ident.getTimestamp(), ident.getSourceId()));
+		gd.setPosted(posted);
+		gd.setSamples(new DatumSamples(samples));
+		return gd;
+	}
+
 	/**
 	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
 	 * @return the sample data, or {@code null} if none available
 	 */
+	@Override
 	@JsonUnwrapped
 	@JsonAnyGetter
 	public @Nullable Map<String, ?> getSampleData() {
@@ -175,6 +199,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 *
 	 * @return the sourceId
 	 */
+	@Override
 	public final String getSourceId() {
 		return id.getSourceId();
 	}

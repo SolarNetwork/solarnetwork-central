@@ -693,7 +693,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is from clock time +1ms for <=")
 			.returns(clock.instant().plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(clock.instant().plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(clock.instant().minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(result)
@@ -762,7 +762,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is from clock time +1ms for <=")
 			.returns(clock.instant().plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(clock.instant().plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(clock.instant().minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(result)
@@ -845,7 +845,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is given timestamp + 1ms for <=")
 			.returns(queryTimestamp.plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(queryTimestamp.plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(queryTimestamp.minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(criteriaCaptor.getAllValues())
@@ -948,7 +948,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is given timestamp + 1ms for <=")
 			.returns(queryTimestamp.plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(queryTimestamp.plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(queryTimestamp.minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(criteriaCaptor.getAllValues())

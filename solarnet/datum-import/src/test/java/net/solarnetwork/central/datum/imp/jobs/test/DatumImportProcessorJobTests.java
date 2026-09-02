@@ -34,12 +34,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.TaskRejectedException;
-import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * Test cases for the {@link DatumImportProcessorJob} class.

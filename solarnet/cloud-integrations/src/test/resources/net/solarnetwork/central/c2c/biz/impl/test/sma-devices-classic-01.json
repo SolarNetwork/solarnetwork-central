@@ -1,0 +1,29 @@
+{
+  "plant": {
+    "plantId": "25056",
+    "name": "Niestetal Plant",
+    "description": "One of the biggest solar plants.",
+    "timezone": "Europe/Berlin"
+  },
+  "devices": [
+    {
+      "deviceId": "302453",
+      "name": "SB 3000TL-30",
+      "timezone": "Europe/Berlin",
+      "characteristic": {
+        "category": "Consumer",
+        "subCategory": "Dishwasher"
+      },
+      "type": "Solar Inverters",
+      "product": "SB4.0-1AV-41",
+      "productId": 9403,
+      "serial": "2005890720",
+      "vendor": "SMA Solar Technology AG",
+      "generatorPower": 4000,
+      "generatorPowerDc": 4000,
+      "isActive": false,
+      "deactivatedAt": "2019-04-07T12:30:02",
+      "isSmartConnectedReady": true
+    }
+  ]
+}

@@ -160,11 +160,7 @@ public class MockCloudControlService extends BaseCloudControlService {
 			// list available systems
 			result = systems();
 		}
-		try {
-			Collections.sort(result);
-		} catch ( UnsupportedOperationException e ) {
-			// probably immutable collection
-		}
+		result.sort(null);
 		return result;
 	}
 
@@ -179,7 +175,7 @@ public class MockCloudControlService extends BaseCloudControlService {
 	private List<CloudDataValue> systemDevices(final String systemId) {
 		var devices = DATA_VALUES.get(systemId);
 		if ( devices == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		List<CloudDataValue> result = new ArrayList<>(8);
 		for ( var deviceId : devices.keySet() ) {
@@ -191,11 +187,11 @@ public class MockCloudControlService extends BaseCloudControlService {
 	private List<CloudDataValue> deviceTopics(final String systemId, final String deviceId) {
 		var devices = DATA_VALUES.get(systemId);
 		if ( devices == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		var deviceTopics = devices.get(deviceId);
 		if ( deviceTopics == null ) {
-			return List.of();
+			return new ArrayList<>(0);
 		}
 		return deviceTopics;
 	}

@@ -22,13 +22,18 @@
 
 package net.solarnetwork.central.c2c.config;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.support.RetrySettings;
 
 /**
  * Marker interface for the cloud integrations configuration package.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface SolarNetCloudIntegrationsConfiguration {
 
@@ -78,4 +83,29 @@ public interface SolarNetCloudIntegrationsConfiguration {
 	 * @since 1.5
 	 */
 	String CLOUD_INTEGRATIONS_DEVMODE = SolarNetCommonConfiguration.DEVMODE + " & " + CLOUD_INTEGRATIONS;
+
+	/**
+	 * Create a {@link RetryTemplate} for given settings, suitable for use in
+	 * cloud integrations.
+	 *
+	 * @param settings
+	 *        the retry settings
+	 * @return the template instance
+	 * @since 1.6
+	 */
+	static RetryTemplate cloudDatumStreamRetryTemplate(RetrySettings settings) {
+		return new RetryTemplate(settings.toPolicy(builder -> {
+			builder.predicate(t -> {
+				final var hce = ExceptionUtils.throwableOfType(t, HttpClientErrorException.class);
+				final HttpStatusCode status = (hce != null ? hce.getStatusCode() : null);
+				if ( status != null && status.is4xxClientError() ) {
+					// do not retry for 4xx response
+					return false;
+				}
+
+				return true;
+			});
+		}));
+	}
+
 }

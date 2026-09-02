@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
@@ -34,15 +35,21 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,26 +60,46 @@ import org.springframework.web.client.RestClientResponseException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.imp.domain.DatumImportUserEvents;
 import net.solarnetwork.central.datum.support.DatumUtils;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumIdentity;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StringNaturalSortComparator;
@@ -81,10 +108,10 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.9
+ * @version 2.2
  */
-public class DaoCloudDatumStreamPollService
-		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
+public class DaoCloudDatumStreamPollService implements CloudDatumStreamPollService,
+		ServiceLifecycleObserver, CloudIntegrationsUserEvents, DatumImportUserEvents {
 
 	/** The {@code shutdownMaxWait} property default value: 1 minute. */
 	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofMinutes(1);
@@ -120,9 +147,12 @@ public class DaoCloudDatumStreamPollService
 	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final CloudDatumStreamPollTaskDao taskDao;
+	private final CloudDatumStreamRakeTaskDao rakeTaskDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
+	private final DatumStreamMetadataDao datumStreamMetadataDao;
 	private final DatumWriteOnlyDao datumDao;
+	private final DatumAuxiliaryEntityDao datumAuxiliaryDao;
 	private final ExecutorService executorService;
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
 	private Duration fastRescheduleMinLag = DEFAULT_FAST_RESCHEDULE_MIN_LAG;
@@ -143,12 +173,18 @@ public class DaoCloudDatumStreamPollService
 	 *        the node ownership DAO
 	 * @param taskDao
 	 *        the task DAO
+	 * @param rakeTaskDao
+	 *        the rake task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
 	 * @param datumStreamSettingsDao
 	 *        the datum stream settings DAO
+	 * @param datumStreamMetadataDao
+	 *        the datum stream metadata DAO
 	 * @param datumDao
 	 *        the datum DAO
+	 * @param datumAuxiliaryDao
+	 *        the datum auxiliary DAO
 	 * @param executor
 	 *        the executor; this must be exclusive to this service, as it will
 	 *        be shut down when this service is shut down
@@ -160,19 +196,24 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
-			CloudDatumStreamConfigurationDao datumStreamDao,
-			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao, DatumWriteOnlyDao datumDao,
-			ExecutorService executor,
+			CloudDatumStreamRakeTaskDao rakeTaskDao, CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao,
+			DatumStreamMetadataDao datumStreamMetadataDao, DatumWriteOnlyDao datumDao,
+			DatumAuxiliaryEntityDao datumAuxiliaryDao, ExecutorService executor,
 			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.rakeTaskDao = requireNonNullArgument(rakeTaskDao, "rakeTaskDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamSettingsDao = requireNonNullArgument(datumStreamSettingsDao,
 				"datumStreamSettingsDao");
+		this.datumStreamMetadataDao = requireNonNullArgument(datumStreamMetadataDao,
+				"datumStreamMetadataDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.datumAuxiliaryDao = requireNonNullArgument(datumAuxiliaryDao, "datumAuxiliaryDao");
 		this.executorService = requireNonNullArgument(executor, "executor");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
 				"datumStreamServiceProvider");
@@ -233,6 +274,8 @@ public class DaoCloudDatumStreamPollService
 
 		private final CloudDatumStreamPollTaskEntity taskInfo;
 		private final BasicClaimableJobState startState;
+		private @Nullable Set<String> resolvedSourceIds;
+		private @Nullable Map<String, UUID> sourceToStreamIds;
 
 		private CloudDatumStreamPollTask(CloudDatumStreamPollTaskEntity taskInfo) {
 			super();
@@ -262,7 +305,8 @@ public class DaoCloudDatumStreamPollService
 							taskInfo.getServiceProperties());
 					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 1L;
 					var errMsg = "Error executing poll task.";
-					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage(), ERROR_COUNT_DATA_KEY,
+					Map<String, Object> errData = Map.of(MESSAGE_DATA_KEY,
+							Objects.requireNonNullElse(t.getMessage(), ""), ERROR_COUNT_DATA_KEY,
 							errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
@@ -343,7 +387,7 @@ public class DaoCloudDatumStreamPollService
 							"Refusing to execute datum stream {} poll task because task owner {} does not own node {}",
 							datumStreamIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
-					var errData = Map.of(SOURCE_DATA_KEY, (Object) objectId);
+					Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, objectId);
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
@@ -354,12 +398,40 @@ public class DaoCloudDatumStreamPollService
 				}
 			}
 
-			// save task state to Executing (TODO maybe we don't need this step?)
+			// verify no rake task is executing, so the two tasks do not overlap
+			final var rakeTaskFilter = new BasicFilter();
+			rakeTaskFilter.setUserId(datumStream.getUserId());
+			rakeTaskFilter.setClaimableJobStates(new BasicClaimableJobState[] {
+					BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing });
+			rakeTaskFilter.setDatumStreamId(datumStream.getDatumStreamId());
+			FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> activeRakeTasks = rakeTaskDao
+					.findFiltered(rakeTaskFilter);
+			if ( activeRakeTasks != null && activeRakeTasks.getReturnedResultCount() > 0 ) {
+				final CloudDatumStreamRakeTaskEntity rakeTask = nonnull(activeRakeTasks.firstResult(),
+						"Rake task");
+				log.debug(
+						"Refusing to execute datum stream {} poll task because rake task {} is currently active",
+						taskInfo.getDatumStreamId(), rakeTask.ident());
+				var errMsg = "Rake task active.";
+				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, (Object) rakeTask.getConfigId(),
+						DATE_OFFSET_DATA_KEY, rakeTask.getOffset().toString());
+				taskInfo.setExecuteAt(
+						execTime.plus(fastRescheduleAmount).truncatedTo(ChronoUnit.SECONDS));
+				taskInfo.setMessage(errMsg);
+				taskInfo.putServiceProps(errData);
+				taskInfo.setState(Queued);
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
+				taskDao.updateTask(taskInfo, startState);
+				return taskInfo;
+			}
+
+			// save task state to Executing
 			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
-				var errMsg = "Failed to update task state from Claimed to Executing.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
+				var errMsg = "Failed to update task state from %s to Executing.".formatted(startState);
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 				return taskInfo;
@@ -369,7 +441,7 @@ public class DaoCloudDatumStreamPollService
 			final Trigger schedule = triggerForSchedule(datumStream);
 			if ( schedule == null ) {
 				var errMsg = "Datum Stream service schedule not provided or usable.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getSchedule());
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumStream.getSchedule());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
@@ -387,7 +459,8 @@ public class DaoCloudDatumStreamPollService
 			if ( datumStreamService == null ) {
 				// service no longer supported?...
 				var errMsg = "Configured Datum Stream service not available.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getServiceIdentifier());
+				Map<String, Object> errData = Map.of(SOURCE_DATA_KEY,
+						datumStream.getServiceIdentifier());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
@@ -397,15 +470,18 @@ public class DaoCloudDatumStreamPollService
 				return taskInfo;
 			}
 
+			final Instant queryStartDate = taskInfo.getStartAt();
+			final Instant queryEndDate = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+
 			final var filter = new BasicQueryFilter();
-			filter.setStartDate(taskInfo.getStartAt());
-			filter.setEndDate(clock.instant());
+			filter.setStartDate(queryStartDate);
+			filter.setEndDate(queryEndDate);
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
 					eventForUserRelatedKey(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
-							Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
-									taskInfo.getStartAt(), "endAt", filter.getEndDate(), "startedAt",
-									execTime)));
+							Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(), START_AT_DATA_KEY,
+									taskInfo.getStartAt(), END_AT_DATA_KEY, filter.getEndDate(),
+									STARTED_AT_DATA_KEY, execTime)));
 
 			log.debug("Polling for {} datum with filter {}", datumStreamIdent, filter);
 			final var polledDatum = datumStreamService.datum(datumStream, filter);
@@ -415,6 +491,11 @@ public class DaoCloudDatumStreamPollService
 				log.debug("Polling for {} found {} datum to import", datumStreamIdent,
 						polledDatum.size());
 				final DatumProcessor fluxPublisher = getFluxPublisher();
+
+				// cache datum stream  metadata to speed up conversion to StreamDatum
+				final Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> streamMetaCache = new HashMap<>(
+						8);
+
 				for ( var datum : polledDatum ) {
 					final var datumId = datum.datumIdent();
 					// validate that provided datum ID matches that on the configuration
@@ -423,8 +504,8 @@ public class DaoCloudDatumStreamPollService
 								"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling poll task.",
 								datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
 						var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
-						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumId.getObjectId(), "expected",
-								objectId);
+						Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumId.getObjectId(),
+								"expected", objectId);
 						taskInfo.setMessage(errMsg);
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
@@ -440,7 +521,8 @@ public class DaoCloudDatumStreamPollService
 								"Datum stream {} configured with kind {} but produced datum with kind {}: cancelling rake task.",
 								datumStreamIdent, kind, datumKind);
 						var errMsg = "Access denied to datum with kind different from datum stream configuration.";
-						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumKind, "expected", kind);
+						Map<String, Object> errData = Map.of(SOURCE_DATA_KEY, datumKind, "expected",
+								kind);
 						taskInfo.setMessage(errMsg);
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
@@ -452,28 +534,26 @@ public class DaoCloudDatumStreamPollService
 					if ( datumId.getSourceId() == null ) {
 						continue;
 					}
-					if ( datumId instanceof DatumEntity d ) {
+					if ( datumId instanceof StreamDatum d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.store(d);
 						}
-					} else if ( datumId instanceof GeneralObjectDatum<?> d ) {
-						if ( datumStreamSettings.isPublishToSolarIn() ) {
-							datumDao.persist(d);
-						}
-						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& datumId instanceof GeneralNodeDatum nodeDatum ) {
-							fluxPublisher.processDatum(nodeDatum);
-						}
 					} else {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
-							datumDao.store(datum);
-						}
-						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& kind == ObjectDatumKind.Node ) {
-							GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
-							if ( gd instanceof GeneralNodeDatum nodeDatum ) {
-								fluxPublisher.processDatum(nodeDatum);
+							final StreamDatum sDatum = datumStreamDatum(datumId, datum, queryEndDate,
+									streamMetaCache);
+							if ( sDatum != null ) {
+								datumDao.store(sDatum);
+							} else {
+								datumDao.store(datum);
 							}
+						}
+					}
+					if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
+							&& kind == ObjectDatumKind.Node ) {
+						GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
+						if ( gd instanceof GeneralNodeDatum nodeDatum ) {
+							fluxPublisher.processDatum(nodeDatum);
 						}
 					}
 					if ( lastDatumDate == null || lastDatumDate.isBefore(datumId.getTimestamp()) ) {
@@ -497,6 +577,10 @@ public class DaoCloudDatumStreamPollService
 				// updating aggregate values at the same timestamp
 				taskInfo.setStartAt(lastDatumDate);
 			}
+
+			// deal with auxiliary datum
+			maintainAuxiliaryRecords(datumStream, datumStreamService, queryStartDate, queryEndDate,
+					polledDatum);
 
 			// calculate the next execution time based on the datum stream schedule
 			var now = clock.instant();
@@ -535,21 +619,20 @@ public class DaoCloudDatumStreamPollService
 				log.warn("Failed to reset poll task {} @ {} starting @ {}", datumStreamIdent,
 						taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
-						taskInfo.getStartAt());
+				Map<String, Object> errData = Map.of(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt(),
+						START_AT_DATA_KEY, taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
 				var data = new LinkedHashMap<String, Object>(4);
-				data.put("executeAt", taskInfo.getExecuteAt());
-				data.put("startAt", taskInfo.getStartAt());
-				data.put("datumImportCount", polledDatum != null ? polledDatum.size() : 0);
+				data.put(EXECUTE_AT_DATA_KEY, taskInfo.getExecuteAt());
+				data.put(START_AT_DATA_KEY, taskInfo.getStartAt());
+				data.put(DATUM_COUNT_DATA_KEY, polledDatum != null ? polledDatum.size() : 0);
 				if ( lastDatumDate != null ) {
 					data.put("datumLastDate", lastDatumDate);
 				}
 				if ( polledDatum != null && !polledDatum.isEmpty() ) {
-					data.put("datumImportCount", polledDatum.size());
 					Map<String, Integer> sourceCounts = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
 					Map<String, Instant> lastDates = new TreeMap<>(
@@ -569,7 +652,7 @@ public class DaoCloudDatumStreamPollService
 							return datumId.getTimestamp().isAfter(old) ? datum.getTimestamp() : old;
 						});
 					}
-					data.put("datumImportCountBySource", sourceCounts);
+					data.put(DATUM_COUNT_BY_SOURCE_DATA_KEY, sourceCounts);
 					data.put("datumLastDateBySource", lastDates);
 				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
@@ -578,6 +661,135 @@ public class DaoCloudDatumStreamPollService
 			return taskInfo;
 		}
 
+		private void maintainAuxiliaryRecords(CloudDatumStreamConfiguration datumStream,
+				CloudDatumStreamService datumStreamService, Instant queryStartDate, Instant queryEndDate,
+				@Nullable CloudDatumStreamQueryResult polledDatum) {
+			if ( polledDatum == null || datumStream.getKind() != ObjectDatumKind.Node ) {
+				return;
+			}
+			final Set<String> sourceIds = resolveSourceIds(datumStream, datumStreamService);
+			if ( sourceIds.isEmpty() ) {
+				return;
+			}
+			final CloudDatumStreamQueryFilter usedFilter = (polledDatum.getUsedQueryFilter() != null
+					? polledDatum.getUsedQueryFilter()
+					: null);
+
+			final Instant startDate = usedFilter != null && usedFilter.getStartDate() != null
+					? usedFilter.getStartDate()
+					: queryStartDate;
+			final Instant endDate = usedFilter != null && usedFilter.getEndDate() != null
+					? usedFilter.getEndDate()
+					: queryEndDate;
+
+			// clear out any existing generated auxiliary for query date range
+			var auxFilter = new BasicDatumCriteria();
+			auxFilter.setDatumAuxiliaryType(DatumAuxiliaryType.Mark);
+			auxFilter.setObjectKind(datumStream.getKind());
+			auxFilter.setNodeId(datumStream.getObjectId());
+			auxFilter.setSourceIds(sourceIds.toArray(String[]::new));
+			auxFilter.setStartDate(startDate);
+			auxFilter.setEndDate(endDate);
+			auxFilter.setSearchFilter(CloudDatumStreamService.GENERATED_AUXILIARY_SEARCH_FILTER);
+			long deleteCount = datumAuxiliaryDao.deleteFiltered(auxFilter);
+			if ( deleteCount > 0 ) {
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_POLL_TAGS,
+						"Deleted %d generated Mark datum auxiliary records.".formatted(deleteCount),
+						// @formatter:off
+								Map.of(START_AT_DATA_KEY, auxFilter.getStartDate()
+									, END_AT_DATA_KEY, auxFilter.getEndDate()
+									, NODE_ID_DATA_KEY, auxFilter.getNodeId()
+									, SOURCE_ID_DATA_KEY, auxFilter.getSourceIds()
+								// @formatter:on
+						)));
+			}
+
+			// save any auxiliary records returned
+			final SequencedCollection<DatumAuxiliaryRecord> auxiliary = polledDatum.getAuxiliary();
+			if ( auxiliary != null ) {
+				final Map<String, UUID> sourceToStreamIds = sourceToStreamIds(datumStream, sourceIds);
+				for ( DatumAuxiliaryRecord aux : auxiliary ) {
+					final UUID streamId = sourceToStreamIds.get(aux.getSourceId());
+					if ( streamId != null ) {
+						final var entity = new DatumAuxiliaryEntity(streamId, aux.getTimestamp(),
+								aux.getType(), Instant.now(), aux.getSamplesFinal(),
+								aux.getSamplesStart(), aux.getNotes(), aux.getMetadata());
+						datumAuxiliaryDao.save(entity);
+					}
+				}
+			}
+		}
+
+		private Set<String> resolveSourceIds(CloudDatumStreamConfiguration datumStream,
+				CloudDatumStreamService service) {
+			if ( resolvedSourceIds != null ) {
+				return resolvedSourceIds;
+			}
+			Set<String> resolvedSourceIds = service.datumStreamSourceIds(datumStream);
+			this.resolvedSourceIds = (resolvedSourceIds != null ? resolvedSourceIds : Set.of());
+			return this.resolvedSourceIds;
+		}
+
+		private Map<String, UUID> sourceToStreamIds(CloudDatumStreamConfiguration datumStream,
+				Set<String> sourceIds) {
+			if ( sourceToStreamIds != null || sourceIds.isEmpty() ) {
+				return (sourceToStreamIds != null ? sourceToStreamIds : Map.of());
+			}
+
+			// copy aux filter for node/source IDs but clear out other criteria
+			var filter = new BasicDatumCriteria();
+			filter.setObjectKind(datumStream.getKind());
+			filter.setNodeId(datumStream.getObjectId());
+			filter.setSourceIds(sourceIds.toArray(String[]::new));
+
+			sourceToStreamIds = stream(datumStreamMetadataDao.findDatumStreamMetadataIds(filter)
+					.spliterator(), false).collect(Collectors.toMap(
+							net.solarnetwork.central.domain.ObjectDatumStreamMetadataId::getSourceId,
+							net.solarnetwork.central.domain.ObjectDatumStreamMetadataId::getStreamId,
+							(_, r) -> r));
+			return sourceToStreamIds;
+		}
+
+	}
+
+	private @Nullable StreamDatum datumStreamDatum(DatumIdentity datumId, Datum datum, Instant received,
+			Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> cache) {
+		final ObjectDatumStreamMetadata meta = datumStreamMetadata(datumId, cache);
+		if ( meta != null ) {
+			try {
+				var datumProps = DatumProperties.propertiesFrom(datum, meta);
+				if ( datumProps != null ) {
+					return new DatumEntity(meta.getStreamId(), datumId.getTimestamp(), received,
+							datumProps);
+				}
+			} catch ( IllegalArgumentException e ) {
+				// incompatible properties for stream; fall back to generic datum
+			}
+		}
+		return null;
+	}
+
+	private @Nullable ObjectDatumStreamMetadata datumStreamMetadata(DatumIdentity datumId,
+			Map<ObjectDatumStreamMetadataId, ObjectDatumStreamMetadata> cache) {
+		final var metaId = new ObjectDatumStreamMetadataId(datumId.getKind(), datumId.getObjectId(),
+				datumId.getSourceId());
+		ObjectDatumStreamMetadata meta = cache.get(metaId);
+		if ( meta == null ) {
+			var f = new BasicDatumCriteria();
+			f.setObjectKind(datumId.getKind());
+			if ( datumId.getKind() == ObjectDatumKind.Location ) {
+				f.setLocationId(datumId.getObjectId());
+			} else {
+				f.setNodeId(datumId.getObjectId());
+			}
+			f.setSourceId(datumId.getSourceId());
+			meta = datumStreamMetadataDao.findStreamMetadata(f);
+			if ( meta != null ) {
+				cache.put(metaId, meta);
+			}
+		}
+		return meta;
 	}
 
 	private @Nullable Trigger triggerForSchedule(CloudDatumStreamConfiguration datumStream) {

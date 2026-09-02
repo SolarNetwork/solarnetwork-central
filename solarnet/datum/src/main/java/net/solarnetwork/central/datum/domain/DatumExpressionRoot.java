@@ -56,7 +56,7 @@ import tools.jackson.databind.JsonNode;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -524,13 +524,60 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset) {
+		Datum d = offsetDatum(sourceId, offset);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Extract a property value from a datum offset matching a specific source
+	 * ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @param key
+	 *        the property name to extract
+	 * @return the extracted property from the matching datum, or {@code null}
+	 *         if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(@Nullable String sourceId, int offset, Object key) {
+		return offsetProp(sourceId, offset, key, null);
+	}
+
+	/**
+	 * Extract a property value from a datum offset matching a specific source
+	 * ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @param key
+	 *        the property name to extract
+	 * @param fallback
+	 *        the value to return if the property is not available
+	 * @return the extracted property from the matching datum, or
+	 *         {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(@Nullable String sourceId, int offset, Object key,
+			@Nullable Object fallback) {
+		Datum d = offsetDatum(sourceId, offset);
+		Object result = (d != null ? d.asSampleOperations().findSampleValue(key.toString()) : null);
+		return (result != null ? result : fallback);
+	}
+
+	private @Nullable Datum offsetDatum(@Nullable String sourceId, int offset) {
 		final ObjectDatumKind kind = datumKind();
 		final Long objectId = datumObjectId();
 		if ( datumStreamsAccessor == null || sourceId == null || kind == null || objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, offset);
-		return (d != null ? copyWith(d) : null);
+		return datumStreamsAccessor.offset(kind, objectId, sourceId, offset);
 	}
 
 	/**
@@ -570,14 +617,65 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset,
 			@Nullable Instant timestamp) {
+		Datum d = offsetDatum(sourceId, offset, timestamp);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Extract a property from a datum offset from a reference timestamp and
+	 * matching a specific source ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @return the matching datum, or {@code null} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(@Nullable String sourceId, int offset,
+			@Nullable Instant timestamp, Object key) {
+		return offsetProp(sourceId, offset, timestamp, key, null);
+	}
+
+	/**
+	 * Extract a property from a datum offset from a reference timestamp and
+	 * matching a specific source ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @param fallback
+	 *        the value to return if the property is not available
+	 * @return the matching datum, or {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(@Nullable String sourceId, int offset,
+			@Nullable Instant timestamp, Object key, @Nullable Object fallback) {
+		Datum d = offsetDatum(sourceId, offset, timestamp);
+		Object result = (d != null ? d.asSampleOperations().findSampleValue(key.toString()) : null);
+		return (result != null ? result : fallback);
+	}
+
+	private @Nullable Datum offsetDatum(@Nullable String sourceId, int offset,
+			@Nullable Instant timestamp) {
 		final ObjectDatumKind kind = datumKind();
 		final Long objectId = datumObjectId();
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
 				|| objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, offset);
-		return (d != null ? copyWith(d) : null);
+		return datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, offset);
 	}
 
 	/**
@@ -595,13 +693,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.1
 	 */
 	public boolean hasOffset(@Nullable String sourceId, int offset, @Nullable Instant timestamp) {
-		final ObjectDatumKind kind = datumKind();
-		final Long objectId = datumObjectId();
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
-				|| objectId == null ) {
-			return false;
-		}
-		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, offset);
+		Datum d = offsetDatum(sourceId, offset, timestamp);
 		return (d != null);
 	}
 
@@ -620,6 +712,48 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			return null;
 		}
 		return offset(me.getSourceId(), offset);
+	}
+
+	/**
+	 * Extract a property from an offset from the latest available datum
+	 * matching the source ID of this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @param key
+	 *        the property name to extract
+	 * @return the matching datum, or {@code null} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(int offset, Object key) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offsetProp(me.getSourceId(), offset, key, null);
+	}
+
+	/**
+	 * Extract a property from an offset from the latest available datum
+	 * matching the source ID of this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @param key
+	 *        the property name to extract
+	 * @param fallback
+	 *        the value to return if the property is not available
+	 * @return the matching datum, or {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(int offset, Object key, @Nullable Object fallback) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offsetProp(me.getSourceId(), offset, key, fallback);
 	}
 
 	/**
@@ -658,6 +792,53 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			return null;
 		}
 		return offset(me.getSourceId(), offset, timestamp);
+	}
+
+	/**
+	 * Extract a property from a datum offset from a given timestamp matching
+	 * the source ID of this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @return the matching datum, or {@code null} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(int offset, Instant timestamp, Object key) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offsetProp(me.getSourceId(), offset, timestamp, key, null);
+	}
+
+	/**
+	 * Extract a property from a datum offset from a given timestamp matching
+	 * the source ID of this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @param fallback
+	 *        the value to return if the property is not available
+	 * @return the matching datum, or {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object offsetProp(int offset, Instant timestamp, Object key,
+			@Nullable Object fallback) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offsetProp(me.getSourceId(), offset, timestamp, key, fallback);
 	}
 
 	/**
@@ -714,6 +895,49 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	}
 
 	/**
+	 * Extract a property value from the latest available datum matching a
+	 * specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code offset(sourceId, 0).get(key)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param key
+	 *        the property name to extract
+	 * @return the extracted property from the matching datum, or {@code null}
+	 *         if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object latestProp(String sourceId, Object key) {
+		return latestProp(sourceId, key, null);
+	}
+
+	/**
+	 * Extract a property value from the latest available datum matching a
+	 * specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code offsetProp(sourceId, 0, key, fallback)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param key
+	 *        the property name to extract
+	 * @param fallback
+	 *        the value to return if the property is not available
+	 * @return the extracted property from the matching datum, or
+	 *         {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object latestProp(String sourceId, Object key, @Nullable Object fallback) {
+		return offsetProp(sourceId, 0, key, fallback);
+	}
+
+	/**
 	 * Get datum latest to a reference timestamp matching a specific source ID.
 	 *
 	 * <p>
@@ -730,6 +954,55 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public @Nullable DatumExpressionRoot latest(String sourceId, Instant timestamp) {
 		return offset(sourceId, 0, timestamp);
+	}
+
+	/**
+	 * Extract a property value from a datum latest to a reference timestamp
+	 * matching a specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code offsetProp(sourceId, 0, timestamp, key)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @return the extracted property from the matching datum, or {@code null}
+	 *         if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object latestProp(String sourceId, Instant timestamp, Object key) {
+		return latestProp(sourceId, timestamp, key, null);
+	}
+
+	/**
+	 * Extract a property value from a datum latest to a reference timestamp
+	 * matching a specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code offset(sourceId, 0, timestamp).get(key)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param key
+	 *        the property name to extract
+	 * @return the extracted property from the matching datum, or
+	 *         {@code fallback} if not available
+	 * @return the extracted property from the matching datum, or
+	 *         {@code fallback} if not available
+	 * @since 1.2
+	 */
+	public @Nullable Object latestProp(String sourceId, Instant timestamp, Object key,
+			@Nullable Object fallback) {
+		return offsetProp(sourceId, 0, timestamp, key, fallback);
 	}
 
 	/**

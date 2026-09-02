@@ -1,0 +1,68 @@
+{
+  "plant": {
+    "plantId": "11260000",
+    "name": "Site 1",
+    "timezone": "America/New_York"
+  },
+  "device": {
+    "deviceId": "11260000",
+    "name": "WR8KU002 SN:2001200000",
+    "timezone": "America/New_York"
+  },
+  "setType": "EnergyAndPowerPv",
+  "resolution": "FiveMinutes",
+  "set": [
+    {
+      "time": "2025-03-27T07:00:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-27T07:05:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-27T07:10:00",
+      "pvGeneration": 4.0
+    },
+    {
+      "time": "2025-03-27T07:15:00",
+      "pvGeneration": 6.0
+    },
+    {
+      "time": "2025-03-27T07:20:00",
+      "pvGeneration": 8.0
+    },
+    {
+      "time": "2025-03-27T07:25:00",
+      "pvGeneration": 12.0
+    },
+    {
+      "time": "2025-03-27T07:30:00",
+      "pvGeneration": 14.0
+    },
+    {
+      "time": "2025-03-27T07:35:00",
+      "pvGeneration": 15.0
+    },
+    {
+      "time": "2025-03-27T07:40:00",
+      "pvGeneration": 19.0
+    },
+    {
+      "time": "2025-03-27T07:45:00",
+      "pvGeneration": 21.0
+    },
+    {
+      "time": "2025-03-27T07:50:00",
+      "pvGeneration": 23.0
+    },
+    {
+      "time": "2025-03-27T07:55:00",
+      "pvGeneration": 27.0
+    },
+    {
+      "time": "2025-03-28T00:00:00",
+      "pvGeneration": 283.0
+    }
+  ]
+}

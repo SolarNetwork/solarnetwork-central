@@ -40,6 +40,7 @@ import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollecti
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -62,6 +63,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -69,6 +72,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.reg.web.api.v1.UserCloudIntegrationsControlsController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
@@ -82,7 +86,7 @@ import tools.jackson.databind.ObjectMapper;
  * {@link UserCloudIntegrationsControlsController} datum stream actions.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -130,7 +134,8 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 
 	private CloudIntegrationConfiguration createIntegration(Long userId) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(),
+				AlsoEnergyCloudIntegrationService.SERVICE_IDENTIFIER);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 
@@ -148,14 +153,20 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 	}
 
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId) {
+		return createDatumStream(userId, nodeId, null);
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId,
+			Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString(),
-				ObjectDatumKind.Node);
+				unassignedEntityIdKey(userId), clock.instant(), randomString(),
+				AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER, ObjectDatumKind.Node);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		conf.setObjectId(nodeId);
 		conf.setSchedule("600");
 		conf.setSourceId(randomString());
+		conf.setServiceProps(serviceProps);
 
 		return datumStreamDao.get(datumStreamDao.save(conf));
 	}
@@ -177,7 +188,7 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 		final CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
+		input.setServiceIdentifier(AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER);
 		input.setDatumStreamMappingId(mapping.getConfigId());
 		input.setKind(ObjectDatumKind.Node);
 		input.setObjectId(reqNodeId);
@@ -325,7 +336,7 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 		final CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
+		input.setServiceIdentifier(AlsoEnergyCloudDatumStreamService.SERVICE_IDENTIFIER);
 		input.setDatumStreamMappingId(mapping.getConfigId());
 		input.setKind(ObjectDatumKind.Node);
 		input.setObjectId(reqNodeId);
@@ -864,6 +875,325 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 			.node("data")
 			.as("No data on forbidden response")
 			.isAbsent()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProperties_simple() throws Exception {
+		// GIVEN
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final List<Long> nodeIds = createUserNodes(3);
+		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+
+		// @formatter:off
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId,
+				initialProps);
+
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
+
+		final String reqJson = objectMapper.writeValueAsString(input);
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/datum-streams/%s/serviceProperties"
+				.formatted(datumStream.getConfigId());
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.PATCH.name())
+				.host("localhost")
+				.path(uriPath)
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				patch(uriPath)
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.isObject()
+			.hasSize(5)
+			.contains(
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
+			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(1)
+					.containsEntry("N1", 1)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.containsExactly("A1")
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProperties_recursive() throws Exception {
+		// GIVEN
+		final MergeMode mode = MergeMode.RecursiveObjects;
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final List<Long> nodeIds = createUserNodes(3);
+		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+
+		// @formatter:off
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId,
+				initialProps);
+
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
+
+		final String reqJson = objectMapper.writeValueAsString(input);
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/datum-streams/%s/serviceProperties"
+				.formatted(datumStream.getConfigId());
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.PATCH.name())
+				.host("localhost")
+				.path(uriPath)
+				.queryParams(Map.of("mode", mode.name()))
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				patch(uriPath)
+				.queryParam("mode", mode.name())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.isObject()
+			.hasSize(5)
+			.contains(
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
+			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(2)
+					.as("Object is recursively merged")
+					.containsOnly(
+						entry("n1", 1),
+						entry("N1", 1)
+					)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.as("Array is replaced")
+					.containsExactly("A1")
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProperties_recursiveArrays() throws Exception {
+		// GIVEN
+		final MergeMode mode = MergeMode.RecursiveObjectsAndArrays;
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final List<Long> nodeIds = createUserNodes(3);
+		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+
+		// @formatter:off
+		final Map<String, Object> initialProps = Map.of(
+				"foo", "f",
+				"bar", "b",
+				"obj", Map.of(
+						"n1", 1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId,
+				initialProps);
+
+		// @formatter:off
+		final Map<String, Object> input = Map.of(
+				"bar", "B",
+				"baz", "Z",
+				"obj", Map.of(
+						"N1", 1
+					),
+				"ary", List.of("A1")
+			);
+		// @formatter:on
+
+		final String reqJson = objectMapper.writeValueAsString(input);
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// THEN
+		final String uriPath = "/api/v1/sec/user/c2c/datum-streams/%s/serviceProperties"
+				.formatted(datumStream.getConfigId());
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.PATCH.name())
+				.host("localhost")
+				.path(uriPath)
+				.queryParams(Map.of("mode", mode.name()))
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				patch(uriPath)
+				.queryParam("mode", mode.name())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.isObject()
+			.hasSize(5)
+			.contains(
+				entry("foo", "f"),
+				entry("bar", "B"),
+				entry("baz", "Z")
+			)
+			.hasEntrySatisfying("obj", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isObject()
+					.hasSize(2)
+					.as("Object is recursively merged")
+					.containsOnly(
+						entry("n1", 1),
+						entry("N1", 1)
+					)
+					;
+			})
+			.hasEntrySatisfying("ary", obj -> {
+				then(obj)
+					.asInstanceOf(JSON)
+					.isArray()
+					.hasSize(2)
+					.as("Array is recursively merged")
+					.containsExactly("a1", "A1")
+					;
+			})
 			;
 		// @formatter:on
 	}
