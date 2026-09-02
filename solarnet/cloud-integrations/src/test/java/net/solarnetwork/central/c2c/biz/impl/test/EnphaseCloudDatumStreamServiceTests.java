@@ -328,6 +328,133 @@ public class EnphaseCloudDatumStreamServiceTests implements CloudIntegrationsUse
 		// @formatter:on
 	}
 
+	@Test
+	public void dataValues_root_nullValues() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				API_KEY_SETTING, apiKey,
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("enphase-systems-02.json", getClass()), ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(), Map.of());
+
+		// THEN
+		// @formatter:off
+		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		and.then(authRequestCaptor.getValue())
+			.as("OAuth request provided")
+			.isNotNull()
+			.as("No OAuth2AuthorizedClient provided")
+			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
+			.as("Client registration ID is configuration system identifier")
+			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		final URI listSystems = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
+				.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
+				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
+				.queryParam(EnphaseCloudIntegrationService.PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
+				.queryParam(EnphaseCloudIntegrationService.PAGE_PARAM, 1).buildAndExpand().toUri();
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(listSystems, from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		and.then(results)
+			.as("Result generated")
+			.hasSize(15)
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.as("System name parsed")
+					.returns("Sys 1", from(CloudDataValue::getName))
+					.as("System ID parsed")
+					.returns(List.of("1000000"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							"tz", "US/Eastern",
+							"l", "Washington",
+							"st", "DC",
+							"postalCode", "20017",
+							"c", "US",
+							"lastSeenAt", Instant.ofEpochSecond(1775142194)
+							))
+					;
+				and.then(l).element(9)
+					.as("System name parsed")
+					.returns("Sys 10", from(CloudDataValue::getName))
+					.as("System ID parsed")
+					.returns(List.of("1000009"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							"tz", "US/Eastern",
+							"l", "Washington",
+							"st", "DC",
+							"postalCode", "20018",
+							"c", "US"
+							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
 	private String refValue(List<String> idents) {
 		return idents.stream().collect(Collectors.joining("/", "/", ""));
 	}

@@ -406,16 +406,16 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				return;
 			}
 			if ( json.has("total") ) {
-				total = json.path("total").longValue();
+				total = json.path("total").longValue(0L);
 			}
 			if ( json.has("current_page") ) {
-				page = json.path("current_page").longValue();
+				page = json.path("current_page").longValue(0L);
 			}
 			if ( json.has("size") ) {
-				pageSize = json.path("size").intValue();
+				pageSize = json.path("size").intValue(0);
 			}
 			if ( json.has("count") ) {
-				count = json.path("count").intValue();
+				count = json.path("count").intValue(0);
 			}
 		}
 
@@ -507,7 +507,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		populateNonEmptyValue(addrNode, "country", CloudDataValue.COUNTRY_METADATA, meta);
 		populateNonEmptyValue(addrNode, "postal_code", CloudDataValue.POSTAL_CODE_METADATA, meta);
 
-		long lastSeen = json.path("last_report_at").longValue();
+		long lastSeen = json.path("last_report_at").longValue(0L);
 		if ( lastSeen > 0 ) {
 			meta.put("lastSeenAt", Instant.ofEpochSecond(lastSeen));
 		}
@@ -742,13 +742,13 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return;
 		}
 		// track the minimum "last report date" value in a response, to adjust "next start" query value
-		long jsonLastReportAt = json.path("meta").path("last_report_at").longValue();
+		long jsonLastReportAt = json.path("meta").path("last_report_at").longValue(0L);
 		if ( jsonLastReportAt > 0 ) {
 			if ( jsonLastReportAt < date.longValue() ) {
 				date.setValue(jsonLastReportAt);
 			}
 		}
-		long jsonLastEnergyAt = json.path("meta").path("last_energy_at").longValue();
+		long jsonLastEnergyAt = json.path("meta").path("last_energy_at").longValue(0L);
 		if ( jsonLastEnergyAt > 0 ) {
 			if ( jsonLastEnergyAt < date.longValue() ) {
 				date.setValue(jsonLastEnergyAt);
@@ -1019,7 +1019,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				? resolveTimeGapValidationThreshold(datumStream)
 				: null);
 
-		final Integer totalDeviceCount = json.path("total_devices").intValue();
+		final Integer totalDeviceCount = json.path("total_devices").intValue(0);
 
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
@@ -1028,7 +1028,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		String deviceRef = null;
 		Instant prevTs = null;
 		for ( JsonNode telem : json.path("intervals") ) {
-			long tsEpoch = telem.path(END_AT_PARAM).longValue();
+			long tsEpoch = telem.path(END_AT_PARAM).longValue(0L);
 			if ( tsEpoch < 1 ) {
 				continue;
 			} else if ( tsEpoch > nonnull(filter.getEndDate(), "End date").getEpochSecond() ) {
@@ -1078,7 +1078,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			// add internal device count props
-			int reportingDeviceCount = telem.path("devices_reporting").intValue();
+			int reportingDeviceCount = telem.path("devices_reporting").intValue(0);
 			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
 			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
@@ -1172,7 +1172,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				? resolveTimeGapValidationThreshold(datumStream)
 				: null);
 
-		final Integer totalDeviceCount = json.path("total_devices").intValue();
+		final Integer totalDeviceCount = json.path("total_devices").intValue(0);
 
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
@@ -1186,7 +1186,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( phaseReadings != null ) {
 			for ( JsonNode meter : json.path("meter_intervals") ) {
 				for ( JsonNode telem : meter.path("intervals") ) {
-					long ts = telem.path(END_AT_PARAM).longValue();
+					long ts = telem.path(END_AT_PARAM).longValue(0L);
 					if ( ts < 1 ) {
 						continue;
 					}
@@ -1196,7 +1196,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 
 		for ( JsonNode telem : json.path("intervals") ) {
-			final long tsEpoch = telem.path(END_AT_PARAM).longValue();
+			final long tsEpoch = telem.path(END_AT_PARAM).longValue(0L);
 			if ( tsEpoch < 1 ) {
 				continue;
 			}
@@ -1219,7 +1219,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 				Object propVal = null;
 				if ( "DevicesReporting".equals(ref.fieldName) ) {
-					propVal = telem.path("devices_reporting").intValue();
+					propVal = telem.path("devices_reporting").intValue(0);
 				} else if ( "WhExp".equals(ref.fieldName) ) {
 					JsonNode fieldNode = telem.path("wh_del");
 					if ( fieldNode == null || fieldNode.isNull() || fieldNode.isMissingNode() ) {
@@ -1255,7 +1255,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 							default -> -1;
 						};
 						JsonNode phaseTelem = phaseNodes.stream()
-								.filter(n -> desiredChannel == n.path("channel").intValue()).findFirst()
+								.filter(n -> desiredChannel == n.path("channel").intValue(0)).findFirst()
 								.orElse(null);
 						if ( phaseTelem == null || phaseTelem.isNull() || phaseTelem.isMissingNode() ) {
 							continue;
@@ -1287,7 +1287,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			// add internal device count props
-			int reportingDeviceCount = telem.path("devices_reporting").intValue();
+			int reportingDeviceCount = telem.path("devices_reporting").intValue(0);
 			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
 			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
