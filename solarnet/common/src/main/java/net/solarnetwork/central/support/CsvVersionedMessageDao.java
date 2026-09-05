@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.snf.util;
+package net.solarnetwork.central.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -52,7 +52,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao;
  * </ol>
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 public class CsvVersionedMessageDao implements VersionedMessageDao {
 
@@ -97,6 +97,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 		Map<String, Row> rows = new LinkedHashMap<>(64);
 		for ( Resource r : resources ) {
 			try (CsvReader<CsvRecord> reader = CsvReader.builder().ofCsvRecord(r.getInputStream())) {
+				reader.skipLines(1); // skip header
 				for ( CsvRecord list : reader ) {
 					Instant ts = TIMESTAMP_FORMATTER.parse(list.getField(0), Instant::from);
 					if ( ts.isAfter(version) ) {
