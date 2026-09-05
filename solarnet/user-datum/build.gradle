@@ -34,10 +34,11 @@ dependencies {
 	// JCache
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
-
+	
 	// Utilities
-	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:${snCommonTmplSt4}"
 	implementation 'org.aspectj:aspectjweaver'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -1,0 +1,78 @@
+vers,bundle,locale,msg_key,msg_val
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,alert,stale,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
+2026-09-01 00:00:00+12,snf.stale-datum-alert,en,alertTitle,SolarNetwork alert:
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,body.st,"body() ::= <<
+$introSection()$
+$staleInfoSection()$
+$footerSection()$
+>>"
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,footerSection.st,"footerSection() ::= <<
+<footer>
+	<p>
+	This automated email was sent to $alert.email$ because of an alert configured for SolarNode
+	$alert.nodeId$. You can manage your alert settings by logging in to your
+	<a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork account</a>.
+	</p>
+</footer>
+>>"
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,head.st,"head() ::= <<
+<meta charset=""UTF-8"">
+<title>$messages.alertTitle$ $alert.nodeId$</title>
+<style type=""text/css"">
+$style()$
+</style>
+>>"
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,introSection.st,"introSection() ::= <<
+<p>
+This is an automated alert email from SolarNetwork. The following sources are stale:
+</p>
+>>"
+2026-09-01 00:00:00+12,snf.stale-datum-alert,en,lastDatumDateLabel,Last datum date
+2026-09-01 00:00:00+12,snf.stale-datum-alert,en,nodeIdLabel,Node
+2026-09-01 00:00:00+12,snf.stale-datum-alert,en,sourceIdLabel,Source
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,staleInfoRow.st,"staleInfoRow(info) ::= <<
+<tr>
+	<th>$info.nodeId$</th>
+	<th>$info.sourceId$</th>
+	<td>$info.localizedTimestamp$</td>
+</tr>
+>>"
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,staleInfoSection.st,"staleInfoSection() ::= <<
+<table class=""items"">
+	<thead>
+		<tr>
+			<th>$messages.nodeIdLabel$</th>
+			<th>$messages.sourceIdLabel$</th>
+			<th>$messages.lastDatumDateLabel$</th>
+		</tr>
+		<tr>
+			<th colspan=""3"" class=""hr""></th>
+		</tr>
+	</thead>
+	<tbody>
+		$stale:staleInfoRow()$	
+	</tbody>
+</table>
+>>"
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,style.st,"style() ::= <<
+	body '{' 
+		font-family: sans-serif;
+		background-color: #FFF;  
+		margin: 2rem; '}'
+	footer '{' border-top:2px solid #F7C819;color:#666;margin-top:2rem; '}'
+	footer > p '{' margin-top:4px; margin-bottom: 4px; font-size:0.8rem; '}'
+	footer > p + p '{' border-top: 1px solid #ccc; padding-top: 2px; '}'
+	table '{' width: 100%; '}'
+	th.hr '{' border-top: 2px solid black; '}'
+	td.hr '{' border-top: 1px solid #ccc; '}'
+	th '{' text-align:left; '}'
+	.items tbody td,
+	.items tbody th,
+	.items tfoot td,
+	.items tfoot th '{'
+		font-size:0.8rem;
+	'}'
+	.items td '{' padding-top: 2px; padding-bottom: 2px; vertical-align: text-bottom; '}'
+	.items tr *:last-child '{' text-align: right; '}'
+	.items th '{' width: auto; '}'
+>>"

@@ -39,6 +39,7 @@ dependencies {
 	
 	// Utilities
 	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:${snCommonTmplSt4}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.javamoney:moneta:1.4.2'
