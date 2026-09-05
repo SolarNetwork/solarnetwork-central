@@ -42,7 +42,7 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public final class CommonTestUtils {
 
@@ -141,6 +141,21 @@ public final class CommonTestUtils {
 			buf.append('/');
 		}
 		buf.append(1 + RNG.nextInt(8));
+		return buf.toString();
+	}
+
+	/**
+	 * Get a random email address.
+	 *
+	 * @return the email
+	 * @since 1.9
+	 */
+	public static String randomEmail() {
+		StringBuilder buf = new StringBuilder();
+		for ( int i = 0; i < 8; i++ ) {
+			buf.append((char) (ALPHA_CHAR_OFFSET + RNG.nextInt(ALPHA_CHAR_LEN)));
+		}
+		buf.append("@localhost");
 		return buf.toString();
 	}
 
