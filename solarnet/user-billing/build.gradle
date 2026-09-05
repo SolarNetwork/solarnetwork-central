@@ -58,14 +58,12 @@ dependencies {
 	
 	// Utilities
 	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:${snCommonTmplSt4}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 	implementation 'org.slf4j:slf4j-api'
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
-	
-	// SolarNetwork
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

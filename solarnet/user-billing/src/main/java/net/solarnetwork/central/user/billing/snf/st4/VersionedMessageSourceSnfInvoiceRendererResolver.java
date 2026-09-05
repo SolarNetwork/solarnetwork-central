@@ -22,26 +22,23 @@
 
 package net.solarnetwork.central.user.billing.snf.st4;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import java.util.List;
 import java.util.Locale;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
-import org.springframework.context.MessageSource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
-import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.support.VersionedMessageSourceSupport;
 import net.solarnetwork.common.tmpl.st4.MessageSourceGroup;
 import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 import net.solarnetwork.service.TemplateRenderer;
 
 /**
  * {@link SnfInvoiceRendererResolver} that resolves {@link ST4TemplateRenderer}
- * renderers using a {@link MessageSourceGroup} for templates.
+ * instances using a {@link MessageSourceGroup} for templates.
  *
  * <p>
  * The start and end delimiters for ST are both configured as the {@literal $}
@@ -49,16 +46,10 @@ import net.solarnetwork.service.TemplateRenderer;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvoiceRendererResolver {
-
-	private final String[] bundleNames;
-	private final String rootTemplateName;
-	private final List<MimeType> mimeTypes;
-	private final VersionedMessageDao messageDao;
-	private final Cache<String, VersionedMessages> messageCache;
-	private final Cache<String, ST4TemplateRenderer> templateCache;
+public class VersionedMessageSourceSnfInvoiceRendererResolver extends VersionedMessageSourceSupport
+		implements SnfInvoiceRendererResolver {
 
 	/**
 	 * Constructor.
@@ -82,40 +73,14 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 			MimeType mimeType, VersionedMessageDao messageDao,
 			Cache<String, VersionedMessages> messageCache,
 			Cache<String, ST4TemplateRenderer> templateCache) {
-		super();
-		this.bundleNames = new String[] { requireNonNullArgument(bundleName, "bundleName") };
-		this.rootTemplateName = requireNonNullArgument(rootTemplateName, "rootTemplateName");
-		this.messageDao = requireNonNullArgument(messageDao, "messageDao");
-		this.mimeTypes = List.of(requireNonNullArgument(mimeType, "mimeType"));
-		this.messageCache = requireNonNullArgument(messageCache, "messageCache");
-		this.templateCache = requireNonNullArgument(templateCache, "templateCache");
+		super(bundleName, rootTemplateName, mimeType, messageDao, messageCache, templateCache);
 	}
 
 	@Override
 	public @Nullable TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType,
 			Locale locale) {
-		boolean mimeMatch = false;
-		for ( MimeType allowed : mimeTypes ) {
-			if ( allowed.isCompatibleWith(mimeType) ) {
-				mimeMatch = true;
-				break;
-			}
-		}
-		if ( !mimeMatch ) {
-			return null;
-		}
 		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
-		MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao, bundleNames,
-				version, messageCache);
-		String templateVersion = messageSource.getMessage("version", null, "", locale);
-		ST4TemplateRenderer renderer = templateCache.get(templateVersion);
-		if ( renderer == null ) {
-			renderer = new ST4TemplateRenderer(bundleNames[0],
-					new MessageSourceGroup(bundleNames[0], messageSource, '$', '$'), rootTemplateName,
-					mimeTypes, ST4TemplateRenderer.UTF8);
-			templateCache.putIfAbsent(templateVersion, renderer);
-		}
-		return renderer;
+		return rendererForVersion(version, mimeType, locale);
 	}
 
 }
