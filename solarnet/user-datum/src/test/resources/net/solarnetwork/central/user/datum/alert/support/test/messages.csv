@@ -1,9 +1,10 @@
 vers,bundle,locale,msg_key,msg_val
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,alert,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,situation,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,alertTitle,SolarNetwork alert:
+2026-09-01 00:00:00+12,snf.stale-datum-alert,en,resolvedTitle,SolarNetwork alert resolved:
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,body.st,"body() ::= <<
 $introSection()$
-$staleInfoSection()$
+$datumInfoSection()$
 $footerSection()$
 >>"
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,footerSection.st,"footerSection() ::= <<
@@ -17,30 +18,44 @@ $footerSection()$
 >>"
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,head.st,"head() ::= <<
 <meta charset=""UTF-8"">
-<title>$messages.alertTitle$ $alert.nodeId$</title>
+<title>
+	$if(situation.resolved)$
+	$messages.resolvedTitle$ $situation.alert.nodeId$
+	$else$
+	$messages.alertTitle$ $situation.alert.nodeId$
+	$endif$
+</title>
 <style type=""text/css"">
 $style()$
 </style>
 >>"
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,introSection.st,"introSection() ::= <<
 <p>
-This is an automated <b>stale datum alert</b> email from SolarNetwork.
-$if(localizedAlertAge)$
-The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
+$if(situation.resolved)$
+	This is an automated stale datum <b>resolved</b> email from SolarNetwork.
+	$if(localizedAlertAge)$
+	The following sources <b>are no longer considered stale</b> because they have have posted
+	data within the past <b>$localizedAlertAge$</b>:
+	$endif$
+$else$
+	This is an automated <b>stale datum alert</b> email from SolarNetwork.
+	$if(localizedAlertAge)$
+	The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
+	$endif$
 $endif$
 </p>
 >>"
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,lastDatumDateLabel,Last datum date
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,nodeIdLabel,Node
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,sourceIdLabel,Source
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,staleInfoRow.st,"staleInfoRow(info) ::= <<
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,datumInfoRow.st,"datumInfoRow(info) ::= <<
 <tr>
 	<th>$info.nodeId$</th>
 	<th>$info.sourceId$</th>
 	<td>$info.localizedTimestamp$</td>
 </tr>
 >>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,staleInfoSection.st,"staleInfoSection() ::= <<
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,datumInfoSection.st,"datumInfoSection() ::= <<
 <table class=""items"">
 	<thead>
 		<tr>
@@ -53,7 +68,7 @@ $endif$
 		</tr>
 	</thead>
 	<tbody>
-		$datum:staleInfoRow()$
+		$datum:datumInfoRow()$
 	</tbody>
 </table>
 >>"

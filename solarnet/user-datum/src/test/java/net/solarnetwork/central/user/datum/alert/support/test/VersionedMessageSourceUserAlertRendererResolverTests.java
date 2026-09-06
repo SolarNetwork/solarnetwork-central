@@ -56,6 +56,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertOptions;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 import net.solarnetwork.service.TemplateRenderer;
 import net.solarnetwork.util.DateUtils;
@@ -113,7 +114,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 			.hasSize(4)
 			;
 		then(result.get(UserAlertRendererResolver.USER_PARAM)).as("User populated").isSameAs(user);
-		then(result.get(UserAlertRendererResolver.ALERT_PARAM)).as("Alert populated").isSameAs(alert);
+		then(result.get(UserAlertRendererResolver.SITUATION_PARAM)).as("Alert populated").isSameAs(sit);
 		then(result.get(UserAlertRendererResolver.DATUM_IDENTIFIER_LIST_PARAM))
 			.as("Datum info populated")
 			.asInstanceOf(list(UserAlertRendererResolver.DatumStreamInfo.class))
@@ -169,7 +170,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 			.hasSize(5)
 			;
 		then(result.get(UserAlertRendererResolver.USER_PARAM)).as("User populated").isSameAs(user);
-		then(result.get(UserAlertRendererResolver.ALERT_PARAM)).as("Alert populated").isSameAs(alert);
+		then(result.get(UserAlertRendererResolver.SITUATION_PARAM)).as("Alert populated").isSameAs(sit);
 		then(result.get(UserAlertRendererResolver.DATUM_IDENTIFIER_LIST_PARAM))
 			.as("Datum info populated")
 			.asInstanceOf(list(UserAlertRendererResolver.DatumStreamInfo.class))
@@ -352,6 +353,130 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 				</style></head><body><p>
 				This is an automated <b>stale datum alert</b> email from SolarNetwork.
 				The following sources have not posted data in more than <b>%4$s minutes</b>:
+				</p>
+				<table class="items">
+					<thead>
+						<tr>
+							<th>Node</th>
+							<th>Source</th>
+							<th>Last datum date</th>
+						</tr>
+						<tr>
+							<th colspan="3" class="hr"></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th>%1$d</th>
+							<th>%2$s</th>
+							<td>%3$s</td>
+						</tr>	
+					</tbody>
+				</table>
+				<footer>
+					<p>
+					This automated email was sent to %5$s because of a stale datum alert configured in
+					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
+					account</a> of %6$s.
+					</p>
+				</footer></body></html>					
+				""".formatted(
+						  alert.getNodeId()
+						, sourceId
+						, DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
+							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))
+						, NumberFormat.getIntegerInstance(locale).format(age / 60)
+						, user.getEmail()
+						, user.getEmail()
+					)
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void renderHtml_oneStale_resolved() throws IOException {
+		// GIVEN
+		final Locale locale = Locale.ENGLISH;
+		final MimeType mimeType = MimeTypeUtils.TEXT_HTML;
+
+		final Integer age = randomInt();
+		final String sourceId = randomSourceId();
+
+		final User user = new User();
+		user.setEmail(randomEmail());
+		final SolarLocation loc = new SolarLocation();
+		loc.setTimeZoneId("Europe/London");
+		user.setLocation(loc);
+
+		final UserAlert alert = new UserAlert();
+		alert.setNodeId(randomLong());
+		// @formatter:off
+		alert.setOptions(Map.of(
+				UserAlertOptions.AGE_THRESHOLD, age,
+				UserAlertOptions.SOURCE_IDS, List.of(sourceId)
+		));
+		// @formatter:on
+
+		final UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(alert);
+		sit.setStatus(UserAlertSituationStatus.Resolved);
+
+		final List<NodeDatumStreamPK> datum = List
+				.of(new NodeDatumStreamPK(alert.getNodeId(), sourceId, now()));
+
+		// WHEN
+		TemplateRenderer renderer = resolver.rendererForAlert(sit, mimeType, locale);
+
+		// THEN
+		// @formatter:off
+		then(renderer)
+			.as("Renderer returned for HTML")
+			.isNotNull()
+			;
+		
+		final var messageSource =  new VersionedMessageDaoMessageSource(messageDao, new String[] {"snf.stale-datum-alert"}, Instant.now(),
+				messageCache);
+		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, locale);
+		templateParameters.put("messages", messageSource.propertiesForLocale(locale));
+		
+		final ByteArrayOutputStream byos = new ByteArrayOutputStream();
+		renderer.render(locale, mimeType, templateParameters, byos);
+
+		final String result = byos.toString(StandardCharsets.UTF_8);
+		then(result)
+			.as("HTML generated")
+			.isNotNull()
+			.isEqualToIgnoringWhitespace("""
+				<html><head><meta charset="UTF-8">
+				<title>
+					SolarNetwork alert resolved: %1$d
+				</title>
+				<style type="text/css">
+					body { 
+						font-family: sans-serif;
+						background-color: #FFF;  
+						margin: 2rem; }
+					footer { border-top:2px solid #F7C819;color:#666;margin-top:2rem; }
+					footer > p { margin-top:4px; margin-bottom: 4px; font-size:0.8rem; }
+					footer > p + p { border-top: 1px solid #ccc; padding-top: 2px; }
+					table { width: 100%%; }
+					th.hr { border-top: 2px solid black; }
+					td.hr { border-top: 1px solid #ccc; }
+					th { text-align:left; }
+					.items tbody td,
+					.items tbody th,
+					.items tfoot td,
+					.items tfoot th {
+						font-size:0.8rem;
+					}
+					.items td { padding-top: 2px; padding-bottom: 2px; vertical-align: text-bottom; }
+					.items tr *:last-child { text-align: right; }
+					.items th { width: auto; }
+				</style></head><body><p>
+				This is an automated stale datum <b>resolved</b> email from SolarNetwork.
+				The following sources <b>are no longer considered stale</b> because they have have posted
+				data within the past <b>%4$s minutes</b>:
 				</p>
 				<table class="items">
 					<thead>

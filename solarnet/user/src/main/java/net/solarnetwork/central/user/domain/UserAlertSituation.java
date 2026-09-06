@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A triggered alert condition.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class UserAlertSituation extends BaseEntity {
 
@@ -83,6 +83,16 @@ public class UserAlertSituation extends BaseEntity {
 	@SuppressWarnings("NullAway")
 	public final Instant notified() {
 		return notified;
+	}
+
+	/**
+	 * Test if the situation is resolved.
+	 * 
+	 * @return {@code true} if the situation status is {@code Resolved}
+	 * @since 2.2
+	 */
+	public boolean isResolved() {
+		return (status == UserAlertSituationStatus.Resolved);
 	}
 
 	public final @Nullable UserAlert getAlert() {

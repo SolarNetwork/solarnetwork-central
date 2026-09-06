@@ -50,8 +50,8 @@ public interface UserAlertRendererResolver {
 	/** A template parameter name for a {@code User} instance. */
 	String USER_PARAM = "user";
 
-	/** A template parameter name for an {@code UserAlert} instance. */
-	String ALERT_PARAM = "alert";
+	/** A template parameter name for an {@code UserAlertSituation} instance. */
+	String SITUATION_PARAM = "situation";
 
 	/**
 	 * A template parameter name for a {@code List<DatumStreamInfo>} datum
@@ -116,7 +116,7 @@ public interface UserAlertRendererResolver {
 				.withZone(tz);
 		final Map<String, Object> result = new LinkedHashMap<>(8);
 		result.put(USER_PARAM, user);
-		result.put(ALERT_PARAM, situation.getAlert());
+		result.put(SITUATION_PARAM, situation);
 		result.put(DATUM_IDENTIFIER_LIST_PARAM,
 				datum.stream().map(id -> new DatumStreamInfo(id.getNodeId(), id.getSourceId(),
 						id.getTimestamp(), formatter.format(id.getTimestamp()))).toList());
