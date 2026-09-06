@@ -22,23 +22,28 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import static net.solarnetwork.central.common.dao.config.VersionedMessageDaoConfig.VERSIONED_MESSAGES_CACHE;
 import java.time.Clock;
+import java.util.List;
+import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.dao.AppSettingDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.DefaultMailService;
 import net.solarnetwork.central.mail.support.MailServiceSettings;
 import net.solarnetwork.central.user.alert.jobs.UserAlertSituationCleanerJob;
+import net.solarnetwork.central.user.biz.UserAlertRendererResolver;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -85,6 +90,16 @@ public class UserAlertJobsConfig {
 	@Autowired
 	private JavaMailSender mailSender;
 
+	@Autowired
+	private List<UserAlertRendererResolver> userAlertRendererResolvers;
+
+	@Autowired
+	private VersionedMessageDao messageDao;
+
+	@Autowired
+	@Qualifier(VERSIONED_MESSAGES_CACHE)
+	private Cache<String, VersionedMessageDao.VersionedMessages> versionedMessagesCache;
+
 	@ConfigurationProperties(prefix = "app.mail.settings")
 	@Bean
 	public MailServiceSettings mailSettings() {
@@ -111,11 +126,12 @@ public class UserAlertJobsConfig {
 	@ConfigurationProperties(prefix = "app.user-alert.stale-data.processor")
 	@Bean
 	public EmailNodeStaleDataAlertProcessor emailNodeStaleDataAlertProcessor() {
-		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(EmailNodeStaleDataAlertProcessor.class.getName());
-
-		return new EmailNodeStaleDataAlertProcessor(solarNodeDao, userDao, userNodeDao, userAlertDao,
-				userAlertSituationDao, datumDao, emailNodeStaleDataAlertMailService(), msgSource);
+		var result = new EmailNodeStaleDataAlertProcessor(Clock.systemUTC(), solarNodeDao, userDao,
+				userNodeDao, userAlertDao, userAlertSituationDao, datumDao,
+				emailNodeStaleDataAlertMailService(), messageDao);
+		result.setRendererResolvers(userAlertRendererResolvers);
+		result.setMessageCache(versionedMessagesCache);
+		return result;
 	}
 
 	@ConfigurationProperties(prefix = "app.job.user-alert.stale-data.emailer")

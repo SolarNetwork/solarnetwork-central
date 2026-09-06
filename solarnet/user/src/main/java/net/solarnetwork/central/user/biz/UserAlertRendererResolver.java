@@ -34,6 +34,7 @@ import java.util.ResourceBundle;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.service.TemplateRenderer;
@@ -77,7 +78,13 @@ public interface UserAlertRendererResolver {
 	 * @param localizedTimestamp
 	 *        the localized formatted timestamp
 	 */
-	record DatumStreamInfo(Long nodeId, String sourceId, Instant timestamp, String localizedTimestamp) {
+	record DatumStreamInfo(Long nodeId, String sourceId, Instant timestamp, String localizedTimestamp)
+			implements NodeIdRelated {
+
+		@Override
+		public @Nullable Long getNodeId() {
+			return nodeId;
+		}
 
 	}
 
