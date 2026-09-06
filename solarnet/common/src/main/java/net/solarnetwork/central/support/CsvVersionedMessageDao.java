@@ -133,9 +133,16 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 				throw new RuntimeException(e);
 			}
 		}
+		Instant latestVersion = null;
 		Properties p = new Properties();
 		for ( Row r : rows.values() ) {
+			if ( latestVersion == null || r.version.isAfter(latestVersion) ) {
+				latestVersion = r.version;
+			}
 			p.put(r.name, r.template);
+		}
+		if ( latestVersion != null ) {
+			p.put(VERSION_KEY, latestVersion.toString());
 		}
 		return p;
 	}
