@@ -328,7 +328,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 			.isNotNull()
 			.isEqualToIgnoringWhitespace("""
 				<html><head><meta charset="UTF-8">
-				<title>SolarNetwork alert: %1$d</title>
+				<title>SolarNetwork stale datum alert</title>
 				<style type="text/css">
 					body { 
 						font-family: sans-serif;
@@ -449,9 +449,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 			.isNotNull()
 			.isEqualToIgnoringWhitespace("""
 				<html><head><meta charset="UTF-8">
-				<title>
-					SolarNetwork alert resolved: %1$d
-				</title>
+				<title>SolarNetwork stale datum alert resolved</title>
 				<style type="text/css">
 					body { 
 						font-family: sans-serif;
@@ -576,7 +574,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 			.isNotNull()
 			.isEqualToIgnoringWhitespace("""
 				<html><head><meta charset="UTF-8">
-				<title>SolarNetwork alert: %1$d</title>
+				<title>SolarNetwork stale datum alert</title>
 				<style type="text/css">
 					body { 
 						font-family: sans-serif;

@@ -1,61 +1,19 @@
-vers,bundle,locale,msg_key,msg_val
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,situation,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
-2026-09-01 00:00:00+12,snf.stale-datum-alert,en,alertTitle,SolarNetwork alert:
-2026-09-01 00:00:00+12,snf.stale-datum-alert,en,resolvedTitle,SolarNetwork alert resolved:
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,body.st,"body() ::= <<
+"vers","bundle","locale","msg_key","msg_val"
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","alert.st","alert(user,situation,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","alertTitle","SolarNetwork stale datum alert"
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","body.st","body() ::= <<
 $introSection()$
 $datumInfoSection()$
 $footerSection()$
 >>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,footerSection.st,"footerSection() ::= <<
-<footer>
-	<p>
-	This automated email was sent to $destinationEmails$ because of a stale datum alert configured in
-	the <a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork
-	account</a> of $user.email$.
-	</p>
-</footer>
->>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,head.st,"head() ::= <<
-<meta charset=""UTF-8"">
-<title>
-	$if(situation.resolved)$
-	$messages.resolvedTitle$ $situation.alert.nodeId$
-	$else$
-	$messages.alertTitle$ $situation.alert.nodeId$
-	$endif$
-</title>
-<style type=""text/css"">
-$style()$
-</style>
->>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,introSection.st,"introSection() ::= <<
-<p>
-$if(situation.resolved)$
-	This is an automated stale datum <b>resolved</b> email from SolarNetwork.
-	$if(localizedAlertAge)$
-	The following sources <b>are no longer considered stale</b> because they have have posted
-	data within the past <b>$localizedAlertAge$</b>:
-	$endif$
-$else$
-	This is an automated <b>stale datum alert</b> email from SolarNetwork.
-	$if(localizedAlertAge)$
-	The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
-	$endif$
-$endif$
-</p>
->>"
-2026-09-01 00:00:00+12,snf.stale-datum-alert,en,lastDatumDateLabel,Last datum date
-2026-09-01 00:00:00+12,snf.stale-datum-alert,en,nodeIdLabel,Node
-2026-09-01 00:00:00+12,snf.stale-datum-alert,en,sourceIdLabel,Source
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,datumInfoRow.st,"datumInfoRow(info) ::= <<
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","datumInfoRow.st","datumInfoRow(info) ::= <<
 <tr>
 	<th>$info.nodeId$</th>
 	<th>$info.sourceId$</th>
 	<td>$info.localizedTimestamp$</td>
 </tr>
 >>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,datumInfoSection.st,"datumInfoSection() ::= <<
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","datumInfoSection.st","datumInfoSection() ::= <<
 <table class=""items"">
 	<thead>
 		<tr>
@@ -72,7 +30,51 @@ $endif$
 	</tbody>
 </table>
 >>"
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,style.st,"style() ::= <<
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","footerSection.st","footerSection() ::= <<
+<footer>
+	<p>
+	This automated email was sent to $destinationEmails$ because of a stale datum alert configured in
+	the <a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork
+	account</a> of $user.email$.
+	</p>
+</footer>
+>>"
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","head.st","head() ::= <<
+<meta charset=""UTF-8"">
+<title>
+	$if(situation.resolved)$
+	$messages.resolvedTitle$
+	$else$
+	$messages.alertTitle$
+	$endif$
+</title>
+<style type=""text/css"">
+$style()$
+</style>
+>>"
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","introSection.st","introSection() ::= <<
+<p>
+$if(situation.resolved)$
+	This is an automated stale datum <b>resolved</b> email from SolarNetwork.
+	$if(localizedAlertAge)$
+	The following sources <b>are no longer considered stale</b> because they have have posted
+	data within the past <b>$localizedAlertAge$</b>:
+	$endif$
+$else$
+	This is an automated <b>stale datum alert</b> email from SolarNetwork.
+	$if(localizedAlertAge)$
+	The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
+	$endif$
+$endif$
+</p>
+>>"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","lastDatumDateLabel","Last datum date"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","mail.subject.resolved","SolarNetwork alert resolved: SolarNode {0} data is no longer stale"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","mail.subject.stale","SolarNetwork alert: SolarNode {0} data is stale"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","nodeIdLabel","Node"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","resolvedTitle","SolarNetwork stale datum alert resolved"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","sourceIdLabel","Source"
+"2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","style.st","style() ::= <<
 	body '{' 
 		font-family: sans-serif;
 		background-color: #FFF;  
