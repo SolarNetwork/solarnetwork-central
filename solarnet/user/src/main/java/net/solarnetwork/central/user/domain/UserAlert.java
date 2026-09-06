@@ -26,11 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,6 +36,7 @@ import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.util.CollectionUtils;
 
 /**
  * An alert condition definition. User alerts are designed to cover conditions
@@ -53,7 +51,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </ul>
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
@@ -215,18 +213,9 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	 * @since 2.1
 	 */
 	public final String @Nullable [] optionEmailTos() {
-		String[] result = null;
-		if ( options != null ) {
-			Object o = options.get(UserAlertOptions.EMAIL_TOS);
-			if ( o instanceof Collection<?> c ) {
-				result = c.stream().map(Object::toString).toArray(String[]::new);
-			} else if ( o instanceof String[] a ) {
-				result = a;
-			} else if ( o != null ) {
-				result = new String[] { o.toString() };
-			}
-		}
-		return result;
+		final List<String> tos = CollectionUtils.mapPropertyStringList(UserAlertOptions.EMAIL_TOS,
+				getOptions());
+		return (tos != null && !tos.isEmpty() ? tos.toArray(String[]::new) : null);
 	}
 
 	/**
@@ -237,18 +226,20 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	 * @since 2.2
 	 */
 	public final @Nullable List<String> optionSourceIds() {
-		List<String> result = null;
-		if ( options != null ) {
-			Object o = options.get(UserAlertOptions.SOURCE_IDS);
-			if ( o instanceof Collection<?> c ) {
-				result = c.stream().map(Object::toString).collect(Collectors.toList());
-			} else if ( o instanceof String[] a ) {
-				result = Arrays.asList(a);
-			} else if ( o != null ) {
-				result = List.of(o.toString());
-			}
-		}
-		return result;
+		return CollectionUtils.mapPropertyStringList(UserAlertOptions.SOURCE_IDS, getOptions());
+	}
+
+	/**
+	 * Get the {@link UserAlertOptions#AGE_THRESHOLD} number.
+	 *
+	 * @return the age threshold number, or {@code null} if the option is not
+	 *         available
+	 * @since 2.3
+	 */
+	public final @Nullable Integer optionAgeThreshold() {
+		final Number result = CollectionUtils.mapPropertyNumber(UserAlertOptions.AGE_THRESHOLD, null,
+				getOptions());
+		return (result instanceof Integer n ? n : result != null ? result.intValue() : null);
 	}
 
 	public final @Nullable UserAlertSituation getSituation() {

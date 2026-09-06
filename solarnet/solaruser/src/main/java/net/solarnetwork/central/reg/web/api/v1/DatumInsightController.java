@@ -23,11 +23,11 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.success;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
-import java.util.TimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -82,11 +82,10 @@ public class DatumInsightController {
 	public Result<DatumInsightOverallStatistics> overallStatistics() {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		User user = userBiz.getUser(userId);
-		TimeZone userTimeZone = user.getTimeZone() != null ? user.getTimeZone()
-				: TimeZone.getTimeZone("UTC");
+		ZoneId userTimeZone = user.timeZone();
 
 		// get last 30 days of audit data
-		ZonedDateTime today = ZonedDateTime.now(userTimeZone.toZoneId()).truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime today = ZonedDateTime.now(userTimeZone).truncatedTo(ChronoUnit.DAYS);
 		ZonedDateTime tomorrow = today.plusDays(1);
 		ZonedDateTime thirtyDaysAgo = tomorrow.minusDays(30);
 		BasicDatumCriteria filter = new BasicDatumCriteria();

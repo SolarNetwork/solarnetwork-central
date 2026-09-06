@@ -24,10 +24,12 @@ package net.solarnetwork.central.user.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,7 +42,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user domain object.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class User extends BaseEntity implements UserInfo {
 
@@ -109,20 +111,31 @@ public class User extends BaseEntity implements UserInfo {
 	}
 
 	/**
-	 * Get a {@link TimeZone} instance from this user's location.
+	 * Get a {@link ZoneId} instance from this user's location.
 	 *
 	 * <p>
-	 * This will return a {@code TimeZone} for the configured location's
+	 * This will return a {@code ZoneId} for the configured location's
 	 * {@link SolarLocation#getTimeZoneId()}.
 	 * <p>
 	 *
-	 * @return the TimeZone, or {@code null} if none available
+	 * @return the ZoneId, or {@code null} if none available
 	 * @since 1.4
 	 */
-	public @Nullable TimeZone getTimeZone() {
+	public @Nullable ZoneId getTimeZone() {
 		return (this.location != null && this.location.getTimeZoneId() != null
-				? TimeZone.getTimeZone(this.location.getTimeZoneId())
+				? ZoneId.of(this.location.getTimeZoneId())
 				: null);
+	}
+
+	/**
+	 * Get a non-null time zone for the user.
+	 * 
+	 * @return the time zone based on the {@link #getLocation()} time zone,
+	 *         falling back to {@code UTC} if not available
+	 * @since 2.2
+	 */
+	public ZoneId timeZone() {
+		return Objects.requireNonNullElse(getTimeZone(), ZoneOffset.UTC);
 	}
 
 	@Override

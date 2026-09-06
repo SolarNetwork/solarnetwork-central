@@ -1,5 +1,5 @@
 vers,bundle,locale,msg_key,msg_val
-2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,alert,stale,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
+2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,alert.st,"alert(user,alert,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,alertTitle,SolarNetwork alert:
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,body.st,"body() ::= <<
 $introSection()$
@@ -9,9 +9,9 @@ $footerSection()$
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,footerSection.st,"footerSection() ::= <<
 <footer>
 	<p>
-	This automated email was sent to $alert.email$ because of an alert configured for SolarNode
-	$alert.nodeId$. You can manage your alert settings by logging in to your
-	<a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork account</a>.
+	This automated email was sent to $destinationEmails$ because of a stale datum alert configured in
+	the <a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork
+	account</a> of $user.email$.
 	</p>
 </footer>
 >>"
@@ -24,7 +24,10 @@ $style()$
 >>"
 2026-09-01 00:00:00+12,/snf/text/html/stale-datum-alert,en,introSection.st,"introSection() ::= <<
 <p>
-This is an automated alert email from SolarNetwork. The following sources are stale:
+This is an automated <b>stale datum alert</b> email from SolarNetwork.
+$if(localizedAlertAge)$
+The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
+$endif$
 </p>
 >>"
 2026-09-01 00:00:00+12,snf.stale-datum-alert,en,lastDatumDateLabel,Last datum date
@@ -50,7 +53,7 @@ This is an automated alert email from SolarNetwork. The following sources are st
 		</tr>
 	</thead>
 	<tbody>
-		$stale:staleInfoRow()$	
+		$datum:staleInfoRow()$
 	</tbody>
 </table>
 >>"

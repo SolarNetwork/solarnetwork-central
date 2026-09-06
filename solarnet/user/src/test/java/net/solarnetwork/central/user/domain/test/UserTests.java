@@ -24,8 +24,8 @@ package net.solarnetwork.central.user.domain.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import java.time.ZoneId;
 import java.util.Map;
-import java.util.TimeZone;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.user.domain.User;
@@ -81,8 +81,7 @@ public class UserTests {
 		SolarLocation loc = testLocation();
 		User user = new User(randomString());
 		user.setLocation(loc);
-		then(user.getTimeZone()).as("TimeZone extracted")
-				.isEqualTo(TimeZone.getTimeZone(loc.getTimeZoneId()));
+		then(user.getTimeZone()).as("TimeZone extracted").isEqualTo(ZoneId.of(loc.getTimeZoneId()));
 	}
 
 	@Test
