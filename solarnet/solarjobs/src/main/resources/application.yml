@@ -302,12 +302,6 @@ app:
         maximum-wait-ms: 900000
         schedule: 300000
         minimum-age: "2h"
-  oauth:
-    client:
-      registration-cache:
-        ttl: 120
-        heap-max-entries: 1000
-        disk-max-size-mb: 0
     ocpp:
       charge-session-cleaner:
         schedule: "40 30 5 * * *"
@@ -403,6 +397,12 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+  oauth:
+    client:
+      registration-cache:
+        ttl: 120
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
