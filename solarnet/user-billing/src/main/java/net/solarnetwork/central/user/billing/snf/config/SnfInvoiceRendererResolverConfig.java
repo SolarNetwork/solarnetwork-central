@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.config;
 
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTML;
 import static net.solarnetwork.central.common.dao.config.VersionedMessageDaoConfig.VERSIONED_MESSAGES_CACHE;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -32,6 +33,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.util.MimeTypeUtils;
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver;
@@ -46,10 +49,7 @@ import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class SnfInvoiceRendererResolverConfig {
-
-	/** A StringTemplates 4 qualifier. */
-	public static final String ST4 = "st4";
+public class SnfInvoiceRendererResolverConfig implements SolarNetUserBillingConfiguration {
 
 	@Autowired
 	@Qualifier(VERSIONED_MESSAGES_CACHE)
@@ -62,7 +62,7 @@ public class SnfInvoiceRendererResolverConfig {
 	private CacheManager cacheManager;
 
 	@Bean
-	@Qualifier(ST4)
+	@VersionedQualifier(value = USER_BILLING_INVOICE, version = HTML)
 	@ConfigurationProperties(prefix = "app.billing.invoice.html-template-cache")
 	public CacheSettings snfInvoiceHtmlTemplateCacheSettings() {
 		CacheSettings settings = new CacheSettings();
@@ -72,27 +72,28 @@ public class SnfInvoiceRendererResolverConfig {
 	}
 
 	@Bean
-	@Qualifier(ST4)
+	@VersionedQualifier(value = USER_BILLING_INVOICE, version = HTML)
 	public Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache(
-			@Qualifier(ST4) CacheSettings settings) {
+			@VersionedQualifier(value = USER_BILLING_INVOICE, version = HTML) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, ST4TemplateRenderer.class,
-				"st4-template-renderers");
+				USER_BILLING_INVOICE + "-st4-html-template-renderers");
 	}
 
-	@Qualifier("html")
 	@Primary
 	@Bean
+	@Qualifier(HTML)
 	public SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver(
-			@Qualifier(ST4) Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache) {
+			@VersionedQualifier(value = USER_BILLING_INVOICE,
+					version = HTML) Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache) {
 		return new VersionedMessageSourceSnfInvoiceRendererResolver("/snf/text/html/invoice", "invoice",
 				MimeTypeUtils.TEXT_HTML, messageDao, versionedMessagesCache,
 				snfInvoiceHtmlTemplateCache);
 	}
 
-	@Qualifier("pdf")
+	@Qualifier(SolarNetCommonConfiguration.PDF)
 	@Bean
 	public SnfInvoiceRendererResolver pdfSnfInvoiceRendererResolver(
-			@Qualifier("html") SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver) {
+			@Qualifier(HTML) SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver) {
 		return new HtmlToPdfSnfInvoiceRendererResolver(htmlSnfInvoiceRendererResolver);
 	}
 
