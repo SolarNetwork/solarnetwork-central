@@ -159,7 +159,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private final MailService mailService;
 	private final VersionedMessageDao messageDao;
 	private Integer batchSize = DEFAULT_BATCH_SIZE;
-	private DateTimeFormatter timestampFormat = DateUtils.DISPLAY_DATE_LONG_TIME_SHORT;
 	private int initialAlertReminderDelayMinutes = 60;
 	private int alertReminderFrequencyMultiplier = 4;
 
@@ -217,7 +216,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	@Override
 	public @Nullable Long processAlerts(@Nullable Long lastProcessedAlertId, Instant validDate) {
 		if ( validDate == null ) {
-			validDate = Instant.now();
+			validDate = clock.instant();
 		}
 		List<UserAlert> alerts = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				lastProcessedAlertId, validDate, batchSize);
@@ -227,29 +226,17 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		try {
 			loadMostRecentNodeData(alerts);
 			for ( UserAlert alert : alerts ) {
-				Map<String, Object> alertOptions = alert.getOptions();
-				if ( alertOptions == null ) {
-					continue;
-				}
-
-				final PathMatcher sourceIdMatcher = new AntPathMatcher();
-
 				// extract options
-				Number age;
-				List<String> sourceIdPatterns;
-				try {
-					age = (Number) alertOptions.get(UserAlertOptions.AGE_THRESHOLD);
-					sourceIdPatterns = alert.optionSourceIds();
-				} catch ( ClassCastException e ) {
-					log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
-					continue;
-				}
+				final Integer age = alert.optionAgeThreshold();
+				final List<String> sourceIdPatterns = alert.optionSourceIds();
 
 				if ( age == null ) {
 					log.debug("Skipping alert {} that does not include {} option", alert,
 							UserAlertOptions.AGE_THRESHOLD);
 					continue;
 				}
+
+				final PathMatcher sourceIdMatcher = new AntPathMatcher();
 
 				// look for first stale data matching age + source criteria
 				final List<DateInterval> timePeriods = new ArrayList<>(2);
@@ -262,7 +249,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						var data = new LinkedHashMap<>(3);
 						data.put(SITUATION_INFO_NODE_ID, id.getNodeId());
 						data.put(SITUATION_INFO_SOURCE_ID, id.getSourceId());
-						data.put(SITUATION_INFO_TIMESTAMP, id.getTimestamp());
+						data.put(SITUATION_INFO_TIMESTAMP, id.getTimestamp().toString());
 						return data;
 					}).toList());
 				}
@@ -287,7 +274,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					}
 
 					// taper off the alerts so the become less frequent over time
-					if ( !sit.notified().plusMillis(notifyOffset).isAfter(now) ) {
+					if ( sit.notified().plusMillis(notifyOffset).compareTo(now) >= 0 ) {
 						sendAlertMail(now, sit, "mail.subject.stale", stale);
 						sit.setNotified(now);
 					}
@@ -513,7 +500,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	private Instant startOfNextTimePeriod(final Instant now, @Nullable List<DateInterval> intervals) {
 		if ( intervals == null || intervals.isEmpty() ) {
-			return Instant.now();
+			return clock.instant();
 		}
 		DateInterval found = null;
 		DateInterval earliest = null;
@@ -635,10 +622,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		if ( user == null ) {
 			return;
 		}
-		SolarNode node = nodeCache.get(alert.getNodeId());
-		if ( node == null ) {
-			return;
-		}
 
 		BasicMailAddress addr = null;
 		String[] emails = alert.optionEmailTos();
@@ -723,22 +706,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	public void setBatchSize(Integer batchSize) {
 		this.batchSize = batchSize;
-	}
-
-	public DateTimeFormatter getTimestampFormat() {
-		return timestampFormat;
-	}
-
-	/**
-	 * Set the timestamp formatter.
-	 * 
-	 * @param timestampFormat
-	 *        the formatter to use; if {@code null} then
-	 *        {@link DateUtils#DISPLAY_DATE_LONG_TIME_SHORT} will be used
-	 */
-	public void setTimestampFormat(DateTimeFormatter timestampFormat) {
-		this.timestampFormat = (timestampFormat != null ? timestampFormat
-				: DateUtils.DISPLAY_DATE_LONG_TIME_SHORT);
 	}
 
 	public int getInitialAlertReminderDelayMinutes() {
