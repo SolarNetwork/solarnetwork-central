@@ -40,10 +40,17 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * MyBatis implementation of {@link UserDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMatch, UserFilter, Long>
 		implements UserDao {
+
+	/**
+	 * The query name used for {@link #getUserWithLocation(Long)}.
+	 * 
+	 * @since 2.2
+	 */
+	public static final String QUERY_WITH_LOCATION = "get-User-with-location";
 
 	/** The query name used for {@link #getUserByEmail(String)}. */
 	public static final String QUERY_FOR_EMAIL = "get-User-for-email";
@@ -91,6 +98,11 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 */
 	public MyBatisUserDao() {
 		super(User.class, Long.class, UserMatch.class);
+	}
+
+	@Override
+	public @Nullable User getUserWithLocation(Long id) {
+		return selectFirst(QUERY_WITH_LOCATION, id);
 	}
 
 	@Override

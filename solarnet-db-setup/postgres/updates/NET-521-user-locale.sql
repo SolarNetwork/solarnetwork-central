@@ -1,0 +1,1 @@
+ALTER TABLE solaruser.user_user ADD COLUMN lang CHARACTER VARYING(3) DEFAULT 'en' NOT NULL;

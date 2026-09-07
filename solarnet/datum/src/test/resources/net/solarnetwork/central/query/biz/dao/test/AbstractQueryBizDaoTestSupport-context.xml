@@ -17,19 +17,20 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="configurationProperties">
 			<util:properties>
+				<prop key="location-cache-flush">0</prop>
 				<prop key="node-cache-flush">0</prop>
 				<prop key="user-cache-flush">0</prop>
 				<prop key="user-auth-token-cache-flush">0</prop>
 				<prop key="user-node-cache-flush">0</prop>
 			</util:properties>
-		</property>	
+		</property>
 		<property name="typeAliases">
 			<list>
 				<value>net.solarnetwork.domain.NetworkAssociationDetails</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 
-				
+
 				<value>net.solarnetwork.central.datum.domain.LocationSourcePK</value>
 				<value>net.solarnetwork.central.datum.domain.NodeSourcePK</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
@@ -45,15 +46,15 @@
 			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/NetworkAssociation.xml</value>
-				
+
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 			</list>
 		</property>
 	</bean>
-	
+
 	<!-- Common DAO -->
-	
+
 	<bean id="networkAssociationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisNetworkAssociationDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
@@ -61,9 +62,9 @@
 	<bean id="solarLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
-	
+
 	<bean id="solarNodeDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
-	
+
 </beans>

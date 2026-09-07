@@ -28,12 +28,15 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.UserFilterCommand;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
@@ -43,7 +46,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisUserDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -98,10 +101,137 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			.returns(TEST_PASSWORD, from(User::getPassword))
 			.returns(TEST_EMAIL, from(User::getEmail))
 			.returns(true, from(User::getEnabled))
+			.as("English language defaulted by database")
+			.returns(Locale.ENGLISH.getLanguage(), from(User::getLang))
 			.extracting(User::getCreated)
 			.isNotNull()
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void getWithLocation() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+		final String timeZoneId = "America/Mexico_City";
+		final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, locale.getCountry(),
+				timeZoneId);
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(Instant.now());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+		newUser.setLocationId(locId);
+
+		// WHEN
+		final User result = userDao.getUserWithLocation(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(locale.getLanguage(), from(User::getLang))
+			.as("Locale resolved from user lang and SolarLocation country")
+			.returns(locale, from(User::locale))
+			.extracting(User::getLocation)
+			.as("Location instance provided")
+			.isNotNull()
+			.as("Matches user's location ID")
+			.returns(locId, from(SolarLocation::getId))
+			.as("Location country populated")
+			.returns(locale.getCountry(), from(SolarLocation::getCountry))
+			.as("Location time zone populated")
+			.returns(timeZoneId, from(SolarLocation::getTimeZoneId))
+			;
+		// @formatter:on
+
+		userId = result.getId();
+	}
+
+	@Test
+	public void getWithLocation_noLocationId() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(Instant.now());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+
+		// WHEN
+		final User result = userDao.getUserWithLocation(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is returned")
+			.isNotNull()
+			.as("No location instance available")
+			.returns(null, from(User::getLocation))
+			.extracting(User::getLocation)
+			;
+		// @formatter:on
+
+		userId = result.getId();
+	}
+
+	@Test
+	public void storeNewUser_explicitLang() {
+		// GIVEN
+		User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(Instant.now());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(Locale.JAPANESE.getLanguage());
+
+		// WHEN
+		final User result = userDao.get(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(Locale.JAPANESE.getLanguage(), from(User::getLang))
+			;
+		// @formatter:on
+		userId = result.getId();
+	}
+
+	@Test
+	public void storeNewUser_langAndCountry() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+		final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, "MX", "America/Mexico_City");
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(Instant.now());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+		newUser.setLocationId(locId);
+
+		// WHEN
+		final User result = userDao.get(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(locale.getLanguage(), from(User::getLang))
+			.as("Locale resolved from user lang but default country without SolarLocation instance")
+			.returns(Locale.of(locale.getLanguage(), Locale.US.getCountry()), from(User::locale))
+			;
+		// @formatter:on
+
+		userId = result.getId();
 	}
 
 	/**

@@ -164,6 +164,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     ocpp-auth-cache-flush: 900000
     ocpp-charge-point-cache-flush: 900000

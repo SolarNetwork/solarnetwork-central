@@ -40,6 +40,7 @@ CREATE TABLE solaruser.user_user (
 	email				citext NOT NULL,
 	password			CHARACTER VARYING(128) NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
+	lang 				CHARACTER VARYING(3) NOT NULL DEFAULT 'en',
 	loc_id				BIGINT,
 	jdata				jsonb,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),

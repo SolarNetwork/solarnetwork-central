@@ -151,6 +151,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000

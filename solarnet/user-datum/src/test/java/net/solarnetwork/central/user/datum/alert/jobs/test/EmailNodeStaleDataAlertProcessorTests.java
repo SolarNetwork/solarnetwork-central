@@ -304,7 +304,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
@@ -376,7 +376,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
@@ -473,7 +473,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
@@ -538,7 +538,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
@@ -605,7 +605,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
@@ -769,7 +769,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<>();
@@ -933,7 +933,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(null);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		//		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<>();
@@ -1030,7 +1030,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 					.andReturn(null);
 
 			// get User for alert
-			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
 			expect(userAlertSituationDao.save(capture(newSituation)))
@@ -1054,7 +1054,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 					.andReturn(null);
 
 			// get User for alert
-			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
 			expect(userAlertSituationDao.save(capture(newSituation)))
@@ -1078,7 +1078,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 					.andReturn(null);
 
 			// get User, SolarNode for alert
-			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
 			expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
@@ -1151,7 +1151,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(activeSituation);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation -> resolved
 		expect(userAlertSituationDao.save(activeSituation)).andReturn(activeSituation.getId());
@@ -1220,7 +1220,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 				.andReturn(activeSituation);
 
 		// get User for alert
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation -> resolved
 		expect(userAlertSituationDao.save(activeSituation)).andReturn(activeSituation.getId());

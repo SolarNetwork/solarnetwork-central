@@ -619,7 +619,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			return;
 		}
 
-		final User user = userDao.get(alert.getUserId());
+		final User user = userDao.getUserWithLocation(alert.getUserId());
 		if ( user == null ) {
 			return;
 		}

@@ -43,7 +43,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user domain object.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class User extends BaseEntity implements UserInfo {
 
@@ -56,6 +56,7 @@ public class User extends BaseEntity implements UserInfo {
 	private @Nullable Boolean enabled;
 	private @Nullable Map<String, Object> internalData;
 	private @Nullable Long locationId;
+	private @Nullable String lang;
 
 	private @Nullable String internalDataJson;
 	private @Nullable SolarLocation location;
@@ -147,9 +148,8 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 2.2
 	 */
 	public Locale locale() {
-		// for now we only have country to go by, if that
-		String lang = "en";
-		String co = "US";
+		String lang = lang();
+		String co = Locale.US.getCountry();
 
 		final SolarLocation loc = getLocation();
 		if ( loc != null && loc.getCountry() != null ) {
@@ -371,6 +371,39 @@ public class User extends BaseEntity implements UserInfo {
 	public final void setInternalDataJson(@Nullable String json) {
 		internalDataJson = json;
 		internalData = null;
+	}
+
+	/**
+	 * Get the preferred language.
+	 * 
+	 * @return the preferred language, as an ISO 639 code
+	 * @since 2.3
+	 */
+	public final @Nullable String getLang() {
+		return lang;
+	}
+
+	/**
+	 * Set the preferred language.
+	 * 
+	 * @param lang
+	 *        the preferred language to set, as an ISO 639 code
+	 * @since 2.3
+	 */
+	public final void setLang(@Nullable String lang) {
+		this.lang = lang;
+	}
+
+	/**
+	 * Get a non-null preferred language.
+	 * 
+	 * @return the configured language, as an ISO 639 code, falling back to
+	 *         {@code en} if not available
+	 * @since 2.3
+	 */
+	public final String lang() {
+		final String lang = getLang();
+		return (lang != null ? lang : Locale.ENGLISH.getLanguage());
 	}
 
 }

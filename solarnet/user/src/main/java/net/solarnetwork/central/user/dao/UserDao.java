@@ -35,10 +35,26 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for User objects.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserDao
 		extends GenericDao<User, Long>, FilterableDao<UserFilterMatch, Long, UserFilter> {
+
+	/**
+	 * Get a user by primary key, with a full location populated.
+	 * 
+	 * <p>
+	 * If the user entity has a {@code locationId} value populated, then the
+	 * returned entity will have its {@code User#getLocation()} object populated
+	 * as well.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the primary key of the user to get
+	 * @return the found User, or {@code null} if not found
+	 */
+	@Nullable
+	User getUserWithLocation(Long id);
 
 	/**
 	 * Get a user by their email.

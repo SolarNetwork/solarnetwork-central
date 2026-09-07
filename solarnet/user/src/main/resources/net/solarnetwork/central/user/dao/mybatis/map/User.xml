@@ -9,12 +9,18 @@
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.solaruser_seq') AS id 
 		</selectKey>
-		INSERT INTO solaruser.user_user 
-			(id, created, disp_name, email, password, enabled,
-			loc_id, jdata)
-		VALUES
-			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled},
-			#{locationId}, #{internalDataJson}::jsonb)
+		INSERT INTO solaruser.user_user (
+			id, created, disp_name, email, password, enabled, loc_id, jdata
+			<if test="lang != null">
+				, lang
+			</if>
+		)
+		VALUES (
+			#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled}, #{locationId}, #{internalDataJson}::jsonb
+			<if test="lang != null">
+				, #{lang}
+			</if>
+		)
 	</insert>
 
 	<update id="update-User" parameterType="User">
@@ -24,6 +30,9 @@
 			password = #{password},
 			enabled = #{enabled},
 			loc_id = #{locationId}
+			<if test="lang != null">
+				, lang = #{lang}
+			</if>
 		WHERE
 			id = #{id}
 	</update>
@@ -36,6 +45,7 @@
 		u.password AS user_password,
 		u.enabled AS user_enabled,
 		u.loc_id AS user_loc_id,
+		u.lang AS user_lang,
 		u.jdata AS user_jdata
 	</sql>
 
@@ -59,7 +69,23 @@
 		<result property="password" column="user_password"/>
 		<result property="enabled" column="user_enabled"/>
 		<result property="locationId" column="user_loc_id"/>
+		<result property="lang" column="user_lang"/>
 		<result property="internalDataJson" column="user_jdata"/>
+	</resultMap>
+	
+	<resultMap id="UserFullResultWithLocation" type="User" extends="UserFullResult">
+		<constructor>
+			<idArg column="user_id" javaType="long"/>
+			<arg column="user_email" javaType="string"/>
+		</constructor>
+		<result property="created" column="user_created"/>
+		<result property="name" column="user_disp_name"/>
+		<result property="password" column="user_password"/>
+		<result property="enabled" column="user_enabled"/>
+		<result property="locationId" column="user_loc_id"/>
+		<result property="lang" column="user_lang"/>
+		<result property="internalDataJson" column="user_jdata"/>
+		<association property="location"  notNullColumn="user_loc_id" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationFullResult"/>
 	</resultMap>
 	
 	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">
@@ -67,6 +93,22 @@
 			<include refid="fragment-User-full-result"/>
 		FROM
 			solaruser.user_user u
+		WHERE
+			u.id = #{id}
+	</select>
+	
+	<sql id="fragment-User-select-with-location">
+		SELECT
+			<include refid="fragment-User-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solaruser.user_user u
+		LEFT OUTER JOIN
+			solarnet.sn_loc l ON l.id = u.loc_id
+	</sql>
+	
+	<select id="get-User-with-location" parameterType="long" resultMap="UserFullResultWithLocation">
+		<include refid="fragment-User-select-with-location"/>
 		WHERE
 			u.id = #{id}
 	</select>

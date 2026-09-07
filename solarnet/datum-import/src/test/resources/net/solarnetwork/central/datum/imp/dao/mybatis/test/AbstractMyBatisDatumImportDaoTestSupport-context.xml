@@ -12,10 +12,11 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="configurationProperties">
 			<util:properties>
+				<prop key="location-cache-flush">0</prop>
 				<prop key="node-cache-flush">0</prop>
 				<prop key="user-cache-flush">0</prop>
 			</util:properties>
-		</property>	
+		</property>
 		<property name="typeAliases">
 			<list>
 				<value>java.util.UUID</value>
@@ -40,5 +41,5 @@
 			</list>
 		</property>
 	</bean>
-	
+
 </beans>
