@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.config;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * Marker interface for the User configuration package.
  * 
  * @author matt
  * @version 1.3
