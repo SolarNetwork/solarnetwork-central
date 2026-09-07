@@ -25,7 +25,11 @@ package net.solarnetwork.central.user.biz;
 import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.FormatStyle;
+import java.time.format.TextStyle;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +42,6 @@ import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.service.TemplateRenderer;
-import net.solarnetwork.util.DateUtils;
 
 /**
  * API for resolving a {@link TemplateRenderer} for rendering an alert.
@@ -65,6 +68,16 @@ public interface UserAlertRendererResolver {
 
 	/** A template parameter name for the destination email. */
 	String DESTINATION_EMAILS_PARAM = "destinationEmails";
+
+	/** Format for a long date and full time, for display purposes. */
+	// @formatter:off
+	DateTimeFormatter DISPLAY_DATE_FORMATTER = new DateTimeFormatterBuilder()
+			.appendLocalized(FormatStyle.LONG, FormatStyle.MEDIUM)
+			.appendLiteral(' ')
+			.appendLocalizedOffset(TextStyle.SHORT)
+			.toFormatter()
+			.withChronology(IsoChronology.INSTANCE);
+	// @formatter:on
 
 	/**
 	 * A node stream template information record.
@@ -119,8 +132,7 @@ public interface UserAlertRendererResolver {
 	default Map<String, Object> templateParametersForAlert(final User user,
 			final UserAlertSituation situation, List<NodeDatumStreamPK> datum, Locale locale) {
 		final ZoneId tz = user.timeZone();
-		final DateTimeFormatter formatter = DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale)
-				.withZone(tz);
+		final DateTimeFormatter formatter = DISPLAY_DATE_FORMATTER.withLocale(locale).withZone(tz);
 		final Map<String, Object> result = new LinkedHashMap<>(8);
 		result.put(USER_PARAM, user);
 		result.put(SITUATION_PARAM, situation);
