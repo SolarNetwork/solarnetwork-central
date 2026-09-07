@@ -27,6 +27,7 @@ import java.io.Serial;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -136,6 +137,26 @@ public class User extends BaseEntity implements UserInfo {
 	 */
 	public ZoneId timeZone() {
 		return Objects.requireNonNullElse(getTimeZone(), ZoneOffset.UTC);
+	}
+
+	/**
+	 * Get a non-null locale for the user.
+	 * 
+	 * @return the locale for the user, falling back to {@code en-US} if not
+	 *         available
+	 * @since 2.2
+	 */
+	public Locale locale() {
+		// for now we only have country to go by, if that
+		String lang = "en";
+		String co = "US";
+
+		final SolarLocation loc = getLocation();
+		if ( loc != null && loc.getCountry() != null ) {
+			co = loc.getCountry();
+		}
+
+		return Locale.of(lang, co);
 	}
 
 	@Override
