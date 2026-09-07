@@ -42,6 +42,7 @@ import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.util.FileCopyUtils;
 import jakarta.mail.BodyPart;
 import jakarta.mail.MessagingException;
+import jakarta.mail.Part;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
@@ -54,7 +55,7 @@ import jakarta.mail.internet.MimeMultipart;
  * </p>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MockMailSender implements MailSender, JavaMailSender {
 
@@ -102,7 +103,42 @@ public class MockMailSender implements MailSender, JavaMailSender {
 		}
 	}
 
-	private void extractContent(Object content, StringBuilder buf)
+	/**
+	 * Extract mail content as a string.
+	 * 
+	 * @param content
+	 *        the content to extract, for example a {@code String},
+	 *        {@code InputStream}, {@code MimeMultipart}, or {@code BodyPart}
+	 *        instance
+	 * @return the extracted content
+	 * @throws MessagingException
+	 *         if a messaging error occurs
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @since 1.4
+	 */
+	public static String extractContent(Object content) throws MessagingException, IOException {
+		final var buf = new StringBuilder();
+		extractContent(content, buf);
+		return buf.toString();
+	}
+
+	/**
+	 * Extract mail content into a text buffer.
+	 * 
+	 * @param content
+	 *        the content to extract, for example a {@code String},
+	 *        {@code InputStream}, {@code MimeMessage}, {@code MimeMultipart},
+	 *        or {@code BodyPart} instance
+	 * @param buf
+	 *        the buffer to populate
+	 * @throws MessagingException
+	 *         if a messaging error occurs
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @since 1.4
+	 */
+	public static void extractContent(Object content, StringBuilder buf)
 			throws MessagingException, IOException {
 		if ( content instanceof String ) {
 			buf.append(content);
@@ -113,7 +149,7 @@ public class MockMailSender implements MailSender, JavaMailSender {
 				BodyPart part = multi.getBodyPart(i);
 				extractContent(part, buf);
 			}
-		} else if ( content instanceof BodyPart part ) {
+		} else if ( content instanceof Part part ) {
 			extractContent(part.getContent(), buf);
 		}
 	}
