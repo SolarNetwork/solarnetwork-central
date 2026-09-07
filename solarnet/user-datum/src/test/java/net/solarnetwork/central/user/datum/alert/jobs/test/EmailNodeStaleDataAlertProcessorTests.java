@@ -137,6 +137,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	private static final String TEST_USER_EMAIL = "test@localhost";
 	private static final String TEST_USER_NAME = "Tester Dude";
 
+	private static final String TEST_COUNTRY = "US";
 	private static final ZoneId TEST_TIME_ZONE = ZoneId.of("Pacific/Auckland");
 
 	private static final AtomicLong AlertIdCounter = new AtomicLong(TEST_USER_ALERT_ID);
@@ -192,6 +193,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		testLoc = new SolarLocation();
 		testLoc.setId(TEST_LOC_ID);
 		testLoc.setTimeZoneId(TEST_TIME_ZONE.getId());
+		testLoc.setCountry(TEST_COUNTRY);
 
 		testUser = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		testUser.setName(TEST_USER_NAME);

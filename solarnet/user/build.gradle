@@ -43,6 +43,7 @@ dependencies {
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.javamoney:moneta:1.4.2'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

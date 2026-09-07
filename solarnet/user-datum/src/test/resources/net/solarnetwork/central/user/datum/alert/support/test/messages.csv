@@ -1,4 +1,5 @@
 "vers","bundle","locale","msg_key","msg_val"
+"2001-01-01 00:00:00+12","snf.stale-datum-alert","en","ageLabel","Age"
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","alert.st","alert(user,situation,datum,localizedAlertAge,destinationEmails,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
 "2001-01-01 00:00:00+12","snf.stale-datum-alert","en","alertTitle","SolarNetwork stale datum alert"
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","body.st","body() ::= <<
@@ -8,9 +9,10 @@ $footerSection()$
 >>"
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","datumInfoRow.st","datumInfoRow(info) ::= <<
 <tr>
-	<th>$info.nodeId$</th>
-	<th>$info.sourceId$</th>
+	<td>$info.nodeId$</td>
+	<td>$info.sourceId$</td>
 	<td>$info.localizedTimestamp$</td>
+	<td>$info.localizedAge$</td>
 </tr>
 >>"
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","datumInfoSection.st","datumInfoSection() ::= <<
@@ -20,9 +22,10 @@ $footerSection()$
 			<th>$messages.nodeIdLabel$</th>
 			<th>$messages.sourceIdLabel$</th>
 			<th>$messages.lastDatumDateLabel$</th>
+			<th>$messages.ageLabel$</th>
 		</tr>
 		<tr>
-			<th colspan=""3"" class=""hr""></th>
+			<th colspan=""4"" class=""hr""></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -33,7 +36,7 @@ $footerSection()$
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","footerSection.st","footerSection() ::= <<
 <footer>
 	<p>
-	This automated email was sent to $destinationEmails$ because of a stale datum alert configured in
+	This automated message was sent to $destinationEmails$ because of a stale datum alert configured in
 	the <a href=""https://data.solarnetwork.net/solaruser/u/sec/alerts"">SolarNetwork
 	account</a> of $user.email$.
 	</p>
@@ -55,15 +58,15 @@ $style()$
 "2001-01-01 00:00:00+12","/snf/text/html/stale-datum-alert","en","introSection.st","introSection() ::= <<
 <p>
 $if(situation.resolved)$
-	This is an automated stale datum <b>resolved</b> email from SolarNetwork.
+	This is an automated message from SolarNetwork to inform you that a stale datum alert has been <b>resolved</b>.
 	$if(localizedAlertAge)$
 	The following sources <b>are no longer considered stale</b> because they have have posted
 	data within the past <b>$localizedAlertAge$</b>:
 	$endif$
 $else$
-	This is an automated <b>stale datum alert</b> email from SolarNetwork.
+	This is an automated <b>stale datum alert</b> from SolarNetwork.
 	$if(localizedAlertAge)$
-	The following sources have not posted data in more than <b>$localizedAlertAge$</b>:
+	The following sources have <b>not posted data</b> in more than <b>$localizedAlertAge$</b>:
 	$endif$
 $endif$
 </p>

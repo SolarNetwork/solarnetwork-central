@@ -33,8 +33,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -44,6 +48,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+import org.threeten.extra.AmountFormats;
+import org.threeten.extra.PeriodDuration;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -59,7 +65,6 @@ import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 import net.solarnetwork.service.TemplateRenderer;
-import net.solarnetwork.util.DateUtils;
 
 /**
  * Test cases for the {@link VersionedMessageSourceUserAlertRendererResolver}
@@ -74,10 +79,12 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 	private Cache<String, VersionedMessages> messageCache;
 	private Cache<String, ST4TemplateRenderer> templateCache;
 
+	private Clock clock;
 	private VersionedMessageSourceUserAlertRendererResolver resolver;
 
 	@BeforeEach
 	public void setup() {
+		clock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC);
 		messageDao = new CsvVersionedMessageDao(
 				List.of(new ClassPathResource("messages.csv", getClass())));
 		messageCache = new SimpleCache<>("TestMessageCache");
@@ -100,12 +107,17 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(alert);
 
-		final List<NodeDatumStreamPK> datum = List
-				.of(new NodeDatumStreamPK(randomLong(), randomSourceId(), now()));
+		final List<NodeDatumStreamPK> datum = List.of(new NodeDatumStreamPK(randomLong(),
+				randomSourceId(), clock.instant().minus(Duration.parse("PT6H10M30S"))));
+		final PeriodDuration ageDur = PeriodDuration.between(
+				datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()),
+				clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()));
+
 		final Locale locale = Locale.US;
 
 		// WHEN
-		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum, locale);
+		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum,
+				clock.instant(), locale);
 
 		// THEN
 		// @formatter:off
@@ -124,8 +136,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					datum.getFirst().getNodeId(),
 					datum.getFirst().getSourceId(),
 					datum.getFirst().getTimestamp(),
-					DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
-							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))))
+					UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
+							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId()))),
+					AmountFormats.wordBased(ageDur.getPeriod(), ageDur.getDuration(), locale)))
 			;
 		then(result.get(UserAlertRendererResolver.DESTINATION_EMAILS_PARAM))
 			.as("Localized email list populated")
@@ -156,12 +169,16 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(alert);
 
-		final List<NodeDatumStreamPK> datum = List
-				.of(new NodeDatumStreamPK(randomLong(), randomSourceId(), now()));
+		final List<NodeDatumStreamPK> datum = List.of(new NodeDatumStreamPK(randomLong(),
+				randomSourceId(), clock.instant().minus(Duration.parse("PT6H10M30S"))));
 		final Locale locale = Locale.US;
+		final PeriodDuration ageDur = PeriodDuration.between(
+				datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()),
+				clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()));
 
 		// WHEN
-		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum, locale);
+		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum,
+				clock.instant(), locale);
 
 		// THEN
 		// @formatter:off
@@ -180,8 +197,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					datum.getFirst().getNodeId(),
 					datum.getFirst().getSourceId(),
 					datum.getFirst().getTimestamp(),
-					DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
-							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))))
+					UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
+							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId()))),
+					AmountFormats.wordBased(ageDur, locale)))
 			;
 		then(result.get(UserAlertRendererResolver.LOCALIZED_ALERT_AGE_PARAM))
 			.as("Localized age populated")
@@ -219,7 +237,8 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final Locale locale = Locale.US;
 
 		// WHEN
-		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum, locale);
+		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum,
+				clock.instant(), locale);
 
 		// THEN
 		// @formatter:off
@@ -259,7 +278,8 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final Locale locale = Locale.US;
 
 		// WHEN
-		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum, locale);
+		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum,
+				clock.instant(), locale);
 
 		// THEN
 		// @formatter:off
@@ -301,8 +321,14 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(alert);
 
-		final List<NodeDatumStreamPK> datum = List
-				.of(new NodeDatumStreamPK(alert.getNodeId(), sourceId, now()));
+		final List<NodeDatumStreamPK> datum = List.of(new NodeDatumStreamPK(alert.getNodeId(), sourceId,
+				clock.instant().minus(Duration.parse("PT32H18M56.123S"))));
+		final PeriodDuration ageDur = PeriodDuration
+				.between(
+						datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+								.atZone(user.timeZone()),
+						clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+				.normalizedYears().normalizedStandardDays();
 
 		// WHEN
 		TemplateRenderer renderer = resolver.rendererForAlert(sit, mimeType, locale);
@@ -316,7 +342,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		
 		final var messageSource =  new VersionedMessageDaoMessageSource(messageDao, new String[] {"snf.stale-datum-alert"}, Instant.now(),
 				messageCache);
-		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, locale);
+		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, clock.instant(), locale);
 		templateParameters.put("messages", messageSource.propertiesForLocale(locale));
 		
 		final ByteArrayOutputStream byos = new ByteArrayOutputStream();
@@ -351,8 +377,8 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					.items tr *:last-child { text-align: right; }
 					.items th { width: auto; }
 				</style></head><body><p>
-				This is an automated <b>stale datum alert</b> email from SolarNetwork.
-				The following sources have not posted data in more than <b>%4$s minutes</b>:
+				This is an automated <b>stale datum alert</b> from SolarNetwork.
+				The following sources have <b>not posted data</b> in more than <b>%5$s minutes</b>:
 				</p>
 				<table class="items">
 					<thead>
@@ -360,31 +386,34 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<th>Node</th>
 							<th>Source</th>
 							<th>Last datum date</th>
+							<th>Age</th>
 						</tr>
 						<tr>
-							<th colspan="3" class="hr"></th>
+							<th colspan="4" class="hr"></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<th>%1$d</th>
-							<th>%2$s</th>
+							<td>%1$d</td>
+							<td>%2$s</td>
 							<td>%3$s</td>
+							<td>%4$s</td>
 						</tr>	
 					</tbody>
 				</table>
 				<footer>
 					<p>
-					This automated email was sent to %5$s because of a stale datum alert configured in
+					This automated message was sent to %6$s because of a stale datum alert configured in
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
-					account</a> of %6$s.
+					account</a> of %7$s.
 					</p>
 				</footer></body></html>					
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId
-						, DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
+						, UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
 							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))
+						, AmountFormats.wordBased(ageDur, locale)
 						, NumberFormat.getIntegerInstance(locale).format(age / 60)
 						, user.getEmail()
 						, user.getEmail()
@@ -422,8 +451,14 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		sit.setAlert(alert);
 		sit.setStatus(UserAlertSituationStatus.Resolved);
 
-		final List<NodeDatumStreamPK> datum = List
-				.of(new NodeDatumStreamPK(alert.getNodeId(), sourceId, now()));
+		final List<NodeDatumStreamPK> datum = List.of(
+				new NodeDatumStreamPK(alert.getNodeId(), sourceId, clock.instant().minusSeconds(45)));
+		final PeriodDuration ageDur = PeriodDuration
+				.between(
+						datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+								.atZone(user.timeZone()),
+						clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+				.normalizedYears().normalizedStandardDays();
 
 		// WHEN
 		TemplateRenderer renderer = resolver.rendererForAlert(sit, mimeType, locale);
@@ -437,7 +472,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		
 		final var messageSource =  new VersionedMessageDaoMessageSource(messageDao, new String[] {"snf.stale-datum-alert"}, Instant.now(),
 				messageCache);
-		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, locale);
+		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, clock.instant(), locale);
 		templateParameters.put("messages", messageSource.propertiesForLocale(locale));
 		
 		final ByteArrayOutputStream byos = new ByteArrayOutputStream();
@@ -472,9 +507,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					.items tr *:last-child { text-align: right; }
 					.items th { width: auto; }
 				</style></head><body><p>
-				This is an automated stale datum <b>resolved</b> email from SolarNetwork.
+				This is an automated message from SolarNetwork to inform you that a stale datum alert has been <b>resolved</b>.
 				The following sources <b>are no longer considered stale</b> because they have have posted
-				data within the past <b>%4$s minutes</b>:
+				data within the past <b>%5$s minutes</b>:
 				</p>
 				<table class="items">
 					<thead>
@@ -482,31 +517,34 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<th>Node</th>
 							<th>Source</th>
 							<th>Last datum date</th>
+							<th>Age</th>
 						</tr>
 						<tr>
-							<th colspan="3" class="hr"></th>
+							<th colspan="4" class="hr"></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<th>%1$d</th>
-							<th>%2$s</th>
+							<td>%1$d</td>
+							<td>%2$s</td>
 							<td>%3$s</td>
+							<td>%4$s</td>
 						</tr>	
 					</tbody>
 				</table>
 				<footer>
 					<p>
-					This automated email was sent to %5$s because of a stale datum alert configured in
+					This automated message was sent to %6$s because of a stale datum alert configured in
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
-					account</a> of %6$s.
+					account</a> of %7$s.
 					</p>
 				</footer></body></html>					
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId
-						, DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
+						, UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
 							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))
+						, AmountFormats.wordBased(ageDur, locale)
 						, NumberFormat.getIntegerInstance(locale).format(age / 60)
 						, user.getEmail()
 						, user.getEmail()
@@ -547,8 +585,24 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		sit.setAlert(alert);
 
 		final List<NodeDatumStreamPK> datum = List.of(
-				new NodeDatumStreamPK(alert.getNodeId(), sourceId1, now()),
-				new NodeDatumStreamPK(alert.getNodeId(), sourceId2, now().minusSeconds(age)));
+				new NodeDatumStreamPK(alert.getNodeId(), sourceId1, clock.instant()),
+				new NodeDatumStreamPK(alert.getNodeId(), sourceId2, clock.instant().minusSeconds(age)));
+
+		final List<PeriodDuration> ageDurs = List.of(
+				PeriodDuration
+						.between(
+								datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+										.atZone(user.timeZone()),
+								clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+						.normalizedYears().normalizedStandardDays(),
+				PeriodDuration
+						.between(
+								datum.getLast().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+										.atZone(user.timeZone()),
+								clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+						.normalizedYears().normalizedStandardDays()
+
+		);
 
 		// WHEN
 		TemplateRenderer renderer = resolver.rendererForAlert(sit, mimeType, locale);
@@ -562,7 +616,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		
 		final var messageSource =  new VersionedMessageDaoMessageSource(messageDao, new String[] {"snf.stale-datum-alert"}, Instant.now(),
 				messageCache);
-		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, locale);
+		final Map<String, Object> templateParameters = resolver.templateParametersForAlert(user, sit, datum, clock.instant(), locale);
 		templateParameters.put("messages", messageSource.propertiesForLocale(locale));
 		
 		final ByteArrayOutputStream byos = new ByteArrayOutputStream();
@@ -597,8 +651,8 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					.items tr *:last-child { text-align: right; }
 					.items th { width: auto; }
 				</style></head><body><p>
-				This is an automated <b>stale datum alert</b> email from SolarNetwork.
-				The following sources have not posted data in more than <b>%7$s minutes</b>:
+				This is an automated <b>stale datum alert</b> from SolarNetwork.
+				The following sources have <b>not posted data</b> in more than <b>%9$s minutes</b>:
 				</p>
 				<table class="items">
 					<thead>
@@ -606,40 +660,45 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<th>Node</th>
 							<th>Source</th>
 							<th>Last datum date</th>
+							<th>Age</th>
 						</tr>
 						<tr>
-							<th colspan="3" class="hr"></th>
+							<th colspan="4" class="hr"></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<th>%1$d</th>
-							<th>%2$s</th>
+							<td>%1$d</td>
+							<td>%2$s</td>
 							<td>%3$s</td>
+							<td>%4$s</td>
 						</tr>	
 						<tr>
-							<th>%4$d</th>
-							<th>%5$s</th>
+							<td>%5$d</td>
 							<td>%6$s</td>
+							<td>%7$s</td>
+							<td>%8$s</td>
 						</tr>	
 					</tbody>
 				</table>
 				<footer>
 					<p>
-					This automated email was sent to %8$s because of a stale datum alert configured in
+					This automated message was sent to %10$s because of a stale datum alert configured in
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
-					account</a> of %9$s.
+					account</a> of %11$s.
 					</p>
 				</footer></body></html>					
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId1
-						, DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
+						, UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
 							datum.getFirst().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))
+						, AmountFormats.wordBased(ageDurs.getFirst(), locale)
 						, alert.getNodeId()
 						, sourceId2
-						, DateUtils.DISPLAY_DATE_LONG_TIME_SHORT.withLocale(locale).format(
+						, UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(locale).format(
 							datum.getLast().getTimestamp().atZone(ZoneId.of(loc.getTimeZoneId())))
+						, AmountFormats.wordBased(ageDurs.getLast(), locale)
 						, NumberFormat.getIntegerInstance(locale).format(age / 60)
 						, "%s and %s".formatted(destEmails.get(0), destEmails.get(1))
 						, user.getEmail()

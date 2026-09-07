@@ -30,6 +30,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,11 +38,15 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
+import org.threeten.extra.AmountFormats;
+import org.threeten.extra.PeriodDuration;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
 import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.service.TemplateRenderer;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * API for resolving a {@link TemplateRenderer} for rendering an alert.
@@ -90,9 +95,11 @@ public interface UserAlertRendererResolver {
 	 *        the datum timestamp
 	 * @param localizedTimestamp
 	 *        the localized formatted timestamp
+	 * @param localizedAge
+	 *        the localized formatted age
 	 */
-	record DatumStreamInfo(Long nodeId, String sourceId, Instant timestamp, String localizedTimestamp)
-			implements NodeIdRelated {
+	record DatumStreamInfo(Long nodeId, String sourceId, Instant timestamp, String localizedTimestamp,
+			String localizedAge) implements NodeIdRelated {
 
 		@Override
 		public @Nullable Long getNodeId() {
@@ -105,8 +112,8 @@ public interface UserAlertRendererResolver {
 	 * Resolve a renderer for a given alert situation and output
 	 * characteristics.
 	 *
-	 * @param invoice
-	 *        the invoice to be rendered
+	 * @param alert
+	 *        the alert to be rendered
 	 * @param mimeType
 	 *        the desired output MIME type
 	 * @param locale
@@ -125,25 +132,35 @@ public interface UserAlertRendererResolver {
 	 *        the alert situation
 	 * @param datum
 	 *        the datum identifier list
+	 * @param now
+	 *        the instant to treat as the "current time"
 	 * @param locale
 	 *        the locale to use
 	 * @return the parameters
 	 */
 	default Map<String, Object> templateParametersForAlert(final User user,
-			final UserAlertSituation situation, List<NodeDatumStreamPK> datum, Locale locale) {
+			final UserAlertSituation situation, List<NodeDatumStreamPK> datum, Instant now,
+			Locale locale) {
 		final ZoneId tz = user.timeZone();
 		final DateTimeFormatter formatter = DISPLAY_DATE_FORMATTER.withLocale(locale).withZone(tz);
 		final Map<String, Object> result = new LinkedHashMap<>(8);
+		final UserAlert alert = ObjectUtils.nonnull(situation.getAlert(), "Alert");
 		result.put(USER_PARAM, user);
 		result.put(SITUATION_PARAM, situation);
-		result.put(DATUM_IDENTIFIER_LIST_PARAM,
-				datum.stream().map(id -> new DatumStreamInfo(id.getNodeId(), id.getSourceId(),
-						id.getTimestamp(), formatter.format(id.getTimestamp()))).toList());
+		result.put(DATUM_IDENTIFIER_LIST_PARAM, datum.stream().map(id -> {
+			// note we truncate the duration to minutes for display purposes
+			final var age = PeriodDuration
+					.between(id.getTimestamp().truncatedTo(ChronoUnit.MINUTES).atZone(tz),
+							now.truncatedTo(ChronoUnit.MINUTES).atZone(tz))
+					.normalizedYears().normalizedStandardDays();
+			return new DatumStreamInfo(id.getNodeId(), id.getSourceId(), id.getTimestamp(),
+					formatter.format(id.getTimestamp()), AmountFormats.wordBased(age, locale));
+		}).toList());
 
 		final ResourceBundle bundle = ResourceBundle.getBundle(UserAlertRendererResolver.class.getName(),
 				locale);
 
-		String[] destEmails = situation.getAlert().optionEmailTos();
+		String[] destEmails = alert.optionEmailTos();
 		if ( destEmails == null || destEmails.length < 1 ) {
 			destEmails = new String[] { user.getEmail() };
 		}
@@ -162,7 +179,7 @@ public interface UserAlertRendererResolver {
 		}
 		result.put(DESTINATION_EMAILS_PARAM, locDestEmails.toString());
 
-		final Integer ageThreshold = situation.getAlert().optionAgeThreshold();
+		final Integer ageThreshold = alert.optionAgeThreshold();
 		if ( ageThreshold != null ) {
 			NumberFormat numFmt = NumberFormat.getIntegerInstance(locale);
 			result.put(LOCALIZED_ALERT_AGE_PARAM,

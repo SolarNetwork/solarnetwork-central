@@ -118,7 +118,7 @@ subprojects {
 		springdocStarterVersion = '3.0.0'
 		superCsvVersion = '2.4.0'
 		swaggerVersion = '2.2.41'
-		threetenExtraVersion = '1.8.0'
+		threetenExtraVersion = '1.10.0'
 		uuidGeneratorVersion = '5.1.0'
 		xzVersion = '1.10'
 

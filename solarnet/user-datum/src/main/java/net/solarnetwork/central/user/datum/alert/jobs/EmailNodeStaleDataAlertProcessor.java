@@ -245,7 +245,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 				Map<String, Object> staleInfo = new HashMap<>(4);
 				if ( stale != null ) {
-					staleInfo.put(SITUATION_INFO_STALE_DATUM_IDS, stale.stream().map(id -> {
+					staleInfo.put(SITUATION_INFO_STALE_DATUM_IDS, stale.stream().sorted().map(id -> {
 						var data = new LinkedHashMap<>(3);
 						data.put(SITUATION_INFO_NODE_ID, id.getNodeId());
 						data.put(SITUATION_INFO_SOURCE_ID, id.getSourceId());
@@ -592,7 +592,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return false;
 	}
 
-	private @Nullable List<NodeDatumStreamPK> getNonStaleDatum(final UserAlert alert, final Instant now,
+	private List<NodeDatumStreamPK> getNonStaleDatum(final UserAlert alert, final Instant now,
 			final Number age, final PathMatcher sourceIdMatcher,
 			final @Nullable List<String> sourceIdPatterns) {
 		List<NodeDatumStreamPK> nonStale = null;
@@ -607,18 +607,19 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				nonStale.add(datum);
 			}
 		}
-		return nonStale;
+		return (nonStale != null ? nonStale : List.of());
 	}
 
 	private void sendAlertMail(final Instant now, final UserAlertSituation sit, final String subjectKey,
 			List<NodeDatumStreamPK> datum) {
-		final UserAlert alert = sit.getAlert();
+		final UserAlert alert = nonnull(sit.getAlert(), "Alert");
 		if ( alert.getStatus() == UserAlertStatus.Suppressed ) {
 			// no emails for this alert
 			log.debug("Alert email suppressed: {}; datum {}; subject {}", alert, datum, subjectKey);
 			return;
 		}
-		User user = userDao.get(alert.getUserId());
+
+		final User user = userDao.get(alert.getUserId());
 		if ( user == null ) {
 			return;
 		}
@@ -631,13 +632,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			addr = new BasicMailAddress(emails);
 		}
 
-		final Locale locale = Locale.US; // TODO: get Locale from User entity
+		final Locale locale = user.locale();
 
 		final ResolvedRenderer renderer = renderer(sit, MimeTypeUtils.TEXT_HTML, locale);
 		final var messageSource = new VersionedMessageDaoMessageSource(messageDao, MESSAGE_BUNDLE_NAMES,
 				now, messageCache);
 		final Map<String, Object> model = renderer.resolver.templateParametersForAlert(user, sit, datum,
-				locale);
+				now, locale);
+
 		model.put("messages", messageSource.propertiesForLocale(locale));
 
 		final ByteArrayOutputStream byos = new ByteArrayOutputStream();
