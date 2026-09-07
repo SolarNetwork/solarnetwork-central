@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Primary key for a datum based on object/source/timestamp values.
@@ -253,7 +254,7 @@ public class ObjectDatumStreamPK extends BasePK
 			} else if ( o.sourceId == null ) {
 				return -1;
 			}
-			result = sourceId.compareTo(o.sourceId);
+			result = StringUtils.naturalSortCompare(sourceId, o.sourceId, true);
 			if ( result != 0 ) {
 				return result;
 			}
