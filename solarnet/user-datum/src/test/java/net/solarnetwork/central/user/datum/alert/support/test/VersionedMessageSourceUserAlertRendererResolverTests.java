@@ -109,9 +109,12 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 
 		final List<NodeDatumStreamPK> datum = List.of(new NodeDatumStreamPK(randomLong(),
 				randomSourceId(), clock.instant().minus(Duration.parse("PT6H10M30S"))));
-		final PeriodDuration ageDur = PeriodDuration.between(
-				datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()),
-				clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()));
+		final PeriodDuration ageDur = PeriodDuration
+				.between(
+						datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+								.atZone(user.timeZone()),
+						clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+				.normalizedYears().normalizedStandardDays();
 
 		final Locale locale = Locale.US;
 
@@ -172,9 +175,12 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 		final List<NodeDatumStreamPK> datum = List.of(new NodeDatumStreamPK(randomLong(),
 				randomSourceId(), clock.instant().minus(Duration.parse("PT6H10M30S"))));
 		final Locale locale = Locale.US;
-		final PeriodDuration ageDur = PeriodDuration.between(
-				datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()),
-				clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()));
+		final PeriodDuration ageDur = PeriodDuration
+				.between(
+						datum.getFirst().getTimestamp().truncatedTo(ChronoUnit.MINUTES)
+								.atZone(user.timeZone()),
+						clock.instant().truncatedTo(ChronoUnit.MINUTES).atZone(user.timeZone()))
+				.normalizedYears().normalizedStandardDays();
 
 		// WHEN
 		Map<String, Object> result = resolver.templateParametersForAlert(user, sit, datum,
@@ -356,9 +362,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 				<html><head><meta charset="UTF-8">
 				<title>SolarNetwork stale datum alert</title>
 				<style type="text/css">
-					body { 
+					body {
 						font-family: sans-serif;
-						background-color: #FFF;  
+						background-color: #FFF;
 						margin: 2rem; }
 					footer { border-top:2px solid #F7C819;color:#666;margin-top:2rem; }
 					footer > p { margin-top:4px; margin-bottom: 4px; font-size:0.8rem; }
@@ -398,7 +404,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<td>%2$s</td>
 							<td>%3$s</td>
 							<td>%4$s</td>
-						</tr>	
+						</tr>
 					</tbody>
 				</table>
 				<footer>
@@ -407,7 +413,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
 					account</a> of %7$s.
 					</p>
-				</footer></body></html>					
+				</footer></body></html>
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId
@@ -486,9 +492,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 				<html><head><meta charset="UTF-8">
 				<title>SolarNetwork stale datum alert resolved</title>
 				<style type="text/css">
-					body { 
+					body {
 						font-family: sans-serif;
-						background-color: #FFF;  
+						background-color: #FFF;
 						margin: 2rem; }
 					footer { border-top:2px solid #F7C819;color:#666;margin-top:2rem; }
 					footer > p { margin-top:4px; margin-bottom: 4px; font-size:0.8rem; }
@@ -529,7 +535,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<td>%2$s</td>
 							<td>%3$s</td>
 							<td>%4$s</td>
-						</tr>	
+						</tr>
 					</tbody>
 				</table>
 				<footer>
@@ -538,7 +544,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
 					account</a> of %7$s.
 					</p>
-				</footer></body></html>					
+				</footer></body></html>
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId
@@ -630,9 +636,9 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 				<html><head><meta charset="UTF-8">
 				<title>SolarNetwork stale datum alert</title>
 				<style type="text/css">
-					body { 
+					body {
 						font-family: sans-serif;
-						background-color: #FFF;  
+						background-color: #FFF;
 						margin: 2rem; }
 					footer { border-top:2px solid #F7C819;color:#666;margin-top:2rem; }
 					footer > p { margin-top:4px; margin-bottom: 4px; font-size:0.8rem; }
@@ -672,13 +678,13 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 							<td>%2$s</td>
 							<td>%3$s</td>
 							<td>%4$s</td>
-						</tr>	
+						</tr>
 						<tr>
 							<td>%5$d</td>
 							<td>%6$s</td>
 							<td>%7$s</td>
 							<td>%8$s</td>
-						</tr>	
+						</tr>
 					</tbody>
 				</table>
 				<footer>
@@ -687,7 +693,7 @@ public class VersionedMessageSourceUserAlertRendererResolverTests {
 					the <a href="https://data.solarnetwork.net/solaruser/u/sec/alerts">SolarNetwork
 					account</a> of %11$s.
 					</p>
-				</footer></body></html>					
+				</footer></body></html>
 				""".formatted(
 						  alert.getNodeId()
 						, sourceId1
