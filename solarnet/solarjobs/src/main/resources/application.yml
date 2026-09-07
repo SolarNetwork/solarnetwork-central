@@ -500,6 +500,10 @@ app:
         batch-size: 250
         initial-alert-reminder-delay-minutes: 60
         alert-reminder-frequency-multiplier: 4
+      html-template-cache:
+        ttl: 3600
+        heap-max-entries: 200
+        disk-max-size-mb: 0
   user-event:
     sqs:
       stat-frequency: 200

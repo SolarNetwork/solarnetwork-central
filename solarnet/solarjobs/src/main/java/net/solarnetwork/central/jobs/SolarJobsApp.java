@@ -41,6 +41,7 @@ import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
+import net.solarnetwork.central.user.datum.alert.config.SolarNetUserDatumAlertConfiguration;
 import net.solarnetwork.central.user.datum.event.config.SolarNetUserEventConfiguration;
 import net.solarnetwork.central.user.datum.expire.config.SolarNetUserExpireConfiguration;
 import net.solarnetwork.central.user.datum.export.config.SolarNetUserExportConfiguration;
@@ -51,7 +52,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarJobs application.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
@@ -61,6 +62,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumImportConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
+		SolarNetUserDatumAlertConfiguration.class,
 		SolarNetUserEventConfiguration.class,
 		SolarNetUserExpireConfiguration.class,
 		SolarNetUserExportConfiguration.class,
