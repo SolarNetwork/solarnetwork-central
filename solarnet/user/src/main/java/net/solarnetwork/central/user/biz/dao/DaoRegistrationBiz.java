@@ -49,6 +49,7 @@ import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -383,6 +384,27 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// sent enabled if not configured
 		if ( user.getEnabled() == null ) {
 			user.setEnabled(Boolean.TRUE);
+		}
+
+		// save location details if provided
+		if ( user.getLocation() != null && (user.getLocationId() == null
+				|| !Objects.equals(user.getLocationId(), user.getLocation().getId())) ) {
+			if ( user.getLocation().getId() != null ) {
+				// just update user's location ID
+				user.setLocationId(user.getLocation().getId());
+			} else {
+				final String country = nonnull(user.getLocation().getCountry(), "Country");
+				final String timeZoneId = nonnull(user.getLocation().getTimeZoneId(), "Time zone ID");
+				// look up location for Country + Time Zone
+				SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(country, timeZoneId);
+				if ( loc == null ) {
+					loc = new SolarLocation();
+					loc.setCountry(country);
+					loc.setTimeZoneId(timeZoneId);
+					loc = solarLocationDao.get(solarLocationDao.save(loc));
+				}
+				user.setLocation(loc);
+			}
 		}
 	}
 
@@ -1129,11 +1151,29 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				&& !DO_NOT_CHANGE_VALUE.equals(userEntry.getPassword()) ) {
 			entity.setPassword(userEntry.getPassword());
 		}
+		if ( StringUtils.hasText(userEntry.getCountry()) ) {
+			entity.setCountry(userEntry.getCountry());
+		}
+		if ( StringUtils.hasText(userEntry.getTimeZoneId()) ) {
+			entity.setTimeZoneId(userEntry.getTimeZoneId());
+		}
+		if ( StringUtils.hasText(userEntry.getLang()) ) {
+			entity.setLang(userEntry.getLang());
+		}
+
+		// perform service-side validation
+		if ( this.userValidator != null ) {
+			Errors errors = new BindException(entity, "user");
+			this.userValidator.validate(entity, errors);
+			if ( errors.hasErrors() ) {
+				throw new ValidationException(errors);
+			}
+		}
 
 		prepareUserForStorage(entity);
 
 		try {
-			entity = nonnull(userDao.get(userDao.save(entity)), "User");
+			entity = nonnull(userDao.getUserWithLocation(userDao.save(entity)), "User");
 		} catch ( DataIntegrityViolationException e ) {
 			log.warn("Duplicate user registration: {}", entity.getEmail());
 			throw new AuthorizationException(entity.getEmail(),

@@ -35,6 +35,30 @@
 			<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></span>
 		</div>
 	</div>
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('country')}? error">
+		<label class="col-sm-2 control-label" for="user-country" data-th-text="#{user.country.label}">Country</label>
+		<div class="col-sm-6">
+			<input type="text" data-th-field="*{country}" minlength="2" maxlength="3" id="user-country" data-th-placeholder="#{user.country.placeholder}" class="form-control">
+			<span class="help-block" data-th-utext="#{user.country.caption}">Country code, like <code>US</code>.</span>
+			<span class="text-warning" data-th-if="${#fields.hasErrors('country')}" data-th-errors="*{country}"></span>
+		</div>
+	</div>
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('timeZoneId')}? error">
+		<label class="col-sm-2 control-label" for="user-time-zone-id" data-th-text="#{user.timeZoneId.label}">Time Zone</label>
+		<div class="col-sm-6">
+			<input type="text" data-th-field="*{timeZoneId}" id="user-time-zone-id" data-th-placeholder="#{user.timeZoneId.placeholder}" class="form-control">
+			<span class="help-block" data-th-utext="#{user.timeZoneId.caption}">For example <code>America/Los_Angeles</code>.</span>
+			<span class="text-warning" data-th-if="${#fields.hasErrors('timeZoneId')}" data-th-errors="*{timeZoneId}"></span>
+		</div>
+	</div>
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('lang')}? error">
+		<label class="col-sm-2 control-label" for="user-lang" data-th-text="#{user.lang.label}">Language</label>
+		<div class="col-sm-6">
+			<input type="text" data-th-field="*{lang}" minlength="2" maxlength="3" id="user-lang" data-th-placeholder="#{user.lang.placeholder}" class="form-control">
+			<span class="help-block" data-th-utext="#{user.lang.caption}">Language code, like <code>en</code> for English.</span>
+			<span class="text-warning" data-th-if="${#fields.hasErrors('lang')}" data-th-errors="*{lang}"></span>
+		</div>
+	</div>
 </fieldset>
 </form>
 </body>

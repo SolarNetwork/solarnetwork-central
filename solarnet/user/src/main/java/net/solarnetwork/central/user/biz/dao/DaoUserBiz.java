@@ -78,7 +78,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -138,7 +138,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public @Nullable User getUser(Long id) {
-		return userDao.get(id);
+		return userDao.getUserWithLocation(id);
 	}
 
 	@Override

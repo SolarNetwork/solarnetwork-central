@@ -123,7 +123,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @return the ZoneId, or {@code null} if none available
 	 * @since 1.4
 	 */
-	public @Nullable ZoneId getTimeZone() {
+	public final @Nullable ZoneId getTimeZone() {
 		return (this.location != null && this.location.getTimeZoneId() != null
 				? ZoneId.of(this.location.getTimeZoneId())
 				: null);
@@ -136,7 +136,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *         falling back to {@code UTC} if not available
 	 * @since 2.2
 	 */
-	public ZoneId timeZone() {
+	public final ZoneId timeZone() {
 		return Objects.requireNonNullElse(getTimeZone(), ZoneOffset.UTC);
 	}
 
@@ -147,7 +147,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *         available
 	 * @since 2.2
 	 */
-	public Locale locale() {
+	public final Locale locale() {
 		String lang = lang();
 		String co = Locale.US.getCountry();
 
@@ -404,6 +404,104 @@ public class User extends BaseEntity implements UserInfo {
 	public final String lang() {
 		final String lang = getLang();
 		return (lang != null ? lang : Locale.ENGLISH.getLanguage());
+	}
+
+	/**
+	 * Get the location country.
+	 * 
+	 * <p>
+	 * This is a shortcut for {@code getLocation().getCountry()}.
+	 * </p>
+	 * 
+	 * @return the location country, or {@code null} if not available
+	 * @since 2.3
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	public final @Nullable String getCountry() {
+		final var loc = getLocation();
+		return (loc != null ? loc.getCountry() : null);
+	}
+
+	/**
+	 * Set the location country.
+	 * 
+	 * <p>
+	 * This is a shortcut for {@code getLocation().setCountry(country)}. If the
+	 * provided {@code country} differs from the current location country, the
+	 * location's {@code id} will be set to {@code null} to signal that the
+	 * location association has changed.
+	 * </p>
+	 * </p>
+	 * 
+	 * @param country
+	 *        the country to set
+	 * @since 2.3
+	 */
+	public final void setCountry(@Nullable String country) {
+		var loc = getLocation();
+		if ( loc == null ) {
+			if ( country == null || country.isEmpty() ) {
+				return;
+			}
+			loc = new SolarLocation();
+			setLocation(loc);
+		}
+		if ( !Objects.equals(country, loc.getCountry()) && locationId != null ) {
+			// reset for detail change
+			this.locationId = null;
+			loc.setId(null);
+		}
+		loc.setCountry(country);
+	}
+
+	/**
+	 * Get the location time zone ID.
+	 * 
+	 * <p>
+	 * This is a shortcut for {@code getLocation().getTimeZoneId()}.
+	 * </p>
+	 * 
+	 * @return the location time zone ID, or {@code null} if not available
+	 * @since 2.3
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	public final @Nullable String getTimeZoneId() {
+		final var loc = getLocation();
+		return (loc != null ? loc.getTimeZoneId() : null);
+	}
+
+	/**
+	 * Set the location time zone ID.
+	 * 
+	 * <p>
+	 * This is a shortcut for {@code getLocation().setTimeZoneId(country)}. If
+	 * the provided {@code timeZoneId} differs from the current location time
+	 * zone ID, the location's {@code id} will be set to {@code null} to signal
+	 * that the location association has changed.
+	 * </p>
+	 * </p>
+	 * 
+	 * @param timeZoneId
+	 *        the time zone ID to set
+	 * @since 2.3
+	 */
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
+		var loc = getLocation();
+		if ( loc == null ) {
+			if ( timeZoneId == null || timeZoneId.isEmpty() ) {
+				return;
+			}
+			loc = new SolarLocation();
+			setLocation(loc);
+		}
+		if ( !Objects.equals(timeZoneId, loc.getTimeZoneId()) && locationId != null ) {
+			// reset for detail change
+			this.locationId = null;
+			loc.setId(null);
+		}
+		loc.setTimeZoneId(timeZoneId);
 	}
 
 }
