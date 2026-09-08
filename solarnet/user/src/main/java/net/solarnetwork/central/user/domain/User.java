@@ -391,7 +391,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 2.3
 	 */
 	public final void setLang(@Nullable String lang) {
-		this.lang = lang;
+		this.lang = (lang != null && !lang.isEmpty() ? lang : null);
 	}
 
 	/**
