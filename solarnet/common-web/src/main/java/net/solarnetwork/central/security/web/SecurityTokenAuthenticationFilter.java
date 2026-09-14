@@ -207,7 +207,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		final String computedDigest = data
 				.computeSignatureDigest(user.getPassword() != null ? user.getPassword() : "");
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
-			log.debug("Expected response: [{}] but received: [{}]", computedDigest,
+			log.debug("Computed signature digest does not match received value [{}]",
 					data.getSignatureDigest());
 			fail(request, res, new BadCredentialsException("Bad credentials"));
 			return;
