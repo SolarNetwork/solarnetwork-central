@@ -76,6 +76,27 @@ public class JdbcAuthServiceIntegrationDirectTokensTests extends JdbcAuthService
 	}
 
 	@Test
+	public void authenticateOk_directToken_secretWithPeriod() {
+		// given
+		final Long userId = 123L;
+		DbUtils.createUser(jdbcOps, userId);
+		final String tokenId = "test.token";
+		final String tokenSecret = generateTokenSecret().replace('-', '.');
+		DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
+				DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
+
+		RegisterRequest req = RegisterRequest.builder().withClientId(tokenId).withUsername(tokenId)
+				.withPassword(tokenSecret).build();
+
+		// when
+		Response r = authService.authenticateRequest(req);
+
+		// then
+		assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
+		assertThat("No modifiers", r.getModifiers(), nullValue());
+	}
+
+	@Test
 	public void authenticateFailed_directToken_badSecret() {
 		// given
 		final Long userId = 123L;

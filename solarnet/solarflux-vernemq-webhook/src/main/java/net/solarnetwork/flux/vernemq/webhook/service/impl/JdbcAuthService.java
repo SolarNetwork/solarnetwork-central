@@ -124,14 +124,15 @@ public class JdbcAuthService implements AuthService {
 	 * The default value for the {@code directTokenSecretRegex} property.
 	 *
 	 * <p>
-	 * This pattern matches the RFC 1924 alphabet used by SolarNetwork when
-	 * generating tokens.
+	 * This pattern matches the RFC 1924 alphabet formerly used by SolarNetwork
+	 * when generating tokens, along with a {@code .} character used by the
+	 * current token alphabet.
 	 * </p>
 	 *
 	 * @since 1.1
 	 */
 	public static final Pattern DEFAULT_DIRECT_TOKEN_SECRET_REGEX = Pattern
-			.compile("[0-9A-Za-z!#$%&()*+;<=>?@^_`{|}~-]{16,}");
+			.compile("[0-9A-Za-z.!#$%&()*+;<=>?@^_`{|}~-]{16,}");
 
 	private static final Logger log = LoggerFactory.getLogger(JdbcAuthService.class);
 
