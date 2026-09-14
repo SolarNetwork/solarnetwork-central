@@ -204,18 +204,6 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			return;
 		}
 
-		if ( user instanceof SecurityToken token ) {
-			SecurityPolicy policy = token.getPolicy();
-			if ( policy != null && !policy.isValidAt(Instant.now()) ) {
-				fail(request, res, new CredentialsExpiredException("Expired token"));
-				return;
-			}
-			if ( !isValidApiPath(request, policy) ) {
-				fail(request, res, new BadCredentialsException("Access denied"));
-				return;
-			}
-		}
-
 		final String computedDigest = data
 				.computeSignatureDigest(user.getPassword() != null ? user.getPassword() : "");
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
@@ -229,6 +217,18 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			log.debug("Request date [{}] diff too large: {}", data.getDate(), data.getDateSkew());
 			fail(request, res, new BadCredentialsException("Date skew too large"));
 			return;
+		}
+
+		if ( user instanceof SecurityToken token ) {
+			SecurityPolicy policy = token.getPolicy();
+			if ( policy != null && !policy.isValidAt(Instant.now()) ) {
+				fail(request, res, new CredentialsExpiredException("Expired token"));
+				return;
+			}
+			if ( !isValidApiPath(request, policy) ) {
+				fail(request, res, new BadCredentialsException("Access denied"));
+				return;
+			}
 		}
 
 		log.debug("Authentication success for user: [{}]", user.getUsername());

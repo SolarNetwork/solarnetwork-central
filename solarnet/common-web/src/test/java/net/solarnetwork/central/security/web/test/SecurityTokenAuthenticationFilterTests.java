@@ -601,7 +601,7 @@ public class SecurityTokenAuthenticationFilterTests {
 				SecurityTokenType.ReadNodeData, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
-		final Date now = new Date(System.currentTimeMillis() - 16L * 60L * 1000L);
+		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request,
 				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
@@ -610,6 +610,30 @@ public class SecurityTokenAuthenticationFilterTests {
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Expired token");
+	}
+
+	@Test
+	public void expiredToken_invalidSignature() throws ServletException, IOException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNotAfter(Instant.now().minusSeconds(1)).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.ReadNodeData, -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+
+		// create header from wrong time for invalid signature
+		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
+				TEST_PASSWORD, request, new Date(now.getTime() + 1000)));
+
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+
+		// the signature validation should happen before expired token check
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Bad credentials");
 	}
 
 	@Test
@@ -662,6 +686,33 @@ public class SecurityTokenAuthenticationFilterTests {
 		// then
 		verify(filterChain, userDetailsService);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2SimpleDenied_invalidSignature() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(singleton("/foo/**"))
+				.build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+
+		// create header from wrong time for invalid signature
+		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
+				TEST_PASSWORD, request, new Date(now.getTime() + 1000)));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Bad credentials");
 	}
 
 	@Test
