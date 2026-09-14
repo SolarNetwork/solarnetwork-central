@@ -178,6 +178,61 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 	}
 
 	@Test
+	public void tokenAuth_firstCredUsed() throws ServletException, IOException {
+		// GIVEN
+		final List<MockHttpServletResponse> responses = new ArrayList<>(TEST_CAPACITY);
+
+		final String tokenId = CommonTestUtils.randomString();
+
+		final String extraAuth = ",Credential=IGNORED";
+
+		// WHEN
+		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
+			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
+			req.addHeader(AUTHORIZATION, snws2Cred(tokenId) + extraAuth);
+
+			final MockHttpServletResponse res = new MockHttpServletResponse();
+			responses.add(res);
+
+			final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
+
+			filter.doFilter(req, res, chain);
+		}
+
+		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
+				"solarcommon.bucket", "id");
+
+		// THEN
+		// @formatter:off
+		then(nextFilter).should(times(TEST_CAPACITY)).doFilter(any(), any(), any());
+
+		and.then(responses)
+			.satisfies(list -> {
+				for (int i = 0; i < TEST_CAPACITY; i++ ) {
+					final int reqNum = i + 1;
+					and.then(list).element(i)
+						.satisfies(res -> {
+							and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_REMAINING_HEADER))
+								.as("Rate limit remaining header for resopnse %d deducted from capacity", reqNum)
+								.isEqualTo(String.valueOf(TEST_CAPACITY - reqNum))
+								;
+						})
+						;
+				}
+			})
+			;
+
+		and.then(rows)
+			.as("Bucket row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("ID for token ID")
+			.containsEntry("id", RateLimitingFilter.idForString(tokenId))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void tokenAuth_overLimit() throws ServletException, IOException {
 		// GIVEN
 		final String tokenId = CommonTestUtils.randomString();

@@ -67,7 +67,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 
 	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern.compile("^SolarNetworkWS\\s+([^:]+):");
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern
-			.compile("^SNWS2\\s+.*Credential=([^,]+)(?:,|$)");
+			.compile("^SNWS2\\s+.*?Credential=([^,]+)(?:,|$)");
 
 	private static final Long GLOBAL_ANONYMOUS_KEY = -1L;
 
