@@ -75,7 +75,7 @@ import net.solarnetwork.util.StringUtils;
 public class FixedIntervalCloudDatumStreamService extends BaseCloudDatumStreamService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.fixed.interval";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.fixed.interval";
 
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
