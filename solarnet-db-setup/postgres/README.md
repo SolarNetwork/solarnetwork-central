@@ -1,11 +1,11 @@
 # SolarNet Postgres Database Setup
 
-SolarNet requires a [Postgres][pgsql] database, version 12 or higher, to operate. Please note that
-only version 12 has been extensively tested, but newer versions may work fine.
+SolarNet requires a [Postgres][pgsql] database, version 17 or higher, to operate. Please note that
+only version 17 has been extensively tested, but newer versions may work fine.
 
 ## Requirements
 
- * Postgres 12 - http://www.postgresql.org/
+ * Postgres 17 - http://www.postgresql.org/
  * **citext** extension (from contrib)
  * **pgcrypto** extension (from contrib)
  * **uuid-ossp** extension (from contrib)
@@ -37,14 +37,14 @@ git clone https://github.com/timescale/timescaledb.git
 
 # checkout version tag
 cd timescaledb
-git checkout 2.11.2   # or some other release
+git checkout 2.19.3   # or some other release
 ```
 
 Then, build and install according to the TimescaleDB documentation. On macOS, for example:
 
 ```sh
 # make sure Postgres is on your PATH, e.g. for macOS Postgres.app:
-export PATH=/Applications/Postgres.app/Contents/Versions/12/bin:$PATH
+export PATH=/Applications/Postgres.app/Contents/Versions/17/bin:$PATH
 
 # in theory: ./bootstrap but on macOS may require OpenSSL from Homebrew:
 OPENSSL_ROOT_DIR=/usr/local/opt/openssl ./bootstrap -DREGRESS_CHECKS=OFF
@@ -69,8 +69,8 @@ cd aggs_for_vecs
 make && sudo make install
 
 # Install for macOS Postgres.app
-make PG_CONFIG=/Applications/Postgres.app/Contents/Versions/12/bin/pg_config
-make install PG_CONFIG=/Applications/Postgres.app/Contents/Versions/12/bin/pg_config
+make PG_CONFIG=/Applications/Postgres.app/Contents/Versions/17/bin/pg_config
+make install PG_CONFIG=/Applications/Postgres.app/Contents/Versions/17/bin/pg_config
 ```
 
 
@@ -94,7 +94,7 @@ If Postgres is running on a non-standard port, or on a remote host, pass `psql` 
 arguments via the `-c` switch:
 
 ```sh
-./bin/setup-db.sh -mrv -c '-p 5496 -h postgres96.example.com'
+./bin/setup-db.sh -mrv -c '-p 2345 -h postgres.example.com'
 ```
 
 ### SQL only database creation
