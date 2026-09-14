@@ -147,7 +147,8 @@ public class MqttJsonPublisher_UserEventTests extends MqttServerSupport {
 		// GIVEN
 		final String largeContent = utf8StringResource("large-event-data-02.json",
 				UserEventAppenderBizTests.class);
-		final UserEvent event = new UserEvent(CommonTestUtils.randomLong(), UUID.randomUUID(),
+		final UserEvent event = new UserEvent(
+				CommonTestUtils.RNG.nextLong(100_000_000_000L, 999_999_999_999L), UUID.randomUUID(),
 				new String[] { "a", "b", "c" }, "Test message.", largeContent);
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
@@ -163,7 +164,7 @@ public class MqttJsonPublisher_UserEventTests extends MqttServerSupport {
 		then(session.publishMessages).as("Only 1 message published").hasSize(1);
 
 		final UserEvent errEvent = new UserEvent(event.id(), event.getTags(),
-				"Unable to publish event because the payload length 14778 exceeds the maximum allowed 8192.",
+				"Unable to publish event because the payload length 14764 exceeds the maximum allowed 8192.",
 				"""
 						{"message":"Content too large to preserve."}""");
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
