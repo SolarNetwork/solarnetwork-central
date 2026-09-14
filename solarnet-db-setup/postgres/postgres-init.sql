@@ -48,3 +48,5 @@
 \i postgres-init-billing-schema.sql
 \i postgres-init-billing.sql
 
+\i postgres-init-migration-version.sql
+
