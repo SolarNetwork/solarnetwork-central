@@ -109,7 +109,7 @@ public final class CloudIntegrationsUtils {
 		TemporalAdjuster adj = period.getYears() > 0 ? TemporalAdjusters.firstDayOfYear()
 				: period.getMonths() > 0 ? TemporalAdjusters.firstDayOfMonth()
 						: TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY);
-		return date.atZone(zone).with(adj).toInstant().truncatedTo(ChronoUnit.DAYS);
+		return date.atZone(zone).with(adj).truncatedTo(ChronoUnit.DAYS).toInstant();
 	}
 
 	/**

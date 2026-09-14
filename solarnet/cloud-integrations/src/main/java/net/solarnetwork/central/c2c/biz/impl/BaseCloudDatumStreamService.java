@@ -41,6 +41,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
@@ -125,7 +126,7 @@ import tools.jackson.databind.JsonNode;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -527,6 +528,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @param integrationId
 	 *        the {@link CloudIntegrationConfiguration} ID to provide as a
 	 *        {@code integrationId} parameter
+	 * @return the resulting datum
 	 * @since 1.6
 	 */
 	public Collection<GeneralDatum> evaluateExpressions(CloudDatumStreamConfiguration datumStream,
@@ -550,6 +552,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        {@code integrationId} parameter
 	 * @param parameters
 	 *        optional parameters to pass to the expressions
+	 * @return the resulting datum
 	 */
 	public Collection<GeneralDatum> evaluateExpressions(CloudDatumStreamConfiguration datumStream,
 			SequencedCollection<CloudDatumStreamPropertyConfiguration> configurations,
@@ -1374,6 +1377,42 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 		}
 		return (!result.isEmpty() ? result : null);
+	}
+
+	/**
+	 * Resolve a time zone from a datum stream configuration, with an optional
+	 * parameter override.
+	 *
+	 * @param ds
+	 *        the configuration to extract the time zone service property value
+	 *        from
+	 * @param key
+	 *        the service property key, or parameter key, with the time zone ID
+	 *        to parse
+	 * @param parameters
+	 *        an optional parameters map to override the datum stream service
+	 *        properties
+	 * @return the time zone, falling back to {@code UTC} if one is not
+	 *         otherwise available
+	 * @since 2.7
+	 */
+	public static ZoneId resolveTimeZone(@Nullable CloudDatumStreamConfiguration ds, final String key,
+			@Nullable Map<String, ?> parameters) {
+		ZoneId result = null;
+		try {
+			String settingVal = null;
+			if ( parameters != null && parameters.get(key) instanceof String s ) {
+				settingVal = s;
+			} else if ( ds != null ) {
+				settingVal = ds.serviceProperty(key, String.class);
+			}
+			if ( settingVal != null && !settingVal.isEmpty() ) {
+				result = ZoneId.of(settingVal);
+			}
+		} catch ( Exception e ) {
+			// ignore
+		}
+		return (result != null ? result : ZoneOffset.UTC);
 	}
 
 	/**

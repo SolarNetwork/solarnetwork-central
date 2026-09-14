@@ -43,7 +43,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -395,7 +394,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
-		final ZoneId zone = resolveTimeZone(datumStream, null);
+		final ZoneId zone = resolveTimeZone(datumStream, TIME_ZONE_SETTING, null);
 		final AlsoEnergyGranularity granularity = resolveGranularity(datumStream, null, null, null,
 				null);
 
@@ -439,7 +438,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
 					"filter.startDate");
 
-			final ZoneId zone = resolveTimeZone(datumStream, filter.getParameters());
+			final ZoneId zone = resolveTimeZone(datumStream, TIME_ZONE_SETTING, filter.getParameters());
 
 			final SortedMap<Period, AlsoEnergyGranularity> granularityPeriods = resolveGranularityPeriods(
 					datumStream);
@@ -782,25 +781,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 		}
 		return (result != null ? result : AlsoEnergyGranularity.Raw);
-	}
-
-	private ZoneId resolveTimeZone(CloudDatumStreamConfiguration datumStream,
-			@Nullable Map<String, ?> parameters) {
-		ZoneId result = null;
-		try {
-			String settingVal = null;
-			if ( parameters != null && parameters.get(TIME_ZONE_SETTING) instanceof String s ) {
-				settingVal = s;
-			} else if ( datumStream != null ) {
-				settingVal = datumStream.serviceProperty(TIME_ZONE_SETTING, String.class);
-			}
-			if ( settingVal != null && !settingVal.isEmpty() ) {
-				result = ZoneId.of(settingVal);
-			}
-		} catch ( Exception e ) {
-			// ignore
-		}
-		return (result != null ? result : ZoneOffset.UTC);
 	}
 
 	/**
