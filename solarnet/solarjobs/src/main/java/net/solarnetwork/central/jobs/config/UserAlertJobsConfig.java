@@ -120,6 +120,7 @@ public class UserAlertJobsConfig {
 		DefaultMailService service = new DefaultMailService(mailSender);
 		service.setTemplateMessage(emailNodeStaleDataAlertMailTemplate());
 		service.applySettings(mailSettings());
+		service.setHtml(true);
 		return service;
 	}
 
