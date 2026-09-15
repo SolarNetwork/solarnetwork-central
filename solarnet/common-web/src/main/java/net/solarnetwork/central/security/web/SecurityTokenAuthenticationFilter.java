@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.PathContainer;
+import org.springframework.http.server.RequestPath;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -85,7 +87,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  *
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -121,10 +123,10 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * @param pathMatcher
 	 *        the matcher to use, or {@code null} if not supported
 	 * @param pathMatcherPrefixStrip
-	 *        a path prefix to strip from
-	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
-	 *        {@link HttpServletRequest#getContextPath()} has been removed,
-	 *        before comparing paths, or {@code null} to not strip any prefix
+	 *        a path prefix to strip from the decoded request path within the
+	 *        application (the request URI with any
+	 *        {@link HttpServletRequest#getContextPath()} removed), before
+	 *        comparing paths, or {@code null} to not strip any prefix
 	 * @param settings
 	 *        the settings, or {@code null} to create a default instance
 	 * @throws IllegalArgumentException
@@ -247,13 +249,9 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		} else if ( request == null ) {
 			return false;
 		}
-		String path = request.getRequestURI();
+		String path = decodedPathWithinApplication(request);
 		if ( path == null ) {
 			return false;
-		}
-		String ctxPath = request.getContextPath();
-		if ( ctxPath != null && !ctxPath.isEmpty() ) {
-			path = path.substring(ctxPath.length());
 		}
 		if ( pathMatcherPrefixStrip != null && !pathMatcherPrefixStrip.isEmpty()
 				&& path.startsWith(pathMatcherPrefixStrip) ) {
@@ -284,6 +282,49 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get the decoded request path within the application.
+	 *
+	 * <p>
+	 * The request URI is parsed the same way Spring MVC parses it for request
+	 * mapping: each path segment is percent-decoded as UTF-8 and has any path
+	 * parameters removed. API path policies are thus evaluated against the same
+	 * path that is used to route the request, so percent-encoding cannot be used
+	 * to avoid matching a policy pattern.
+	 * </p>
+	 *
+	 * @param request
+	 *        the request
+	 * @return the decoded path, or {@code null} if the path cannot be decoded
+	 *         unambiguously
+	 */
+	private static @Nullable String decodedPathWithinApplication(HttpServletRequest request) {
+		final String uri = request.getRequestURI();
+		if ( uri == null ) {
+			return null;
+		}
+		try {
+			final RequestPath requestPath = RequestPath.parse(uri, request.getContextPath());
+			final StringBuilder buf = new StringBuilder(uri.length());
+			for ( PathContainer.Element e : requestPath.pathWithinApplication().elements() ) {
+				if ( e instanceof PathContainer.PathSegment segment ) {
+					final String value = segment.valueToMatch();
+					if ( value.indexOf('/') >= 0 ) {
+						// an encoded path separator makes the decoded path ambiguous
+						return null;
+					}
+					buf.append(value);
+				} else {
+					buf.append(e.value());
+				}
+			}
+			return buf.toString();
+		} catch ( IllegalArgumentException e ) {
+			// invalid percent-encoding, or the context path does not prefix the URI
+			return null;
+		}
 	}
 
 	private Authentication createSuccessfulAuthentication(HttpServletRequest request, UserDetails user) {

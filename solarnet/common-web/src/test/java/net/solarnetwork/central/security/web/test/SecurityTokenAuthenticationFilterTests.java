@@ -847,6 +847,108 @@ public class SecurityTokenAuthenticationFilterTests {
 	}
 
 	@Test
+	public void apiPathV2SimpleAllowed_encodedPath() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %61 is an encoded "a", so this request maps to /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/p%61th/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedPath() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %61 is an encoded "a", so this request maps to the denied /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/p%61th/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedPrefix() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %6F is an encoded "o", so this request maps to the denied /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/m%6Fck/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedSlash() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/do/*")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %2F is an encoded "/", which makes the decoded path ambiguous
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/a%2Fb");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
 	public void multipartFormDataRequestTooLargeV2() throws ServletException, IOException {
 		// GIVEN
 		final Date now = new Date();
