@@ -186,7 +186,7 @@ CREATE TABLE solaruser.user_auth_token (
 );
 
 /**
- * View of active tokens with associated user, token, and policy details.
+ * View of active tokens owned by enabled users, with associated user, token, and policy details.
  */
 CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
 	SELECT t.auth_token AS username,
@@ -198,7 +198,8 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
 		t.jpolicy
 	 FROM solaruser.user_auth_token t
 		 JOIN solaruser.user_user u ON u.id = t.user_id
-	WHERE t.status = 'Active'::solaruser.user_auth_token_status;
+	WHERE t.status = 'Active'::solaruser.user_auth_token_status
+		AND u.enabled = TRUE;
 
 /**
  * View of granted roles for tokens.
@@ -219,7 +220,8 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_role AS
  * View of all valid node IDs, as an array, for a given token.
  *
  * This will filter out any node IDs not present on the token policy `nodeIds` array.
- * Additionally, archived nodes are filtered out.
+ * Additionally, archived nodes are filtered out, and only active tokens owned by
+ * enabled users are included.
  *
  * Typical query is:
  *
@@ -234,7 +236,9 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_node_ids AS
 		array_agg(un.node_id) AS node_ids
 	FROM solaruser.user_auth_token t
 	JOIN solaruser.user_node un ON un.user_id = t.user_id
+	JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE un.archived = FALSE
+		AND u.enabled = TRUE
 		AND t.status = 'Active'::solaruser.user_auth_token_status
 		AND (
 			(t.jpolicy->'nodeIds') IS NULL
@@ -344,7 +348,7 @@ $$;
  * This function will validate the provided signature and parameters matches
  * the token secret associated with `token_id`, by re-computing the signature
  * value using a signing date matching any date between `req_date` and 6 days
- * earlier.
+ * earlier. Only active tokens owned by enabled users can be verified.
  *
  * @param token_id the security token to verify
  * @param req_date the request date
@@ -374,15 +378,17 @@ $$
 		) AS sign_data
 	)
 	SELECT
-		user_id,
-		token_type,
-		jpolicy
+		auth.user_id,
+		auth.token_type,
+		auth.jpolicy
 	FROM solaruser.user_auth_token auth
+	INNER JOIN solaruser.user_user u ON u.id = auth.user_id
 	INNER JOIN sign_dates sd ON TRUE
 	INNER JOIN canon_data cd ON TRUE
 	WHERE auth.auth_token = token_id
 		AND auth.status = 'Active'::solaruser.user_auth_token_status
-		AND COALESCE(to_timestamp((jpolicy->>'notAfter')::double precision / 1000), req_date) >= req_date
+		AND u.enabled = TRUE
+		AND COALESCE(to_timestamp((auth.jpolicy->>'notAfter')::double precision / 1000), req_date) >= req_date
 		AND solaruser.snws2_signature(
 				sign_data,
 				solaruser.snws2_signing_key(sd.sign_date, auth.auth_secret)

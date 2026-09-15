@@ -42,6 +42,7 @@ import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.jackson.BasicSecurityPolicyDeserializer;
 import net.solarnetwork.codec.jackson.SecurityPolicySerializer;
 import net.solarnetwork.domain.BasicSecurityPolicy;
@@ -140,6 +141,21 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 					;
 			});
 		// @formatter:on
+	}
+
+	@Test
+	public void matchingToken_disabledUser() {
+		// GIVEN
+		final Long userId = 123L;
+		setupTestUser(userId);
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(Set.of("Main")).build();
+		final String token = setupTestToken(userId, policy);
+		CommonDbTestUtils.setUserEnabled(jdbcTemplate, userId, false);
+
+		// THEN
+		thenExceptionOfType(UsernameNotFoundException.class)
+				.isThrownBy(() -> service.loadUserByUsername(token));
 	}
 
 	@Test

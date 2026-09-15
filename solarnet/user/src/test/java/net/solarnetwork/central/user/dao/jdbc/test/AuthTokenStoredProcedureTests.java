@@ -58,6 +58,7 @@ import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
@@ -434,6 +435,40 @@ public class AuthTokenStoredProcedureTests extends AbstractJUnit5JdbcDaoTestSupp
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
 		assertThat("Result length", data, hasSize(0));
+	}
+
+	@Test
+	public void snwsFindVerifiedTokenDetailsUserDisabled() {
+		// GIVEN
+		final Instant reqDate = LocalDateTime.of(2017, 4, 25, 14, 30).atZone(ZoneOffset.UTC).toInstant();
+		final String tokenId = "123456789abcdefghijk";
+		final String tokenSecret = "password";
+		final Long userId = -1L;
+		createUser(userId, "test@localhost");
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
+				SecurityTokenType.ReadNodeData, null);
+		CommonDbTestUtils.setUserEnabled(jdbcTemplate, userId, false);
+
+		// WHEN
+		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con.prepareCall(SQL_SNWS2_FIND_VERIFIED_TOKEN);
+				stmt.setString(1, tokenId);
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
+				stmt.setString(3, "localhost");
+				stmt.setString(4, "/foobar");
+				stmt.setString(5, "f366ddc9e6299794928cc956e9fa409333078df6e6b9d94d4c1e64dbecf499db");
+				return stmt;
+			}
+		}, asList((SqlParameter) new SqlReturnResultSet("data", new ColumnMapRowMapper())));
+
+		// THEN
+		assertThat("Result available", result, hasKey("data"));
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+		assertThat("No result for token owned by disabled user", data, hasSize(0));
 	}
 
 	@Test

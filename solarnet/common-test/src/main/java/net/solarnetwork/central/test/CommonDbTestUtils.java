@@ -39,7 +39,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class CommonDbTestUtils {
 
@@ -380,6 +380,21 @@ public final class CommonDbTestUtils {
 			}
 			return true;
 		});
+	}
+
+	/**
+	 * Set the enabled state of a SolarNetwork user.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC ops
+	 * @param userId
+	 *        the user ID
+	 * @param enabled
+	 *        {@literal true} to enable the user, {@literal false} to disable
+	 * @since 1.4
+	 */
+	public static void setUserEnabled(JdbcOperations jdbcOps, Long userId, boolean enabled) {
+		jdbcOps.update("UPDATE solaruser.user_user SET enabled = ? WHERE id = ?", enabled, userId);
 	}
 
 }
