@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.security.web;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.domain.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -208,7 +210,9 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 		final String computedDigest = data
 				.computeSignatureDigest(user.getPassword() != null ? user.getPassword() : "");
-		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
+		// compare in constant time to avoid leaking timing information
+		if ( !MessageDigest.isEqual(computedDigest.getBytes(UTF_8),
+				data.getSignatureDigest().getBytes(UTF_8)) ) {
 			log.debug("Computed signature digest does not match received value [{}]",
 					data.getSignatureDigest());
 			fail(request, res, new BadCredentialsException("Bad credentials"));
