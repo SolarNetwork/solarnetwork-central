@@ -46,8 +46,17 @@ import net.solarnetwork.central.web.RateLimitExceededException;
 /**
  * Filter for rate-limiting HTTP requests.
  *
+ * <p>
+ * Requests are keyed by the authenticated token ID, or by
+ * {@link HttpServletRequest#getRemoteAddr()} for anonymous requests. Headers
+ * like {@code X-Forwarded-For} are not read directly, as clients can set them
+ * to anything. Behind a proxy, the servlet container must be configured to
+ * resolve the remote address from trusted proxies instead, for example with
+ * Spring Boot's {@code server.forward-headers-strategy} setting.
+ * </p>
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class RateLimitingFilter extends OncePerRequestFilter implements Filter {
 
@@ -59,9 +68,6 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 * attempted.
 	 */
 	public static final String X_SN_RATE_LIMIT_RETRY_AFTER = "X-SN-Rate-Limit-Retry-After";
-
-	/** HTTP request header for a proxied client IP address. */
-	public static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
 
 	private static final Long GLOBAL_ANONYMOUS_KEY = -1L;
 
@@ -112,10 +118,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	private String requestKey(HttpServletRequest request) {
 		String key = SecurityUtils.currentTokenId();
 		if ( key == null ) {
-			key = request.getHeader(X_FORWARDED_FOR_HEADER);
-			if ( key == null ) {
-				key = request.getRemoteAddr();
-			}
+			key = request.getRemoteAddr();
 		}
 		return (keyPrefix != null ? keyPrefix + key : key);
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.web.support.RateLimitingFilter.idForString;
@@ -73,7 +74,7 @@ import net.solarnetwork.central.web.support.RateLimitingFilter;
  * Test cases for the {@link RateLimitingFilter} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -81,6 +82,7 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final int TEST_CAPACITY = 3;
 	private static final Duration TEST_DURATION = Duration.ofSeconds(1);
+	private static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
 
 	@Autowired
 	private DataSource dataSource;
@@ -121,6 +123,13 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 	public void teardown() {
 		jdbcTemplate.update("DELETE FROM solarcommon.bucket");
 		SecurityUtils.removeAuthentication();
+	}
+
+	// bucket rows outlive the test transaction, so use unique keys per test
+	private static String randomIpAddress() {
+		final byte[] addr = randomBytes(4);
+		return String.format("%d.%d.%d.%d", addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF,
+				addr[3] & 0xFF);
 	}
 
 	@Test
@@ -285,6 +294,149 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 			.element(0, map(String.class, Object.class))
 			.as("ID for token ID")
 			.containsEntry("id", idForString(tokenId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void anonymous_forwardedFor_keyedByRemoteAddress() throws ServletException, IOException {
+		// GIVEN
+		final String remoteAddr = randomIpAddress();
+
+		// WHEN
+		final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
+		req.setRemoteAddr(remoteAddr);
+		req.addHeader(X_FORWARDED_FOR_HEADER, randomIpAddress());
+
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+
+		final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
+
+		filter.doFilter(req, res, chain);
+
+		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
+				"solarcommon.bucket", "id");
+
+		// THEN
+		// @formatter:off
+		then(nextFilter).should().doFilter(any(), any(), any());
+
+		and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_REMAINING_HEADER))
+			.as("Rate limit remaining header deducted from capacity")
+			.isEqualTo(String.valueOf(TEST_CAPACITY - 1))
+			;
+
+		and.then(rows)
+			.as("Bucket row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("ID for remote address, not X-Forwarded-For header value")
+			.containsEntry("id", idForString(remoteAddr))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void anonymous_overLimit_varyingForwardedFor() throws ServletException, IOException {
+		// GIVEN
+		final String remoteAddr = randomIpAddress();
+
+		// WHEN
+		// claim to be a different client on every request
+		for ( int i = 0; i < TEST_CAPACITY + 1; i++ ) {
+			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
+			req.setRemoteAddr(remoteAddr);
+			req.addHeader(X_FORWARDED_FOR_HEADER, randomIpAddress());
+
+			final MockHttpServletResponse res = new MockHttpServletResponse();
+
+			final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
+
+			filter.doFilter(req, res, chain);
+		}
+
+		// THEN
+		// @formatter:off
+		then(nextFilter).should(times(TEST_CAPACITY)).doFilter(any(), any(), any());
+
+		then(handlerExceptionResolver).should().resolveException(any(), any(), any(), exceptionCaptor.capture());
+		and.then(exceptionCaptor.getValue())
+			.as("Thrown exception is rate limit")
+			.isInstanceOf(RateLimitExceededException.class)
+			.asInstanceOf(type(RateLimitExceededException.class))
+			.as("Exception key is remote address")
+			.returns(remoteAddr, from(RateLimitExceededException::getKey))
+			.as("Exception ID is for remote address")
+			.returns(idForString(remoteAddr), from(RateLimitExceededException::getId))
+			;
+
+		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
+				"solarcommon.bucket", "id");
+
+		and.then(rows)
+			.as("Single bucket row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("ID for remote address")
+			.containsEntry("id", idForString(remoteAddr))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void anonymous_forwardedForOtherClient_otherClientOk() throws ServletException, IOException {
+		// GIVEN
+		final String remoteAddr = randomIpAddress();
+		final String otherRemoteAddr = randomIpAddress();
+
+		// WHEN
+		// claim to be the other client, until over the limit
+		for ( int i = 0; i < TEST_CAPACITY + 1; i++ ) {
+			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
+			req.setRemoteAddr(remoteAddr);
+			req.addHeader(X_FORWARDED_FOR_HEADER, otherRemoteAddr);
+
+			final MockHttpServletResponse res = new MockHttpServletResponse();
+
+			final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
+
+			filter.doFilter(req, res, chain);
+		}
+
+		final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
+		req.setRemoteAddr(otherRemoteAddr);
+
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+
+		final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
+
+		filter.doFilter(req, res, chain);
+
+		// THEN
+		// @formatter:off
+		then(nextFilter).should(times(TEST_CAPACITY + 1)).doFilter(any(), any(), any());
+
+		then(handlerExceptionResolver).should().resolveException(any(), any(), any(), exceptionCaptor.capture());
+		and.then(exceptionCaptor.getValue())
+			.as("Thrown exception is rate limit")
+			.isInstanceOf(RateLimitExceededException.class)
+			.asInstanceOf(type(RateLimitExceededException.class))
+			.as("Exception key is remote address of client over the limit")
+			.returns(remoteAddr, from(RateLimitExceededException::getKey))
+			;
+
+		and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_REMAINING_HEADER))
+			.as("Other client request allowed, deducted from its own capacity")
+			.isEqualTo(String.valueOf(TEST_CAPACITY - 1))
+			;
+
+		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
+				"solarcommon.bucket", "id");
+
+		and.then(rows)
+			.as("Bucket row created for each remote address")
+			.extracting(row -> row.get("id"))
+			.containsExactlyInAnyOrder(idForString(remoteAddr), idForString(otherRemoteAddr))
 			;
 		// @formatter:on
 	}
