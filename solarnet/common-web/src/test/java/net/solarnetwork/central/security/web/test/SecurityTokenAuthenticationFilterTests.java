@@ -26,6 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
+import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.TEST_HOST;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
@@ -61,6 +62,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.AntPathMatcher;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthenticatedToken;
@@ -75,7 +77,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class SecurityTokenAuthenticationFilterTests {
 
@@ -956,14 +958,15 @@ public class SecurityTokenAuthenticationFilterTests {
 		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
 		request.addHeader("Date", now);
-		setupAuthorizationHeader(request,
-				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, now);
 
 		// create new request as we read the input stream above
 		request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
 		request.addHeader("Date", now);
+		setupAuthorizationHeader(request, authHeader);
 
 		// WHEN
 		filter.setMaxRequestBodySize(1);
@@ -985,6 +988,116 @@ public class SecurityTokenAuthenticationFilterTests {
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
 		assertThat("Status code", response.getStatus(), is(403));
+	}
+
+	@Test
+	public void multipartFormDataNoAuthorizationHeader() throws ServletException, IOException {
+		// GIVEN
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		then(request.isContentRead()).as("Content not read without authorization data to verify")
+				.isFalse();
+	}
+
+	@Test
+	public void multipartFormDataInvalidScheme() throws ServletException, IOException {
+		// GIVEN
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		setupAuthorizationHeader(request, "FooScheme ABC:DOEIJLSIEWOSEIHLSISYEOIHEOIJ");
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		then(request.isContentRead()).as("Content not read for unsupported authorization scheme")
+				.isFalse();
+	}
+
+	@Test
+	public void multipartFormDataV2() throws ServletException, IOException {
+		// GIVEN
+		final Date now = new Date();
+		final MockHttpServletRequest signedRequest = new MockHttpServletRequest("POST",
+				"/mock/path/here");
+		signedRequest.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		signedRequest.setContent("foo=bar".getBytes(UTF_8));
+		signedRequest.addHeader("Date", now);
+		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				signedRequest, now);
+
+		// create new request as we read the input stream above
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		request.addHeader("Date", now);
+		request.addHeader("Host", TEST_HOST);
+		setupAuthorizationHeader(request, authHeader);
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		validateAuthentication();
+		// @formatter:off
+		then(request.isParametersReadBeforeContent())
+				.as("Content read before parameters, so the servlet container does not parse the parts")
+				.isFalse()
+				;
+		// @formatter:on
+	}
+
+	/**
+	 * Request that tracks when its content and parameters are accessed.
+	 */
+	private static final class ContentTrackingRequest extends MockHttpServletRequest {
+
+		private boolean contentRead;
+		private boolean parametersReadBeforeContent;
+
+		private ContentTrackingRequest(String method, String requestURI) {
+			super(method, requestURI);
+		}
+
+		@Override
+		public ServletInputStream getInputStream() {
+			contentRead = true;
+			return super.getInputStream();
+		}
+
+		@Override
+		public Map<String, String[]> getParameterMap() {
+			if ( !contentRead ) {
+				parametersReadBeforeContent = true;
+			}
+			return super.getParameterMap();
+		}
+
+		private boolean isContentRead() {
+			return contentRead;
+		}
+
+		private boolean isParametersReadBeforeContent() {
+			return parametersReadBeforeContent;
+		}
+
 	}
 
 }

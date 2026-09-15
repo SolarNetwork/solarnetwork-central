@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.config;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -58,7 +59,7 @@ import tools.jackson.databind.ObjectMapper;
  * Web security configuration.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -164,6 +165,16 @@ public class WebSecurityConfig {
 			OscpTokenAuthorizationHeaderAuthenticationFilter filter = new OscpTokenAuthorizationHeaderAuthenticationFilter();
 			filter.setAuthenticationManager(authenticationManager());
 			return filter;
+		}
+
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<OscpTokenAuthorizationHeaderAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				OscpTokenAuthorizationHeaderAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean

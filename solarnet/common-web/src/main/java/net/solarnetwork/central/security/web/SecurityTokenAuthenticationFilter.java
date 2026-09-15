@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.PathContainer;
 import org.springframework.http.server.RequestPath;
@@ -65,6 +66,7 @@ import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.web.jakarta.security.AuthenticationData;
 import net.solarnetwork.web.jakarta.security.AuthenticationDataFactory;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
@@ -89,7 +91,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  *
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -165,9 +167,12 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		AuthenticationData data;
 		try {
 			// for multipart requests, force the InputStream to be resolved now so the parameters
-			// are not parsed by the servlet container
-			if ( req.getContentType() != null && MediaType.MULTIPART_FORM_DATA
-					.isCompatibleWith(MimeType.valueOf(req.getContentType())) ) {
+			// are not parsed by the servlet container; that only matters when there is
+			// authorization data to verify, so the content is not read otherwise
+			if ( req.getContentType() != null
+					&& MediaType.MULTIPART_FORM_DATA
+							.isCompatibleWith(MimeType.valueOf(req.getContentType()))
+					&& isSupportedAuthorizationScheme(req.getHeader(HttpHeaders.AUTHORIZATION)) ) {
 				request.getContentSHA256();
 			}
 
@@ -245,6 +250,26 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		chain.doFilter(request, res);
 	}
 
+	/**
+	 * Test if an {@code Authorization} header uses a supported authentication
+	 * scheme.
+	 *
+	 * @param header
+	 *        the header value, or {@code null}
+	 * @return {@code true} if the header uses a supported scheme
+	 */
+	private static boolean isSupportedAuthorizationScheme(@Nullable String header) {
+		if ( header == null ) {
+			return false;
+		}
+		for ( AuthenticationScheme scheme : AuthenticationScheme.values() ) {
+			if ( scheme.matchingHeaderData(header) != null ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private boolean isValidApiPath(final HttpServletRequest request,
 			final @Nullable SecurityPolicy policy) {
 		Set<String> apiPaths = (policy != null ? policy.getApiPaths() : null);
@@ -295,8 +320,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * The request URI is parsed the same way Spring MVC parses it for request
 	 * mapping: each path segment is percent-decoded as UTF-8 and has any path
 	 * parameters removed. API path policies are thus evaluated against the same
-	 * path that is used to route the request, so percent-encoding cannot be used
-	 * to avoid matching a policy pattern.
+	 * path that is used to route the request, so percent-encoding cannot be
+	 * used to avoid matching a policy pattern.
 	 * </p>
 	 *
 	 * @param request

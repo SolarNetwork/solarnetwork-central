@@ -25,6 +25,7 @@ package net.solarnetwork.central.query.config;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,7 +61,7 @@ import tools.jackson.databind.ObjectMapper;
  * Security configuration.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -199,6 +200,16 @@ public class WebSecurityConfig {
 			return new SecurityTokenAuthenticationFilter(tokenUserDetailsService(),
 					unauthorizedEntryPoint(), null, pathMatcher, "/api/v1/sec",
 					securityTokenFilterSettings);
+		}
+
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<SecurityTokenAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				SecurityTokenAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean
