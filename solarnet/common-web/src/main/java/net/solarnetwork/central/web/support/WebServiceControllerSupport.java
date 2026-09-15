@@ -222,7 +222,6 @@ public final class WebServiceControllerSupport {
 					return name;
 				}
 			}
-			return authHeader;
 		}
 		return ANONYMOUS_USER_PRINCIPAL;
 	}
