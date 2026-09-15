@@ -314,8 +314,7 @@ public class JdbcAuthService implements AuthService {
 			return Response.NEXT;
 		}
 
-		log.debug("Authenticating [{}] @ {}{} with [{}]", username, snHost, snPath,
-				pwTokens.get(SIGNATURE_PASSWORD_TOKEN));
+		log.debug("Authenticating [{}] @ {}{}", username, snHost, snPath);
 		List<SnTokenDetails> results = jdbcOps.query(con -> {
 			PreparedStatement stmt = con.prepareStatement(authenticateCall, ResultSet.TYPE_FORWARD_ONLY,
 					ResultSet.CONCUR_READ_ONLY);
