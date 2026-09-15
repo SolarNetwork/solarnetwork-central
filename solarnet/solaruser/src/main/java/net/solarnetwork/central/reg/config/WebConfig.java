@@ -92,7 +92,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  * Web layer configuration.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -275,10 +275,11 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		// allow cross-origin access only to the API, without credentials, as it is authenticated
+		// by the Authorization header; the cookie-based browser UI is same-origin only
 		// @formatter:off
-		registry.addMapping("/**")
-			.allowCredentials(true)
-			.allowedOriginPatterns(CorsConfiguration.ALL)
+		registry.addMapping("/api/**")
+			.allowedOrigins(CorsConfiguration.ALL)
 			.maxAge(TimeUnit.HOURS.toSeconds(24))
 			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
 			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")

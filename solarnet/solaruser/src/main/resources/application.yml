@@ -456,6 +456,7 @@ server:
     session:
       cookie:
         http-only: true
+        same-site: "lax"
       timeout: "15m"
       tracking-modes: "COOKIE"
   tomcat:
