@@ -14,7 +14,7 @@
 # If Postgres is running on a non-standard port, or on a remote host, pass `psql` connection
 # arguments via the -c switch:
 #
-#     ./bin/setup-db.sh -mrv -c '-p 5496 -h postgres96.example.com'
+#     ./bin/setup-db.sh -mrv -c '-p 2345 -h postgres.example.com'
 
 PSQL_CONN_ARGS=""
 PG_USER="solartest"
@@ -49,7 +49,7 @@ Example that creates the test database and user for the first time:
 
 To connect to a different Postgres port:
 
-  ./bin/setup-db.sh -c '-p 5412'
+  ./bin/setup-db.sh -c '-p 2345'
 
 To recreate the database (drop and create):
 
