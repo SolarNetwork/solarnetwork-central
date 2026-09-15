@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
-import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -89,7 +89,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 	@Test
 	public void storeNew() {
 		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
-		newUserNodeCert.setCreated(Instant.now());
+		newUserNodeCert.setCreated(MS_CLOCK.instant());
 		newUserNodeCert.setNodeId(this.node.getId());
 		newUserNodeCert.setUserId(this.user.getId());
 		newUserNodeCert.setRequestId(TEST_REQ_KEY);

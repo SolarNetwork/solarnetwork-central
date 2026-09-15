@@ -27,6 +27,7 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -91,7 +92,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	private NodeInstruction storeNewInstruction(Long nodeId) {
-		return storeNewInstruction(nodeId, Instant.now());
+		return storeNewInstruction(nodeId, MS_CLOCK.instant());
 	}
 
 	private NodeInstruction storeNewInstruction(Long nodeId, Instant date) {
@@ -107,7 +108,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 			Map<String, Object> resultParams, Consumer<NodeInstruction> callback) {
 
 		NodeInstruction instr = new NodeInstruction();
-		instr.setCreated(Instant.now());
+		instr.setCreated(MS_CLOCK.instant());
 		instr.getInstruction().setStatusDate(date);
 		instr.getInstruction().setInstructionDate(date);
 		instr.setNodeId(nodeId);
@@ -180,7 +181,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 	@Test
 	public void storeNew_withResultParameters() {
-		lastDatum = storeNewInstruction(TEST_NODE_ID, Instant.now(), singletonMap("foo", "bar"));
+		lastDatum = storeNewInstruction(TEST_NODE_ID, MS_CLOCK.instant(), singletonMap("foo", "bar"));
 	}
 
 	@Test
@@ -193,8 +194,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void storeNew_withExpiration() {
 		// GIVEN
-		lastDatum = storeNewInstruction(TEST_NODE_ID, Instant.now(), null, instr -> {
-			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+		lastDatum = storeNewInstruction(TEST_NODE_ID, MS_CLOCK.instant(), null, instr -> {
+			instr.getInstruction()
+					.setExpirationDate(MS_CLOCK.instant().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// THEN
@@ -229,7 +231,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.getInstruction().setState(InstructionState.Declined);
-		datum.getInstruction().setStatusDate(Instant.now());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
 		Long newId = dao.save(datum);
 		then(newId).as("ID preserved").isEqualTo(datum.getId());
 		NodeInstruction datum2 = dao.get(datum.getId());
@@ -241,7 +243,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.getInstruction().setState(InstructionState.Completed);
-		datum.getInstruction().setStatusDate(Instant.now());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
 		datum.getInstruction().setResultParameters(Map.of("foo", (Object) "bar"));
 		Long newId = dao.save(datum);
 		then(newId).as("ID preserved").isEqualTo(datum.getId());
@@ -258,9 +260,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		// store a second for a different node ID, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
-		datum.setCreated(Instant.now());
-		datum.getInstruction().setStatusDate(Instant.now());
-		datum.getInstruction().setInstructionDate(Instant.now());
+		datum.setCreated(MS_CLOCK.instant());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
+		datum.getInstruction().setInstructionDate(MS_CLOCK.instant());
 		datum.setNodeId(node2Id);
 		datum.getInstruction().setState(InstructionState.Queued);
 		datum.getInstruction().setTopic("Test Topic");
@@ -474,13 +476,14 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void findForDateRange_stream() throws IOException {
 		// GIVEN
-		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
+		final Instant ts1 = MS_CLOCK.instant().truncatedTo(MINUTES).minus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts1);
-		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
+		final Instant ts2 = MS_CLOCK.instant().truncatedTo(MINUTES);
 		storeNewInstruction(TEST_NODE_ID, ts2);
-		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		final Instant ts3 = MS_CLOCK.instant().truncatedTo(MINUTES).plus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
-			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+			instr.getInstruction()
+					.setExpirationDate(MS_CLOCK.instant().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// WHEN
@@ -514,9 +517,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		// store a second for a different state, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
-		datum.setCreated(Instant.now());
-		datum.getInstruction().setStatusDate(Instant.now());
-		datum.getInstruction().setInstructionDate(Instant.now());
+		datum.setCreated(MS_CLOCK.instant());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
+		datum.getInstruction().setInstructionDate(MS_CLOCK.instant());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.getInstruction().setState(InstructionState.Executing);
 		datum.getInstruction().setTopic("Test Topic");
@@ -556,9 +559,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		// store a second for a different state, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
-		datum.setCreated(Instant.now());
-		datum.getInstruction().setStatusDate(Instant.now());
-		datum.getInstruction().setInstructionDate(Instant.now());
+		datum.setCreated(MS_CLOCK.instant());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
+		datum.getInstruction().setInstructionDate(MS_CLOCK.instant());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.getInstruction().setState(InstructionState.Executing);
 		datum.getInstruction().setTopic("Test Topic");
@@ -594,9 +597,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void getWithoutParameters() {
 		final NodeInstruction datum = new NodeInstruction();
-		datum.setCreated(Instant.now());
-		datum.getInstruction().setStatusDate(Instant.now());
-		datum.getInstruction().setInstructionDate(Instant.now());
+		datum.setCreated(MS_CLOCK.instant());
+		datum.getInstruction().setStatusDate(MS_CLOCK.instant());
+		datum.getInstruction().setInstructionDate(MS_CLOCK.instant());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.getInstruction().setState(InstructionState.Executing);
 		datum.getInstruction().setTopic("Test Topic");
@@ -633,7 +636,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 	@Test
 	public void purgeCompletedInstructionsNone() {
-		long result = dao.purgeCompletedInstructions(Instant.now());
+		long result = dao.purgeCompletedInstructions(MS_CLOCK.instant());
 		then(result).isZero();
 	}
 
@@ -675,7 +678,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 	@Test
 	public void purgeIncompleteInstructionsNone() {
-		long result = dao.purgeIncompleteInstructions(Instant.now());
+		long result = dao.purgeIncompleteInstructions(MS_CLOCK.instant());
 		then(result).isZero();
 	}
 
@@ -800,7 +803,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 
 		// when
-		long count = dao.updateStaleInstructionsState(InstructionState.Queuing, Instant.now(),
+		long count = dao.updateStaleInstructionsState(InstructionState.Queuing, MS_CLOCK.instant(),
 				InstructionState.Completed);
 
 		// then
@@ -844,7 +847,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void updateStaleMulti() {
 		// given
-		Instant startTime = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		Instant startTime = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES);
 		final int instrCount = 5;
 		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>(instrCount);
 		for ( int i = 0; i < instrCount; i++ ) {
@@ -869,10 +872,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void transitionExpired() {
 		// GIVEN
-		final Instant expirationDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final Instant expirationDate = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 		final List<NodeInstruction> instructions = new ArrayList<>();
 		for ( int i = 0; i < 20; i++ ) {
-			NodeInstruction instr = new NodeInstruction("test", Instant.now(), TEST_NODE_ID,
+			NodeInstruction instr = new NodeInstruction("test", MS_CLOCK.instant(), TEST_NODE_ID,
 					expirationDate.minus(10 - i, ChronoUnit.MINUTES));
 			instr.getInstruction()
 					.setState(InstructionState.values()[i % InstructionState.values().length]);
@@ -947,8 +950,8 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void transitionExpired_mergeResultParameters() {
 		// GIVEN
-		final Instant expirationDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-		final NodeInstruction instruction = storeNewInstruction(TEST_NODE_ID, Instant.now(),
+		final Instant expirationDate = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
+		final NodeInstruction instruction = storeNewInstruction(TEST_NODE_ID, MS_CLOCK.instant(),
 				Map.of("foo", "bar"), instr -> {
 					instr.getInstruction().setState(InstructionState.Queued);
 					instr.getInstruction().setExpirationDate(expirationDate.minusSeconds(1));
@@ -996,13 +999,14 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		setupTestUser(userId);
 		setupTestUserNode(userId, TEST_NODE_ID);
 
-		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
+		final Instant ts1 = MS_CLOCK.instant().truncatedTo(MINUTES).minus(1, HOURS);
 		final NodeInstruction ni1 = storeNewInstruction(TEST_NODE_ID, ts1);
-		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
+		final Instant ts2 = MS_CLOCK.instant().truncatedTo(MINUTES);
 		final NodeInstruction ni2 = storeNewInstruction(TEST_NODE_ID, ts2);
-		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		final Instant ts3 = MS_CLOCK.instant().truncatedTo(MINUTES).plus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
-			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+			instr.getInstruction()
+					.setExpirationDate(MS_CLOCK.instant().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// WHEN
@@ -1036,13 +1040,13 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		setupTestUser(userId);
 		setupTestUserNode(userId, TEST_NODE_ID);
 
-		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
+		final Instant ts1 = MS_CLOCK.instant().truncatedTo(MINUTES).minus(1, HOURS);
 		final NodeInstruction ni1 = storeNewInstruction(TEST_NODE_ID, ts1, null, instr -> {
 			instr.getInstruction().setState(InstructionState.Executing);
 		});
-		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
+		final Instant ts2 = MS_CLOCK.instant().truncatedTo(MINUTES);
 		storeNewInstruction(TEST_NODE_ID, ts2);
-		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		final Instant ts3 = MS_CLOCK.instant().truncatedTo(MINUTES).plus(1, HOURS);
 		final NodeInstruction ni3 = storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
 			instr.getInstruction().setState(InstructionState.Received);
 		});

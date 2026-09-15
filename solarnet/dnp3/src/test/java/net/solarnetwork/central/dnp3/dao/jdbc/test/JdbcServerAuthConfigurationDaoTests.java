@@ -23,13 +23,13 @@
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerAuthConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,8 +78,8 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// WHEN
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, lastServer.getServerId(),
-				randomString(), Instant.now(), randomString());
-		conf.setModified(Instant.now().plusMillis(234L));
+				randomString(), MS_CLOCK.instant(), randomString());
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		UserLongStringCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -136,7 +136,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 		// WHEN
 		ServerAuthConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setName(randomString());
 
 		UserLongStringCompositePK result = dao.save(conf);
@@ -187,7 +187,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), randomString(), Instant.now(), randomString());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
@@ -227,7 +227,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), randomString(), Instant.now(), randomString());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
@@ -269,7 +269,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), randomString(), Instant.now(), randomString());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
 					conf.setEnabled(true);
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
@@ -295,7 +295,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 		server = server.copyWithId(serverId);
 
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
-				randomString(), Instant.now(), randomString());
+				randomString(), MS_CLOCK.instant(), randomString());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		dao.create(userId, server.getServerId(), conf);
@@ -316,7 +316,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 		server = server.copyWithId(serverId);
 
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
-				randomString(), Instant.now(), randomString());
+				randomString(), MS_CLOCK.instant(), randomString());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(false);
 		dao.create(userId, server.getServerId(), conf);

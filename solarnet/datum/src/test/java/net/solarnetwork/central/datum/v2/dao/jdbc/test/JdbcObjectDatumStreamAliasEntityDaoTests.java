@@ -28,6 +28,7 @@ import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumJdbcTestUtils.allObjectDatumStreamAliasData;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.EntityConstants.isAssigned;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -125,7 +126,7 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 		setupTestNode(nodeId, locId);
 		setupUserNodeEntity(nodeId, userId);
 
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 
@@ -170,7 +171,7 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 		setupTestNode(nodeId, locId);
 		setupUserNodeEntity(nodeId, userId);
 
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 
@@ -230,7 +231,7 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 		insert();
 
 		// WHEN
-		final Instant modified = Instant.now().plusSeconds(1);
+		final Instant modified = MS_CLOCK.instant().plusSeconds(1);
 		final ObjectDatumStreamAliasEntity entity = new ObjectDatumStreamAliasEntity(last.id(),
 				last.created(), modified, Node, randomLong(), randomSourceId(),
 				last.getOriginalObjectId(), last.getOriginalSourceId());
@@ -267,7 +268,7 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 		final int nodeCount = 3;
 		final int sourceCount = 3;
 		final int aliasCount = 3;
-		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+		final Instant now = MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS);
 		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = new TreeMap<>();
 
 		for ( int u = 0; u < userCount; u++ ) {

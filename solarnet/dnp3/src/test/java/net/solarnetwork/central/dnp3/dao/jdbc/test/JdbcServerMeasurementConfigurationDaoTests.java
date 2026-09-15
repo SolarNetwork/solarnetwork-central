@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerMeasurementConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -30,7 +31,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,9 +81,9 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 		// WHEN
 		ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now(), randomLong(), randomString(),
+				lastServer.getServerId(), 0, MS_CLOCK.instant(), randomLong(), randomString(),
 				MeasurementType.AnalogInput, randomString());
-		conf.setModified(Instant.now().plusMillis(234L));
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		conf.setMultiplier(new BigDecimal("1.23"));
 		conf.setOffset(new BigDecimal("2.34"));
 		conf.setScale(3);
@@ -156,7 +156,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		// WHEN
 		ServerMeasurementConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setProperty(randomString());
 		conf.setType(MeasurementType.BinaryInput);
@@ -212,7 +212,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
@@ -254,7 +254,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
@@ -297,7 +297,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);

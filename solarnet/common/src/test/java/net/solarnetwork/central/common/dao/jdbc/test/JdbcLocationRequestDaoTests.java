@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -164,7 +165,7 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	public void get() {
 		// GIVEN
 		final Long id = UUID.randomUUID().getLeastSignificantBits();
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		final Long userId = UUID.randomUUID().getLeastSignificantBits();
 		final LocationRequestStatus status = LocationRequestStatus.Duplicate;
 		final String json = "{\"yeah\":\"nah\"}";
@@ -192,7 +193,7 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void find_user_status() {
 		// GIVEN
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		List<LocationRequest> data = new ArrayList<>();
 		for ( int i = 0; i < 12; i++ ) {
 			LocationRequest req = new LocationRequest((long) i, now);
@@ -250,7 +251,7 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void delete_user_status() {
 		// GIVEN
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		List<LocationRequest> data = new ArrayList<>();
 		for ( int i = 0; i < 12; i++ ) {
 			LocationRequest req = new LocationRequest((long) i, now);
@@ -305,7 +306,7 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void find_fts() {
 		// GIVEN
-		final Instant now = Instant.now();
+		final Instant now = MS_CLOCK.instant();
 		LocationRequest req = new LocationRequest(1L, now);
 		req.setModified(now);
 		req.setUserId(1L);

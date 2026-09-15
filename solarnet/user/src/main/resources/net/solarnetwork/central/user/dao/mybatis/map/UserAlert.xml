@@ -101,7 +101,7 @@
 		WHERE 
 			ual.alert_type = CAST(#{type,jdbcType=VARCHAR} AS solaruser.user_alert_type)
 			AND ual.status != CAST('Disabled' AS solaruser.user_alert_status)
-			<if test="validDate != null">AND ual.valid_to &lt; #{validDate,jdbcType=TIMESTAMP}</if>
+			<if test="validDate != null">AND ual.valid_to &lt;= #{validDate,jdbcType=TIMESTAMP}</if>
 			<if test="startingId != null">AND ual.id > #{startingId,javaType=long,jdbcType=BIGINT}</if>
 		ORDER BY
 			ual.id

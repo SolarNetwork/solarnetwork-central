@@ -24,13 +24,13 @@ package net.solarnetwork.central.din.dao.jdbc.test;
 
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.allTransformConfigurationData;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.newTransformConfiguration;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -148,7 +148,7 @@ public class JdbcTransformConfigurationDaoTests extends AbstractJUnit5JdbcDaoTes
 		// WHEN
 		TransformConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setName(randomString());
 		conf.setServiceIdentifier(randomString());
 

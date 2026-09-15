@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.datum.export.dao.mybatis.test;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -93,8 +92,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
-				now());
+				unassignedEntityIdKey(this.user.getId()), MS_CLOCK.instant(), TEST_NAME,
+				ScheduleType.Weekly, 2, MS_CLOCK.instant());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
@@ -213,7 +212,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		// no properties will change when we check
 
 		UserAdhocDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
-		info.setCreated(Instant.now());
+		info.setCreated(MS_CLOCK.instant());
 		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
 		thenExceptionOfType(MyBatisSystemException.class).isThrownBy(() ->
@@ -226,7 +225,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		getByPrimaryKey();
 
 		// WHEN
-		long result = datumTaskDao.purgeCompletedTasks(Instant.now());
+		long result = datumTaskDao.purgeCompletedTasks(MS_CLOCK.instant());
 
 		// THEN
 		then(result).as("Deleted no expired rows").isEqualTo(0L);
@@ -255,7 +254,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 		// WHEN
 		long result = datumTaskDao.purgeCompletedTasks(
-				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
 
 		// THEN
 		then(result).as("Deleted no expired rows").isEqualTo(0L);
@@ -284,7 +283,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		getByPrimaryKey();
 		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
-		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
+		datumTask.setCompleted(MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES));
 		datumTaskDao.save(datumTask);
 
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo(this.info.getUserId());
@@ -292,12 +291,12 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info = dao.get(dao.save(info), this.user.getId());
 		datumTask = datumTaskDao.get(info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
-		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		datumTask.setCompleted(MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 		datumTaskDao.save(datumTask);
 
 		// WHEN
 		long result = datumTaskDao.purgeCompletedTasks(
-				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
 
 		// THEN
 		then(result).as("Deleted expired rows").isEqualTo(2L);

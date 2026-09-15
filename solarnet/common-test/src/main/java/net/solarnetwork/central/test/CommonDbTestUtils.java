@@ -24,6 +24,9 @@ package net.solarnetwork.central.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import java.time.Clock;
+import java.time.InstantSource;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -39,6 +42,12 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
  * @version 1.3
  */
 public final class CommonDbTestUtils {
+
+	/**
+	 * A millisecond precise clock to avoid database precision differences
+	 * (nanos vs micros).
+	 */
+	public static InstantSource MS_CLOCK = Clock.tickMillis(ZoneOffset.UTC);
 
 	/**
 	 * Insert a new user with a randomly assigned user ID and username.

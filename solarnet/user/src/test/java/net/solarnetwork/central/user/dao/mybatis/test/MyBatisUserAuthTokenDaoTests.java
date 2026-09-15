@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
@@ -103,7 +104,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void storeNew() {
 		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
 				SecurityTokenType.User);
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setStatus(SecurityTokenStatus.Active);
 		String id = userAuthTokenDao.save(authToken);
@@ -115,7 +116,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void storeNewWithNodeId() {
 		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
 				SecurityTokenType.ReadNodeData);
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder().withNodeIds(Set.of(node.getId())).build());
@@ -130,7 +131,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		setupTestNode(nodeId2);
 		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
 				SecurityTokenType.ReadNodeData);
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
@@ -144,7 +145,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void storeNewWithInfo() {
 		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
 				SecurityTokenType.User);
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setName(UUID.randomUUID().toString());

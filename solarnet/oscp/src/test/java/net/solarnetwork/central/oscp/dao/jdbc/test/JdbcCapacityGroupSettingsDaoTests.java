@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupSettingsData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupConfiguration;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupSettings;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -101,19 +101,19 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 		provider = capacityProviderDao.get(capacityProviderDao.create(userId, OscpJdbcTestUtils
-				.newCapacityProviderConf(userId, flexibilityProviderId, Instant.now())));
+				.newCapacityProviderConf(userId, flexibilityProviderId, MS_CLOCK.instant())));
 		optimizer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
-				.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
+				.newCapacityOptimizerConf(userId, flexibilityProviderId, MS_CLOCK.instant())));
 		group = capacityGroupDao.get(
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
-						provider.getEntityId(), optimizer.getEntityId(), Instant.now())));
+						provider.getEntityId(), optimizer.getEntityId(), MS_CLOCK.instant())));
 	}
 
 	@Test
 	public void insert() {
 		// GIVEN
 		CapacityGroupSettings settings = new CapacityGroupSettings(userId, group.getEntityId(),
-				Instant.now());
+				MS_CLOCK.instant());
 		settings.setModified(settings.getCreated());
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
@@ -169,7 +169,8 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 	@Test
 	public void resolveDatumPublishSettings_user() {
 		// GIVEN
-		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, now(), randomLong());
+		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, MS_CLOCK.instant(),
+				randomLong());
 		settings.setPublishToSolarFlux(false);
 		userSettingsDao.save(settings);
 
@@ -203,7 +204,8 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		// GIVEN
 		insert();
 
-		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, now(), randomLong());
+		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, MS_CLOCK.instant(),
+				randomLong());
 		settings.setPublishToSolarFlux(false);
 		userSettingsDao.save(settings);
 
@@ -230,7 +232,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// WHEN
 		CapacityGroupSettings settings = last.copyWithId(last.getId());
-		settings.setModified(Instant.now().plusMillis(474));
+		settings.setModified(MS_CLOCK.instant().plusMillis(474));
 		settings.setPublishToSolarIn(false);
 		settings.setPublishToSolarIn(false);
 		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
@@ -277,7 +279,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		Map<Long, CapacityProviderConfiguration> userProviders = new LinkedHashMap<>(userCount);
 		Map<Long, CapacityOptimizerConfiguration> userOptimizers = new LinkedHashMap<>(userCount);
 		final List<CapacityGroupSettings> confs = new ArrayList<>(count);
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES);
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);
 			for ( int u = 0; u < userCount; u++ ) {
@@ -292,11 +294,11 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 					userProviders.put(userId,
 							capacityProviderDao.get(capacityProviderDao.create(userId,
 									OscpJdbcTestUtils.newCapacityProviderConf(userId,
-											flexibilityProviderId, Instant.now()))));
+											flexibilityProviderId, MS_CLOCK.instant()))));
 					userOptimizers.put(userId,
 							capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
 									OscpJdbcTestUtils.newCapacityOptimizerConf(userId,
-											flexibilityProviderId, Instant.now()))));
+											flexibilityProviderId, MS_CLOCK.instant()))));
 
 				} else {
 					userId = userIds.get(u);

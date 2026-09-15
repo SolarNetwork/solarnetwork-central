@@ -23,7 +23,7 @@
 package net.solarnetwork.central.security.jdbc.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
@@ -31,7 +31,6 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -91,10 +90,10 @@ public class JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests
 	@Test
 	public void insert() {
 		// GIVEN
-		final Instant issueDate = now().truncatedTo(ChronoUnit.MILLIS);
+		final Instant issueDate = MS_CLOCK.instant();
 		final ClientAccessTokenEntity entity = new ClientAccessTokenEntity(userId, randomString(),
-				randomString(), now(), randomString(), randomString().getBytes(UTF_8), issueDate,
-				issueDate.plusSeconds(3600L));
+				randomString(), MS_CLOCK.instant(), randomString(), randomString().getBytes(UTF_8),
+				issueDate, issueDate.plusSeconds(3600L));
 		entity.setAccessTokenScopes(new LinkedHashSet<>(Arrays.asList("a", "b")));
 		entity.setRefreshToken(randomString().getBytes(UTF_8));
 		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));
@@ -262,10 +261,10 @@ public class JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests
 	@Test
 	public void select_unencryptedRefreshToken() {
 		// GIVEN
-		final Instant issueDate = now().truncatedTo(ChronoUnit.MILLIS);
+		final Instant issueDate = MS_CLOCK.instant();
 		final ClientAccessTokenEntity entity = new ClientAccessTokenEntity(userId, randomString(),
-				randomString(), now().truncatedTo(ChronoUnit.MILLIS), randomString(),
-				randomString().getBytes(UTF_8), issueDate, issueDate.plusSeconds(3600L));
+				randomString(), MS_CLOCK.instant(), randomString(), randomString().getBytes(UTF_8),
+				issueDate, issueDate.plusSeconds(3600L));
 		entity.setAccessTokenScopes(Set.of());
 		entity.setRefreshToken(randomString().getBytes(UTF_8));
 		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));

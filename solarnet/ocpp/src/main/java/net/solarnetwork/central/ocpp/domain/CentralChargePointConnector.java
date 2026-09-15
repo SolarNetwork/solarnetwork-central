@@ -43,7 +43,7 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
  * </p>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "evseId", "connectorId", "userId", "created", "info" })
@@ -79,7 +79,25 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *         if {@code userId} is {@code null}
 	 */
 	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id, Long userId) {
-		super(id);
+		this(id, userId, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @param userId
+	 *        the owner user ID
+	 * @param created
+	 *        the created date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
+	 * @since 1.4
+	 */
+	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id, Long userId,
+			@Nullable Instant created) {
+		super(id, created);
 		this.userId = requireNonNullArgument(userId, "userId");
 	}
 

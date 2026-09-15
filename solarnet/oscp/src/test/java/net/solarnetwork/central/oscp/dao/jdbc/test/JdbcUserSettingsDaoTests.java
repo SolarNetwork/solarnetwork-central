@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allUserSettingsData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newUserSettings;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -68,7 +68,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void insert() {
 		// GIVEN
-		UserSettings settings = new UserSettings(userId, now(), randomLong());
+		UserSettings settings = new UserSettings(userId, MS_CLOCK.instant(), randomLong());
 		settings.setModified(settings.getCreated());
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
@@ -113,7 +113,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 		// WHEN
 		UserSettings settings = last.copyWithId(last.getId());
-		settings.setModified(Instant.now().plusMillis(474));
+		settings.setModified(MS_CLOCK.instant().plusMillis(474));
 		settings.setPublishToSolarIn(false);
 		settings.setPublishToSolarIn(false);
 		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
@@ -158,7 +158,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		final List<Long> userIds = new ArrayList<>(userCount);
 		Map<Long, UserSettings> userSettings = new LinkedHashMap<>(userCount);
 		final List<UserSettings> confs = new ArrayList<>(count * userCount);
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES);
 		final Long nodeId = randomLong();
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
@@ -83,7 +84,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	@Test
 	public void storeNew() {
 		UserAlert alert = new UserAlert();
-		alert.setCreated(Instant.now());
+		alert.setCreated(MS_CLOCK.instant());
 		alert.setUserId(this.user.getId());
 		alert.setNodeId(TEST_NODE_ID);
 		alert.setType(UserAlertType.NodeStaleData);
@@ -220,7 +221,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// setup an alert for a 2nd node, to make sure that alert is NOT deleted
 		setupTestNode(-2L); // add a 2nd
 		UserAlert alert = new UserAlert();
-		alert.setCreated(Instant.now());
+		alert.setCreated(MS_CLOCK.instant());
 		alert.setUserId(this.user.getId());
 		alert.setNodeId(-2L);
 		alert.setType(UserAlertType.NodeStaleData);
@@ -270,7 +271,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		List<UserAlert> results = new ArrayList<UserAlert>(12);
 		Long startingId = null;
-		final Instant batchTime = Instant.now();
+		final Instant batchTime = MS_CLOCK.instant();
 		final Integer max = 5;
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
@@ -303,7 +304,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		List<UserAlert> results = new ArrayList<UserAlert>(12);
 		Long startingId = null;
-		final Instant batchTime = Instant.now();
+		final Instant batchTime = MS_CLOCK.instant();
 		final Integer max = 5;
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
@@ -360,7 +361,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create a Resolved situation
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(userAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
 		resolved.setId(userAlertSituationDao.save(resolved));
 
@@ -384,7 +385,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create an active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setStatus(UserAlertSituationStatus.Active);
 		sit.setId(userAlertSituationDao.save(sit));
 
@@ -408,14 +409,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create a Resolved situation
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(userAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		// create an Active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setStatus(UserAlertSituationStatus.Active);
 		sit.setId(userAlertSituationDao.save(sit));
 
@@ -446,7 +447,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create an Active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(alerts.get(1));
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setStatus(UserAlertSituationStatus.Active);
 		sit.setId(userAlertSituationDao.save(sit));
 
@@ -484,7 +485,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create a Resolved situation
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(userAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
 		resolved.setId(userAlertSituationDao.save(resolved));
 
@@ -505,7 +506,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create an active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setStatus(UserAlertSituationStatus.Active);
 		sit.setId(userAlertSituationDao.save(sit));
 
@@ -527,14 +528,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		// create a Resolved situation
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(userAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		// create an Active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setStatus(UserAlertSituationStatus.Active);
 		sit.setId(userAlertSituationDao.save(sit));
 
@@ -600,18 +601,18 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		// create an alert for 2nd node
 		UserAlert otherNodeAlert = new UserAlert();
-		otherNodeAlert.setCreated(Instant.now());
+		otherNodeAlert.setCreated(MS_CLOCK.instant());
 		otherNodeAlert.setNodeId(-200L);
 		otherNodeAlert.setUserId(user.getId());
 		otherNodeAlert.setStatus(UserAlertStatus.Active);
 		otherNodeAlert.setType(UserAlertType.NodeStaleData);
-		otherNodeAlert.setValidTo(Instant.now());
+		otherNodeAlert.setValidTo(MS_CLOCK.instant());
 		otherNodeAlert.setId(userAlertDao.save(otherNodeAlert));
 
 		// create an Active situation, but for other node ID
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(otherNodeAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Active);
 		resolved.setId(userAlertSituationDao.save(resolved));
 
@@ -628,18 +629,18 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		// create an alert for 2nd node
 		UserAlert otherNodeAlert = new UserAlert();
-		otherNodeAlert.setCreated(Instant.now());
+		otherNodeAlert.setCreated(MS_CLOCK.instant());
 		otherNodeAlert.setNodeId(-200L);
 		otherNodeAlert.setUserId(user.getId());
 		otherNodeAlert.setStatus(UserAlertStatus.Active);
 		otherNodeAlert.setType(UserAlertType.NodeStaleData);
-		otherNodeAlert.setValidTo(Instant.now());
+		otherNodeAlert.setValidTo(MS_CLOCK.instant());
 		otherNodeAlert.setId(userAlertDao.save(otherNodeAlert));
 
 		// create an Active situation, but for other node ID
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(otherNodeAlert);
-		resolved.setCreated(Instant.now());
+		resolved.setCreated(MS_CLOCK.instant());
 		resolved.setStatus(UserAlertSituationStatus.Active);
 		resolved.setId(userAlertSituationDao.save(resolved));
 

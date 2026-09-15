@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.datum.export.dao.mybatis.test;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -76,8 +76,8 @@ public class MyBatisUserOutputConfigurationDaoTests extends AbstractMyBatisUserD
 	@Test
 	public void storeNew() {
 		UserOutputConfiguration conf = new UserOutputConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, TEST_SERVICE_IDENT,
-				OutputCompressionType.None);
+				unassignedEntityIdKey(this.user.getId()), MS_CLOCK.instant(), TEST_NAME,
+				TEST_SERVICE_IDENT, OutputCompressionType.None);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");

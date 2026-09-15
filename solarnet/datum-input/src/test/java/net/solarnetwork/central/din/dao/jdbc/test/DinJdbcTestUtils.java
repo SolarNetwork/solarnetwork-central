@@ -24,7 +24,7 @@ package net.solarnetwork.central.din.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
-import java.time.Instant;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,7 +66,7 @@ public final class DinJdbcTestUtils {
 	public static CredentialConfiguration newCredentialConfiguration(Long userId, String username,
 			String password) {
 		CredentialConfiguration conf = new CredentialConfiguration(unassignedEntityIdKey(userId),
-				Instant.now(), username);
+				MS_CLOCK.instant(), username);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		conf.setPassword(password);
@@ -104,7 +104,7 @@ public final class DinJdbcTestUtils {
 	public static TransformConfiguration newTransformConfiguration(Long userId, String name,
 			String serviceId, Map<String, Object> serviceProps) {
 		TransformConfiguration conf = new TransformConfiguration(unassignedEntityIdKey(userId),
-				Instant.now(), name, serviceId);
+				MS_CLOCK.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
 		conf.setServiceProps(serviceProps);
 		return conf;
@@ -145,7 +145,7 @@ public final class DinJdbcTestUtils {
 	public static EndpointConfiguration newEndpointConfiguration(Long userId, UUID endpointId,
 			String name, Long nodeId, String sourceId, Long transformId) {
 		EndpointConfiguration conf = new EndpointConfiguration(new UserUuidPK(userId, endpointId),
-				Instant.now(), name);
+				MS_CLOCK.instant(), name);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		conf.setNodeId(nodeId);
@@ -185,7 +185,7 @@ public final class DinJdbcTestUtils {
 	public static EndpointAuthConfiguration newEndpointAuthConfiguration(Long userId, UUID endpointId,
 			Long credentialId) {
 		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(
-				new UserUuidLongCompositePK(userId, endpointId, credentialId), Instant.now());
+				new UserUuidLongCompositePK(userId, endpointId, credentialId), MS_CLOCK.instant());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		return conf;

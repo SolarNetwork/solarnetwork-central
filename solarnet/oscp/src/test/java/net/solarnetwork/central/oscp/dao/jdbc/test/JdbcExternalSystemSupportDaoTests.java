@@ -23,11 +23,11 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
@@ -73,7 +73,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 		// GIVEN
 		CapacityProviderConfiguration conf = capacityProviderDao
 				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
-						flexibilityProviderId, Instant.now())));
+						flexibilityProviderId, MS_CLOCK.instant())));
 
 		// WHEN
 		ExternalSystemConfiguration result = dao.externalSystemConfiguration(OscpRole.CapacityProvider,
@@ -92,7 +92,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 		// GIVEN
 		CapacityOptimizerConfiguration conf = capacityOptimizerDao
 				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
-						.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
+						.newCapacityOptimizerConf(userId, flexibilityProviderId, MS_CLOCK.instant())));
 
 		// WHEN
 		ExternalSystemConfiguration result = dao.externalSystemConfiguration(OscpRole.CapacityOptimizer,

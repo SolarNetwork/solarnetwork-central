@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -499,7 +500,7 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 
 		// when
 		var conn = new CentralChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
-				cp.getUserId());
+				cp.getUserId(), MS_CLOCK.instant());
 		conn.setInfo(StatusNotification.builder().withConnectorId(1).withTimestamp(conn.getCreated())
 				.build());
 		ChargePointConnectorKey pk = dao.save(conn);

@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao.mybatis.test;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,7 +34,6 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.notNullValue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,7 +71,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 
 	private SolarNodeMetadata getTestInstance() {
 		SolarNodeMetadata datum = new SolarNodeMetadata();
-		datum.setCreated(Instant.now());
+		datum.setCreated(MS_CLOCK.instant());
 		datum.setNodeId(TEST_NODE_ID);
 
 		GeneralDatumMetadata samples = new GeneralDatumMetadata();
@@ -161,7 +161,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 			setupTestNode((long) i);
 
 			SolarNodeMetadata datum = new SolarNodeMetadata();
-			datum.setCreated(Instant.now());
+			datum.setCreated(MS_CLOCK.instant());
 			datum.setNodeId((long) i);
 			nodeIds.add(datum.getNodeId());
 

@@ -23,10 +23,10 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static java.lang.String.format;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -88,8 +88,9 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
-		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
-				PaymentType.Payment, new BigDecimal("12345.67"), account.getCurrencyCode());
+		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+				MS_CLOCK.instant(), PaymentType.Payment, new BigDecimal("12345.67"),
+				account.getCurrencyCode());
 		entity.setExternalKey(randomString());
 		entity.setReference(randomString());
 

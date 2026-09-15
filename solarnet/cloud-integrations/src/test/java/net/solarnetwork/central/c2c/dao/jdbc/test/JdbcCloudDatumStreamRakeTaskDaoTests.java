@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.time.Instant.now;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamRakeTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamRakeTaskEntity;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
@@ -163,7 +163,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 				Period.ofDays(1),
 				randomString(),
 				props)
@@ -255,7 +255,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 							userId,
 							streamId,
 							BasicClaimableJobState.Queued,
-							Instant.now(),
+							MS_CLOCK.instant(),
 							Period.ofDays(1),
 							randomString(),
 							null
@@ -302,7 +302,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 							userId,
 							streamId,
 							BasicClaimableJobState.values()[s % BasicClaimableJobState.values().length],
-							Instant.now(),
+							MS_CLOCK.instant(),
 							Period.ofDays(1),
 							randomString(),
 							null
@@ -356,7 +356,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								streamId,
 								BasicClaimableJobState.values()[r % (BasicClaimableJobState.values().length - 1) + 1],
-								Instant.now(),
+								MS_CLOCK.instant(),
 								Period.ofDays(r + 1),
 								randomString(),
 								null
@@ -414,7 +414,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 							userId,
 							datumStream.getConfigId(),
 							BasicClaimableJobState.Queued,
-							Instant.now(),
+							MS_CLOCK.instant(),
 							Period.ofDays(1),
 							randomString(),
 							null
@@ -484,7 +484,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								datumStream.getConfigId(),
 								BasicClaimableJobState.Queued,
-								Instant.now(),
+								MS_CLOCK.instant(),
 								p,
 								randomString(),
 								null
@@ -569,7 +569,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								datumStream.getConfigId(),
 								BasicClaimableJobState.Queued,
-								Instant.now(),
+								MS_CLOCK.instant(),
 								p,
 								randomString(),
 								null
@@ -647,7 +647,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								datumStream.getConfigId(),
 								BasicClaimableJobState.Queued,
-								Instant.now(),
+								MS_CLOCK.instant(),
 								p,
 								randomString(),
 								null
@@ -708,7 +708,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamRakeTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
 		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
@@ -742,7 +742,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamRakeTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Claimed);
-		conf.setExecuteAt(now().plusMillis(474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
 		conf.setMessage(randomString());
 
 		Map<String, Object> props = Map.of("bar", "foo");
@@ -784,7 +784,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamRakeTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
 		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
@@ -907,7 +907,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								streamId,
 								BasicClaimableJobState.Queued,
-								Instant.now(),
+								MS_CLOCK.instant(),
 								Period.ofDays(t + 1),
 								randomString(),
 								null
@@ -965,7 +965,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 								userId,
 								streamId,
 								BasicClaimableJobState.Queued,
-								Instant.now(),
+								MS_CLOCK.instant(),
 								Period.ofDays(t + 1),
 								randomString(),
 								null
@@ -1026,7 +1026,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Completed,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				Period.ofDays(1),
 				randomString(),
 				null)
@@ -1040,7 +1040,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
 
 		// THEN
-		final Instant afterClaim = now();
+		final Instant afterClaim = MS_CLOCK.instant();
 		CloudDatumStreamRakeTaskEntity expected = last.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -1095,7 +1095,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity c1 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream1.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
 				Period.ofDays(1),
 				randomString(),
 				null)
@@ -1105,7 +1105,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity c2 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 				Period.ofDays(1),
 				randomString(),
 				null)
@@ -1121,7 +1121,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
 
 		// THEN
-		final Instant afterClaim = now();
+		final Instant afterClaim = MS_CLOCK.instant();
 		CloudDatumStreamRakeTaskEntity expected = conf2.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -1170,7 +1170,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
 				last.getDatumStreamId(),
 				BasicClaimableJobState.Executing,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				Period.ofDays(2),
 				randomString(),
 				null)
@@ -1202,7 +1202,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
 				last.getDatumStreamId(),
 				BasicClaimableJobState.Claimed,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				Period.ofDays(2),
 				randomString(),
 				null)
@@ -1280,7 +1280,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
 				last.getDatumStreamId(),
 				BasicClaimableJobState.Claimed,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				Period.ofDays(2),
 				randomString(),
 				null)
@@ -1296,7 +1296,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamRakeTaskEntity conf3 = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				Period.ofDays(1),
 				randomString(),
 				null)
@@ -1328,7 +1328,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	public void resetAbandoned() {
 		// GIVEN
 		final int datumStreamCount = 10;
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS);
 		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
 		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
 				integration.getConfigId(), null);

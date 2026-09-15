@@ -24,6 +24,7 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerControlConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
@@ -35,7 +36,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -91,9 +91,9 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 		// WHEN
 		ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now(), randomLong(), randomString(),
+				lastServer.getServerId(), 0, MS_CLOCK.instant(), randomLong(), randomString(),
 				ControlType.Analog);
-		conf.setModified(Instant.now().plusMillis(234L));
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		UserLongIntegerCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -142,9 +142,9 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 		// WHEN
 		ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now(), randomLong(), randomString(),
+				lastServer.getServerId(), 0, MS_CLOCK.instant(), randomLong(), randomString(),
 				ControlType.Analog);
-		conf.setModified(Instant.now().plusMillis(234L));
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		conf.setProperty(randomString());
 		conf.setMultiplier(new BigDecimal("1.23"));
 		conf.setOffset(new BigDecimal("2.34"));
@@ -231,7 +231,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		// WHEN
 		ServerControlConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setControlId(randomString());
 		conf.setType(ControlType.Binary);
@@ -258,7 +258,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		// WHEN
 		ServerControlConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setControlId(randomString());
 		conf.setProperty(randomString());
@@ -315,7 +315,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							ControlType.Binary);
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
@@ -356,7 +356,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							ControlType.Binary);
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
@@ -403,7 +403,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							ControlType.Analog);
 					conf.setModified(conf.getCreated());
 
@@ -467,7 +467,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
 							ControlType.Binary);
 					conf.setModified(conf.getCreated());
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);

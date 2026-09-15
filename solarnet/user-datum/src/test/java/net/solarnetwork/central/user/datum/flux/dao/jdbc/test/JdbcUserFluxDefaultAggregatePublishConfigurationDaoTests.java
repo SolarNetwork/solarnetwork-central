@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.user.datum.flux.dao.jdbc.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +66,7 @@ public class JdbcUserFluxDefaultAggregatePublishConfigurationDaoTests
 	private static UserFluxDefaultAggregatePublishConfiguration newUserFluxDefaultAggregatePublishConfiguration(
 			Long userId, boolean publish, boolean retain) {
 		UserFluxDefaultAggregatePublishConfiguration conf = new UserFluxDefaultAggregatePublishConfiguration(
-				userId, Instant.now());
+				userId, MS_CLOCK.instant());
 		conf.setModified(conf.getCreated());
 		conf.setPublish(publish);
 		conf.setRetain(retain);

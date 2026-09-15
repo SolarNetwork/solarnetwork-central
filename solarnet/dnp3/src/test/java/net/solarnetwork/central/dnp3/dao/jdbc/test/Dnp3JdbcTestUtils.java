@@ -25,8 +25,8 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.dnp3.test.Dnp3TestUtils.certificatesFromResource;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public final class Dnp3JdbcTestUtils {
 	 */
 	public static TrustedIssuerCertificate newTrustedIssuerCertificate(Long userId,
 			X509Certificate cert) {
-		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(userId, cert, Instant.now());
+		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(userId, cert, MS_CLOCK.instant());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		return conf;
@@ -106,8 +106,8 @@ public final class Dnp3JdbcTestUtils {
 	 * @return the entity
 	 */
 	public static ServerConfiguration newServerConfiguration(Long userId, String name) {
-		ServerConfiguration conf = new ServerConfiguration(unassignedEntityIdKey(userId), Instant.now(),
-				name);
+		ServerConfiguration conf = new ServerConfiguration(unassignedEntityIdKey(userId),
+				MS_CLOCK.instant(), name);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		return conf;

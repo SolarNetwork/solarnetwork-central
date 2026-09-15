@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.event.dao.mybatis.test;
 
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -107,7 +108,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 	private UserNodeEventHookConfiguration createHookConf(Long userId, Long[] nodeIds,
 			String[] sourceIds) {
 		final UserNodeEventHookConfiguration hookConf = new UserNodeEventHookConfiguration(userId,
-				Instant.now(), "Test", TEST_SERVICE_ID);
+				MS_CLOCK.instant(), "Test", TEST_SERVICE_ID);
 		hookConf.setNodeIds(nodeIds);
 		hookConf.setSourceIds(sourceIds);
 		hookConf.setTopic(AGGREGATE_UPDATED_TOPIC);
@@ -122,7 +123,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 
 		// WHEN		
 		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
-				Instant.now().truncatedTo(ChronoUnit.HOURS));
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		acceptor.offerDatumEvent(event);
@@ -179,7 +180,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		UserNodeEvent claimed = dao.claimQueuedTask(AGGREGATE_UPDATED_TOPIC);
 		UserNodeEventTask claimedTask = claimed.getTask();
 		Thread.sleep(400L);
-		claimedTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		claimedTask.setCompleted(MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS));
 		claimedTask.setSuccess(true);
 		claimedTask.setStatus(UserNodeEventTaskState.Completed);
 		claimedTask.setMessage("Good one.");
@@ -216,7 +217,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		// GIVEN
 
 		// WHEN
-		long count = dao.purgeCompletedTasks(Instant.now());
+		long count = dao.purgeCompletedTasks(MS_CLOCK.instant());
 
 		// THEN
 		assertThat("Nothing purged because nothing exists", count, equalTo(0L));
@@ -228,7 +229,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		complete_task();
 
 		// WHEN
-		long count = dao.purgeCompletedTasks(Instant.now().minus(1, ChronoUnit.DAYS));
+		long count = dao.purgeCompletedTasks(MS_CLOCK.instant().minus(1, ChronoUnit.DAYS));
 
 		// THEN
 		assertThat("Nothing purged because nothing older", count, equalTo(0L));
@@ -240,7 +241,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		accept_oneConfiguration_exactNodeSource();
 
 		// WHEN
-		long count = dao.purgeCompletedTasks(Instant.now().plus(1, ChronoUnit.DAYS));
+		long count = dao.purgeCompletedTasks(MS_CLOCK.instant().plus(1, ChronoUnit.DAYS));
 
 		// THEN
 		assertThat("One task purged because both older", count, equalTo(1L));
@@ -254,9 +255,9 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		// create 3 tasks @ 3 dates
 		Instant ts = null;
 		for ( int i = 0; i < 3; i++ ) {
-			ts = Instant.now();
+			ts = MS_CLOCK.instant();
 			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
-					Instant.now().truncatedTo(ChronoUnit.HOURS));
+					MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -283,11 +284,11 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
 
 		// create 3 tasks @ 3 dates
-		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		Instant ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
 		for ( int i = 0; i < 3; i++ ) {
 			ts = ts.plusSeconds(60);
 			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
-					Instant.now().truncatedTo(ChronoUnit.HOURS));
+					MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -322,11 +323,11 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
 
 		// create 4 tasks @ 4 dates
-		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		Instant ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
 		for ( int i = 0; i < 4; i++ ) {
 			ts = ts.plusSeconds(60);
 			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
-					Instant.now().truncatedTo(ChronoUnit.HOURS));
+					MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);

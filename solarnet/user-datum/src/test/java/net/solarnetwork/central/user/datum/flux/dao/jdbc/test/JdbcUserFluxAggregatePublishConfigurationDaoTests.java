@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.datum.flux.dao.jdbc.test;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_USER_ID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -36,7 +37,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -98,7 +98,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 	private static UserFluxAggregatePublishConfiguration newUserFluxAggregatePublishConfiguration(
 			Long userId, Long[] nodeIds, String[] sourceIds, boolean publish, boolean retain) {
 		UserFluxAggregatePublishConfiguration conf = new UserFluxAggregatePublishConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), MS_CLOCK.instant());
 		conf.setModified(conf.getCreated());
 		conf.setNodeIds(nodeIds);
 		conf.setSourceIds(sourceIds);
@@ -236,7 +236,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// WHEN
 		dao.delete(new UserFluxAggregatePublishConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now()));
+				UserLongCompositePK.unassignedEntityIdKey(userId), MS_CLOCK.instant()));
 
 		// THEN
 		then(data).as("Initial data before delete has 3 rows").hasSize(3);
@@ -262,7 +262,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		UserFluxAggregatePublishConfiguration conf = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf.setNodeIds(new Long[] { nodeId });
 		conf.setSourceIds(new String[] { randomString(), randomString(), randomString() });
 		conf.setPublish(true);
@@ -308,7 +308,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId2, nodeId3);
 
 		UserFluxAggregatePublishConfiguration conf = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf.setSourceIds(new String[] { randomString(), randomString(), randomString() });
 		conf.setPublish(true);
 		conf.setRetain(true);
@@ -375,7 +375,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId2, nodeId3);
 
 		UserFluxAggregatePublishConfiguration conf = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf.setNodeIds(new Long[] { nodeId1, nodeId2 });
 		conf.setPublish(true);
 		conf.setRetain(true);
@@ -431,7 +431,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		UserFluxAggregatePublishConfiguration conf1 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf1.setNodeIds(new Long[] { nodeId });
 		conf1.setSourceIds(new String[] { randomString(), randomString(), randomString() });
 		conf1.setPublish(true);
@@ -440,7 +440,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// override source ID 2 to not retain
 		UserFluxAggregatePublishConfiguration conf2 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf2.setNodeIds(new Long[] { nodeId, randomLong() });
 		conf2.setSourceIds(new String[] { conf1.getSourceIds()[1] });
 		conf2.setPublish(true);
@@ -449,7 +449,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// override source ID 3 to not publish
 		UserFluxAggregatePublishConfiguration conf3 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf3.setNodeIds(new Long[] { nodeId, randomLong() });
 		conf3.setSourceIds(new String[] { conf1.getSourceIds()[2] });
 		conf3.setPublish(false);
@@ -520,7 +520,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId2);
 
 		UserFluxAggregatePublishConfiguration conf1 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf1.setNodeIds(new Long[] { nodeId1 });
 		conf1.setSourceIds(new String[] { randomString(), randomString(), randomString() });
 		conf1.setPublish(true);
@@ -529,7 +529,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// override source ID 2 to not retain
 		UserFluxAggregatePublishConfiguration conf2 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf2.setNodeIds(new Long[] { nodeId1, randomLong() });
 		conf2.setSourceIds(new String[] { conf1.getSourceIds()[1] });
 		conf2.setPublish(true);
@@ -538,7 +538,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// override source ID 3 to not publish
 		UserFluxAggregatePublishConfiguration conf3 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf3.setNodeIds(new Long[] { nodeId1, randomLong() });
 		conf3.setSourceIds(new String[] { conf1.getSourceIds()[2] });
 		conf3.setPublish(false);
@@ -547,7 +547,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// add wildcard to do nothing... should not override any more specific conf above
 		UserFluxAggregatePublishConfiguration conf4 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf4.setPublish(false);
 		conf4.setRetain(true);
 		dao.create(userId, conf4);
@@ -624,7 +624,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		// insert default, with true settings
-		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, Instant.now());
+		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, MS_CLOCK.instant());
 		defaults.setPublish(true);
 		defaults.setRetain(false);
 		defaultDao.save(defaults);
@@ -655,7 +655,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		// insert default, with true settings
-		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, Instant.now());
+		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, MS_CLOCK.instant());
 		defaults.setPublish(true);
 		defaults.setRetain(true);
 		defaultDao.save(defaults);
@@ -686,7 +686,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		// insert default, with true settings
-		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, Instant.now());
+		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, MS_CLOCK.instant());
 		defaults.setPublish(false);
 		defaults.setRetain(true);
 		defaultDao.save(defaults);
@@ -717,7 +717,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		// insert default, with true settings
-		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, Instant.now());
+		var defaults = new UserFluxDefaultAggregatePublishConfiguration(userId, MS_CLOCK.instant());
 		defaults.setPublish(false);
 		defaults.setRetain(false);
 		defaultDao.save(defaults);
@@ -748,7 +748,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		setupTestUserNode(userId, nodeId);
 
 		UserFluxAggregatePublishConfiguration conf1 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf1.setNodeIds(new Long[] { randomLong() });
 		conf1.setSourceIds(new String[] { randomString() });
 		conf1.setPublish(true);
@@ -756,7 +756,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 		var id1 = dao.create(userId, conf1);
 
 		UserFluxAggregatePublishConfiguration conf2 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf2.setNodeIds(new Long[] { randomLong() });
 		conf2.setSourceIds(new String[] { randomString() });
 		conf2.setPublish(true);
@@ -767,7 +767,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDaoTests extends AbstractJ
 
 		// override source ID 3 to not publish
 		UserFluxAggregatePublishConfiguration conf3 = new UserFluxAggregatePublishConfiguration(
-				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, Instant.now());
+				UNASSIGNED_USER_ID, UNASSIGNED_ENTITY_ID, MS_CLOCK.instant());
 		conf3.setNodeIds(new Long[] { randomLong() });
 		conf3.setSourceIds(new String[] { randomString() });
 		conf3.setPublish(false);

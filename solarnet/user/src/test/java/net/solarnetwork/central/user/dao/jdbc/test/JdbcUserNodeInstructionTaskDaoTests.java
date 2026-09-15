@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.dao.jdbc.test;
 
-import static java.time.Instant.now;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -108,9 +108,9 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 				randomString(),
 				TEST_SCHEDULE,
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 				props,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				randomString(),
 				rprops
 				);
@@ -206,7 +206,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,
@@ -251,7 +251,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,
@@ -289,8 +289,8 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 		// populate some result data
 		UserNodeInstructionTaskEntity orig = last.copyWithId(last.getId());
 		orig.setState(BasicClaimableJobState.Queued);
-		orig.setExecuteAt(now().plusMillis(818));
-		orig.setLastExecuteAt(now().plusMillis(-181));
+		orig.setExecuteAt(MS_CLOCK.instant().plusMillis(818));
+		orig.setLastExecuteAt(MS_CLOCK.instant().plusMillis(-181));
 		orig.setMessage(randomString());
 		orig.setResultProps(Map.of("pop", "bang"));
 		dao.updateTask(orig, last.getState());
@@ -305,8 +305,8 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 		conf.setState(BasicClaimableJobState.Completed);
 
 		// the following should NOT be updated because they are execution result properties
-		conf.setExecuteAt(now().plusMillis(2474));
-		conf.setLastExecuteAt(now().plusMillis(1747));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(2474));
+		conf.setLastExecuteAt(MS_CLOCK.instant().plusMillis(1747));
 		conf.setMessage("not saved");
 		conf.setResultProps(Map.of("not", "saved"));
 
@@ -346,8 +346,8 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 		conf.setServiceProps(Map.of("bar", "foo"));
 
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
-		conf.setLastExecuteAt(now().plusMillis(747));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
+		conf.setLastExecuteAt(MS_CLOCK.instant().plusMillis(747));
 		conf.setMessage(randomString());
 		conf.setResultProps(Map.of("pop", "bang"));
 
@@ -390,8 +390,8 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 		UserNodeInstructionTaskEntity conf = last.copyWithId(last.getId());
 		conf.setServiceProps(Map.of("bar", "foo"));
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
-		conf.setLastExecuteAt(now().plusMillis(747));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
+		conf.setLastExecuteAt(MS_CLOCK.instant().plusMillis(747));
 		conf.setMessage(randomString());
 		conf.setResultProps(Map.of("pop", "bang"));
 
@@ -507,7 +507,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,
@@ -565,7 +565,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,
@@ -625,7 +625,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 				randomString(),
 				TEST_SCHEDULE,
 				BasicClaimableJobState.Completed,
-				now().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
 				null,
 				null,
 				null,
@@ -666,7 +666,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 				randomString(),
 				TEST_SCHEDULE,
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
 				null,
 				null,
 				null,
@@ -681,7 +681,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 				randomString(),
 				TEST_SCHEDULE,
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 				null,
 				null,
 				null,
@@ -714,7 +714,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 	public void resetAbandoned() {
 		// GIVEN
 		final int taskCount = 10;
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final List<UserNodeInstructionTaskEntity> rakeTasks = new ArrayList<>(taskCount);
 
@@ -784,7 +784,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,
@@ -842,7 +842,7 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 						randomString(),
 						TEST_SCHEDULE,
 						BasicClaimableJobState.Queued,
-						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
 						null,
 						null,
 						null,

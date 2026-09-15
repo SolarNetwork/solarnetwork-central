@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
@@ -76,7 +77,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	@Test
 	public void storeNewUser() {
 		User newUser = new User(TEST_EMAIL);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -118,7 +119,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 				timeZoneId);
 
 		final User newUser = new User(TEST_EMAIL);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -157,7 +158,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final Locale locale = Locale.of("es", "MX");
 
 		final User newUser = new User(TEST_EMAIL);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -183,7 +184,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void storeNewUser_explicitLang() {
 		// GIVEN
 		User newUser = new User(TEST_EMAIL);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -210,7 +211,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, "MX", "America/Mexico_City");
 
 		final User newUser = new User(TEST_EMAIL);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -351,7 +352,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private Long storeTestUser(String email) {
 		User newUser = new User(email);
-		newUser.setCreated(Instant.now());
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);

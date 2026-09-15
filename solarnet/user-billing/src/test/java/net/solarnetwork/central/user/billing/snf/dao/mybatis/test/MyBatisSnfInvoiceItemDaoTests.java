@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import java.math.BigDecimal;
@@ -89,7 +90,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 		SnfInvoice invoice = createTestInvoice();
 
 		SnfInvoiceItem entity = SnfInvoiceItem.newItem(invoice.getId().getId(), InvoiceItemType.Fixed,
-				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"));
+				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"), MS_CLOCK.instant());
 		UUID pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
 		assertAccountBalance(invoice.getAccountId(), entity.getAmount(), BigDecimal.ZERO);

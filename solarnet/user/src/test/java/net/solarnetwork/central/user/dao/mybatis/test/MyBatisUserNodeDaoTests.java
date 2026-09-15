@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT;
@@ -34,7 +35,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -124,7 +124,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void storeNewUserNode() {
 		UserNode newUserNode = new UserNode(this.user, this.node);
 		newUserNode.setNode(this.node);
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
 		Long id = userNodeDao.save(newUserNode);
@@ -222,7 +222,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
 		Long userNode2 = userNodeDao.save(newUserNode);
@@ -262,7 +262,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
 		Long userNode2 = userNodeDao.save(newUserNode);
@@ -289,7 +289,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
 		Long userNode2 = userNodeDao.save(newUserNode);
@@ -339,7 +339,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private UserNodeCertificate storeNewCert(UserNodeCertificateStatus status) {
 		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
-		newUserNodeCert.setCreated(Instant.now());
+		newUserNodeCert.setCreated(MS_CLOCK.instant());
 		newUserNodeCert.setNodeId(this.node.getId());
 		newUserNodeCert.setUserId(this.user.getId());
 		newUserNodeCert.setKeystoreData(TEST_CERT);
@@ -369,7 +369,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private UserNodeTransfer storeNewTransfer(Long nodeId) {
 		UserNodeTransfer newUserNodeTransfer = new UserNodeTransfer();
-		newUserNodeTransfer.setCreated(Instant.now());
+		newUserNodeTransfer.setCreated(MS_CLOCK.instant());
 		newUserNodeTransfer.setNodeId(nodeId);
 		newUserNodeTransfer.setUserId(this.user.getId());
 		newUserNodeTransfer.setEmail(TEST_EMAIL_2);
@@ -472,7 +472,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
 		Long userNode2 = userNodeDao.save(newUserNode);
@@ -487,7 +487,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final Long nodeId2 = -2L;
 		setupTestNode(nodeId2);
 		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
@@ -507,7 +507,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private UserAuthToken tokenForUser(SecurityTokenType type) {
 		final String tokenId = randomTokenId();
 		UserAuthToken authToken = new UserAuthToken(tokenId, this.user.getId(), type);
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret("password");
 		return authToken;
 	}
@@ -554,7 +554,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
 			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
-			newUserNode.setCreated(Instant.now());
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
 			userNodeDao.save(newUserNode);
@@ -574,7 +574,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
 			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
-			newUserNode.setCreated(Instant.now());
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
 			userNodeDao.save(newUserNode);
@@ -595,7 +595,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
 			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
-			newUserNode.setCreated(Instant.now());
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
 			userNodeDao.save(newUserNode);

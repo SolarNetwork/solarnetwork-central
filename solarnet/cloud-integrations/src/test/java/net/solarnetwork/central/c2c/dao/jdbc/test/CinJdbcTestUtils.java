@@ -24,10 +24,10 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -77,8 +77,7 @@ public class CinJdbcTestUtils {
 	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
-				serviceId);
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
 		conf.setServiceProps(serviceProps);
 		conf.setEnabled(true);
@@ -128,8 +127,7 @@ public class CinJdbcTestUtils {
 			Long datumStreamMappingId, String schedule, ObjectDatumKind kind, Long objectId,
 			String sourceId, String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
-				serviceId, kind);
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId, kind);
 		conf.setModified(conf.getCreated());
 		conf.setDatumStreamMappingId(datumStreamMappingId);
 		conf.setSchedule(schedule);
@@ -172,8 +170,7 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamMappingConfiguration newCloudDatumStreamMappingConfiguration(
 			Long userId, Long integrationId, String name, Map<String, Object> serviceProps) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
-				integrationId);
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, integrationId);
 		conf.setModified(conf.getCreated());
 		conf.setServiceProps(serviceProps);
 		return conf;
@@ -225,8 +222,8 @@ public class CinJdbcTestUtils {
 			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
 			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				datumStreamMappingId, index, Instant.now().truncatedTo(ChronoUnit.MILLIS), propertyType,
-				propertyName, valueType, valueReference);
+				datumStreamMappingId, index, MS_CLOCK.instant(), propertyType, propertyName, valueType,
+				valueReference);
 		conf.setModified(conf.getCreated());
 		conf.setMultiplier(multiplier);
 		conf.setScale(scale);
@@ -354,7 +351,7 @@ public class CinJdbcTestUtils {
 	 */
 	public static UserSettingsEntity newUserSettingsEntity(Long userId, boolean publishToSolarIn,
 			boolean publishToSolarFlux) {
-		UserSettingsEntity conf = new UserSettingsEntity(userId, Instant.now());
+		UserSettingsEntity conf = new UserSettingsEntity(userId, MS_CLOCK.instant());
 		conf.setPublishToSolarIn(publishToSolarIn);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
 		return conf;
@@ -393,7 +390,7 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamSettingsEntity newCloudDatumStreamSettingsEntity(Long userId,
 			Long datumStreamId, boolean publishToSolarIn, boolean publishToSolarFlux) {
 		CloudDatumStreamSettingsEntity conf = new CloudDatumStreamSettingsEntity(userId, datumStreamId,
-				Instant.now());
+				MS_CLOCK.instant());
 		conf.setPublishToSolarIn(publishToSolarIn);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
 		return conf;
@@ -442,8 +439,7 @@ public class CinJdbcTestUtils {
 			Long nodeId, String controlId, String controlReference, String name, String serviceId,
 			Map<String, Object> serviceProps) {
 		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS), name, serviceId, integrationId, nodeId,
-				controlId);
+				MS_CLOCK.instant(), name, serviceId, integrationId, nodeId, controlId);
 		conf.setModified(conf.getCreated());
 		conf.setControlReference(controlReference);
 		conf.setServiceProps(serviceProps);

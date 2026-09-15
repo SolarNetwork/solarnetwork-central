@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -159,7 +160,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		// GIVEN
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		TestTransaction.flagForCommit();
 		TestTransaction.end();
@@ -191,7 +192,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		// GIVEN
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		// insert earlier record
 		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, 0, 0, action,
@@ -228,7 +229,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		final var connId = 1;
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		TestTransaction.flagForCommit();
 		TestTransaction.end();
@@ -263,7 +264,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		final var connId = 2;
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		TestTransaction.flagForCommit();
 		TestTransaction.end();
@@ -298,7 +299,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		final var connId = 1;
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		// insert earlier record
 		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, 0, connId, action,
@@ -336,7 +337,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		final var connId = 2;
 		final var action = "foo";
 		final var messageId = UUID.randomUUID().toString();
-		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final var ts = MS_CLOCK.instant().truncatedTo(ChronoUnit.MILLIS);
 
 		// insert earlier record
 		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, evseId, connId, action,
@@ -407,7 +408,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 					String messageId = UUID.randomUUID().toString();
 					synchronized ( chargerToActionToMessageIdMap ) {
 						dao.updateActionTimestamp(TEST_USER_ID, ident, evseId, connId, action, messageId,
-								Instant.now());
+								MS_CLOCK.instant());
 						chargerToActionToMessageIdMap.computeIfAbsent(ident, _ -> new HashMap<>())
 								.put(action, messageId);
 					}

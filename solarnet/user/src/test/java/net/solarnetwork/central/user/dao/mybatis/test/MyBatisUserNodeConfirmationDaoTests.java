@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
-import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,7 +80,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 	@Test
 	public void storeNew() {
 		UserNodeConfirmation newUserNodeConf = new UserNodeConfirmation(this.user);
-		newUserNodeConf.setCreated(Instant.now());
+		newUserNodeConf.setCreated(MS_CLOCK.instant());
 		newUserNodeConf.setConfirmationKey(String.valueOf(testNodeId));
 		newUserNodeConf.setSecurityPhrase("test phrase");
 		newUserNodeConf.setCountry("NZ");
@@ -174,7 +174,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 
 		// make the confirmation no longer pending
 		UserNodeConfirmation conf0 = this.userNodeConf;
-		conf0.setConfirmationDate(Instant.now());
+		conf0.setConfirmationDate(MS_CLOCK.instant());
 		userNodeConfirmationDao.save(conf0);
 
 		// now add a 2nd confirmation that is still pending

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.datum.export.dao.mybatis.test;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -93,8 +93,8 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
-				now());
+				unassignedEntityIdKey(this.user.getId()), MS_CLOCK.instant(), TEST_NAME,
+				ScheduleType.Weekly, 2, MS_CLOCK.instant());
 
 		UserLongCompositePK id = confDao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -106,8 +106,8 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 	public void storeNew() {
 		Instant date = LocalDateTime.of(2017, 4, 18, 9, 0, 0).toInstant(ZoneOffset.UTC);
 		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo(
-				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date), now(),
-				this.userDatumExportConfig.getConfigId());
+				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date),
+				MS_CLOCK.instant(), this.userDatumExportConfig.getConfigId());
 		info.setConfig(this.userDatumExportConfig);
 
 		UserDatumExportTaskPK id = dao.save(info);
@@ -148,7 +148,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 
 		UserDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
 		Instant originalCreated = info.getCreated();
-		info.setCreated(Instant.now());
+		info.setCreated(MS_CLOCK.instant());
 		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
 		UserDatumExportTaskPK id = dao.save(info);
@@ -169,7 +169,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		getByPrimaryKey();
 
 		// WHEN
-		long result = datumTaskDao.purgeCompletedTasks(Instant.now());
+		long result = datumTaskDao.purgeCompletedTasks(MS_CLOCK.instant());
 
 		// THEN
 		then(result).as("Deleted no expired rows").isEqualTo(0L);
@@ -198,7 +198,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 
 		// WHEN
 		long result = datumTaskDao.purgeCompletedTasks(
-				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
 
 		// THEN
 		then(result).as("Deleted no expired rows").isEqualTo(0L);
@@ -227,23 +227,23 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		getByPrimaryKey();
 		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getTaskId());
 		datumTask.setStatus(DatumExportState.Completed);
-		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
+		datumTask.setCompleted(MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES));
 		datumTaskDao.save(datumTask);
 
 		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo(
 				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly,
 						LocalDateTime.of(2017, 4, 18, 10, 0, 0).toInstant(ZoneOffset.UTC)),
-				now(), this.userDatumExportConfig.getConfigId());
+				MS_CLOCK.instant(), this.userDatumExportConfig.getConfigId());
 		info.setConfig(this.userDatumExportConfig);
 		info = dao.get(dao.save(info), this.user.getId());
 		datumTask = datumTaskDao.get(info.getTaskId());
 		datumTask.setStatus(DatumExportState.Completed);
-		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		datumTask.setCompleted(MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS));
 		datumTaskDao.save(datumTask);
 
 		// WHEN
 		long result = datumTaskDao.purgeCompletedTasks(
-				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
 
 		// THEN
 		then(result).as("Deleted expired rows").isEqualTo(2L);

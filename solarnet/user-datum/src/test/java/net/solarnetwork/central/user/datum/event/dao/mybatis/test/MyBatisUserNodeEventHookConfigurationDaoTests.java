@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.event.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -29,7 +30,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,7 +78,7 @@ public class MyBatisUserNodeEventHookConfigurationDaoTests
 		props.put("foo", "bar");
 
 		final UserNodeEventHookConfiguration hook = new UserNodeEventHookConfiguration(user.getId(),
-				Instant.now(), TEST_CONFIG_NAME, TEST_SERVICE_ID);
+				MS_CLOCK.instant(), TEST_CONFIG_NAME, TEST_SERVICE_ID);
 		hook.setNodeIds(new Long[] { TEST_NODE_ID });
 		hook.setSourceIds(new String[] { TEST_SOURCE_ID });
 		hook.setTopic(TEST_TOPIC);

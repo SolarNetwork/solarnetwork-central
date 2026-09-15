@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
@@ -82,7 +83,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 	private UserAlert createUserAlert() {
 		UserAlert alert = new UserAlert();
-		alert.setCreated(Instant.now());
+		alert.setCreated(MS_CLOCK.instant());
 		alert.setUserId(this.user.getId());
 		alert.setNodeId(TEST_NODE_ID);
 		alert.setType(UserAlertType.NodeStaleData);
@@ -109,7 +110,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	private UserAlertSituation storeNew(UserAlert alert, UserAlertSituationStatus status,
 			Instant notified) {
 		UserAlertSituation sit = new UserAlertSituation();
-		sit.setCreated(Instant.now());
+		sit.setCreated(MS_CLOCK.instant());
 		sit.setAlert(alert);
 		sit.setStatus(status);
 		sit.setNotified(notified);
@@ -222,13 +223,14 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 	@Test
 	public void purgeCompletedInstructionsNone() {
-		long result = userAlertSituationDao.purgeResolvedSituations(Instant.now());
+		long result = userAlertSituationDao.purgeResolvedSituations(MS_CLOCK.instant());
 		then(result).isZero();
 	}
 
 	@Test
 	public void purgeCompletedInstructionsNoMatchActive() {
-		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Active, Instant.now());
+		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Active,
+				MS_CLOCK.instant());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().plus(1, ChronoUnit.DAYS));
 		then(result).isZero();
@@ -245,7 +247,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	@Test
 	public void purgeCompletedInstructionsNoMatchDateMismatch() {
 		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved,
-				Instant.now());
+				MS_CLOCK.instant());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().minus(1, ChronoUnit.DAYS));
 		then(result).isZero();
@@ -254,7 +256,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	@Test
 	public void purgeCompletedInstructionsMatch() {
 		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved,
-				Instant.now());
+				MS_CLOCK.instant());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().plus(1, ChronoUnit.DAYS));
 		then(result).isOne();
@@ -266,11 +268,11 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	public void purgeCompletedInstructionsMatchMultiple() {
 		List<UserAlertSituation> toPurge = new ArrayList<UserAlertSituation>();
 		List<UserAlertSituation> notToPurge = new ArrayList<UserAlertSituation>();
-		toPurge.add(storeNew(createUserAlert(), UserAlertSituationStatus.Resolved, Instant.now()));
-		notToPurge.add(storeNew(userAlert, UserAlertSituationStatus.Active, Instant.now())); // Active state, should NOT be deleted
-		toPurge.add(storeNew(userAlert, UserAlertSituationStatus.Resolved, Instant.now()));
+		toPurge.add(storeNew(createUserAlert(), UserAlertSituationStatus.Resolved, MS_CLOCK.instant()));
+		notToPurge.add(storeNew(userAlert, UserAlertSituationStatus.Active, MS_CLOCK.instant())); // Active state, should NOT be deleted
+		toPurge.add(storeNew(userAlert, UserAlertSituationStatus.Resolved, MS_CLOCK.instant()));
 		long result = userAlertSituationDao
-				.purgeResolvedSituations(Instant.now().plus(1, ChronoUnit.DAYS));
+				.purgeResolvedSituations(MS_CLOCK.instant().plus(1, ChronoUnit.DAYS));
 		then(result).as("Purged resolved").isEqualTo(toPurge.size());
 		for ( UserAlertSituation sit : notToPurge ) {
 			UserAlertSituation match = userAlertSituationDao.get(sit.getId());

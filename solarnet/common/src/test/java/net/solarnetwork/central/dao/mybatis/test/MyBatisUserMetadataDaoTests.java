@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +67,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	private UserMetadataEntity getTestInstance(Long userId) {
-		UserMetadataEntity datum = new UserMetadataEntity(userId, Instant.now());
+		UserMetadataEntity datum = new UserMetadataEntity(userId, MS_CLOCK.instant());
 
 		GeneralDatumMetadata samples = new GeneralDatumMetadata();
 		datum.setMeta(samples);

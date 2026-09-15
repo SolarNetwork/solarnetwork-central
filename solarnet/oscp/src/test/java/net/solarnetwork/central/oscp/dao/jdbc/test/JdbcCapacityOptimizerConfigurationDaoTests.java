@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
@@ -30,6 +29,7 @@ import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allC
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityOptimizerConf;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -116,7 +116,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	public void insert() {
 		// GIVEN
 		CapacityOptimizerConfiguration conf = newCapacityOptimizerConf(userId, flexibilityProviderId,
-				Instant.now());
+				MS_CLOCK.instant());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -264,7 +264,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		CapacityOptimizerConfiguration conf = last.copyWithId(last.getId());
 		conf.setBaseUrl(randomUUID().toString());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Failed);
 		conf.setServiceProps(Map.of("bim", "bam"));
@@ -357,7 +357,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<Long> flexibilityProviderIds = new ArrayList<>(userCount);
 		final List<CapacityOptimizerConfiguration> confs = new ArrayList<>(count);
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.MINUTES);
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);
 			for ( int u = 0; u < userCount; u++ ) {
@@ -400,7 +400,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		insert();
 
 		// WHEN
-		Instant offline = Instant.now();
+		Instant offline = MS_CLOCK.instant();
 		dao.updateOfflineDate(last.getId(), offline);
 
 		// THEN
@@ -430,7 +430,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		insert();
 
 		// WHEN
-		Instant ts = Instant.now();
+		Instant ts = MS_CLOCK.instant();
 		boolean result = dao.compareAndSetHeartbeat(last.getId(), null, ts);
 
 		// THEN
@@ -449,7 +449,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		updateHeartbeatDate_fromNull();
 
 		// WHEN
-		Instant ts = Instant.now().plusSeconds(10);
+		Instant ts = MS_CLOCK.instant().plusSeconds(10);
 		boolean result = dao.compareAndSetHeartbeat(last.getId(), lastHeartbeatDate, ts);
 
 		// THEN
@@ -468,8 +468,8 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		updateHeartbeatDate_fromNull();
 
 		// WHEN
-		Instant expected = Instant.now().plusSeconds(5);
-		Instant ts = Instant.now().plusSeconds(10);
+		Instant expected = MS_CLOCK.instant().plusSeconds(5);
+		Instant ts = MS_CLOCK.instant().plusSeconds(10);
 		boolean result = dao.compareAndSetHeartbeat(last.getId(), expected, ts);
 
 		// THEN
@@ -497,7 +497,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	public void processExpiredMeasurement() {
 		// GIVEN
 		CapacityOptimizerConfiguration conf = OscpJdbcTestUtils.newCapacityOptimizerConf(userId,
-				flexibilityProviderId, Instant.now());
+				flexibilityProviderId, MS_CLOCK.instant());
 		UserLongCompositePK id = dao.create(userId, conf);
 		jdbcTemplate.update("UPDATE solaroscp.oscp_co_conf SET reg_status = ?",
 				RegistrationStatus.Registered.getCode());
@@ -505,18 +505,18 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 		CapacityProviderConfiguration provConf = capacityProviderDao
 				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
-						flexibilityProviderId, Instant.now())));
+						flexibilityProviderId, MS_CLOCK.instant())));
 
 		CapacityGroupConfiguration group = capacityGroupDao.get(
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
-						provConf.getEntityId(), id.getEntityId(), Instant.now())));
+						provConf.getEntityId(), id.getEntityId(), MS_CLOCK.instant())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, MS_CLOCK.instant(),
 				group.getEntityId(), OscpRole.CapacityOptimizer));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityOptimizerMeasurementPeriod()
-				.previousPeriodStart(Instant.now());
+				.previousPeriodStart(MS_CLOCK.instant());
 		Instant newTs = group.getCapacityOptimizerMeasurementPeriod().nextPeriodStart(expectedTaskDate);
 		boolean result = dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 			assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityOptimizer)));
@@ -542,7 +542,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	public void processExpiredMeasurement_skipLocked() {
 		// GIVEN
 		CapacityOptimizerConfiguration conf = OscpJdbcTestUtils.newCapacityOptimizerConf(userId,
-				flexibilityProviderId, Instant.now());
+				flexibilityProviderId, MS_CLOCK.instant());
 		UserLongCompositePK id = dao.create(userId, conf);
 		jdbcTemplate.update("UPDATE solaroscp.oscp_co_conf SET reg_status = ?",
 				RegistrationStatus.Registered.getCode());
@@ -550,18 +550,18 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 		CapacityProviderConfiguration provConf = capacityProviderDao
 				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
-						flexibilityProviderId, Instant.now())));
+						flexibilityProviderId, MS_CLOCK.instant())));
 
 		CapacityGroupConfiguration group = capacityGroupDao.get(
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
-						provConf.getEntityId(), id.getEntityId(), Instant.now())));
+						provConf.getEntityId(), id.getEntityId(), MS_CLOCK.instant())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, MS_CLOCK.instant(),
 				group.getEntityId(), OscpRole.CapacityOptimizer));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityOptimizerMeasurementPeriod()
-				.previousPeriodStart(Instant.now());
+				.previousPeriodStart(MS_CLOCK.instant());
 		Instant newTs = group.getCapacityOptimizerMeasurementPeriod().nextPeriodStart(expectedTaskDate);
 
 		AtomicBoolean updateFailed = new AtomicBoolean();

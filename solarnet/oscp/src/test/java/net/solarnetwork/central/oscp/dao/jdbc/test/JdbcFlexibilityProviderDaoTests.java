@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -32,7 +33,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,7 +182,7 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 
 		CapacityProviderConfiguration cp = capacityProviderDao
 				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
-						lastAuthId.getEntityId(), Instant.now())));
+						lastAuthId.getEntityId(), MS_CLOCK.instant())));
 
 		// WHEN
 		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
@@ -198,9 +198,9 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		// GIVEN
 		insert_authToken();
 
-		CapacityOptimizerConfiguration co = capacityOptimizerDao
-				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
-						.newCapacityOptimizerConf(userId, lastAuthId.getEntityId(), Instant.now())));
+		CapacityOptimizerConfiguration co = capacityOptimizerDao.get(
+				capacityOptimizerDao.create(userId, OscpJdbcTestUtils.newCapacityOptimizerConf(userId,
+						lastAuthId.getEntityId(), MS_CLOCK.instant())));
 
 		// WHEN
 		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
