@@ -10,9 +10,9 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost/solarnetwork"
-    username: "solarnet"
-    password: "solarnet"
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
     initialize: false
   datum:
     stream-metadata-cache:
