@@ -38,8 +38,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipException;
@@ -61,18 +59,18 @@ import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.CacheUtils;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.StatTracker;
-import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * Caching service backed by a {@link javax.cache.Cache}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -83,10 +81,6 @@ public class JCacheContentCachingService
 
 	/** The default value for the {@code statLogAccessCount} property. */
 	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
-
-	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern
-			.compile("^" + AuthenticationScheme.V1.getSchemeName() + "\\s+([^:]+):");
-	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
 
 	private static final Logger log = LoggerFactory.getLogger(JCacheContentCachingService.class);
 
@@ -196,26 +190,16 @@ public class JCacheContentCachingService
 		}
 	}
 
-	private void addAuthorization(HttpServletRequest request, MessageDigest digest) {
-		AuthenticationScheme scheme = null;
-		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if ( header != null ) {
-			for ( AuthenticationScheme aScheme : AuthenticationScheme.values() ) {
-				if ( header.startsWith(aScheme.getSchemeName()) ) {
-					scheme = aScheme;
-					break;
-				}
-			}
-		}
-		Matcher m = null;
-		if ( scheme != null ) {
-			m = switch (scheme) {
-				case V1 -> SNWS_V1_KEY_PATTERN.matcher(header);
-				case V2 -> SNWS_V2_KEY_PATTERN.matcher(header);
-			};
-		}
-		if ( m != null && m.find() ) {
-			digest.update(m.group(1).getBytes(UTF_8));
+	/**
+	 * Add the active actor identifier, if available.
+	 * 
+	 * @param digest
+	 *        the digest to add to
+	 */
+	private void addAuthorization(MessageDigest digest) {
+		final String actorTokenId = SecurityUtils.currentTokenId();
+		if ( actorTokenId != null ) {
+			digest.update(actorTokenId.getBytes(UTF_8));
 			digest.update((byte) '@');
 		}
 	}
@@ -325,7 +309,7 @@ public class JCacheContentCachingService
 	@Override
 	public @Nullable String keyForRequest(HttpServletRequest request) {
 		MessageDigest digest = org.apache.commons.codec.digest.DigestUtils.getMd5Digest();
-		addAuthorization(request, digest);
+		addAuthorization(digest);
 		digest.update(request.getMethod().getBytes(UTF_8));
 		digest.update(request.getRequestURI().getBytes(UTF_8));
 		addNormalizedQueryParameters(request, digest);

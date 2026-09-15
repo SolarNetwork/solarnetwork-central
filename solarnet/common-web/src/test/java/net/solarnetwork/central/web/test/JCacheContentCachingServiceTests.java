@@ -23,6 +23,8 @@
 package net.solarnetwork.central.web.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
@@ -51,6 +53,8 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.CachedContent;
 import net.solarnetwork.central.web.support.JCacheContentCachingService;
 import net.solarnetwork.central.web.support.SimpleCachedContent;
@@ -82,6 +86,7 @@ public class JCacheContentCachingServiceTests {
 	@AfterEach
 	public void teardown() {
 		EasyMock.verify(cache);
+		SecurityUtils.removeAuthentication();
 	}
 
 	@Test
@@ -155,10 +160,12 @@ public class JCacheContentCachingServiceTests {
 	}
 
 	@Test
-	public void keyWithAuthV1() {
+	public void keyWithAuth() {
 		// given
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION, "SolarNetworkWS foo:bar");
 
 		cache.registerCacheEntryListener(anyObject());
 
@@ -168,14 +175,16 @@ public class JCacheContentCachingServiceTests {
 		String key = service.keyForRequest(req);
 
 		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath")));
+		assertThat("Cache key", key, equalTo(md5Hex(tokenId + "@GET/somepath")));
 	}
 
 	@Test
-	public void keyWithAuthV1AndQueryParameters() {
+	public void keyWithAuthAndQueryParameters() {
 		// given
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION, "SolarNetworkWS foo:bar");
 		req.addParameter("bim", "bam");
 		req.addParameter("yin", "yang");
 
@@ -187,45 +196,7 @@ public class JCacheContentCachingServiceTests {
 		String key = service.keyForRequest(req);
 
 		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath?bim=bam&yin=yang")));
-	}
-
-	@Test
-	public void keyWithAuthV2() {
-		// given
-		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION,
-				"SNWS2 Credential=foo,SignedHeaders=Date,Signature=abc123");
-
-		cache.registerCacheEntryListener(anyObject());
-
-		// when
-		replayAll();
-		JCacheContentCachingService service = new JCacheContentCachingService(cache);
-		String key = service.keyForRequest(req);
-
-		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath")));
-	}
-
-	@Test
-	public void keyWithAuthV2AndQueryParameters() {
-		// given
-		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION,
-				"SNWS2 Credential=foo,SignedHeaders=Date,Signature=abc123");
-		req.addParameter("bim", "bam");
-		req.addParameter("yin", "yang");
-
-		cache.registerCacheEntryListener(anyObject());
-
-		// when
-		replayAll();
-		JCacheContentCachingService service = new JCacheContentCachingService(cache);
-		String key = service.keyForRequest(req);
-
-		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath?bim=bam&yin=yang")));
+		assertThat("Cache key", key, equalTo(md5Hex(tokenId + "@GET/somepath?bim=bam&yin=yang")));
 	}
 
 	@Test
