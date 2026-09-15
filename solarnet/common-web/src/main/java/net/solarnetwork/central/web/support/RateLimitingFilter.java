@@ -26,11 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.MurmurHash2;
 import org.jspecify.annotations.Nullable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -43,6 +40,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.RateLimitExceededException;
 
 /**
@@ -64,10 +62,6 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 
 	/** HTTP request header for a proxied client IP address. */
 	public static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
-
-	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern.compile("^SolarNetworkWS\\s+([^:]+):");
-	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern
-			.compile("^SNWS2\\s+.*?\\bCredential=([^,]+)(?:,|$)");
 
 	private static final Long GLOBAL_ANONYMOUS_KEY = -1L;
 
@@ -116,19 +110,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	}
 
 	private String requestKey(HttpServletRequest request) {
-		String key = null;
-		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if ( authHeader != null ) {
-			Matcher m = SNWS_V2_KEY_PATTERN.matcher(authHeader);
-			if ( m.find() ) {
-				key = m.group(1);
-			} else {
-				m = SNWS_V1_KEY_PATTERN.matcher(authHeader);
-				if ( m.find() ) {
-					key = m.group(1);
-				}
-			}
-		}
+		String key = SecurityUtils.currentTokenId();
 		if ( key == null ) {
 			key = request.getHeader(X_FORWARDED_FOR_HEADER);
 			if ( key == null ) {

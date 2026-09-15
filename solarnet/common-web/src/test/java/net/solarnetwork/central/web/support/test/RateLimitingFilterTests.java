@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.web.support.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.web.support.RateLimitingFilter.idForString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -30,7 +32,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.GET;
 import java.io.IOException;
 import java.time.Duration;
@@ -61,9 +62,10 @@ import io.github.bucket4j.postgresql.Bucket4jPostgreSQL;
 import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
-import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.central.web.RateLimitExceededException;
 import net.solarnetwork.central.web.support.RateLimitingFilter;
 
@@ -118,10 +120,7 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@AfterEach
 	public void teardown() {
 		jdbcTemplate.update("DELETE FROM solarcommon.bucket");
-	}
-
-	private static String snws2Cred(String tokenId) {
-		return "SNWS2 Credential=%s,SignedHeaders=date;host,Signature=abc123".formatted(tokenId);
+		SecurityUtils.removeAuthentication();
 	}
 
 	@Test
@@ -129,123 +128,13 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 		// GIVEN
 		final List<MockHttpServletResponse> responses = new ArrayList<>(TEST_CAPACITY);
 
-		final String tokenId = CommonTestUtils.randomString();
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 
 		// WHEN
 		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
 			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-			req.addHeader(AUTHORIZATION, snws2Cred(tokenId));
-
-			final MockHttpServletResponse res = new MockHttpServletResponse();
-			responses.add(res);
-
-			final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
-
-			filter.doFilter(req, res, chain);
-		}
-
-		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
-				"solarcommon.bucket", "id");
-
-		// THEN
-		// @formatter:off
-		then(nextFilter).should(times(TEST_CAPACITY)).doFilter(any(), any(), any());
-
-		and.then(responses)
-			.satisfies(list -> {
-				for (int i = 0; i < TEST_CAPACITY; i++ ) {
-					final int reqNum = i + 1;
-					and.then(list).element(i)
-						.satisfies(res -> {
-							and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_REMAINING_HEADER))
-								.as("Rate limit remaining header for resopnse %d deducted from capacity", reqNum)
-								.isEqualTo(String.valueOf(TEST_CAPACITY - reqNum))
-								;
-						})
-						;
-				}
-			})
-			;
-
-		and.then(rows)
-			.as("Bucket row created")
-			.hasSize(1)
-			.element(0, map(String.class, Object.class))
-			.as("ID for token ID")
-			.containsEntry("id", RateLimitingFilter.idForString(tokenId))
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void tokenAuth_firstCredUsed() throws ServletException, IOException {
-		// GIVEN
-		final List<MockHttpServletResponse> responses = new ArrayList<>(TEST_CAPACITY);
-
-		final String tokenId = CommonTestUtils.randomString();
-
-		final String extraAuth = ",Credential=IGNORED";
-
-		// WHEN
-		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
-			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-			req.addHeader(AUTHORIZATION, snws2Cred(tokenId) + extraAuth);
-
-			final MockHttpServletResponse res = new MockHttpServletResponse();
-			responses.add(res);
-
-			final MockFilterChain chain = new MockFilterChain(servlet, nextFilter);
-
-			filter.doFilter(req, res, chain);
-		}
-
-		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
-				"solarcommon.bucket", "id");
-
-		// THEN
-		// @formatter:off
-		then(nextFilter).should(times(TEST_CAPACITY)).doFilter(any(), any(), any());
-
-		and.then(responses)
-			.satisfies(list -> {
-				for (int i = 0; i < TEST_CAPACITY; i++ ) {
-					final int reqNum = i + 1;
-					and.then(list).element(i)
-						.satisfies(res -> {
-							and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_REMAINING_HEADER))
-								.as("Rate limit remaining header for resopnse %d deducted from capacity", reqNum)
-								.isEqualTo(String.valueOf(TEST_CAPACITY - reqNum))
-								;
-						})
-						;
-				}
-			})
-			;
-
-		and.then(rows)
-			.as("Bucket row created")
-			.hasSize(1)
-			.element(0, map(String.class, Object.class))
-			.as("ID for token ID")
-			.containsEntry("id", RateLimitingFilter.idForString(tokenId))
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void tokenAuth_ignoreFakeCred() throws ServletException, IOException {
-		// GIVEN
-		final List<MockHttpServletResponse> responses = new ArrayList<>(TEST_CAPACITY);
-
-		final String tokenId = CommonTestUtils.randomString();
-
-		final String extraAuth = "FakeCredential=IGNORED,";
-
-		// WHEN
-		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
-			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-			// insert FakeCred=X at start of auth components, to validate it is ignored
-			req.addHeader(AUTHORIZATION, snws2Cred(tokenId).replace("SNWS2 ", "SNWS2 " + extraAuth));
 
 			final MockHttpServletResponse res = new MockHttpServletResponse();
 			responses.add(res);
@@ -291,12 +180,13 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void tokenAuth_overLimit() throws ServletException, IOException {
 		// GIVEN
-		final String tokenId = CommonTestUtils.randomString();
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 
 		// WHEN
 		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
 			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-			req.addHeader(AUTHORIZATION, snws2Cred(tokenId));
 
 			final MockHttpServletResponse res = new MockHttpServletResponse();
 
@@ -306,7 +196,6 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 		}
 
 		final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-		req.addHeader(AUTHORIZATION, snws2Cred(tokenId));
 
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 
@@ -350,12 +239,13 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 		// GIVEN
 		filter.setExceptionResolver(null);
 
-		final String tokenId = CommonTestUtils.randomString();
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 
 		// WHEN
 		for ( int i = 0; i < TEST_CAPACITY; i++ ) {
 			final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-			req.addHeader(AUTHORIZATION, snws2Cred(tokenId));
 
 			final MockHttpServletResponse res = new MockHttpServletResponse();
 
@@ -365,7 +255,6 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 		}
 
 		final MockHttpServletRequest req = new MockHttpServletRequest(GET.toString(), "/foo");
-		req.addHeader(AUTHORIZATION, snws2Cred(tokenId));
 
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 
