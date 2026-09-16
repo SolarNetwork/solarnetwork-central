@@ -39,6 +39,7 @@ import org.apache.commons.io.input.BoundedInputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
@@ -472,8 +473,9 @@ public final class WebUtils {
 		if ( !response.isCommitted() ) {
 			throw e;
 		}
-		if ( GLOBAL_WEB_LOG.isDebugEnabled() ) {
-			GLOBAL_WEB_LOG.debug(
+		final var level = isClientAbortException(e) ? Level.DEBUG : Level.WARN;
+		if ( GLOBAL_WEB_LOG.isEnabledForLevel(level) ) {
+			GLOBAL_WEB_LOG.atLevel(level).log(
 					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
 					e.getClass().getSimpleName(), requestDescription(request),
 					userPrincipalName(request), e.toString());
