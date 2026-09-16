@@ -37,6 +37,7 @@ import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
+import net.solarnetwork.central.user.domain.GeneratedUserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
@@ -47,7 +48,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Web service API for {@link UserAuthToken} management.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @GlobalExceptionRestController
 @RestController("v1UserAuthTokenController")
@@ -108,14 +109,15 @@ public class UserAuthTokenController {
 	 *        The type of token to generate.
 	 * @param policy
 	 *        An optional policy to attach to the token.
-	 * @return The generated token.
+	 * @return The generated token, including the token secret.
 	 */
 	@RequestMapping(value = "/generate/{type}", method = RequestMethod.POST)
-	public Result<UserAuthToken> generateToken(Principal principal, @PathVariable SecurityTokenType type,
+	public Result<GeneratedUserAuthToken> generateToken(Principal principal,
+			@PathVariable SecurityTokenType type,
 			@RequestBody(required = false) SecurityPolicy policy) {
 		final Long actorUserId = getActorUserId(principal);
 		UserAuthToken token = userBiz.generateUserAuthToken(actorUserId, type, policy);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	/**

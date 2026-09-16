@@ -35,10 +35,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,7 +66,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -105,6 +105,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 						"expired":false
 					}}
 					""", JsonCompareMode.LENIENT))
+			.andExpect(jsonPath("$.data.authSecret").isNotEmpty())
 			;
 		// @formatter:on
 	}
@@ -144,9 +145,29 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 
 	@Test
 	@WithMockSecurityUser
+	public void listTokens_withoutSecret() throws Exception {
+		// GIVEN
+		final String testTokenId = randomString(20);
+		insertSecurityToken(jdbcTemplate, testTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(), null);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(get("/api/v1/sec/user/auth-tokens")
+				.accept(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data[0].id").exists())
+			.andExpect(jsonPath("$.data..authSecret").doesNotExist())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	@WithMockSecurityUser
 	public void mergePolicy() throws Exception {
 		// GIVEN
-		final String testTokenId = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 20);
+		final String testTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, testTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(), """
 						{
@@ -197,7 +218,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	@WithMockSecurityUser
 	public void replacePolicy() throws Exception {
 		// GIVEN
-		final String testTokenId = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 20);
+		final String testTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, testTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(), """
 						{

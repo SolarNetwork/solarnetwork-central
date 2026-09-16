@@ -45,7 +45,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
 
@@ -223,6 +223,18 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		return getToken();
 	}
 
+	/**
+	 * Get the token secret.
+	 *
+	 * <p>
+	 * This value is never serialized; {@link GeneratedUserAuthToken} returns it
+	 * to a client when a token is created.
+	 * </p>
+	 *
+	 * @return the secret, or {@code null}
+	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public final @Nullable String getAuthSecret() {
 		return authSecret;
 	}

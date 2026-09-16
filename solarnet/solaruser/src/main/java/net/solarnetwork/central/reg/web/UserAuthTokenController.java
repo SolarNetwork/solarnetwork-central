@@ -42,6 +42,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.GeneratedUserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.Result;
@@ -51,7 +52,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Controller for user authorization ticket management.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/auth-tokens")
@@ -143,7 +144,7 @@ public class UserAuthTokenController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAuthToken> generateUserToken(
+	public Result<GeneratedUserAuthToken> generateUserToken(
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description,
 			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
@@ -164,7 +165,7 @@ public class UserAuthTokenController extends ControllerSupport {
 						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
 						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	private UserAuthToken updateTokenInfo(final SecurityUser user, final UserAuthToken token,
@@ -237,7 +238,7 @@ public class UserAuthTokenController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAuthToken> generateDataToken(
+	public Result<GeneratedUserAuthToken> generateDataToken(
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description,
 			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
@@ -259,7 +260,7 @@ public class UserAuthTokenController extends ControllerSupport {
 						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
 						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	/**
