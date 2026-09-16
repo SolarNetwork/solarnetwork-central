@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -49,6 +50,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.DeferredResult;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -181,10 +183,15 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public void activeInstructions(@RequestParam("nodeId") Long nodeId,
+	public void activeInstructions(
+	// @formatter:off
+			@RequestParam("nodeId") Long nodeId,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
-		activeInstructions(Set.of(nodeId), accept, response);
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
+		activeInstructions(Set.of(nodeId), accept, request, response);
 	}
 
 	/**
@@ -194,15 +201,22 @@ public class NodeInstructionController {
 	 *        the IDs of the nodes to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public void activeInstructions(@RequestParam("nodeIds") Set<Long> nodeIds,
+	public void activeInstructions(
+	// @formatter:off
+			@RequestParam("nodeIds") Set<Long> nodeIds,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		final var filter = new SimpleInstructionFilter();
 		filter.setNodeIds(nodeIds.toArray(Long[]::new));
 		filter.setState(InstructionState.Queued);
@@ -212,6 +226,8 @@ public class NodeInstructionController {
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
 			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 

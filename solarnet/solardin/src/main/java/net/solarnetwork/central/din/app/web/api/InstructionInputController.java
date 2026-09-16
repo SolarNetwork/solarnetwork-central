@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.app.web.api;
 
 import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,7 +54,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Instruction input controller.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestController("v1InstructionInputController")
 @RequestMapping("/api/v1/instr/endpoint/{endpointId}")
@@ -102,13 +103,17 @@ public class InstructionInputController {
 	 *         if an IO error occurs
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public void postInstruction(@PathVariable UUID endpointId,
+	public void postInstruction(
+			// @formatter:on
+			@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
 			WebRequest req, InputStream in,
 			@RequestHeader(value = "Accept", required = true) String accept,
 			@RequestHeader(value = "Accept-Encoding", required = false) @Nullable String acceptEncoding,
-			HttpServletResponse response) throws IOException {
+			HttpServletResponse response
+	// @formatter:off
+			) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType inputType = MediaType.parseMediaType(contentType);
@@ -149,6 +154,8 @@ public class InstructionInputController {
 
 			inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out,
 					params);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, req, response);
 		}
 	}
 

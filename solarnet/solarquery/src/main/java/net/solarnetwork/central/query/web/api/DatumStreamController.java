@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.web.api;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.STREAM_DATUM_FILTER;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -74,7 +75,6 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.config.JsonConfig;
 import net.solarnetwork.central.query.domain.StreamDatumResult;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.io.ProvidedOutputStream;
 import net.solarnetwork.util.StringUtils;
 import tools.jackson.databind.ObjectMapper;
@@ -97,7 +97,6 @@ import tools.jackson.dataformat.cbor.CBORMapper;
 @GlobalExceptionRestController
 public class DatumStreamController {
 
-	private final WebServiceGlobalControllerSupport support;
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final QueryBiz queryBiz;
@@ -107,8 +106,6 @@ public class DatumStreamController {
 	/**
 	 * Constructor.
 	 *
-	 * @param support
-	 *        the support to use
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param objectMapper
@@ -117,11 +114,10 @@ public class DatumStreamController {
 	 *        the mapper to use for CBOR
 	 */
 	@Autowired
-	public DatumStreamController(WebServiceGlobalControllerSupport support, QueryBiz queryBiz,
+	public DatumStreamController(QueryBiz queryBiz,
 			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper objectMapper,
 			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) CBORMapper cborObjectMapper) {
 		super();
-		this.support = requireNonNullArgument(support, "support");
 		this.queryBiz = requireNonNullArgument(queryBiz, "queryBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
@@ -247,7 +243,7 @@ public class DatumStreamController {
 			queryBiz.findFilteredStreamDatum(criteria, processor, criteria.getSortDescriptors(),
 					criteria.getOffset(), criteria.getMax());
 		} catch ( RuntimeException e ) {
-			support.throwUnlessCommitted(e, request, response);
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -319,7 +315,7 @@ public class DatumStreamController {
 			queryBiz.findFilteredStreamReadings(criteria, readingType, tolerance, processor,
 					criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		} catch ( RuntimeException e ) {
-			support.throwUnlessCommitted(e, request, response);
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 

@@ -27,6 +27,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.security.CertificateUtils.X509_CERTIFICATE_FACTORY;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -60,6 +61,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -91,7 +93,7 @@ import net.solarnetwork.service.CertificateException;
  * Web service API for DNP3 management.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Profile(DNP3)
 @GlobalExceptionRestController
@@ -691,6 +693,8 @@ public class UserDnp3Controller {
 	 *
 	 * @param serverId
 	 *        the ID of the server configuration to import for
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @param locale
@@ -699,14 +703,25 @@ public class UserDnp3Controller {
 	 *         if an IO error occurs
 	 */
 	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.GET)
-	public void exportServerConfigurationCsv(@PathVariable Long serverId, HttpServletResponse response,
-			Locale locale) throws IOException {
+	public void exportServerConfigurationCsv(
+	// @formatter:off
+			@PathVariable Long serverId,
+			WebRequest request,
+			HttpServletResponse response,
+			Locale locale
+			// @formatter:on
+	) throws IOException {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
 				"attachment; filename=\"solarnet-dnp3-server-%d.csv\"".formatted(serverId));
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
-		userDnp3Biz().exportServerConfigurationsCsv(userId, filter, response.getOutputStream(), locale);
+		try {
+			userDnp3Biz().exportServerConfigurationsCsv(userId, filter, response.getOutputStream(),
+					locale);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
+		}
 	}
 
 }

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.oscp.fp.web;
 
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
+import static net.solarnetwork.central.web.WebUtils.requestDescription;
+import static net.solarnetwork.central.web.WebUtils.userPrincipalName;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
@@ -52,7 +52,7 @@ import tools.jackson.core.JacksonException;
  * Global controller exception handlers.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)

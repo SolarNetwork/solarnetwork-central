@@ -29,19 +29,24 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Supplier;
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.util.MimeType;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
@@ -52,6 +57,7 @@ import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
+import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -61,6 +67,14 @@ import net.solarnetwork.util.StringUtils;
  * @version 2.1
  */
 public final class WebUtils {
+
+	/**
+	 * A "global" web logger, for library-level logging.
+	 *
+	 * @since 2.1
+	 */
+	public static final Logger GLOBAL_WEB_LOG = LoggerFactory
+			.getLogger("net.solarnetwork.central.web.GLOBAL");
 
 	/**
 	 * The {@literal text/csv} media type value.
@@ -95,6 +109,13 @@ public final class WebUtils {
 	 * @since 1.2
 	 */
 	public static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(XLSX_MEDIA_TYPE_VALUE);
+
+	/**
+	 * A value to use for anonymous users in log messages.
+	 *
+	 * @since 2.1
+	 */
+	public static final String ANONYMOUS_USER_PRINCIPAL = "anonymous";
 
 	private WebUtils() {
 		// not allowed
@@ -363,6 +384,99 @@ public final class WebUtils {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get a standardized string description of a request.
+	 *
+	 * @param request
+	 *        the request
+	 * @return the description
+	 * @since 2.1
+	 */
+	@SuppressWarnings("RedundantControlFlow")
+	public static String requestDescription(WebRequest request) {
+		StringBuilder buf = new StringBuilder(request.getDescription(false));
+		Map<String, String[]> params = request.getParameterMap();
+		if ( !params.isEmpty() ) {
+			buf.append("?");
+			boolean next = false;
+			for ( Entry<String, String[]> e : params.entrySet() ) {
+				if ( next ) {
+					buf.append('&');
+				} else {
+					next = true;
+				}
+				buf.append(e.getKey()).append("=");
+				String[] vals = e.getValue();
+				if ( vals == null || vals.length < 1 ) {
+					continue;
+				} else if ( vals.length == 1 ) {
+					buf.append(vals[0]);
+				} else {
+					for ( int i = 0, len = vals.length; i < len; i++ ) {
+						if ( i > 0 ) {
+							buf.append(",");
+						}
+						buf.append(vals[i]);
+					}
+				}
+			}
+		}
+		return buf.toString();
+	}
+
+	/**
+	 * Get the user principal name of a given request.
+	 *
+	 * @param request
+	 *        the request
+	 * @return the name, or {@link #ANONYMOUS_USER_PRINCIPAL}
+	 * @since 2.1
+	 */
+	public static String userPrincipalName(WebRequest request) {
+		Principal userPrincipal = request.getUserPrincipal();
+		if ( userPrincipal != null ) {
+			return userPrincipal.getName();
+		}
+		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+		if ( authHeader != null ) {
+			int idx = authHeader.indexOf(' ');
+			if ( idx > 0 && idx + 1 < authHeader.length() ) {
+				String data = authHeader.substring(idx + 1);
+				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
+				String name = (dataMap != null
+						? dataMap.get(AbstractAuthorizationBuilder.AUTHORIZATION_COMPONENT_CREDENTIAL)
+						: null);
+				if ( name != null ) {
+					return name;
+				}
+			}
+		}
+		return ANONYMOUS_USER_PRINCIPAL;
+	}
+
+	/**
+	 * Throw an exception unless the HTTP response has already been committed.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param response
+	 *        the response
+	 * @since 2.1
+	 */
+	public static void throwUnlessCommitted(final RuntimeException e, WebRequest request,
+			final HttpServletResponse response) {
+		if ( !response.isCommitted() ) {
+			throw e;
+		}
+		if ( GLOBAL_WEB_LOG.isDebugEnabled() ) {
+			GLOBAL_WEB_LOG.debug(
+					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
+					requestDescription(request), userPrincipalName(request), e.toString());
+		}
 	}
 
 }

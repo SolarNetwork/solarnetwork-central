@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_ACTION_STATUS_FILTER;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -48,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
@@ -84,7 +86,7 @@ import tools.jackson.databind.ObjectMapper;
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -333,6 +335,8 @@ public class UserOcppController {
 	 *        the binding result
 	 * @param accept
 	 *        the desired content type
+	 * @param request
+	 *        the request
 	 * @param response
 	 *        the HTTP response
 	 * @throws IOException
@@ -341,9 +345,14 @@ public class UserOcppController {
 	 */
 	@ResponseBody
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/status")
-	public void listChargePointStatus(final BasicOcppCriteria filter,
+	public void listChargePointStatus(
+	// @formatter:off
+			final BasicOcppCriteria filter,
 			final BindingResult validationResult, @RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		if ( chargePointStatusFilterValidator != null ) {
 			chargePointStatusFilterValidator.validate(filter, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -358,6 +367,8 @@ public class UserOcppController {
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								ChargePointStatusSerializer.INSTANCE, propertySerializerRegistrar))) {
 			userOcppBiz().findFilteredChargePointStatus(filter, processor, null, null, null);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -370,6 +381,8 @@ public class UserOcppController {
 	 *        the binding result
 	 * @param accept
 	 *        the desired content type
+	 * @param request
+	 *        the request
 	 * @param response
 	 *        the HTTP response
 	 * @throws IOException
@@ -378,9 +391,14 @@ public class UserOcppController {
 	 */
 	@ResponseBody
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/action-status")
-	public void listChargePointActionStatus(final BasicOcppCriteria filter,
+	public void listChargePointActionStatus(
+	// @formatter:off
+			final BasicOcppCriteria filter,
 			final BindingResult validationResult, @RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		if ( chargePointActionStatusFilterValidator != null ) {
 			chargePointActionStatusFilterValidator.validate(filter, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -396,6 +414,8 @@ public class UserOcppController {
 								ChargePointActionStatusSerializer.INSTANCE,
 								propertySerializerRegistrar))) {
 			userOcppBiz().findFilteredChargePointActionStatus(filter, processor, null, null, null);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 

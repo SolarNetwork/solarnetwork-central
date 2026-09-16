@@ -22,17 +22,15 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.WebUtils.GLOBAL_WEB_LOG;
+import static net.solarnetwork.central.web.WebUtils.requestDescription;
+import static net.solarnetwork.central.web.WebUtils.userPrincipalName;
 import static net.solarnetwork.domain.Result.error;
-import java.security.Principal;
 import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.TypeMismatchException;
@@ -65,15 +63,13 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
-import net.solarnetwork.security.AbstractAuthorizationBuilder;
-import net.solarnetwork.util.StringUtils;
 import tools.jackson.core.JacksonException;
 
 /**
  * A base class to support web service style controllers.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 @Order(100)
@@ -142,89 +138,11 @@ public final class WebServiceControllerSupport {
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
-	/**
-	 * A value to use for anonymous users in log messages.
-	 *
-	 * @since 2.1
-	 */
-	public static final String ANONYMOUS_USER_PRINCIPAL = "anonymous";
-
-	/** A class-level logger. */
-	private static final Logger log = LoggerFactory.getLogger(WebServiceControllerSupport.class);
-
 	@Autowired
 	private @Nullable MessageSource messageSource;
 
 	@Autowired(required = false)
 	private @Nullable Validator validator;
-
-	/**
-	 * Get a standardized string description of a request.
-	 *
-	 * @param request
-	 *        the request
-	 * @return the description
-	 */
-	@SuppressWarnings("RedundantControlFlow")
-	public static String requestDescription(WebRequest request) {
-		StringBuilder buf = new StringBuilder(request.getDescription(false));
-		Map<String, String[]> params = request.getParameterMap();
-		if ( !params.isEmpty() ) {
-			buf.append("?");
-			boolean next = false;
-			for ( Entry<String, String[]> e : params.entrySet() ) {
-				if ( next ) {
-					buf.append('&');
-				} else {
-					next = true;
-				}
-				buf.append(e.getKey()).append("=");
-				String[] vals = e.getValue();
-				if ( vals == null || vals.length < 1 ) {
-					continue;
-				} else if ( vals.length == 1 ) {
-					buf.append(vals[0]);
-				} else {
-					for ( int i = 0, len = vals.length; i < len; i++ ) {
-						if ( i > 0 ) {
-							buf.append(",");
-						}
-						buf.append(vals[i]);
-					}
-				}
-			}
-		}
-		return buf.toString();
-	}
-
-	/**
-	 * Get the user principal name of a given request.
-	 *
-	 * @param request
-	 *        the request
-	 * @return the name, or {@link #ANONYMOUS_USER_PRINCIPAL}
-	 */
-	public static String userPrincipalName(WebRequest request) {
-		Principal userPrincipal = request.getUserPrincipal();
-		if ( userPrincipal != null ) {
-			return userPrincipal.getName();
-		}
-		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if ( authHeader != null ) {
-			int idx = authHeader.indexOf(' ');
-			if ( idx > 0 && idx + 1 < authHeader.length() ) {
-				String data = authHeader.substring(idx + 1);
-				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
-				String name = (dataMap != null
-						? dataMap.get(AbstractAuthorizationBuilder.AUTHORIZATION_COMPONENT_CREDENTIAL)
-						: null);
-				if ( name != null ) {
-					return name;
-				}
-			}
-		}
-		return ANONYMOUS_USER_PRINCIPAL;
-	}
 
 	/**
 	 * Handle an {@link BeanInstantiationException}.
@@ -241,7 +159,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBeanInstantiationException(BeanInstantiationException e,
 			WebRequest request) {
-		log.debug("BeanInstantiationException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.debug("BeanInstantiationException in request {}: {}", requestDescription(request),
 				e.getMessage(), e);
 		return error("422", "Malformed request data.");
 	}
@@ -263,7 +181,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
 			HttpServletResponse response) {
-		log.debug("TypeMismatchException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("TypeMismatchException in request {}", requestDescription(request), e);
 		return error(null, "Illegal argument: " + e.getMessage());
 	}
 
@@ -283,7 +201,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
 	public Result<Void> handleUnsupportedOperationException(UnsupportedOperationException e,
 			WebRequest request) {
-		log.debug("UnsupportedOperationException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("UnsupportedOperationException in request {}", requestDescription(request),
+				e);
 		return error("404", e.getMessage());
 	}
 
@@ -301,7 +220,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleJsonParseException(JacksonException e, WebRequest request) {
-		log.debug("JacksonException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("JacksonException in request {}", requestDescription(request), e);
 		return error(null, "Malformed JSON: " + e.getOriginalMessage());
 	}
 
@@ -319,7 +238,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
-		log.debug("DateTimeParseException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("DateTimeParseException in request {}", requestDescription(request), e);
 		return error(null, "Malformed date string: " + e.getMessage());
 	}
 
@@ -337,7 +256,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDateTimeException(DateTimeException e, WebRequest request) {
-		log.debug("DateTimeException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("DateTimeException in request {}", requestDescription(request), e);
 		return error(null, "Date exception: " + e.getMessage());
 	}
 
@@ -363,8 +282,8 @@ public final class WebServiceControllerSupport {
 		} else if ( t instanceof DateTimeParseException ex ) {
 			return handleDateTimeParseException(ex, request);
 		}
-		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
-				e.toString());
+		GLOBAL_WEB_LOG.warn("HttpMessageNotReadableException in request {}: {}",
+				requestDescription(request), e.toString());
 		return error(null, "Malformed request: " + e.getMessage());
 	}
 
@@ -385,8 +304,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
-		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
-				e.toString());
+		GLOBAL_WEB_LOG.warn("DataIntegrityViolationException in request {}: {}",
+				requestDescription(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -407,7 +326,8 @@ public final class WebServiceControllerSupport {
 				}
 			}
 			if ( sqlEx != null ) {
-				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
+				GLOBAL_WEB_LOG.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(),
+						sqlEx);
 				sqlState = sqlEx.getSQLState();
 				if ( sqlEx.getMessage() != null ) {
 					params[0] = sqlEx.getMessage();
@@ -459,8 +379,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
 	public Result<Void> handleDataRetrievalFailureException(DataRetrievalFailureException e,
 			WebRequest request, Locale locale) {
-		log.debug("DataRetrievalFailureException in request {}, user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.debug("DataRetrievalFailureException in request {}, user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 		String msg;
 		String msgKey;
 		String code;
@@ -491,8 +411,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus
 	public Result<Void> handleInvalidDataAccessResourceUsageException(
 			InvalidDataAccessResourceUsageException e, WebRequest request, Locale locale) {
-		log.error("InvalidDataAccessResourceUsageException in request {}", requestDescription(request),
-				e.getMostSpecificCause());
+		GLOBAL_WEB_LOG.error("InvalidDataAccessResourceUsageException in request {}",
+				requestDescription(request), e.getMostSpecificCause());
 		String msg = "Internal error";
 		String msgKey = "error.dao.invalidResourceUsage";
 		String code = "DAO.00500";
@@ -517,8 +437,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
-		log.debug("ConstraintViolationException in request {}: {}", requestDescription(request),
-				e.toString());
+		GLOBAL_WEB_LOG.debug("ConstraintViolationException in request {}: {}",
+				requestDescription(request), e.toString());
 		BindingResult errors = ExceptionUtils.toBindingResult(e, validator);
 		return ExceptionUtils.generateErrorsResult(errors, "VAL.00003", locale, messageSource);
 	}
@@ -538,7 +458,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
-		log.debug("BindException in request {}: {}", requestDescription(request), e.toString());
+		GLOBAL_WEB_LOG.debug("BindException in request {}: {}", requestDescription(request),
+				e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
 
@@ -558,7 +479,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
 			Locale locale) {
-		log.info("InvalidPropertyException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.info("InvalidPropertyException in request {}: {}", requestDescription(request),
 				e.toString());
 		return error("VAL.00005",
 				messageSource != null
@@ -583,7 +504,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleValidationException(ValidationException e, WebRequest request,
 			Locale locale) {
-		log.debug("ValidationException in request {}: {}", requestDescription(request), e.toString());
+		GLOBAL_WEB_LOG.debug("ValidationException in request {}: {}", requestDescription(request),
+				e.toString());
 		String msg = ExceptionUtils.generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return error(null, msg);
@@ -603,8 +525,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleMultipartException(MultipartException e, WebRequest request) {
-		log.info("MultipartException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.toString());
+		GLOBAL_WEB_LOG.info("MultipartException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		StringBuilder buf = new StringBuilder();
 		buf.append("Error parsing multipart HTTP request");
 		String msg = e.getMostSpecificCause().getMessage();

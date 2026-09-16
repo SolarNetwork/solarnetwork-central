@@ -26,6 +26,7 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.QUERY_CACHE;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.domain.Result.success;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
@@ -452,14 +453,11 @@ public class ClientAbortWebTests {
 
 		private final RequestTracker tracker;
 		private final JsonMapper jsonMapper;
-		private final WebServiceGlobalControllerSupport support;
 
-		private ClientAbortTestController(RequestTracker tracker, JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
+		private ClientAbortTestController(RequestTracker tracker, JsonMapper jsonMapper) {
 			super();
 			this.tracker = tracker;
 			this.jsonMapper = jsonMapper;
-			this.support = support;
 		}
 
 		/**
@@ -512,7 +510,7 @@ public class ClientAbortWebTests {
 			try {
 				writeJsonItems(response, -1);
 			} catch ( RuntimeException e ) {
-				support.throwUnlessCommitted(e, request, response);
+				throwUnlessCommitted(e, request, response);
 			}
 		}
 
@@ -542,7 +540,7 @@ public class ClientAbortWebTests {
 			try {
 				writeJsonItems(response, QUERY_TIMEOUT_ITEM_COUNT);
 			} catch ( RuntimeException e ) {
-				support.throwUnlessCommitted(e, request, response);
+				throwUnlessCommitted(e, request, response);
 			}
 		}
 
@@ -594,9 +592,8 @@ public class ClientAbortWebTests {
 	@RequestMapping(TEST_PATH + "/app")
 	static class AppTestController extends ClientAbortTestController {
 
-		private AppTestController(RequestTracker tracker, JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			super(tracker, jsonMapper, support);
+		private AppTestController(RequestTracker tracker, JsonMapper jsonMapper) {
+			super(tracker, jsonMapper);
 		}
 
 	}
@@ -605,9 +602,8 @@ public class ClientAbortWebTests {
 	@RequestMapping(TEST_PATH + "/app-cache")
 	static class AppQueryCacheTestController extends ClientAbortTestController {
 
-		private AppQueryCacheTestController(RequestTracker tracker, JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			super(tracker, jsonMapper, support);
+		private AppQueryCacheTestController(RequestTracker tracker, JsonMapper jsonMapper) {
+			super(tracker, jsonMapper);
 		}
 
 	}
@@ -616,9 +612,8 @@ public class ClientAbortWebTests {
 	@RequestMapping(TEST_PATH + "/rest")
 	static class RestTestController extends ClientAbortTestController {
 
-		private RestTestController(RequestTracker tracker, JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			super(tracker, jsonMapper, support);
+		private RestTestController(RequestTracker tracker, JsonMapper jsonMapper) {
+			super(tracker, jsonMapper);
 		}
 
 	}
@@ -639,23 +634,20 @@ public class ClientAbortWebTests {
 
 		@Bean
 		AppTestController clientAbortAppTestController(RequestTracker tracker,
-				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			return new AppTestController(tracker, jsonMapper, support);
+				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper) {
+			return new AppTestController(tracker, jsonMapper);
 		}
 
 		@Bean
 		AppQueryCacheTestController clientAbortAppQueryCacheTestController(RequestTracker tracker,
-				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			return new AppQueryCacheTestController(tracker, jsonMapper, support);
+				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper) {
+			return new AppQueryCacheTestController(tracker, jsonMapper);
 		}
 
 		@Bean
 		RestTestController clientAbortRestTestController(RequestTracker tracker,
-				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper,
-				WebServiceGlobalControllerSupport support) {
-			return new RestTestController(tracker, jsonMapper, support);
+				@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper jsonMapper) {
+			return new RestTestController(tracker, jsonMapper);
 		}
 
 		@Bean

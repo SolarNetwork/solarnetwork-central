@@ -22,16 +22,15 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.WebUtils.GLOBAL_WEB_LOG;
 import static net.solarnetwork.central.web.WebUtils.isClientAbortException;
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
+import static net.solarnetwork.central.web.WebUtils.requestDescription;
+import static net.solarnetwork.central.web.WebUtils.userPrincipalName;
 import static net.solarnetwork.domain.Result.error;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.apache.catalina.connector.ClientAbortException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -94,9 +93,6 @@ import net.solarnetwork.util.NumberUtils;
 @Order(1000)
 public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Object> {
 
-	/** A class-level logger. */
-	private static final Logger log = LoggerFactory.getLogger(WebServiceGlobalControllerSupport.class);
-
 	@Autowired
 	private @Nullable MessageSource messageSource;
 
@@ -120,8 +116,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
 			WebRequest request, Locale locale) {
-		log.warn("MaxUploadSizeExceededException for {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		GLOBAL_WEB_LOG.warn("MaxUploadSizeExceededException for {}; user [{}]",
+				requestDescription(request), userPrincipalName(request));
 		String msg = "Upload size exceeded";
 		String maxSize = NumberUtils.humanReadableCount(
 				e.getMaxUploadSize() > -1 ? e.getMaxUploadSize() : maxUploadSize.toBytes());
@@ -149,7 +145,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
 			WebRequest request, Locale locale) {
-		log.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
+		GLOBAL_WEB_LOG.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
@@ -181,7 +177,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleTransientDataAccessException(TransientDataAccessException e,
 			WebRequest request, Locale locale) {
-		log.warn("TransientDataAccessException in request {}; user [{}]: {}",
+		GLOBAL_WEB_LOG.warn("TransientDataAccessException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
@@ -235,8 +231,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleUncategorizedSQLException(UncategorizedSQLException e, WebRequest request,
 			Locale locale) {
-		log.warn("UncategorizedSQLException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.toString());
+		GLOBAL_WEB_LOG.warn("UncategorizedSQLException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		final Throwable cause = e.getMostSpecificCause();
 		final String causeMessageLc = (cause.getMessage() != null
 				? cause.getMessage().toLowerCase(Locale.ROOT)
@@ -276,8 +272,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleTransactionException(TransactionException e, WebRequest request,
 			Locale locale) {
-		log.warn("TransactionException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.toString());
+		GLOBAL_WEB_LOG.warn("TransactionException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -320,7 +316,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
-		log.debug("AuthorizationException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.debug("AuthorizationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getReason().toString());
 	}
@@ -340,8 +336,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleSecurityException(BasicSecurityException e, WebRequest request) {
-		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.getMessage());
+		GLOBAL_WEB_LOG.info("SecurityException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -359,7 +355,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
-		log.info("BadCredentialsException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.info("BadCredentialsException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getMessage());
 	}
@@ -378,7 +374,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
 	public Result<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
-		log.info("AuthenticationException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.info("AuthenticationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getMessage());
 	}
@@ -397,7 +393,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
-		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
+		GLOBAL_WEB_LOG.info("AccessDeniedException in request {}: {}", requestDescription(request),
+				e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -416,8 +413,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
 	public Result<?> handleRequestRejectedException(RequestRejectedException e, WebRequest request) {
-		log.warn("RequestRejectedException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.getMessage());
+		GLOBAL_WEB_LOG.warn("RequestRejectedException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -435,7 +432,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus
 	public Result<?> handleExecutionException(ExecutionException e, WebRequest request) {
-		log.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
+		GLOBAL_WEB_LOG.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
@@ -461,7 +458,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
-		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("IllegalArgumentException in request {}", requestDescription(request), e);
 		return error(null, "Illegal argument: " + e.getMessage());
 	}
 
@@ -490,7 +487,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 		if ( result != null ) {
 			return result;
 		}
-		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
+		GLOBAL_WEB_LOG.error("RuntimeException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error(null, "Internal error");
 	}
@@ -523,7 +520,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus
 	public Result<?> handleError(Error e, WebRequest request) {
-		log.warn("Error in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.warn("Error in request {}", requestDescription(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
@@ -556,8 +553,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 			return null;
 		}
 
-		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.error("HttpMessageConversionException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 		return error("WEB.00200", e.getMessage());
 	}
 
@@ -590,13 +587,13 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 				handleClientAbortException(cae, request, servletRequest);
 				return;
 			} else if ( cause instanceof IOException ) {
-				log.debug("IOException in request {}", requestDescription(request), e);
+				GLOBAL_WEB_LOG.debug("IOException in request {}", requestDescription(request), e);
 				return;
 			}
 		}
 
-		log.warn("HttpMessageNotWritableException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.warn("HttpMessageNotWritableException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 	}
 
 	/**
@@ -655,8 +652,9 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	 *        the request
 	 */
 	private static void logClientAbort(Throwable e, WebRequest request) {
-		if ( log.isDebugEnabled() ) {
-			log.debug("{} in request {}; user [{}]; response can not be written to client: {}",
+		if ( GLOBAL_WEB_LOG.isDebugEnabled() ) {
+			GLOBAL_WEB_LOG.debug(
+					"{} in request {}; user [{}]; response can not be written to client: {}",
 					e.getClass().getSimpleName(), requestDescription(request),
 					userPrincipalName(request), e.getMessage());
 		}
@@ -681,7 +679,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 			logClientAbort(e, request);
 			return null;
 		}
-		log.warn("IOException in request {}; user [{}]", requestDescription(request),
+		GLOBAL_WEB_LOG.warn("IOException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.09000", e.getMessage());
 	}
@@ -700,8 +698,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleRemoteServiceException(RemoteServiceException e, WebRequest request) {
-		log.warn("RemoteServiceException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.warn("RemoteServiceException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 		return error("RS.00001", e.getMessage());
 	}
 
@@ -718,32 +716,9 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleRateLimitExceededException(RateLimitExceededException e, WebRequest request) {
-		log.warn("RateLimitExceededException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		GLOBAL_WEB_LOG.warn("RateLimitExceededException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request));
 		return error("WEB.10000", e.getMessage());
-	}
-
-	/**
-	 * Throw an exception unless the HTTP response has already been committed.
-	 *
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @param response
-	 *        the response
-	 * @since 1.14
-	 */
-	public void throwUnlessCommitted(final RuntimeException e, WebRequest request,
-			final HttpServletResponse response) {
-		if ( !response.isCommitted() ) {
-			throw e;
-		}
-		if ( log.isDebugEnabled() ) {
-			log.debug(
-					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
-					requestDescription(request), userPrincipalName(request), e.toString());
-		}
 	}
 
 	/**
@@ -778,7 +753,8 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 			ServerHttpResponse response) {
 		if ( response instanceof ServletServerHttpResponse servletResponse
 				&& servletResponse.getServletResponse().isCommitted() ) {
-			log.debug("Response committed so error can not be passed to client in request {}: {}",
+			GLOBAL_WEB_LOG.debug(
+					"Response committed so error can not be passed to client in request {}: {}",
 					request.getURI(), body);
 			return null;
 		}

@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -52,7 +52,6 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
-import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import tools.jackson.databind.ObjectMapper;
 
@@ -67,7 +66,6 @@ import tools.jackson.databind.ObjectMapper;
 @RequestMapping(value = { "/api/v1/sec/user/events" })
 public class UserEventController {
 
-	private final WebServiceGlobalControllerSupport support;
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final PropertySerializerRegistrar propertySerializerRegistrar;
@@ -89,12 +87,11 @@ public class UserEventController {
 	 *        the registrar to use (may be {@code null}
 	 */
 	@Autowired
-	public UserEventController(WebServiceGlobalControllerSupport support, UserEventBiz userEventBiz,
+	public UserEventController(UserEventBiz userEventBiz,
 			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
 			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
-		this.support = requireNonNullArgument(support, "support");
 		this.userEventBiz = requireNonNullArgument(userEventBiz, "userEventBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
@@ -122,7 +119,6 @@ public class UserEventController {
 			final BasicUserEventFilter cmd,
 			final @RequestHeader(HttpHeaders.ACCEPT) String accept,
 			final WebRequest request,
-			final Locale locale,
 			final HttpServletResponse response,
 			final BindingResult validationResult
 			// @formatter:on
@@ -140,7 +136,7 @@ public class UserEventController {
 						cborObjectMapper, UserEventSerializer.INSTANCE, propertySerializerRegistrar))) {
 			userEventBiz.findFilteredUserEvents(cmd, processor);
 		} catch ( RuntimeException e ) {
-			support.throwUnlessCommitted(e, request, response);
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
