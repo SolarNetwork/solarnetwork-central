@@ -34,6 +34,7 @@ import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.captureDouble;
 import static org.easymock.EasyMock.captureLong;
@@ -42,7 +43,6 @@ import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -58,6 +58,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.BDDAssertions;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -93,7 +96,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoUserDatumDeleteBiz} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @SuppressWarnings("static-access")
 public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
@@ -368,11 +371,17 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 
 		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();
 
-		// update progress for each batch segment
+		// update progress for each batch segment; these are applied on a separate executor, so
+		// that progress commits outside the delete transaction, so count them down to know when
+		// they have all been applied
+		final CountDownLatch progressLatch = new CountDownLatch(5);
 		Capture<Double> progressCapture = new Capture<>(CaptureType.ALL);
 		Capture<Long> resultCountsCapture = new Capture<>(CaptureType.ALL);
 		expect(jobInfoDao.updateJobProgress(eq(id), captureDouble(progressCapture),
-				captureLong(resultCountsCapture))).andReturn(true).times(5);
+				captureLong(resultCountsCapture))).andAnswer(() -> {
+					progressLatch.countDown();
+					return true;
+				}).times(5);
 
 		// allow updating the status as job progresses
 		expect(jobInfoDao.save(jobInfo)).andReturn(id).anyTimes();
@@ -390,9 +399,20 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 		DatumDeleteJobStatus result = biz.performDatumDelete(id);
 
 		// then
-		assertThat("Result", result, notNullValue());
-		assertThat("Result delete count is sum of batch results", result.get().getResultCount(),
-				equalTo(count));
+		// @formatter:off
+		then(progressLatch.await(5, TimeUnit.SECONDS))
+			.as("All progress updates applied")
+			.isTrue()
+			;
+		then(result)
+			.as("Result")
+			.isNotNull()
+			.as("Delete complete")
+			.succeedsWithin(1L, TimeUnit.SECONDS, type(DatumDeleteJobInfo.class))
+			.as("Result delete count is sum of batch results")
+			.returns(count, BDDAssertions.from(DatumDeleteJobInfo::getResultCount))
+			;
+		// @formatter:on
 
 		List<ObjectStreamCriteria> batchFilters = filterCaptor.getValues();
 
@@ -402,20 +422,34 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 		long accumulatedResultCount = 0L;
 		for ( int i = 0; i < 5; i++ ) {
 			ObjectStreamCriteria batchFilter = batchFilters.get(i);
-			assertThat("User ID preserved " + i, batchFilter.getUserId(), equalTo(filter.getUserId()));
-			assertThat("Node ID preserved " + i, batchFilter.getNodeId(), equalTo(filter.getNodeId()));
-			assertThat("Batch start date " + i, batchFilter.getLocalStartDate(), equalTo(currStartDate));
-			assertThat("Progress incremented " + i, progressCapture.getValues().get(i),
-					greaterThan(lastProgressValue));
 			accumulatedResultCount += (i + 1);
-			assertThat("Result count " + i, resultCountsCapture.getValues().get(i),
-					equalTo(accumulatedResultCount));
 
 			LocalDateTime currEndDate = currStartDate.plusDays(7);
 			if ( currEndDate.isAfter(filter.getLocalEndDate()) ) {
 				currEndDate = filter.getLocalEndDate();
 			}
-			assertThat("Batch end date " + i, batchFilter.getLocalEndDate(), equalTo(currEndDate));
+
+			// @formatter:off
+			then(batchFilter)
+				.as("User ID preserved %d", i)
+				.returns(filter.getUserId(), from(ObjectStreamCriteria::getUserId))
+				.as("Node ID preserved %d", i)
+				.returns(filter.getNodeId(), from(ObjectStreamCriteria::getNodeId))
+				.as("Batch start date %d", i)
+				.returns(currStartDate, from(ObjectStreamCriteria::getLocalStartDate))
+				.as("Batch end date %d", i)
+				.returns(currEndDate, from(ObjectStreamCriteria::getLocalEndDate))
+				;
+			then(progressCapture.getValues().get(i))
+				.as("Progress incremented %d", i)
+				.isGreaterThan(lastProgressValue)
+				;
+			then(resultCountsCapture.getValues().get(i))
+				.as("Result count %d", i)
+				.isEqualTo(accumulatedResultCount)
+				;
+			// @formatter:on
+
 			currStartDate = currEndDate;
 		}
 	}
