@@ -60,7 +60,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.assertj.core.api.BDDAssertions;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -410,7 +409,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 			.as("Delete complete")
 			.succeedsWithin(1L, TimeUnit.SECONDS, type(DatumDeleteJobInfo.class))
 			.as("Result delete count is sum of batch results")
-			.returns(count, BDDAssertions.from(DatumDeleteJobInfo::getResultCount))
+			.returns(count, from(DatumDeleteJobInfo::getResultCount))
 			;
 		// @formatter:on
 
@@ -422,6 +421,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 		long accumulatedResultCount = 0L;
 		for ( int i = 0; i < 5; i++ ) {
 			ObjectStreamCriteria batchFilter = batchFilters.get(i);
+			final Double progressValue = progressCapture.getValues().get(i);
 			accumulatedResultCount += (i + 1);
 
 			LocalDateTime currEndDate = currStartDate.plusDays(7);
@@ -440,7 +440,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 				.as("Batch end date %d", i)
 				.returns(currEndDate, from(ObjectStreamCriteria::getLocalEndDate))
 				;
-			then(progressCapture.getValues().get(i))
+			then(progressValue)
 				.as("Progress incremented %d", i)
 				.isGreaterThan(lastProgressValue)
 				;
@@ -451,6 +451,7 @@ public class DaoUserDatumDeleteBizTests implements DatumExpireUserEvents {
 			// @formatter:on
 
 			currStartDate = currEndDate;
+			lastProgressValue = progressValue;
 		}
 	}
 
