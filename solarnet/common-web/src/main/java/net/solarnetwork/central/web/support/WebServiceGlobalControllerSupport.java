@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.WebUtils.isClientAbortException;
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
 import static net.solarnetwork.domain.Result.error;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -43,8 +45,13 @@ import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -60,6 +67,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -73,12 +81,18 @@ import net.solarnetwork.util.NumberUtils;
 /**
  * Global REST controller support.
  *
+ * <p>
+ * Exceptions caused by the client disconnecting are logged at {@code DEBUG}
+ * level only, without a response body. Exception handler response bodies are
+ * not written once the response has been committed.
+ * </p>
+ *
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 @RestControllerAdvice
 @Order(1000)
-public class WebServiceGlobalControllerSupport {
+public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Object> {
 
 	/** A class-level logger. */
 	private static final Logger log = LoggerFactory.getLogger(WebServiceGlobalControllerSupport.class);
@@ -459,13 +473,18 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @return an error response object
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.1
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
+	public @Nullable Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
+		}
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
 		Result<?> result = handleCause(e, request);
 		if ( result != null ) {
@@ -523,7 +542,8 @@ public class WebServiceGlobalControllerSupport {
 	 *        the request locale
 	 * @param response
 	 *        the response
-	 * @return an error response object
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.5
 	 */
 	@ExceptionHandler(HttpMessageConversionException.class)
@@ -531,13 +551,9 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus
 	public @Nullable Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
 			WebRequest request, Locale locale, HttpServletResponse response) {
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-			if ( cause instanceof ClientAbortException cae ) {
-				handleClientAbortException(cae, request, null);
-				return null;
-			}
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
 		}
 
 		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
@@ -586,6 +602,11 @@ public class WebServiceGlobalControllerSupport {
 	/**
 	 * Handle a {@link ClientAbortException}.
 	 *
+	 * <p>
+	 * The client has disconnected, so this is only logged at {@code DEBUG}
+	 * level.
+	 * </p>
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -598,12 +619,16 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(ClientAbortException.class)
 	public void handleClientAbortException(ClientAbortException e, WebRequest request,
 			@Nullable ServletRequest servletRequest) {
-		log.info("ClientAbortException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		logClientAbort(e, request);
 	}
 
 	/**
 	 * Handle a {@link AsyncRequestNotUsableException}.
+	 *
+	 * <p>
+	 * The response can no longer be written to, typically because the client
+	 * has disconnected, so this is only logged at {@code DEBUG} level.
+	 * </p>
 	 *
 	 * @param e
 	 *        the exception
@@ -617,8 +642,24 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(AsyncRequestNotUsableException.class)
 	public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e,
 			WebRequest request, @Nullable ServletRequest servletRequest) {
-		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		logClientAbort(e, request);
+	}
+
+	/**
+	 * Log an exception caused by the client disconnecting, at {@code DEBUG}
+	 * level.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 */
+	private static void logClientAbort(Throwable e, WebRequest request) {
+		if ( log.isDebugEnabled() ) {
+			log.debug("{} in request {}; user [{}]; response can not be written to client: {}",
+					e.getClass().getSimpleName(), requestDescription(request),
+					userPrincipalName(request), e.getMessage());
+		}
 	}
 
 	/**
@@ -628,21 +669,18 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @return an error response object
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.6
 	 */
 	@ExceptionHandler(IOException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public @Nullable Result<?> handleIOException(IOException e, WebRequest request) {
-		Throwable cause = e;
-		do {
-			if ( cause instanceof AsyncRequestNotUsableException ex ) {
-				handleAsyncRequestNotUsableException(ex, request, null);
-				return null;
-			}
-			cause = cause.getCause();
-		} while ( cause != null );
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
+		}
 		log.warn("IOException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.09000", e.getMessage());
@@ -706,6 +744,45 @@ public class WebServiceGlobalControllerSupport {
 					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
 					requestDescription(request), userPrincipalName(request), e.toString());
 		}
+	}
+
+	/**
+	 * Apply to {@link ExceptionHandler} methods only.
+	 *
+	 * @since 1.15
+	 */
+	@Override
+	public boolean supports(MethodParameter returnType,
+			Class<? extends HttpMessageConverter<?>> converterType) {
+		return returnType.hasMethodAnnotation(ExceptionHandler.class);
+	}
+
+	/**
+	 * Skip writing an {@link ExceptionHandler} response body if the response
+	 * has already been committed.
+	 *
+	 * <p>
+	 * The response is committed when an exception is thrown after a handler has
+	 * started writing its response, for example when a query fails while
+	 * streaming results. The error can not be passed to the client by then, and
+	 * writing the body fails if the handler closed the response, which passes
+	 * the original exception on to the servlet container.
+	 * </p>
+	 *
+	 * @since 1.15
+	 */
+	@Override
+	public @Nullable Object beforeBodyWrite(@Nullable Object body, MethodParameter returnType,
+			MediaType selectedContentType,
+			Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request,
+			ServerHttpResponse response) {
+		if ( response instanceof ServletServerHttpResponse servletResponse
+				&& servletResponse.getServletResponse().isCommitted() ) {
+			log.debug("Response committed so error can not be passed to client in request {}: {}",
+					request.getURI(), body);
+			return null;
+		}
+		return body;
 	}
 
 }

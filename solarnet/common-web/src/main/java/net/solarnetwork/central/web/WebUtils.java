@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.util.MimeType;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -56,7 +58,7 @@ import net.solarnetwork.util.StringUtils;
  * Helper utilities for web APIs.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class WebUtils {
 
@@ -334,6 +336,33 @@ public final class WebUtils {
 				.setOnMaxCount((_, _) -> {
 					throw new MaxUploadSizeExceededException(maxLength);
 				}).get();
+	}
+
+	/**
+	 * Test if an exception was caused by an HTTP response that can no longer be
+	 * written to, typically because the client disconnected.
+	 *
+	 * <p>
+	 * The servlet container throws a {@link ClientAbortException} when writing
+	 * to a client that has disconnected. Spring wraps the response passed to
+	 * handler methods, which throws an {@link AsyncRequestNotUsableException}
+	 * when writing fails, or when writing after a previous failure.
+	 * </p>
+	 *
+	 * @param e
+	 *        the exception to test
+	 * @return {@code true} if {@code e} or any of its causes is a
+	 *         {@link ClientAbortException} or
+	 *         {@link AsyncRequestNotUsableException}
+	 * @since 2.1
+	 */
+	public static boolean isClientAbortException(@Nullable Throwable e) {
+		for ( Throwable t = e; t != null; t = t.getCause() ) {
+			if ( t instanceof ClientAbortException || t instanceof AsyncRequestNotUsableException ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

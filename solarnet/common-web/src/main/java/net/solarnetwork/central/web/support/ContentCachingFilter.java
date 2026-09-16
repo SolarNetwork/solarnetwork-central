@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.WebUtils.isClientAbortException;
 import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER;
 import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER_MISS;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -45,6 +46,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -68,7 +70,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 3.4
+ * @version 3.5
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -373,7 +375,8 @@ public class ContentCachingFilter implements Filter, PingTest {
 					contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
 							headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
 				} catch ( IOException e ) {
-					log.warn("{} {} [{}] {} during response processing, not caching: {}", requestId, key,
+					log.atLevel(isClientAbortException(e) ? Level.DEBUG : Level.WARN).log(
+							"{} {} [{}] {} during response processing, not caching: {}", requestId, key,
 							requestUri, e.getClass().getName(), e.getMessage());
 					return;
 				}
