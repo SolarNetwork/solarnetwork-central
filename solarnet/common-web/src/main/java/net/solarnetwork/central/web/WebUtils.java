@@ -475,7 +475,8 @@ public final class WebUtils {
 		if ( GLOBAL_WEB_LOG.isDebugEnabled() ) {
 			GLOBAL_WEB_LOG.debug(
 					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
-					requestDescription(request), userPrincipalName(request), e.toString());
+					e.getClass().getSimpleName(), requestDescription(request),
+					userPrincipalName(request), e.toString());
 		}
 	}
 
