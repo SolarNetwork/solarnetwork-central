@@ -473,12 +473,12 @@ public final class WebUtils {
 		if ( !response.isCommitted() ) {
 			throw e;
 		}
-		final var level = isClientAbortException(e) ? Level.DEBUG : Level.WARN;
+		final var level = isClientAbortException(e) ? Level.DEBUG : Level.ERROR;
 		if ( GLOBAL_WEB_LOG.isEnabledForLevel(level) ) {
 			GLOBAL_WEB_LOG.atLevel(level).log(
 					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
 					e.getClass().getSimpleName(), requestDescription(request),
-					userPrincipalName(request), e.toString());
+					userPrincipalName(request), e.toString(), e);
 		}
 	}
 
