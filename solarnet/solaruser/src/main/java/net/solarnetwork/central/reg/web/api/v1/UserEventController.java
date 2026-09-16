@@ -59,7 +59,7 @@ import tools.jackson.databind.ObjectMapper;
  * Web service API for user event management.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalExceptionRestController
 @RestController("v1UserEventsController")

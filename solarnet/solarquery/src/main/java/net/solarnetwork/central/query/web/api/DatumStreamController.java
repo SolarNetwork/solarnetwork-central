@@ -85,7 +85,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  * Controller for querying datum stream related data.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1DatumStreamController")
 @RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
