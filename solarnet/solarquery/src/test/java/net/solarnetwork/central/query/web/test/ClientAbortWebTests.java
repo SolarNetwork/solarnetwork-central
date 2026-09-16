@@ -98,6 +98,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.RateLimitExceededException;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
 import net.solarnetwork.central.web.support.ContentCachingService;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -500,7 +501,7 @@ public class ClientAbortWebTests {
 		/**
 		 * Stream JSON to the response output stream with a generator, passing
 		 * exceptions to
-		 * {@link WebServiceGlobalControllerSupport#throwUnlessCommitted(RuntimeException, WebRequest, HttpServletResponse)}
+		 * {@link WebUtils#throwUnlessCommitted(RuntimeException, WebRequest, HttpServletResponse)}
 		 * like {@code DatumStreamController} does.
 		 */
 		@GetMapping("/stream/json/throw-unless-committed")
@@ -530,7 +531,7 @@ public class ClientAbortWebTests {
 		 * Stream some JSON to the response output stream with a generator, then
 		 * fail like a query timing out while streaming results, passing the
 		 * exception to
-		 * {@link WebServiceGlobalControllerSupport#throwUnlessCommitted(RuntimeException, WebRequest, HttpServletResponse)}.
+		 * {@link WebUtils#throwUnlessCommitted(RuntimeException, WebRequest, HttpServletResponse)}.
 		 */
 		@GetMapping("/stream/json/query-timeout/throw-unless-committed")
 		public void jsonGeneratorQueryTimeoutThrowUnlessCommitted(

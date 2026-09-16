@@ -75,8 +75,6 @@ public class UserEventController {
 	/**
 	 * Constructor.
 	 *
-	 * @param support
-	 *        the support to use
 	 * @param userEventBiz
 	 *        the UserEventBiz to use
 	 * @param objectMapper
@@ -107,8 +105,6 @@ public class UserEventController {
 	 *        the HTTP accept header value
 	 * @param request
 	 *        the request
-	 * @param locale
-	 *        the request locale
 	 * @param response
 	 *        the HTTP response
 	 */

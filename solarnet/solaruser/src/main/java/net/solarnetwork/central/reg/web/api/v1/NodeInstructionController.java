@@ -187,6 +187,8 @@ public class NodeInstructionController {
 	 *        the ID of the node to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 */
@@ -273,6 +275,8 @@ public class NodeInstructionController {
 	 *        the IDs of the nodes to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.2

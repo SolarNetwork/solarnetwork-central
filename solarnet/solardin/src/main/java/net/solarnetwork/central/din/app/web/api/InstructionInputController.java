@@ -104,7 +104,7 @@ public class InstructionInputController {
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public void postInstruction(
-			// @formatter:on
+	// @formatter:off
 			@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
@@ -112,8 +112,8 @@ public class InstructionInputController {
 			@RequestHeader(value = "Accept", required = true) String accept,
 			@RequestHeader(value = "Accept-Encoding", required = false) @Nullable String acceptEncoding,
 			HttpServletResponse response
-	// @formatter:off
-			) throws IOException {
+	// @formatter:on
+	) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType inputType = MediaType.parseMediaType(contentType);
