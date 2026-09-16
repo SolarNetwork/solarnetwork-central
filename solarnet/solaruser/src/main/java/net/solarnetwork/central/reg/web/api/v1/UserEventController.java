@@ -139,8 +139,8 @@ public class UserEventController {
 				acceptTypes, response, new OutputSerializationSupportContext<>(objectMapper,
 						cborObjectMapper, UserEventSerializer.INSTANCE, propertySerializerRegistrar))) {
 			userEventBiz.findFilteredUserEvents(cmd, processor);
-		} catch ( Exception e ) {
-			support.handleExceptionInternally(e, request, locale, response, null);
+		} catch ( RuntimeException e ) {
+			support.throwUnlessCommitted(e, request, response);
 		}
 	}
 

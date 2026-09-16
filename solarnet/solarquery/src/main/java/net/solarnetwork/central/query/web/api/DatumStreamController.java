@@ -246,8 +246,8 @@ public class DatumStreamController {
 				acceptEncoding, criteria.allowedPropertyNames(), response)) {
 			queryBiz.findFilteredStreamDatum(criteria, processor, criteria.getSortDescriptors(),
 					criteria.getOffset(), criteria.getMax());
-		} catch ( Exception e ) {
-			support.handleExceptionInternally(e, request, locale, response, null);
+		} catch ( RuntimeException e ) {
+			support.throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -318,8 +318,8 @@ public class DatumStreamController {
 				acceptEncoding, criteria.allowedPropertyNames(), response)) {
 			queryBiz.findFilteredStreamReadings(criteria, readingType, tolerance, processor,
 					criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
-		} catch ( Exception e ) {
-			support.handleExceptionInternally(e, request, locale, response, null);
+		} catch ( RuntimeException e ) {
+			support.throwUnlessCommitted(e, request, response);
 		}
 	}
 

@@ -74,7 +74,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  *
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 @RestControllerAdvice
 @Order(1000)
@@ -686,53 +686,25 @@ public class WebServiceGlobalControllerSupport {
 	}
 
 	/**
-	 * Handle an exception directly, without using a response HTTP converter.
+	 * Throw an exception unless the HTTP response has already been committed.
 	 *
 	 * @param e
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @param locale
-	 *        the locale
 	 * @param response
 	 *        the response
-	 * @param servletRequest
-	 *        unused, but signals that the request has been completely handled
-	 *        by this method
-	 * @since 1.13
+	 * @since 1.14
 	 */
-	public void handleExceptionInternally(final Exception e, final WebRequest request,
-			final Locale locale, final HttpServletResponse response,
-			final @Nullable ServletRequest servletRequest) {
-		HttpStatus responseStatusCode = null;
-		String responseMessage = null;
-		if ( e instanceof TransientDataAccessException tdae ) {
-			Result<?> result = handleTransientDataAccessException(tdae, request, locale);
-			responseStatusCode = HttpStatus.TOO_MANY_REQUESTS;
-			responseMessage = result.getMessage();
-		} else {
-			Throwable cause = e;
-			while ( cause.getCause() != null ) {
-				cause = cause.getCause();
-				if ( "org.apache.catalina.connector.ClientAbortException"
-						.equals(cause.getClass().getName()) ) {
-					log.debug("ClientAbortException in request {}", requestDescription(request), e);
-					return;
-				}
-			}
-			log.warn("{} in request {}; user [{}]: {}", e.getClass().getSimpleName(),
-					requestDescription(request), userPrincipalName(request), e.toString());
+	public void throwUnlessCommitted(final RuntimeException e, WebRequest request,
+			final HttpServletResponse response) {
+		if ( !response.isCommitted() ) {
+			throw e;
 		}
-		if ( responseStatusCode != null && !response.isCommitted() ) {
-			try {
-				if ( responseMessage != null ) {
-					response.sendError(responseStatusCode.value(), responseMessage);
-				} else {
-					response.sendError(responseStatusCode.value());
-				}
-			} catch ( Exception e2 ) {
-				log.warn("Error sending HTTP response error {}: {}", responseStatusCode, e2.toString());
-			}
+		if ( log.isDebugEnabled() ) {
+			log.debug(
+					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",
+					requestDescription(request), userPrincipalName(request), e.toString());
 		}
 	}
 
