@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -29,10 +31,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import javax.cache.Cache;
 import javax.cache.Cache.Entry;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SortDescriptor;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Proxy implementation of {@link GenericDao} with caching support.
@@ -44,9 +46,9 @@ import net.solarnetwork.util.ObjectUtils;
  * @param <D>
  *        the delegate DAO type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class CachingGenericDao<T extends Entity<K>, K, D extends GenericDao<T, K>>
+public class CachingGenericDao<T extends Entity<K>, K extends Comparable<K> & Serializable, D extends GenericDao<T, K>>
 		implements GenericDao<T, K> {
 
 	/** The delegate DAO. */
@@ -68,13 +70,13 @@ public class CachingGenericDao<T extends Entity<K>, K, D extends GenericDao<T, K
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingGenericDao(D delegate, Cache<K, T> cache, Executor executor) {
 		super();
-		this.delegate = ObjectUtils.requireNonNullArgument(delegate, "delegate");
-		this.cache = ObjectUtils.requireNonNullArgument(cache, "cache");
-		this.executor = ObjectUtils.requireNonNullArgument(executor, "executor");
+		this.delegate = requireNonNullArgument(delegate, "delegate");
+		this.cache = requireNonNullArgument(cache, "cache");
+		this.executor = requireNonNullArgument(executor, "executor");
 	}
 
 	@Override
@@ -97,7 +99,7 @@ public class CachingGenericDao<T extends Entity<K>, K, D extends GenericDao<T, K
 	}
 
 	@Override
-	public T get(K id) {
+	public @Nullable T get(K id) {
 		T result = cache.get(id);
 		if ( result == null ) {
 			result = delegate.get(id);
@@ -109,7 +111,7 @@ public class CachingGenericDao<T extends Entity<K>, K, D extends GenericDao<T, K
 	}
 
 	@Override
-	public Collection<T> getAll(List<SortDescriptor> sorts) {
+	public Collection<T> getAll(@Nullable List<SortDescriptor> sorts) {
 		return delegate.getAll(sorts);
 	}
 

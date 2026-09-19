@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.security;
 import static net.solarnetwork.central.oscp.security.OscpSecurityUtils.jwtTokenIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.net.URL;
 import java.util.Collection;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -57,7 +58,7 @@ public class ExternalSystemJwtAuthenticationConverter
 	 * @param dao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemJwtAuthenticationConverter(AuthTokenAuthorizationDao dao) {
 		this(dao, new JwtScopeGrantedAuthoritiesConverter(), JwtClaimNames.SUB);
@@ -69,7 +70,7 @@ public class ExternalSystemJwtAuthenticationConverter
 	 * @param dao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemJwtAuthenticationConverter(AuthTokenAuthorizationDao dao,
 			Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter,
@@ -84,9 +85,16 @@ public class ExternalSystemJwtAuthenticationConverter
 	@Override
 	public AbstractAuthenticationToken convert(Jwt jwt) {
 		Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
+		URL issuer = jwt.getIssuer();
+		if ( issuer == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no issuer).");
+		}
 		String principalClaimValue = jwt.getClaimAsString(this.principalClaimName);
+		if ( principalClaimValue == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no principal claim).");
+		}
 
-		String token = jwtTokenIdentifier(jwt.getIssuer(), principalClaimValue);
+		String token = jwtTokenIdentifier(issuer, principalClaimValue);
 
 		UserLongCompositePK authId = dao.idForToken(token, true);
 		if ( authId == null ) {
@@ -107,8 +115,8 @@ public class ExternalSystemJwtAuthenticationConverter
 
 		private final AuthRoleInfo info;
 
-		public AuthInfoJwtAuthenticatedToken(Jwt jwt, Collection<? extends GrantedAuthority> authorities,
-				String name, AuthRoleInfo info) {
+		private AuthInfoJwtAuthenticatedToken(Jwt jwt,
+				Collection<? extends GrantedAuthority> authorities, String name, AuthRoleInfo info) {
 			super(jwt, authorities, name);
 			this.info = requireNonNullArgument(info, "info");
 		}

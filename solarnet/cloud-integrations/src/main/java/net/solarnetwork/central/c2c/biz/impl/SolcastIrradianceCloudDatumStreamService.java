@@ -37,7 +37,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -46,13 +45,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -68,8 +67,8 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -78,13 +77,14 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Solcast implementation of {@link CloudDatumStreamService} using the
  * irradiance API.
  *
  * @author matt
- * @version 1.5
+ * @version 2.1
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -92,7 +92,15 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.solcast.irr";
 
 	/** The maximum duration allowed for queries. */
-	public static final Duration MAX_QUERY_DURATION = Duration.ofHours(168);
+	public static final Duration MAX_QUERY_DURATION = Duration.ofDays(7);
+
+	/**
+	 * The maximum offset from the current time allowed for "live" date range
+	 * queries, in hours.
+	 *
+	 * @since 1.8
+	 */
+	public static final int MAX_LIVE_API_OFFSET_HOURS = 168;
 
 	/**
 	 * The maximum offset from the current time allowed for "live" date range
@@ -100,7 +108,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 *
 	 * @since 1.2
 	 */
-	public static final Duration MAX_LIVE_API_OFFSET = Duration.ofHours(36);
+	public static final Duration MAX_LIVE_API_OFFSET = Duration.ofHours(MAX_LIVE_API_OFFSET_HOURS);
 
 	/**
 	 * The URL path for historic radiation and weather data.
@@ -111,6 +119,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -120,16 +129,17 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 				new BasicTextFieldSettingSpecifier(AZIMUTH_SETTING, null),
 				new BasicTextFieldSettingSpecifier(TILT_SETTING, null),
 				ARRAY_TYPE_SETTTING_SPECIFIER,
-				RESOLUTION_SETTING_SPECIFIER
+				RESOLUTION_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -153,7 +163,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolcastIrradianceCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -170,12 +180,12 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		return Arrays.stream(SolcastIrradianceType.values()).map(e -> dataValue(List.of(e.name()),
 				e.getName(),
 				Map.of(UNIT_OF_MEASURE_METADATA, e.getUnit(), DESCRIPTION_METADATA, e.getDescription())))
@@ -197,7 +207,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return result.getResults();
 	}
@@ -236,6 +246,9 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = CloudIntegrationsUtils.nextTickStart(resolution, endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {
@@ -253,61 +266,86 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
+			final Instant now = clock.instant();
+
 			// use the live API if requested or if query start near current date
 			final boolean useLiveApi = filter.hasParameter(QUERY_PARAM_USE_LIVE_DATA)
 					|| (ds.hasServiceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class)
-							&& ds.serviceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
-					|| Duration.between(startDate, clock.instant()).compareTo(MAX_LIVE_API_OFFSET) < 0;
+							&& ds.serviceProp(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
+					|| Duration.between(startDate, now).compareTo(MAX_LIVE_API_OFFSET) < 0;
 
-			// @formatter:off
-			final UriComponentsBuilder uriBuilder = UriComponentsBuilder
-					.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-					.path(useLiveApi
-							? SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH
-							: HISTORIC_RADIATION_URL_PATH)
-					.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
-					.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
+			Collection<GeneralDatum> r = null;
 
-					.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
-					.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-							resolveOutputParametersValue(refsByFieldName.values()))
-					;
-			// @formatter:on
-
-			if ( useLiveApi ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
-						resolveHours(startDate, endDate));
+			if ( !useLiveApi && Duration.between(endDate, now).compareTo(MAX_LIVE_API_OFFSET) < 0 ) {
+				// need to request historic data only up to MAX_LIVE_API_OFFSET, then live for range after that
+				Instant splitDate = CloudIntegrationsUtils.truncateDate(now.minus(MAX_LIVE_API_OFFSET),
+						resolution, UTC);
+				var rHistoric = executeRequest(ds, integration, latitude, longitude, resolution,
+						refsByFieldName, startDate, splitDate, false, now);
+				var rLive = executeRequest(ds, integration, latitude, longitude, resolution,
+						refsByFieldName, splitDate, endDate, true, now);
+				r = new ArrayList<>(rHistoric);
+				r.addAll(rLive);
 			} else {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM,
-						startDate.toString());
-				uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
+				r = executeRequest(ds, integration, latitude, longitude, resolution, refsByFieldName,
+						startDate, endDate, useLiveApi, now);
 			}
-
-			String azimuth = nonEmptyString(ds.serviceProperty(AZIMUTH_SETTING, String.class));
-			if ( azimuth != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
-			}
-			String tilt = nonEmptyString(ds.serviceProperty(TILT_SETTING, String.class));
-			if ( tilt != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
-			}
-			String arrayType = nonEmptyString(ds.serviceProperty(ARRAY_TYPE_SETTING, String.class));
-			if ( tilt != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
-			}
-
-			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data",
-					integration, JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds, refsByFieldName, resolution,
-							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
-					integration.getConfigId());
+			r = evaluateExpressions(ds, exprProps, r, mapping.getConfigId(), integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList());
 		});
+	}
+
+	private Collection<GeneralDatum> executeRequest(CloudDatumStreamConfiguration datumStream,
+			CloudIntegrationConfiguration integration, final String latitude, final String longitude,
+			final Duration resolution, final Map<String, ValueRef> refsByFieldName, Instant startDate,
+			Instant endDate, final boolean useLiveApi, final Instant now) {
+		if ( !endDate.isAfter(startDate) ) {
+			// sometimes happens from split between historic/live
+			return List.of();
+		}
+		// @formatter:off
+		final UriComponentsBuilder uriBuilder = UriComponentsBuilder
+				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+				.path(useLiveApi
+						? SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH
+						: HISTORIC_RADIATION_URL_PATH)
+				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
+				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
+
+				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
+				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+						resolveOutputParametersValue(refsByFieldName.values()))
+				;
+		// @formatter:on
+
+		if ( useLiveApi ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+					resolveHours(startDate, now));
+		} else {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM, startDate.toString());
+			uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
+		}
+
+		String azimuth = nonEmptyString(datumStream.serviceProperty(AZIMUTH_SETTING, String.class));
+		if ( azimuth != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
+		}
+		String tilt = nonEmptyString(datumStream.serviceProperty(TILT_SETTING, String.class));
+		if ( tilt != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
+		}
+		String arrayType = nonEmptyString(datumStream.serviceProperty(ARRAY_TYPE_SETTING, String.class));
+		if ( tilt != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
+		}
+
+		return restOpsHelper.httpGet("List irradiance data", integration, JsonNode.class,
+				_ -> uriBuilder.buildAndExpand().toUri(), (_, res) -> parseDatum(res.getBody(),
+						datumStream, refsByFieldName, resolution, startDate, endDate));
 	}
 
 	/**
@@ -323,7 +361,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(.+)");
 
-	private static record ValueRef(String fieldName, SolcastIrradianceType type,
+	private record ValueRef(String fieldName, SolcastIrradianceType type,
 			CloudDatumStreamPropertyConfiguration property) {
 
 	}
@@ -385,14 +423,14 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	private int resolveHours(Instant from, Instant to) {
 		Duration d = Duration.between(from, to);
 		long mins = d.toMinutes();
-		return ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0));
+		return Math.min(MAX_LIVE_API_OFFSET_HOURS, ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0)));
 	}
 
-	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream,
-			Map<String, ValueRef> refsByFieldName, Duration resolution, Instant minDate,
-			Instant maxDate) {
+	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream, Map<String, ValueRef> refsByFieldName,
+			Duration resolution, Instant minDate, Instant maxDate) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -409,11 +447,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		*/
 		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode node : json.path("estimated_actuals") ) {
-			String end = nonEmptyString(node.path("period_end").asText());
+			String end = nonEmptyString(node.path("period_end").asString());
 			if ( end == null ) {
 				continue;
 			}
-			String per = nonEmptyString(node.path("period").asText());
+			String per = nonEmptyString(node.path("period").asString());
 			Duration d = resolution;
 			if ( per != null ) {
 				d = Duration.parse(per);
@@ -436,13 +474,13 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 				}
 			}
 			if ( !samples.isEmpty() ) {
-				result.add(new GeneralDatum(new DatumId(datumStream.getKind(), datumStream.getObjectId(),
-						datumStream.getSourceId(), ts), samples));
+				result.add(new GeneralDatum(DatumId.datumId(datumStream.getKind(),
+						datumStream.getObjectId(), datumStream.getSourceId(), ts), samples));
 			}
 		}
 
 		// Solcast API returns data in reverse time order, so reverse it now
-		result.sort(Identity.sortByIdentity());
+		result.sort(null);
 
 		return result;
 	}

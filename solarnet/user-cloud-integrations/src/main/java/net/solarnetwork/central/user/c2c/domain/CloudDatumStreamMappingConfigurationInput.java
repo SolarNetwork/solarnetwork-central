@@ -25,10 +25,12 @@ package net.solarnetwork.central.user.c2c.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingRelated;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -37,21 +39,23 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * DTO for cloud datum stream mapping configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamMappingConfigurationInput extends
 		BaseUserRelatedStdInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
+		CloudDatumStreamMappingRelated {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
 	@NotNull
-	private Long integrationId;
+	private @Nullable Long integrationId;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
 	/**
 	 * Constructor.
@@ -60,14 +64,16 @@ public class CloudDatumStreamMappingConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CloudDatumStreamMappingConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				requireNonNullArgument(id, "id"), date);
+				requireNonNullArgument(id, "id"), date, name, integrationId);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(CloudDatumStreamMappingConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -82,7 +88,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 *
 	 * @return the integration ID
 	 */
-	public final Long getIntegrationId() {
+	public final @Nullable Long getIntegrationId() {
 		return integrationId;
 	}
 
@@ -93,7 +99,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 * @param integrationId
 	 *        the datum integration ID to set
 	 */
-	public final void setIntegrationId(Long integrationId) {
+	public final void setIntegrationId(@Nullable Long integrationId) {
 		this.integrationId = integrationId;
 	}
 
@@ -102,7 +108,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -112,7 +118,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -121,7 +127,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public final @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -131,7 +137,7 @@ public class CloudDatumStreamMappingConfigurationInput extends
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public final void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 

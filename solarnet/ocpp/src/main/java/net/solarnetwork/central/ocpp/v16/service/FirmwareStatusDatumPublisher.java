@@ -1,21 +1,21 @@
 /* ==================================================================
  * FirmwareStatusDatumPublisher.java - 29/07/2022 12:57:14 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.v16.service;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -42,7 +43,7 @@ import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
 
 /**
  * Publish firmware status notifications as a datum stream.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -55,7 +56,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointDao
 	 *        the charge point DAO to use
 	 * @param chargePointSettingsDao
@@ -65,7 +66,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FirmwareStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -89,14 +90,14 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 		private final String propertyName;
 		private final DatumSamplesType classification;
 
-		private DatumProperty(String propertyName, DatumSamplesType classification) {
+		DatumProperty(String propertyName, DatumSamplesType classification) {
 			this.propertyName = propertyName;
 			this.classification = classification;
 		}
 
 		/**
 		 * Get the property name.
-		 * 
+		 *
 		 * @return the property name
 		 */
 		public String getPropertyName() {
@@ -105,7 +106,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 		/**
 		 * Get the property classification.
-		 * 
+		 *
 		 * @return the classification
 		 */
 		public DatumSamplesType getClassification() {
@@ -115,58 +116,59 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	}
 
 	@Override
-	public void processActionMessage(ActionMessage<FirmwareStatusNotificationRequest> message,
-			ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler) {
-		if ( message != null && message.getMessage() != null ) {
-			FirmwareStatusNotificationRequest notif = message.getMessage();
-			DatumSamples s = new DatumSamples();
-			if ( notif.getStatus() != null ) {
-				s.putSampleValue(DatumProperty.Status.getClassification(),
-						DatumProperty.Status.getPropertyName(), notif.getStatus().toString());
-			}
+	protected void handleActionMessage(final ActionMessage<FirmwareStatusNotificationRequest> message,
+			final ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler,
+			final FirmwareStatusNotificationRequest req) {
+		DatumSamples s = null;
+		if ( req.getStatus() != null ) {
+			s = new DatumSamples();
+			s.putSampleValue(DatumProperty.Status.getClassification(),
+					DatumProperty.Status.getPropertyName(), req.getStatus().toString());
+		}
 
-			if ( !s.isEmpty() ) {
-				final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+		if ( s != null && !s.isEmpty() && message.getClientId() != null ) {
+			final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+			if ( cp.getInfo().getId() != null ) {
 				final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
-						cp.getId());
-
-				GeneralNodeDatum d = new GeneralNodeDatum();
-				d.setCreated(Instant.now());
-				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+						cp.id());
+				final var d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+						pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 				d.setSamples(s);
 				pubSupport.publishDatum(cps, d);
 			}
 		}
-		super.processActionMessage(message, resultHandler);
+
+		super.handleActionMessage(message, resultHandler, req);
 	}
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
@@ -174,11 +176,11 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Set a suffix to append to the resolved source ID template.
-	 * 
+	 *
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

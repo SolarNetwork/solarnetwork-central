@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.io.IOException;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -75,6 +76,7 @@ public interface ReadingDatumDao {
 	 * @since 1.1
 	 */
 	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 }

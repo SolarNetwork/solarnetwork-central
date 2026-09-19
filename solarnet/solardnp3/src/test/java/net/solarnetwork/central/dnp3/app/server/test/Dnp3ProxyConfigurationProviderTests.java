@@ -1,21 +1,21 @@
 /* ==================================================================
  * Dnp3ProxyConfigurationProviderTests.java - 14/08/2023 11:01:03 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.app.server.test;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -34,6 +35,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,9 +75,9 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Test cases for the {@link Dnp3ProxyConfigurationProvider} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class Dnp3ProxyConfigurationProviderTests {
@@ -164,7 +166,7 @@ public class Dnp3ProxyConfigurationProviderTests {
 
 		// check auth
 		final ServerAuthConfiguration auth = new ServerAuthConfiguration(userId, serverId,
-				clientSubjectDn, now());
+				clientSubjectDn, now(), randomString());
 		auth.setEnabled(true);
 		given(serverAuthDao.findForIdentifier(clientSubjectDn)).willReturn(auth);
 
@@ -176,21 +178,14 @@ public class Dnp3ProxyConfigurationProviderTests {
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 
 		final ServerMeasurementConfiguration meas = new ServerMeasurementConfiguration(userId, serverId,
-				0, now());
-		meas.setNodeId(nodeId);
-		meas.setSourceId("meter/1");
-		meas.setProperty("watts");
-		meas.setType(MeasurementType.AnalogInput);
+				0, now(), nodeId, "meter/1", MeasurementType.AnalogInput, "watts");
 		meas.setEnabled(true);
 		given(serverMeasurementDao.findFiltered(any()))
 				.willReturn(new BasicFilterResults<>(asList(meas)));
 
 		// load controls
 		final ServerControlConfiguration ctrl = new ServerControlConfiguration(userId, serverId, 0,
-				now());
-		ctrl.setNodeId(nodeId);
-		ctrl.setSourceId("switch/1");
-		ctrl.setType(ControlType.Binary);
+				now(), nodeId, "switch/1", ControlType.Binary);
 		ctrl.setEnabled(true);
 		given(serverControlDao.findFiltered(any())).willReturn(new BasicFilterResults<>(asList(ctrl)));
 
@@ -206,7 +201,7 @@ public class Dnp3ProxyConfigurationProviderTests {
 
 		// WHEN
 		SimpleProxyConnectionRequest req = new SimpleProxyConnectionRequest(
-				canonicalSubjectDn(clientCert), new X509Certificate[] { clientCert, caCert });
+				canonicalSubjectDn(clientCert), List.of(clientCert, caCert));
 		ProxyConnectionSettings result = service.authorize(req);
 		if ( result instanceof ServiceLifecycleObserver obs ) {
 			obs.serviceDidStartup();
@@ -222,7 +217,7 @@ public class Dnp3ProxyConfigurationProviderTests {
 			.as("Trusted cert filter included enabled flag")
 			.returns(true, CertificateFilter::getEnabled)
 			;
-		
+
 		then(result)
 			.as("Settings created")
 			.isNotNull()
@@ -231,15 +226,15 @@ public class Dnp3ProxyConfigurationProviderTests {
 			.as("Port from registrar")
 			.returns(port, ProxyConnectionSettings::destinationPort)
 			;
-		
+
 		then(result.connectionRequest())
 			.as("Connection request provided")
 			.isSameAs(req)
 			;
-		
+
 		verify(manager).addTCPServer(any(), anyInt(), any(), ipEndpointCaptor.capture(), any());
 		then(ipEndpointCaptor.getValue()).as("Listen on specified port").returns(port, o -> o.port);
-		
+
 		verify(outstation).enable();
 		// @formatter:on
 	}

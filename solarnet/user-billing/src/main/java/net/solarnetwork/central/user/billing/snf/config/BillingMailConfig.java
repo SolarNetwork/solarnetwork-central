@@ -27,9 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import net.solarnetwork.central.mail.support.DefaultMailService;
+import net.solarnetwork.central.mail.support.MailServiceSettings;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.mail.MailSnfInvoiceDeliverer;
@@ -38,19 +39,22 @@ import net.solarnetwork.central.user.billing.snf.mail.MailSnfInvoiceDeliverer;
  * Billing mail configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class BillingMailConfig {
 
 	@Autowired
-	private MailSender mailSender;
+	private JavaMailSender mailSender;
 
 	@Autowired
 	private SnfInvoicingSystem snfInvoicingSystem;
 
 	@Autowired
 	private Executor executor;
+
+	@Autowired
+	private MailServiceSettings mailSettings;
 
 	@Value("${app.billing.invoice.mail.from:accounts@localhost}")
 	private String invoiceFrom = "accounts@localhost";
@@ -62,6 +66,7 @@ public class BillingMailConfig {
 		SimpleMailMessage template = new SimpleMailMessage();
 		template.setFrom(invoiceFrom);
 		mailService.setTemplateMessage(template);
+		mailService.applySettings(mailSettings);
 		return new MailSnfInvoiceDeliverer(snfInvoicingSystem, mailService, executor);
 	}
 

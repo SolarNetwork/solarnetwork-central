@@ -51,7 +51,6 @@ public class DatumImportJobsConfig {
 	@Bean
 	public ManagedJob datumImportProcessorJob() {
 		DatumImportProcessorJob job = new DatumImportProcessorJob(datumImportJobBiz);
-		job.setId("DatumImportProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -60,7 +59,6 @@ public class DatumImportJobsConfig {
 	@Bean
 	public ManagedJob datumImportJobInfoCleanerJob() {
 		DatumImportJobInfoCleanerJob job = new DatumImportJobInfoCleanerJob(datumImportJobBiz);
-		job.setId("DatumImportJobInfoCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

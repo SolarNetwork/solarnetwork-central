@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for identifier related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface IdentifierCriteria {
 
@@ -35,7 +37,7 @@ public interface IdentifierCriteria {
 	 * 
 	 * @return array of identifiers (may be {@code null})
 	 */
-	String[] getIdentifiers();
+	String @Nullable [] getIdentifiers();
 
 	/**
 	 * Get the first identifier.
@@ -47,7 +49,7 @@ public interface IdentifierCriteria {
 	 * 
 	 * @return the first identifier, or {@code null} if not available
 	 */
-	default String getIdentifier() {
+	default @Nullable String getIdentifier() {
 		String[] a = getIdentifiers();
 		return (a != null && a.length > 0 ? a[0] : null);
 	}
@@ -59,6 +61,40 @@ public interface IdentifierCriteria {
 	 */
 	default boolean hasIdentifierCriteria() {
 		return getIdentifier() != null;
+	}
+
+	/**
+	 * Get the first identifier.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIdentifierCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String identifier() {
+		return getIdentifier();
+	}
+
+	/**
+	 * Get an array of identifiers.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIdentifierCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of source IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] identifiers() {
+		return getIdentifiers();
 	}
 
 }

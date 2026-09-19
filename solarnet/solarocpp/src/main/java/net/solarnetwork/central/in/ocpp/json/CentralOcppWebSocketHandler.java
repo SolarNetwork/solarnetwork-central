@@ -29,17 +29,17 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -53,6 +53,7 @@ import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ErrorCode;
+import net.solarnetwork.ocpp.domain.ErrorCodeException;
 import net.solarnetwork.ocpp.domain.PendingActionMessage;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
@@ -60,12 +61,14 @@ import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.8
+ * @version 3.0
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -87,7 +90,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
 	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
-	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
+	private Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
 
@@ -119,7 +122,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param subProtocols
 	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
@@ -164,7 +167,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param subProtocols
 	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public CentralOcppWebSocketHandler(Clock clock, StatTracker stats, Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
@@ -345,6 +348,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
 			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
 			data.put(MESSAGE_DATA_KEY, payload);
+			if ( exception != null ) {
+				data.put(ERROR_DATA_KEY, exception.getMessage());
+				if ( exception instanceof ErrorCodeException err ) {
+					data.put("errorCode", err.getErrorCode());
+					data.put("errorDescription", err.getErrorDescription());
+					data.put("errorDetails", err.getErrorDetails());
+				}
+			}
 			generateUserEvent(userId, CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
 		}
 	}
@@ -401,7 +412,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		}
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		// bump to executor to not block processor thread
 		executor.execute(() -> {
 			final UserEventAppenderBiz biz = getUserEventAppenderBiz();
@@ -410,12 +421,11 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			}
 			String dataStr;
 			try {
-				dataStr = (data instanceof String ? (String) data
-						: getObjectMapper().writeValueAsString(data));
-			} catch ( JsonProcessingException e ) {
+				dataStr = (data instanceof String s ? s : getObjectMapper().writeValueAsString(data));
+			} catch ( JacksonException e ) {
 				dataStr = null;
 			}
-			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+			LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 			biz.addEvent(userId, event);
 		});
 	}
@@ -551,7 +561,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * 
 	 * @return the function
 	 */
-	public Function<Object, ChargePointConnectorKey> getConnectorIdExtractor() {
+	public Function<Object, @Nullable ChargePointConnectorKey> getConnectorIdExtractor() {
 		return connectorIdExtractor;
 	}
 
@@ -561,15 +571,16 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param connectorIdExtractor
 	 *        the function to set
 	 */
-	public void setConnectorIdExtractor(Function<Object, ChargePointConnectorKey> connectorIdExtractor) {
+	public void setConnectorIdExtractor(
+			Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
 	}
 
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
 	 * 
-	 * @return the instruction topic to listen to, or {@literal null} to not
-	 *         look for OCPP instructions
+	 * @return the instruction topic to listen to, or {@code null} to not look
+	 *         for OCPP instructions
 	 * @since 2.6
 	 */
 	public String getInstructionTopic() {
@@ -604,7 +615,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param shutdownTaskMaxWait
 	 *        the maximum wait time to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 2.7
 	 */
 	public void setShutdownTaskMaxWait(Duration shutdownTaskMaxWait) {
@@ -631,7 +642,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param shutdownTaskPostDelay
 	 *        the delay to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 2.7
 	 */
 	public void setShutdownTaskPostDelay(Duration shutdownTaskPostDelay) {

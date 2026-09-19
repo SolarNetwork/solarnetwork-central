@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
@@ -34,18 +35,35 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for User objects.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserDao
 		extends GenericDao<User, Long>, FilterableDao<UserFilterMatch, Long, UserFilter> {
+
+	/**
+	 * Get a user by primary key, with a full location populated.
+	 * 
+	 * <p>
+	 * If the user entity has a {@code locationId} value populated, then the
+	 * returned entity will have its {@code User#getLocation()} object populated
+	 * as well.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the primary key of the user to get
+	 * @return the found User, or {@code null} if not found
+	 */
+	@Nullable
+	User getUserWithLocation(Long id);
 
 	/**
 	 * Get a user by their email.
 	 * 
 	 * @param email
 	 *        the email address to lookup
-	 * @return the found User, or {@literal null} if not found
+	 * @return the found User, or {@code null} if not found
 	 */
+	@Nullable
 	User getUserByEmail(String email);
 
 	/**
@@ -57,7 +75,7 @@ public interface UserDao
 	 * 
 	 * @param user
 	 *        the user to get the roles for
-	 * @return the user roles
+	 * @return the user roles, never {@code null}
 	 */
 	Set<String> getUserRoles(User user);
 
@@ -81,15 +99,16 @@ public interface UserDao
 	 * 
 	 * @param userId
 	 *        the ID of the user to get
-	 * @return the internal data, or {@literal null} if none available
+	 * @return the internal data, or {@code null} if none available
 	 */
+	@Nullable
 	Map<String, Object> getInternalData(Long userId);
 
 	/**
 	 * Add, update, or remove properties from the internal data of a user.
 	 * 
 	 * <p>
-	 * To remove properties, pass in {@literal null} values.
+	 * To remove properties, pass in {@code null} values.
 	 * </p>
 	 * 
 	 * @param userId
@@ -98,6 +117,6 @@ public interface UserDao
 	 *        the properties to add, update, or remove
 	 * @since 1.1
 	 */
-	void storeInternalData(Long userId, Map<String, Object> data);
+	void storeInternalData(Long userId, @Nullable Map<String, Object> data);
 
 }

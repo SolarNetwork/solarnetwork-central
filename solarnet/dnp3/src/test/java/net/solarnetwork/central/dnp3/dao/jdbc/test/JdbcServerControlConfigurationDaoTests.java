@@ -24,16 +24,18 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerControlConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -85,15 +87,13 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 	public void insert() {
 		// GIVEN
 		lastServer = serverDao.get(serverDao.create(userId,
-				Dnp3JdbcTestUtils.newServerConfiguration(userId, UUID.randomUUID().toString())));
+				Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString())));
 
 		// WHEN
 		ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now());
-		conf.setModified(Instant.now().plusMillis(234L));
-		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setControlId(UUID.randomUUID().toString());
-		conf.setType(ControlType.Analog);
+				lastServer.getServerId(), 0, MS_CLOCK.instant(), randomLong(), randomString(),
+				ControlType.Analog);
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		UserLongIntegerCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -138,16 +138,14 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 	public void insert_withProperty() {
 		// GIVEN
 		lastServer = serverDao.get(serverDao.create(userId,
-				Dnp3JdbcTestUtils.newServerConfiguration(userId, UUID.randomUUID().toString())));
+				Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString())));
 
 		// WHEN
 		ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now());
-		conf.setModified(Instant.now().plusMillis(234L));
-		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setControlId(UUID.randomUUID().toString());
-		conf.setProperty(UUID.randomUUID().toString());
-		conf.setType(ControlType.Analog);
+				lastServer.getServerId(), 0, MS_CLOCK.instant(), randomLong(), randomString(),
+				ControlType.Analog);
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
+		conf.setProperty(randomString());
 		conf.setMultiplier(new BigDecimal("1.23"));
 		conf.setOffset(new BigDecimal("2.34"));
 		conf.setScale(3);
@@ -233,9 +231,9 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		// WHEN
 		ServerControlConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setControlId(UUID.randomUUID().toString());
+		conf.setControlId(randomString());
 		conf.setType(ControlType.Binary);
 
 		UserLongIntegerCompositePK result = dao.save(conf);
@@ -260,10 +258,10 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		// WHEN
 		ServerControlConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setControlId(UUID.randomUUID().toString());
-		conf.setProperty(UUID.randomUUID().toString());
+		conf.setControlId(randomString());
+		conf.setProperty(randomString());
 		conf.setType(ControlType.Binary);
 		conf.setMultiplier(new BigDecimal("3.21"));
 		conf.setOffset(new BigDecimal("4.32"));
@@ -311,17 +309,15 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
+							ControlType.Binary);
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setControlId(UUID.randomUUID().toString());
-					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -353,18 +349,16 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
+							ControlType.Binary);
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setControlId(UUID.randomUUID().toString());
-					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -402,16 +396,16 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
+							ControlType.Analog);
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 
 					// always insert a node record, but only sometimes a user_node record
 					// so some records should not be returned
@@ -421,7 +415,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 						userNodeOwnership.add(new UserNodePK(userId, conf.getNodeId()));
 					}
 
-					conf.setControlId(UUID.randomUUID().toString());
+					conf.setControlId(randomString());
 					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
@@ -466,18 +460,16 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, MS_CLOCK.instant(), randomLong(), randomString(),
+							ControlType.Binary);
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setControlId(UUID.randomUUID().toString());
-					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}

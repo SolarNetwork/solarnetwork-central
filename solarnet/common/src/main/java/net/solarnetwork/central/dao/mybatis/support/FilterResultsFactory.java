@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Factory API for creating filter results instances.
@@ -36,11 +38,11 @@ import net.solarnetwork.domain.Identity;
  * @param <F>
  *        the filter type
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 2.7
  */
 @FunctionalInterface
-public interface FilterResultsFactory<M extends Identity<K>, K, F> {
+public interface FilterResultsFactory<M extends Unique<K>, K extends Comparable<K> & Serializable, F> {
 
 	/**
 	 * Create a results instance from query results.
@@ -52,14 +54,15 @@ public interface FilterResultsFactory<M extends Identity<K>, K, F> {
 	 * @param rows
 	 *        the resulting rows
 	 * @param totalCount
-	 *        the total count (or {@literal null} if not known)
+	 *        the total count (or {@code null} if not known)
 	 * @param offset
 	 *        the offset of the first result
 	 * @param returnedCount
 	 *        the number of results returned
 	 * @return the result instance
 	 */
-	FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps, Iterable<M> rows,
-			Long totalCount, Long offset, Integer returnedCount);
+	FilterResults<M, K> createFilterResults(F filter, @Nullable Map<String, Object> sqlProps,
+			Iterable<M> rows, @Nullable Long totalCount, @Nullable Long offset,
+			@Nullable Integer returnedCount);
 
 }

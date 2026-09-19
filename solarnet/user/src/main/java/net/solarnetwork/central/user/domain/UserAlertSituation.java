@@ -26,50 +26,96 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.BaseEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A triggered alert condition.
  *
  * @author matt
- * @version 2.0
+ * @version 2.2
  */
 public class UserAlertSituation extends BaseEntity {
 
 	@Serial
 	private static final long serialVersionUID = -6858352050110675205L;
 
-	private UserAlert alert;
-	private UserAlertSituationStatus status;
-	private Instant notified;
-	private Map<String, Object> info;
-	private String infoJson;
+	private @Nullable UserAlert alert;
+	private @Nullable UserAlertSituationStatus status;
+	private @Nullable Instant notified;
+	private @Nullable Map<String, Object> info;
+	private @Nullable String infoJson;
 
-	public UserAlert getAlert() {
-		return alert;
+	/**
+	 * Constructor.
+	 */
+	public UserAlertSituation() {
+		super();
 	}
 
-	public void setAlert(UserAlert alert) {
-		this.alert = alert;
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UserAlertSituation{id=");
+		builder.append(getId());
+		builder.append(", created=");
+		builder.append(getCreated());
+		builder.append(", alert=");
+		builder.append(alert);
+		builder.append(", status=");
+		builder.append(status);
+		builder.append(", notified=");
+		builder.append(notified);
+		builder.append("}");
+		return builder.toString();
 	}
 
-	public UserAlertSituationStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(UserAlertSituationStatus status) {
-		this.status = status;
-	}
-
-	public Instant getNotified() {
+	/**
+	 * Get the notified date, presumed to be non-null.
+	 * 
+	 * @return the notified date
+	 * @since 2.1
+	 */
+	@SuppressWarnings("NullAway")
+	public final Instant notified() {
 		return notified;
 	}
 
-	public void setNotified(Instant notified) {
+	/**
+	 * Test if the situation is resolved.
+	 * 
+	 * @return {@code true} if the situation status is {@code Resolved}
+	 * @since 2.2
+	 */
+	public boolean isResolved() {
+		return (status == UserAlertSituationStatus.Resolved);
+	}
+
+	public final @Nullable UserAlert getAlert() {
+		return alert;
+	}
+
+	public final void setAlert(@Nullable UserAlert alert) {
+		this.alert = alert;
+	}
+
+	public final @Nullable UserAlertSituationStatus getStatus() {
+		return status;
+	}
+
+	public final void setStatus(@Nullable UserAlertSituationStatus status) {
+		this.status = status;
+	}
+
+	public final @Nullable Instant getNotified() {
+		return notified;
+	}
+
+	public final void setNotified(@Nullable Instant notified) {
 		this.notified = notified;
 	}
 
@@ -77,15 +123,15 @@ public class UserAlertSituation extends BaseEntity {
 	 * Get the info object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore <em>null</em> values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never <em>null</em>
+	 * @return a JSON encoded string, never {@code null}
 	 * @since 1.1
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getInfoJson() {
+	public final @Nullable String getInfoJson() {
 		if ( infoJson == null ) {
 			infoJson = JsonUtils.getJSONString(info, "{}");
 		}
@@ -107,7 +153,7 @@ public class UserAlertSituation extends BaseEntity {
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setInfoJson(String json) {
+	public final void setInfoJson(@Nullable String json) {
 		infoJson = json;
 		info = null;
 	}
@@ -120,7 +166,7 @@ public class UserAlertSituation extends BaseEntity {
 	 */
 	@SuppressWarnings("unchecked")
 	@JsonProperty
-	public Map<String, Object> getInfo() {
+	public final @Nullable Map<String, Object> getInfo() {
 		if ( info == null && infoJson != null ) {
 			info = JsonUtils.getObjectFromJSON(infoJson, Map.class);
 		}
@@ -140,26 +186,9 @@ public class UserAlertSituation extends BaseEntity {
 	 * @since 1.1
 	 */
 	@JsonProperty
-	public void setInfo(Map<String, Object> info) {
+	public final void setInfo(@Nullable Map<String, Object> info) {
 		this.info = info;
 		infoJson = null;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("UserAlertSituation{id=");
-		builder.append(getId());
-		builder.append(", created=");
-		builder.append(getCreated());
-		builder.append(", alert=");
-		builder.append(alert);
-		builder.append(", status=");
-		builder.append(status);
-		builder.append(", notified=");
-		builder.append(notified);
-		builder.append("}");
-		return builder.toString();
 	}
 
 }

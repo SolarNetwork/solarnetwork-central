@@ -43,7 +43,7 @@ public enum EnphaseDeviceType {
 	private final String key;
 	private final String groupKey;
 
-	private EnphaseDeviceType(String key, String groupKey) {
+	EnphaseDeviceType(String key, String groupKey) {
 		this.key = key;
 		this.groupKey = groupKey;
 	}
@@ -51,7 +51,7 @@ public enum EnphaseDeviceType {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;

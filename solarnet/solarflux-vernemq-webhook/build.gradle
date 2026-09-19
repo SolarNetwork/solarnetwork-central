@@ -1,40 +1,16 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.5'
+	id 'org.springframework.boot' version '4.1.1'
+	id 'org.graalvm.buildtools.native' version '0.11.1'
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.graalvm.buildtools.native'
 
 description = 'SolarFlux VerneMQ Webhook'
-version = '2.4.0'
-
-configurations {
-	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'com.amazonaws'
-	all*.exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
-	all*.exclude group: 'com.zaxxer', module: 'HikariCP'
-	all*.exclude group: 'io.netty'
-	all*.exclude group: 'javax.servlet'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
-	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'
-	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.pki.bc'
-	all*.exclude group: 'org.apache.commons', module: 'commons-compress'
-	all*.exclude group: 'org.eclipse.virgo.mirrored'
-	all*.exclude group: 'org.mybatis'
-	all*.exclude group: 'org.mybatis.spring.boot', module: 'mybatis-spring-boot-starter'
-	all*.exclude group: 'org.osgi'
-	all*.exclude group: 'org.osgi.core'
-	all*.exclude group: 'org.osgi.enterprise'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'org.springframework', module: 'spring-messaging'
-	all*.exclude group: 'org.springframework', module: 'spring-websocket'
-	all*.exclude group: 'org.springframework.security'
-	all*.exclude group: 'software.amazon.awssdk'
-}
 
 dependencies {
 	implementation project(':solarnet-common')
@@ -43,11 +19,10 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter"
 	implementation "org.springframework.boot:spring-boot-starter-cache"
 	implementation "org.springframework.boot:spring-boot-starter-jdbc"
-	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-webmvc"
 
 	// DB
 	runtimeOnly 'org.postgresql:postgresql'
-	implementation 'org.apache.tomcat:tomcat-jdbc'
 		
 	// JCache
 	implementation 'javax.cache:cache-api'
@@ -55,22 +30,98 @@ dependencies {
 
 	// JSON
 	implementation "com.fasterxml.jackson.core:jackson-annotations"
-	implementation "com.fasterxml.jackson.core:jackson-core"
-	implementation "com.fasterxml.jackson.core:jackson-databind"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-joda"
+	implementation "tools.jackson.core:jackson-core"
+	implementation "tools.jackson.core:jackson-databind"
 
 	// Utils
     implementation 'com.github.veqryn:cidr-ip-trie:1.0.1'
     
     // Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation 'com.spotify:hamcrest-jackson:1.1.3'
-    testImplementation 'com.spotify:hamcrest-pojo:1.1.3'
+	testImplementation "org.springframework.boot:spring-boot-starter-jdbc-test"
+	testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+}
+
+configurations.configureEach {
+	exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
+	exclude group: 'io.netty'
+	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'
+	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.pki.bc'
+	exclude group: 'org.apache.commons', module: 'commons-compress'
+	exclude group: 'org.eclipse.virgo.mirrored'
+	exclude group: 'org.mybatis'
+	exclude group: 'org.mybatis.spring.boot', module: 'mybatis-spring-boot-starter'
+	exclude group: 'org.osgi'
+	exclude group: 'org.osgi.core'
+	exclude group: 'org.osgi.enterprise'
+	exclude group: 'org.springframework', module: 'spring-messaging'
+	exclude group: 'org.springframework', module: 'spring-websocket'
+	exclude group: 'org.springframework.security'
+	exclude group: 'org.springframework.boot', module: 'spring-boot-security'
+	exclude group: 'org.springframework.boot', module: 'spring-boot-security-test'
+	exclude group: 'software.amazon.awssdk'
+}
+
+def commonManifest = {
+    attributes(
+        'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
+		'Implementation-Version': project.version
+    )
+}
+
+jar {
+	manifest commonManifest
 }
 
 bootJar {
-	manifest {
-		attributes 	'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
-					'Implementation-Version': archiveVersion
+	manifest commonManifest
+}
+
+graalvmNative {
+	binaries.main {
+		def allArgs = []
+
+		// NATIVE_BUILD_ARGS=a,b,c ../gradlew nativeCompile
+        providers.environmentVariable('NATIVE_BUILD_ARGS')
+            .orNull?.split(',')?.each { allArgs << it }
+
+		// pass -PnativeBuildArgs=a,b,c
+        providers.gradleProperty('nativeBuildArgs')
+            .orNull?.split(',')?.each { allArgs << it }
+
+		// pass -PnativeBuildArgsFile=dev.args, or default to native-build.args
+		def argsFile = providers.gradleProperty('nativeBuildArgsFile')
+                .map { file(it) }
+                .orElse(file('native-build.args'))
+                .get()
+        
+        if (argsFile.exists()) {
+            allArgs.addAll(
+                argsFile.readLines()
+                    .findAll { it && !it.startsWith('#') }
+            )
+        }
+
+		if (allArgs.isEmpty()) {
+			buildArgs.addAll(['--enable-native-access=ALL-UNNAMED', '-O3', '-R:MaxHeapSize=160m', '-R:MinHeapSize=160m'])
+		} else {
+	        buildArgs.addAll(allArgs)
+	    }
 	}
+	
+	binaries.main {
+		imageName = 'solarflux-webhook'
+	}
+}
+
+tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
+    args("${aotProcessArgs}")
+}
+
+compileAotJava {
+	options.errorprone.enabled = false
+}
+
+compileAotTestJava {
+	options.errorprone.enabled = false
 }

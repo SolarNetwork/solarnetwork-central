@@ -1,21 +1,21 @@
 /* ==================================================================
  * FlexibilityProviderTestUtils.java - 17/08/2022 3:37:12 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,13 +23,12 @@
 package net.solarnetwork.central.oscp.fp.test;
 
 import static java.lang.String.format;
-import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.joining;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -48,7 +47,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Testing utilities for Flexibility Provider.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -63,11 +62,11 @@ public final class FlexibilityProviderTestUtils {
 	/**
 	 * Save a new user and Flexibility Provider authorization ID for the current
 	 * actor.
-	 * 
+	 *
 	 * <p>
 	 * This is designed to support {@link WithMockAuthenticatedToken} tests.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @return the new ID
@@ -86,7 +85,7 @@ public final class FlexibilityProviderTestUtils {
 
 	/**
 	 * Save a new Flexibility Provider authorization ID.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId
@@ -112,7 +111,7 @@ public final class FlexibilityProviderTestUtils {
 
 	/**
 	 * Create a new configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param entityId
@@ -128,21 +127,18 @@ public final class FlexibilityProviderTestUtils {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
 				entityId == null ? UserLongCompositePK.unassignedEntityIdKey(userId)
 						: new UserLongCompositePK(userId, entityId),
-				created);
+				created, randomString(), flexibilityProviderId, RegistrationStatus.Registered);
 		conf.setModified(created);
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setFlexibilityProviderId(flexibilityProviderId);
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
+		conf.setServiceProps(Map.of("foo", randomString()));
+		conf.setToken(randomString());
 		return conf;
 	}
 
 	/**
 	 * Create a new configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param entityId
@@ -158,21 +154,18 @@ public final class FlexibilityProviderTestUtils {
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
 				entityId == null ? UserLongCompositePK.unassignedEntityIdKey(userId)
 						: new UserLongCompositePK(userId, entityId),
-				created);
+				created, randomString(), flexibilityProviderId, RegistrationStatus.Registered);
 		conf.setModified(created);
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setFlexibilityProviderId(flexibilityProviderId);
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
+		conf.setServiceProps(Map.of("foo", randomString()));
+		conf.setToken(randomString());
 		return conf;
 	}
 
 	/**
 	 * Dump the contents of the {@code solaroscp.oscp_cp_conf} table.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the table contents
@@ -188,7 +181,7 @@ public final class FlexibilityProviderTestUtils {
 
 	/**
 	 * Dump the contents of the {@code solaroscp.oscp_cp_token} table.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the table contents
@@ -203,7 +196,7 @@ public final class FlexibilityProviderTestUtils {
 
 	/**
 	 * Dump the contents of the {@code solaroscp.oscp_co_conf} table.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the table contents
@@ -219,7 +212,7 @@ public final class FlexibilityProviderTestUtils {
 
 	/**
 	 * Dump the contents of the {@code solaroscp.oscp_co_token} table.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the table contents

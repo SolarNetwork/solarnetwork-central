@@ -22,16 +22,18 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Base implementation of {@link FilterableDao} using MyBatis via
@@ -41,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.1
  * @since 2.7
  */
-public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F extends PaginationCriteria>
+public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K extends Comparable<K> & Serializable, M extends Unique<K>, F extends PaginationCriteria>
 		extends BaseMyBatisGenericDaoSupport<T, K>
 		implements FilterableDao<M, K, F>, FilterResultsFactory<M, K, F> {
 
@@ -85,7 +87,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * @param sqlProps
 	 *        the properties
 	 */
-	protected void postProcessFilterProperties(F filter, Map<String, Object> sqlProps) {
+	protected void postProcessFilterProperties(F filter, @Nullable Map<String, Object> sqlProps) {
 		// nothing here, extending classes can implement
 	}
 
@@ -115,8 +117,8 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * @see BaseMyBatisDao#selectFiltered(String, Object, List, Long, Integer,
 	 *      java.util.function.BiConsumer)
 	 */
-	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+	protected FilterResults<M, K> doFindFiltered(F filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		final String filterDomain = matchType.getSimpleName();
 		final String query = getFilteredQuery(filterDomain, filter);
 		return selectFiltered(query, filter, sorts, offset, max, this::postProcessFilterProperties,
@@ -124,8 +126,9 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	}
 
 	@Override
-	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
-			Iterable<M> rows, Long totalCount, Long offset, Integer returnedCount) {
+	public FilterResults<M, K> createFilterResults(F filter, @Nullable Map<String, Object> sqlProps,
+			Iterable<M> rows, @Nullable Long totalCount, @Nullable Long offset,
+			@Nullable Integer returnedCount) {
 		return BasicFilterResults.<M, K> filterResults(rows, filter, totalCount,
 				(returnedCount != null ? returnedCount : 0));
 	}

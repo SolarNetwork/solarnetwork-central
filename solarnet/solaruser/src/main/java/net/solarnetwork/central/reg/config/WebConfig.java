@@ -28,11 +28,10 @@ import static net.solarnetwork.central.reg.config.RateLimitConfig.RATE_LIMIT;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +48,9 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.cbor.MappingJackson2CborHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverters.ServerBuilder;
+import org.springframework.http.converter.cbor.JacksonCborHttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.session.jdbc.PostgreSqlJdbcIndexedSessionRepositoryCustomizer;
@@ -63,9 +63,9 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
+import net.solarnetwork.central.datum.support.GeneralDatumMapPropertySerializer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
@@ -85,12 +85,14 @@ import net.solarnetwork.web.jakarta.support.JSONView;
 import net.solarnetwork.web.jakarta.support.SimpleCsvHttpMessageConverter;
 import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
 import net.solarnetwork.web.jakarta.support.SimpleXmlView;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Web layer configuration.
  *
  * @author matt
- * @version 1.8
+ * @version 2.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -108,8 +110,11 @@ public class WebConfig implements WebMvcConfigurer {
 	private ContentCachingService contentCachingService;
 
 	@Autowired
+	private JsonMapper jsonMapper;
+
+	@Autowired
 	@Qualifier(JsonConfig.CBOR_MAPPER)
-	private ObjectMapper cborObjectMapper;
+	private CBORMapper cborMapper;
 
 	@Override
 	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
@@ -130,7 +135,7 @@ public class WebConfig implements WebMvcConfigurer {
 	public void addFormatters(FormatterRegistry registry) {
 		registry.addFormatterForFieldType(LocalDateTime.class,
 				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC),
-				new DelegatingParser<TemporalAccessor>(
+				new DelegatingParser<>(
 						new TemporalAccessorParser(LocalDateTime.class,
 								DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC),
 						new TemporalAccessorParser(LocalDateTime.class,
@@ -146,7 +151,7 @@ public class WebConfig implements WebMvcConfigurer {
 		SimpleXmlView view = new SimpleXmlView();
 		view.setContentType("text/xml;charset=UTF-8");
 		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
-		view.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		view.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		return view;
 	}
 
@@ -176,34 +181,46 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	public PropertySerializerRegistrar propertySerializerRegistrar() {
-		PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
+		final PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
 
-		Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
+		final GeneralDatumMapPropertySerializer generalDatumMapSerializer = new GeneralDatumMapPropertySerializer();
+
+		final Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
 		classSerializers.put("sun.util.calendar.ZoneInfo", timeZonePropertySerializer());
 		classSerializers.put("org.springframework.validation.BeanPropertyBindingResult",
 				bindingResultSerializer());
+		classSerializers.put("net.solarnetwork.domain.datum.GeneralDatum", generalDatumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.v2.domain.ObjectDatum",
+				generalDatumMapSerializer);
 		reg.setClassSerializers(classSerializers);
 
 		return reg;
 	}
 
 	@Override
-	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-		// update CBOR with our standard ObjectMapper
-		for ( HttpMessageConverter<?> c : converters ) {
-			if ( c instanceof MappingJackson2CborHttpMessageConverter cbor ) {
-				cbor.setObjectMapper(cborObjectMapper);
-			}
-		}
-
-		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
+	public void configureMessageConverters(ServerBuilder builder) {
+		var csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
-		converters.add(csv);
 
-		SimpleXmlHttpMessageConverter xml = new SimpleXmlHttpMessageConverter();
-		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		var xml = new SimpleXmlHttpMessageConverter();
+		xml.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(propertySerializerRegistrar());
-		converters.add(xml);
+
+		var json = new JacksonJsonHttpMessageConverter(jsonMapper);
+		var cbor = new JacksonCborHttpMessageConverter(cborMapper);
+
+		// NOTE json added twice because custom converters ordered BEFORE
+		// the "default" converters like withJsonConverter(); to avoid instantiating
+		// another JSON converter but have JSON handled before CSV, we add both
+		// via withJsonConverter() then addCustomConverter().
+
+		// @formatter:off
+		builder.withJsonConverter(json)
+				.withCborConverter(cbor)
+				.addCustomConverter(json)
+				.addCustomConverter(csv)
+				.addCustomConverter(xml);
+		// @formatter:on
 	}
 
 	@Bean(autowireCandidate = false)
@@ -258,10 +275,11 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		// allow cross-origin access only to the API, without credentials, as it is authenticated
+		// by the Authorization header; the cookie-based browser UI is same-origin only
 		// @formatter:off
-		registry.addMapping("/**")
-			.allowCredentials(true)
-			.allowedOriginPatterns(CorsConfiguration.ALL)
+		registry.addMapping("/api/**")
+			.allowedOrigins(CorsConfiguration.ALL)
 			.maxAge(TimeUnit.HOURS.toSeconds(24))
 			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
 			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")

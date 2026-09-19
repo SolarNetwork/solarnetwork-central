@@ -29,31 +29,31 @@ import net.solarnetwork.flux.vernemq.webhook.domain.v311.SubscribeRequest;
  */
 public interface AuthService {
 
-  /**
-   * Authenticate a register request.
-   * 
-   * @param request
-   *        the request to authenticate
-   * @return the response
-   */
-  Response authenticateRequest(RegisterRequest request);
+	/**
+	 * Authenticate a register request.
+	 * 
+	 * @param request
+	 *        the request to authenticate
+	 * @return the response
+	 */
+	Response authenticateRequest(RegisterRequest request);
 
-  /**
-   * Authorize a publish request.
-   * 
-   * @param request
-   *        the request to authorize
-   * @return the response
-   */
-  Response authorizeRequest(PublishRequest request);
+	/**
+	 * Authorize a publish request.
+	 * 
+	 * @param request
+	 *        the request to authorize
+	 * @return the response
+	 */
+	Response authorizeRequest(PublishRequest request);
 
-  /**
-   * Authorize a subscribe request.
-   * 
-   * @param request
-   *        the request to authorize
-   * @return the response
-   */
-  Response authorizeRequest(SubscribeRequest request);
+	/**
+	 * Authorize a subscribe request.
+	 * 
+	 * @param request
+	 *        the request to authorize
+	 * @return the response
+	 */
+	Response authorizeRequest(SubscribeRequest request);
 
 }

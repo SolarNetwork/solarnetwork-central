@@ -62,7 +62,7 @@ public final class UpdateCloudIntegrationConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudIntegrationConfiguration(UserLongCompositePK id,
 			CloudIntegrationConfiguration entity) {

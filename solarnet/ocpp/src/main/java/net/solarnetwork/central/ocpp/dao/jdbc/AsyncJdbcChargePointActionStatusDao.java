@@ -35,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
@@ -74,7 +75,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	private final BlockingQueue<ChargePointActionStatusUpdate> statuses;
 	private final StatTracker stats;
 
-	private WriterThread writerThread;
+	private @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long connectionRecoveryDelay;
 	private int bufferRemovalLagAlertThreshold;
@@ -89,7 +90,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource) {
 		this(dataSource, new LinkedBlockingQueue<>());
@@ -103,7 +104,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param statuses
 	 *        the map to use for tracking status updates
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
 			BlockingQueue<ChargePointActionStatusUpdate> statuses) {
@@ -121,7 +122,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param stats
 	 *        the statistics counter
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 * @since 1.1
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
@@ -163,19 +164,19 @@ public class AsyncJdbcChargePointActionStatusDao
 		private final AtomicBoolean keepGoing = new AtomicBoolean(true);
 		private boolean started = false;
 
-		public boolean hasStarted() {
+		private boolean hasStarted() {
 			return started;
 		}
 
-		public boolean isGoing() {
+		private boolean isGoing() {
 			return keepGoing.get();
 		}
 
-		public void reconnect() {
+		private void reconnect() {
 			keepGoingWithConnection.compareAndSet(true, false);
 		}
 
-		public void exit() {
+		private void exit() {
 			keepGoing.compareAndSet(true, false);
 			keepGoingWithConnection.compareAndSet(true, false);
 		}
@@ -204,7 +205,8 @@ public class AsyncJdbcChargePointActionStatusDao
 						try {
 							Thread.sleep(connectionRecoveryDelay);
 						} catch ( InterruptedException e2 ) {
-							log.info("Writer thread interrupted: exiting now.");
+							log.info(
+									"Writer thread interrupted during connection recovery: exiting now.");
 							keepGoing.set(false);
 						}
 					}
@@ -249,19 +251,9 @@ public class AsyncJdbcChargePointActionStatusDao
 							upd.getAction(), upd.getMessageId(), upd.getDate());
 					stmt.execute();
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
-				} catch ( SQLException e ) {
+				} catch ( SQLException | RuntimeException e ) {
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
 					throw e;
-				} catch ( Exception e ) {
-					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-					RuntimeException re;
-					if ( e instanceof RuntimeException ) {
-						re = (RuntimeException) e;
-					} else {
-						re = new RuntimeException("Exception flushing OCPP charge point action status",
-								e);
-					}
-					throw re;
 				}
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
@@ -285,13 +277,14 @@ public class AsyncJdbcChargePointActionStatusDao
 	 */
 	public synchronized void enableWriting() {
 		if ( writerThread == null || !writerThread.isGoing() ) {
-			writerThread = new WriterThread();
-			writerThread.setName("OcppChargePointActionStatusUpdater");
-			synchronized ( writerThread ) {
-				writerThread.start();
-				while ( !writerThread.hasStarted() ) {
+			WriterThread t = new WriterThread();
+			t.setName("OcppChargePointActionStatusUpdater");
+			this.writerThread = t;
+			synchronized ( t ) {
+				t.start();
+				while ( !t.hasStarted() ) {
 					try {
-						writerThread.wait(5000L);
+						t.wait(5000L);
 					} catch ( InterruptedException e ) {
 						// ignore
 					}
@@ -345,8 +338,8 @@ public class AsyncJdbcChargePointActionStatusDao
 		// verify buffer removals does not lag additions
 		final long addCount = statMap
 				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
-		final long removeLag = addCount - (statMap
-				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L));
+		final long removeLag = addCount
+				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.pki.dogtag;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Agent info on a certificate request in Dogtag.
  * 
@@ -30,40 +32,40 @@ package net.solarnetwork.central.user.pki.dogtag;
  */
 public class DogtagAgentCertRequestInfo {
 
-	private String requestorName;
-	private String requestorEmail;
-	private String subjectDn;
-	private String csr;
+	private @Nullable String requestorName;
+	private @Nullable String requestorEmail;
+	private @Nullable String subjectDn;
+	private @Nullable String csr;
 
-	public String getRequestorName() {
+	public final @Nullable String getRequestorName() {
 		return requestorName;
 	}
 
-	public void setRequestorName(String requestorName) {
+	public final void setRequestorName(@Nullable String requestorName) {
 		this.requestorName = requestorName;
 	}
 
-	public String getRequestorEmail() {
+	public final @Nullable String getRequestorEmail() {
 		return requestorEmail;
 	}
 
-	public void setRequestorEmail(String requestorEmail) {
+	public final void setRequestorEmail(@Nullable String requestorEmail) {
 		this.requestorEmail = requestorEmail;
 	}
 
-	public String getSubjectDn() {
+	public final @Nullable String getSubjectDn() {
 		return subjectDn;
 	}
 
-	public void setSubjectDn(String subjectDn) {
+	public final void setSubjectDn(@Nullable String subjectDn) {
 		this.subjectDn = subjectDn;
 	}
 
-	public String getCsr() {
+	public final @Nullable String getCsr() {
 		return csr;
 	}
 
-	public void setCsr(String csr) {
+	public final void setCsr(@Nullable String csr) {
 		this.csr = csr;
 	}
 

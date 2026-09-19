@@ -40,11 +40,13 @@ public class StaleAuditNodeServiceProcessor extends TieredStoredProcedureStaleRe
 	 * 
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param id
+	 *        the job ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public StaleAuditNodeServiceProcessor(JdbcOperations jdbcOps) {
-		super(jdbcOps, "stale node service audit data");
+	public StaleAuditNodeServiceProcessor(JdbcOperations jdbcOps, String id) {
+		super(jdbcOps, "Audit", id, "stale node service audit data");
 		setJdbcCall(DEFAULT_SQL);
 		setTierProcessMax(null);
 	}

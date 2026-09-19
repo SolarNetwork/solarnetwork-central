@@ -59,7 +59,7 @@ public final class InsertServerConfiguration implements PreparedStatementCreator
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertServerConfiguration(Long userId, ServerConfiguration entity) {
 		super();

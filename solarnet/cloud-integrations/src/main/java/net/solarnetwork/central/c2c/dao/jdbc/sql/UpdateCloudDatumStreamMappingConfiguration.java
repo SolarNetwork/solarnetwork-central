@@ -63,7 +63,7 @@ public final class UpdateCloudDatumStreamMappingConfiguration
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamMappingConfiguration(UserLongCompositePK id,
 			CloudDatumStreamMappingConfiguration entity) {

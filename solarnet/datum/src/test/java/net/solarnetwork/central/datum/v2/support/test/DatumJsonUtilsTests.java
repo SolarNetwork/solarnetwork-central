@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumUtilsTests.java - 7/10/2019 3:25:02 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
@@ -38,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -49,27 +49,29 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.junit.Test;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
-import net.solarnetwork.domain.datum.Aggregation;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.ObjectWriteContext;
+import tools.jackson.core.json.JsonFactory;
 
 /**
  * Test cases for the {@link DatumJsonUtils} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -85,7 +87,8 @@ public class DatumJsonUtilsTests {
 						new BigDecimal[] { new BigDecimal("123456") }, new String[] { "On", "Happy" },
 						null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(), equalTo(
@@ -99,7 +102,8 @@ public class DatumJsonUtilsTests {
 						new BigDecimal[] { null, new BigDecimal("123456") },
 						new String[] { "On", null, "Holy" }, null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -114,7 +118,8 @@ public class DatumJsonUtilsTests {
 						new BigDecimal[] { new BigDecimal("123456") }, new String[] { "On" },
 						new String[] { "A", "B" }));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(), equalTo(
@@ -122,12 +127,13 @@ public class DatumJsonUtilsTests {
 	}
 
 	@Test
-	public void writePropertyValues_missingTimestamp() throws IOException {
-		DatumEntity datum = new DatumEntity(UUID.randomUUID(), null, null,
+	public void writePropertyValues_epochTimestamp() throws IOException {
+		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.EPOCH, null,
 				propertiesOf(new BigDecimal[] { new BigDecimal("1.23") },
 						new BigDecimal[] { new BigDecimal("123456") }, new String[] { "On" }, null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(), equalTo("[null,1.23,123456,\"On\"]"));
@@ -138,7 +144,8 @@ public class DatumJsonUtilsTests {
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, propertiesOf(null,
 				new BigDecimal[] { new BigDecimal("123456") }, new String[] { "On" }, null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -150,7 +157,8 @@ public class DatumJsonUtilsTests {
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, propertiesOf(
 				new BigDecimal[] { new BigDecimal("1.23") }, null, new String[] { "On" }, null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -163,7 +171,8 @@ public class DatumJsonUtilsTests {
 				propertiesOf(new BigDecimal[] { new BigDecimal("1.23") },
 						new BigDecimal[] { new BigDecimal("123456") }, null, null));
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writePropertyValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -176,7 +185,8 @@ public class DatumJsonUtilsTests {
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
 				new String[] { "six" });
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
@@ -188,7 +198,8 @@ public class DatumJsonUtilsTests {
 		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC", null,
 				new String[] { "four", "five" }, new String[] { "six" });
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
@@ -200,7 +211,8 @@ public class DatumJsonUtilsTests {
 		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, null, new String[] { "six" });
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
@@ -212,7 +224,8 @@ public class DatumJsonUtilsTests {
 		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" }, null);
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
@@ -224,7 +237,8 @@ public class DatumJsonUtilsTests {
 		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC", null, null,
 				null);
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(),
@@ -259,7 +273,8 @@ public class DatumJsonUtilsTests {
 								new String[] { "Onnn" }, null)));
 
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStream(generator, streamId, metadata, datum.iterator(), datum.size());
 		}
 		assertThat("JSON object generated", out.toString(), equalTo("{\"streamId\":\""
@@ -290,7 +305,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						arrayOfDecimals("1.23", "2.34"), 
+						arrayOfDecimals("1.23", "2.34"),
 						arrayOfDecimals("123456"),
 						null, null),
 				statisticsOf(
@@ -301,7 +316,8 @@ public class DatumJsonUtilsTests {
 								arrayOfDecimals("0", "123456") }));
 		// @formatter:on
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStatisticValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -315,7 +331,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						arrayOfDecimals("1.23", null), 
+						arrayOfDecimals("1.23", null),
 						arrayOfDecimals(null, "123456"),
 						null, null),
 				statisticsOf(
@@ -327,7 +343,8 @@ public class DatumJsonUtilsTests {
 								arrayOfDecimals("0", "123456") }));
 		// @formatter:on
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStatisticValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -336,10 +353,10 @@ public class DatumJsonUtilsTests {
 	}
 
 	@Test
-	public void writeStatisticValues_missingTimestamp() throws IOException {
+	public void writeStatisticValues_epochTimestamp() throws IOException {
 		// @formatter:off
 		AggregateDatumEntity datum = new AggregateDatumEntity(
-				UUID.randomUUID(), null, Aggregation.Hour,
+				UUID.randomUUID(), Instant.EPOCH, Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23"),
 						null,
@@ -350,7 +367,8 @@ public class DatumJsonUtilsTests {
 						null));
 		// @formatter:on
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStatisticValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(), equalTo("[null,[1.11,2.22,60]]"));
@@ -362,7 +380,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						null, 
+						null,
 						arrayOfDecimals("123456"),
 						null, null),
 				statisticsOf(
@@ -371,7 +389,8 @@ public class DatumJsonUtilsTests {
 								arrayOfDecimals("0", "123456") }));
 		// @formatter:on
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStatisticValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -393,7 +412,8 @@ public class DatumJsonUtilsTests {
 						null));
 		// @formatter:on
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeStatisticValuesArray(generator, datum);
 		}
 		assertThat("JSON array generated", out.toString(),
@@ -466,7 +486,8 @@ public class DatumJsonUtilsTests {
 		// @formatter:on
 
 		StringWriter out = new StringWriter();
-		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+		try (JsonGenerator generator = JsonFactory.builder().build()
+				.createGenerator(ObjectWriteContext.empty(), out)) {
 			DatumJsonUtils.writeAggregateStream(generator, streamId, metadata, datum.iterator(),
 					datum.size());
 		}
@@ -477,7 +498,7 @@ public class DatumJsonUtilsTests {
 				+ "\",\"metadata\":{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],"
 				+ "\"class\":{\"i\":[\"one\",\"two\",\"three\"],"
 				+ "\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
-				+ format(",\"values\":[" 
+				+ format(",\"values\":["
 								+ "[%d,1.23,2.34,3.45,456,567,\"On\"],"
 								+ "[%d,[1.11,2.22,60],[2.22,3.33,59],[3.33,4.44,58],[0,456],[0,567]],"
 								+ "[%d,1.234,2.345,3.456,4567,5678,\"Onn\",\"TAG\"],"
@@ -500,7 +521,7 @@ public class DatumJsonUtilsTests {
 		List<AggregateDatum> result = new ArrayList<>();
 		int row = 0;
 		try (BufferedReader r = new BufferedReader(
-				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+				new InputStreamReader(clazz.getResourceAsStream(resource), UTF_8))) {
 			while ( true ) {
 				String line = r.readLine();
 				if ( line == null ) {
@@ -512,7 +533,7 @@ public class DatumJsonUtilsTests {
 					continue;
 				}
 
-				JsonParser parser = factory.createParser(line);
+				JsonParser parser = factory.createParser(ObjectReadContext.empty(), line);
 				AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, streamIdProvider);
 				assertThat(format("Parsed JSON aggregate datum in line %d", row), d, notNullValue());
 				result.add(d);
@@ -523,7 +544,7 @@ public class DatumJsonUtilsTests {
 
 	/**
 	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
-	 * 
+	 *
 	 * @param nums
 	 *        the string numbers, which will be parsed as {@link BigDecimal}
 	 *        instances

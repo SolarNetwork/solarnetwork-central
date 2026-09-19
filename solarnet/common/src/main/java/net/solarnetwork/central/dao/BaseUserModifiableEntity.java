@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.dao.BasicEntity;
@@ -33,16 +35,20 @@ import net.solarnetwork.dao.BasicEntity;
  * Base mutable user-related configuration entity, where the first component of
  * its primary key is a Long user ID.
  *
+ * @param <T>
+ *        the identity type
+ * @param <K>
+ *        the key type
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends BasicEntity<K> implements UserRelatedStdEntity<C, K> {
+public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends BasicEntity<K> implements UserRelatedStdEntity<T, K> {
 
 	@Serial
 	private static final long serialVersionUID = -8201311252309117005L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean enabled;
 
 	/**
@@ -51,7 +57,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.2
 	 */
 	public BaseUserModifiableEntity(K id) {
@@ -66,7 +72,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserModifiableEntity(K id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -74,12 +80,12 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public C clone() {
-		return (C) super.clone();
+	public T clone() {
+		return (T) super.clone();
 	}
 
 	@Override
-	public void copyTo(C entity) {
+	public void copyTo(T entity) {
 		entity.setModified(modified);
 		entity.setEnabled(enabled);
 	}
@@ -97,19 +103,21 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(C other) {
+	public boolean isSameAs(@Nullable T other) {
+		if ( other == null ) {
+			return false;
+		}
 		return (this.enabled == other.isEnabled());
 	}
 
 	@Override
-	public boolean differsFrom(C other) {
+	public boolean differsFrom(@Nullable T other) {
 		return !isSameAs(other);
 	}
 
 	@Override
-	public Long getUserId() {
-		K pk = getId();
-		return (pk != null ? (Long) pk.keyComponent(0) : null);
+	public final Long getUserId() {
+		return nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -140,7 +148,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 *
 	 * @return the modified date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -150,7 +158,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @param modified
 	 *        the modified date to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
@@ -159,7 +167,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 *
 	 * @return {@literal true} if enabled
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -169,7 +177,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @param enabled
 	 *        the value to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 

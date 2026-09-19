@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -53,11 +56,14 @@ public class ServerConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public ServerConfiguration(UserLongCompositePK id, Instant created) {
+	public ServerConfiguration(UserLongCompositePK id, Instant created, String name) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -69,16 +75,18 @@ public class ServerConfiguration
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public ServerConfiguration(Long userId, Long entityId, Instant created) {
-		this(new UserLongCompositePK(userId, entityId), created);
+	public ServerConfiguration(Long userId, Long entityId, Instant created, String name) {
+		this(new UserLongCompositePK(userId, entityId), created, name);
 	}
 
 	@Override
 	public ServerConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new ServerConfiguration(id, getCreated());
+		var copy = new ServerConfiguration(id, created(), name);
 		copyTo(copy);
 		return copy;
 	}
@@ -90,12 +98,12 @@ public class ServerConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(ServerConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable ServerConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
-		return Objects.equals(this.name, other.getName());
+		final var o = nonnull(other, "other");
+		return Objects.equals(this.name, o.getName());
 	}
 
 	@Override
@@ -128,9 +136,8 @@ public class ServerConfiguration
 	 *
 	 * @return the server ID
 	 */
-	public Long getServerId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getServerId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -138,7 +145,7 @@ public class ServerConfiguration
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -148,8 +155,8 @@ public class ServerConfiguration
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 }

@@ -57,7 +57,7 @@ public class DelegatingValidator implements SmartValidator {
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		validate(target, errors, (Object[]) null);
+		validate(target, errors, new Object[0]);
 	}
 
 	@Override
@@ -71,8 +71,8 @@ public class DelegatingValidator implements SmartValidator {
 		if ( delegate == null ) {
 			return;
 		}
-		if ( delegate instanceof SmartValidator ) {
-			((SmartValidator) delegate).validate(target, errors, validationHints);
+		if ( delegate instanceof SmartValidator sv ) {
+			sv.validate(target, errors, validationHints);
 		} else {
 			delegate.validate(target, errors);
 		}

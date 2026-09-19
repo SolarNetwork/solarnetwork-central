@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao.mybatis.support;
 
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Callback API for performing work with a {@link SqlSession}.
@@ -30,15 +31,16 @@ import org.apache.ibatis.session.SqlSession;
  * @author matt
  * @version 1.0
  */
-public interface SqlSessionCallback<T> {
+public interface SqlSessionCallback<T extends @Nullable Object> {
 
 	/**
 	 * Perform some task with a {@link SqlSession}.
 	 * 
 	 * @param session
 	 *        the session object
-	 * @return some object (possibly <em>null</em>)
+	 * @return some object (possibly {@code null})
 	 */
+	@Nullable
 	T doWithSqlSession(SqlSession session);
 
 }

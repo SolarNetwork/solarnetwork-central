@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.dao.Entity;
@@ -31,21 +33,14 @@ import net.solarnetwork.dao.Entity;
 /**
  * API for an entity associated with a user ID.
  *
- * @param <PK>
+ * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 2.0
  */
-public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
-
-	/**
-	 * Get the user ID this entity relates to.
-	 *
-	 * @return the user ID
-	 */
-	@Override
-	Long getUserId();
+public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
+		extends Entity<K>, UserIdRelated {
 
 	/**
 	 * Mask any sensitive information.
@@ -57,7 +52,8 @@ public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	default void maskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}
@@ -72,7 +68,8 @@ public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void unmaskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	default void unmaskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}

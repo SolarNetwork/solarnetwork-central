@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 
 /**
  * Base class for data collector implementations.
@@ -103,17 +103,17 @@ public abstract class AbstractDataCollector {
 	 *        <em>true</em> if AuthenticatedNode is required, or <em>false</em>
 	 *        if not
 	 * @return AuthenticatedNode
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if an AuthenticatedNode is not available and {@code required} is
 	 *         <em>true</em>
 	 */
 	protected AuthenticatedNode getAuthenticatedNode(boolean required) {
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		if ( principal instanceof AuthenticatedNode ) {
-			return (AuthenticatedNode) principal;
+		if ( principal instanceof AuthenticatedNode n ) {
+			return n;
 		}
 		if ( required ) {
-			throw new SecurityException("Authenticated node required but not avaialble");
+			throw new BasicSecurityException("Authenticated node required but not avaialble");
 		}
 		return null;
 	}

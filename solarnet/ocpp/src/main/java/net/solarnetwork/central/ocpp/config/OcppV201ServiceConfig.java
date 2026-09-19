@@ -33,12 +33,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.config.VersionedQualifier;
-import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -59,6 +57,8 @@ import ocpp.v201.BootNotificationRequest;
 import ocpp.v201.BootNotificationResponse;
 import ocpp.v201.StatusNotificationRequest;
 import ocpp.v201.StatusNotificationResponse;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v2.0.1 controller configuration.
@@ -106,14 +106,11 @@ public class OcppV201ServiceConfig {
 	private ActionPayloadDecoder ocppChargePointActionPayloadDecoder;
 
 	@Autowired(required = false)
-	@Qualifier("solarflux")
-	private DatumProcessor fluxPublisher;
-
-	@Autowired(required = false)
 	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V201)
 	private ActionMessageProcessor<JsonNode, Void> ocppInstructionHandler;
 
 	@Bean
+	@Order(10)
 	@Qualifier(OCPP_V201)
 	public OcppController ocppController_v201() {
 		OcppController controller = new OcppController(executor, ocppChargePointRouter, userNodeDao,

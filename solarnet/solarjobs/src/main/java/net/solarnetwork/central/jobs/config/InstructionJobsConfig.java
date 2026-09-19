@@ -50,7 +50,6 @@ public class InstructionJobsConfig {
 	@Bean
 	public ManagedJob completedNodeInstructionCleaner() {
 		var job = new NodeInstructionCleaner(nodeInstructionDao);
-		job.setId("NodeInstructionCleaner");
 		return job;
 	}
 
@@ -58,7 +57,6 @@ public class InstructionJobsConfig {
 	@Bean
 	public ManagedJob queuingStaleNodeStateUpdator() {
 		var job = new StaleNodeStateUpdater(nodeInstructionDao);
-		job.setId("StaleNodeStateUpdater-Queuing");
 		return job;
 	}
 
@@ -67,7 +65,6 @@ public class InstructionJobsConfig {
 	public ManagedJob expiredNodeInstructionUpdater(
 			@Value("${app.job.instr.expired-transition.message}") String message) {
 		var job = new ExpiredNodeInstructionUpdater(nodeInstructionDao, Map.of("message", message));
-		job.setId("ExpiredNodeInstructionUpdater");
 		return job;
 	}
 

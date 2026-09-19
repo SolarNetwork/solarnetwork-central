@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -38,9 +39,9 @@ import java.util.List;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
@@ -79,14 +80,14 @@ public class DaoDatumMaintenanceBizTests {
 		verify(datumDao, metaDao);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumMaintenanceDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		biz = new DaoDatumMaintenanceBiz(datumDao, metaDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		verifyAll();
 	}
@@ -97,7 +98,7 @@ public class DaoDatumMaintenanceBizTests {
 		UUID streamId = UUID.randomUUID();
 		List<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum> daoStale = new ArrayList<>();
 		StaleAggregateDatumEntity daoDatum = new StaleAggregateDatumEntity(streamId,
-				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, Instant.now());
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, now());
 		daoStale.add(daoDatum);
 		Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
 		BasicFilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, StreamKindPK> daoResults = new BasicFilterResults<>(
@@ -142,7 +143,7 @@ public class DaoDatumMaintenanceBizTests {
 		UUID streamId = UUID.randomUUID();
 		List<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum> daoStale = new ArrayList<>();
 		StaleAggregateDatumEntity daoDatum = new StaleAggregateDatumEntity(streamId,
-				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, Instant.now());
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, now());
 		daoStale.add(daoDatum);
 		Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
 		BasicFilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, StreamKindPK> daoResults = new BasicFilterResults<>(

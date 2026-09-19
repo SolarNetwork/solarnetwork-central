@@ -46,7 +46,7 @@ public final class SelectAccumulativeAuditDatum extends SelectAuditDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectAccumulativeAuditDatum(AuditDatumCriteria filter) {
 		super(filter, Aggregation.RunningTotal);

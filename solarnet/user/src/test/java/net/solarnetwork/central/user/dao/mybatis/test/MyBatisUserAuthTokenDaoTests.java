@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.domain.Identity.sortByIdentity;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,16 +39,15 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -58,13 +57,14 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -102,13 +102,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNew() {
-		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.User);
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.User);
 		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
@@ -116,15 +114,12 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNewWithNodeId() {
-		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.ReadNodeData);
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.ReadNodeData);
-		authToken.setPolicy(new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(node.getId())).build());
+		authToken.setPolicy(new BasicSecurityPolicy.Builder().withNodeIds(Set.of(node.getId())).build());
 		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
@@ -134,13 +129,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void storeNewWithNodeIds() {
 		final Long nodeId2 = -2L;
 		setupTestNode(nodeId2);
-		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.ReadNodeData);
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
 		String id = userAuthTokenDao.save(authToken);
@@ -150,13 +143,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNewWithInfo() {
-		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.User);
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.User);
 		authToken.setName(UUID.randomUUID().toString());
 		authToken.setDescription(UUID.randomUUID().toString());
 		String id = userAuthTokenDao.save(authToken);
@@ -366,7 +357,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 			.as("All results for user %d returned in order", randomUserId)
 			.containsExactlyElementsOf(entities.stream()
 					.filter(t -> randomUserId.equals(t.getUserId()))
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 		
@@ -381,7 +372,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 					.filter(t -> randomUserId.equals(t.getUserId())
 							&& t.getStatus() == (randomActive 
 									? SecurityTokenStatus.Active : SecurityTokenStatus.Disabled))
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 
@@ -390,7 +381,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 			.containsExactlyElementsOf(entities.stream()
 					.filter(t -> randomUserId.equals(t.getUserId())
 							&& randomType == t.getType())
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 	

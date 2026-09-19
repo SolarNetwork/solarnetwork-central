@@ -97,7 +97,6 @@ function fluxManagement() {
 		if (!sys) {
 			return;
 		}
-		const modal = $(this);
 		const container = sys.container.find('.list-container');
 		SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
 			if (deleted) {

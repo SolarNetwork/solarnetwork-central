@@ -93,7 +93,7 @@ public class LocalizedNamedCost implements LocalizedNamedCostInfo, NamedCost {
 	public String getLocalizedQuantity() {
 		BigInteger val = getQuantity();
 		if ( val == null ) {
-			return null;
+			return "";
 		}
 		NumberFormat fmt = NumberFormat.getNumberInstance(locale);
 		return fmt.format(val);
@@ -104,7 +104,7 @@ public class LocalizedNamedCost implements LocalizedNamedCostInfo, NamedCost {
 		BigDecimal val = getCost();
 		return (val != null
 				? MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode, val)
-				: null);
+				: "");
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class LocalizedNamedCost implements LocalizedNamedCostInfo, NamedCost {
 		BigDecimal val = getEffectiveRate();
 		return (val != null
 				? MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode, val)
-				: null);
+				: "");
 	}
 
 }

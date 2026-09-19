@@ -49,7 +49,7 @@ public final class UpdateLocationRequest implements PreparedStatementCreator, Sq
 	 * @param request
 	 *        the request to update
 	 * @throws IllegalArgumentException
-	 *         if {@code request} or {@code request.id} is {@literal null}
+	 *         if {@code request} or {@code request.id} is {@code null}
 	 */
 	public UpdateLocationRequest(LocationRequest request) {
 		super();

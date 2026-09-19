@@ -23,10 +23,10 @@
 package net.solarnetwork.central.in.config;
 
 import static java.lang.String.format;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,7 +55,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -72,11 +72,10 @@ public class WebConfig implements WebMvcConfigurer {
 
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
 		// @formatter:off
-		configurer.favorPathExtension(true)
+		configurer
 			.favorParameter(false)
 			.ignoreAcceptHeader(false)
 			.useRegisteredExtensionsOnly(true)
@@ -107,7 +106,7 @@ public class WebConfig implements WebMvcConfigurer {
 		SimpleXmlView view = new SimpleXmlView();
 		view.setContentType("text/xml;charset=UTF-8");
 		view.setPropertySerializerRegistrar(registrar);
-		view.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		view.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		return view;
 	}
 

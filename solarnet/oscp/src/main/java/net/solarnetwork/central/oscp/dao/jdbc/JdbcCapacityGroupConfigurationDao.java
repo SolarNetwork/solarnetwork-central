@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcCapacityGroupConfigurationDao.java - 14/08/2022 7:33:47 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -45,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * JDBC implementation of {@link JdbcCapacityGroupConfigurationDao}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -55,11 +56,11 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCapacityGroupConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -76,7 +77,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 		final InsertCapacityGroupConfiguration sql = new InsertCapacityGroupConfiguration(userId,
 				entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
+		final var pk = new UserLongCompositePK(userId, id);
 
 		// make sure measurement rows created at same time, for CP and CO
 		jdbcOps.update(new InsertCapacityGroupMeasurementDate(OscpRole.CapacityProvider, pk, null));
@@ -87,17 +88,19 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	@Override
 	public UserLongCompositePK save(CapacityGroupConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		final var id = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !id.entityIdIsAssigned() ) {
+			return create(id.getUserId(), entity);
 		}
-		final UpdateCapacityGroupConfiguration sql = new UpdateCapacityGroupConfiguration(entity.getId(),
-				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateCapacityGroupConfiguration(id, entity);
+		jdbcOps.update(sql);
+		return id;
 	}
 
 	@Override
-	public Collection<CapacityGroupConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCapacityGroupConfiguration(filter);
@@ -131,7 +134,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration get(UserLongCompositePK id) {
+	public @Nullable CapacityGroupConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -143,7 +146,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public Collection<CapacityGroupConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -158,8 +161,8 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
-			String groupIdentifier) {
+	public @Nullable CapacityGroupConfiguration findForCapacityProvider(Long userId,
+			Long capacityProviderId, String groupIdentifier) {
 		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
 		filter.setProviderId(capacityProviderId);
 		filter.setIdentifier(groupIdentifier);
@@ -170,8 +173,8 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
-			String groupIdentifier) {
+	public @Nullable CapacityGroupConfiguration findForCapacityOptimizer(Long userId,
+			Long capacityOptimizerId, String groupIdentifier) {
 		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
 		filter.setOptimizerId(capacityOptimizerId);
 		filter.setIdentifier(groupIdentifier);

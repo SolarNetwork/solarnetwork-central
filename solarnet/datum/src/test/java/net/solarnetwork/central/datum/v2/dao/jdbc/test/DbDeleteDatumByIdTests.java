@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -35,7 +36,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -85,10 +85,7 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 			final int count, final long step, final Long nodeId, final String sourceId) {
 		List<GeneralNodeDatum> data = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(start.plusMillis(i * step));
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+			GeneralNodeDatum d = new GeneralNodeDatum(nodeId, start.plusMillis(i * step), sourceId);
 			DatumSamples s = new DatumSamples();
 			s.putInstantaneousSampleValue("watts", 125);
 			s.putAccumulatingSampleValue("wattHours", 10);
@@ -130,7 +127,7 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 		if ( result.get("data") instanceof List<?> l ) {
 			return (List<ObjectDatumId>) l;
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Test
@@ -160,7 +157,7 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 		// @formatter:off
 		then(staleRows)
 			.as("Stale row inserted")
-			.containsExactly(new StaleAggregateDatumEntity(streamId, tsToDelete.truncatedTo(HOURS), Aggregation.Hour, null))
+			.containsExactly(new StaleAggregateDatumEntity(streamId, tsToDelete.truncatedTo(HOURS), Aggregation.Hour, now()))
 			;
 		// @formatter:on
 	}

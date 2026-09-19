@@ -10,9 +10,9 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost/solarnetwork"
-    username: "solarnet"
-    password: "solarnet"
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
     initialize: false
   datum:
     stream-metadata-cache:
@@ -23,6 +23,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 5
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   http.client:
     connections:
       default-max-per-route: 4
@@ -128,6 +132,27 @@ app:
     thread-name-prefix: "SolarOSCP-FP-Sched-"
     pool-size: 5
     remove-on-cancel-policy: true
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 0
+      write-concurrency: 1
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      ping-test-timeout: "2s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
 
 debug: false
 
@@ -158,6 +183,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000
@@ -172,9 +198,17 @@ mybatis:
 server:
   compression:
     enabled: true
-    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types:
+      - "application/cbor"
+      - "application/json"
+      - "application/javascript"
+      - "application/octet-stream"
+      - "image/svg+xml"
+      - "text/css"
+      - "text/html"
+      - "text/plain"
+      - "text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9084
   tomcat.threads:
     min-spare: 1
@@ -191,6 +225,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "http://localhost/idp/path"
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

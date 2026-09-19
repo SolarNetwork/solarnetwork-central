@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.c2c.dao;
 
-import java.time.Instant;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.common.dao.ClaimableTaskDao;
+import net.solarnetwork.central.common.dao.FilterableDeleteDao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterableDao;
 
@@ -37,58 +37,8 @@ import net.solarnetwork.dao.FilterableDao;
  */
 public interface CloudDatumStreamPollTaskDao
 		extends GenericCompositeKey2Dao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, Long, Long>,
-		FilterableDao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, CloudDatumStreamPollTaskFilter> {
-
-	/**
-	 * Claim a queued task.
-	 *
-	 * This method will "claim" a task that is currently in a "queued" state,
-	 * changing the state to "claimed".
-	 *
-	 * @return a claimed task, or {@literal null} if none could be claimed
-	 */
-	CloudDatumStreamPollTaskEntity claimQueuedTask();
-
-	/**
-	 * Update the state of a specific poll task.
-	 *
-	 * @param id
-	 *        the ID of the task to update the state of
-	 * @param desiredState
-	 *        the state to update the task to
-	 * @param expectedStates
-	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@literal null} if
-	 *        the current state of the task does not matter
-	 * @return {@literal true} if the task state was changed
-	 */
-	boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			BasicClaimableJobState... expectedStates);
-
-	/**
-	 * Update a specific poll task.
-	 *
-	 * @param info
-	 *        the info to save
-	 * @param expectedStates
-	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@literal null}
-	 *        if the current state of the task does not matter
-	 * @return {@literal true} if the task state was changed
-	 */
-	boolean updateTask(CloudDatumStreamPollTaskEntity info, BasicClaimableJobState... expectedStates);
-
-	/**
-	 * Reset poll tasks that are in the executing state but have an execute date
-	 * older than a given date.
-	 *
-	 * <p>
-	 * The intention of this method is to "reset" a task that was inadvertently
-	 * left in an executing state, for example after a server restart.
-	 * </p>
-	 *
-	 * @return the number of tasks reset
-	 */
-	int resetAbandondedExecutingTasks(Instant olderThan);
+		FilterableDao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, CloudDatumStreamPollTaskFilter>,
+		FilterableDeleteDao<CloudDatumStreamPollTaskFilter>,
+		ClaimableTaskDao<CloudDatumStreamPollTaskEntity, UserLongCompositePK> {
 
 }

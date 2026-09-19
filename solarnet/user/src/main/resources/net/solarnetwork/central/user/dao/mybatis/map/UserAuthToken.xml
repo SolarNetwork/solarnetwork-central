@@ -58,13 +58,15 @@
 	</sql>
 
 	<resultMap id="UserAuthTokenFullResult" type="UserAuthToken">
-		<id property="id" column="uat_auth_token"/>
+		<constructor>
+			<idArg column="uat_auth_token" javaType="string"/>
+			<arg column="uat_user_id" javaType="long"/>
+			<arg column="uat_token_type" javaType="net.solarnetwork.central.security.SecurityTokenType"/>
+		</constructor>
 		<result property="created" column="uat_created"/>
-		<result property="userId" column="uat_user_id"/>
 		<result property="name" column="uat_disp_name"/>
 		<result property="description" column="uat_description"/>
 		<result property="status" column="uat_status"/>
-		<result property="type" column="uat_token_type"/>
 		<result property="policyJson" column="uat_jpolicy"/>
 	</resultMap>
 	

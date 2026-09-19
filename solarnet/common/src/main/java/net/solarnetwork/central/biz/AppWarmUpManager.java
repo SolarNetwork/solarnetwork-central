@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.biz;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -37,7 +38,7 @@ public class AppWarmUpManager implements ServiceLifecycleObserver {
 
 	private static final Logger log = LoggerFactory.getLogger(AppWarmUpManager.class);
 
-	private final Iterable<AppWarmUpTask> warmUpTasks;
+	private final @Nullable Iterable<AppWarmUpTask> warmUpTasks;
 
 	/**
 	 * Constructor.
@@ -45,7 +46,7 @@ public class AppWarmUpManager implements ServiceLifecycleObserver {
 	 * @param warmUpTasks
 	 *        the warm-up tasks to manage
 	 */
-	public AppWarmUpManager(Iterable<AppWarmUpTask> warmUpTasks) {
+	public AppWarmUpManager(@Nullable Iterable<AppWarmUpTask> warmUpTasks) {
 		super();
 		this.warmUpTasks = warmUpTasks;
 	}

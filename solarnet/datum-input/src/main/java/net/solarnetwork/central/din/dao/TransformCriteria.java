@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.din.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for transform related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TransformCriteria {
 
@@ -35,12 +37,12 @@ public interface TransformCriteria {
 	 *
 	 * <p>
 	 * This returns the first available transform ID from the
-	 * {@link #getTransformIds()} array, or {@literal null} if not available.
+	 * {@link #getTransformIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first transform ID, or {@literal null} if not available
+	 * @return the first transform ID, or {@code null} if not available
 	 */
-	default Long getTransformId() {
+	default @Nullable Long getTransformId() {
 		final Long[] array = getTransformIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface TransformCriteria {
 	/**
 	 * Get an array of transform IDs.
 	 *
-	 * @return array of transform IDs (may be {@literal null})
+	 * @return array of transform IDs (may be {@code null})
 	 */
-	Long[] getTransformIds();
+	Long @Nullable [] getTransformIds();
 
 	/**
 	 * Test if this filter has any transform criteria.
@@ -59,6 +61,40 @@ public interface TransformCriteria {
 	 */
 	default boolean hasTransformCriteria() {
 		return getTransformId() != null;
+	}
+
+	/**
+	 * Get the first transform ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTransformCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first transform ID, presumed non-null
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long transformId() {
+		return getTransformId();
+	}
+
+	/**
+	 * Get an array of transform IDs
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTransformCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of transform IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] transformIds() {
+		return getTransformIds();
 	}
 
 }

@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for node related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface NodeCriteria {
@@ -36,19 +38,20 @@ public interface NodeCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available node ID from the {@link #getNodeIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the node ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 * 
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@code null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 	/**
 	 * Test if this filter has any node criteria.
@@ -58,6 +61,40 @@ public interface NodeCriteria {
 	 */
 	default boolean hasNodeCriteria() {
 		return getNodeId() != null;
+	}
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasNodeCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first node ID (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default Long nodeId() {
+		return getNodeId();
+	}
+
+	/**
+	 * Get an array of node IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasNodeCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of node IDs (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] nodeIds() {
+		return getNodeIds();
 	}
 
 }

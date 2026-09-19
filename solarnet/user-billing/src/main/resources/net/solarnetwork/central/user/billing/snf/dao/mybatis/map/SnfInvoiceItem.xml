@@ -41,11 +41,11 @@
 			<idArg column="bill_invoice_item_id" javaType="java.util.UUID"/>
 			<arg column="bill_invoice_item_inv_id" javaType="Long"/>
 			<arg column="bill_invoice_item_created" javaType="java.time.Instant"/>
+			<arg column="bill_invoice_item_item_type" javaType="net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="bill_invoice_item_item_key" javaType="String"/>
+			<arg column="bill_invoice_item_quantity" javaType="java.math.BigDecimal"/>
+			<arg column="bill_invoice_item_amount" javaType="java.math.BigDecimal"/>
 		</constructor>
-		<result property="itemType" column="bill_invoice_item_item_type" javaType="net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
-		<result property="key" column="bill_invoice_item_item_key"/>
-		<result property="amount" column="bill_invoice_item_amount"/>
-		<result property="quantity" column="bill_invoice_item_quantity"/>
 		<result property="metadata" column="bill_invoice_item_jmeta" javaType="java.util.Map" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
 	</resultMap>
 

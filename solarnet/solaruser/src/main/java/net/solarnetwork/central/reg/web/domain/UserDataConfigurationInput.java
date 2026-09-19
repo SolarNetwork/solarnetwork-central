@@ -23,10 +23,11 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDataConfiguration;
 
 /**
  * Input DTO for {@link UserDataConfiguration} entities.
@@ -37,9 +38,9 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 public final class UserDataConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<UserDataConfiguration, UserLongCompositePK> {
 
-	private Long id;
+	private @Nullable Long id;
 
-	private DatumFilterCommand datumFilter;
+	private @Nullable DatumFilterCommand datumFilter;
 
 	/**
 	 * Constructor.
@@ -50,7 +51,8 @@ public final class UserDataConfigurationInput extends
 
 	@Override
 	public UserDataConfiguration toEntity(UserLongCompositePK id, Instant date) {
-		UserDataConfiguration entity = new UserDataConfiguration(id, date);
+		UserDataConfiguration entity = new UserDataConfiguration(id, date, getName(),
+				getServiceIdentifier());
 		populateConfiguration(entity);
 		return entity;
 	}
@@ -66,7 +68,7 @@ public final class UserDataConfigurationInput extends
 	 *
 	 * @return the ID
 	 */
-	public Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -76,7 +78,7 @@ public final class UserDataConfigurationInput extends
 	 * @param id
 	 *        the ID to set
 	 */
-	public void setId(Long id) {
+	public final void setId(@Nullable Long id) {
 		this.id = id;
 	}
 
@@ -85,7 +87,7 @@ public final class UserDataConfigurationInput extends
 	 *
 	 * @return the filter
 	 */
-	public DatumFilterCommand getDatumFilter() {
+	public final @Nullable DatumFilterCommand getDatumFilter() {
 		return datumFilter;
 	}
 
@@ -95,7 +97,7 @@ public final class UserDataConfigurationInput extends
 	 * @param datumFilter
 	 *        the filter to set
 	 */
-	public void setDatumFilter(DatumFilterCommand datumFilter) {
+	public final void setDatumFilter(@Nullable DatumFilterCommand datumFilter) {
 		this.datumFilter = datumFilter;
 	}
 

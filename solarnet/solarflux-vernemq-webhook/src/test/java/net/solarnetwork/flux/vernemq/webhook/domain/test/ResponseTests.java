@@ -17,32 +17,17 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonArray;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonBoolean;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonMissing;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.util.Arrays;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
 
 /**
@@ -52,103 +37,122 @@ import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
  */
 public class ResponseTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	@Test
+	public void jsonOkSimple() {
+		Response r = new Response();
+		String json = JSON_MAPPER.writeValueAsString(r);
+		log.debug("OK simple JSON: {}", json);
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
-
-  @Test
-  public void jsonOkSimple() throws JsonProcessingException {
-    Response r = new Response();
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("OK simple JSON: {}", json);
-
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-        ));
+	// @formatter:off
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonErrorSimple() throws JsonProcessingException {
-    Response r = new Response("fail");
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Error simple JSON: {}", json);
+	@Test
+	public void jsonErrorSimple() {
+		Response r = new Response("fail");
+		String json = JSON_MAPPER.writeValueAsString(r);
+		log.debug("Error simple JSON: {}", json);
 
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(
-              jsonObject()
-                .where("error", is(jsonText("fail")))
-              ))
-        ));
+	// @formatter:off
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result")
+        .as("Result error object")
+        .node("result")
+            .isObject()
+            .containsOnlyKeys("error")
+            .as("Error")
+            .containsEntry("error", "fail")
+        ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithModifiers() throws JsonProcessingException {
-    RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
-    Response r = new Response(mods);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with mods JSON: {}", json);
+	@Test
+	public void jsonOkWithModifiers() {
+		RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
+		Response r = new Response(mods);
+		String json = JSON_MAPPER.writeValueAsString(r);
+		log.debug("Ok with mods JSON: {}", json);
 
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonObject()
-            .where("upgrade_qos", is(jsonBoolean(false)))    
-          ))
-          .where("topics", is(jsonMissing()))
-        ));
+	// @formatter:off
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "modifiers")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("modifiers")
+            .isObject()
+            .containsOnlyKeys("upgrade_qos")
+            .as("Upgrade QoS")
+            .containsEntry("upgrade_qos", false)
+        ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithTopicSettings() throws JsonProcessingException {
-    TopicSettings topics = new TopicSettings(Arrays.asList(
-        TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
-    Response r = new Response(topics);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with topic settings JSON: {}", json);
+	@Test
+	public void jsonOkWithTopicSettings() {
+		TopicSettings topics = new TopicSettings(Arrays.asList(
+				TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
+		Response r = new Response(topics);
+		String json = JSON_MAPPER.writeValueAsString(r);
+		log.debug("Ok with topic settings JSON: {}", json);
 
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonMissing()))
-          .where("topics", is(jsonArray(contains(
-              jsonObject()
-                .where("topic", is(jsonText("foo")))
-                .where("qos", is(jsonInt(Qos.AtLeastOnce.getKey())))
-          ))))
-        ));
+	// @formatter:off
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "topics")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("topics")
+        .isArray()
+        .as("Topic specified as array")
+        .hasSize(1)
+        .element(0)
+            .isObject()
+            .containsOnlyKeys("topic", "qos")
+            .as("Topic name provided")
+            .containsEntry("topic", "foo")
+            .as("Topic QoS provided")
+            .containsEntry("qos", Qos.AtLeastOnce.getKey())
+        ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithTopicList() throws JsonProcessingException {
-    TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
-    Response r = new Response(topics);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with topics list JSON: {}", json);
+	@Test
+	public void jsonOkWithTopicList() {
+		TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
+		Response r = new Response(topics);
+		String json = JSON_MAPPER.writeValueAsString(r);
+		log.debug("Ok with topics list JSON: {}", json);
 
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonMissing()))
-          .where("topics", is(jsonArray(contains(
-              jsonText("foo"),
-              jsonText("bar")
-          ))))
-        ));
+	// @formatter:off
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "topics")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("topics")
+        .isArray()
+        .as("Topics specified")
+        .containsExactly("foo", "bar")
+        ;
     // @formatter:on
-  }
+	}
 
 }

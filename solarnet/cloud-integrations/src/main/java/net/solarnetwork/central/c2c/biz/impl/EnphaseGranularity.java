@@ -29,6 +29,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -37,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum EnphaseGranularity {
 
 	/** Fifteen minutes. */
@@ -53,7 +55,7 @@ public enum EnphaseGranularity {
 	private final String key;
 	private final TemporalAmount tickAmount;
 
-	private EnphaseGranularity(String key, TemporalAmount tickAmount) {
+	EnphaseGranularity(String key, TemporalAmount tickAmount) {
 		this.key = key;
 		this.tickAmount = tickAmount;
 	}
@@ -86,9 +88,6 @@ public enum EnphaseGranularity {
 	 * @return the start instant
 	 */
 	public Instant tickStart(Instant ts, ZoneId zone) {
-		if ( tickAmount == null ) {
-			return ts;
-		}
 		if ( tickAmount instanceof Duration d ) {
 			return CloudIntegrationsUtils.truncateDate(ts, d, zone);
 		} else if ( tickAmount instanceof Period p ) {
@@ -128,13 +127,13 @@ public enum EnphaseGranularity {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #FifteenMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static EnphaseGranularity fromValue(String value) {
+	public static EnphaseGranularity fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return FifteenMinute;
 		}
@@ -155,6 +154,7 @@ public enum EnphaseGranularity {
 	 *        the ending date
 	 * @return the granularity to use, never {@code null}
 	 */
+	@SuppressWarnings("JavaPeriodGetDays")
 	public static EnphaseGranularity forQueryDateRange(Instant from, Instant to) {
 		final long mins = Duration.between(from, to).get(ChronoUnit.SECONDS);
 		for ( EnphaseGranularity g : EnphaseGranularity.values() ) {

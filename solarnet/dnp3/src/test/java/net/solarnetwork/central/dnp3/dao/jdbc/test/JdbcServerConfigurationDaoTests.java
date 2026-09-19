@@ -24,11 +24,11 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerConfigurationData;
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.newServerConfiguration;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -120,7 +120,7 @@ public class JdbcServerConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		// WHEN
 		ServerConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setName(UUID.randomUUID().toString());
 
 		UserLongCompositePK result = dao.save(conf);

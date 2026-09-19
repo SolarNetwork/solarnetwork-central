@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +52,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Fronius implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class FroniusCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -116,17 +117,20 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FroniusCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "Fronius", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
-				new FroniusRestOperationsHelper(
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
+			InstantSource clock) {
+		super(SERVICE_IDENTIFIER, "Fronius", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
+				new FroniusRestOperationsHelper(clock,
 						LoggerFactory.getLogger(FroniusCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -157,10 +161,10 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 		// validate by requesting the V1 available sites
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL).buildAndExpand()
 							.toUri(),
-					res -> res.getBody());
+					(_, res) -> res.getBody());
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

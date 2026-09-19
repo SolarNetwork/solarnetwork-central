@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -38,10 +39,10 @@ import net.solarnetwork.domain.SortDescriptor;
  * Base MyBatis {@link FilterableDao} implementation.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
-public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
-		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
+public abstract class BaseMyBatisFilterableDao<T extends Entity<K>, M extends FilterMatch<K>, F extends Filter, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisGenericDao<T, K> implements FilterableDao<M, K, F> {
 
 	/** A query property for a general Filter object value. */
 	public static final String FILTER_PROPERTY = "filter";
@@ -58,7 +59,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	 * @param filterResultClass
 	 *        the filter result class
 	 */
-	public BaseMyBatisFilterableDao(Class<? extends T> domainClass, Class<? extends PK> pkClass,
+	public BaseMyBatisFilterableDao(Class<? extends T> domainClass, Class<? extends K> pkClass,
 			Class<? extends M> filterResultClass) {
 		super(domainClass, pkClass);
 		this.filterResultClass = filterResultClass;
@@ -91,8 +92,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	}
 
 	@Override
-	public FilterResults<M, PK> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
+	public FilterResults<M, K> findFiltered(F filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
 		final String filterDomain = getMemberDomainKey(filterResultClass);
 		final String query = getFilteredQuery(filterDomain, filter);
 		Map<String, Object> sqlProps = new HashMap<>(1);
@@ -113,7 +114,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 
 		List<M> rows = selectList(query, sqlProps, offset, max);
 
-		return new BasicFilterResults<M, PK>(rows,
+		return new BasicFilterResults<>(rows,
 				(totalCount != null ? totalCount : Long.valueOf(rows.size())),
 				offset != null ? offset : 0L, rows.size());
 	}
@@ -124,7 +125,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	 * <p>
 	 * If the query throws an {@link IllegalArgumentException} this method
 	 * assumes that means the query name was not found, and will simply return
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @param countQueryName
@@ -135,8 +136,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	 *        the SQL properties
 	 * @return the count
 	 */
-	protected Long executeFilterCountQuery(final String countQueryName, F filter,
-			final Map<String, ?> sqlProps) {
+	protected @Nullable Long executeFilterCountQuery(final String countQueryName, final F filter,
+			final @Nullable Map<String, ?> sqlProps) {
 		try {
 			return selectLong(countQueryName, sqlProps);
 		} catch ( RuntimeException e ) {

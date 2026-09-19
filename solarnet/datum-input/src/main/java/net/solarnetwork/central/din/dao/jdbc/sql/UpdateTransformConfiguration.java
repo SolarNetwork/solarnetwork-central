@@ -62,7 +62,7 @@ public final class UpdateTransformConfiguration implements PreparedStatementCrea
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateTransformConfiguration(UserLongCompositePK id, TransformConfiguration entity) {
 		super();

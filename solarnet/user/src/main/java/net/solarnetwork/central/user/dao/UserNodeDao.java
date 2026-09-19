@@ -24,20 +24,24 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for UserNode objects.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
-public interface UserNodeDao extends GenericDao<UserNode, Long> {
+public interface UserNodeDao
+		extends GenericDao<UserNode, Long>, FilterableDao<UserNodeInfo, Long, UserNodeFilter> {
 
 	/**
 	 * Find a list of all UserNode objects for a particular user.
@@ -138,9 +142,10 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 *
 	 * @param pk
 	 *        The ID of the transfer to get.
-	 * @return The matching UserNodeTransfer, or <em>null</em> if not available.
+	 * @return The matching UserNodeTransfer, or {@code null} if not available.
 	 * @since 1.2
 	 */
+	@Nullable
 	UserNodeTransfer getUserNodeTransfer(UserNodePK pk);
 
 	/**
@@ -157,7 +162,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 *
 	 * @param email
 	 *        The email of the requested recipient of the ownership transfer.
-	 * @return The available node transfers, never <em>null</em>.
+	 * @return The available node transfers, never {@code null}.
 	 * @since 1.2
 	 */
 	List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email);

@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseEntity;
 
 /**
@@ -37,27 +38,27 @@ public class SolarCapability extends BaseEntity implements Cloneable, Serializab
 	@Serial
 	private static final long serialVersionUID = 1449569875028595935L;
 
-	private Long generationCapacityWatts;
-	private Long storageCapacityWattHours;
+	private @Nullable Long generationCapacityWatts;
+	private @Nullable Long storageCapacityWattHours;
 
 	@Override
 	public SolarCapability clone() {
 		return (SolarCapability) super.clone();
 	}
 
-	public Long getGenerationCapacityWatts() {
+	public final @Nullable Long getGenerationCapacityWatts() {
 		return generationCapacityWatts;
 	}
 
-	public void setGenerationCapacityWatts(Long generationCapacityWatts) {
+	public final void setGenerationCapacityWatts(@Nullable Long generationCapacityWatts) {
 		this.generationCapacityWatts = generationCapacityWatts;
 	}
 
-	public Long getStorageCapacityWattHours() {
+	public final @Nullable Long getStorageCapacityWattHours() {
 		return storageCapacityWattHours;
 	}
 
-	public void setStorageCapacityWattHours(Long storageCapacityWattHours) {
+	public final void setStorageCapacityWattHours(@Nullable Long storageCapacityWattHours) {
 		this.storageCapacityWattHours = storageCapacityWattHours;
 	}
 

@@ -28,25 +28,28 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 1.2
+ * @version 2.2
  */
 public class AuthorizationSupport {
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
-	private PathMatcher pathMatcher;
+	private @Nullable PathMatcher pathMatcher;
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -56,7 +59,7 @@ public class AuthorizationSupport {
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuthorizationSupport(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
@@ -82,7 +85,7 @@ public class AuthorizationSupport {
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
 	 */
-	protected void requireNodeWriteAccess(Long nodeId) {
+	protected void requireNodeWriteAccess(@Nullable Long nodeId) {
 		requireNodeWriteAccess(nodeId, log);
 	}
 
@@ -99,8 +102,10 @@ public class AuthorizationSupport {
 	 *         if the authorization check fails
 	 * @since 1.1
 	 */
-	public void requireNodeWriteAccess(Long nodeId, Logger log) {
-		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
+	public void requireNodeWriteAccess(@Nullable Long nodeId, Logger log) {
+		final SolarNodeOwnership ownership = (nodeId != null
+				? nodeOwnershipDao.ownershipForNodeId(nodeId)
+				: null);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
 			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
@@ -109,7 +114,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
@@ -119,7 +124,7 @@ public class AuthorizationSupport {
 			if ( ownership.isArchived() ) {
 				throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 			}
-			if ( !nodeId.equals(node.getNodeId()) ) {
+			if ( !node.getNodeId().equals(nodeId) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
 				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
@@ -167,7 +172,7 @@ public class AuthorizationSupport {
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
 	 */
-	protected void requireNodeReadAccess(Long nodeId) {
+	protected void requireNodeReadAccess(@Nullable Long nodeId) {
 		requireNodeReadAccess(nodeId, log);
 	}
 
@@ -184,8 +189,10 @@ public class AuthorizationSupport {
 	 *         if the authorization check fails
 	 * @since 1.1
 	 */
-	public void requireNodeReadAccess(Long nodeId, Logger log) {
-		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
+	public void requireNodeReadAccess(@Nullable Long nodeId, Logger log) {
+		final SolarNodeOwnership ownership = (nodeId != null
+				? nodeOwnershipDao.ownershipForNodeId(nodeId)
+				: null);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
 			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
@@ -197,7 +204,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
@@ -207,7 +214,7 @@ public class AuthorizationSupport {
 			if ( ownership.isArchived() ) {
 				throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 			}
-			if ( !nodeId.equals(node.getNodeId()) ) {
+			if ( !node.getNodeId().equals(nodeId) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
 				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
@@ -257,7 +264,7 @@ public class AuthorizationSupport {
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
 	 */
-	protected void requireUserWriteAccess(Long userId) {
+	protected void requireUserWriteAccess(@Nullable Long userId) {
 		requireUserWriteAccess(userId, log);
 	}
 
@@ -274,11 +281,11 @@ public class AuthorizationSupport {
 	 *         if the authorization check fails
 	 * @since 1.1
 	 */
-	public void requireUserWriteAccess(Long userId, Logger log) {
+	public void requireUserWriteAccess(@Nullable Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
 			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}
@@ -312,8 +319,52 @@ public class AuthorizationSupport {
 	 *
 	 * @return The active user's policy, or {@code null}.
 	 */
-	public SecurityPolicy getActiveSecurityPolicy() {
+	public @Nullable SecurityPolicy getActiveSecurityPolicy() {
 		return SecurityUtils.getActiveSecurityPolicy();
+	}
+
+	/**
+	 * Require the active user to have an unrestricted policy, or no policy at
+	 * all.
+	 * 
+	 * @since 2.1
+	 */
+	public void requireUnrestrictedSecurityPolicy() {
+		if ( !SecurityUtils.policyIsUnrestricted(getActiveSecurityPolicy()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
+	}
+
+	/**
+	 * Require the active user to not have any node ID restriction in a security
+	 * policy.
+	 * 
+	 * @since 2.2
+	 */
+	public void requireUnrestrictedNodeSecurityPolicy() {
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+		if ( policy.getNodeIds() != null && !policy.getNodeIds().isEmpty() ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
+	}
+
+	/**
+	 * Require the active user to not have any source ID restriction in a
+	 * security policy.
+	 * 
+	 * @since 2.2
+	 */
+	public void requireUnrestrictedSourceSecurityPolicy() {
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+		if ( policy.getSourceIds() != null && !policy.getSourceIds().isEmpty() ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
 	}
 
 	/**
@@ -326,7 +377,7 @@ public class AuthorizationSupport {
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
 	 */
-	protected void requireUserReadAccess(Long userId) {
+	protected void requireUserReadAccess(@Nullable Long userId) {
 		requireUserReadAccess(userId, log);
 	}
 
@@ -343,11 +394,11 @@ public class AuthorizationSupport {
 	 *         if the authorization check fails
 	 * @since 1.1
 	 */
-	public void requireUserReadAccess(Long userId, Logger log) {
+	public void requireUserReadAccess(@Nullable Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
 			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}
@@ -361,7 +412,7 @@ public class AuthorizationSupport {
 				log.warn("Access DENIED to user {} for node {}; not found", userId, node.getNodeId());
 				throw new AuthorizationException(UNKNOWN_OBJECT, userId);
 			}
-			if ( !userId.equals(ownership.getUserId()) ) {
+			if ( !ownership.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for node {}; wrong node", userId, node.getNodeId());
 				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
@@ -407,12 +458,33 @@ public class AuthorizationSupport {
 	 *        the domain object type
 	 * @param domainObject
 	 *        The domain object to enforce the active policy on.
-	 * @return The domain object to use.
+	 * @return the domain object to use, or {@code null} if {@code domainObject}
+	 *         is {@code null}
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
 	 */
-	public <T> T policyEnforcerCheck(T domainObject) {
+	public <T> @Nullable T policyEnforcerCheck(@Nullable T domainObject) {
 		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object and
+	 * {@code SecurityPolicyMetadataType#Node} metadata type.
+	 *
+	 * @param <T>
+	 *        the domain object type
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @return the domain object to use, or {@code null} if {@code domainObject}
+	 *         is {@code null}
+	 * @param writeAccess
+	 *        {@code true} to require write-level access
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 2.1
+	 */
+	public <T> @Nullable T policyEnforcerCheck(@Nullable T domainObject, boolean writeAccess) {
+		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node, writeAccess);
 	}
 
 	/**
@@ -429,14 +501,43 @@ public class AuthorizationSupport {
 	 *        The domain object to enforce the active policy on.
 	 * @param metadataType
 	 *        The metadata type to enforce the active policy on.
-	 * @return The domain object to use.
+	 * @return the domain object to use, or {@code null} if {@code domainObject}
+	 *         is {@code null}
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
 	 */
-	public <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
+	public <T> @Nullable T policyEnforcerCheck(@Nullable T domainObject,
+			SecurityPolicyMetadataType metadataType) {
+		return policyEnforcerCheck(domainObject, metadataType, false);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object or collection of domain
+	 * objects.
+	 *
+	 * <p>
+	 * The {@link FilterResults} API is supported, as is {@link List}.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        the domain object type
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @param metadataType
+	 *        The metadata type to enforce the active policy on.
+	 * @param writeAccess
+	 *        {@code true} to require write-level access
+	 * @return the domain object to use, or {@code null} if {@code domainObject}
+	 *         is {@code null}
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 2.1
+	 */
+	public <T> @Nullable T policyEnforcerCheck(@Nullable T domainObject,
+			SecurityPolicyMetadataType metadataType, boolean writeAccess) {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
-		if ( policy == null || domainObject == null ) {
+		if ( domainObject == null ) {
 			return domainObject;
 		}
 
@@ -444,7 +545,7 @@ public class AuthorizationSupport {
 
 		if ( domainObject instanceof FilterResults<?, ?> filterResults ) {
 			Collection<?> filteredObjects = policyEnforcedCollection(filterResults, policy, principal,
-					metadataType);
+					metadataType, writeAccess);
 			@SuppressWarnings({ "rawtypes", "unchecked" })
 			T result = (T) new BasicFilterResults(filteredObjects, filterResults.getTotalResults(),
 					filterResults.getStartingOffset(), filterResults.getReturnedResultCount());
@@ -452,26 +553,28 @@ public class AuthorizationSupport {
 		} else if ( domainObject instanceof List<?> collectionResults ) {
 			@SuppressWarnings("unchecked")
 			T filteredObjects = (T) policyEnforcedCollection(collectionResults, policy, principal,
-					metadataType);
+					metadataType, writeAccess);
 			return filteredObjects;
 		}
 
-		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), domainObject,
-				pathMatcher, metadataType);
-		enforcer.verify();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, domainObject,
+				pathMatcher, metadataType,
+				(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
+				nodeOwnershipDao::getDatumStreamMetadataIds);
+		if ( enforcer.verify() ) {
+			return domainObject;
+		}
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
-	private Collection<?> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
-			Object principal, SecurityPolicyMetadataType metadataType) {
-		if ( input == null ) {
-			return null;
-		}
+	private Collection<?> policyEnforcedCollection(Iterable<?> input, @Nullable SecurityPolicy policy,
+			@Nullable Object principal, SecurityPolicyMetadataType metadataType, boolean writeAccess) {
 		List<Object> enforced = new ArrayList<>();
 		for ( Object obj : input ) {
 			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, obj,
-					pathMatcher, metadataType);
+					pathMatcher, metadataType,
+					(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
+					nodeOwnershipDao::getDatumStreamMetadataIds);
 			enforcer.verify();
 			enforced.add(SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer));
 		}
@@ -483,7 +586,7 @@ public class AuthorizationSupport {
 	 *
 	 * @return the path matcher
 	 */
-	public PathMatcher getPathMatcher() {
+	public @Nullable PathMatcher getPathMatcher() {
 		return pathMatcher;
 	}
 
@@ -493,7 +596,7 @@ public class AuthorizationSupport {
 	 * @param pathMatcher
 	 *        the matcher to use
 	 */
-	public void setPathMatcher(PathMatcher pathMatcher) {
+	public void setPathMatcher(@Nullable PathMatcher pathMatcher) {
 		this.pathMatcher = pathMatcher;
 	}
 

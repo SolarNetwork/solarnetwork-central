@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityProviderConfigurationTests.java - 11/08/2022 1:57:44 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,27 +23,29 @@
 package net.solarnetwork.central.oscp.domain.test;
 
 import static java.lang.String.format;
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import java.io.IOException;
-import java.time.Instant;
-import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link CapacityProviderConfiguration} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -52,11 +54,12 @@ public class CapacityProviderConfigurationTests {
 	@Test
 	public void createWithUnassignedEntityId() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 
 		// WHEN
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), now(), randomString(), randomLong(),
+				RegistrationStatus.Pending);
 
 		// THEN
 		assertThat("Entity key component not null", conf.getId().getEntityId(), is(notNullValue()));
@@ -74,6 +77,7 @@ public class CapacityProviderConfigurationTests {
 				, "modified":"%s"
 				, "enabled":%s
 				, "name":"%s"
+				, "flexibilityProviderId":%d
 				, "baseUrl":"%s"
 				, "registrationStatus":"%s"
 				, "serviceProps":%s
@@ -85,6 +89,7 @@ public class CapacityProviderConfigurationTests {
 				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getModified()),
 				conf.isEnabled(),
 				conf.getName(),
+				conf.getFlexibilityProviderId(),
 				conf.getBaseUrl(),
 				conf.getRegistrationStatus().name(),
 				JsonUtils.getJSONString(conf.getServiceProps(), "null")
@@ -95,18 +100,18 @@ public class CapacityProviderConfigurationTests {
 	@Test
 	public void serializeJson() throws IOException, JSONException {
 		// GIVEN
-		ObjectMapper mapper = JsonUtils.newObjectMapper();
+		ObjectMapper mapper = JsonUtils.JSON_OBJECT_MAPPER;
 
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long confId = UUID.randomUUID().getMostSignificantBits();
-		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, confId,
-				Instant.now());
+		Long userId = randomLong();
+		Long confId = randomLong();
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, confId, now(),
+				randomString(), randomLong(), RegistrationStatus.Pending);
 		conf.setModified(conf.getCreated().plusSeconds(9));
 		conf.setEnabled(true);
 		conf.setName("Howdy");
 		conf.setBaseUrl("https://localhost/" + UUID.randomUUID());
 		conf.setRegistrationStatus(RegistrationStatus.Pending);
-		conf.setServiceProps(Collections.singletonMap("foo", "bar"));
+		conf.setServiceProps(Map.of("foo", "bar"));
 
 		// WHEN
 		String json = mapper.writeValueAsString(conf);

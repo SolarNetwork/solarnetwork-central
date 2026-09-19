@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -36,6 +38,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Identity;
@@ -132,18 +135,18 @@ import net.solarnetwork.domain.SortDescriptor;
  *
  * @param <T>
  *        The entity type this DAO supports.
- * @param <PK>
+ * @param <K>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
-public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
-		extends BaseMyBatisDao implements GenericDao<T, PK> {
+public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
-	/** The query name used for {@link #get(Serializable)}. */
+	/** The query name used for {@link #get(Comparable)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
 
 	/** The query name used for {@link #getAll(List)}. */
@@ -184,7 +187,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	public static final String CHILD_DELETE = "delete-";
 
 	private final Class<? extends T> domainClass;
-	private final Class<? extends PK> pkClass;
+	private final Class<? extends K> pkClass;
 	private String queryForId;
 	private String queryForAll;
 	private String insert;
@@ -199,7 +202,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	private String childUpdate;
 	private String childDelete;
 
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -209,7 +212,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param pkClass
 	 *        the primary key class
 	 */
-	public BaseMyBatisGenericDao(Class<? extends T> domainClass, Class<? extends PK> pkClass) {
+	public BaseMyBatisGenericDao(Class<? extends T> domainClass, Class<? extends K> pkClass) {
 		super();
 
 		final String domainName = domainClass.getSimpleName();
@@ -243,17 +246,17 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *
 	 * @return the primary key type
 	 */
-	public Class<? extends PK> getPrimaryKeyType() {
+	public Class<? extends K> getPrimaryKeyType() {
 		return this.pkClass;
 	}
 
 	@Override
-	public T get(PK id) {
+	public @Nullable T get(K id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
 	@Override
-	public List<T> getAll(List<SortDescriptor> sortDescriptors) {
+	public List<T> getAll(@Nullable List<SortDescriptor> sortDescriptors) {
 		List<T> results;
 		if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
 			Map<String, Object> params = new HashMap<>(1);
@@ -265,11 +268,13 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		return results;
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public PK save(T datum) {
-		final PK id = datum.getId();
+	public K save(T datum) {
+		final K id = datum.getId();
 		if ( (id instanceof CompositeKey ck && ck.allKeyComponentsAreAssigned())
-				|| (!(id instanceof CompositeKey) && datum.getId() != null) ) {
+				|| (!(id instanceof CompositeKey) && datum.getId() != null
+						&& datum.getId() != EntityConstants.UNASSIGNED_LONG_ID) ) {
 			return handleUpdate(datum);
 		}
 		preprocessInsert(datum);
@@ -291,13 +296,13 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to store
 	 * @return the primary key
 	 */
-	protected PK handleAssignedPrimaryKeyStore(T datum) {
+	protected K handleAssignedPrimaryKeyStore(T datum) {
 		// try update, then insert if that fails
 		if ( getSqlSession().update(getUpdate(), datum) == 0 ) {
 			preprocessInsert(datum);
 			getSqlSession().insert(getInsert(), datum);
 		}
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	/**
@@ -333,9 +338,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to update
 	 * @return {@link T#getId()}
 	 */
-	protected PK handleUpdate(T datum) {
+	protected K handleUpdate(T datum) {
 		getSqlSession().update(this.update, datum);
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	/**
@@ -350,10 +355,10 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to insert
 	 * @return the result of the insert statement
 	 */
-	protected PK handleInsert(T datum) {
+	protected K handleInsert(T datum) {
 		int updated = getSqlSession().insert(this.insert, datum);
 		log.debug("Insert of {} updated {} rows", datum, updated);
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	@Override
@@ -363,9 +368,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		}
 		int result = getSqlSession().delete(this.delete, domainObject.getId());
 		if ( result < 1 ) {
-			log.warn("Delete [" + domainObject + "] did not affect any rows");
-		} else if ( log.isInfoEnabled() ) {
-			log.debug("Deleted [" + domainObject + ']');
+			log.warn("Delete [{}] did not affect any rows", domainObject);
+		} else if ( log.isDebugEnabled() ) {
+			log.debug("Deleted [{}]", domainObject);
 		}
 	}
 
@@ -413,14 +418,14 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param parentId
 	 *        the ID of the parent entity
 	 * @param newList
-	 *        the list of related objects to persist (may be <em>null</em>)
+	 *        the list of related objects to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E> void handleRelation(Long parentId, List<E> newList, Class<? extends E> relationClass,
-			Map<String, ?> additionalProperties) {
+	protected <E> void handleRelation(@Nullable Long parentId, @Nullable List<E> newList,
+			Class<? extends E> relationClass, @Nullable Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
 		}
@@ -501,14 +506,15 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param parentId
 	 *        the ID of the parent entity
 	 * @param newObject
-	 *        the related object to persist (may be <em>null</em>)
+	 *        the related object to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E extends Identity<Long>> void handleRelation(Long parentId, E newObject,
-			Class<? extends E> relationClass, Map<String, ?> additionalProperties) {
+	protected <E extends Identity<Long>> void handleRelation(@Nullable Long parentId,
+			@Nullable E newObject, Class<? extends E> relationClass,
+			@Nullable Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
 		}
@@ -574,13 +580,13 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param parent
 	 *        the parent entity
 	 * @param child
-	 *        the child object to persist (may be <em>null</em>)
+	 *        the child object to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @return the child entity's primary key
 	 */
-	protected <E extends net.solarnetwork.domain.Identity<Long>> Long handleChildRelation(T parent,
-			E child, Class<? extends E> relationClass) {
+	protected <E extends Identity<Long>> @Nullable Long handleChildRelation(@Nullable T parent,
+			@Nullable E child, Class<? extends E> relationClass) {
 		if ( parent == null ) {
 			return null;
 		}
@@ -623,7 +629,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *         {@link SqlSessionCallback#doWithSqlSession(org.apache.ibatis.session.SqlSession)}
 	 * @see #mapSqlMapException(RuntimeException, Object)
 	 */
-	protected <R> R execute(final SqlSessionCallback<R> callback, final Object errorObject) {
+	protected <R extends @Nullable Object> @Nullable R execute(final SqlSessionCallback<R> callback,
+			final Object errorObject) {
 		try {
 			return callback.doWithSqlSession(getSqlSession());
 		} catch ( RuntimeException e ) {
@@ -639,13 +646,13 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the original exception
 	 * @param errorObject
 	 *        a validation error object
-	 * @return an exception, never <em>null</em> and might be the exception
+	 * @return an exception, never {@code null} and might be the exception
 	 *         instance passed in
 	 */
 	protected RuntimeException mapSqlMapException(final RuntimeException e, final Object errorObject) {
 		RuntimeException result = e;
 		Errors errors = new org.springframework.validation.BindException(errorObject, "filter");
-		if ( e.getMessage().contains("no statement named") ) {
+		if ( e.getMessage() != null && e.getMessage().contains("no statement named") ) {
 			errors.reject("error.unknown.query", "Unknown query");
 		}
 		if ( errors.hasErrors() ) {
@@ -684,7 +691,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the buffer to append to
 	 * @return <em>true</em> if {@code value} was appended to {@code buf}
 	 */
-	protected final boolean spaceAppend(String value, StringBuilder buf) {
+	protected final boolean spaceAppend(@Nullable String value, StringBuilder buf) {
 		if ( value == null ) {
 			return false;
 		}
@@ -699,119 +706,120 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		return true;
 	}
 
-	public String getQueryForId() {
+	public final String getQueryForId() {
 		return queryForId;
 	}
 
-	public void setQueryForId(String queryForId) {
+	public final void setQueryForId(String queryForId) {
 		this.queryForId = queryForId;
 	}
 
-	public String getInsert() {
+	public final String getInsert() {
 		return insert;
 	}
 
-	public void setInsert(String insert) {
+	public final void setInsert(String insert) {
 		this.insert = insert;
 	}
 
-	public String getUpdate() {
+	public final String getUpdate() {
 		return update;
 	}
 
-	public void setUpdate(String update) {
+	public final void setUpdate(String update) {
 		this.update = update;
 	}
 
-	public Class<? extends T> getDomainClass() {
+	public final Class<? extends T> getDomainClass() {
 		return domainClass;
 	}
 
-	public String getQueryForAll() {
+	public final String getQueryForAll() {
 		return queryForAll;
 	}
 
-	public void setQueryForAll(String queryForAll) {
+	public final void setQueryForAll(String queryForAll) {
 		this.queryForAll = queryForAll;
 	}
 
-	public String getDelete() {
+	public final String getDelete() {
 		return delete;
 	}
 
-	public void setDelete(String delete) {
+	public final void setDelete(String delete) {
 		this.delete = delete;
 	}
 
-	public String getRelationQueryForParent() {
+	public final String getRelationQueryForParent() {
 		return relationQueryForParent;
 	}
 
-	public void setRelationQueryForParent(String relationQueryForParent) {
+	public final void setRelationQueryForParent(String relationQueryForParent) {
 		this.relationQueryForParent = relationQueryForParent;
 	}
 
-	public String getRelationInsert() {
+	public final String getRelationInsert() {
 		return relationInsert;
 	}
 
-	public void setRelationInsert(String relationInsert) {
+	public final void setRelationInsert(String relationInsert) {
 		this.relationInsert = relationInsert;
 	}
 
-	public String getRelationUpdate() {
+	public final String getRelationUpdate() {
 		return relationUpdate;
 	}
 
-	public void setRelationUpdate(String relationUpdate) {
+	public final void setRelationUpdate(String relationUpdate) {
 		this.relationUpdate = relationUpdate;
 	}
 
-	public String getRelationDelete() {
+	public final String getRelationDelete() {
 		return relationDelete;
 	}
 
-	public void setRelationDelete(String relationDelete) {
+	public final void setRelationDelete(String relationDelete) {
 		this.relationDelete = relationDelete;
 	}
 
-	public String getRelationObjectQueryForParent() {
+	public final String getRelationObjectQueryForParent() {
 		return relationObjectQueryForParent;
 	}
 
-	public void setRelationObjectQueryForParent(String relationObjectQueryForParent) {
+	public final void setRelationObjectQueryForParent(String relationObjectQueryForParent) {
 		this.relationObjectQueryForParent = relationObjectQueryForParent;
 	}
 
-	public String getChildInsert() {
+	public final String getChildInsert() {
 		return childInsert;
 	}
 
-	public void setChildInsert(String childInsert) {
+	public final void setChildInsert(String childInsert) {
 		this.childInsert = childInsert;
 	}
 
-	public String getChildUpdate() {
+	public final String getChildUpdate() {
 		return childUpdate;
 	}
 
-	public void setChildUpdate(String childUpdate) {
+	public final void setChildUpdate(String childUpdate) {
 		this.childUpdate = childUpdate;
 	}
 
-	public String getChildDelete() {
+	public final String getChildDelete() {
 		return childDelete;
 	}
 
-	public void setChildDelete(String childDelete) {
+	public final void setChildDelete(String childDelete) {
 		this.childDelete = childDelete;
 	}
 
-	public MessageSource getMessageSource() {
+	public final @Nullable MessageSource getMessageSource() {
 		return messageSource;
 	}
 
-	public void setMessageSource(MessageSource messageSource) {
+	public final void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
+
 }

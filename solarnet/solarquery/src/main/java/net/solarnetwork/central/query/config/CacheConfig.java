@@ -44,18 +44,18 @@ import org.springframework.context.annotation.Configuration;
 @EnableCaching
 public class CacheConfig {
 
+	@SuppressWarnings("NullAway.Init")
 	@Value("${app.cache.persistence.path}")
 	private Path persistencePath;
 
 	@Bean
 	public CacheManager jCacheManager() {
 		CachingProvider cachingProvider = Caching.getCachingProvider();
-		if ( cachingProvider instanceof EhcacheCachingProvider ) {
+		if ( cachingProvider instanceof EhcacheCachingProvider eh ) {
 			DefaultConfiguration configuration = new DefaultConfiguration(
 					cachingProvider.getDefaultClassLoader(),
 					new DefaultPersistenceConfiguration(persistencePath.toFile()));
-			return ((EhcacheCachingProvider) cachingProvider)
-					.getCacheManager(cachingProvider.getDefaultURI(), configuration);
+			return eh.getCacheManager(cachingProvider.getDefaultURI(), configuration);
 		} else {
 			return cachingProvider.getCacheManager();
 		}

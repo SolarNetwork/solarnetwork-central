@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dnp3.domain;
 
 import java.math.BigDecimal;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -41,29 +42,31 @@ import net.solarnetwork.domain.CodedValue;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseDnp3ConfigurationInput<C, UserLongIntegerCompositePK> {
 
 	@NotNull
-	private Long nodeId;
+	private @Nullable Long nodeId;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String sourceId;
+	private @Nullable String sourceId;
 
 	@Size(max = 255)
-	private String property;
+	private @Nullable String property;
 
 	@NotNull
-	private T type;
+	private @Nullable T type;
 
-	private BigDecimal multiplier;
+	private @Nullable BigDecimal multiplier;
 
-	private BigDecimal offset;
+	private @Nullable BigDecimal offset;
 
-	private Integer scale;
+	private @Nullable Integer scale;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(C conf) {
 		super.populateConfiguration(conf);
@@ -81,7 +84,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -91,7 +94,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -100,7 +103,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -110,7 +113,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -119,7 +122,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the property
 	 */
-	public String getProperty() {
+	public @Nullable String getProperty() {
 		return property;
 	}
 
@@ -129,7 +132,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param property
 	 *        the property to set
 	 */
-	public void setProperty(String property) {
+	public void setProperty(@Nullable String property) {
 		this.property = property;
 	}
 
@@ -138,7 +141,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the type
 	 */
-	public T getType() {
+	public final @Nullable T getType() {
 		return type;
 	}
 
@@ -148,7 +151,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param type
 	 *        the measurement type to set
 	 */
-	public void setType(T type) {
+	public final void setType(@Nullable T type) {
 		this.type = type;
 	}
 
@@ -157,7 +160,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the multiplier
 	 */
-	public BigDecimal getMultiplier() {
+	public final @Nullable BigDecimal getMultiplier() {
 		return multiplier;
 	}
 
@@ -167,7 +170,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param multiplier
 	 *        the multiplier to set
 	 */
-	public void setMultiplier(BigDecimal multiplier) {
+	public final void setMultiplier(@Nullable BigDecimal multiplier) {
 		this.multiplier = multiplier;
 	}
 
@@ -176,7 +179,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the offset
 	 */
-	public BigDecimal getOffset() {
+	public final @Nullable BigDecimal getOffset() {
 		return offset;
 	}
 
@@ -186,7 +189,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param offset
 	 *        the offset to set
 	 */
-	public void setOffset(BigDecimal offset) {
+	public final void setOffset(@Nullable BigDecimal offset) {
 		this.offset = offset;
 	}
 
@@ -195,7 +198,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 *
 	 * @return the scale
 	 */
-	public Integer getScale() {
+	public final @Nullable Integer getScale() {
 		return scale;
 	}
 
@@ -205,7 +208,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 	 * @param scale
 	 *        the scale to set
 	 */
-	public void setScale(Integer scale) {
+	public final void setScale(@Nullable Integer scale) {
 		this.scale = scale;
 	}
 

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
@@ -117,7 +118,7 @@ public class ObservableMqttConnection extends BaseMqttConnectionService
 
 	@Override
 	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
-			Throwable cause) {
+			@Nullable Throwable cause) {
 		if ( connectionObservers != null ) {
 			for ( MqttConnectionObserver o : connectionObservers ) {
 				try {

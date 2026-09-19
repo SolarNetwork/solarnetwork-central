@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.mail;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for mail address information.
  * 
@@ -42,20 +44,21 @@ public interface MailAddress {
 	 * 
 	 * @return array of email addresses
 	 */
-	String[] getCc();
+	String @Nullable [] getCc();
 
 	/**
 	 * Get list of addresses to blind-carbon-copy the mail to.
 	 * 
 	 * @return array of email addresses
 	 */
-	String[] getBcc();
+	String @Nullable [] getBcc();
 
 	/**
 	 * Get the address to send the mail from.
 	 * 
 	 * @return email address
 	 */
+	@Nullable
 	String getFrom();
 
 }

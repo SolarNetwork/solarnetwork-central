@@ -22,18 +22,20 @@
 
 package net.solarnetwork.central.web.support;
 
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
-import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
+import static net.solarnetwork.central.web.WebUtils.GLOBAL_WEB_LOG;
+import static net.solarnetwork.central.web.WebUtils.isClientAbortException;
+import static net.solarnetwork.central.web.WebUtils.requestDescription;
+import static net.solarnetwork.central.web.WebUtils.userPrincipalName;
 import static net.solarnetwork.domain.Result.error;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.apache.catalina.connector.ClientAbortException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -43,7 +45,14 @@ import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -58,8 +67,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.web.RateLimitExceededException;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.RemoteServiceException;
@@ -68,18 +81,21 @@ import net.solarnetwork.util.NumberUtils;
 /**
  * Global REST controller support.
  *
+ * <p>
+ * Exceptions caused by the client disconnecting are logged at {@code DEBUG}
+ * level only, without a response body. Exception handler response bodies are
+ * not written once the response has been committed.
+ * </p>
+ *
  * @author matt
- * @version 1.10
+ * @version 1.15
  */
 @RestControllerAdvice
 @Order(1000)
-public class WebServiceGlobalControllerSupport {
-
-	/** A class-level logger. */
-	private static final Logger log = LoggerFactory.getLogger(WebServiceGlobalControllerSupport.class);
+public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Object> {
 
 	@Autowired
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	@Value("${spring.servlet.multipart.max-file-size:1MB}")
 	private DataSize maxUploadSize = DataSize.ofMegabytes(1);
@@ -98,11 +114,11 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
 			WebRequest request, Locale locale) {
-		log.warn("MaxUploadSizeExceededException for {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		GLOBAL_WEB_LOG.warn("MaxUploadSizeExceededException for {}; user [{}]",
+				requestDescription(request), userPrincipalName(request));
 		String msg = "Upload size exceeded";
 		String maxSize = NumberUtils.humanReadableCount(
 				e.getMaxUploadSize() > -1 ? e.getMaxUploadSize() : maxUploadSize.toBytes());
@@ -130,7 +146,7 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
 			WebRequest request, Locale locale) {
-		log.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
+		GLOBAL_WEB_LOG.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
@@ -162,8 +178,10 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleTransientDataAccessException(TransientDataAccessException e,
 			WebRequest request, Locale locale) {
-		log.warn("TransientDataAccessException in request {}; user [{}]: {}",
-				requestDescription(request), userPrincipalName(request), e.toString());
+		final var exMsg = e.toString();
+		final var level = (exMsg.contains("conflict with recovery") ? Level.DEBUG : Level.WARN);
+		GLOBAL_WEB_LOG.atLevel(level).log("TransientDataAccessException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), exMsg);
 		String msg;
 		String msgKey;
 		String code;
@@ -188,9 +206,50 @@ public class WebServiceGlobalControllerSupport {
 			msgKey = "error.dao.concurrencyFailure";
 			code = "DAO.00205";
 		} else {
-			msg = "Data integrity violation";
+			msg = "Temporary resource capacity constraint";
 			msgKey = "error.dao.transientDataAccess";
 			code = "DAO.00200";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return error(code, msg);
+	}
+
+	/**
+	 * Handle transient data access exceptions.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.13
+	 */
+	@ExceptionHandler(UncategorizedSQLException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Result<?> handleUncategorizedSQLException(UncategorizedSQLException e, WebRequest request,
+			Locale locale) {
+		GLOBAL_WEB_LOG.warn("UncategorizedSQLException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
+		final Throwable cause = e.getMostSpecificCause();
+		final String causeMessageLc = (cause.getMessage() != null
+				? cause.getMessage().toLowerCase(Locale.ROOT)
+				: "");
+		String msg;
+		String msgKey;
+		String code;
+		if ( causeMessageLc.contains("connection is closed") ) {
+			var tdare = new TransientDataAccessResourceException("Connection closed", cause);
+			return handleTransientDataAccessException(tdare, request, locale);
+		} else {
+			msg = "Unknown SQL error";
+			msgKey = "error.dao.unknownSqlException";
+			code = "DAO.00207";
 		}
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
@@ -216,8 +275,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleTransactionException(TransactionException e, WebRequest request,
 			Locale locale) {
-		log.warn("TransactionException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.toString());
+		GLOBAL_WEB_LOG.warn("TransactionException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -260,13 +319,14 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
-		log.debug("AuthorizationException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.debug("AuthorizationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getReason().toString());
 	}
 
 	/**
-	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
+	 * Handle a
+	 * {@link net.solarnetwork.central.security.BasicSecurityException}.
 	 *
 	 * @param e
 	 *        the exception
@@ -275,13 +335,12 @@ public class WebServiceGlobalControllerSupport {
 	 * @return an error response object
 	 * @since 1.1
 	 */
-	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
+	@ExceptionHandler(BasicSecurityException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Result<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
-			WebRequest request) {
-		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.getMessage());
+	public Result<?> handleSecurityException(BasicSecurityException e, WebRequest request) {
+		GLOBAL_WEB_LOG.info("SecurityException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -299,7 +358,7 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
-		log.info("BadCredentialsException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.info("BadCredentialsException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getMessage());
 	}
@@ -318,7 +377,7 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
 	public Result<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
-		log.info("AuthenticationException in request {}: {}", requestDescription(request),
+		GLOBAL_WEB_LOG.info("AuthenticationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return error(null, e.getMessage());
 	}
@@ -337,7 +396,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Result<?> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
-		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
+		GLOBAL_WEB_LOG.info("AccessDeniedException in request {}: {}", requestDescription(request),
+				e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -356,8 +416,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
 	public Result<?> handleRequestRejectedException(RequestRejectedException e, WebRequest request) {
-		log.warn("RequestRejectedException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.getMessage());
+		GLOBAL_WEB_LOG.warn("RequestRejectedException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.getMessage());
 		return error(null, e.getMessage());
 	}
 
@@ -375,7 +435,7 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus
 	public Result<?> handleExecutionException(ExecutionException e, WebRequest request) {
-		log.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
+		GLOBAL_WEB_LOG.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
@@ -399,9 +459,9 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
-		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.debug("IllegalArgumentException in request {}", requestDescription(request), e);
 		return error(null, "Illegal argument: " + e.getMessage());
 	}
 
@@ -413,24 +473,40 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @return an error response object
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.1
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
+	public @Nullable Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
+		}
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
+		Result<?> result = handleCause(e, request);
+		if ( result != null ) {
+			return result;
 		}
-		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
-		}
-		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
+		GLOBAL_WEB_LOG.error("RuntimeException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error(null, "Internal error");
+	}
+
+	private @Nullable Result<?> handleCause(Throwable e, WebRequest request) {
+		Throwable cause = e;
+		Result<?> result = null;
+		do {
+			if ( cause instanceof IllegalArgumentException iae ) {
+				result = handleIllegalArgumentException(iae, request);
+			} else if ( cause instanceof IOException ioe ) {
+				result = handleIOException(ioe, request);
+			}
+			cause = cause.getCause();
+		} while ( cause != null && result == null );
+		return result;
 	}
 
 	/**
@@ -447,7 +523,7 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus
 	public Result<?> handleError(Error e, WebRequest request) {
-		log.warn("Error in request {}", requestDescription(request), e);
+		GLOBAL_WEB_LOG.warn("Error in request {}", requestDescription(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
@@ -462,31 +538,74 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @return an error response object
+	 * @param locale
+	 *        the request locale
+	 * @param response
+	 *        the response
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.5
 	 */
 	@ExceptionHandler(HttpMessageConversionException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
-			WebRequest request) {
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-			if ( "org.apache.catalina.connector.ClientAbortException"
-					.equals(cause.getClass().getName()) ) {
-				log.debug("ClientAbortException in request {}", requestDescription(request), e);
-				return error("WEB.00201", "Client abort.");
-			}
+	public @Nullable Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
+			WebRequest request, Locale locale, HttpServletResponse response) {
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
 		}
 
-		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.error("HttpMessageConversionException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 		return error("WEB.00200", e.getMessage());
 	}
 
 	/**
+	 * Handle a {@link HttpMessageNotWritableException}.
+	 *
+	 * <p>
+	 * This exception implies a response cannot be written, so just log a
+	 * message.
+	 * </p>
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param response
+	 *        the response
+	 * @param servletRequest
+	 *        unused, but signals that the request has been completely handled
+	 *        by this method
+	 * @since 1.12
+	 */
+	@ExceptionHandler(HttpMessageNotWritableException.class)
+	public void handleHttpMessageNotWritableException(HttpMessageNotWritableException e,
+			WebRequest request, HttpServletResponse response, @Nullable ServletRequest servletRequest) {
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+			if ( cause instanceof ClientAbortException cae ) {
+				handleClientAbortException(cae, request, servletRequest);
+				return;
+			} else if ( cause instanceof IOException ) {
+				GLOBAL_WEB_LOG.debug("IOException in request {}", requestDescription(request), e);
+				return;
+			}
+		}
+
+		GLOBAL_WEB_LOG.warn("HttpMessageNotWritableException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
+	}
+
+	/**
 	 * Handle a {@link ClientAbortException}.
+	 *
+	 * <p>
+	 * The client has disconnected, so this is only logged at {@code DEBUG}
+	 * level.
+	 * </p>
 	 *
 	 * @param e
 	 *        the exception
@@ -499,13 +618,17 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(ClientAbortException.class)
 	public void handleClientAbortException(ClientAbortException e, WebRequest request,
-			ServletRequest servletRequest) {
-		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+			@Nullable ServletRequest servletRequest) {
+		logClientAbort(e, request);
 	}
 
 	/**
 	 * Handle a {@link AsyncRequestNotUsableException}.
+	 *
+	 * <p>
+	 * The response can no longer be written to, typically because the client
+	 * has disconnected, so this is only logged at {@code DEBUG} level.
+	 * </p>
 	 *
 	 * @param e
 	 *        the exception
@@ -518,9 +641,26 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(AsyncRequestNotUsableException.class)
 	public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e,
-			WebRequest request, ServletRequest servletRequest) {
-		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+			WebRequest request, @Nullable ServletRequest servletRequest) {
+		logClientAbort(e, request);
+	}
+
+	/**
+	 * Log an exception caused by the client disconnecting, at {@code DEBUG}
+	 * level.
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 */
+	private static void logClientAbort(Throwable e, WebRequest request) {
+		if ( GLOBAL_WEB_LOG.isDebugEnabled() ) {
+			GLOBAL_WEB_LOG.debug(
+					"{} in request {}; user [{}]; response can not be written to client: {}",
+					e.getClass().getSimpleName(), requestDescription(request),
+					userPrincipalName(request), e.getMessage());
+		}
 	}
 
 	/**
@@ -530,22 +670,19 @@ public class WebServiceGlobalControllerSupport {
 	 *        the exception
 	 * @param request
 	 *        the request
-	 * @return an error response object
+	 * @return an error response object, or {@code null} if the exception was
+	 *         caused by the client disconnecting
 	 * @since 1.6
 	 */
 	@ExceptionHandler(IOException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Result<?> handleIOException(IOException e, WebRequest request) {
-		Throwable cause = e;
-		do {
-			if ( cause instanceof AsyncRequestNotUsableException ex ) {
-				handleAsyncRequestNotUsableException(ex, request, null);
-				return null;
-			}
-			cause = cause.getCause();
-		} while ( cause != null );
-		log.warn("IOException in request {}; user [{}]", requestDescription(request),
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
+	public @Nullable Result<?> handleIOException(IOException e, WebRequest request) {
+		if ( isClientAbortException(e) ) {
+			logClientAbort(e, request);
+			return null;
+		}
+		GLOBAL_WEB_LOG.warn("IOException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.09000", e.getMessage());
 	}
@@ -562,10 +699,10 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(RemoteServiceException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleRemoteServiceException(RemoteServiceException e, WebRequest request) {
-		log.warn("RemoteServiceException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
+		GLOBAL_WEB_LOG.warn("RemoteServiceException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request), e);
 		return error("RS.00001", e.getMessage());
 	}
 
@@ -582,9 +719,49 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleRateLimitExceededException(RateLimitExceededException e, WebRequest request) {
-		log.warn("RateLimitExceededException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request));
+		GLOBAL_WEB_LOG.warn("RateLimitExceededException in request {}; user [{}]",
+				requestDescription(request), userPrincipalName(request));
 		return error("WEB.10000", e.getMessage());
+	}
+
+	/**
+	 * Apply to {@link ExceptionHandler} methods only.
+	 *
+	 * @since 1.15
+	 */
+	@Override
+	public boolean supports(MethodParameter returnType,
+			Class<? extends HttpMessageConverter<?>> converterType) {
+		return returnType.hasMethodAnnotation(ExceptionHandler.class);
+	}
+
+	/**
+	 * Skip writing an {@link ExceptionHandler} response body if the response
+	 * has already been committed.
+	 *
+	 * <p>
+	 * The response is committed when an exception is thrown after a handler has
+	 * started writing its response, for example when a query fails while
+	 * streaming results. The error can not be passed to the client by then, and
+	 * writing the body fails if the handler closed the response, which passes
+	 * the original exception on to the servlet container.
+	 * </p>
+	 *
+	 * @since 1.15
+	 */
+	@Override
+	public @Nullable Object beforeBodyWrite(@Nullable Object body, MethodParameter returnType,
+			MediaType selectedContentType,
+			Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request,
+			ServerHttpResponse response) {
+		if ( response instanceof ServletServerHttpResponse servletResponse
+				&& servletResponse.getServletResponse().isCommitted() ) {
+			GLOBAL_WEB_LOG.debug(
+					"Response committed so error can not be passed to client in request {}: {}",
+					request.getURI(), body);
+			return null;
+		}
+		return body;
 	}
 
 }

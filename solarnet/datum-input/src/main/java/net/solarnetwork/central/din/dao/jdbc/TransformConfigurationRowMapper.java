@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 
@@ -75,13 +77,15 @@ public class TransformConfigurationRowMapper implements RowMapper<TransformConfi
 	@Override
 	public TransformConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
-		Long userId = rs.getObject(++p, Long.class);
-		Long entityId = rs.getObject(++p, Long.class);
-		Timestamp ts = rs.getTimestamp(++p);
-		TransformConfiguration conf = new TransformConfiguration(userId, entityId, ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
+		Long userId = nonnull(rs.getObject(++p, Long.class), "userId");
+		Long entityId = nonnull(rs.getObject(++p, Long.class), "entityId");
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		String name = nonnull(rs.getString(++p), "name");
+		String serviceId = nonnull(rs.getString(++p), "serviceId");
+		final TransformConfiguration conf = new TransformConfiguration(userId, entityId, ts, name,
+				serviceId);
+		conf.setModified(mod);
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}

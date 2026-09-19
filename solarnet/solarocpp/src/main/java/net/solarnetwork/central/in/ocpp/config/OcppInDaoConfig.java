@@ -48,7 +48,7 @@ public class OcppInDaoConfig {
 	@ConfigurationProperties(prefix = "app.ocpp.async-status-updater")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	@Primary
-	public ChargePointStatusDao ocppAsyncChargePointStatusDao(TaskScheduler taskScheduler,
+	public AsyncChargePointStatusDao ocppAsyncChargePointStatusDao(TaskScheduler taskScheduler,
 			ChargePointStatusDao delegate) {
 		return new AsyncChargePointStatusDao(taskScheduler, delegate);
 	}

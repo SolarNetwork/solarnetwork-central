@@ -47,15 +47,15 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link InstructorSecurityAspect} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InstructorSecurityAspectTests {
 

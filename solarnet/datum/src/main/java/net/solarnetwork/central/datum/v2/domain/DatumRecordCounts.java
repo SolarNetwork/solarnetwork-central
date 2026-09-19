@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Counts of datum records for a date range.
@@ -45,6 +46,7 @@ public interface DatumRecordCounts {
 	 *
 	 * @return the datum count
 	 */
+	@Nullable
 	Long getDatumCount();
 
 	/**
@@ -52,6 +54,7 @@ public interface DatumRecordCounts {
 	 *
 	 * @return the hourly aggregate datum count
 	 */
+	@Nullable
 	Long getDatumHourlyCount();
 
 	/**
@@ -59,6 +62,7 @@ public interface DatumRecordCounts {
 	 *
 	 * @return the daily aggregate datum count
 	 */
+	@Nullable
 	Integer getDatumDailyCount();
 
 	/**
@@ -66,6 +70,7 @@ public interface DatumRecordCounts {
 	 *
 	 * @return the monthly aggregate datum count
 	 */
+	@Nullable
 	Integer getDatumMonthlyCount();
 
 	/**

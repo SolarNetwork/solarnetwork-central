@@ -32,10 +32,10 @@ import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
@@ -52,7 +52,7 @@ import net.solarnetwork.util.StringUtils;
  * Simple proxy configuration provider designed for testing.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvider {
 
@@ -69,8 +69,8 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 *
 	 * @see #setExternalServerCommand(String[])
 	 */
-	public static List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = List.of("/usr/local/bin/ncat", "-l",
-			"{port}", "-k", "-c", "/usr/bin/xargs -n1 echo");
+	public static final List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = List.of("/usr/local/bin/ncat",
+			"-l", "{port}", "-k", "-c", "/usr/bin/xargs -n1 echo");
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleProxyConfigurationProvider.class);
 
@@ -86,7 +86,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 * @param userMappings
 	 *        the user mappings to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleProxyConfigurationProvider(DynamicPortRegistrar portRegistrar,
 			List<SimplePrincipalMapping> userMappings) {
@@ -96,20 +96,23 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	}
 
 	@Override
-	public ProxyConnectionSettings authorize(ProxyConnectionRequest request)
+	public @Nullable ProxyConnectionSettings authorize(ProxyConnectionRequest request)
 			throws AuthorizationException {
 		final String ident = requestIdentity(request);
+		if ( ident == null ) {
+			return null;
+		}
 		if ( log.isDebugEnabled() ) {
 			log.debug("Connection authorization request received for: [{}]", ident);
 		}
-		final X509Certificate[] clientChain = request.principalIdentity();
+		final List<X509Certificate> clientChain = request.principalIdentity();
 
 		for ( SimplePrincipalMapping mapping : userMappings ) {
 			if ( mapping.subjectUserMapping().containsKey(ident) ) {
 				KeyStore trustStore = mapping.trustStore();
 				try {
-					PKIXCertPathValidatorResult vr = CertificateUtils
-							.validateCertificateChain(trustStore, clientChain);
+					PKIXCertPathValidatorResult vr = CertificateUtils.validateCertificateChain(
+							trustStore, clientChain.toArray(X509Certificate[]::new));
 					if ( log.isInfoEnabled() ) {
 						TrustAnchor ta = vr.getTrustAnchor();
 						log.info(
@@ -126,9 +129,9 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 		return null;
 	}
 
-	private String requestIdentity(ProxyConnectionRequest request) {
-		return request.principalIdentity() != null && request.principalIdentity().length > 0
-				? canonicalSubjectDn(request.principalIdentity()[0])
+	private @Nullable String requestIdentity(ProxyConnectionRequest request) {
+		return request.principalIdentity() != null && !request.principalIdentity().isEmpty()
+				? canonicalSubjectDn(request.principalIdentity().getFirst())
 				: request.principal();
 	}
 
@@ -165,8 +168,8 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 		private final KeyStore trustStore;
 		private int port = 0;
 
-		private String[] serverCommand;
-		private Process server;
+		private String @Nullable [] serverCommand;
+		private @Nullable Process server;
 
 		private DynamicConnectionSettings(ProxyConnectionRequest request, KeyStore trustStore) {
 			super();
@@ -201,11 +204,12 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 			}
 			final int newPort = portRegistrar.reserveNewPort();
 
-			final Map<String, Object> cmdParameters = Collections.singletonMap("port", newPort);
+			final Map<String, Object> cmdParameters = Map.of("port", newPort);
 			final int cmdLen = externalServerCommand.length;
 			String[] cmd = new String[cmdLen];
 			for ( int i = 0; i < cmdLen; i++ ) {
-				cmd[i] = StringUtils.expandTemplateString(externalServerCommand[i], cmdParameters);
+				var c = StringUtils.expandTemplateString(externalServerCommand[i], cmdParameters);
+				cmd[i] = (c != null ? c : "");
 			}
 
 			// start up dynamic server to proxy to
@@ -251,12 +255,13 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 *
 	 * @return the command
 	 */
-	public String[] getExternalServerCommand() {
+	public final String[] getExternalServerCommand() {
 		return externalServerCommand;
 	}
 
 	/**
 	 * Set the external server command.
+	 *
 	 * <p>
 	 * This is the OS-specific command to run that starts up the external server
 	 * to proxy the connection to. The command can include a <code>{port}</code>
@@ -266,9 +271,12 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 *
 	 * @param externalServerCommand
 	 *        the command to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setExternalServerCommand(String[] externalServerCommand) {
-		this.externalServerCommand = externalServerCommand;
+	public final void setExternalServerCommand(String[] externalServerCommand) {
+		this.externalServerCommand = requireNonNullArgument(externalServerCommand,
+				"externalServerCommand");
 	}
 
 }

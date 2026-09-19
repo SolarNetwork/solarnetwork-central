@@ -25,19 +25,23 @@ package net.solarnetwork.central.user.dao.jdbc.test;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.stream.Collectors.joining;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.user.domain.UserKeyPairEntity;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 
 /**
  * Helper methods for user JDBC tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserJdbcTestUtils {
 
@@ -108,6 +112,71 @@ public final class UserJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solaruser.user_secret ORDER BY user_id, topic, skey");
 		log.debug("solaruser.user_secret table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new control instruction task instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param topic
+	 *        the topic
+	 * @param name
+	 *        the name
+	 * @param schedule
+	 *        the schedule
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execution time
+	 * @param serviceProps
+	 *        the service properties
+	 * @param lastExecuteAt
+	 *        the last execution time
+	 * @param message
+	 *        a message
+	 * @param resultProps
+	 *        the result properties
+	 * @return the entity
+	 * @since 1.1
+	 */
+	public static UserNodeInstructionTaskEntity newUserNodeInstructionTaskEntity(Long userId,
+			String name, Long nodeId, String topic, String schedule, BasicClaimableJobState state,
+			Instant executeAt, Map<String, Object> serviceProps, Instant lastExecuteAt, String message,
+			Map<String, Object> resultProps) {
+		UserNodeInstructionTaskEntity conf = new UserNodeInstructionTaskEntity(
+				unassignedEntityIdKey(userId));
+		conf.setEnabled(true);
+		conf.setName(name);
+		conf.setNodeId(nodeId);
+		conf.setTopic(topic);
+		conf.setSchedule(schedule);
+		conf.setState(state);
+		conf.setExecuteAt(executeAt);
+		conf.setLastExecuteAt(lastExecuteAt);
+		conf.setMessage(message);
+		conf.setServiceProps(serviceProps);
+		conf.setResultProps(resultProps);
+		return conf;
+	}
+
+	/**
+	 * List instruction task rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 * @since 1.1
+	 */
+	public static List<Map<String, Object>> allUserNodeInstructionTaskEntityData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solaruser.user_node_instr_task ORDER BY user_id, id");
+		log.debug("solaruser.user_instr_task table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

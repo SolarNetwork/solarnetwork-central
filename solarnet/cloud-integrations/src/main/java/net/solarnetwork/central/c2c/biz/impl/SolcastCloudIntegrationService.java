@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -51,7 +52,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -137,17 +138,20 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolcastCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
-				new SolcastRestOperationsHelper(
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
+			InstantSource clock) {
+		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
+				new SolcastRestOperationsHelper(clock,
 						LoggerFactory.getLogger(SolcastCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -172,7 +176,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 			final String response = restOpsHelper.httpGet("Validate connection", integration,
 					String.class,
 					// @formatter:off
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(LIVE_RADIATION_URL_PATH)
 							.queryParam(LATITUDE_PARAM, "-33.856784")
 							.queryParam(LONGITUDE_PARAM, "151.215297")
@@ -180,7 +184,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 							.build()
 							.toUri(),
 					// @formatter:on
-					HttpEntity::getBody);
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

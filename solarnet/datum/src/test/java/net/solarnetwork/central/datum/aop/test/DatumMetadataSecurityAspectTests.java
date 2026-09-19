@@ -1,36 +1,37 @@
 /* ==================================================================
  * DatumMetadataSecurityAspectTests.java - Oct 20, 2014 9:52:18 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.aop.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -44,19 +45,19 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.test.AbstractCentralTest;
+import net.solarnetwork.central.test.CentralTestConstants;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link DatumMetadataSecurityAspect} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
+public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 
 	private SolarNodeOwnershipDao userNodeDao;
 
@@ -98,35 +99,41 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 		return token;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		userNodeDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 	}
 
-	@Test(expected = AuthorizationException.class)
-	public void updateMetadataNoAuth() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_foo"));
-		replayAll();
-		aspect.updateLocationMetadataCheck(TEST_LOC_ID);
-		verifyAll();
-	}
-
-	@Test(expected = AuthorizationException.class)
-	public void updateMetadataMissingRole() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_foo"));
-		becomeUser("ROLE_USER");
-		replayAll();
-		aspect.updateLocationMetadataCheck(TEST_LOC_ID);
+	@AfterEach
+	public void teardown() {
 		verifyAll();
 	}
 
 	@Test
+	public void updateMetadataNoAuth() {
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_foo"));
+		replayAll();
+
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.updateLocationMetadataCheck(TEST_LOC_ID));
+	}
+
+	@Test
+	public void updateMetadataMissingRole() {
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_foo"));
+		becomeUser("ROLE_USER");
+		replayAll();
+
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.updateLocationMetadataCheck(TEST_LOC_ID));
+	}
+
+	@Test
 	public void updateMetadataAllowed() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_user"));
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_user"));
 		becomeUser("ROLE_USER");
 		replayAll();
 		aspect.updateLocationMetadataCheck(TEST_LOC_ID);
-		verifyAll();
 	}
 
 	@Test
@@ -136,7 +143,7 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final Set<NodeSourcePK> availableSourceIds = new LinkedHashSet<NodeSourcePK>(Arrays.asList(
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
@@ -155,9 +162,8 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 		@SuppressWarnings("unchecked")
 		Set<NodeSourcePK> result = (Set<NodeSourcePK>) service.filteredMetadataSourcesAccessCheck(pjp,
 				new Long[] { nodeId });
-		Assert.assertEquals("Filtered source IDs", new LinkedHashSet<NodeSourcePK>(Arrays
-				.asList(new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"))),
-				result);
+		then(result).as("Filtered source IDs").containsExactly(new NodeSourcePK(nodeId, "/A/B/watts"),
+				new NodeSourcePK(nodeId, "/A/C/watts"));
 	}
 
 }

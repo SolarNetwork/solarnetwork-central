@@ -156,7 +156,7 @@ public final class SelectServerMeasurementConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

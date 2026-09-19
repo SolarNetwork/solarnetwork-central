@@ -115,7 +115,7 @@ public class UserMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.GET)
-	public Result<UserMetadataEntity> getMetadata(@PathVariable("userId") Long userId) {
+	public Result<UserMetadataEntity> getMetadata(@PathVariable Long userId) {
 		BasicUserMetadataFilter criteria = new BasicUserMetadataFilter();
 		criteria.setUserId(userId);
 		FilterResults<UserMetadataEntity, Long> results = userMetadataBiz.findUserMetadata(criteria,
@@ -157,7 +157,7 @@ public class UserMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.POST)
-	public Result<Object> addMetadata(@PathVariable("userId") Long userId,
+	public Result<Object> addMetadata(@PathVariable Long userId,
 			@RequestBody GeneralDatumMetadata meta) {
 		userMetadataBiz.addUserMetadata(userId, meta);
 		return success();
@@ -189,7 +189,7 @@ public class UserMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.PUT)
-	public Result<Object> replaceMetadata(@PathVariable("userId") Long userId,
+	public Result<Object> replaceMetadata(@PathVariable Long userId,
 			@RequestBody GeneralDatumMetadata meta) {
 		userMetadataBiz.storeUserMetadata(userId, meta);
 		return success();
@@ -215,7 +215,7 @@ public class UserMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.DELETE)
-	public Result<Object> deleteMetadata(@PathVariable("userId") Long userId) {
+	public Result<Object> deleteMetadata(@PathVariable Long userId) {
 		userMetadataBiz.removeUserMetadata(userId);
 		return success();
 	}

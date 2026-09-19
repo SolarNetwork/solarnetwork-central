@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain.validation;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -34,7 +35,7 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
  * @version 1.0
  */
 public class StartStopClaimableJobStateValidator
-		implements ConstraintValidator<StartStopClaimableJobState, BasicClaimableJobState> {
+		implements ConstraintValidator<StartStopClaimableJobState, @Nullable BasicClaimableJobState> {
 
 	/**
 	 * Constructor.
@@ -44,7 +45,7 @@ public class StartStopClaimableJobStateValidator
 	}
 
 	@Override
-	public boolean isValid(BasicClaimableJobState value, ConstraintValidatorContext context) {
+	public boolean isValid(@Nullable BasicClaimableJobState value, ConstraintValidatorContext context) {
 		if ( value == null ) {
 			return true;
 		}

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -40,31 +41,32 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class EndpointConfigurationInput
 		extends BaseInstructionInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
-	private Set<Long> nodeIds;
-
-	@NotNull
-	private Long requestTransformId;
+	private @Nullable Set<Long> nodeIds;
 
 	@NotNull
-	private Long responseTransformId;
+	private @Nullable Long requestTransformId;
+
+	@NotNull
+	private @Nullable Long responseTransformId;
 
 	private int maxExecutionSeconds = EndpointConfiguration.DEFAULT_MAX_EXECUTION_SECONDS;
 
-	private String userMetadataPath;
+	private @Nullable String userMetadataPath;
 
 	@Size(max = 96)
-	private String requestContentType;
+	private @Nullable String requestContentType;
 
 	@Size(max = 96)
-	private String responseContentType;
+	private @Nullable String responseContentType;
 
 	/**
 	 * Constructor.
@@ -73,13 +75,16 @@ public class EndpointConfigurationInput
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public EndpointConfiguration toEntity(UserUuidPK id, Instant date) {
-		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date);
+		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date,
+				name);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(EndpointConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -98,7 +103,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
@@ -108,7 +113,7 @@ public class EndpointConfigurationInput
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -118,7 +123,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the node IDs
 	 */
-	public Set<Long> getNodeIds() {
+	public @Nullable Set<Long> getNodeIds() {
 		return nodeIds;
 	}
 
@@ -129,7 +134,7 @@ public class EndpointConfigurationInput
 	 * @param nodeIds
 	 *        the node IsD to set
 	 */
-	public void setNodeIds(Set<Long> nodeIds) {
+	public void setNodeIds(@Nullable Set<Long> nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -138,7 +143,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the delimited string
 	 */
-	public String getNodeIdsValue() {
+	public @Nullable String getNodeIdsValue() {
 		return StringUtils.commaDelimitedStringFromCollection(nodeIds);
 	}
 
@@ -148,7 +153,7 @@ public class EndpointConfigurationInput
 	 * @param value
 	 *        the comma-delimited string of node IDs to set
 	 */
-	public void setNodeIdsValue(String value) {
+	public void setNodeIdsValue(@Nullable String value) {
 		Set<String> vals = StringUtils.commaDelimitedStringToSet(value);
 		Set<Long> nums = null;
 		if ( vals != null ) {
@@ -173,7 +178,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getRequestTransformId() {
+	public final @Nullable Long getRequestTransformId() {
 		return requestTransformId;
 	}
 
@@ -184,7 +189,7 @@ public class EndpointConfigurationInput
 	 * @param requestTransformId
 	 *        the ID to set
 	 */
-	public void setRequestTransformId(Long requestTransformId) {
+	public final void setRequestTransformId(@Nullable Long requestTransformId) {
 		this.requestTransformId = requestTransformId;
 	}
 
@@ -194,7 +199,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getResponseTransformId() {
+	public final @Nullable Long getResponseTransformId() {
 		return responseTransformId;
 	}
 
@@ -205,7 +210,7 @@ public class EndpointConfigurationInput
 	 * @param responseTransformId
 	 *        the ID to set
 	 */
-	public void setResponseTransformId(Long responseTransformId) {
+	public final void setResponseTransformId(@Nullable Long responseTransformId) {
 		this.responseTransformId = responseTransformId;
 	}
 
@@ -215,7 +220,7 @@ public class EndpointConfigurationInput
 	 * @return the seconds; defaults to
 	 *         {@link EndpointConfiguration#DEFAULT_MAX_EXECUTION_SECONDS}
 	 */
-	public int getMaxExecutionSeconds() {
+	public final int getMaxExecutionSeconds() {
 		return maxExecutionSeconds;
 	}
 
@@ -225,7 +230,7 @@ public class EndpointConfigurationInput
 	 * @param maxExecutionSeconds
 	 *        the seconds to set; anything less than 1 will be saved as 1
 	 */
-	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
+	public final void setMaxExecutionSeconds(int maxExecutionSeconds) {
 		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
 	}
 
@@ -235,7 +240,7 @@ public class EndpointConfigurationInput
 	 * @return the userMetadataPath the user metadata path to extract
 	 * @since 1.1
 	 */
-	public String getUserMetadataPath() {
+	public final @Nullable String getUserMetadataPath() {
 		return userMetadataPath;
 	}
 
@@ -247,7 +252,7 @@ public class EndpointConfigurationInput
 	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
 	 * @since 1.1
 	 */
-	public void setUserMetadataPath(String userMetadataPath) {
+	public final void setUserMetadataPath(@Nullable String userMetadataPath) {
 		this.userMetadataPath = userMetadataPath;
 	}
 
@@ -257,7 +262,7 @@ public class EndpointConfigurationInput
 	 * @return the request content type to assume
 	 * @since 1.2
 	 */
-	public String getRequestContentType() {
+	public final @Nullable String getRequestContentType() {
 		return requestContentType;
 	}
 
@@ -265,11 +270,11 @@ public class EndpointConfigurationInput
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the request content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setRequestContentType(String requestContentType) {
+	public final void setRequestContentType(@Nullable String requestContentType) {
 		if ( requestContentType != null && requestContentType.isBlank() ) {
 			requestContentType = null;
 		}
@@ -282,7 +287,7 @@ public class EndpointConfigurationInput
 	 * @return the response content type to assume
 	 * @since 1.2
 	 */
-	public String getResponseContentType() {
+	public final @Nullable String getResponseContentType() {
 		return responseContentType;
 	}
 
@@ -290,11 +295,11 @@ public class EndpointConfigurationInput
 	 * Set an implicit response content type.
 	 *
 	 * @param responseContentType
-	 *        the response content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the response content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setResponseContentType(String responseContentType) {
+	public final void setResponseContentType(@Nullable String responseContentType) {
 		this.responseContentType = responseContentType;
 	}
 

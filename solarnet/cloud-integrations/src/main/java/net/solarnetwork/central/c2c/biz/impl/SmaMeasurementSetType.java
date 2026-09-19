@@ -24,8 +24,10 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.SmaMeasurementType.indexedNumberType;
 import static net.solarnetwork.central.c2c.biz.impl.SmaMeasurementType.numberType;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.SequencedMap;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum SmaMeasurementSetType {
 
 	/** Energy and power battery. */
@@ -71,11 +74,12 @@ public enum SmaMeasurementSetType {
 	private final String description;
 	private final SequencedMap<String, SmaMeasurementType<?>> measurements;
 
-	private SmaMeasurementSetType(String description) {
+	SmaMeasurementSetType(String description) {
 		this.description = description;
 		this.measurements = createMeasurements(this.name());
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static SequencedMap<String, SmaMeasurementType<?>> createMeasurements(
 			String measurementSetType) {
 		SequencedMap<String, SmaMeasurementType<?>> types = new LinkedHashMap<>(8);
@@ -194,7 +198,7 @@ public enum SmaMeasurementSetType {
 				types.put("windSpeed", numberType("windSpeed", "Wind speed for the sensor in m/s."));
 				break;
 		}
-		return types;
+		return Collections.unmodifiableSequencedMap(types);
 	}
 
 	/**
@@ -213,13 +217,13 @@ public enum SmaMeasurementSetType {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@code null} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static SmaMeasurementSetType fromValue(String value) {
+	public static @Nullable SmaMeasurementSetType fromValue(String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}

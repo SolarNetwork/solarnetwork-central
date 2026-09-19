@@ -26,6 +26,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
@@ -34,6 +35,8 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
+import net.solarnetwork.central.user.dao.jdbc.JdbcUserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertSituationDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
@@ -46,10 +49,13 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
  * Configuration for user DAO implementations.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDaoConfig {
+
+	@Autowired
+	private JdbcOperations jdbcOperations;
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -108,6 +114,17 @@ public class UserDaoConfig {
 		MyBatisUserNodeDao dao = new MyBatisUserNodeDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
+	}
+
+	/**
+	 * The cloud datum stream rake task DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.2
+	 */
+	@Bean
+	public UserNodeInstructionTaskDao userInstructionTaskDaoDao() {
+		return new JdbcUserNodeInstructionTaskDao(jdbcOperations);
 	}
 
 }

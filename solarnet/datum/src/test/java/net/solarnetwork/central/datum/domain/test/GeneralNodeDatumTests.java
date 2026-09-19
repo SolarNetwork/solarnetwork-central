@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralNodeDatumTests.java - Aug 22, 2014 3:15:33 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,16 +32,16 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralNodeDatum} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -56,17 +56,14 @@ public class GeneralNodeDatumTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralNodeDatum getTestInstance() {
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -106,10 +103,11 @@ public class GeneralNodeDatumTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+				+ "\",\"nodeId\":-1,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralNodeDatum datum = objectMapper.readValue(json, GeneralNodeDatum.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getNodeId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getSamples(), is(notNullValue()));
 		assertThat(datum.getSamples().getInstantaneousSampleInteger("watts"), is(89));

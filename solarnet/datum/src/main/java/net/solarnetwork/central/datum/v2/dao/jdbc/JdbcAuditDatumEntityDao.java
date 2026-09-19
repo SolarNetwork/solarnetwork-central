@@ -50,7 +50,7 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcTemplate} is {@literal null}
+	 *         if {@code jdbcTemplate} is {@code null}
 	 */
 	public JdbcAuditDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();

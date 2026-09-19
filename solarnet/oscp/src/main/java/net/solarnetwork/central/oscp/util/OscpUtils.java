@@ -28,14 +28,14 @@ import java.util.Map;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import com.networknt.schema.AbsoluteIri;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion.VersionFlag;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Draft7;
 
 /**
  * Utilities for OSCP.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public final class OscpUtils {
 
@@ -44,11 +44,12 @@ public final class OscpUtils {
 	}
 
 	/**
-	 * Get a JSON schema validator for OSCP 2.0.
+	 * Get a JSON schema registry for OSCP 2.0.
 	 *
-	 * @return the validator
+	 * @return the registry
+	 * @since 2.0
 	 */
-	public static JsonSchemaFactory oscpSchemaFactory_v20() {
+	public static SchemaRegistry oscpSchemaRegistry_v20() {
 		try {
 			AbsoluteIri baseIri = AbsoluteIri.of("http://www.openchargealliance.org/schemas/oscp/2.0/");
 			Map<AbsoluteIri, Resource> uriMappings = new HashMap<>();
@@ -58,8 +59,8 @@ public final class OscpUtils {
 				uriMappings.put(baseIri.resolve(r.getFilename()), r);
 			}
 
-			return JsonSchemaFactory.builder(JsonSchemaFactory.getInstance(VersionFlag.V7))
-					.schemaLoaders((l) -> l.add((iri) -> {
+			return SchemaRegistry.builder().defaultDialectId(Draft7.getInstance().getId())
+					.resourceLoaders((l) -> l.add((iri) -> {
 						var r = uriMappings.get(iri);
 						if ( r == null ) {
 							return null;

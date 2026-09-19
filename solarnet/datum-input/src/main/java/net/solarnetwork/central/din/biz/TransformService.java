@@ -25,6 +25,7 @@ package net.solarnetwork.central.din.biz;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
@@ -117,6 +118,6 @@ public interface TransformService
 	 *         if an IO error occurs
 	 */
 	Iterable<Datum> transform(Object input, MimeType type, IdentifiableConfiguration config,
-			Map<String, ?> parameters) throws IOException;
+			@Nullable Map<String, ?> parameters) throws IOException;
 
 }

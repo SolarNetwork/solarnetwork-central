@@ -50,7 +50,7 @@ public final class DeleteDatumAuxiliary implements CallableStatementCreator, Sql
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public DeleteDatumAuxiliary(DatumAuxiliaryPK id) {
 		super();

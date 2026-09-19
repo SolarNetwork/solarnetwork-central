@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.DatumInputFilter;
@@ -69,10 +70,10 @@ public interface UserDatumInputBiz {
 	 *        an optional filter
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
-			Long userId, DatumInputFilter filter, Class<C> configurationClass);
+			Long userId, @Nullable DatumInputFilter filter, Class<C> configurationClass);
 
 	/**
 	 * Get a specific configuration kind for a given ID.
@@ -85,9 +86,9 @@ public interface UserDatumInputBiz {
 	 *        the primary key of the configuration to get
 	 * @param configurationClass
 	 *        the configuration type to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
-	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForId(
+	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> @Nullable C configurationForId(
 			K id, Class<C> configurationClass);
 
 	/**
@@ -164,6 +165,6 @@ public interface UserDatumInputBiz {
 	 *         if an IO error occurs
 	 */
 	TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId, MimeType contentType,
-			InputStream in, Map<String, ?> parameters) throws IOException;
+			InputStream in, @Nullable Map<String, ?> parameters) throws IOException;
 
 }

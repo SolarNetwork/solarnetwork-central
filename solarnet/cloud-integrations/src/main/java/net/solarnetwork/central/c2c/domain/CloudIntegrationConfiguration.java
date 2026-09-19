@@ -42,7 +42,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "fullyConfigured" })
+@JsonIgnoreProperties({ "id", "fullyConfigured", "integrationId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "serviceIdentifier",
 		"serviceProperties" })
 public final class CloudIntegrationConfiguration
@@ -50,7 +50,7 @@ public final class CloudIntegrationConfiguration
 		implements
 		CloudIntegrationsConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
-		UserIdentifiableSystem {
+		UserIdentifiableSystem, CloudIntegrationIdRelated {
 
 	/**
 	 * A system identifier component included in {@link #systemIdentifier()}.
@@ -67,11 +67,16 @@ public final class CloudIntegrationConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudIntegrationConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CloudIntegrationConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -83,16 +88,21 @@ public final class CloudIntegrationConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudIntegrationConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public CloudIntegrationConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier);
 	}
 
 	@Override
 	public CloudIntegrationConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudIntegrationConfiguration(id, getCreated());
+		var copy = new CloudIntegrationConfiguration(id, created(), getName(), getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}
@@ -100,6 +110,11 @@ public final class CloudIntegrationConfiguration
 	@Override
 	public boolean isFullyConfigured() {
 		return true; // can't really tell with this one
+	}
+
+	@Override
+	public Long getIntegrationId() {
+		return getConfigId();
 	}
 
 	@Override
@@ -132,9 +147,8 @@ public final class CloudIntegrationConfiguration
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return id().getEntityId();
 	}
 
 	/**

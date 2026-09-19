@@ -22,16 +22,15 @@
 
 package net.solarnetwork.central.user.support;
 
-import java.io.IOException;
-import java.io.Serial;
 import java.time.Instant;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserMetadata;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link UserMetadata}.
@@ -39,18 +38,15 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * @author matt
  * @version 2.0
  */
-public class UserMetadataSerializer extends StdSerializer<UserMetadata> {
-
-	@Serial
-	private static final long serialVersionUID = -1846926348224405629L;
+public class UserMetadataSerializer extends StdSerializer<@Nullable UserMetadata> {
 
 	public UserMetadataSerializer() {
 		super(UserMetadata.class);
 	}
 
 	@Override
-	public void serialize(UserMetadata meta, JsonGenerator generator, SerializerProvider provider)
-			throws IOException, JsonGenerationException {
+	public void serialize(@Nullable UserMetadata meta, JsonGenerator generator,
+			SerializationContext provider) throws JacksonException {
 		if ( meta == null ) {
 			generator.writeNull();
 			return;
@@ -58,17 +54,17 @@ public class UserMetadataSerializer extends StdSerializer<UserMetadata> {
 		generator.writeStartObject();
 		Long l = meta.getUserId();
 		if ( l != null ) {
-			generator.writeNumberField("userId", l);
+			generator.writeNumberProperty("userId", l);
 		}
 
 		Instant dt = meta.getCreated();
 		if ( dt != null ) {
-			generator.writeObjectField("created", dt);
+			generator.writePOJOProperty("created", dt);
 		}
 
 		dt = meta.getUpdated();
 		if ( dt != null ) {
-			generator.writeObjectField("updated", dt);
+			generator.writePOJOProperty("updated", dt);
 		}
 
 		GeneralDatumMetadata metadata = meta.getMetadata();

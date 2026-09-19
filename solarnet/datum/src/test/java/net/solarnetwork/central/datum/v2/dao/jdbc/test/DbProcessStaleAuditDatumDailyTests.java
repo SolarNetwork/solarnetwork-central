@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
@@ -49,7 +50,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -195,7 +195,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
 				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
-				Aggregation.Month, null));
+				Aggregation.Month, now()));
 	}
 
 	@Test
@@ -232,7 +232,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
 				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
-				Aggregation.Month, null));
+				Aggregation.Month, now()));
 	}
 
 	@Test
@@ -277,7 +277,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
 				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
-				Aggregation.Month, null));
+				Aggregation.Month, now()));
 	}
 
 	@Test

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for connector related data.
  * 
@@ -35,19 +37,22 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available connector ID from the
-	 * {@link #getConnectorIds()} array, or {@literal null} if not available.
+	 * {@link #getConnectorIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first connector ID, or {@literal null} if not available
+	 * @return the first connector ID, or {@code null} if not available
 	 */
-	Integer getConnectorId();
+	default @Nullable Integer getConnectorId() {
+		final var array = getConnectorIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of connector IDs.
 	 * 
-	 * @return array of connector IDs (may be {@literal null})
+	 * @return array of connector IDs (may be {@code null})
 	 */
-	Integer[] getConnectorIds();
+	Integer @Nullable [] getConnectorIds();
 
 	/**
 	 * Test if this filter has any connector criteria.
@@ -63,21 +68,24 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available EVSE ID from the {@link #getEvseIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first EVSE ID, or {@literal null} if not available
+	 * @return the first EVSE ID, or {@code null} if not available
 	 * @since 1.2
 	 */
-	Integer getEvseId();
+	default @Nullable Integer getEvseId() {
+		final var array = getEvseIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of EVSE IDs.
 	 * 
-	 * @return array of EVSE IDs (may be {@literal null})
+	 * @return array of EVSE IDs (may be {@code null})
 	 * @since 1.2
 	 */
-	Integer[] getEvseIds();
+	Integer @Nullable [] getEvseIds();
 
 	/**
 	 * Test if this filter has any EVSE criteria.
@@ -86,7 +94,7 @@ public interface ChargePointConnectorCriteria {
 	 * @since 1.2
 	 */
 	default boolean hasEvseCriteria() {
-		return getConnectorId() != null;
+		return getEvseId() != null;
 	}
 
 }

@@ -27,23 +27,32 @@ import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.mockito.Mockito.times;
 import java.net.URI;
-import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,21 +63,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.support.TaskExecutorAdapter;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
@@ -86,32 +94,45 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.test.CallingThreadExecutorService;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link LocusEnergyCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class LocusEnergyCloudDatumStreamServiceTests {
+public class LocusEnergyCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> eventCaptor;
 
 	@Mock
 	private RestOperations restOps;
@@ -137,11 +158,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	@Mock
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
-	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
+	@Mock
+	private DatumEntityDao datumDao;
 
 	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<ObjectNode>> httpRequestCaptor;
+
+	private MutableClock clock = MutableClock.of(Instant.now(), UTC);
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -153,13 +179,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
-				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager,
-				Clock.systemUTC(), null);
+				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
+
+		clock.setInstant(Instant.now());
 	}
 
 	private static String componentValueRef(Long componentId, String fieldName) {
@@ -187,7 +214,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -201,27 +228,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -230,16 +250,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -259,24 +277,24 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
-						+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -313,7 +331,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -327,27 +345,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRefWithPlaceholders("W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRefWithPlaceholders("W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRefWithPlaceholders("TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRefWithPlaceholders("TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -356,9 +367,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -368,9 +378,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 						Map.of("siteId", (Object) 321, "componentId", componentId)));
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -390,24 +399,24 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
-						+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -445,7 +454,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -459,27 +468,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId1, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId1, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId2, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId2, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -488,16 +490,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -520,29 +520,32 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final var res2 = new ResponseEntity<ObjectNode>(getObjectFromJSON(
 				utf8StringResource("locus-energy-data-for-component-03.json", getClass()),
 				ObjectNode.class), HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
 							+ "?gran=latest&tz=UTC&fields=W_avg"),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 							+ "?gran=latest&tz=UTC&fields=TotWhExp_max")
-			);
-
-		and.then(httpEntityCaptor.getAllValues()).extracting(HttpEntity::getHeaders)
-			.as("HTTP request includes OAuth Authorization header")
-			.allMatch(headers -> headers.getFirst(AUTHORIZATION).equals("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -580,7 +583,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -594,27 +597,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId1, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId1, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId2, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId2, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -623,16 +619,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -655,29 +649,32 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final var res2 = new ResponseEntity<ObjectNode>(getObjectFromJSON(
 				utf8StringResource("locus-energy-data-for-component-04.json", getClass()),
 				ObjectNode.class), HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
 							+ "?gran=latest&tz=UTC&fields=W_avg"),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 							+ "?gran=latest&tz=UTC&fields=TotWhExp_max")
-			);
-
-		and.then(httpEntityCaptor.getAllValues()).extracting(HttpEntity::getHeaders)
-			.as("HTTP request includes OAuth Authorization header")
-			.allMatch(headers -> headers.getFirst(AUTHORIZATION).equals("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -713,7 +710,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -727,27 +724,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -756,16 +746,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -785,7 +773,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -797,27 +785,27 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter not provided")
 					.isNull()
@@ -873,7 +861,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -887,27 +875,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -916,16 +897,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -945,7 +924,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -957,28 +936,28 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI has end date truncated to 5min granularity constraint")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(startDate.plus(
 									LocusEnergyGranularity.FiveMinute.getConstraint()).atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter provided")
 					.isNotNull()
@@ -1009,7 +988,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -1023,27 +1002,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -1052,16 +1024,14 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1081,7 +1051,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-12-30T00:00:00Z");
@@ -1093,27 +1063,27 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter not provided because no more date-based pages")
 					.isNull()
@@ -1136,7 +1106,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -1150,27 +1120,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -1179,18 +1142,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		datumStream.setServiceProps(
 				Map.of(LocusEnergyCloudDatumStreamService.GRANULARITY_SETTING, "daily"));
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1210,7 +1171,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -1223,21 +1184,21 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI uses 'monthly' granularity from query filter, overriding datum stream setting")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=monthly&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -1274,6 +1235,581 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 					.returns(Instant.parse("2014-04-01T12:05:00Z"), from(Datum::getTimestamp))
 					.as("Datum samples from JSON response")
 					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_multipleComponents_multiStreamLag_withinTolerance() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final Long partnerId = randomLong();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long componentId1 = randomLong();
+		final Long componentId2 = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				LocusEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId1, "W_avg"));
+		prop1.setEnabled(true);
+
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId2, "TotWhExp_max"));
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final ObjectNode resJson1 = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
+				ObjectNode.class);
+		final var res1 = new ResponseEntity<ObjectNode>(resJson1, HttpStatus.OK);
+		final ObjectNode resJson2 = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-05a.json", getClass()),
+				ObjectNode.class);
+		final var res2 = new ResponseEntity<ObjectNode>(resJson2, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
+
+		// WHEN
+		final Instant startDate = Instant.parse("2014-04-01T12:00:00Z");
+		final Instant endDate = startDate.plus(1L, ChronoUnit.HOURS);
+
+		// make clock near datum end date (within lag tolerance)
+		clock.setInstant(endDate.plusSeconds(1L));
+
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.containsOnly(
+					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
+							+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
+									ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+									ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+							)),
+					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
+						+ "?gran=5min&tz=UTC&fields=TotWhExp_max&start=%s&end=%s".formatted(
+								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+						))
+			)
+			;
+
+		and.then(result)
+			.as("Datum list parsed from HTTP responses")
+			.hasSize(2)
+			.satisfies(_ -> {
+				and.then(result.getNextQueryFilter())
+					.as("Next query filter returned")
+					.isNotNull()
+					.as("01:25 returned, as the least of all greatest timestamps per stream")
+					.returns(Instant.parse("2014-04-01T12:00:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+					;
+			})
+			.as("All datum have properties taken from DatumStream configuration")
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				final DatumSamples expectedSamples = new DatumSamples();
+				expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2014-04-01T12:00:00Z"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+
+				expectedSamples.putInstantaneousSampleValue("watts", 24.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5937);
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2014-04-01T12:05:00Z"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_multipleComponents_multiStreamLag_outsideTolerance() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final Long partnerId = randomLong();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long componentId1 = randomLong();
+		final Long componentId2 = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				LocusEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId1, "W_avg"));
+		prop1.setEnabled(true);
+
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId2, "TotWhExp_max"));
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final ObjectNode resJson1 = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
+				ObjectNode.class);
+		final var res1 = new ResponseEntity<ObjectNode>(resJson1, HttpStatus.OK);
+		final ObjectNode resJson2 = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-05a.json", getClass()),
+				ObjectNode.class);
+		final var res2 = new ResponseEntity<ObjectNode>(resJson2, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
+
+		// WHEN
+		final Instant startDate = Instant.parse("2014-04-01T12:00:00Z");
+		final Instant endDate = startDate.plus(1L, ChronoUnit.HOURS);
+
+		// make clock 1y after datum end date (outside lag tolerance)
+		clock.setInstant(endDate.plus(365L, ChronoUnit.DAYS));
+
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.containsOnly(
+					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
+							+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
+									ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+									ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+							)),
+					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
+						+ "?gran=5min&tz=UTC&fields=TotWhExp_max&start=%s&end=%s".formatted(
+								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+						))
+			)
+			;
+
+		and.then(result)
+			.as("Datum list parsed from HTTP responses")
+			.hasSize(2)
+			.satisfies(_ -> {
+				and.then(result.getNextQueryFilter())
+					.as("No next query filter returned because clock is beyond multi stream lag tolerance")
+					.isNull()
+					;
+			})
+			.as("All datum have properties taken from DatumStream configuration")
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				final DatumSamples expectedSamples = new DatumSamples();
+				expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2014-04-01T12:00:00Z"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+
+				expectedSamples.putInstantaneousSampleValue("watts", 24.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5937);
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2014-04-01T12:05:00Z"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_timeJump() {
+		// GIVEN
+		service.setDatumDao(datumDao);
+
+		final String tokenUri = "https://example.com/oauth/token";
+		final Long partnerId = randomLong();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long componentId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				LocusEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(componentId, "W_avg"));
+		prop1.setEnabled(true);
+
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(componentId, "TotWhExp_max"));
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final ObjectNode resJson = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
+				ObjectNode.class);
+		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
+
+		// lookup previous datum for first datum in result set
+		final Instant firstDatumTs = Instant.parse("2014-04-01T12:00:00Z");
+		final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+		final String deviceRef = "/%s".formatted(componentId);
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+				new DatumProperties());
+		given(datumDao.findFiltered(any())).willReturn(new BasicObjectDatumStreamFilterResults<>(
+				Map.of(prevDatum.streamId(),
+						emptyMeta(prevDatum.streamId(), "UTC", datumStream.getKind(), nodeId, sourceId)),
+				List.of(prevDatum)));
+
+		// WHEN
+		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
+		final Instant endDate = Instant.parse("2024-01-01T01:00:00Z");
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
+
+		final URI expectedUri = BASE_URI.resolve(
+				V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+				+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
+						ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+						ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+				));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
+		and.then(result)
+			.as("Datum list parsed from HTTP response")
+			.hasSize(2)
+			.satisfies(_ -> {
+				and.then(result.getNextQueryFilter())
+					.as("Next filter not provided")
+					.isNull()
+					;
+			})
+			.as("All datum have properties taken from DatumStream configuration")
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				final DatumSamples expectedSamples = new DatumSamples();
+				expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(firstDatumTs, from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+
+				expectedSamples.putInstantaneousSampleValue("watts", 24.717f);
+				expectedSamples.putAccumulatingSampleValue("wattHours", 5937);
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2014-04-01T12:05:00Z"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples, Datum::asSampleOperations)
+					;
+			})
+			;
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(sourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				final Instant timeGapStartTs = prevDatumTs;
+				final Instant timeGapEndTs = firstDatumTs;
+
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUri, null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
 					;
 			})
 			;

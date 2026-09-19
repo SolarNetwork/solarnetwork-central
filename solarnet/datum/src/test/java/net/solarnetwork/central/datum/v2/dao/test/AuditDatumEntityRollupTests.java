@@ -22,20 +22,21 @@
 
 package net.solarnetwork.central.datum.v2.dao.test;
 
+import static java.time.Instant.EPOCH;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.accumulativeAuditDatumRollup;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import java.time.Instant;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test cases for the {@link AuditDatumEntityRollup} class.
@@ -46,15 +47,16 @@ import net.solarnetwork.codec.JsonUtils;
 public class AuditDatumEntityRollupTests {
 
 	public ObjectMapper objectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-		objectMapper.setSerializationInclusion(Include.NON_NULL);
-		objectMapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-		return objectMapper;
+		return JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS).build();
 	}
 
 	@Test
 	public void jsonPropertyOrder() throws Exception {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 2L, 3, 4);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 2L, 3, 4);
 		String json = JsonUtils.getJSONString(c, null);
 		assertThat("JSON", json, equalTo("""
 				{"aggregation":"RunningTotal","datumTotalCount":10,"datumCount":1,"datumHourlyCount":2\
@@ -81,32 +83,32 @@ public class AuditDatumEntityRollupTests {
 
 	@Test
 	public void totalCount_allNull() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, null, null, null,
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, null, null, null,
 				null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(0L));
 	}
 
 	@Test
 	public void totalCount_datum() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, null, null, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, null, null, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(1L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourly() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, null, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, null, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(4L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourlyAndDaily() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, 5, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, 5, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(9L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourlyAndDailyAndMonthly() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, 5, 7);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, 5, 7);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(16L));
 	}
 

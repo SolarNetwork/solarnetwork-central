@@ -51,7 +51,7 @@ public final class DeleteForId implements PreparedStatementCreator, SqlProvider 
 	 * @param columnName
 	 *        the column name that corresponds to the key index
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteForId(Object pk, String tableName, String columnName) {
 		super();

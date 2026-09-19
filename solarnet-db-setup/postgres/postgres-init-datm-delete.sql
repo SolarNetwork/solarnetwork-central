@@ -63,16 +63,18 @@ BEGIN
 		AND d.ts < ts_max AT TIME ZONE tz;
 	GET DIAGNOSTICS total_count = ROW_COUNT;
 
-	-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
-	WITH dates AS (
-		SELECT sid AS stream_id, ts_min AT TIME ZONE tz AS ts_start
-		UNION ALL
-		SELECT sid AS stream_id, ts_max AT TIME ZONE tz AS ts_start
-	)
-	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
-	SELECT s.stream_id, s.ts_start, 'h' AS agg_kind
-	FROM dates, solardatm.calc_stale_datm(dates.stream_id, dates.ts_start) s
-	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	IF total_count > 0 THEN
+		-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
+		WITH dates AS (
+			SELECT sid AS stream_id, ts_min AT TIME ZONE tz AS ts_start
+			UNION ALL
+			SELECT sid AS stream_id, ts_max AT TIME ZONE tz AS ts_start
+		)
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT s.stream_id, s.ts_start, 'h' AS agg_kind
+		FROM dates, solardatm.calc_stale_datm(dates.stream_id, dates.ts_start) s
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+	END IF;
 
 	--GET DIAGNOSTICS stale_count = ROW_COUNT;
 	--RAISE NOTICE 'INSERTED % solardatm.agg_stale_datm rows after delete.', stale_count;

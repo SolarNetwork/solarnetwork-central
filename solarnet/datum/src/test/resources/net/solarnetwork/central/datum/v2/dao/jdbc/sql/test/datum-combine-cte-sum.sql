@@ -85,7 +85,7 @@
 , datum AS (
 	SELECT
 		  COALESCE(di_ary.stream_id, da_ary.stream_id) AS stream_id
-		, COALESCE(di_ary.ts, da_ary.ts) AS ts
+		, COALESCE(di_ary.ts, da_ary.ts) AS ts_start
 		, di_ary.data_i
 		, da_ary.data_a
 		, NULL::BIGINT[] AS data_s

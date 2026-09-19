@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcReadingDatumEntityDaoTests.java - 17/11/2020 7:28:08 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,9 +31,10 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatu
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
-import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,19 +53,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
@@ -72,16 +73,18 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link ReadingDatumDao} implementation within the
  * {@link JdbcDatumEntityDao} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -94,15 +97,19 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 	}
 
 	private Map<NodeSourcePK, ObjectDatumStreamMetadata> loadStreamWithAuxiliary(String resource,
-			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper) {
+			Function<GeneralNodeDatum, GeneralNodeDatum> datumMapper,
+			Function<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliary> auxMapper) {
 		List<?> data;
 		try {
-			data = loadJsonDatumAndAuxiliaryResource(resource, getClass(), datumMapper, auxMapper);
+			data = loadJsonDatumAndAuxiliaryResource(resource, getClass(), null, auxMapper);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
 		log.debug("Got test data:\n{}", data.stream().map(Object::toString).collect(joining("\n")));
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
+		if ( datumMapper != null ) {
+			datums = datums.stream().map(datumMapper).toList();
+		}
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
@@ -179,7 +186,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 
 		ReadingDatum d = results.iterator().next();
 		assertReading("Node and source", d,
-				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), null,
+				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), Aggregation.None,
 						start.plusHours(1).minusMinutes(1).toInstant(),
 						propertiesOf(null, decimalArray("30"), null, null),
 						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
@@ -211,7 +218,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 
 		ReadingDatum d = results.iterator().next();
 		assertReading("Node and source", d,
-				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), null,
+				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), Aggregation.None,
 						start.plusHours(1).minusMinutes(1).toInstant(),
 						propertiesOf(null, decimalArray("30"), null, null),
 						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
@@ -224,10 +231,8 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		for ( int i = 0; i < 5; i++ ) {
 			final Long nodeId = (long) (i + 1);
 			final String sourceId = Character.toString((char) ('a' + i));
-			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
-				d.setNodeId(nodeId);
-				d.setSourceId(sourceId);
-			}, null));
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt",
+					d -> d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated(), sourceId)), null));
 		}
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
@@ -253,7 +258,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 			final String sourceId = Character.toString((char) ('a' + i));
 			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
 			assertReading("Node and source " + i, d, new ReadingDatumEntity(streamId,
-					start.minusMinutes(1).toInstant(), null,
+					start.minusMinutes(1).toInstant(), Aggregation.None,
 					start.plusHours(1).minusMinutes(1).toInstant(),
 					propertiesOf(null, decimalArray("30"), null, null),
 					statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
@@ -274,13 +279,11 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 			final ZoneId zone = zones.get(i);
 			setupTestLocation(id, zone.getId());
 			setupTestNode(id, id);
-			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
-				d.setNodeId(nodeId);
-				d.setSourceId(sourceId);
-				ZonedDateTime dt = d.getCreated().atZone(ZoneId.of("Pacific/Auckland"))
-						.withZoneSameLocal(zone);
-				d.setCreated(dt.toInstant());
-			}, null));
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt",
+					d -> d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated()
+							.atZone(ZoneId.of("Pacific/Auckland")).withZoneSameLocal(zone).toInstant(),
+							sourceId)),
+					null));
 		}
 
 		LocalDateTime start = LocalDateTime.of(2020, 6, 2, 0, 0, 0, 0);
@@ -307,7 +310,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 			final String sourceId = Character.toString((char) ('a' + i));
 			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
 			assertReading("Node and source " + i, d, new ReadingDatumEntity(streamId,
-					start.minusMinutes(1).atZone(zones.get(i)).toInstant(), null,
+					start.minusMinutes(1).atZone(zones.get(i)).toInstant(), Aggregation.None,
 					start.plusHours(1).minusMinutes(1).atZone(zones.get(i)).toInstant(),
 					propertiesOf(null, decimalArray("30"), null, null),
 					statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
@@ -422,17 +425,19 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		assertReading("CalcualtedAt reading diff for stream 1 @ local time", d,
 				new ReadingDatumEntity(meta_1.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
-						null,
+						Aggregation.None,
 						filter.getLocalEndDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
-						propertiesOf(decimalArray("1.5"), decimalArray("19.8"), null, null), null));
+						propertiesOf(decimalArray("1.5"), decimalArray("19.8"), null, null),
+						DatumPropertiesStatistics.emptyStatistics()));
 
 		d = datumList.get(1);
 		assertReading("CalcualtedAt reading diff for stream 2 @ local time", d,
 				new ReadingDatumEntity(meta_2.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
-						null,
+						Aggregation.None,
 						filter.getLocalEndDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
-						propertiesOf(decimalArray("4.5"), decimalArray("59.4"), null, null), null));
+						propertiesOf(decimalArray("4.5"), decimalArray("59.4"), null, null),
+						DatumPropertiesStatistics.emptyStatistics()));
 	}
 
 	@Test
@@ -483,9 +488,9 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 
 		ReadingDatum d = results.iterator().next();
 		assertReading("CalcualtedAt reading has props without stats", d,
-				new ReadingDatumEntity(streamId, filter.getStartDate(), null, null,
+				new ReadingDatumEntity(streamId, filter.getStartDate(), Aggregation.None, null,
 						propertiesOf(decimalArray("1.28", "2.9"), decimalArray("104"), null, null),
-						null));
+						DatumPropertiesStatistics.emptyStatistics()));
 	}
 
 	@Test
@@ -523,8 +528,9 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 
 		ReadingDatum d = results.iterator().next();
 		assertReading("CalcualtedAt reading between no difference", d,
-				new ReadingDatumEntity(meta.getStreamId(), filter.getStartDate(), null, null,
-						propertiesOf(decimalArray("3"), decimalArray("33"), null, null), null));
+				new ReadingDatumEntity(meta.getStreamId(), filter.getStartDate(), Aggregation.None, null,
+						propertiesOf(decimalArray("3"), decimalArray("33"), null, null),
+						DatumPropertiesStatistics.emptyStatistics()));
 	}
 
 	@Test
@@ -578,15 +584,17 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		assertReading("CalcualtedAt reading for stream 1 @ local time", d,
 				new ReadingDatumEntity(meta_1.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
-						null, null, propertiesOf(decimalArray("1.2"), decimalArray("13.2"), null, null),
-						null));
+						Aggregation.None, null,
+						propertiesOf(decimalArray("1.2"), decimalArray("13.2"), null, null),
+						emptyStatistics()));
 
 		d = datumList.get(1);
 		assertReading("CalcualtedAt reading for stream 2 @ local time", d,
 				new ReadingDatumEntity(meta_2.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
-						null, null, propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null),
-						null));
+						Aggregation.None, null,
+						propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null),
+						emptyStatistics()));
 	}
 
 }

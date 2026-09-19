@@ -24,26 +24,28 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of a String-based
  * {@link net.solarnetwork.domain.Identity}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public abstract class BaseStringIdentity
-		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<String> {
+public abstract class BaseStringIdentity implements Cloneable, Serializable, Identity<String> {
 
 	@Serial
 	private static final long serialVersionUID = -2979855366308936650L;
 
-	private String id = null;
+	private @Nullable String id;
 
 	@Override
-	public Object clone() {
+	public BaseStringIdentity clone() {
 		try {
-			return super.clone();
+			return (BaseStringIdentity) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -62,8 +64,9 @@ public abstract class BaseStringIdentity
 	 * Test if two BaseStringEntity objects have the same {@link #getId()}
 	 * value.
 	 */
+	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -71,43 +74,26 @@ public abstract class BaseStringIdentity
 			return false;
 		}
 		BaseStringIdentity other = (BaseStringIdentity) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
+		return Objects.equals(id, other.getId());
 	}
 
 	/**
-	 * Compare based on the primary key, with {@literal null} values ordered
-	 * before non-null values. {@inheritDoc}
-	 */
-	@Override
-	public int compareTo(String o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
-	}
-
-	/**
+	 * Get the ID.
+	 * 
 	 * @return the id
 	 */
 	@Override
-	public String getId() {
+	public final @Nullable String getId() {
 		return id;
 	}
 
 	/**
+	 * Set the ID.
+	 * 
 	 * @param id
 	 *        the id to set
 	 */
-	public void setId(String id) {
+	public final void setId(@Nullable String id) {
 		this.id = id;
 	}
 

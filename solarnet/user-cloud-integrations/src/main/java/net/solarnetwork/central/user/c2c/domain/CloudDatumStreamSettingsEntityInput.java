@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.c2c.domain;
 
 import java.time.Instant;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -30,10 +31,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * DTO for datum stream settings entity.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamSettingsEntityInput implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamSettingsEntity, UserLongCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamSettingsEntity, UserLongCompositePK>,
+		CloudDatumStreamRelated {
 
 	private boolean publishToSolarIn = true;
 
@@ -52,7 +54,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 *
 	 * @return {@literal true} if data should be published to SolarIn
 	 */
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -62,7 +64,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 * @param publishToSolarIn
 	 *        {@literal true} if data should be published to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
@@ -71,7 +73,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 *
 	 * @return {@literal true} if data should be published to SolarFlux
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -81,7 +83,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data should be published to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 

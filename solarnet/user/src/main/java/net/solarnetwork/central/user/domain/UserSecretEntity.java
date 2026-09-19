@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.domain;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BasicUserEntity;
@@ -56,7 +58,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, byte[] secret) {
 		super(id);
@@ -75,7 +77,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
 			byte[] secret) {
@@ -99,7 +101,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			byte[] secret) {
@@ -118,7 +120,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, String secretValue) {
 		this(id, requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
@@ -138,7 +140,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
 			String secretValue) {
@@ -163,7 +165,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			String secretValue) {
@@ -172,19 +174,19 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	}
 
 	@Override
-	public UserSecretEntity copyWithId(UserStringStringCompositePK id) {
-		return new UserSecretEntity(id, getCreated(), getModified(), secret);
+	public UserSecretEntity copyWithId(@Nullable UserStringStringCompositePK id) {
+		return new UserSecretEntity(requireNonNullArgument(id, "id"), created(),
+				nonnull(getModified(), "modified"), secret);
 	}
 
 	@Override
-	public boolean isSameAs(UserSecretEntity other) {
-		return Arrays.equals(secret, other.secret);
+	public boolean isSameAs(@Nullable UserSecretEntity other) {
+		return (other != null && Arrays.equals(secret, other.secret));
 	}
 
 	@Override
 	public String getTopic() {
-		var pk = getId();
-		return (pk != null ? pk.getGroupId() : null);
+		return nonnull(getId(), "id").getGroupId();
 	}
 
 	/**
@@ -194,8 +196,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 */
 	@Override
 	public String getKey() {
-		var pk = getId();
-		return (pk != null ? pk.getEntityId() : null);
+		return nonnull(getId(), "id").getEntityId();
 	}
 
 	@Override

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Password reset bean.
  * 
@@ -30,10 +32,10 @@ package net.solarnetwork.central.user.domain;
  */
 public class PasswordEntry {
 
-	private String username;
-	private String confirmationCode;
-	private String password;
-	private String passwordConfirm;
+	private @Nullable String username;
+	private @Nullable String confirmationCode;
+	private @Nullable String password;
+	private @Nullable String passwordConfirm;
 
 	/**
 	 * Default constructor.
@@ -48,41 +50,41 @@ public class PasswordEntry {
 	 * @param password
 	 *        the password to set
 	 */
-	public PasswordEntry(String password) {
+	public PasswordEntry(@Nullable String password) {
 		super();
-		setPassword(password);
-		setPasswordConfirm(password);
+		this.password = password;
+		this.passwordConfirm = password;
 	}
 
-	public String getPassword() {
+	public final @Nullable String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public final void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
-	public String getPasswordConfirm() {
+	public final @Nullable String getPasswordConfirm() {
 		return passwordConfirm;
 	}
 
-	public void setPasswordConfirm(String passwordConfirm) {
+	public final void setPasswordConfirm(@Nullable String passwordConfirm) {
 		this.passwordConfirm = passwordConfirm;
 	}
 
-	public String getUsername() {
+	public final @Nullable String getUsername() {
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public final void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
-	public String getConfirmationCode() {
+	public final @Nullable String getConfirmationCode() {
 		return confirmationCode;
 	}
 
-	public void setConfirmationCode(String confirmationCode) {
+	public final void setConfirmationCode(@Nullable String confirmationCode) {
 		this.confirmationCode = confirmationCode;
 	}
 

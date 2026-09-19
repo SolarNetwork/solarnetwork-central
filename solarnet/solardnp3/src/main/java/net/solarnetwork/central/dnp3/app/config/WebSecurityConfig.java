@@ -47,18 +47,18 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 @Configuration
 @EnableWebSecurity
@@ -104,8 +104,7 @@ public class WebSecurityConfig {
 
 	@Bean
 	public AuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}

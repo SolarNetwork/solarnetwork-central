@@ -59,7 +59,7 @@ public final class UpdateSystemSettings implements PreparedStatementCreator, Sql
 	 * @param settings
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateSystemSettings(OscpRole type, UserLongCompositePK id, SystemSettings settings) {
 		super();

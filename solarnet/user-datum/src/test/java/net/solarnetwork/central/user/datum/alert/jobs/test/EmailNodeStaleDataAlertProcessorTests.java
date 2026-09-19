@@ -1,0 +1,1291 @@
+/* ==================================================================
+ * EmailNodeStaleDataAlertProcessorTests.java - 18/05/2015 9:09:18 am
+ * 
+ * Copyright 2007-2015 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.datum.alert.jobs.test;
+
+import static java.time.Instant.now;
+import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.StreamSupport;
+import javax.cache.Cache;
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.easymock.Capture;
+import org.easymock.CaptureType;
+import org.easymock.EasyMock;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.MailMessage;
+import org.springframework.mail.javamail.MimeMailMessage;
+import org.springframework.util.MimeTypeUtils;
+import org.threeten.extra.MutableClock;
+import jakarta.mail.Message.RecipientType;
+import jakarta.mail.MessagingException;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.mock.MockMailSender;
+import net.solarnetwork.central.mail.support.DefaultMailService;
+import net.solarnetwork.central.support.CsvVersionedMessageDao;
+import net.solarnetwork.central.support.SimpleCache;
+import net.solarnetwork.central.test.CentralTestConstants;
+import net.solarnetwork.central.user.biz.UserAlertRendererResolver;
+import net.solarnetwork.central.user.dao.UserAlertDao;
+import net.solarnetwork.central.user.dao.UserAlertSituationDao;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.datum.alert.jobs.EmailNodeStaleDataAlertProcessor;
+import net.solarnetwork.central.user.datum.alert.support.VersionedMessageSourceUserAlertRendererResolver;
+import net.solarnetwork.central.user.datum.alert.support.test.VersionedMessageSourceUserAlertRendererResolverTests;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertOptions;
+import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
+import net.solarnetwork.central.user.domain.UserAlertType;
+import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+
+/**
+ * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
+ * 
+ * @author matt
+ * @version 1.3
+ */
+public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstants {
+
+	private static final MockMailSender MailSender = new MockMailSender();
+	private static final MailService MailService = new DefaultMailService(MailSender);
+	static {
+		((DefaultMailService) MailService).setHtml(true);
+	}
+	private static final ResourceBundleMessageSource MessageSource = new ResourceBundleMessageSource();
+
+	private static final Long TEST_USER_ID = -99L;
+	private static final Long TEST_NODE_ID_2 = -2L;
+	private static final String TEST_SOURCE_ID = "test.source";
+	private static final Long TEST_USER_ALERT_ID = -999L;
+	private static final String TEST_USER_EMAIL = "test@localhost";
+	private static final String TEST_USER_NAME = "Tester Dude";
+
+	private static final String TEST_COUNTRY = "US";
+	private static final ZoneId TEST_TIME_ZONE = ZoneId.of("Pacific/Auckland");
+
+	private static final AtomicLong AlertIdCounter = new AtomicLong(TEST_USER_ALERT_ID);
+
+	private MutableClock clock;
+	private VersionedMessageDao messageDao;
+	private SolarNodeDao solarNodeDao;
+	private UserDao userDao;
+	private UserNodeDao userNodeDao;
+	private UserAlertDao userAlertDao;
+	private UserAlertSituationDao userAlertSituationDao;
+	private DatumEntityDao datumDao;
+	private Cache<String, VersionedMessages> messageCache;
+	private Cache<String, ST4TemplateRenderer> templateCache;
+
+	private User testUser;
+	private SolarLocation testLoc;
+	private SolarNode testNode;
+
+	private EmailNodeStaleDataAlertProcessor service;
+
+	@BeforeAll
+	public static void setupClass() {
+		MessageSource.setBasename(EmailNodeStaleDataAlertProcessor.class.getName());
+	}
+
+	@BeforeEach
+	public void setup() {
+		clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
+		messageDao = new CsvVersionedMessageDao(List.of(new ClassPathResource("messages.csv",
+				VersionedMessageSourceUserAlertRendererResolverTests.class)));
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
+		solarNodeDao = EasyMock.createMock(SolarNodeDao.class);
+		userDao = EasyMock.createMock(UserDao.class);
+		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		userAlertDao = EasyMock.createMock(UserAlertDao.class);
+		userAlertSituationDao = EasyMock.createMock(UserAlertSituationDao.class);
+		messageCache = new SimpleCache<>("TestMessageCache");
+		templateCache = new SimpleCache<>("TestTemplateCache");
+
+		MailSender.getSent().clear();
+
+		service = new EmailNodeStaleDataAlertProcessor(clock, solarNodeDao, userDao, userNodeDao,
+				userAlertDao, userAlertSituationDao, datumDao, MailService, messageDao);
+		service.setBatchSize(1);
+		service.setMessageCache(messageCache);
+		service.setRendererResolvers(List.of(
+				new VersionedMessageSourceUserAlertRendererResolver("/snf/text/html/stale-datum-alert",
+						"alert", MimeTypeUtils.TEXT_HTML, messageDao, messageCache, templateCache)));
+
+		AlertIdCounter.set(TEST_USER_ALERT_ID);
+
+		testLoc = new SolarLocation();
+		testLoc.setId(TEST_LOC_ID);
+		testLoc.setTimeZoneId(TEST_TIME_ZONE.getId());
+		testLoc.setCountry(TEST_COUNTRY);
+
+		testUser = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		testUser.setName(TEST_USER_NAME);
+		testUser.setLocation(testLoc);
+
+		testNode = new SolarNode(TEST_NODE_ID, testLoc.getId());
+		testNode.setLocation(testLoc);
+	}
+
+	@AfterEach
+	public void teardown() {
+		EasyMock.verify(datumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
+				userAlertSituationDao);
+	}
+
+	private void replayAll() {
+		EasyMock.replay(datumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
+				userAlertSituationDao);
+	}
+
+	private UserAlert newUserAlertInstance() {
+		UserAlert alert = new UserAlert();
+		alert.setCreated(clock.instant());
+		alert.setValidTo(alert.getCreated());
+		alert.setUserId(TEST_USER_ID);
+		alert.setNodeId(TEST_NODE_ID);
+		alert.setType(UserAlertType.NodeStaleData);
+		alert.setStatus(UserAlertStatus.Active);
+
+		Map<String, Object> options = new HashMap<String, Object>(4);
+		options.put(UserAlertOptions.AGE_THRESHOLD, 5);
+		alert.setOptions(options);
+
+		alert.setId(AlertIdCounter.getAndIncrement());
+		return alert;
+	}
+
+	private static DatumEntity newDatum(ZonedDateTime created, UUID streamId) {
+		DatumEntity d = new DatumEntity(streamId, created.toInstant(), now(), emptyProperties());
+		return d;
+	}
+
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			UUID streamId) {
+		return newTestResults(created, streamId, newDatum(created, streamId));
+	}
+
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			UUID streamId, Datum... nodeData) {
+		return newTestResults(created, streamId, TEST_NODE_ID, nodeData);
+	}
+
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			UUID streamId, Long nodeId, Datum... nodeData) {
+		return newTestResults(created,
+				new ObjectDatumStreamMetadata[] {
+						emptyMeta(streamId, TEST_TZ, ObjectDatumKind.Node, nodeId, TEST_SOURCE_ID) },
+				nodeData);
+	}
+
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			ObjectDatumStreamMetadata[] metas, Datum... nodeData) {
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = new BasicObjectDatumStreamFilterResults<>(
+				asList(metas).stream()
+						.collect(toMap(ObjectDatumStreamMetadata::getStreamId, identity())),
+				asList(nodeData), (long) nodeData.length, 0, nodeData.length);
+		return nodeDataResults;
+	}
+
+	@Test
+	public void processNoAlerts() {
+		List<UserAlert> pendingAlerts = List.of();
+		final Instant batchTime = clock.instant();
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		then(startingId).isNull();
+		then(MailSender.getSent()).as("no mail sent").isEmpty();
+	}
+
+	@Test
+	public void processOneAlertTrigger() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+
+		final MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is("SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID)));
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlerts.get(0).getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+	}
+
+	@Test
+	public void processOneAlertTrigger_largeNodeId() throws Exception {
+		// GIVEN
+		final Instant batchTime = clock.instant();
+		final Long nodeId = randomLong() + 100_000L;
+		final var testNode = new SolarNode(nodeId, testLoc.getId());
+		testNode.setLocation(testLoc);
+
+		final UserAlert alert = newUserAlertInstance();
+		alert.setNodeId(nodeId);
+		List<UserAlert> pendingAlerts = List.of(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { nodeId });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId,
+				nodeId,
+				newDatum(ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10),
+						streamId));
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(nodeId)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		// WHEN
+		replayAll();
+		final Long startingId = service.processAlerts(null, batchTime);
+
+		// THEN
+		// @formatter:off
+		then(startingId)
+			.as("Next staring ID is last processed alert ID")
+			.isEqualTo(pendingAlerts.get(0).getId())
+			;
+		then(MailSender.getSent())
+			.as("Mail sent")
+			.hasSize(1)
+			.element(0, type(MimeMailMessage.class))
+			.as("Mail sent to owner address")
+			.returns(new String[] {String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL)}, from(m -> {
+					try {
+						return Arrays.stream(m.getMimeMessage().getRecipients(RecipientType.TO))
+								.map(a -> a.toString()).toArray(String[]::new);
+					} catch ( MessagingException e ) {
+						throw new RuntimeException(e);
+					}
+				}))
+			.as("Mail subject from template")
+			.returns("SolarNetwork alert: SolarNode " + nodeId + " data is stale", from(m -> {
+					try {
+						return m.getMimeMessage().getSubject();
+					} catch ( MessagingException e ) {
+						throw new RuntimeException(e);
+					}
+				}))
+			.extracting(m -> {
+				try {
+					return MockMailSender.extractContent(m.getMimeMessage());
+				} catch ( MessagingException | IOException  e ) {
+					throw new RuntimeException(e);
+				}
+			}, InstanceOfAssertFactories.STRING)
+			.as("Mail has source ID")
+			.contains(TEST_SOURCE_ID)
+			.as("Mail has formatted datum date")
+			.contains(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp()))
+			;
+		then(newSituation.getValue())
+			.as("Situation captured")
+			.isNotNull()
+			.as("Situation for pending alert")
+			.returns(pendingAlerts.get(0), from(UserAlertSituation::getAlert))
+			.as("Status is active")
+			.returns(UserAlertSituationStatus.Active, from(UserAlertSituation::getStatus))
+			;
+		then(pendingAlerts.get(0))
+			.as("Saved alert validTo not increased")
+			.returns(pendingAlertValidTo, from(UserAlert::getValidTo))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void processOneAlertTrigger_customEmail() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		final String alertEmailTo = "custom@localhost";
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.EMAIL_TOS, new String[] { alertEmailTo });
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+
+		final MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail sent to custom address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(alertEmailTo)));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID))));
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
+	}
+
+	@Test
+	public void processOneAlertTrigger_sourceIdFilter() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		final List<String> sourceIdPatterns = Arrays.asList("foo", TEST_SOURCE_ID);
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.SOURCE_IDS, sourceIdPatterns);
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+
+		final MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID))));
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
+	}
+
+	@Test
+	public void processOneAlertTrigger_sourceIdPatternFilter() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		final List<String> sourceIdPatterns = Arrays.asList("test.*");
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.SOURCE_IDS, sourceIdPatterns);
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId);
+		final List<Datum> datum = StreamSupport.stream(nodeDataResults.spliterator(), false).toList();
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID))));
+
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(datum.getFirst().getTimestamp())));
+
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
+
+		// @formatter:off
+		then(newSituation.getValue().getInfo())
+			.as("Situation info created")
+			.isNotNull()
+			.as("Stale datum info list populated")
+			.containsKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS)
+			.extractingByKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS, list(Object.class))
+			.as("1 stale stream IDs populated")
+			.hasSize(1)
+			.allSatisfy(m -> {
+				then(m).asInstanceOf(map(String.class, Object.class))
+					.as("Has expected datum info keys")
+					.containsOnlyKeys(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP)
+					;
+			})
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP, datum.get(0).getTimestamp().toString()
+					))
+					;
+			})
+			;
+		// @formatter:on
+
+	}
+
+	@Test
+	public void processOneAlertTriggerSuppressed() {
+		final Instant batchTime = clock.instant();
+
+		final UserAlert pendingAlert = newUserAlertInstance();
+		pendingAlert.setStatus(UserAlertStatus.Suppressed);
+		List<UserAlert> pendingAlerts = Arrays.asList(pendingAlert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+				.andReturn(null);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		then(startingId).as("Next staring ID is last processed alert ID")
+				.isEqualTo(pendingAlert.getId());
+		then(MailSender.getSent()).as("No mail sent").isEmpty();
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlert);
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+	}
+
+	private String mailFormattedDate(Instant ts) {
+		return UserAlertRendererResolver.DISPLAY_DATE_FORMATTER.withLocale(Locale.US)
+				.format(ts.atZone(TEST_TIME_ZONE));
+	}
+
+	@Test
+	public void processOneAlertTriggerForUser() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		final UserAlert pendingAlert = newUserAlertInstance();
+		pendingAlert.setNodeId(null); // change to "all nodes for user"
+		List<UserAlert> pendingAlerts = Arrays.asList(pendingAlert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserIds(new Long[] { TEST_USER_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
+
+		final UUID streamId_1 = UUID.randomUUID();
+		final UUID streamId_2 = UUID.randomUUID();
+		final ObjectDatumStreamMetadata[] metas = new ObjectDatumStreamMetadata[] {
+				emptyMeta(streamId_1, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID),
+				emptyMeta(streamId_2, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID_2, TEST_SOURCE_ID) };
+		final Datum[] datum = new Datum[] {
+				newDatum(ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(20),
+						streamId_2),
+				newDatum(ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10),
+						streamId_1) };
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.ofInstant(clock.instant(), TEST_TIME_ZONE).minusSeconds(10), metas, datum);
+
+		// first query for pending alerts, starting at beginning
+		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// will next query on user ID to get available nodes
+		final User testUser = new User(TEST_USER_ID, "test@localhost");
+		final SolarNode testNode2 = new SolarNode(TEST_NODE_ID_2, testNode.getLocationId());
+		testNode2.setLocation(testNode.getLocation());
+
+		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode),
+				new UserNode(testUser, testNode2));
+		expect(userNodeDao.findUserNodesForUser(eq(testUser))).andReturn(userNodes);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is("SolarNetwork alert: SolarNode %d, %d data is stale".formatted(TEST_NODE_ID_2,
+						TEST_NODE_ID)));
+
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+
+		// @formatter:off
+		then(newSituation.getValue().getInfo())
+			.as("Situation info created")
+			.isNotNull()
+			.as("Stale datum info list populated")
+			.containsKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS)
+			.extractingByKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS, list(Object.class))
+			.as("2 stale stream IDs populated")
+			.hasSize(2)
+			.allSatisfy(m -> {
+				then(m).asInstanceOf(map(String.class, Object.class))
+					.as("Has expected datum info keys")
+					.containsOnlyKeys(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP)
+					;
+			})
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID_2,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP, datum[0].getTimestamp().toString()
+					))
+					;
+				then(l).element(1, map(String.class, Object.class))
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP, datum[1].getTimestamp().toString()
+					))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void processOneAlertTriggerForUserOutsideTimeWindow() {
+		final ZoneId nodeTZ = testNode.getTimeZone().toZoneId();
+		final Instant batchTime = ZonedDateTime.of(2016, 4, 1, 8, 59, 56, 0, nodeTZ).toInstant();
+		clock.setInstant(batchTime);
+
+		final UserAlert pendingAlert = newUserAlertInstance();
+		pendingAlert.setNodeId(null); // change to "all nodes for user"
+
+		// create time window
+		List<Map<String, Object>> windows = new ArrayList<Map<String, Object>>();
+		Map<String, Object> window = new HashMap<String, Object>();
+		window.put("timeStart", "09:00");
+		window.put("timeEnd", "16:00");
+		windows.add(window);
+		pendingAlert.getOptions().put(UserAlertOptions.TIME_WINDOWS, windows);
+
+		List<UserAlert> pendingAlerts = Arrays.asList(pendingAlert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserIds(new Long[] { TEST_USER_ID });
+		filter.setMostRecent(true);
+
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0, nodeTZ);
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// will next query on user ID to get available nodes
+		final User testUser = new User(TEST_USER_ID, "test@localhost");
+
+		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode));
+		expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for active situation
+		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+				.andReturn(null);
+
+		// and finally save the alert valid date
+		userAlertDao.updateValidTo(EasyMock.eq(pendingAlerts.get(0).getId()),
+				EasyMock.<Instant> anyObject());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		then(startingId).as("Next staring ID is last processed alert ID")
+				.isEqualTo(pendingAlert.getId());
+		then(MailSender.getSent()).as("Mail sent").isEmpty();
+	}
+
+	@Test
+	public void processOneAlertTriggerForUserWithinTimeWindow() throws Exception {
+		final ZoneId nodeTZ = testNode.getTimeZone().toZoneId();
+		final Instant batchTime = ZonedDateTime.of(2016, 4, 1, 9, 0, 1, 0, nodeTZ).toInstant();
+		clock.setInstant(batchTime);
+
+		final UserAlert pendingAlert = newUserAlertInstance();
+		pendingAlert.setNodeId(null); // change to "all nodes for user"
+
+		// create time window
+		List<Map<String, Object>> windows = new ArrayList<Map<String, Object>>();
+		Map<String, Object> window = new HashMap<String, Object>();
+		window.put("timeStart", "09:00");
+		window.put("timeEnd", "16:00");
+		windows.add(window);
+		pendingAlert.getOptions().put(UserAlertOptions.TIME_WINDOWS, windows);
+
+		List<UserAlert> pendingAlerts = Arrays.asList(pendingAlert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserIds(new Long[] { TEST_USER_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
+
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0, nodeTZ);
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
+		final List<Datum> datum = StreamSupport.stream(nodeDataResults.spliterator(), false).toList();
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// will next query on user ID to get available nodes
+		final User testUser = new User(TEST_USER_ID, "test@localhost");
+		testUser.setLocation(testLoc);
+
+		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode));
+		expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		//		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<>();
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+
+		final MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
+				is("SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID)));
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+
+		// @formatter:off
+		then(newSituation.getValue().getInfo())
+			.as("Situation info created")
+			.isNotNull()
+			.as("Stale datum info list populated")
+			.containsKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS)
+			.extractingByKey(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_STALE_DATUM_IDS, list(Object.class))
+			.as("1 stale stream IDs populated")
+			.hasSize(1)
+			.allSatisfy(m -> {
+				then(m).asInstanceOf(map(String.class, Object.class))
+					.as("Has expected datum info keys")
+					.containsOnlyKeys(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP)
+					;
+			})
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsExactlyInAnyOrderEntriesOf(Map.of(
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID,
+							EmailNodeStaleDataAlertProcessor.SITUATION_INFO_TIMESTAMP, datum.get(0).getTimestamp().toString()
+					))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void processBatchAlertsTrigger() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		// add 10 alerts, so we can test batching
+		List<UserAlert> pendingAlerts = new ArrayList<>();
+		for ( int i = 0; i < 12; i++ ) {
+			pendingAlerts.add(newUserAlertInstance());
+		}
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+
+		ZonedDateTime dataTimestamp = ZonedDateTime.ofInstant(batchTime, ZoneId.of(TEST_TZ))
+				.minusSeconds(10);
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts.subList(0, 5));
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		Capture<UserAlertSituation> newSituation = new Capture<>(CaptureType.ALL);
+
+		// then query for active situation
+		for ( int i = 0; i < 5; i++ ) {
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+					.andReturn(null);
+
+			// get User for alert
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+			// then save active situation
+			expect(userAlertSituationDao.save(capture(newSituation)))
+					.andReturn(AlertIdCounter.getAndIncrement());
+		}
+
+		// 2nd batch query for pending alerts, starting at previous ID
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+				pendingAlerts.get(4).getId(), batchTime, service.getBatchSize()))
+						.andReturn(pendingAlerts.subList(5, 10));
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		for ( int i = 5; i < 10; i++ ) {
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+					.andReturn(null);
+
+			// get User for alert
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+			// then save active situation
+			expect(userAlertSituationDao.save(capture(newSituation)))
+					.andReturn(AlertIdCounter.getAndIncrement());
+		}
+
+		// 3rd batch query for pending alerts, starting at previous ID
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+				pendingAlerts.get(9).getId(), batchTime, service.getBatchSize()))
+						.andReturn(pendingAlerts.subList(10, pendingAlerts.size()));
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		for ( int i = 10; i < 12; i++ ) {
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+					.andReturn(null);
+
+			// get User, SolarNode for alert
+			expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+			// then save active situation
+			expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
+					.andReturn(AlertIdCounter.getAndIncrement());
+		}
+
+		// 4th batch query for pending alerts, starting at previous ID
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+				pendingAlerts.get(11).getId(), batchTime, service.getBatchSize()))
+						.andReturn(Collections.<UserAlert> emptyList());
+
+		replayAll();
+
+		Long startingId = null;
+		for ( int i = 0; i < 4; i++ ) {
+			final int batchSize = (i < 2 ? 5 : 2);
+			startingId = service.processAlerts(startingId, batchTime);
+			if ( i == 3 ) {
+				then(startingId).as("No more batch values").isNull();
+			} else {
+				then(startingId).as("Next staring ID is last processed alert ID")
+						.isEqualTo(pendingAlerts.get((i * 5) + batchSize - 1).getId());
+				then(MailSender.getSent()).as("Mail sent").hasSize(batchSize);
+				for ( MailMessage sent : MailSender.getSent() ) {
+					final MimeMailMessage sentMail = (MimeMailMessage) sent;
+					final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+					assertThat("Mail subject", sentMail.getMimeMessage().getSubject(), is(
+							"SolarNetwork alert: SolarNode %d data is stale".formatted(TEST_NODE_ID)));
+					assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+					assertThat("Mail has formatted datum date", mailContent,
+							containsString(mailFormattedDate(dataTimestamp.toInstant())));
+				}
+			}
+			MailSender.getSent().clear();
+		}
+	}
+
+	@Test
+	public void processOneAlertResolved() throws Exception {
+		final Instant batchTime = clock.instant();
+
+		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ));
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		final UserAlertSituation activeSituation = new UserAlertSituation();
+		activeSituation.setId(AlertIdCounter.getAndIncrement());
+		activeSituation.setCreated(clock.instant());
+		activeSituation.setAlert(pendingAlerts.get(0));
+		activeSituation.setStatus(UserAlertSituationStatus.Active);
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(activeSituation);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation -> resolved
+		expect(userAlertSituationDao.save(activeSituation)).andReturn(activeSituation.getId());
+
+		// and finally save the alert valid date
+		userAlertDao.updateValidTo(eq(pendingAlerts.get(0).getId()), anyObject());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+
+		final MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		final String mailContent = MockMailSender.extractContent(sentMail.getMimeMessage());
+
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(), is(
+				"SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID + " data is no longer stale"));
+		assertThat("Mail has source ID", mailContent, containsString(TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", mailContent,
+				containsString(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+
+		then(activeSituation.getStatus()).isEqualTo(UserAlertSituationStatus.Resolved);
+		then(activeSituation.getNotified()).isNotNull();
+		then(pendingAlerts.get(0).getValidTo()).as("Saved alert validTo increased")
+				.isAfter(pendingAlertValidTo);
+	}
+
+	@Test
+	public void processOneAlertResolved_largeNodeId() throws Exception {
+		final Instant batchTime = clock.instant();
+		final Long nodeId = randomLong() + 100_000L;
+		final var testNode = new SolarNode(nodeId, testLoc.getId());
+		testNode.setLocation(testLoc);
+
+		final UserAlert alert = newUserAlertInstance();
+		alert.setNodeId(nodeId);
+		List<UserAlert> pendingAlerts = List.of(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { nodeId });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ));
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId, nodeId, newDatum(dataTimestamp, streamId));
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(nodeId)).andReturn(testNode);
+
+		// then query for active situation
+		final UserAlertSituation activeSituation = new UserAlertSituation();
+		activeSituation.setId(AlertIdCounter.getAndIncrement());
+		activeSituation.setCreated(clock.instant());
+		activeSituation.setAlert(pendingAlerts.get(0));
+		activeSituation.setStatus(UserAlertSituationStatus.Active);
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(activeSituation);
+
+		// get User for alert
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation -> resolved
+		expect(userAlertSituationDao.save(activeSituation)).andReturn(activeSituation.getId());
+
+		// and finally save the alert valid date
+		userAlertDao.updateValidTo(eq(pendingAlerts.get(0).getId()), anyObject());
+
+		// WHEN
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+
+		// THEN
+		// @formatter:off
+		then(startingId)
+			.as("Next staring ID is last processed alert ID")
+			.isEqualTo(pendingAlerts.get(0).getId())
+			;
+		then(MailSender.getSent())
+			.as("Mail sent")
+			.hasSize(1)
+			.element(0, type(MimeMailMessage.class))
+			.as("Mail sent to owner address")
+			.returns(new String[] {String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL)}, from(m -> {
+					try {
+						return Arrays.stream(m.getMimeMessage().getRecipients(RecipientType.TO))
+								.map(a -> a.toString()).toArray(String[]::new);
+					} catch ( MessagingException e ) {
+						throw new RuntimeException(e);
+					}
+				}))
+			.as("Mail subject from template")
+			.returns("SolarNetwork alert resolved: SolarNode " + nodeId + " data is no longer stale", from(m -> {
+					try {
+						return m.getMimeMessage().getSubject();
+					} catch ( MessagingException e ) {
+						throw new RuntimeException(e);
+					}
+				}))
+			.extracting(m -> {
+				try {
+					return MockMailSender.extractContent(m.getMimeMessage());
+				} catch ( Exception e ) {
+					throw new RuntimeException(e);
+				}
+			}, InstanceOfAssertFactories.STRING)
+			.as("Mail has source ID")
+			.contains(TEST_SOURCE_ID)
+			.as("Mail has formatted datum date")
+			.contains(mailFormattedDate(nodeDataResults.iterator().next().getTimestamp()))
+			;
+		then(activeSituation)
+			.as("Status is resolved")
+			.returns(UserAlertSituationStatus.Resolved, from(UserAlertSituation::getStatus))
+			.satisfies(sit -> {
+				then(sit.getNotified())
+					.as("Notification marked")
+					.isNotNull()
+					;
+			})
+			;
+		then(pendingAlerts.get(0).getValidTo())
+			.as("Saved alert validTo increased")
+			.isAfter(pendingAlertValidTo)
+			;
+		// @formatter:on
+	}
+
+}

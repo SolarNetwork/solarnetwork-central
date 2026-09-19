@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -62,12 +63,14 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the properties
 	 * @param statistics
 	 *        the statistics
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateDatumEntity(DatumPK id, Aggregation aggregation, DatumProperties properties,
 			DatumPropertiesStatistics statistics) {
 		super(id, null, properties);
-		this.aggregation = aggregation;
-		this.statistics = statistics;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
+		this.statistics = requireNonNullArgument(statistics, "statistics");
 	}
 
 	/**
@@ -83,12 +86,14 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the samples
 	 * @param statistics
 	 *        the statistics
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
 			DatumProperties properties, DatumPropertiesStatistics statistics) {
 		super(streamId, timestamp, null, properties);
-		this.aggregation = aggregation;
-		this.statistics = statistics;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
+		this.statistics = requireNonNullArgument(statistics, "statistics");
 	}
 
 	@Override
@@ -151,7 +156,7 @@ public class AggregateDatumEntity extends DatumEntity
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final Aggregation getAggregation() {
 		return aggregation;
 	}
 
@@ -161,7 +166,7 @@ public class AggregateDatumEntity extends DatumEntity
 	 * @return the statistics
 	 */
 	@Override
-	public DatumPropertiesStatistics getStatistics() {
+	public final DatumPropertiesStatistics getStatistics() {
 		return statistics;
 	}
 

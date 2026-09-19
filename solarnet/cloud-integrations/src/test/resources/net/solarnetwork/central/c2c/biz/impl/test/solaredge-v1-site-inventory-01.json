@@ -1,0 +1,21 @@
+{
+    "Inventory": {
+        "inverters": [
+			{
+			    "name": "Inverter 1",
+			    "manufacturer": "SolarEdge",
+			    "model": "SE14.4K",
+			    "communicationMethod": "ETHERNET",
+			    "dsp1Version": "1.13.1938",
+			    "dsp2Version": "2.19.1511",
+			    "cpuVersion": "3.2537.0",
+			    "connectedOptimizers": 27,
+			    "SN": "7E140000-01"
+			}
+        ],
+        "batteries": [],
+        "gateways": [],
+        "sensors": [],
+        "meters": []
+    }
+}

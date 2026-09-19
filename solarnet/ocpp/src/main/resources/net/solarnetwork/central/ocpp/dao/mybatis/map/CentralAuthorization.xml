@@ -77,7 +77,7 @@
 				<if test="filter.id != null">
 					AND ca.id = #{filter.id}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned != null">
 					AND ca.user_id = #{filter.userId}
 				</if>
 				<if test="filter.token != null">
@@ -101,7 +101,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_authorization_user_id, ocpp_authorization_created, ocpp_authorization_id
+				ocpp_authorization_id
 			</otherwise>
 		</choose>
 	</sql>

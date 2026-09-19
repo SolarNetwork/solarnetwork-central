@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.CACHING;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,15 +43,17 @@ import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
+import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 
 /**
  * DAO configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
-public class InstructionInputCachingDaoConfig implements InstructionInputConfiguration {
+public class InstructionInputCachingDaoConfig
+		implements InstructionInputConfiguration, SolarNetUserConfiguration {
 
 	@Autowired
 	private Executor executor;
@@ -80,7 +83,7 @@ public class InstructionInputCachingDaoConfig implements InstructionInputConfigu
 	public TransformConfigurationDao<RequestTransformConfiguration> cachingInstructionRequestTransformConfigurationDao(
 			TransformConfigurationDao<RequestTransformConfiguration> dao,
 			@Qualifier(REQ_TRANSFORM_CONF) Cache<UserLongCompositePK, RequestTransformConfiguration> cache) {
-		return new CachingTransformConfigurationDao<RequestTransformConfiguration>(dao, cache, executor);
+		return new CachingTransformConfigurationDao<>(dao, cache, executor);
 	}
 
 	/**
@@ -94,8 +97,7 @@ public class InstructionInputCachingDaoConfig implements InstructionInputConfigu
 	public TransformConfigurationDao<ResponseTransformConfiguration> cachingInstructionResponseTransformConfigurationDao(
 			TransformConfigurationDao<ResponseTransformConfiguration> dao,
 			@Qualifier(RES_TRANSFORM_CONF) Cache<UserLongCompositePK, ResponseTransformConfiguration> cache) {
-		return new CachingTransformConfigurationDao<ResponseTransformConfiguration>(dao, cache,
-				executor);
+		return new CachingTransformConfigurationDao<>(dao, cache, executor);
 	}
 
 	/**

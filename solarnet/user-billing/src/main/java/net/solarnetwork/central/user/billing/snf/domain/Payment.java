@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -37,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
  * Payment entity.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class Payment extends BasicEntity<UserUuidPK>
 		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
@@ -58,9 +61,10 @@ public class Payment extends BasicEntity<UserUuidPK>
 
 		@Override
 		public int compare(Payment o1, Payment o2) {
-			int result = o1.getCreated().compareTo(o2.getCreated());
+			int result = nonnull(o1.getCreated(), "Left created")
+					.compareTo(nonnull(o2.getCreated(), "Right created"));
 			if ( result == 0 ) {
-				result = o1.getId().compareTo(o2.getId());
+				result = nonnull(o1.getId(), "Left ID").compareTo(nonnull(o2.getId(), "Right ID"));
 			}
 			return result;
 		}
@@ -68,22 +72,11 @@ public class Payment extends BasicEntity<UserUuidPK>
 	}
 
 	private final Long accountId;
-	private PaymentType paymentType;
-	private BigDecimal amount;
-	private String currencyCode;
-	private String externalKey;
-	private String reference;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param accountId
-	 *        the account ID
-	 */
-	public Payment(Long accountId) {
-		super(new UserUuidPK(), Instant.now());
-		this.accountId = accountId;
-	}
+	private final PaymentType paymentType;
+	private final BigDecimal amount;
+	private final String currencyCode;
+	private @Nullable String externalKey;
+	private @Nullable String reference;
 
 	/**
 	 * Constructor.
@@ -94,10 +87,22 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param paymentType
+	 *        the payment type
+	 * @param amount
+	 *        the amount
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
 	 */
-	public Payment(UserUuidPK id, Long accountId, Instant created) {
-		super(id, created);
-		this.accountId = accountId;
+	public Payment(UserUuidPK id, Long accountId, Instant created, PaymentType paymentType,
+			BigDecimal amount, String currencyCode) {
+		super(requireNonNullArgument(id, "id"), created);
+		this.accountId = requireNonNullArgument(accountId, "accountId");
+		this.paymentType = requireNonNullArgument(paymentType, "paymentType");
+		this.amount = requireNonNullArgument(amount, "amount");
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 	}
 
 	/**
@@ -111,9 +116,18 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param paymentType
+	 *        the payment type
+	 * @param amount
+	 *        the amount
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
 	 */
-	public Payment(UUID id, Long userId, Long accountId, Instant created) {
-		this(new UserUuidPK(userId, id), accountId, created);
+	public Payment(UUID id, Long userId, Long accountId, Instant created, PaymentType paymentType,
+			BigDecimal amount, String currencyCode) {
+		this(new UserUuidPK(userId, id), accountId, created, paymentType, amount, currencyCode);
 	}
 
 	@Override
@@ -153,13 +167,14 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(Payment other) {
+	@SuppressWarnings("ReferenceEquality")
+	public boolean isSameAs(@Nullable Payment other) {
 		if ( other == null ) {
 			return false;
 		}
 		// @formatter:off
 		return Objects.equals(accountId, other.accountId)
-				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0)
+				&& ((amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0))
 				&& Objects.equals(currencyCode, other.currencyCode)
 				&& Objects.equals(externalKey, other.externalKey)
 				&& Objects.equals(paymentType, other.paymentType)
@@ -168,20 +183,19 @@ public class Payment extends BasicEntity<UserUuidPK>
 	}
 
 	@Override
-	public boolean differsFrom(Payment other) {
+	public boolean differsFrom(@Nullable Payment other) {
 		return !isSameAs(other);
 	}
 
 	@Override
 	public boolean hasId() {
-		UserUuidPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		final UserUuidPK id = id();
+		return (id.userIdIsAssigned() && id.uuidIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		final UserUuidPK id = getId();
-		return id != null ? id.getUserId() : null;
+		return id().getUserId();
 	}
 
 	/**
@@ -189,7 +203,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the account ID
 	 */
-	public Long getAccountId() {
+	public final Long getAccountId() {
 		return accountId;
 	}
 
@@ -198,18 +212,8 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the type
 	 */
-	public PaymentType getPaymentType() {
+	public final PaymentType getPaymentType() {
 		return paymentType;
-	}
-
-	/**
-	 * Set the payment type.
-	 *
-	 * @param paymentType
-	 *        the type to set
-	 */
-	public void setPaymentType(PaymentType paymentType) {
-		this.paymentType = paymentType;
 	}
 
 	/**
@@ -217,18 +221,8 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the amount
 	 */
-	public BigDecimal getAmount() {
+	public final BigDecimal getAmount() {
 		return amount;
-	}
-
-	/**
-	 * Set the amount.
-	 *
-	 * @param amount
-	 *        the amount to set
-	 */
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
 	}
 
 	/**
@@ -236,18 +230,8 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the currency code
 	 */
-	public String getCurrencyCode() {
+	public final String getCurrencyCode() {
 		return currencyCode;
-	}
-
-	/**
-	 * Set the currency code.
-	 *
-	 * @param currencyCode
-	 *        the currency code to set
-	 */
-	public void setCurrencyCode(String currencyCode) {
-		this.currencyCode = currencyCode;
 	}
 
 	/**
@@ -260,7 +244,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the external key
 	 */
-	public String getExternalKey() {
+	public final @Nullable String getExternalKey() {
 		return externalKey;
 	}
 
@@ -270,7 +254,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @param externalKey
 	 *        the key to set
 	 */
-	public void setExternalKey(String externalKey) {
+	public final void setExternalKey(@Nullable String externalKey) {
 		this.externalKey = externalKey;
 	}
 
@@ -283,7 +267,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the reference
 	 */
-	public String getReference() {
+	public final @Nullable String getReference() {
 		return reference;
 	}
 
@@ -293,7 +277,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @param reference
 	 *        the reference to set
 	 */
-	public void setReference(String reference) {
+	public final void setReference(@Nullable String reference) {
 		this.reference = reference;
 	}
 

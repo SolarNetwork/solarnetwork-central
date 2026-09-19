@@ -33,10 +33,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.List;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -76,7 +75,7 @@ public class CommonJdbcUtilsTests {
 
 		// execute actual query
 		LocationRequest datum = new LocationRequest();
-		List<LocationRequest> data = Collections.singletonList(datum);
+		List<LocationRequest> data = List.of(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
 
 		// WHEN
@@ -106,7 +105,7 @@ public class CommonJdbcUtilsTests {
 		RowMapper<LocationRequest> mapper = EasyMock.createMock(RowMapper.class);
 
 		LocationRequest datum = new LocationRequest();
-		List<LocationRequest> data = Collections.singletonList(datum);
+		List<LocationRequest> data = List.of(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
 
 		// WHEN
@@ -137,7 +136,7 @@ public class CommonJdbcUtilsTests {
 		RowMapper<LocationRequest> mapper = EasyMock.createMock(RowMapper.class);
 
 		LocationRequest datum = new LocationRequest();
-		List<LocationRequest> data = Collections.singletonList(datum);
+		List<LocationRequest> data = List.of(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
 
 		// WHEN

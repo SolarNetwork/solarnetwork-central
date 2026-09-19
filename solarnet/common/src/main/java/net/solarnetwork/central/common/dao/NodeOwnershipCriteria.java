@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for node ownership.
  * 
@@ -42,8 +44,9 @@ public interface NodeOwnershipCriteria {
 	 * </p>
 	 * 
 	 * @return the {@literal true} or {@literal false} to filter by that state,
-	 *         or {@literal null} to not filter
+	 *         or {@code null} to not filter
 	 */
+	@Nullable
 	Boolean getValidNodeOwnership();
 
 	/**

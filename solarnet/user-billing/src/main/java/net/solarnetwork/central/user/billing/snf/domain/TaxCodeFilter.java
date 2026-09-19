@@ -1,21 +1,21 @@
 /* ==================================================================
  * TaxCodeFilter.java - 24/07/2020 6:29:23 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,32 +25,33 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.SimplePagination;
 
 /**
  * Query filter for {@code TaxCode} entities.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class TaxCodeFilter extends SimplePagination implements Differentiable<TaxCodeFilter> {
 
-	private String[] zones;
-	private String itemKey;
-	private String code;
-	private Instant date;
+	private String @Nullable [] zones;
+	private @Nullable String itemKey;
+	private @Nullable String code;
+	private @Nullable Instant date;
 
 	/**
 	 * Create a filter for a given date and list of zones.
-	 * 
+	 *
 	 * @param date
 	 *        the date
 	 * @param zones
 	 *        the zones
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
-	public static TaxCodeFilter filterFor(Instant date, String... zones) {
+	public static TaxCodeFilter filterFor(Instant date, String @Nullable... zones) {
 		TaxCodeFilter f = new TaxCodeFilter();
 		f.setDate(date);
 		f.setZones(zones);
@@ -60,17 +61,17 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	/**
 	 * Test if the properties of another instance are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@link SimplePagination} properties are not compared by this method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other instance to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(TaxCodeFilter other) {
+	public boolean isSameAs(@Nullable TaxCodeFilter other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -83,7 +84,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	}
 
 	@Override
-	public boolean differsFrom(TaxCodeFilter other) {
+	public boolean differsFrom(@Nullable TaxCodeFilter other) {
 		return !isSameAs(other);
 	}
 
@@ -116,107 +117,108 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Get the tax zones.
-	 * 
+	 *
 	 * @return the zones
 	 */
-	public String[] getZones() {
+	public final String @Nullable [] getZones() {
 		return zones;
 	}
 
 	/**
 	 * Set the tax zones.
-	 * 
+	 *
 	 * @param zones
 	 *        the zones to set
 	 */
-	public void setZones(String[] zones) {
+	public final void setZones(String @Nullable [] zones) {
 		this.zones = zones;
 	}
 
 	/**
 	 * Get the tax zone.
-	 * 
+	 *
 	 * <p>
 	 * This returns the first-available value from the {@code zones} array.
 	 * </p>
-	 * 
+	 *
 	 * @return the zone
 	 */
-	public String getZone() {
+	public final @Nullable String getZone() {
 		String[] zones = getZones();
 		return zones != null && zones.length > 0 ? zones[0] : null;
 	}
 
 	/**
 	 * Set the tax zone.
-	 * 
+	 *
 	 * <p>
 	 * This replaces the configured {@code zones} array with a single-element
-	 * array if {@code zone} is not {@literal null}, otherwise sets
-	 * {@code zones} to {@literal null}.
+	 * array if {@code zone} is not {@code null}, otherwise sets {@code zones}
+	 * to {@code null}.
 	 * </p>
-	 * 
+	 *
 	 * @param zone
 	 *        the zone to set
 	 */
-	public void setZone(String zone) {
+	@SuppressWarnings("InvalidParam")
+	public final void setZone(@Nullable String zone) {
 		setZones(zone != null ? new String[] { zone } : null);
 	}
 
 	/**
 	 * Get the item key.
-	 * 
+	 *
 	 * @return the item key
 	 */
-	public String getItemKey() {
+	public final @Nullable String getItemKey() {
 		return itemKey;
 	}
 
 	/**
 	 * Set the item key.
-	 * 
+	 *
 	 * @param itemKey
 	 *        the item key to set
 	 */
-	public void setItemKey(String itemKey) {
+	public final void setItemKey(@Nullable String itemKey) {
 		this.itemKey = itemKey;
 	}
 
 	/**
 	 * Get the tax code.
-	 * 
+	 *
 	 * @return the code
 	 */
-	public String getCode() {
+	public final @Nullable String getCode() {
 		return code;
 	}
 
 	/**
 	 * Set the tax code.
-	 * 
+	 *
 	 * @param code
 	 *        the code to set
 	 */
-	public void setCode(String code) {
+	public final void setCode(@Nullable String code) {
 		this.code = code;
 	}
 
 	/**
 	 * Get the effective date.
-	 * 
+	 *
 	 * @return the date
 	 */
-	public Instant getDate() {
+	public final @Nullable Instant getDate() {
 		return date;
 	}
 
 	/**
 	 * Set the effective date.
-	 * 
+	 *
 	 * @param date
 	 *        the date to set
 	 */
-	public void setDate(Instant date) {
+	public final void setDate(@Nullable Instant date) {
 		this.date = date;
 	}
 

@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.common.job;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,13 +56,18 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	 * 
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
-		super(jdbcOps, taskDescription);
+	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String groupId, String id,
+			String taskDescription) {
+		super(jdbcOps, groupId, id, taskDescription);
 	}
 
 	private static final Pattern CALL_RETURN_COUNT = Pattern.compile("\\?\\s=\\s*call\\s+",
@@ -75,7 +83,7 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 
 				@Override
 				public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-					final String sql = getJdbcCall();
+					final String sql = nonnull(getJdbcCall(), "jdbcCall");
 					final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
 					try (CallableStatement call = con.prepareCall(sql)) {
 						int idx = 0;
@@ -91,10 +99,18 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 						con.setAutoCommit(true); // we want every execution of our loop to commit immediately
 						int resultCount = 0;
 						do {
-							if ( call.execute() ) {
+							final Instant start = Instant.now();
+							Duration elapsed = null;
+							final boolean hasResultSet;
+							try {
+								hasResultSet = call.execute();
+							} finally {
+								elapsed = Duration.between(start, Instant.now());
+							}
+							if ( hasResultSet ) {
 								try (ResultSet rs = call.getResultSet()) {
 									if ( rs.next() ) {
-										processResultRow(rs);
+										processResultRow(rs, elapsed);
 										resultCount = 1;
 									} else {
 										resultCount = 0;
@@ -132,20 +148,22 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	 * </p>
 	 * 
 	 * @param rs
-	 *        the result set
+	 *        the result set positioned on the next result row
+	 * @param duration
+	 *        the execution duration
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	protected void processResultRow(ResultSet rs) throws SQLException {
+	protected void processResultRow(ResultSet rs, Duration duration) throws SQLException {
 		// extending classes can override
-		if ( log.isDebugEnabled() ) {
+		if ( rs != null && log.isDebugEnabled() ) {
 			ResultSetMetaData meta = rs.getMetaData();
 			final int colCount = meta.getColumnCount();
 			Map<String, Object> row = new LinkedHashMap<>(colCount);
 			for ( int i = 1; i <= colCount; i++ ) {
 				row.put(meta.getColumnName(i), rs.getObject(i));
 			}
-			log.debug("Processed stale row: {}", row);
+			log.debug("Processed stale row in {}: {}", duration, row);
 		}
 	}
 }

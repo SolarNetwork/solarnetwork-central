@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.KeyCriteria;
 import net.solarnetwork.central.common.dao.TopicCriteria;
@@ -32,13 +33,13 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserSecretFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserSecretFilter extends BasicCoreCriteria
 		implements UserSecretFilter, UserKeyPairFilter {
 
-	private String[] topics;
-	private String[] keys;
+	private String @Nullable [] topics;
+	private String @Nullable [] keys;
 
 	/**
 	 * Constructor.
@@ -48,14 +49,17 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	/**
+	 * Copy constructor.
+	 * 
 	 * @param criteria
+	 *        the criteria to copy from
 	 */
-	public BasicUserSecretFilter(PaginationCriteria criteria) {
+	public BasicUserSecretFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicUserSecretFilter c ) {
 			setTopics(c.getTopics());
@@ -80,23 +84,32 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserSecretFilter) ) {
+		if ( !(obj instanceof BasicUserSecretFilter other) ) {
 			return false;
 		}
-		BasicUserSecretFilter other = (BasicUserSecretFilter) obj;
-		return Arrays.equals(topics, topics) && Arrays.equals(keys, other.keys);
+		return Arrays.equals(topics, other.topics) && Arrays.equals(keys, other.keys);
 	}
 
 	@Override
 	public BasicUserSecretFilter clone() {
 		return (BasicUserSecretFilter) super.clone();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (keys != null && keys.length > 0)
+				|| (topics != null && topics.length > 0)
+				;
+		// @formatter:on
 	}
 
 	/**
@@ -109,7 +122,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		setTopics(topic != null ? new String[] { topic } : null);
 	}
 
@@ -119,7 +132,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * @return the topics
 	 */
 	@Override
-	public String[] getTopics() {
+	public final String @Nullable [] getTopics() {
 		return topics;
 	}
 
@@ -129,7 +142,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * @param topics
 	 *        the topics to set
 	 */
-	public void setTopics(String[] topics) {
+	public final void setTopics(String @Nullable [] topics) {
 		this.topics = topics;
 	}
 
@@ -143,12 +156,12 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * @param key
 	 *        the key to set
 	 */
-	public void setKey(String key) {
+	public final void setKey(@Nullable String key) {
 		setKeys(key != null ? new String[] { key } : null);
 	}
 
 	@Override
-	public String[] getKeys() {
+	public final String @Nullable [] getKeys() {
 		return keys;
 	}
 
@@ -158,7 +171,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * @param keys
 	 *        the keys to set
 	 */
-	public void setKeys(String[] keys) {
+	public final void setKeys(String @Nullable [] keys) {
 		this.keys = keys;
 	}
 

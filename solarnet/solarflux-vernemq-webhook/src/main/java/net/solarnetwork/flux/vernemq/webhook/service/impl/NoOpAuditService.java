@@ -29,14 +29,14 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
  */
 public class NoOpAuditService implements AuditService {
 
-  @Override
-  public void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message) {
-    // nothing
-  }
+	@Override
+	public void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message) {
+		// nothing
+	}
 
-  @Override
-  public void auditDeliverMessage(Message message) {
-    // nothing
-  }
+	@Override
+	public void auditDeliverMessage(Message message) {
+		// nothing
+	}
 
 }

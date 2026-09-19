@@ -22,21 +22,24 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
@@ -47,7 +50,7 @@ import net.solarnetwork.ocpp.domain.RegistrationStatus;
  * Test cases for the {@link MyBatisCentralChargePointDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -57,14 +60,13 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	private Long nodeId;
 	private ChargePoint last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisCentralChargePointDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
-		UUID uuid = UUID.randomUUID();
-		userId = uuid.getMostSignificantBits();
-		nodeId = uuid.getLeastSignificantBits();
+		userId = randomLong();
+		nodeId = randomLong();
 		setupTestUser(userId);
 		setupTestLocation();
 		setupTestNode(nodeId);
@@ -93,13 +95,13 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		last.setConnectorCount(entity.getConnectorCount());
 	}
 
-	@Test(expected = DuplicateKeyException.class)
+	@Test
 	public void insert_duplicate() {
 		insert();
 		ChargePoint entity = createTestChargePoint();
 		dao.save(entity);
-		getSqlSessionTemplate().flushStatements();
-		fail("Should not be able to create duplicate.");
+		thenExceptionOfType(DuplicateKeyException.class).as("Should not be able to create duplicate.")
+				.isThrownBy(() -> getSqlSessionTemplate().flushStatements());
 	}
 
 	@Test
@@ -142,7 +144,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<ChargePoint> results = dao.getAll(null);
-		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("Results found in order", results, contains(obj1, obj2, obj3));
 	}
 
 	@Test
@@ -164,7 +166,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<CentralChargePoint> results = dao.findAllForOwner(userId);
-		assertThat("Results found in order", results, contains(obj2, obj1));
+		assertThat("Results found in order", results, contains(obj1, obj2));
 	}
 
 	@Test
@@ -239,10 +241,11 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		assertThat("Identifier matches", entity.getInfo().getId(), equalTo("foobar"));
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void findByUserAndId_noMatch() {
 		insert();
-		dao.get(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.get(userId, last.getId() - 1));
 	}
 
 	@Test
@@ -252,10 +255,53 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void deleteByUserAndId_noMatch() {
 		insert();
-		dao.delete(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.delete(userId, last.getId() - 1));
+	}
+
+	@Test
+	public void findFiltered_user_pages() {
+		// GIVEN
+		var obj1 = createTestChargePoint();
+		obj1 = (CentralChargePoint) dao.get(dao.save(obj1));
+		var obj2 = new CentralChargePoint(userId, nodeId, obj1.getCreated().minusSeconds(60), "b", "foo",
+				"bar");
+		obj2 = (CentralChargePoint) dao.get(dao.save(obj2));
+
+		final Long userId2 = userId - 1;
+		final Long nodeId2 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId2, nodeId2);
+
+		var obj3 = new CentralChargePoint(userId2, nodeId2, obj1.getCreated().plusSeconds(60), "c",
+				"foo", "bar");
+		obj3 = (CentralChargePoint) dao.get(dao.save(obj3));
+
+		// WHEN
+		var filter = new BasicOcppFilter();
+		filter.setUserId(userId);
+		filter.setMax(1);
+		filter.setOffset(0L);
+		FilterResults<CentralChargePoint, Long> results1 = dao.findFiltered(filter);
+
+		filter.setOffset(1L);
+		FilterResults<CentralChargePoint, Long> results2 = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(results1)
+			.as("Single result returned for page 0")
+			.containsExactly(obj1)
+			;
+		then(results2)
+			.as("Single result returned for page 1")
+			.containsExactly(obj2)
+			;
+		// @formatter:on
 	}
 
 }

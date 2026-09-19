@@ -56,8 +56,9 @@ public final class StoreSolarNodeMetadata implements CallableStatementCreator, S
 	 *         if any argument is {@code null}
 	 */
 	public StoreSolarNodeMetadata(SolarNodeMetadata entity) {
-		this(requireNonNullArgument(entity, "entity").getNodeId(), entity.getCreated(),
-				entity.getMetaJson());
+		this(requireNonNullArgument(requireNonNullArgument(entity, "entity").getNodeId(),
+				"entity.nodeId"), requireNonNullArgument(entity.getCreated(), "entity.created"),
+				requireNonNullArgument(entity.getMetaJson(), "entity.metaJson"));
 	}
 
 	/**

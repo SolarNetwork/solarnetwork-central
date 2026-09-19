@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.Clock;
@@ -37,15 +38,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.random.RandomGenerator;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
@@ -63,12 +63,13 @@ import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Sma implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -159,24 +160,24 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code integrationLocksCache} is
+	 *         {@code null}
 	 */
 	public SmaCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationConfigurationDao integrationDao, RandomGenerator rng, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
-		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache));
+						_ -> SECURE_SETTINGS, oauthClientManager, clock, integrationLocksCache));
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.rng = requireNonNullArgument(rng, "rng");
 		this.tokenFetchHelper = new RestOperationsHelper(
 				LoggerFactory.getLogger(SmaCloudIntegrationService.class), userEventAppenderBiz, restOps,
-				INTEGRATION_HTTP_ERROR_TAGS, encryptor, integrationServiceIdentifier -> SECURE_SETTINGS);
+				INTEGRATION_HTTP_ERROR_TAGS, encryptor, _ -> SECURE_SETTINGS);
 	}
 
 	@Override
@@ -225,9 +226,9 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		// validate by requesting the available systems
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(),
-					HttpEntity::getBody);
+					(_, res) -> nonnull(res.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {
@@ -256,7 +257,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		final String stateToken = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand))
 				.replace("=", "");
 
-		integrationDao.saveOAuthAuthorizationState(integration.getId(), stateToken, null);
+		integrationDao.saveOAuthAuthorizationState(integration.id(), stateToken, null);
 
 		String stateValue = new AuthorizationState(integration.getConfigId(), stateToken).stateValue();
 
@@ -296,14 +297,14 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			throw new AuthorizationException(Reason.ACCESS_DENIED, state.integrationId());
 		}
 
-		if ( !integrationDao.saveOAuthAuthorizationState(integration.getId(), null, state.token()) ) {
+		if ( !integrationDao.saveOAuthAuthorizationState(integration.id(), null, state.token()) ) {
 			// state mis-match; abort
 			String errMsg = ms.getMessage("error.oauth.state.mismtach", null, locale);
 			throw new IllegalArgumentException(errMsg);
 		}
 
-		final var decrypted = integration.copyWithId(integration.getId());
-		decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+		final var decrypted = integration.copyWithId(integration.id());
+		decrypted.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
 				integration, JsonNode.class, (req) -> {
@@ -317,10 +318,14 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 						.queryParam("scope", "offline_access")
 						.buildAndExpand().toUri();
 					// @formatter:on
-					req.setBasicAuth(decrypted.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class),
-							decrypted.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class));
+					String username = decrypted.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class);
+					String password = decrypted.serviceProperty(OAUTH_CLIENT_SECRET_SETTING,
+							String.class);
+					if ( username != null && password != null ) {
+						req.setBasicAuth(username, password);
+					}
 					return uri;
-				}, HttpEntity::getBody);
+				}, (_, res) -> nonnull(res.getBody(), "Response body"));
 
 		/*- JSON example:
 			{
@@ -335,13 +340,13 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			}
 		 */
 
-		final String accessToken = json.path("access_token").textValue();
+		final String accessToken = json.path("access_token").stringValue();
 		if ( accessToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.accessToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);
 		}
 
-		final String refreshToken = json.path("refresh_token").textValue();
+		final String refreshToken = json.path("refresh_token").stringValue();
 		if ( refreshToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.refreshToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);

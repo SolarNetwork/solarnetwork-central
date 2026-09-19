@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.inin.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -32,6 +33,6 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * @version 1.0
  */
 public record TransformInstructionResults(Long nodeId, InstructionState state,
-		Map<String, Object> resultParameters) {
+		@Nullable Map<String, Object> resultParameters) {
 
 }

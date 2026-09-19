@@ -47,6 +47,8 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public UserMetadataSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super(nodeOwnershipDao);

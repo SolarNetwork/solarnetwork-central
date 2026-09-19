@@ -23,6 +23,8 @@
 package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
+import java.time.Instant;
+import org.jspecify.annotations.NonNull;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
@@ -31,14 +33,32 @@ import net.solarnetwork.domain.Differentiable;
  * Extension of {@link UserRelatedEntity} that supports {@link CopyingIdentity}
  * and {@link Differentiable}.
  *
- * @param <C>
+ * @param <T>
  *        the entity type
  * @param <K>
  *        the key type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserRelatedStdEntity<C extends UserRelatedStdEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>, Serializable, Cloneable {
+public interface UserRelatedStdEntity<T extends UserRelatedStdEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedEntity<K>, CopyingIdentity<T, K>, Differentiable<T>, Serializable, Cloneable {
+
+	/**
+	 * Get the primary identifier of the object.
+	 *
+	 * @return the primary identifier, never {@code null}
+	 */
+	@NonNull
+	@Override
+	K getId();
+
+	/**
+	 * Get the primary identifier of the object.
+	 *
+	 * @return the primary identifier, never {@code null}
+	 */
+	@NonNull
+	@Override
+	Instant getCreated();
 
 }

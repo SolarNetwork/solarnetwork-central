@@ -26,6 +26,8 @@ import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.central.security.CertificateUtils.X509_CERTIFICATE_FACTORY;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -39,7 +41,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import java.io.IOException;
 import java.net.URI;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
@@ -60,6 +61,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -73,7 +75,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
@@ -92,7 +93,7 @@ import net.solarnetwork.service.CertificateException;
  * Web service API for DNP3 management.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Profile(DNP3)
 @GlobalExceptionRestController
@@ -117,7 +118,7 @@ public class UserDnp3Controller {
 	/**
 	 * Get the {@link UserDnp3Biz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */
@@ -139,10 +140,9 @@ public class UserDnp3Controller {
 	public Result<Collection<TrustedIssuerCertificate>> importTrustedIssuerCertificates(
 			@RequestPart("file") MultipartFile data) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		CertificateFactory cf = CertificateUtils.x509CertificateFactory();
 		Collection<? extends Certificate> certs;
 		try {
-			certs = cf.generateCertificates(data.getInputStream());
+			certs = X509_CERTIFICATE_FACTORY.generateCertificates(data.getInputStream());
 		} catch ( java.security.cert.CertificateException | IOException e ) {
 			throw new CertificateException("Error parsing certificate data.", e);
 		}
@@ -179,7 +179,7 @@ public class UserDnp3Controller {
 	 * @return the result
 	 */
 	@RequestMapping(method = DELETE, value = "/trusted-issuer-certs/{identifier}")
-	public Result<Void> deleteTrustedIssuerCertificate(@PathVariable("identifier") String identifier) {
+	public Result<Void> deleteTrustedIssuerCertificate(@PathVariable String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().deleteTrustedIssuerCertificate(userId, identifier);
 		return success();
@@ -233,8 +233,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/trusted-issuer-certs/enabled/{enabled}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<Void> updateTrustedIssuerCertificateEnabledStatus(
-			@PathVariable("enabled") boolean enabled,
+	public Result<Void> updateTrustedIssuerCertificateEnabledStatus(@PathVariable boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateTrustedIssuerCertificateEnabledStatus(userId, criteria, enabled);
@@ -285,7 +284,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/servers/enabled/{enabled}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<Void> updateServerEnabledStatus(@PathVariable("enabled") boolean enabled,
+	public Result<Void> updateServerEnabledStatus(@PathVariable boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateServerEnabledStatus(userId, criteria, enabled);
@@ -300,7 +299,7 @@ public class UserDnp3Controller {
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/servers/{serverId}")
-	public Result<ServerConfiguration> getServer(@PathVariable("serverId") Long serverId) {
+	public Result<ServerConfiguration> getServer(@PathVariable Long serverId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
@@ -320,7 +319,7 @@ public class UserDnp3Controller {
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/servers/{serverId}", consumes = APPLICATION_JSON_VALUE)
-	public Result<ServerConfiguration> updateServer(@PathVariable("serverId") Long serverId,
+	public Result<ServerConfiguration> updateServer(@PathVariable Long serverId,
 			@Valid @RequestBody ServerConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		ServerConfiguration result = userDnp3Biz().updateServer(userId, serverId, input);
@@ -335,7 +334,7 @@ public class UserDnp3Controller {
 	 * @return the result
 	 */
 	@RequestMapping(method = DELETE, value = "/servers/{serverId}")
-	public Result<Void> deleteServer(@PathVariable("serverId") Long serverId) {
+	public Result<Void> deleteServer(@PathVariable Long serverId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServer(userId, serverId);
 		return success();
@@ -366,7 +365,7 @@ public class UserDnp3Controller {
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/servers/{serverId}/auths")
-	public Result<ServerAuthConfiguration> getServerAuth(@PathVariable("serverId") Long serverId,
+	public Result<ServerAuthConfiguration> getServerAuth(@PathVariable Long serverId,
 			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
@@ -389,7 +388,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/servers/{serverId}/auths",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable("serverId") Long serverId,
+	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable Long serverId,
 			@Valid @RequestBody ServerAuthConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId,
@@ -407,7 +406,7 @@ public class UserDnp3Controller {
 	 * @return the result
 	 */
 	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths")
-	public Result<Void> deleteServerAuth(@PathVariable("serverId") Long serverId,
+	public Result<Void> deleteServerAuth(@PathVariable Long serverId,
 			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServerAuth(userId, serverId, identifier);
@@ -426,7 +425,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/servers/auths/enabled/{enabled}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<Void> updateServerAuthEnabledStatus(@PathVariable("enabled") boolean enabled,
+	public Result<Void> updateServerAuthEnabledStatus(@PathVariable boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateServerAuthEnabledStatus(userId, criteria, enabled);
@@ -458,8 +457,8 @@ public class UserDnp3Controller {
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/servers/{serverId}/measurements/{index}")
-	public Result<ServerMeasurementConfiguration> getServerMeasurement(
-			@PathVariable("serverId") Long serverId, @PathVariable("index") Integer index) {
+	public Result<ServerMeasurementConfiguration> getServerMeasurement(@PathVariable Long serverId,
+			@PathVariable Integer index) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
@@ -483,9 +482,8 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = PUT, value = "/servers/{serverId}/measurements/{index}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<ServerMeasurementConfiguration> saveServerMeasurement(
-			@PathVariable("serverId") Long serverId, @PathVariable("index") Integer index,
-			@Valid @RequestBody ServerMeasurementConfigurationInput input) {
+	public Result<ServerMeasurementConfiguration> saveServerMeasurement(@PathVariable Long serverId,
+			@PathVariable Integer index, @Valid @RequestBody ServerMeasurementConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		ServerMeasurementConfiguration result = userDnp3Biz().saveServerMeasurement(userId, serverId,
 				index, input);
@@ -502,8 +500,8 @@ public class UserDnp3Controller {
 	 * @return the result
 	 */
 	@RequestMapping(method = DELETE, value = "/servers/{serverId}/measurements/{index}")
-	public Result<Void> deleteServerMeasurement(@PathVariable("serverId") Long serverId,
-			@PathVariable("index") Integer index) {
+	public Result<Void> deleteServerMeasurement(@PathVariable Long serverId,
+			@PathVariable Integer index) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServerMeasurement(userId, serverId, index);
 		return success();
@@ -521,7 +519,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/servers/measurements/enabled/{enabled}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<Void> updateServerMeasurementEnabledStatus(@PathVariable("enabled") boolean enabled,
+	public Result<Void> updateServerMeasurementEnabledStatus(@PathVariable boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateServerMeasurementEnabledStatus(userId, criteria, enabled);
@@ -553,8 +551,8 @@ public class UserDnp3Controller {
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/servers/{serverId}/controls/{index}")
-	public Result<ServerControlConfiguration> getServerControl(@PathVariable("serverId") Long serverId,
-			@PathVariable("index") Integer index) {
+	public Result<ServerControlConfiguration> getServerControl(@PathVariable Long serverId,
+			@PathVariable Integer index) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
@@ -578,9 +576,8 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = PUT, value = "/servers/{serverId}/controls/{index}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<ServerControlConfiguration> saveServerControl(@PathVariable("serverId") Long serverId,
-			@PathVariable("index") Integer index,
-			@Valid @RequestBody ServerControlConfigurationInput input) {
+	public Result<ServerControlConfiguration> saveServerControl(@PathVariable Long serverId,
+			@PathVariable Integer index, @Valid @RequestBody ServerControlConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		ServerControlConfiguration result = userDnp3Biz().saveServerControl(userId, serverId, index,
 				input);
@@ -597,8 +594,7 @@ public class UserDnp3Controller {
 	 * @return the result
 	 */
 	@RequestMapping(method = DELETE, value = "/servers/{serverId}/controls/{index}")
-	public Result<Void> deleteServerControl(@PathVariable("serverId") Long serverId,
-			@PathVariable("index") Integer index) {
+	public Result<Void> deleteServerControl(@PathVariable Long serverId, @PathVariable Integer index) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServerControl(userId, serverId, index);
 		return success();
@@ -616,7 +612,7 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(method = POST, value = "/servers/controls/enabled/{enabled}",
 			consumes = APPLICATION_JSON_VALUE)
-	public Result<Void> updateServerControlEnabledStatus(@PathVariable("enabled") boolean enabled,
+	public Result<Void> updateServerControlEnabledStatus(@PathVariable boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateServerControlEnabledStatus(userId, criteria, enabled);
@@ -678,9 +674,8 @@ public class UserDnp3Controller {
 	 */
 	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.POST,
 			consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public Result<ServerConfigurations> importServerConfigurationCsv(
-			@PathVariable("serverId") Long serverId, @RequestPart("file") MultipartFile data,
-			Locale locale) throws IOException {
+	public Result<ServerConfigurations> importServerConfigurationCsv(@PathVariable Long serverId,
+			@RequestPart("file") MultipartFile data, Locale locale) throws IOException {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final ServerConfigurations result = userDnp3Biz().importServerConfigurationsCsv(userId, serverId,
 				data, locale);
@@ -698,6 +693,8 @@ public class UserDnp3Controller {
 	 *
 	 * @param serverId
 	 *        the ID of the server configuration to import for
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @param locale
@@ -706,14 +703,25 @@ public class UserDnp3Controller {
 	 *         if an IO error occurs
 	 */
 	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.GET)
-	public void exportServerConfigurationCsv(@PathVariable("serverId") Long serverId,
-			HttpServletResponse response, Locale locale) throws IOException {
+	public void exportServerConfigurationCsv(
+	// @formatter:off
+			@PathVariable Long serverId,
+			WebRequest request,
+			HttpServletResponse response,
+			Locale locale
+			// @formatter:on
+	) throws IOException {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
 				"attachment; filename=\"solarnet-dnp3-server-%d.csv\"".formatted(serverId));
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
-		userDnp3Biz().exportServerConfigurationsCsv(userId, filter, response.getOutputStream(), locale);
+		try {
+			userDnp3Biz().exportServerConfigurationsCsv(userId, filter, response.getOutputStream(),
+					locale);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
+		}
 	}
 
 }

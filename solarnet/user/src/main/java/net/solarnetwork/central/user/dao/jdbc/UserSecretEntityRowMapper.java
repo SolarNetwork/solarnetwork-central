@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -78,11 +78,10 @@ public class UserSecretEntityRowMapper implements RowMapper<UserSecretEntity> {
 		Long userId = rs.getObject(++p, Long.class);
 		String topicId = rs.getString(++p);
 		String key = rs.getString(++p);
-		Instant ts = getTimestampInstant(rs, ++p);
-		Instant mod = getTimestampInstant(rs, ++p);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
 		byte[] secret = rs.getBytes(++p);
-		UserSecretEntity conf = new UserSecretEntity(userId, topicId, key, ts, mod, secret);
-		return conf;
+		return new UserSecretEntity(userId, topicId, key, ts, mod, secret);
 	}
 
 }

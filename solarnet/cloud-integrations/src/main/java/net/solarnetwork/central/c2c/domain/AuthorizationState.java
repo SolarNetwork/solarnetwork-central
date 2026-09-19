@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.domain;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An authorization state record.
@@ -44,7 +45,7 @@ public record AuthorizationState(Long integrationId, String token) {
 	 * @return the decoded value, or {@code null} it {@code state} cannot be
 	 *         decoded
 	 */
-	public static AuthorizationState forStateValue(String state) {
+	public static @Nullable AuthorizationState forStateValue(@Nullable String state) {
 		if ( state == null ) {
 			return null;
 		}

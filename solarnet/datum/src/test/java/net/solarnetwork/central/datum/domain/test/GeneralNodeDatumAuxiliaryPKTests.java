@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralNodeDatumAuxiliaryPKTests.java - 1/02/2019 4:54:16 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,21 +24,19 @@ package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Test;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
+import org.junit.jupiter.api.Test;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 
 /**
  * Test cases for the {@link GeneralNodeDatumPK} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -81,26 +79,8 @@ public class GeneralNodeDatumAuxiliaryPKTests {
 		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
 				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
 		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
+				TEST_SOURCE_ID + "2", DatumAuxiliaryType.Reset);
 		assertThat("Keys not equal", pk1, not(equalTo(pk2)));
-	}
-
-	@Test
-	public void compareTypesDescendingNull() {
-		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
-		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
-		assertThat("Comparison", pk1.compareTo(pk2), greaterThanOrEqualTo(1));
-	}
-
-	@Test
-	public void compareTypesAscendingNull() {
-		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
-		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
-		assertThat("Comparison", pk1.compareTo(pk2), lessThanOrEqualTo(-1));
 	}
 
 	@Test

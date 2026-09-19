@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
-import static net.solarnetwork.central.din.app.config.SolarDinAppConfiguration.CACHING;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.CACHING;
 import static net.solarnetwork.central.din.security.SecurityUtils.ROLE_DIN;
 import static net.solarnetwork.central.inin.security.SecurityUtils.ROLE_ININ;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
@@ -50,7 +50,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
@@ -62,12 +61,13 @@ import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @Configuration
 @EnableWebSecurity
@@ -130,8 +130,7 @@ public class WebSecurityConfig {
 			service.setAuthoritiesByUsernameQuery(
 					JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
 
-			DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-			provider.setUserDetailsService(service);
+			DaoAuthenticationProvider provider = new DaoAuthenticationProvider(service);
 			provider.setPasswordEncoder(passwordEncoder);
 			return provider;
 		}
@@ -177,7 +176,7 @@ public class WebSecurityConfig {
 	public static class DatumApiWebSecurityConfig {
 
 		@Value("${app.security.endpoint-id-url-pattern:}")
-		private String endpointIdUrlPattern;
+		private String endpointIdUrlPattern = "";
 
 		@Autowired
 		private JdbcOperations jdbcOperations;
@@ -251,7 +250,7 @@ public class WebSecurityConfig {
 	public static class InstructionApiWebSecurityConfig {
 
 		@Value("${app.security.endpoint-id-url-pattern:}")
-		private String endpointIdUrlPattern;
+		private String endpointIdUrlPattern = "";
 
 		@Autowired
 		private JdbcOperations jdbcOperations;

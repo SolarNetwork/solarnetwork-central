@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -38,6 +39,15 @@ import net.solarnetwork.domain.datum.Aggregation;
 public interface StaleAuditDatum extends Identity<StreamKindPK> {
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the key
+	 */
+	@Override
+	@NonNull
+	StreamKindPK getId();
+
+	/**
 	 * Get the unique ID of the stream that is stale.
 	 *
 	 * <p>
@@ -46,7 +56,9 @@ public interface StaleAuditDatum extends Identity<StreamKindPK> {
 	 *
 	 * @return the stream ID
 	 */
-	UUID getStreamId();
+	default UUID getStreamId() {
+		return getId().getStreamId();
+	}
 
 	/**
 	 * Get the associated timestamp of this datum.
@@ -61,7 +73,9 @@ public interface StaleAuditDatum extends Identity<StreamKindPK> {
 	 *
 	 * @return the timestamp for this datum
 	 */
-	Instant getTimestamp();
+	default Instant getTimestamp() {
+		return getId().getTimestamp();
+	}
 
 	/**
 	 * Get the type of aggregation that is stale.
@@ -69,7 +83,7 @@ public interface StaleAuditDatum extends Identity<StreamKindPK> {
 	 * <p>
 	 * This value represents the time period in the stream that is stale. Thus,
 	 * the overall stale period is from {@code timestamp} to
-	 * {@code timestamp + kin}.
+	 * {@code timestamp + kind}.
 	 * </p>
 	 *
 	 * <p>
@@ -78,6 +92,8 @@ public interface StaleAuditDatum extends Identity<StreamKindPK> {
 	 *
 	 * @return the kind
 	 */
-	Aggregation getKind();
+	default Aggregation getKind() {
+		return Aggregation.forKey(getId().getKind());
+	}
 
 }

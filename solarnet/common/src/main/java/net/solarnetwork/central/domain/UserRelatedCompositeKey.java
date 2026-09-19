@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serializable;
+import org.jspecify.annotations.NonNull;
 
 /**
  * A standard user-related composite key.
@@ -30,6 +32,7 @@ import java.io.Serializable;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ComparableType")
 public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey & Comparable<K> & Serializable>
 		extends UserIdRelated, CompositeKey, Comparable<K>, Serializable {
 
@@ -39,8 +42,9 @@ public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey 
 	 * @return the user ID
 	 */
 	@Override
+	@NonNull
 	default Long getUserId() {
-		return (Long) keyComponent(0);
+		return (Long) nonnull(keyComponent(0), "userId");
 	}
 
 	/**
@@ -49,8 +53,13 @@ public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey 
 	 * @return {@literal true} if the user ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
+	@Override
 	default boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
+		try {
+			return keyComponentIsAssigned(0);
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
 	}
 
 }

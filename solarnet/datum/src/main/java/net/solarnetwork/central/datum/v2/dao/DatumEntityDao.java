@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.io.IOException;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -57,16 +58,15 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
-	 *
 	 * {@inheritDoc}
 	 */
 	@Override
 	ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
-			List<SortDescriptor> sorts, Long offset, Integer max);
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max);
 
 	@Override
 	default ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter) {
-		return findFiltered(filter, null, null, null);
+		return findFiltered(filter, filter.getSorts(), filter.getOffset(), filter.getMax());
 	}
 
 	/**
@@ -87,7 +87,8 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 * @since 1.2
 	 */
 	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 	/**
 	 * API for querying for a stream of {@link StreamDatum}.
@@ -119,20 +120,9 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 * @since 1.2
 	 */
 	default void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors) throws IOException {
+			@Nullable List<SortDescriptor> sortDescriptors) throws IOException {
 		findFilteredStream(filter, processor, sortDescriptors, null, null);
 	}
-
-	/**
-	 * Store a datum, treating as input from a node.
-	 *
-	 * @param datum
-	 *        the datum to store
-	 * @return the stored primary key
-	 * @since 1.1
-	 */
-	@Override
-	DatumPK store(StreamDatum datum);
 
 	/**
 	 * Store a general node datum, saving as a datum entity, treating as input
@@ -140,8 +130,10 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 */
+	@Nullable
 	DatumPK store(GeneralNodeDatum datum);
 
 	/**
@@ -150,8 +142,10 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 */
+	@Nullable
 	DatumPK store(GeneralLocationDatum datum);
 
 	/**

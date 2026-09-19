@@ -25,9 +25,12 @@ package net.solarnetwork.central.user.c2c.biz;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
@@ -35,26 +38,32 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.service.ServiceConfiguration;
 
 /**
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.4
+ * @version 1.9
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -62,7 +71,7 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a list of all available {@link CloudIntegrationService}
 	 * implementations.
 	 *
-	 * @return the integration services, never {@literal null}
+	 * @return the integration services, never {@code null}
 	 */
 	Iterable<CloudIntegrationService> availableIntegrationServices();
 
@@ -70,26 +79,39 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudIntegrationService} based on its service
 	 * identifier.
 	 *
-	 * @return the integration service, or {@literal null} if not available
+	 * @return the integration service, or {@code null} if not available
 	 */
+	@Nullable
 	CloudIntegrationService integrationService(String identifier);
 
 	/**
 	 * Get a specific {@link CloudDatumStreamService} based on its service
 	 * identifier.
 	 *
-	 * @return the datum stream service, or {@literal null} if not available
+	 * @return the datum stream service, or {@code null} if not available
 	 */
+	@Nullable
 	CloudDatumStreamService datumStreamService(String identifier);
+
+	/**
+	 * Get a specific {@link CloudControlService} based on its service
+	 * identifier.
+	 *
+	 * @return the control service, or {@code null} if not available
+	 * @since 1.8
+	 */
+	@Nullable
+	CloudControlService controlService(String identifier);
 
 	/**
 	 * Get the user-level settings.
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @return the settings ,or {@literal null} if none exist
+	 * @return the settings ,or {@code null} if none exist
 	 * @since 1.3
 	 */
+	@Nullable
 	UserSettingsEntity settingsForUser(Long userId);
 
 	/**
@@ -123,10 +145,10 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional filter
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> listConfigurationsForUser(
-			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass);
+			Long userId, @Nullable CloudIntegrationsFilter filter, Class<C> configurationClass);
 
 	/**
 	 * Get a specific configuration kind for a given ID.
@@ -139,7 +161,9 @@ public interface UserCloudIntegrationsBiz {
 	 *        the primary key of the configuration to get
 	 * @param configurationClass
 	 *        the configuration type to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration
+	 * @throws AuthorizationException
+	 *         if the configuration is not available
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C configurationForId(
 			K id, Class<C> configurationClass);
@@ -192,8 +216,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param <K>
 	 *        the primary key type
 	 * @param id
-	 *        the ID of the configuration to save; at a minimum the user ID
-	 *        component must be provided
+	 *        the ID of the configuration to merge service properties on
 	 * @param configurationClass
 	 *        the configuration type to update
 	 * @param serviceProperties
@@ -203,6 +226,25 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C mergeConfigurationServiceProperties(
 			K id, Map<String, ?> serviceProperties, Class<C> configurationClass);
+
+	/**
+	 * Merge a set of service properties into an existing entity.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the ID of the configuration to merge service properties on
+	 * @param configurationClass
+	 *        the configuration type to update
+	 * @param serviceProperties
+	 *        the service properties to merge
+	 * @return the saved service properties
+	 * @since 1.9
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K> & ServiceConfiguration, K extends UserRelatedCompositeKey<K>> Map<String, ?> mergeConfigurationServiceProperties(
+			K id, MergeMode mode, Map<String, Object> serviceProperties, Class<C> configurationClass);
 
 	/**
 	 * Update the enabled status of configurations, optionally filtered.
@@ -217,7 +259,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param configurationClass
-	 *        the configuration type to get
+	 *        the configuration type to update
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void updateConfigurationEnabled(
 			K id, boolean enabled, Class<C> configurationClass);
@@ -245,12 +287,12 @@ public interface UserCloudIntegrationsBiz {
 	 *        the ID of the configuration to validate
 	 * @param locale
 	 *        the desired locale for any error messages
-	 * @return the validation result, never {@literal null}
+	 * @return the validation result, never {@code null}
 	 */
 	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale);
 
 	/**
-	 * List data values.
+	 * List datum stream data values.
 	 *
 	 * @param integrationId
 	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
@@ -264,10 +306,31 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link CloudDatumStreamService#dataValueFilters(Locale)}
-	 * @return the available values, never {@literal null}
+	 * @return the available values, never {@code null}
 	 */
 	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
-			String datumStreamServiceIdentifier, Map<String, ?> filters);
+			String datumStreamServiceIdentifier, @Nullable Map<String, ?> filters);
+
+	/**
+	 * List control data values.
+	 *
+	 * @param integrationId
+	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
+	 *        data values for
+	 * @param controlServiceIdentifier
+	 *        the service identifier of the {@link CloudControlService} to use;
+	 *        if not provided then the first service available for the
+	 *        {@link CloudIntegrationService} specified in the specified
+	 *        {@link CloudIntegrationConfiguration} will be used
+	 * @param filters
+	 *        an optional set of search filters to limit the data value groups
+	 *        to; the available key values come from the identifiers returned by
+	 *        {@link CloudControlService#dataValueFilters(Locale)}
+	 * @return the available values, never {@code null}
+	 * @since 1.8
+	 */
+	Iterable<CloudDataValue> listControlDataValues(UserLongCompositePK integrationId,
+			String controlServiceIdentifier, @Nullable Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum from a datum stream.
@@ -281,7 +344,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param id
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
 	 *        datum for
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	Iterable<Datum> latestDatumStreamDatumForId(UserLongCompositePK id);
 
@@ -293,7 +356,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        datum for
 	 * @param filter
 	 *        the search criteria
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	CloudDatumStreamQueryResult listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
@@ -306,10 +369,10 @@ public interface UserCloudIntegrationsBiz {
 	 *        the user ID to get entities for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available entities, never {@literal null}
+	 * @return the available entities, never {@code null}
 	 */
 	FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> listDatumStreamPollTasksForUser(
-			Long userId, CloudDatumStreamPollTaskFilter filter);
+			Long userId, @Nullable CloudDatumStreamPollTaskFilter filter);
 
 	/**
 	 * Update the state of a datum stream poll task.
@@ -320,12 +383,13 @@ public interface UserCloudIntegrationsBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@literal null} if
-	 *        the current state of the task does not matter
-	 * @return the resulting task, or {@literal null} if no such task exists
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
+	 * @return the resulting task, or {@code null} if no such task exists
 	 */
+	@Nullable
 	CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
+			BasicClaimableJobState desiredState, BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Save a datum stream poll task.
@@ -336,12 +400,13 @@ public interface UserCloudIntegrationsBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@literal null}
-	 *        if the current state of the task does not matter
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
 	 * @return the resulting task
 	 */
 	CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
-			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates);
+			CloudDatumStreamPollTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Delete a specific datum stream poll task.
@@ -355,9 +420,86 @@ public interface UserCloudIntegrationsBiz {
 	 * Get the default datum stream settings, if no stream-level or user-level
 	 * settings are available.
 	 *
-	 * @return the default cloud datum stream settings
+	 * @return the default cloud datum stream settings, never {@code null}
 	 * @since 1.3
 	 */
 	CloudDatumStreamSettings defaultDatumStreamSettings();
+
+	/**
+	 * Get a list of all available cloud datum stream rake tasks for a given
+	 * user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available entities, never {@code null}
+	 * @since 1.5
+	 */
+	FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> listDatumStreamRakeTasksForUser(
+			Long userId, @Nullable CloudDatumStreamRakeTaskFilter filter);
+
+	/**
+	 * Update the state of a datum stream rake task.
+	 *
+	 * @param id
+	 *        the ID of the task to update the state of
+	 * @param desiredState
+	 *        the state to update the task to
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
+	 * @return the resulting task, or {@code null} if no such task exists
+	 * @since 1.5
+	 */
+	@Nullable
+	CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(UserLongCompositePK id,
+			BasicClaimableJobState desiredState, BasicClaimableJobState @Nullable... expectedStates);
+
+	/**
+	 * Save a datum stream rake task.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamRakeTaskEntity} to save
+	 * @param input
+	 *        the info to save
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
+	 * @return the resulting task
+	 * @since 1.5
+	 */
+	CloudDatumStreamRakeTaskEntity saveDatumStreamRakeTask(UserLongCompositePK id,
+			CloudDatumStreamRakeTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates);
+
+	/**
+	 * Delete a specific datum stream rake task.
+	 *
+	 * @param id
+	 *        the primary key of the entity to delete
+	 * @since 1.5
+	 */
+	void deleteDatumStreamRakeTask(UserLongCompositePK id);
+
+	/**
+	 * Save a list of cloud datum stream rake tasks for a given datum stream.
+	 *
+	 * <p>
+	 * This method will first <b>delete</b> all tasks for the given
+	 * {@code datumStreamId}, then <b>insert</b> the given tasks.
+	 * </p>
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID of the tasks to replace
+	 * @param inputs
+	 *        the task inputs to save
+	 * @return the saved tasks
+	 * @since 1.7
+	 */
+	List<CloudDatumStreamRakeTaskEntity> replaceDatumStreamRakeTasks(UserLongCompositePK datumStreamId,
+			List<CloudDatumStreamRakeTaskEntityBaseInput> inputs);
 
 }

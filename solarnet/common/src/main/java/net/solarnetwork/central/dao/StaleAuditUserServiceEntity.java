@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.AggregateDatumId;
 import net.solarnetwork.central.domain.StaleAuditUserServiceValue;
 import net.solarnetwork.dao.BasicEntity;
@@ -77,7 +78,7 @@ public class StaleAuditUserServiceEntity extends BasicEntity<AggregateDatumId> i
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(StaleAuditUserServiceValue other) {
+	public boolean isSameAs(@Nullable StaleAuditUserServiceValue other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -85,7 +86,7 @@ public class StaleAuditUserServiceEntity extends BasicEntity<AggregateDatumId> i
 	}
 
 	@Override
-	public boolean differsFrom(StaleAuditUserServiceValue other) {
+	public boolean differsFrom(@Nullable StaleAuditUserServiceValue other) {
 		return !isSameAs(other);
 	}
 

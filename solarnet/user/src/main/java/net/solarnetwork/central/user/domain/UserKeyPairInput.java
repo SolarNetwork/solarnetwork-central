@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -31,19 +32,20 @@ import jakarta.validation.constraints.Size;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class UserKeyPairInput {
 
 	@NotBlank
 	@Size(max = 64)
-	private String key;
+	private @Nullable String key;
 
 	@NotBlank
 	@Size(max = 16384)
-	private String keyPem;
+	private @Nullable String keyPem;
 
 	@NotBlank
 	@Size(max = 64)
-	private String password;
+	private @Nullable String password;
 
 	/**
 	 * Constructor.
@@ -57,7 +59,7 @@ public class UserKeyPairInput {
 	 * 
 	 * @return the key name
 	 */
-	public String getKey() {
+	public @Nullable String getKey() {
 		return key;
 	}
 
@@ -67,7 +69,7 @@ public class UserKeyPairInput {
 	 * @param key
 	 *        the key name to set
 	 */
-	public void setKey(String key) {
+	public void setKey(@Nullable String key) {
 		this.key = key;
 	}
 
@@ -76,7 +78,7 @@ public class UserKeyPairInput {
 	 * 
 	 * @return the key data as a PEM encoded string
 	 */
-	public String getKeyPem() {
+	public @Nullable String getKeyPem() {
 		return keyPem;
 	}
 
@@ -86,7 +88,7 @@ public class UserKeyPairInput {
 	 * @param keyPem
 	 *        the key data to set
 	 */
-	public void setKeyPem(String keyPem) {
+	public void setKeyPem(@Nullable String keyPem) {
 		this.keyPem = keyPem;
 	}
 
@@ -95,7 +97,7 @@ public class UserKeyPairInput {
 	 * 
 	 * @return the password
 	 */
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 
@@ -105,7 +107,7 @@ public class UserKeyPairInput {
 	 * @param password
 	 *        the password to set
 	 */
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 

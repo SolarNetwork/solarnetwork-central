@@ -1,0 +1,19 @@
+WITH s AS (
+	SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
+	FROM solardatm.da_datm_meta_aliased s
+	WHERE s.node_id = ANY(?)
+		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
+)
+SELECT s.stream_id, 
+	datum.ts_start, 
+	datum.data_i, 
+	datum.data_a, 
+	datum.data_s, 
+	datum.data_t,
+	datum.stat_i,
+	datum.read_a 
+FROM s
+INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.orig_stream_id
+WHERE datum.ts_start >= ?
+	AND datum.ts_start < ?
+ORDER BY ts_start, node_id, source_id

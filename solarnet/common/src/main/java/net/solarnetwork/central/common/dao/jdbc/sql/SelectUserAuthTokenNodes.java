@@ -55,7 +55,7 @@ public final class SelectUserAuthTokenNodes implements PreparedStatementCreator,
 	 * @param tokenId
 	 *        the token ID
 	 * @throws IllegalArgumentException
-	 *         if {@code tokenId} is {@literal null}
+	 *         if {@code tokenId} is {@code null}
 	 */
 	public SelectUserAuthTokenNodes(String tokenId) {
 		super();

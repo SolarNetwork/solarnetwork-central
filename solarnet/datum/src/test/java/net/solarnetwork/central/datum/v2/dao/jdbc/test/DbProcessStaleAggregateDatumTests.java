@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -36,11 +38,20 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleF
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.datum.Aggregation.Day;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -56,7 +67,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +77,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -81,9 +90,12 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
+import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -94,7 +106,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for DB stored procedures that process stale aggregate datum.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport {
 
@@ -184,14 +196,14 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				hour.toInstant(), Aggregation.Hour, null, null));
+				hour.toInstant(), Aggregation.Hour, emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Hour and inserted stale Day
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
-						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, now()));
 
 		// should not have created stale SolarFlux Hour because not current hour
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
@@ -297,7 +309,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				hour.toInstant(), Aggregation.Hour, null, null));
+				hour.toInstant(), Aggregation.Hour, emptyProperties(), emptyStatistics()));
 
 		staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("Only locked row remains", staleRows, hasSize(1));
@@ -308,7 +320,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
-						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, now()));
 
 		// should not have created stale SolarFlux Hour because not current hour
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
@@ -339,7 +351,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		BasicObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(d.getStreamId(), "UTC",
 				ObjectDatumKind.Node, 1L, "a", new String[] { "i1" }, new String[] { "a1" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, Set.of(d));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(d.getStreamId(),
 						hour.toInstant(), Aggregation.Hour, Instant.now())));
@@ -376,7 +388,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Day);
 		assertThat("Day rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Day rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				day.toInstant(), Aggregation.Day, null, null));
+				day.toInstant(), Aggregation.Day, emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Hour and inserted stale Day
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -384,7 +396,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertStaleAggregateDatum("Month rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
 						day.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Month, null));
+						Aggregation.Month, now()));
 
 		// should have inserted None, Hour, and Day stale audit records
 		List<StaleAuditDatum> staleAuditRows = listStaleAuditDatum(jdbcTemplate);
@@ -419,7 +431,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
 				"UTC", ObjectDatumKind.Node, 1L, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertAggregateDatum(log, jdbcTemplate, Set.of(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						day.toInstant(), Aggregation.Day, Instant.now())));
@@ -455,8 +467,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		// should have stored rollup in Month table
 		List<AggregateDatum> result = aggDatum(Aggregation.Month);
 		assertThat("Month rollup result stored database", result, hasSize(1));
-		assertAggregateDatumId("Month rollup", result.get(0), new AggregateDatumEntity(
-				meta.getStreamId(), month.toInstant(), Aggregation.Month, null, null));
+		assertAggregateDatumId("Month rollup", result.get(0),
+				new AggregateDatumEntity(meta.getStreamId(), month.toInstant(), Aggregation.Month,
+						emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Month
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -495,7 +508,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
 				"UTC", ObjectDatumKind.Node, 1L, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertAggregateDatum(log, jdbcTemplate, Set.of(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						month.toInstant(), Aggregation.Month, Instant.now())));
@@ -630,4 +643,75 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 				arrayContaining(decimalArray("2400", "4900", "7300")));
 	}
 
+	// See NET-472
+	@Test
+	public void markStale_dstShift() throws IOException {
+		final ZoneId zone = ZoneId.of("America/New_York");
+		setupTestLocation(1L, zone.getId());
+		setupTestNode(10L, 1L);
+		final UUID streamId = UUID.randomUUID();
+		final ZonedDateTime start = Instant.parse("2019-11-03T04:00:00Z").atZone(zone);
+
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, zone.getId(),
+				Node, 10L, "A", new String[] { "watts" }, new String[] { "wattHours" }, null);
+		final List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		allTableData(log, jdbcTemplate, "solardatm.da_datm", "stream_id,ts");
+		allTableData(log, jdbcTemplate, "solardatm.agg_stale_datm", "stream_id,ts_start");
+
+		// generate hourly aggs
+		// @formatter:off
+		insertStaleAggregateDatum(log, jdbcTemplate, asList(
+				  new StaleAggregateDatumEntity(meta.getStreamId(), start.toInstant(), Hour, now())
+				, new StaleAggregateDatumEntity(meta.getStreamId(), start.plusHours(1).toInstant(), Hour, now())
+				, new StaleAggregateDatumEntity(meta.getStreamId(), start.plusHours(2).toInstant(), Hour, now())
+				));
+		// @formatter:on
+
+		allTableData(log, jdbcTemplate, "solardatm.agg_datm_hourly", "stream_id,ts_start");
+
+		// WHEN
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Hour));
+
+		// THEN
+		// @formatter:off
+		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
+		then(stales)
+			.as("One Day stale record available after processing stale hours")
+			.hasSize(1)
+			.element(0)
+			.as("Stale record for day")
+			.returns(Day, from(StaleAggregateDatum::getKind))
+			.as("Stale ID is for same stream at stream-local start of day that contains processed hour")
+			.returns(new StreamKindPK(streamId, start.truncatedTo(DAYS).toInstant(), "d"),
+					from(StaleAggregateDatum::getId))
+			;
+
+		List<AggregateDatum> hourly = aggDatum(Hour);
+		then(hourly)
+			.as("Hourly datum created by processing stale hours")
+			.hasSize(3)
+			.element(0)
+			.returns(new DatumPK(meta.getStreamId(), start.toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 0")
+			.returns(new BigDecimal[][] {decimalArray("0", "137952251", "137952251")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		then(hourly).element(1)
+			.returns(new DatumPK(meta.getStreamId(), start.plusHours(1).toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 1")
+			.returns(new BigDecimal[][] {decimalArray("1", "137952251", "137952252")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		then(hourly).element(2)
+			.returns(new DatumPK(meta.getStreamId(), start.plusHours(2).toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 1")
+			.returns(new BigDecimal[][] {decimalArray("0", "137952252", "137952252")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		// @formatter:on
+	}
 }

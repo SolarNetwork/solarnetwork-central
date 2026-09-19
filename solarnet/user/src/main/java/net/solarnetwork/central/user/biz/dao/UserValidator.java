@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.zone.ZoneRulesException;
+import org.apache.commons.lang3.LocaleUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -31,7 +35,7 @@ import net.solarnetwork.central.user.domain.User;
  * Validator for user registration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.1
  */
 public class UserValidator implements Validator {
@@ -57,6 +61,43 @@ public class UserValidator implements Validator {
 		}
 		if ( !StringUtils.hasText(reg.getPassword()) ) {
 			errors.rejectValue("password", "registration.password.required", "Password is required.");
+		}
+		if ( StringUtils.hasText(reg.getCountry()) ) {
+			if ( reg.getCountry().length() < 2 || reg.getCountry().length() > 3 ) {
+				errors.rejectValue("country", "registration.country.length",
+						"The country must be 2 or 3 characters in length.");
+			} else if ( LocaleUtils.languagesByCountry(reg.getCountry()).isEmpty() ) {
+				errors.rejectValue("country", "registration.country.unknown",
+						"The country is not recognized.");
+			}
+			if ( !StringUtils.hasText(reg.getTimeZoneId()) ) {
+				errors.rejectValue("timeZoneId", "registration.timeZoneId.requiredByCountry",
+						"A time zone is required when a country is given.");
+			}
+		}
+		if ( StringUtils.hasText(reg.getTimeZoneId()) ) {
+			try {
+				var _ = ZoneId.of(reg.getTimeZoneId());
+			} catch ( ZoneRulesException e ) {
+				errors.rejectValue("timeZoneId", "registration.timeZoneId.unknown",
+						"The time zone is not recognized.");
+			} catch ( DateTimeException e ) {
+				errors.rejectValue("timeZoneId", "registration.timeZoneId.syntaxError",
+						"The time zone format is not valid.");
+			}
+			if ( !StringUtils.hasText(reg.getCountry()) ) {
+				errors.rejectValue("country", "registration.country.requiredByTimeZoneId",
+						"A country is required when a time zone is given.");
+			}
+		}
+		if ( StringUtils.hasText(reg.getLang()) ) {
+			if ( reg.getLang().length() < 2 || reg.getLang().length() > 3 ) {
+				errors.rejectValue("lang", "registration.lang.length",
+						"The language must be 2 or 3 characters in length.");
+			} else if ( LocaleUtils.countriesByLanguage(reg.getLang()).isEmpty() ) {
+				errors.rejectValue("lang", "registration.lang.unknown",
+						"The language is not recognized.");
+			}
 		}
 	}
 

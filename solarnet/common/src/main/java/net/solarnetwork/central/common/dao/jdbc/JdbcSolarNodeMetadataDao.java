@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.PreparedStatement;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
@@ -70,11 +72,11 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 	public Long save(SolarNodeMetadata entity) {
 		var sql = new StoreSolarNodeMetadata(entity);
 		jdbcOps.execute(sql, PreparedStatement::executeUpdate);
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	@Override
-	public SolarNodeMetadata get(Long id) {
+	public @Nullable SolarNodeMetadata get(Long id) {
 		var filter = new BasicCoreCriteria();
 		filter.setNodeId(id);
 		var sql = new SelectSolarNodeMetadata(filter);
@@ -83,18 +85,19 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 	}
 
 	@Override
-	public Collection<SolarNodeMetadata> getAll(List<SortDescriptor> sorts) {
+	public Collection<SolarNodeMetadata> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void delete(SolarNodeMetadata entity) {
-		jdbcOps.update(new DeleteSolarNodeMetadata(requireNonNullArgument(entity, "entity").getId()));
+		jdbcOps.update(new DeleteSolarNodeMetadata(
+				requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id")));
 	}
 
 	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		var sql = new SelectSolarNodeMetadata(filter);
 		List<SolarNodeMetadata> list = jdbcOps.query(sql, SolarNodeMetadataRowMapper.INSTANCE);
 		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());

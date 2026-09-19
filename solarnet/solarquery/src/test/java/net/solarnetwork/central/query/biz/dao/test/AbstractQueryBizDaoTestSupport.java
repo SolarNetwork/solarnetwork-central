@@ -23,11 +23,11 @@
 package net.solarnetwork.central.query.biz.dao.test;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -36,19 +36,19 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.CommonDbTestUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Base class for other unit tests.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -75,7 +75,7 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractJUnit5Centr
 		return sqlSessionFactory;
 	}
 
-	@Before
+	@BeforeEach
 	public void setupBaseSupport() {
 		solarNodeDao = new MyBatisSolarNodeDao();
 		((MyBatisSolarNodeDao) solarNodeDao).setSqlSessionFactory(sqlSessionFactory);

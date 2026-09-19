@@ -29,6 +29,8 @@ The following Spring runtime profiles are available:
 | `audit-api` | Enables API auditing, if the `user-service-auditor` profile is also enabled. |
 | `aws-secrets` | Enables AWS Secrets Manager persistence for some credentials, like OAuth for OSCP. |
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
+| `devmode` | Enable some developer-only services. |
+| `c2c` | Enable Cloud Integrations support. |
 | `din` | Datum Input support. See [SolarNetUserDatumInputConfiguration][SolarNetUserDatumInputConfiguration]. |
 | `dogtag` | Node PKI support via Dogtag. See [PkiDogtagConfig][PkiDogtagConfig]. |
 | `inin` | Instruction Input support. See [SolarNetUserInstructionInputConfiguration][SolarNetUserInstructionInputConfiguration]. |
@@ -39,7 +41,10 @@ The following Spring runtime profiles are available:
 | `oscp-v20`    | Enable OSCP v2.0 integration. See references to [SolarNetOscpConfiguration][SolarNetOscpConfiguration]. |
 | `rate-limit` | Enables rate-limiting API access. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. :warning: By default reading from SQS is disabled, under the assumption that the SolarJobs app will process SQS messages. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
+| `user-instructions` | Enable user instructions. |
+| `user-secrets` | Enable user secrets. |
 | `user-service-auditor` | Enable user service auditing. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
@@ -59,7 +64,7 @@ working directory of the application, or via profile-specific files like
 
 # Building
 
-The build is managed by Gradle, and requires a Java Development Kit version 21+ to build (and run).
+The build is managed by Gradle, and requires a Java Development Kit version 25+ to build (and run).
 
 ```sh
 # Unix-like OS:

@@ -25,11 +25,13 @@ package net.solarnetwork.central.datum.biz.dao;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -71,7 +73,7 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	 * @param metaDao
 	 *        the metadata DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumMaintenanceBiz(DatumMaintenanceDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
@@ -82,7 +84,7 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
-		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria);
+		BasicDatumCriteria c = requireNonNullArgument(criteriaFromFilter(criteria), "criteria");
 		DatumUtils.populateAggregationType(criteria, c);
 		int count = datumDao.markDatumAggregatesStale(c);
 		log.info("Marked {} aggregate datum stale for criteria {}", count, c);
@@ -91,9 +93,10 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> findStaleAggregateDatum(
-			GeneralNodeDatumFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
-		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+			GeneralNodeDatumFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		BasicDatumCriteria c = requireNonNullArgument(
+				criteriaFromFilter(criteria, sortDescriptors, offset, max), "criteria");
 		c.setObjectKind(ObjectDatumKind.Node);
 		DatumUtils.populateAggregationType(criteria, c);
 		net.solarnetwork.dao.FilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, net.solarnetwork.central.datum.v2.domain.StreamKindPK> r = datumDao
@@ -105,12 +108,10 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 							.collect(toMap(DatumStreamMetadata::getStreamId, identity()));
 			for ( net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum d : r ) {
 				ObjectDatumStreamMetadata meta = metas.get(d.getStreamId());
-				StaleAggregateDatum stale = new StaleAggregateDatum();
 				if ( meta != null ) {
+					StaleAggregateDatum stale = new StaleAggregateDatum(meta.getObjectId(),
+							d.getTimestamp(), meta.getSourceId(), d.getKind().getKey());
 					stale.setCreated(d.getTimestamp());
-					stale.setNodeId(meta.getObjectId());
-					stale.setSourceId(meta.getSourceId());
-					stale.setKind(d.getKind().getKey());
 					data.add(stale);
 				}
 			}

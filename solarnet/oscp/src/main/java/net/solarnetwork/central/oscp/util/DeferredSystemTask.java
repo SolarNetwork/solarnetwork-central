@@ -29,12 +29,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -55,7 +57,7 @@ import net.solarnetwork.central.oscp.http.ExternalSystemClient;
  * Abstract {@link Runnable} to help with OSCP system related task execution.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements Runnable {
@@ -96,22 +98,22 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final UserLongCompositePK configId;
 	protected final ExternalSystemConfigurationDao<C> dao;
 	protected final ExternalSystemClient client;
-	protected final UserEventAppenderBiz userEventAppenderBiz;
-	protected final Executor executor;
-	protected final TaskScheduler taskScheduler;
-	protected final TransactionTemplate txTemplate;
+	protected final @Nullable UserEventAppenderBiz userEventAppenderBiz;
+	protected final @Nullable Executor executor;
+	protected final @Nullable TaskScheduler taskScheduler;
+	protected final @Nullable TransactionTemplate txTemplate;
 
-	private String[] errorTags;
-	private String[] successTags;
+	private @Nullable List<String> errorTags;
+	private @Nullable List<String> successTags;
 	private long conditionTimeout = DEFAULT_CONDITION_TIMEOUT;
 	private long startDelay = DEFAULT_START_DELAY;
 	private long startDelayRandomness = DEFAULT_START_DELAY_RANDOMNESS;
 	private long retryDelay = DEFAULT_RETRY_DELAY;
 	private int remainingTries = DEFAULT_TRIES;
 	private int tries = 0;
-	private C configuration;
-	private Map<String, ?> parameters;
-	private SystemTaskContext<C> context;
+	private @Nullable C configuration;
+	private @Nullable Map<String, ?> parameters;
+	private @Nullable SystemTaskContext<C> context;
 
 	/**
 	 * Constructor.
@@ -140,8 +142,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	public DeferredSystemTask(String name, Future<?> condition, OscpRole role,
 			UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
-			ExternalSystemClient systemBiz, UserEventAppenderBiz userEventAppenderBiz, Executor executor,
-			TaskScheduler taskScheduler, TransactionTemplate txTemplate) {
+			ExternalSystemClient systemBiz, @Nullable UserEventAppenderBiz userEventAppenderBiz,
+			@Nullable Executor executor, @Nullable TaskScheduler taskScheduler,
+			@Nullable TransactionTemplate txTemplate) {
 		super();
 		this.name = requireNonNullArgument(name, "name");
 		this.condition = requireNonNullArgument(condition, "condition");
@@ -223,7 +226,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the user event tags to use for an error event
 	 * @return this instance, for method chaining
 	 */
-	public DeferredSystemTask<C> withErrorEventTags(String[] errorTags) {
+	public DeferredSystemTask<C> withErrorEventTags(List<String> errorTags) {
 		this.errorTags = errorTags;
 		return this;
 	}
@@ -235,7 +238,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the user event tags to use for a success event
 	 * @return this instance, for method chaining
 	 */
-	public DeferredSystemTask<C> withSuccessEventTags(String[] successTags) {
+	public DeferredSystemTask<C> withSuccessEventTags(List<String> successTags) {
 		this.successTags = successTags;
 		return this;
 	}
@@ -245,7 +248,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *
 	 * @param parameters
 	 *        the parameters, provided to the {@link SystemTaskContext} returned
-	 *        from {@link #context(String...)}
+	 *        from {@link #context()}
 	 * @return this instance, for method chaining
 	 */
 	public DeferredSystemTask<C> withParameters(Map<String, ?> parameters) {
@@ -280,7 +283,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 				// ignore
 			}
 			if ( tt != null ) {
-				tt.executeWithoutResult((t) -> {
+				tt.executeWithoutResult(_ -> {
 					try {
 						doWork();
 					} catch ( Exception e ) {
@@ -296,7 +299,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn(e.getMessage());
 			if ( userEventAppenderBiz != null ) {
-				userEventAppenderBiz.addEvent(e.getConfig().getUserId(), e.getEvent());
+				userEventAppenderBiz.addEvent(e.getConfigId().getUserId(), e.getEvent());
 			}
 		} catch ( Exception e ) {
 			if ( --remainingTries > 0 && executor != null ) {
@@ -313,7 +316,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 					userEventAppenderBiz.addEvent(configId.getUserId(), event);
 				}
 				if ( taskScheduler != null && retryDelay > 0 ) {
-					taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
+					var _ = taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
 							Instant.now().plusMillis(tries * retryDelay));
 				} else {
 					executor.execute(this);
@@ -361,8 +364,11 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		if ( config == null ) {
 			var msg = "[%s] task with %s %s failed because the configuration does not exist; perhaps it was deleted."
 					.formatted(name, role, configId.ident());
-			LogEventInfo event = eventForConfiguration(config, errorTags, "Configuration not found");
-			throw new ExternalSystemConfigurationException(role, config, event, msg);
+			LogEventInfo event = eventForConfiguration(configId, errorTags, "Configuration not found");
+			if ( userEventAppenderBiz != null ) {
+				userEventAppenderBiz.addEvent(configId.getUserId(), event);
+			}
+			throw new ExternalSystemConfigurationException(role, configId, event, msg, null);
 		}
 		this.configuration = config;
 		return config;
@@ -412,9 +418,12 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			var msg = "[%s] task with %s %s failed because the registration status is not %s."
 					.formatted(name, role, configId.ident(), statusList);
 			log.info(msg);
-			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config, errorTags, "Status not %s".formatted(statusList)));
-			return null;
+			LogEventInfo event = eventForConfiguration(config, errorTags,
+					"Status not %s".formatted(statusList));
+			if ( userEventAppenderBiz != null ) {
+				userEventAppenderBiz.addEvent(config.getUserId(), event);
+			}
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
 		if ( supportedOscpVersions != null && !supportedOscpVersions.isEmpty() ) {
 			context().verifySystemOscpVersion(supportedOscpVersions);
@@ -425,13 +434,11 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	/**
 	 * Get the task context.
 	 *
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
 	 * @return the context
 	 * @throws ExternalSystemConfigurationException
 	 *         if the configuration is not found
 	 */
-	protected SystemTaskContext<C> context(String... extraErrorTags) {
+	protected SystemTaskContext<C> context() {
 		if ( this.context != null ) {
 			return context;
 		}
@@ -448,11 +455,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the URL path
 	 * @param body
 	 *        the HTTP post body
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
 	 */
-	protected void post(String path, Object body, String... extraErrorTags) {
-		SystemTaskContext<C> ctx = context(extraErrorTags);
+	protected void post(String path, Object body) {
+		SystemTaskContext<C> ctx = context();
 		client.systemExchange(ctx, HttpMethod.POST, () -> ctx.config().customUrlPath(name, path), body);
 	}
 

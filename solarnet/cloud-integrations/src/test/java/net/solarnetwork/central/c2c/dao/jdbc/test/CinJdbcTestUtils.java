@@ -24,18 +24,21 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -48,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Helper methods for cloud integrations JDBC tests.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class CinJdbcTestUtils {
 
@@ -74,10 +77,8 @@ public class CinJdbcTestUtils {
 	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		conf.setEnabled(true);
 		return conf;
@@ -126,13 +127,10 @@ public class CinJdbcTestUtils {
 			Long datumStreamMappingId, String schedule, ObjectDatumKind kind, Long objectId,
 			String sourceId, String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId, kind);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setDatumStreamMappingId(datumStreamMappingId);
 		conf.setSchedule(schedule);
-		conf.setKind(kind);
 		conf.setObjectId(objectId);
 		conf.setSourceId(sourceId);
 		conf.setServiceProps(serviceProps);
@@ -172,10 +170,8 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamMappingConfiguration newCloudDatumStreamMappingConfiguration(
 			Long userId, Long integrationId, String name, Map<String, Object> serviceProps) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, integrationId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setIntegrationId(integrationId);
 		conf.setServiceProps(serviceProps);
 		return conf;
 	}
@@ -226,12 +222,9 @@ public class CinJdbcTestUtils {
 			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
 			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				datumStreamMappingId, index, Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				datumStreamMappingId, index, MS_CLOCK.instant(), propertyType, propertyName, valueType,
+				valueReference);
 		conf.setModified(conf.getCreated());
-		conf.setPropertyType(propertyType);
-		conf.setPropertyName(propertyName);
-		conf.setValueType(valueType);
-		conf.setValueReference(valueReference);
 		conf.setMultiplier(multiplier);
 		conf.setScale(scale);
 		conf.setEnabled(true);
@@ -255,7 +248,7 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
-	 * Create a new datum stream configuration instance.
+	 * Create a new datum stream rake task instance.
 	 *
 	 * @param userId
 	 *        the user ID
@@ -276,10 +269,8 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamPollTaskEntity newCloudDatumStreamPollTaskEntity(Long userId,
 			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Instant startAt,
 			String message, Map<String, Object> serviceProps) {
-		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, datumStreamId);
-		conf.setState(state);
-		conf.setExecuteAt(executeAt);
-		conf.setStartAt(startAt);
+		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, datumStreamId,
+				state, executeAt, startAt);
 		conf.setMessage(message);
 		conf.setServiceProps(serviceProps);
 		return conf;
@@ -302,6 +293,51 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
+	 * Create a new datum stream rake task instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execution time
+	 * @param offset
+	 *        the offset
+	 * @param message
+	 *        a message
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static CloudDatumStreamRakeTaskEntity newCloudDatumStreamRakeTaskEntity(Long userId,
+			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Period offset,
+			String message, Map<String, Object> serviceProps) {
+		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
+				unassignedEntityIdKey(userId), Instant.EPOCH, datumStreamId, state, executeAt, offset);
+		conf.setMessage(message);
+		conf.setServiceProps(serviceProps);
+		return conf;
+	}
+
+	/**
+	 * List datum stream rake task rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamRakeTaskEntityData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardin.cin_datum_stream_rake_task ORDER BY user_id, ds_id, id");
+		log.debug("solardin.cin_datum_stream_rake_task table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
 	 * Create a new user settings instance.
 	 *
 	 * @param userId
@@ -315,7 +351,7 @@ public class CinJdbcTestUtils {
 	 */
 	public static UserSettingsEntity newUserSettingsEntity(Long userId, boolean publishToSolarIn,
 			boolean publishToSolarFlux) {
-		UserSettingsEntity conf = new UserSettingsEntity(userId, Instant.now());
+		UserSettingsEntity conf = new UserSettingsEntity(userId, MS_CLOCK.instant());
 		conf.setPublishToSolarIn(publishToSolarIn);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
 		return conf;
@@ -354,7 +390,7 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamSettingsEntity newCloudDatumStreamSettingsEntity(Long userId,
 			Long datumStreamId, boolean publishToSolarIn, boolean publishToSolarFlux) {
 		CloudDatumStreamSettingsEntity conf = new CloudDatumStreamSettingsEntity(userId, datumStreamId,
-				Instant.now());
+				MS_CLOCK.instant());
 		conf.setPublishToSolarIn(publishToSolarIn);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
 		return conf;
@@ -373,6 +409,56 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardin.cin_datum_stream_settings ORDER BY user_id");
 		log.debug("solardin.cin_datum_stream_settings table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new control configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param integrationId
+	 *        the integration ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param controlId
+	 *        the control ID
+	 * @param controlReference
+	 *        the control reference
+	 * @param name
+	 *        the name
+	 * @param serviceId
+	 *        the service ID
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 * @since 1.3
+	 */
+	public static CloudControlConfiguration newCloudControlConfiguration(Long userId, Long integrationId,
+			Long nodeId, String controlId, String controlReference, String name, String serviceId,
+			Map<String, Object> serviceProps) {
+		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
+				MS_CLOCK.instant(), name, serviceId, integrationId, nodeId, controlId);
+		conf.setModified(conf.getCreated());
+		conf.setControlReference(controlReference);
+		conf.setServiceProps(serviceProps);
+		conf.setEnabled(true);
+		return conf;
+	}
+
+	/**
+	 * List control configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 * @since 1.3
+	 */
+	public static List<Map<String, Object>> allCloudControlConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.cin_control ORDER BY user_id, id");
+		log.debug("solardin.cin_control table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

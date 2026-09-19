@@ -51,7 +51,7 @@ public final class GetDatumAuxiliary implements PreparedStatementCreator, SqlPro
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public GetDatumAuxiliary(DatumAuxiliaryPK id) {
 		super();

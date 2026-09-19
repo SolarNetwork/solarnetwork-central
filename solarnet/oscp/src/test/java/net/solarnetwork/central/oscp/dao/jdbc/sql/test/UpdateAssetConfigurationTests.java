@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Test cases for the {@link UpdateAssetConfiguration} class.
@@ -129,8 +129,8 @@ public class UpdateAssetConfigurationTests {
 		// GIVEN
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
-		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				Instant.now());
+		AssetConfiguration conf = newAssetConfiguration(userId, Instant.now(),
+				randomUUID().getMostSignificantBits());
 		conf.setModified(Instant.now());
 
 		// WHEN
@@ -147,8 +147,8 @@ public class UpdateAssetConfigurationTests {
 		// GIVEN
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
-		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				Instant.now()).copyWithId(id);
+		AssetConfiguration conf = newAssetConfiguration(userId, Instant.now(),
+				randomUUID().getMostSignificantBits()).copyWithId(id);
 		conf.setModified(Instant.now());
 
 		// GIVEN

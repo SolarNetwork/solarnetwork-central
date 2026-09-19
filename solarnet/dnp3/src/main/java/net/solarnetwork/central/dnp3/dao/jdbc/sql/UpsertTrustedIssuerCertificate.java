@@ -67,7 +67,7 @@ public final class UpsertTrustedIssuerCertificate implements PreparedStatementCr
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertTrustedIssuerCertificate(Long userId, TrustedIssuerCertificate entity) {
 		super();

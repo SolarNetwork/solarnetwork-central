@@ -1,0 +1,32 @@
+{
+    "info": [
+        {
+            "hardwareId": 234,
+            "dataIndex": 0,
+            "name": "KwAC",
+            "units": "Kilowatts"
+        },
+        {
+            "hardwareId": 234,
+            "dataIndex": 1,
+            "name": "KwhAC",
+            "units": "KilowattHours"
+        }
+    ],
+    "items": [
+        {
+            "timestamp": "2024-12-30T21:51:00+00:00",
+            "data": [
+                1123,
+                1100
+            ]
+        },
+        {
+            "timestamp": "2024-12-30T21:52:00+00:00",
+            "data": [
+                1124,
+                1101
+            ]
+        }
+    ]
+}

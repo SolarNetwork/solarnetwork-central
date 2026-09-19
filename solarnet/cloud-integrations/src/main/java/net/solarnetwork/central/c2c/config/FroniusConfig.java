@@ -25,7 +25,6 @@ package net.solarnetwork.central.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.time.Clock;
 import java.util.Collection;
-import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -52,11 +52,10 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
-import net.solarnetwork.central.c2c.http.CachableRequestEntity;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -112,10 +111,6 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
-	@Autowired(required = false)
-	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
-	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
-
 	@Autowired
 	private DatumStreamMetadataDao datumStreamMetadataDao;
 
@@ -132,6 +127,10 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Autowired
 	private CacheManager cacheManager;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
 
 	@Bean
 	@Qualifier(FRONIUS_SYSTEM_INFO)
@@ -150,10 +149,10 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Bean
 	@Qualifier(FRONIUS)
-	public CloudIntegrationService FroniusCloudIntegrationService(
+	public CloudIntegrationService froniusCloudIntegrationService(
 			@Qualifier(FRONIUS) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new FroniusCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps);
+				encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(FroniusCloudIntegrationService.class.getName(),
@@ -179,6 +178,7 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.mqtt.test;
 
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -31,7 +32,6 @@ import static org.hamcrest.Matchers.hasSize;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,23 +43,21 @@ import java.util.stream.StreamSupport;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -71,6 +69,7 @@ import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link MqttDataCollector} class.
@@ -93,15 +92,15 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	private NodeInstructionDao nodeInstructionDao;
 	private MqttDataCollector service;
 
-	private ObjectMapper createObjectMapper(JsonFactory jsonFactory) {
-		return JsonUtils.newDatumObjectMapper(jsonFactory);
+	private ObjectMapper createObjectMapper() {
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		setupMqttServer();
 
-		objectMapper = createObjectMapper(null);
+		objectMapper = createObjectMapper();
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
@@ -116,7 +115,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
-				Collections.singletonList(service));
+				List.of(service));
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();
@@ -124,7 +123,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void teardown() {
 		super.teardown();
 		EasyMock.verify(dataCollectorBiz, nodeInstructionDao);
@@ -169,10 +168,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -202,10 +199,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// WHEN
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -243,10 +238,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -274,7 +267,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
 	}
 
-	@Test(expected = RepeatableTaskException.class)
+	@Test
 	public void processGeneralNodeDatumWithTransientExceptionRetriesExhausted() throws Exception {
 		// given
 		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>(CaptureType.ALL);
@@ -287,10 +280,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -298,7 +289,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
 		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
 				json.getBytes("UTF-8"));
-		service.onMqttMessage(msg);
+		thenThrownBy(() -> service.onMqttMessage(msg)).isInstanceOf(RepeatableTaskException.class);
+		;
 	}
 
 	/*- the following test does not work; appears to be a bug in Moquette not re-sending in-flight messages without a PUBACK
@@ -455,10 +447,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -489,10 +479,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -520,7 +508,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		// given
 		final Long nodeInstructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 
@@ -543,7 +531,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	public void processInstructionStatus_twoOh() throws Exception {
 		// GIVEN
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 

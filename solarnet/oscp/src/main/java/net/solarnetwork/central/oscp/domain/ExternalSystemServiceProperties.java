@@ -95,7 +95,7 @@ public interface ExternalSystemServiceProperties {
 	 * A service property for a "combined asset" identifier.
 	 * 
 	 * <p>
-	 * If non-{@literal null} then all assets with a capacity group should be
+	 * If non-{@code null} then all assets with a capacity group should be
 	 * reported as a single, combined asset with this ID.
 	 * </p>
 	 * 

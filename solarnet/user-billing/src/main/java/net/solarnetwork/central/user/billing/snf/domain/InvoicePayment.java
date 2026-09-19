@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -37,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice payment entity.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class InvoicePayment extends BasicEntity<UserUuidPK>
 		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
@@ -59,9 +62,10 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 		@Override
 		public int compare(InvoicePayment o1, InvoicePayment o2) {
-			int result = o1.getCreated().compareTo(o2.getCreated());
+			int result = nonnull(o1.getCreated(), "Left created")
+					.compareTo(nonnull(o2.getCreated(), "Right created"));
 			if ( result == 0 ) {
-				result = o1.getId().compareTo(o2.getId());
+				result = nonnull(o1.getId(), "Left ID").compareTo(nonnull(o2.getId(), "Right ID"));
 			}
 			return result;
 		}
@@ -71,21 +75,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	private final Long accountId;
 	private final UUID paymentId;
 	private final Long invoiceId;
-	private BigDecimal amount;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param accountId
-	 *        the account ID
-	 * @param paymentId
-	 *        the payment ID
-	 * @param invoiceId
-	 *        the invoice ID
-	 */
-	public InvoicePayment(Long accountId, UUID paymentId, Long invoiceId) {
-		this(new UserUuidPK(), accountId, paymentId, invoiceId, Instant.now());
-	}
+	private @Nullable BigDecimal amount;
 
 	/**
 	 * Constructor.
@@ -100,13 +90,15 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *        the invoice ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
 	 */
 	public InvoicePayment(UserUuidPK id, Long accountId, UUID paymentId, Long invoiceId,
-			Instant created) {
-		super(id, created);
-		this.accountId = accountId;
-		this.paymentId = paymentId;
-		this.invoiceId = invoiceId;
+			@Nullable Instant created) {
+		super(requireNonNullArgument(id, "id"), created);
+		this.accountId = requireNonNullArgument(accountId, "accountId");
+		this.paymentId = requireNonNullArgument(paymentId, "paymentId");
+		this.invoiceId = requireNonNullArgument(invoiceId, "invoiceId");
 	}
 
 	/**
@@ -124,9 +116,11 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *        the invoice ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
 	 */
 	public InvoicePayment(UUID id, Long userId, Long accountId, UUID paymentId, Long invoiceId,
-			Instant created) {
+			@Nullable Instant created) {
 		this(new UserUuidPK(userId, id), accountId, paymentId, invoiceId, created);
 	}
 
@@ -163,7 +157,8 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(InvoicePayment other) {
+	@SuppressWarnings("ReferenceEquality")
+	public boolean isSameAs(@Nullable InvoicePayment other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -171,25 +166,24 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 		return Objects.equals(accountId, other.accountId)
 				&& Objects.equals(paymentId, other.paymentId)
 				&& Objects.equals(invoiceId, other.invoiceId)
-				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0);
+				&& ((amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0));
 		// @formatter:on
 	}
 
 	@Override
-	public boolean differsFrom(InvoicePayment other) {
+	public boolean differsFrom(@Nullable InvoicePayment other) {
 		return !isSameAs(other);
 	}
 
 	@Override
 	public boolean hasId() {
-		UserUuidPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		final UserUuidPK id = id();
+		return (id.userIdIsAssigned() && id.uuidIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		final UserUuidPK id = getId();
-		return id != null ? id.getUserId() : null;
+		return id().getUserId();
 	}
 
 	/**
@@ -197,7 +191,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the account ID
 	 */
-	public Long getAccountId() {
+	public final Long getAccountId() {
 		return accountId;
 	}
 
@@ -206,7 +200,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the payment ID
 	 */
-	public UUID getPaymentId() {
+	public final UUID getPaymentId() {
 		return paymentId;
 	}
 
@@ -215,7 +209,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the invoice ID
 	 */
-	public Long getInvoiceId() {
+	public final Long getInvoiceId() {
 		return invoiceId;
 	}
 
@@ -224,7 +218,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 *
 	 * @return the amount
 	 */
-	public BigDecimal getAmount() {
+	public final @Nullable BigDecimal getAmount() {
 		return amount;
 	}
 
@@ -234,7 +228,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param amount
 	 *        the amount to set
 	 */
-	public void setAmount(BigDecimal amount) {
+	public final void setAmount(@Nullable BigDecimal amount) {
 		this.amount = amount;
 	}
 

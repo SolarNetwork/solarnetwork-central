@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserAuthTokenController.java - Dec 12, 2012 11:51:19 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,19 +37,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.GeneratedUserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Controller for user authorization ticket management.
- * 
+ *
  * @author matt
  * @version 2.4
  */
@@ -61,7 +62,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        the user service to use
 	 */
@@ -73,7 +74,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Get the available policy aggregations.
-	 * 
+	 *
 	 * @return the available policy aggregation types
 	 */
 	@ModelAttribute("policyAggregations")
@@ -85,11 +86,12 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate the model for the main view.
-	 * 
+	 *
 	 * @param model
 	 *        the model to populate
 	 * @return the view name
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public String view(Model model) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
@@ -117,7 +119,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate a user token.
-	 * 
+	 *
 	 * @param name
 	 *        an optional name
 	 * @param description
@@ -142,7 +144,7 @@ public class UserAuthTokenController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAuthToken> generateUserToken(
+	public Result<GeneratedUserAuthToken> generateUserToken(
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description,
 			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
@@ -163,7 +165,7 @@ public class UserAuthTokenController extends ControllerSupport {
 						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
 						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	private UserAuthToken updateTokenInfo(final SecurityUser user, final UserAuthToken token,
@@ -178,7 +180,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Delete a token.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to delete
 	 * @return the result status
@@ -193,7 +195,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Change the status of a token.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to change
 	 * @param status
@@ -211,7 +213,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate a data token.
-	 * 
+	 *
 	 * @param name
 	 *        an optional name
 	 * @param description
@@ -236,7 +238,7 @@ public class UserAuthTokenController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAuthToken> generateDataToken(
+	public Result<GeneratedUserAuthToken> generateDataToken(
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description,
 			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
@@ -258,12 +260,12 @@ public class UserAuthTokenController extends ControllerSupport {
 						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
 						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	/**
 	 * Update token info.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to update
 	 * @param name
@@ -279,7 +281,7 @@ public class UserAuthTokenController extends ControllerSupport {
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, user.getUserId());
 		info.setName(name != null && !name.isBlank() ? name : null);
 		info.setDescription(description != null && !description.isBlank() ? description : null);
 		userBiz.updateUserAuthTokenInfo(user.getUserId(), tokenId, info);

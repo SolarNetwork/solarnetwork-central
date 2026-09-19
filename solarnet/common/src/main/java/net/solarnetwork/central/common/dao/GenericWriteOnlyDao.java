@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for a generic write-only DAO.
  * 
@@ -35,8 +37,10 @@ public interface GenericWriteOnlyDao<T, K> {
 	 * 
 	 * @param entity
 	 *        the entity to add
-	 * @return the primary key
+	 * @return the primary key, or {@code null} if the entity was not persisted
+	 *         (for example it had no properties)
 	 */
+	@Nullable
 	K persist(T entity);
 
 }

@@ -28,8 +28,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import java.time.LocalDate;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
@@ -56,7 +56,7 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 
 	private SnfInvoiceNodeUsage last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		addressDao = new MyBatisAddressDao();
 		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -84,11 +84,9 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 		saveNodeName(TEST_NODE_ID, TEST_NODE_DESCRIPTION);
 
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
+				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
-		entity.setCurrencyCode("NZD");
-		entity.setStartDate(LocalDate.of(2019, 12, 1));
-		entity.setEndDate(LocalDate.of(2020, 1, 1));
 		return invoiceDao.get(invoiceDao.save(entity));
 	}
 

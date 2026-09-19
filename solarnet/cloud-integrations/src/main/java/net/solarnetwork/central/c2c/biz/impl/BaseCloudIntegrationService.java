@@ -29,8 +29,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.BasicCloudIntegrationLocalizedServiceInfo;
@@ -39,12 +41,13 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -133,6 +136,9 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	/** The supported datum stream services. */
 	protected final Collection<CloudDatumStreamService> datumStreamServices;
 
+	/** The supported control services. */
+	protected final Collection<CloudControlService> controlServices;
+
 	/** The well known URLs. */
 	protected final Map<String, URI> wellKnownUrls;
 
@@ -145,6 +151,8 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the display name
 	 * @param datumStreamServices
 	 *        the datum stream services
+	 * @param controlServices
+	 *        the control services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -154,14 +162,15 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 * @param wellKnownUrls
 	 *        the well known URLs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
-			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls) {
+			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
+			TextEncryptor encryptor, List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
+		this.controlServices = requireNonNullArgument(controlServices, "controlServices");
 		this.wellKnownUrls = requireNonNullArgument(wellKnownUrls, "wellKnownUrls");
 	}
 
@@ -179,13 +188,13 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the integration to look for the base URL service property on
 	 * @param defaultBaseUrl
 	 *        the fallback URL to use
-	 * @return the URL, or {@code null} if the
+	 * @return the URL, or {@code defaultBaseUrl} if the
 	 *         {@link CloudIntegrationService#BASE_URL_SETTING} service property
-	 *         cannot be resolved as a URI and the given {@code defaultBaseUrl}
-	 *         is {@code null}
+	 *         cannot be resolved as a URI
 	 * @since 1.1
 	 */
-	public static URI resolveBaseUrl(CloudIntegrationConfiguration integration, URI defaultBaseUrl) {
+	public static URI resolveBaseUrl(@Nullable CloudIntegrationConfiguration integration,
+			URI defaultBaseUrl) {
 		return resolveUrl(integration, BASE_URL_SETTING, defaultBaseUrl);
 	}
 
@@ -203,12 +212,12 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the integration to look for the base URL service property on
 	 * @param defaultBaseUrl
 	 *        the fallback URL to use
-	 * @return the URL, or {@code null} if the
+	 * @return the URL, or {@code defaultBaseUrl} if the
 	 *         {@link CloudIntegrationService#BASE_URL_SETTING} service property
 	 *         cannot be resolved
 	 * @since 1.3
 	 */
-	public static String resolveBaseUrl(CloudIntegrationConfiguration integration,
+	public static String resolveBaseUrl(@Nullable CloudIntegrationConfiguration integration,
 			String defaultBaseUrl) {
 		return resolveUrl(integration, BASE_URL_SETTING, defaultBaseUrl);
 	}
@@ -228,17 +237,16 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the name of the URL setting
 	 * @param defaultUrl
 	 *        the fallback URL to use
-	 * @return the URL, or {@code null} if the service property cannot be
-	 *         resolved as a URI and the given {@code defaultUrl} is
-	 *         {@code null}
+	 * @return the URL, or {@code defaultUrl} if the service property cannot be
+	 *         resolved as a URI
 	 * @since 1.6
 	 */
-	public static URI resolveUrl(CloudIntegrationConfiguration integration, String settingName,
+	public static URI resolveUrl(@Nullable CloudIntegrationConfiguration integration, String settingName,
 			URI defaultUrl) {
-		URI result = defaultUrl;
+		URI result = ObjectUtils.requireNonNullArgument(defaultUrl, "defaultUrl");
 		if ( integration != null && integration.hasServiceProperty(settingName) ) {
 			try {
-				result = new URI(integration.serviceProperty(settingName, String.class));
+				result = new URI(integration.serviceProp(settingName, String.class));
 			} catch ( URISyntaxException e ) {
 				// ignore, use default
 			}
@@ -262,21 +270,24 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the name of the URL setting
 	 * @param defaultUrl
 	 *        the fallback URL to use
-	 * @return the URL, or {@code null} if the service property cannot be
+	 * @return the URL, or {@code defaultUrl} if the service property cannot be
 	 *         resolved
 	 * @since 1.6
 	 */
-	public static String resolveUrl(CloudIntegrationConfiguration integration, String settingName,
-			String defaultUrl) {
+	public static String resolveUrl(@Nullable CloudIntegrationConfiguration integration,
+			String settingName, String defaultUrl) {
 		String result = defaultUrl;
 		if ( integration != null && integration.hasServiceProperty(settingName) ) {
-			result = integration.serviceProperty(settingName, String.class);
+			String r = integration.serviceProp(settingName, String.class);
+			if ( r != null ) {
+				result = r;
+			}
 		}
 		return result;
 	}
 
 	@Override
-	public LocalizedServiceInfo getLocalizedServiceInfo(Locale locale) {
+	public LocalizedServiceInfo getLocalizedServiceInfo(@Nullable Locale locale) {
 		return new BasicCloudIntegrationLocalizedServiceInfo(
 				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
 				getSettingSpecifiers(), wellKnownUrls);
@@ -290,6 +301,11 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	@Override
 	public final Iterable<CloudDatumStreamService> datumStreamServices() {
 		return datumStreamServices;
+	}
+
+	@Override
+	public Iterable<CloudControlService> controlServices() {
+		return controlServices;
 	}
 
 }

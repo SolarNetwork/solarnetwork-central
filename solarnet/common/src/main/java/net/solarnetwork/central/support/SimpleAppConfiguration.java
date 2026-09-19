@@ -25,6 +25,7 @@ package net.solarnetwork.central.support;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.AppConfiguration;
 
 /**
@@ -50,10 +51,10 @@ public class SimpleAppConfiguration implements AppConfiguration {
 	 * @param serviceUrls
 	 *        the service URLs to expose
 	 */
-	public SimpleAppConfiguration(Map<String, String> serviceUrls) {
+	public SimpleAppConfiguration(@Nullable Map<String, String> serviceUrls) {
 		super();
 		if ( serviceUrls == null || serviceUrls.isEmpty() ) {
-			this.serviceUrls = Collections.emptyMap();
+			this.serviceUrls = Map.of();
 		} else {
 			this.serviceUrls = Collections.unmodifiableMap(new LinkedHashMap<>(serviceUrls));
 		}

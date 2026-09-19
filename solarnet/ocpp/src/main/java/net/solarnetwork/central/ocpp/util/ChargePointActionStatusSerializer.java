@@ -22,35 +22,32 @@
 
 package net.solarnetwork.central.ocpp.util;
 
-import java.io.IOException;
-import java.io.Serial;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link ChargePointActionStatus} objects.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class ChargePointActionStatusSerializer extends StdSerializer<ChargePointActionStatus> {
-
-	@Serial
-	private static final long serialVersionUID = -7679360882593716740L;
+public class ChargePointActionStatusSerializer extends StdSerializer<@Nullable ChargePointActionStatus> {
 
 	/** A default instance. */
-	public static final StdSerializer<ChargePointActionStatus> INSTANCE = new ChargePointActionStatusSerializer();
+	public static final ValueSerializer<@Nullable ChargePointActionStatus> INSTANCE = new ChargePointActionStatusSerializer();
 
 	public ChargePointActionStatusSerializer() {
 		super(ChargePointActionStatus.class);
 	}
 
 	@Override
-	public void serialize(ChargePointActionStatus status, JsonGenerator generator,
-			SerializerProvider provider) throws IOException, JsonGenerationException {
+	public void serialize(@Nullable ChargePointActionStatus status, JsonGenerator generator,
+			SerializationContext provider) throws JacksonException {
 		if ( status == null ) {
 			generator.writeNull();
 			return;
@@ -65,15 +62,15 @@ public class ChargePointActionStatusSerializer extends StdSerializer<ChargePoint
 
 		generator.writeStartObject(status, size);
 		if ( status.getCreated() != null ) {
-			generator.writeObjectField("created", status.getCreated());
+			generator.writePOJOProperty("created", status.getCreated());
 		}
-		generator.writeNumberField("userId", status.getUserId());
-		generator.writeNumberField("chargePointId", status.getChargePointId());
-		generator.writeNumberField("connectorId", status.getConnectorId());
-		generator.writeStringField("action", status.getAction());
-		generator.writeStringField("messageId", status.getMessageId());
+		generator.writeNumberProperty("userId", status.getUserId());
+		generator.writeNumberProperty("chargePointId", status.getChargePointId());
+		generator.writeNumberProperty("connectorId", status.getConnectorId());
+		generator.writeStringProperty("action", status.getAction());
+		generator.writeStringProperty("messageId", status.getMessageId());
 		if ( status.getTimestamp() != null ) {
-			generator.writeObjectField("ts", status.getTimestamp());
+			generator.writePOJOProperty("ts", status.getTimestamp());
 		}
 		generator.writeEndObject();
 	}

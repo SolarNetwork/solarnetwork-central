@@ -56,7 +56,7 @@ public final class SelectInputDataEntity implements PreparedStatementCreator, Sq
 	 * @param key
 	 *        the key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectInputDataEntity(UserLongStringCompositePK key) {
 		super();

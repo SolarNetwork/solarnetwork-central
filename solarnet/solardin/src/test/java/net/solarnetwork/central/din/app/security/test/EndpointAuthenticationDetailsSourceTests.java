@@ -24,6 +24,7 @@ package net.solarnetwork.central.din.app.security.test;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 import java.util.UUID;
@@ -33,8 +34,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 
@@ -69,7 +70,8 @@ public class EndpointAuthenticationDetailsSourceTests {
 		final MockHttpServletRequest req = new MockHttpServletRequest("GET", url);
 		req.setServletPath(path);
 
-		final EndpointConfiguration endpoint = new EndpointConfiguration(userId, endpointId, now());
+		final EndpointConfiguration endpoint = new EndpointConfiguration(userId, endpointId, now(),
+				randomString());
 		given(endpointDao.getForEndpointId(endpointId)).willReturn(endpoint);
 
 		// WHEN

@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.v16.vendor.zjbeny;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A DLB Meter Key.
@@ -31,11 +32,11 @@ import java.util.regex.Pattern;
  * @param name
  *        the key name
  * @param phase
- *        the optional phase ({@literal null} if not phased)
+ *        the optional phase ({@code null} if not phased)
  * @author matt
  * @version 1.0
  */
-public record DlbMeterKey(DlbMeterKeyName name, String phase) {
+public record DlbMeterKey(DlbMeterKeyName name, @Nullable String phase) {
 
 	/** A pattern to match an un-phased key. */
 	public static final Pattern KEY_PATTERN = Pattern.compile("(?:Current|Power)\\.(\\w+)");
@@ -58,9 +59,9 @@ public record DlbMeterKey(DlbMeterKeyName name, String phase) {
 	 * 
 	 * @param key
 	 *        the key value to parse
-	 * @return the key instance, or {@literal null} if one cannot be extracted
+	 * @return the key instance, or {@code null} if one cannot be extracted
 	 */
-	public static DlbMeterKey forKey(String key) {
+	public static @Nullable DlbMeterKey forKey(@Nullable String key) {
 		Matcher m = KEY_PATTERN.matcher(key);
 		if ( m.matches() ) {
 			try {

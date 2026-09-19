@@ -40,8 +40,8 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Controller for node metadata actions.
@@ -83,8 +83,8 @@ public class NodeMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> findMetadata(
-			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
+	public Result<SolarNodeMetadataFilterMatch> findMetadata(@PathVariable("nodeId") Long requestNodeId,
+			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);

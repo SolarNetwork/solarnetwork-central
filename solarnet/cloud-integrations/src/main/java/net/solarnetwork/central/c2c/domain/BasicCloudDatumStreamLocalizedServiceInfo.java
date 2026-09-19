@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicConfigurableLocalizedServiceInfo;
@@ -40,9 +41,9 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	private final boolean requiresPolling;
 	private final boolean dataValuesRequireDatumStream;
 	private final boolean arbitraryDateRangesSupported;
-	private final Iterable<String> supportedPlaceholders;
-	private final Iterable<Integer> supportedDataValueWildcardIdentifierLevels;
-	private final IntRange dataValueIdentifierLevelsSourceIdRange;
+	private final @Nullable Iterable<String> supportedPlaceholders;
+	private final @Nullable Iterable<Integer> supportedDataValueWildcardIdentifierLevels;
+	private final @Nullable IntRange dataValueIdentifierLevelsSourceIdRange;
 
 	/**
 	 * Copy constructor from another {@link LocalizedServiceInfo} instance.
@@ -67,9 +68,9 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	public BasicCloudDatumStreamLocalizedServiceInfo(LocalizedServiceInfo info,
 			List<SettingSpecifier> settings, boolean requiresPolling,
 			boolean dataValuesRequireDatumStream, boolean arbitraryDateRangesSupported,
-			Iterable<String> supportedPlaceholders,
-			Iterable<Integer> supportedDataValueWildcardIdentifierLevels,
-			IntRange dataValueIdentifierLevelsSourceIdRange) {
+			@Nullable Iterable<String> supportedPlaceholders,
+			@Nullable Iterable<Integer> supportedDataValueWildcardIdentifierLevels,
+			@Nullable IntRange dataValueIdentifierLevelsSourceIdRange) {
 		super(info, settings);
 		this.requiresPolling = requiresPolling;
 		this.dataValuesRequireDatumStream = dataValuesRequireDatumStream;
@@ -80,7 +81,7 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	}
 
 	@Override
-	public boolean isRequiresPolling() {
+	public final boolean isRequiresPolling() {
 		return requiresPolling;
 	}
 
@@ -90,22 +91,22 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	}
 
 	@Override
-	public boolean isArbitraryDateRangesSupported() {
+	public final boolean isArbitraryDateRangesSupported() {
 		return arbitraryDateRangesSupported;
 	}
 
 	@Override
-	public final Iterable<String> getSupportedPlaceholders() {
+	public final @Nullable Iterable<String> getSupportedPlaceholders() {
 		return supportedPlaceholders;
 	}
 
 	@Override
-	public final Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels() {
+	public final @Nullable Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels() {
 		return supportedDataValueWildcardIdentifierLevels;
 	}
 
 	@Override
-	public final IntRange getDataValueIdentifierLevelsSourceIdRange() {
+	public final @Nullable IntRange getDataValueIdentifierLevelsSourceIdRange() {
 		return dataValueIdentifierLevelsSourceIdRange;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
@@ -39,7 +40,9 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.domain.datum.DatumStreamId.datumStreamId;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
@@ -49,7 +52,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -60,13 +62,14 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -79,27 +82,29 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.2
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -145,7 +150,16 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				  UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER
+				, SOURCE_ID_MAP_SETTING_SPECIFIER
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				, VALIDATION_IGNORE_SETTING_SPECIFIER
+				, TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The supported placeholder keys. */
@@ -186,7 +200,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	/**
 	 * A cache of system IDs to associated metadata.
 	 */
-	private Cache<String, CloudDataValue> systemCache;
+	private @Nullable Cache<String, CloudDataValue> systemCache;
 	private int queryLimit = DEFAULT_QUERY_LIMIT;
 
 	/**
@@ -211,7 +225,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FroniusCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -223,10 +237,10 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		super(SERVICE_IDENTIFIER, "Fronius Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
-				new FroniusRestOperationsHelper(
+				new FroniusRestOperationsHelper(clock,
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> FroniusCloudIntegrationService.SECURE_SETTINGS));
+						_ -> FroniusCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override
@@ -237,6 +251,18 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	@Override
 	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
 		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { DatumValidationType.TimeGap.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
 	}
 
 	@Override
@@ -253,11 +279,11 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result = List.of();
 		if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null
 				&& filters.get(DEVICE_ID_FILTER) != null ) {
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
@@ -270,27 +296,28 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			// list available systems
 			result = systems(integration);
 		}
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
+		var sprops = integration.getServiceProperties();
 		return restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL)
-						.buildAndExpand(integration.getServiceProperties()).toUri(),
-				res -> parseSystems(res.getBody()));
+						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
+				(_, res) -> parseSystems(res.getBody()));
 	}
 
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
 			final String systemId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(res.getBody(), systemId));
+				(_, res) -> parseSystemDevices(res.getBody(), systemId));
 	}
 
 	private List<CloudDataValue> deviceChannels(final CloudIntegrationConfiguration integration,
@@ -300,17 +327,17 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		Instant startDate = endDate.minus(1, ChronoUnit.DAYS);
 		return restOpsHelper.httpGet("List devices channels", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(DEVICE_HISTORY_URL_TEMPLATE)
 						.queryParam(START_AT_PARAM, startDate.toString())
 						.queryParam(END_AT_PARAM, endDate.toString())
 						.queryParam(LIMIT_PARAM, 1)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseDeviceChannels(res.getBody(), systemId, deviceId));
+				(_, res) -> parseDeviceChannels(res.getBody(), systemId, deviceId));
 	}
 
-	private static List<CloudDataValue> parseSystems(JsonNode json) {
+	private static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
 		/*- EXAMPLE JSON:
 			{
 			  "pvSystems": [
@@ -363,17 +390,18 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("pvSystems") ) {
-			final String id = sysNode.path("pvSystemId").asText();
+			final String id = sysNode.path("pvSystemId").asString();
 			result.add(parseSystem(sysNode, id));
 		}
 		return result;
 	}
 
-	private static CloudDataValue parseSystem(final JsonNode sysNode, final String systemId) {
+	private static @Nullable CloudDataValue parseSystem(final @Nullable JsonNode sysNode,
+			final String systemId) {
 		if ( sysNode == null ) {
 			return null;
 		}
-		final String name = sysNode.path("name").asText().trim();
+		final String name = sysNode.path("name").asString().trim();
 		final var meta = new LinkedHashMap<String, Object>(4);
 		final JsonNode addrNode = sysNode.path("address");
 		if ( addrNode.isObject() ) {
@@ -390,7 +418,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return intermediateDataValue(List.of(systemId), name, meta.isEmpty() ? null : meta);
 	}
 
-	private static List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
+	private static List<CloudDataValue> parseSystemDevices(final @Nullable JsonNode json,
+			final String systemId) {
 		/*- EXAMPLE JSON:
 		{
 		  "devices": [
@@ -427,8 +456,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode devNode : json.path("devices") ) {
-			final String id = devNode.path("deviceId").asText();
-			final String name = devNode.path("deviceName").asText().trim();
+			final String id = devNode.path("deviceId").asString();
+			final String name = devNode.path("deviceName").asString().trim();
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "deviceManufacturer", MANUFACTURER_METADATA, meta);
@@ -467,8 +496,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private static List<CloudDataValue> parseDeviceChannels(final JsonNode json, final String systemId,
-			final String deviceId) {
+	private static List<CloudDataValue> parseDeviceChannels(final @Nullable JsonNode json,
+			final String systemId, final String deviceId) {
 		/*- EXAMPLE JSON:
 		{
 		  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
@@ -492,7 +521,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 		for ( JsonNode dataNode : json.path("data") ) {
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				final String id = channelNode.path("channelName").asText();
+				final String id = channelNode.path("channelName").asString();
 
 				final var meta = new LinkedHashMap<String, Object>(4);
 				populateNonEmptyValue(channelNode, "channelType", "channelType", meta);
@@ -519,8 +548,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(String systemId, String deviceId, String channelName,
-			CloudDatumStreamPropertyConfiguration property, String sourceId) {
+	private record ValueRef(String systemId, String deviceId, String channelName,
+			CloudDatumStreamPropertyConfiguration property, String deviceRef) {
 
 		private ValueRef(String systemId, String deviceId, String channelName,
 				CloudDatumStreamPropertyConfiguration property) {
@@ -551,7 +580,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 
 		private void addValueRef(ValueRef ref) {
-			deviceValueRefs.computeIfAbsent(ref.deviceId, k -> new ArrayList<>(4)).add(ref);
+			deviceValueRefs.computeIfAbsent(ref.deviceId, _ -> new ArrayList<>(4)).add(ref);
 		}
 
 	}
@@ -568,26 +597,36 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				throw new ValidationException(msg, errors, ms);
 			}
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
-			var resultDatum = new ArrayList<GeneralDatum>();
-			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
-					sourceIdMap, valueProps);
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+
+			final var streamBuffer = new OrderedDatumSamplesBuffer();
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
+					valueProps);
 
 			// for each system, find last import date and query for latest
 			for ( Entry<String, SystemQueryPlan> planEntry : queryPlans.entrySet() ) {
 				var systemId = planEntry.getKey();
 				Instant lastImportDate = lastImportDate(systemId, () -> integration);
+
+				var startDate = lastImportDate != null ? lastImportDate.truncatedTo(HOURS)
+						: clock.instant().truncatedTo(HOURS).minus(1, HOURS);
+				var endDate = startDate.plus(1, HOURS);
+
 				var filter = new BasicQueryFilter();
-				filter.setStartDate(lastImportDate != null ? lastImportDate.truncatedTo(HOURS)
-						: clock.instant().truncatedTo(HOURS).minus(1, HOURS));
-				filter.setEndDate(filter.getStartDate().plus(1, HOURS));
+				filter.setStartDate(startDate);
+				filter.setEndDate(endDate);
 				filter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 				filter.setMax(1);
 
-				fetchDatumForSystem(filter, ms, datumStream, mapping, integration, valueProps, exprProps,
-						sourceIdMap, planEntry.getValue(), resultDatum);
+				fetchDatumForSystem(filter, datumStream, integration, sourceIdMap, planEntry.getValue(),
+						ignoredValidations, streamBuffer);
 			}
+
+			final List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -620,6 +659,9 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			Instant startDate = filterStartDate.truncatedTo(HOURS);
 			Instant endDate = filterEndDate.truncatedTo(HOURS);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = endDate.plus(1, HOURS);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_FILTER_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_FILTER_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {
@@ -633,83 +675,93 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				nextQueryFilter.setEndDate(nextEndDate);
 			}
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
-			final var resultDatum = new ArrayList<GeneralDatum>();
-			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
-					sourceIdMap, valueProps);
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+
+			final var streamBuffer = new OrderedDatumSamplesBuffer();
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
+					valueProps);
 
 			// we can only query for at most MAX_QUERY_TIME_RANGE per request, so have to iterate over time
+			var queryStartDate = startDate;
+			var queryEndDate = startDate.plus(MAX_QUERY_TIME_RANGE);
 			final var queryFilter = new BasicQueryFilter();
-			queryFilter.setStartDate(startDate);
-			queryFilter.setEndDate(startDate.plus(MAX_QUERY_TIME_RANGE));
 
-			while ( queryFilter.getStartDate().isBefore(endDate) ) {
-				if ( queryFilter.getEndDate().isAfter(endDate) ) {
-					queryFilter.setEndDate(endDate);
+			while ( queryStartDate.isBefore(endDate) ) {
+				if ( queryEndDate.isAfter(endDate) ) {
+					queryEndDate = endDate;
 				}
+				queryFilter.setStartDate(queryStartDate);
+				queryFilter.setEndDate(queryEndDate);
+
 				for ( Entry<String, SystemQueryPlan> planEntry : queryPlans.entrySet() ) {
 					var systemId = planEntry.getKey();
 					queryFilter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 
-					fetchDatumForSystem(queryFilter, ms, datumStream, mapping, integration, valueProps,
-							exprProps, sourceIdMap, planEntry.getValue(), resultDatum);
+					fetchDatumForSystem(queryFilter, ds, integration, sourceIdMap, planEntry.getValue(),
+							ignoredValidations, streamBuffer);
 				}
-				queryFilter.setStartDate(queryFilter.getEndDate());
-				queryFilter.setEndDate(queryFilter.getStartDate().plus(MAX_QUERY_TIME_RANGE));
+				queryStartDate = queryEndDate;
+				queryEndDate = queryStartDate.plus(MAX_QUERY_TIME_RANGE);
 			}
 
+			final List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
+
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(ds, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
+
+			nextQueryFilter = resolveNextQueryFilterForMultiStreamLag(ds, streamBuffer, nextQueryFilter,
+					null, UTC, filterEndDate, endDate);
 
 			var usedFilter = new BasicQueryFilter();
 			usedFilter.setStartDate(startDate);
 			usedFilter.setEndDate(endDate);
 
 			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList());
+					r.stream().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 
-	private void fetchDatumForSystem(BasicQueryFilter filter, MessageSource ms,
-			CloudDatumStreamConfiguration datumStream, CloudDatumStreamMappingConfiguration mapping,
-			CloudIntegrationConfiguration integration,
-			List<CloudDatumStreamPropertyConfiguration> valueProps,
-			List<CloudDatumStreamPropertyConfiguration> exprProps, Map<String, String> sourceIdMap,
-			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum) {
-		if ( queryPlan.deviceValueRefs == null ) {
+	private void fetchDatumForSystem(BasicQueryFilter filter, CloudDatumStreamConfiguration datumStream,
+			CloudIntegrationConfiguration integration, @Nullable Map<String, String> sourceIdMap,
+			SystemQueryPlan queryPlan, Set<String> ignoredValidations,
+			OrderedDatumSamplesBuffer streamBuffer) {
+		if ( queryPlan.deviceValueRefs.isEmpty() ) {
 			return;
 		}
+
 		for ( Entry<String, List<ValueRef>> deviceEntry : queryPlan.deviceValueRefs.entrySet() ) {
 			final String deviceId = deviceEntry.getKey();
 			final int limit = filter.getMax() != null ? filter.getMax() : queryLimit;
 			final var pageFilter = BasicQueryFilter.copyOf(filter);
 			pageFilter.setOffset(0L);
 			final var links = new Links();
-			while ( links.hasMore(pageFilter.getOffset(), limit) ) {
-				List<GeneralDatum> datum = restOpsHelper.httpGet("List device data", integration,
-						JsonNode.class, req -> {
-							var b = fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(DEVICE_HISTORY_URL_TEMPLATE)
-									.queryParam(START_AT_PARAM, pageFilter.getStartDate())
-									.queryParam(END_AT_PARAM, pageFilter.getEndDate())
-									.queryParam(OFFSET_PARAM, pageFilter.getOffset())
-									.queryParam(LIMIT_PARAM, limit);
-							return b.buildAndExpand(queryPlan.systemId, deviceId).toUri();
-						}, res -> {
-							JsonNode json = res.getBody();
-							links.parseJson(json);
-							return parseDeviceDatum(json, queryPlan.systemId, deviceId,
-									deviceEntry.getValue(), datumStream, sourceIdMap, pageFilter);
-						});
-				if ( datum != null ) {
-					resultDatum.addAll(datum);
-				}
-				if ( filter.getMax() != null && datum.size() >= filter.getMax() ) {
+			long offset = 0L;
+			long count = 0;
+			while ( links.hasMore(offset) ) {
+				count += restOpsHelper.httpGet("List device data", integration, JsonNode.class, _ -> {
+					var b = fromUri(resolveBaseUrl(integration, BASE_URI))
+							.path(DEVICE_HISTORY_URL_TEMPLATE)
+							.queryParam(START_AT_PARAM, pageFilter.getStartDate())
+							.queryParam(END_AT_PARAM, pageFilter.getEndDate())
+							.queryParam(OFFSET_PARAM, pageFilter.getOffset())
+							.queryParam(LIMIT_PARAM, limit);
+					return b.buildAndExpand(queryPlan.systemId, deviceId).toUri();
+				}, (req, res) -> {
+					JsonNode json = res.getBody();
+					links.parseJson(json);
+					return parseDeviceDatum(req, json, deviceEntry.getValue(), datumStream, sourceIdMap,
+							pageFilter, ignoredValidations, streamBuffer);
+				});
+				if ( filter.getMax() != null && count >= filter.getMax().longValue() ) {
 					break;
 				}
-				pageFilter.setOffset(pageFilter.getOffset() + limit);
+				offset += limit;
+				pageFilter.setOffset(offset);
 			}
 		}
 	}
@@ -726,28 +778,29 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static class Links {
 
-		private String next;
+		private @Nullable String next;
 		private int count = -1;
 
-		private void parseJson(JsonNode json) {
+		private void parseJson(@Nullable JsonNode json) {
 			if ( json == null || !json.has("links") ) {
 				return;
 			}
 			var links = json.path("links");
-			next = links.path("next").textValue();
+			next = links.path("next").stringValue();
 			if ( links.hasNonNull("totalItemsCount") ) {
 				count = links.path("totalItemsCount").intValue();
 			}
 		}
 
-		private boolean hasMore(long offset, int limit) {
+		private boolean hasMore(long offset) {
 			return count < 0 || (offset < count && next != null);
 		}
 	}
 
-	private List<GeneralDatum> parseDeviceDatum(JsonNode json, String systemId, String deviceId,
-			List<ValueRef> refs, CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap,
-			CloudDatumStreamQueryFilter filter) {
+	private int parseDeviceDatum(RequestEntity<Void> request, @Nullable JsonNode json,
+			List<ValueRef> refs, CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, CloudDatumStreamQueryFilter filter,
+			Set<String> ignoredValidations, OrderedDatumSamplesBuffer streamBuffer) {
 		/*- EXAMPLE JSON:
 			{
 			  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
@@ -765,20 +818,25 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			        },
 		 */
 		if ( json == null ) {
-			return List.of();
+			return 0;
 		}
 
-		final List<GeneralDatum> result = new ArrayList<>(16);
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(datumStream)
+				: null);
 
-		// only need to compute the source ID once, as the same for all device data
-		String sourceId = null;
+		// only need to compute the stream ID once, as the same for all device data
+		DatumStreamIdentity streamId = null;
 
 		Set<String> channelNames = refs.stream().map(ValueRef::channelName).collect(toUnmodifiableSet());
 
+		int count = 0;
+		Instant prevTs = null;
+		String deviceRef = null;
 		for ( JsonNode dataNode : json.path("data") ) {
 			final Instant ts;
 			try {
-				ts = Instant.parse(dataNode.path("logDateTime").textValue());
+				ts = Instant.parse(dataNode.path("logDateTime").stringValue());
 			} catch ( DateTimeParseException e ) {
 				// ignore and continue
 				continue;
@@ -787,9 +845,9 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				// query can return data past desired end date (inclusive end) so bail now
 				break;
 			}
-			DatumSamples s = new DatumSamples();
+			DatumSamples s = null;
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				String channelName = channelNode.path("channelName").textValue();
+				String channelName = channelNode.path("channelName").stringValue();
 				if ( !channelNames.contains(channelName) ) {
 					continue;
 				}
@@ -798,11 +856,17 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					if ( !channelName.equals(ref.channelName) ) {
 						continue;
 					}
-					if ( sourceId == null ) {
-						sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+					if ( streamId == null ) {
+						String sourceId = nonEmptyString(resolveSourceId(datumStream, ref, sourceIdMap));
 						if ( sourceId == null ) {
-							return List.of();
+							return 0;
 						}
+						deviceRef = ref.deviceRef;
+						streamId = datumStreamId(datumStream.getKind(), datumStream.getObjectId(),
+								sourceId).toIdentity();
+					}
+					if ( s == null ) {
+						s = streamBuffer.getOrCreate(streamId, ts);
 					}
 
 					Object propVal = parseJsonDatumPropertyValue(channelNode.path("value"),
@@ -814,35 +878,58 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					}
 				}
 			}
-			if ( s.isEmpty() ) {
+
+			if ( s == null || streamId == null ) {
+				continue;
+			} else if ( s.isEmpty() ) {
+				streamBuffer.removeTimestamp(streamId, ts, s);
 				continue;
 			}
 
-			result.add(new GeneralDatum(new DatumId(ds.getKind(), ds.getObjectId(), sourceId, ts), s));
+			count++;
+
+			if ( timeGapDuration != null && deviceRef != null ) {
+				if ( prevTs == null ) {
+					prevTs = streamBuffer.previousTimestamp(streamId, ts);
+					if ( prevTs == null ) {
+						// query for prev datum
+						var prevDatum = lookupPreviousDatum(datumStream, streamId.getSourceId(), ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
+						}
+					}
+				}
+				if ( prevTs != null ) {
+					streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request, deviceRef,
+							null, timeGapDuration, prevTs, streamId.datumIdentity(ts)));
+				}
+			}
+
+			prevTs = ts;
 		}
 
-		return result;
+		return count;
 	}
 
-	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, ValueRef ref,
-			Map<String, String> sourceIdMap) {
+	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
+			ValueRef ref, @Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
-			return sourceIdMap.get(ref.sourceId);
+			return sourceIdMap.get(ref.deviceRef);
 		}
 
-		String result = datumStream.getSourceId() + ref.sourceId;
+		String result = datumStream.getSourceId() + ref.deviceRef;
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			result = result.toUpperCase();
+			result = result.toUpperCase(Locale.ENGLISH);
 		}
 
 		return result;
 	}
 
 	private Map<String, SystemQueryPlan> resolveSystemQueryPlans(
-			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap, List<CloudDatumStreamPropertyConfiguration> propConfigs) {
+			CloudDatumStreamConfiguration datumStream, @Nullable Map<String, String> sourceIdMap,
+			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var result = new LinkedHashMap<String, SystemQueryPlan>(2);
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
@@ -860,7 +947,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				String deviceId = m.group(2);
 				String channelName = m.group(3);
 
-				SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+				SystemQueryPlan plan = result.computeIfAbsent(systemId, _ -> {
 					return new SystemQueryPlan(systemId);
 				});
 
@@ -874,7 +961,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private CloudDataValue systemInfo(String systemId,
+	private @Nullable CloudDataValue systemInfo(String systemId,
 			Supplier<CloudIntegrationConfiguration> integrationProvider) {
 		final var cache = getSystemCache();
 		CloudDataValue result = null;
@@ -885,11 +972,11 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var integration = integrationProvider.get();
 			result = restOpsHelper.httpGet("View system information", integration, JsonNode.class,
 			// @formatter:off
-							(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(SYSTEM_URL_TEMPLATE)
-									.buildAndExpand(systemId).toUri(),
-									// @formatter:on
-					res -> parseSystem(res.getBody(), systemId));
+					_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							.path(SYSTEM_URL_TEMPLATE)
+							.buildAndExpand(systemId).toUri(),
+							// @formatter:on
+					(_, res) -> parseSystem(res.getBody(), systemId));
 			if ( result != null && cache != null ) {
 				cache.put(systemId, result);
 			}
@@ -897,7 +984,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private Instant lastImportDate(String systemId,
+	private @Nullable Instant lastImportDate(String systemId,
 			Supplier<CloudIntegrationConfiguration> integrationProvider) {
 		CloudDataValue sys = systemInfo(systemId, integrationProvider);
 		if ( sys != null && sys.getMetadata() != null
@@ -912,7 +999,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 *
 	 * @return the cache
 	 */
-	public Cache<String, CloudDataValue> getSystemCache() {
+	public final @Nullable Cache<String, CloudDataValue> getSystemCache() {
 		return systemCache;
 	}
 
@@ -922,7 +1009,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * @param systemCache
 	 *        the cache to set
 	 */
-	public void setSystemCache(Cache<String, CloudDataValue> systemCache) {
+	public final void setSystemCache(@Nullable Cache<String, CloudDataValue> systemCache) {
 		this.systemCache = systemCache;
 	}
 
@@ -931,7 +1018,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 *
 	 * @return the limit; defaults to {@link #DEFAULT_QUERY_LIMIT}
 	 */
-	public int getQueryLimit() {
+	public final int getQueryLimit() {
 		return queryLimit;
 	}
 
@@ -941,7 +1028,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * @param queryLimit
 	 *        the limit to set
 	 */
-	public void setQueryLimit(int queryLimit) {
+	public final void setQueryLimit(int queryLimit) {
 		this.queryLimit = queryLimit;
 	}
 

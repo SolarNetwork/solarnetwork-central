@@ -21,8 +21,8 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  * Constants for hook names.
  * 
  * <p>
- * Defining the names here allows {@link HookType} to use them in both enum definitions and JSON
- * annotations.
+ * Defining the names here allows {@link HookType} to use them in both enum
+ * definitions and JSON annotations.
  * </p>
  * 
  * @author matt
@@ -30,20 +30,20 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  */
 public interface HookNames {
 
-  /** Hook name for authorization on register. */
-  String AUTH_ON_REGISTER = "auth_on_register";
+	/** Hook name for authorization on register. */
+	String AUTH_ON_REGISTER = "auth_on_register";
 
-  /** Hook name for authorization on publish. */
-  String AUTH_ON_PUBLISH = "auth_on_publish";
+	/** Hook name for authorization on publish. */
+	String AUTH_ON_PUBLISH = "auth_on_publish";
 
-  /** Hook name for authorization on subscribe. */
-  String AUTH_ON_SUBSCRIBE = "auth_on_subscribe";
+	/** Hook name for authorization on subscribe. */
+	String AUTH_ON_SUBSCRIBE = "auth_on_subscribe";
 
-  /**
-   * Hook name for on deliver.
-   * 
-   * @since 1.1
-   */
-  String ON_DELIVER = "on_deliver";
+	/**
+	 * Hook name for on deliver.
+	 * 
+	 * @since 1.1
+	 */
+	String ON_DELIVER = "on_deliver";
 
 }

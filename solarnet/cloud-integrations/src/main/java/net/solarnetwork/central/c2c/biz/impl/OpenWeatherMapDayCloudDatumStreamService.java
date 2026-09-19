@@ -23,22 +23,22 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
-import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
+import static net.solarnetwork.codec.jackson.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.domain.datum.DayDatum.SUNRISE_KEY;
 import static net.solarnetwork.domain.datum.DayDatum.SUNSET_KEY;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -47,20 +47,20 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * OpenWeatherMap implementation of {@link CloudDatumStreamService} using the
  * weather API.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMapCloudDatumStreamService {
 
@@ -74,16 +74,17 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 		SETTINGS = List.of(
 				new BasicTextFieldSettingSpecifier(LATITUDE_SETTING, null),
 				new BasicTextFieldSettingSpecifier(LONGITUDE_SETTING, null),
-				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null)
+				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null),
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -107,7 +108,7 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OpenWeatherMapDayCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -125,34 +126,38 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
-		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+		return performAction(datumStream, (ms, ds, mapping, integration, _, exprProps) -> {
 
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
 					WEATHER_URL_PATH);
 
 			final GeneralDatum datum = restOpsHelper.httpGet("Get day conditions", integration,
-					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds));
+					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
+					(_, res) -> parseDatum(res.getBody(), ds));
 
-			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)
-					: Collections.emptyList());
+			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum) : List.of());
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList();
+			return r.stream().sorted().map(Datum.class::cast).toList();
 		});
 	}
 
-	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+	private @Nullable GeneralDatum parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream) {
 		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
 		if ( tzOffsetSecs == null ) {
 			return null;
 		}
 
-		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
-				datumStream.getSourceId());
+		final GeneralDatum d = parseWeatherData(json, datumStream.getKind(),
+				nonnull(datumStream.getObjectId(), "Object ID"),
+				nonnull(datumStream.getSourceId(), "Source ID"));
+		if ( d == null || d.getTimestamp() == null ) {
+			return null;
+		}
 
 		// create a day-specific datum
 		var samples = new DatumSamples();
@@ -163,10 +168,10 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 			return null;
 		}
 
-		return new GeneralDatum(
-				new DatumId(datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
-						d.getTimestamp().atZone(ZoneOffset.ofTotalSeconds(tzOffsetSecs))
-								.truncatedTo(ChronoUnit.DAYS).toInstant()),
+		return new GeneralDatum(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(),
+				datumStream.getSourceId(),
+				d.getTimestamp().atZone(ZoneOffset.ofTotalSeconds(tzOffsetSecs))
+						.truncatedTo(ChronoUnit.DAYS).toInstant()),
 				samples);
 	}
 

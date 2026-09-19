@@ -67,7 +67,7 @@ public final class UpdateCloudDatumStreamConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamConfiguration(UserLongCompositePK id,
 			CloudDatumStreamConfiguration entity) {

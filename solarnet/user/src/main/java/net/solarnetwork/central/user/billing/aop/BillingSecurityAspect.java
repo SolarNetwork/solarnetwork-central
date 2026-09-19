@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
@@ -78,7 +79,7 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before(value = "findFilteredInvoices(filter)", argNames = "filter")
-	public void checkFindFilteredInvoices(InvoiceFilter filter) {
+	public void checkFindFilteredInvoices(@Nullable InvoiceFilter filter) {
 		Long userId = (filter != null ? filter.getUserId() : null);
 		requireUserReadAccess(userId);
 	}

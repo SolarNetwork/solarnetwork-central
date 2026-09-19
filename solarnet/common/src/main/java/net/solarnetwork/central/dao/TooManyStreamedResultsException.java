@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import java.io.IOException;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Exception thrown when too many streams results have been processed.
@@ -57,7 +58,7 @@ public class TooManyStreamedResultsException extends IOException {
 	 * @param cause
 	 *        the cause
 	 */
-	public TooManyStreamedResultsException(Throwable cause) {
+	public TooManyStreamedResultsException(@Nullable Throwable cause) {
 		super(cause);
 	}
 
@@ -69,7 +70,7 @@ public class TooManyStreamedResultsException extends IOException {
 	 * @param cause
 	 *        the cause
 	 */
-	public TooManyStreamedResultsException(String message, Throwable cause) {
+	public TooManyStreamedResultsException(String message, @Nullable Throwable cause) {
 		super(message, cause);
 	}
 

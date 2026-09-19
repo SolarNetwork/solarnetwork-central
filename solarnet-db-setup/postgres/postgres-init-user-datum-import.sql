@@ -39,45 +39,44 @@ CREATE TABLE solarnet.sn_datum_import_job (
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solarnet.claim_datum_import_job()
-  RETURNS solarnet.sn_datum_import_job LANGUAGE plpgsql VOLATILE AS
+	RETURNS solarnet.sn_datum_import_job LANGUAGE SQL VOLATILE AS
 $$
-DECLARE
-	rec solarnet.sn_datum_import_job;
-	num INTEGER := 0;
-
-	-- our query here looks for a group with a queued state but without any claimed/executing state
-	-- then locks all rows within the group while changing the oldest queued state to claimed
-	curs CURSOR FOR
-			WITH jg AS (
-				SELECT DISTINCT user_id || '.' || group_key AS gkey
-				FROM solarnet.sn_datum_import_job
-				WHERE state IN ('p', 'e')
-			)
-			, jgg AS (
-				SELECT j.*, j.user_id || '.' || j.group_key AS gkey
-				FROM solarnet.sn_datum_import_job j
-				LEFT OUTER JOIN jg ON jg.gkey = j.user_id || '.' || j.group_key
-				WHERE j.state = 'q'
-					AND jg.gkey IS NULL
-				ORDER BY j.created, j.id
-				LIMIT 1
-			)
-			SELECT j.*
-			FROM solarnet.sn_datum_import_job j
-			INNER JOIN jgg ON jgg.gkey = j.user_id || '.' || j.group_key
-			WHERE j.state = 'q'
-			ORDER BY j.created, j.id
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	FOR r IN curs LOOP
-		IF num = 0 THEN
-			UPDATE solarnet.sn_datum_import_job SET state = 'p' WHERE CURRENT OF curs;
-			rec := r;
-		END IF;
-		num := num + 1;
-	END LOOP;
-	RETURN rec;
-END;
+	-- identify a group with a q task but without any p,e tasks within it
+	WITH g AS (
+		SELECT t.user_id, t.group_key
+		FROM solarnet.sn_datum_import_job t
+		WHERE t.state = 'q'
+		AND NOT EXISTS (
+			SELECT id
+			FROM solarnet.sn_datum_import_job g
+			WHERE g.user_id = t.user_id
+			AND g.group_key = t.group_key
+			AND g.state IN ('p', 'e')
+		)
+		ORDER BY t.created, t.id
+		LIMIT 1
+		FOR NO KEY UPDATE SKIP LOCKED
+	)
+	-- select and lock all q rows within identified group
+	, gt AS (
+		SELECT t.id, t.created
+		FROM solarnet.sn_datum_import_job t
+		INNER JOIN g ON g.user_id = t.user_id AND g.group_key = t.group_key
+		WHERE t.state = 'q'
+		FOR NO KEY UPDATE
+	)
+	-- update the oldest available task to p
+	, t AS (
+		SELECT id
+		FROM gt
+		ORDER BY created, id
+		LIMIT 1
+	)
+	UPDATE solarnet.sn_datum_import_job
+	SET state = 'p'
+	FROM t
+	WHERE sn_datum_import_job.id = t.id
+	RETURNING sn_datum_import_job.*
 $$;
 
 

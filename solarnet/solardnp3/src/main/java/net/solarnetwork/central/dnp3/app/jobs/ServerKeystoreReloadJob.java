@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.net.proxy.config.TlsServerSettings;
 import net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -44,7 +45,7 @@ public class ServerKeystoreReloadJob extends JobSupport {
 	private final TlsServerSettings settings;
 	private final NettyDynamicProxyServer server;
 
-	private Instant lastModified;
+	private @Nullable Instant lastModified;
 
 	/**
 	 * Constructor.
@@ -54,14 +55,12 @@ public class ServerKeystoreReloadJob extends JobSupport {
 	 * @param server
 	 *        the server
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerKeystoreReloadJob(TlsServerSettings settings, NettyDynamicProxyServer server) {
-		super();
+		super("DNP3", "ServerKeystoreReload");
 		this.settings = requireNonNullArgument(settings, "settings");
 		this.server = requireNonNullArgument(server, "server");
-		setGroupId("DNP3");
-		setId("ServerKeystoreReload");
 	}
 
 	@Override

@@ -47,7 +47,7 @@ public enum OscpRole implements CodedValue {
 	private final char code;
 	private final String alias;
 
-	private OscpRole(char code, String alias) {
+	OscpRole(char code, String alias) {
 		this.code = code;
 		this.alias = alias;
 	}

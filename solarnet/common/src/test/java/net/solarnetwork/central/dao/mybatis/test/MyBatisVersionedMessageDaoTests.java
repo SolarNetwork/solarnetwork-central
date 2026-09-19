@@ -37,8 +37,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
 
@@ -50,12 +50,10 @@ import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
  */
 public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSupport {
 
-	;
-
 	private final ZoneId UTC = ZoneId.of("UTC");
 	private MyBatisVersionedMessageDao dao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new MyBatisVersionedMessageDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());

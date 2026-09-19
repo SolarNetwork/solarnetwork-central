@@ -22,15 +22,14 @@
 
 package net.solarnetwork.central.query.aop;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -48,15 +47,13 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ArrayUtils;
@@ -65,7 +62,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.4
  */
 @Aspect
 @Component
@@ -75,7 +72,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public static final String FILTER_KEY_NODE_ID = "nodeId";
 	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
-	private final DatumStreamMetadataDao streamMetadataDao;
 	private Set<String> nodeIdNotRequiredSet;
 
 	/**
@@ -83,13 +79,9 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
-	 * @param streamMetadataDao
-	 *        the stream metadata DAO
 	 */
-	public QuerySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
-			DatumStreamMetadataDao streamMetadataDao) {
+	public QuerySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super(nodeOwnershipDao);
-		this.streamMetadataDao = requireNonNullArgument(streamMetadataDao, "streamMetadataDao");
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
@@ -100,6 +92,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			value = "execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..) && @target(net.solarnetwork.central.domain.Securable)",
 			argNames = "nodeId,sourceId")
 	public void nodeReportableInterval(Long nodeId, String sourceId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findReportableInterval(..)) && args(filter) && @target(net.solarnetwork.central.domain.Securable)")
+	public void nodesReportableInterval(GeneralNodeDatumFilter filter) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
@@ -122,14 +118,14 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeDatumFilter(Filter filter) {
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "nodeDatumFilter(filter)", argNames = "pjp,filter")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
 		final boolean isQueryBiz = (pjp.getTarget() instanceof QueryBiz);
 		final SecurityPolicy policy = getActiveSecurityPolicy();
 
 		if ( policy != null && policy.getSourceIds() != null && !policy.getSourceIds().isEmpty()
-				&& filter instanceof GeneralNodeDatumFilter
-				&& ((GeneralNodeDatumFilter) filter).getSourceId() == null ) {
+				&& filter instanceof GeneralNodeDatumFilter g && g.getSourceId() == null ) {
 			// no source IDs provided, but policy restricts source IDs.
 			// restrict the filter to the available source IDs if using a DatumFilterCommand,
 			// and let call to userNodeAccessCheck later on filter out restricted values
@@ -152,16 +148,15 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		// to findFilteredAggregateGeneralNodeDatum. This _could_ break the calling code if
 		// it is expecting a specific result type, but in many cases it is simply returning
 		// the result as JSON to some HTTP client and the difference does not matter.
-		if ( isQueryBiz && f instanceof AggregateGeneralNodeDatumFilter
-				&& ((AggregateGeneralNodeDatumFilter) f).getAggregation() != null
+		if ( isQueryBiz && f instanceof AggregateGeneralNodeDatumFilter g && g.getAggregation() != null
 				&& pjp.getSignature().getName().equals("findFilteredGeneralNodeDatum") ) {
 			// redirect this to findFilteredAggregateGeneralNodeDatum
 			QueryBiz target = (QueryBiz) pjp.getTarget();
 			Object[] args = pjp.getArgs();
 			@SuppressWarnings("unchecked")
 			List<SortDescriptor> sorts = (List<SortDescriptor>) args[1];
-			return target.findFilteredAggregateGeneralNodeDatum((AggregateGeneralNodeDatumFilter) f,
-					sorts, (Long) args[2], (Integer) args[3]);
+			return target.findFilteredAggregateGeneralNodeDatum(g, sorts, (Long) args[2],
+					(Integer) args[3]);
 		}
 		Object[] args = pjp.getArgs();
 		args[0] = f;
@@ -310,7 +305,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Map<String, Set<NodeSourcePK>> allSourceIds = new LinkedHashMap<>(result.size());
 		for ( NodeSourcePK pk : result ) {
 			Set<NodeSourcePK> pkSet = allSourceIds.computeIfAbsent(pk.getSourceId(),
-					k -> new LinkedHashSet<>(8));
+					_ -> new LinkedHashSet<>(8));
 			pkSet.add(pk);
 		}
 
@@ -388,6 +383,55 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Enforce node ID and source ID policy restrictions when requesting a
+	 * reportable interval with a filter.
+	 *
+	 * <p>
+	 * If the active policy has source ID restrictions, then if no
+	 * {@code sourceId} is provided fill in the first available value from the
+	 * policy. Otherwise, if {@code sourceId} is provided, check that value is
+	 * allowed by the policy.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the filter
+	 * @throws Throwable
+	 *         If any error occurs.
+	 */
+	@Before(value = "nodesReportableInterval(filter)", argNames = "filter")
+	public void reportableIntervalFilterAccessCheck(GeneralNodeDatumFilter filter) throws Throwable {
+		if ( filter.getNodeIds() == null || filter.getNodeIds().length != 1 ) {
+			throw new IllegalArgumentException("Exactly 1 node ID required.");
+		}
+
+		// verify node ID
+		requireNodeReadAccess(filter.getNodeId());
+
+		// now verify source ID
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
+			Authentication authentication = SecurityUtils.getCurrentAuthentication();
+			Object principal = (authentication != null ? authentication.getPrincipal() : null);
+			if ( filter.getSourceId() == null && filter instanceof DatumFilterCommand c ) {
+				// force the first allowed source ID
+				String sourceId = allowedSourceIds.iterator().next();
+				log.info("Access RESTRICTED to source {} for {}", sourceId, principal);
+				c.setSourceId(sourceId);
+			} else if ( filter.getSourceId() == null
+					|| !allowedSourceIds.contains(filter.getSourceId()) ) {
+				log.warn("Access DENIED to source {} for {}", filter.getSourceId(), principal);
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						filter.getSourceId());
+			}
+		}
+	}
+
+	/**
 	 * Allow the current user (or current node) access to node data.
 	 *
 	 * @param nodeId
@@ -415,18 +459,16 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public <T extends Filter> T userNodeAccessCheck(T filter) {
 		Long[] nodeIds = null;
 		boolean nodeIdRequired = true;
+		boolean validateNodeIds = true;
 		if ( filter instanceof NodeDatumFilter cmd ) {
 			nodeIdRequired = isNodeIdRequired(cmd);
 			if ( nodeIdRequired ) {
 				nodeIds = cmd.getNodeIds();
+				validateNodeIds = false; // will be done in policy enforcer
 			}
 		} else if ( filter instanceof StreamDatumFilter cmd ) {
 			if ( cmd.getStreamIds() != null ) {
-				Map<UUID, ObjectDatumStreamMetadataId> ids = streamMetadataDao
-						.getDatumStreamMetadataIds(cmd.getStreamIds());
-				nodeIds = ids.values().stream().filter(e -> e.getKind() == ObjectDatumKind.Node)
-						.map(net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId::getObjectId)
-						.toArray(Long[]::new);
+				nodeIdRequired = false;
 			} else if ( cmd.getKind() == ObjectDatumKind.Node && cmd.getObjectIds() != null ) {
 				nodeIds = cmd.getObjectIds();
 			}
@@ -440,15 +482,16 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 				nodeIdRequired = false;
 			}
 		}
-		if ( !nodeIdRequired ) {
-			return filter;
-		}
-		if ( nodeIds == null || nodeIds.length < 1 || ArrayUtils.isOnlyNull(nodeIds) ) {
+		if ( nodeIdRequired
+				&& (nodeIds == null || nodeIds.length < 1 || ArrayUtils.isOnlyNull(nodeIds)) ) {
 			log.warn("Access DENIED; no node ID provided");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
-		for ( Long nodeId : nodeIds ) {
-			userNodeAccessCheck(nodeId);
+
+		if ( validateNodeIds && nodeIds != null ) {
+			for ( Long nodeId : nodeIds ) {
+				userNodeAccessCheck(nodeId);
+			}
 		}
 
 		return policyEnforcerCheck(filter);
@@ -465,7 +508,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 */
 	private boolean isNodeIdRequired(DatumFilter filter) {
 		final String type = (filter == null || filter.getType() == null ? null
-				: filter.getType().toLowerCase());
+				: filter.getType().toLowerCase(Locale.ENGLISH));
 		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
@@ -473,10 +516,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Long[] result = null;
 		if ( map.containsKey(key) ) {
 			Object o = map.get(key);
-			if ( o instanceof Long[] ) {
-				result = (Long[]) o;
-			} else if ( o instanceof Long ) {
-				result = new Long[] { (Long) o };
+			if ( o instanceof Long[] a ) {
+				result = a;
+			} else if ( o instanceof Long n ) {
+				result = new Long[] { n };
 			}
 		}
 		return result;

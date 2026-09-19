@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support.test;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
@@ -31,6 +32,7 @@ import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -43,6 +45,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,13 +63,18 @@ import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.domain.Location;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -74,7 +82,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the {@link QueryingDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -84,6 +92,9 @@ public class QueryingDatumStreamsAccessorTests {
 	private DatumEntityDao datumDao;
 
 	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Mock
 	private QueryAuditor queryAuditor;
 
 	@Captor
@@ -91,6 +102,9 @@ public class QueryingDatumStreamsAccessorTests {
 
 	@Captor
 	private ArgumentCaptor<Datum> datumCaptor;
+
+	@Captor
+	private ArgumentCaptor<ObjectStreamCriteria> objectStreamCriteriaCaptor;
 
 	private Clock clock;
 	private Long userId;
@@ -141,7 +155,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -210,7 +224,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
 				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
@@ -260,7 +274,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		// we'll be asking for 2 datum, but get only one back
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
@@ -358,7 +372,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		// WHEN
 		Datum result = accessor.offset(Node, nodeId, randStreamMeta.getSourceId(),
@@ -390,7 +404,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -460,7 +474,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, queryAuditor);
+				datumDao, datumStreamMetadataDao, queryAuditor);
 
 		var datumEntity1 = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -557,7 +571,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity1 = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -646,7 +660,7 @@ public class QueryingDatumStreamsAccessorTests {
 				ObjectDatumKind.Node, nodeId, randomString(), new String[] { "a" }, null, null);
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -679,7 +693,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is from clock time +1ms for <=")
 			.returns(clock.instant().plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(clock.instant().plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(clock.instant().minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(result)
@@ -715,7 +729,7 @@ public class QueryingDatumStreamsAccessorTests {
 				ObjectDatumKind.Node, nodeId, randomString(), new String[] { "a" }, null, null);
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, queryAuditor);
+				datumDao, datumStreamMetadataDao, queryAuditor);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -748,7 +762,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is from clock time +1ms for <=")
 			.returns(clock.instant().plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(clock.instant().plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(clock.instant().minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(result)
@@ -790,7 +804,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minus(datumFreq), null,
@@ -831,7 +845,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is given timestamp + 1ms for <=")
 			.returns(queryTimestamp.plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(queryTimestamp.plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(queryTimestamp.minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(criteriaCaptor.getAllValues())
@@ -882,7 +896,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
 				datum.getLast().getTimestamp().minusSeconds(datumFreq.getSeconds() * 3), null,
@@ -934,7 +948,7 @@ public class QueryingDatumStreamsAccessorTests {
 			.as("Query end date is given timestamp + 1ms for <=")
 			.returns(queryTimestamp.plusMillis(1), from(DatumCriteria::getEndDate))
 			.as("Query start date is offset from end date by configured duration")
-			.returns(queryTimestamp.plusMillis(1).minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			.returns(queryTimestamp.minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
 			;
 
 		and.then(criteriaCaptor.getAllValues())
@@ -999,7 +1013,7 @@ public class QueryingDatumStreamsAccessorTests {
 		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
 
 		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
-				datumDao, null);
+				datumDao, datumStreamMetadataDao, null);
 		accessor.setMaxResults(3);
 
 		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
@@ -1039,6 +1053,382 @@ public class QueryingDatumStreamsAccessorTests {
 			.isNull()
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void atTimestamp_middle() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
+				datumDao, datumStreamMetadataDao, null);
+
+		final Instant ts = datum.getFirst().getTimestamp().minus(1, MINUTES);
+		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(), ts, null,
+				propertiesOf(new BigDecimal[] { new BigDecimal(Integer.MAX_VALUE) }, null, null, null));
+		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				List.of(datumEntity));
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		Datum result = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// try again, to validate the datum from query is cached in accessor
+		Datum result2 = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// THEN
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query for at most one datum")
+			.returns(1, from(DatumCriteria::getMax))
+			.as("Query start date is given timestamp")
+			.returns(ts, DatumCriteria::getStartDate)
+			.as("Query end date is given timestamp plus 1ms")
+			.returns(ts.plusMillis(1), from(DatumCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum for node ID returned")
+			.returns(nodeId, from(Datum::getObjectId))
+			.as("Datum for source ID returned")
+			.returns(randStreamMeta.getSourceId(), from(Datum::getSourceId))
+			.as("Datum for timestamp offset from DAO returned")
+			.returns(datumEntity.getTimestamp(), from(Datum::getTimestamp))
+			.as("Returned ObjectDatum for DAO result")
+			.isInstanceOf(ObjectDatum.class)
+			.asInstanceOf(type(ObjectDatum.class))
+			.as("Properties from DAO returned in ObjectDatum")
+			.returns(datumEntity.getProperties(), from(ObjectDatum::getProperties))
+			;
+		and.then(result2)
+			.as("Result from DAO returned 2nd time")
+			.isSameAs(result)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atTimestamp_start() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
+				datumDao, datumStreamMetadataDao, null);
+
+		// choose timestamp later than all datum, so insert at start of data
+		final Instant ts = datum.getFirst().getTimestamp().plus(1, MINUTES);
+
+		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(), ts, null,
+				propertiesOf(new BigDecimal[] { new BigDecimal(Integer.MAX_VALUE) }, null, null, null));
+		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				List.of(datumEntity));
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		Datum result = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// try again, to validate the datum from query is cached in accessor
+		Datum result2 = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// THEN
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query for at most one datum")
+			.returns(1, from(DatumCriteria::getMax))
+			.as("Query start date is given timestamp")
+			.returns(ts, DatumCriteria::getStartDate)
+			.as("Query end date is given timestamp plus 1ms")
+			.returns(ts.plusMillis(1), from(DatumCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum for node ID returned")
+			.returns(nodeId, from(Datum::getObjectId))
+			.as("Datum for source ID returned")
+			.returns(randStreamMeta.getSourceId(), from(Datum::getSourceId))
+			.as("Datum for timestamp offset from DAO returned")
+			.returns(datumEntity.getTimestamp(), from(Datum::getTimestamp))
+			.as("Returned ObjectDatum for DAO result")
+			.isInstanceOf(ObjectDatum.class)
+			.asInstanceOf(type(ObjectDatum.class))
+			.as("Properties from DAO returned in ObjectDatum")
+			.returns(datumEntity.getProperties(), from(ObjectDatum::getProperties))
+			;
+		and.then(result2)
+			.as("Result from DAO returned 2nd time")
+			.isSameAs(result)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atTimestamp_end() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
+				datumDao, datumStreamMetadataDao, null);
+
+		// choose timestamp earlier than all datum, so insert at end of data
+		final Instant ts = datum.getLast().getTimestamp().minus(1, MINUTES);
+
+		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(), ts, null,
+				propertiesOf(new BigDecimal[] { new BigDecimal(Integer.MAX_VALUE) }, null, null, null));
+		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				List.of(datumEntity));
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		Datum result = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// try again, to validate the datum from query is cached in accessor
+		Datum result2 = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// THEN
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query for at most one datum")
+			.returns(1, from(DatumCriteria::getMax))
+			.as("Query start date is given timestamp")
+			.returns(ts, DatumCriteria::getStartDate)
+			.as("Query end date is given timestamp plus 1ms")
+			.returns(ts.plusMillis(1), from(DatumCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum for node ID returned")
+			.returns(nodeId, from(Datum::getObjectId))
+			.as("Datum for source ID returned")
+			.returns(randStreamMeta.getSourceId(), from(Datum::getSourceId))
+			.as("Datum for timestamp offset from DAO returned")
+			.returns(datumEntity.getTimestamp(), from(Datum::getTimestamp))
+			.as("Returned ObjectDatum for DAO result")
+			.isInstanceOf(ObjectDatum.class)
+			.asInstanceOf(type(ObjectDatum.class))
+			.as("Properties from DAO returned in ObjectDatum")
+			.returns(datumEntity.getProperties(), from(ObjectDatum::getProperties))
+			;
+		and.then(result2)
+			.as("Result from DAO returned 2nd time")
+			.isSameAs(result)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atTimestamp_notFound() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
+				datumDao, datumStreamMetadataDao, null);
+
+		// choose timestamp later than all datum, so insert at start of data
+		final Instant ts = datum.getFirst().getTimestamp().plus(1, MINUTES);
+
+		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				Map.of(), List.of());
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		Datum result = accessor.at(Node, nodeId, randStreamMeta.getSourceId(), ts);
+
+		// THEN
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query for at most one datum")
+			.returns(1, from(DatumCriteria::getMax))
+			.as("Query start date is given timestamp")
+			.returns(ts, DatumCriteria::getStartDate)
+			.as("Query end date is given timestamp plus 1ms")
+			.returns(ts.plusMillis(1), from(DatumCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum not found")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void rangeMatching() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		final var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		final Instant to = clock.instant();
+		final Instant from = to.minus(datumFreq.multipliedBy(3));
+
+		// @formatter:off
+		final var foundDatum = datum.stream()
+				.filter(d -> randStreamMeta.getSourceId().equals(d.getSourceId())
+						&& !d.getTimestamp().isBefore(from)
+						&& d.getTimestamp().isBefore(to))
+				.map(d -> {
+					return (net.solarnetwork.central.datum.v2.domain.Datum)new DatumEntity(
+							d.getStreamId(), d.getTimestamp(), d.getTimestamp(), propertiesOf(
+							new BigDecimal[] { d.getSampleBigDecimal(DatumSamplesType.Instantaneous, "a") },
+							null,
+							null,
+							null));
+				})
+				.toList()
+				;
+		// @formatter:on
+		final var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				foundDatum);
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		final var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), List.of(), userId,
+				clock, datumDao, datumStreamMetadataDao, null);
+		Collection<Datum> result = accessor.rangeMatching(Node, nodeId, randStreamMeta.getSourceId(),
+				from, to);
+
+		// also check that cache is used, for same date range
+		Collection<Datum> result2 = accessor.rangeMatching(Node, nodeId, randStreamMeta.getSourceId(),
+				from, to);
+
+		// THEN
+		// @formatter:off
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query start date is given 'from' timestamp")
+			.returns(from, DatumCriteria::getStartDate)
+			.as("Query end date is given 'to' timestamp")
+			.returns(to, from(DatumCriteria::getEndDate))
+			.as("Start at offset 0")
+			.returns(null, from(DatumCriteria::getOffset))
+			.as("Query for at most accessor-configured limit")
+			.returns(accessor.getMaxResults(), from(DatumCriteria::getMax))
+			.extracting(DatumCriteria::getSorts, list(SortDescriptor.class))
+			.containsExactlyElementsOf(QueryingDatumStreamsAccessor.SORT_BY_DATE_DESCENDING)
+			;
+
+		and.then(result)
+			.as("Result not null")
+			.isNotNull()
+			;
+
+		and.then(result2)
+			.as("Equivalent cached data returned 2nd time for same date range")
+			.isEqualTo(result)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findStream() {
+		// GIVEN
+		final String query = randomString();
+		final String sourceIdPat = randomString();
+		final String[] tags = new String[] { randomString(), randomString() };
+
+		final List<ObjectDatumStreamMetadata> daoResult = List
+				.of(BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+						ObjectDatumKind.Location, randomLong(), randomString()));
+		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willReturn(daoResult);
+
+		// WHEN
+		final var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), List.of(), userId,
+				clock, datumDao, datumStreamMetadataDao, null);
+		Collection<ObjectDatumStreamMetadata> result = accessor.findStreams(ObjectDatumKind.Location,
+				query, sourceIdPat, tags);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamMetadataDao).should().findDatumStreamMetadata(objectStreamCriteriaCaptor.capture());
+		and.then(objectStreamCriteriaCaptor.getValue())
+			.as("Kind copied to criteria")
+			.returns(ObjectDatumKind.Location, from(ObjectStreamCriteria::getObjectKind))
+			.as("Source ID pattern copied to criteria")
+			.returns(new String[] {sourceIdPat}, from(ObjectStreamCriteria::getSourceIds))
+			.extracting(ObjectStreamCriteria::getLocation)
+			.as("Location criteria created")
+			.isNotNull()
+			.as("General query copied to locaiton name criteria")
+			.returns(query, from(Location::getName))
+			;
+
+		and.then(result)
+			.as("Result from DAO returned")
+			.isSameAs(daoResult)
+			;
+		// @formatter:on
+
 	}
 
 }

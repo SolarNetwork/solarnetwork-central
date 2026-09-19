@@ -58,7 +58,7 @@ public abstract class BaseInstructionInputConfigurationInput<C extends BaseUserM
 	 *
 	 * @return the enabled
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -68,7 +68,7 @@ public abstract class BaseInstructionInputConfigurationInput<C extends BaseUserM
 	 * @param enabled
 	 *        the enabled to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 

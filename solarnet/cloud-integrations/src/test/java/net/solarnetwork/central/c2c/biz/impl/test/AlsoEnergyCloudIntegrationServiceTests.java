@@ -38,9 +38,9 @@ import static org.mockito.BDDMockito.then;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,13 +51,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -67,6 +67,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
@@ -74,7 +75,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link AlsoEnergyCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -97,6 +98,9 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
+	@Captor
+	private ArgumentCaptor<RequestEntity<?>> httpRequestCaptor;
+
 	@Mock
 	private TextEncryptor encryptor;
 
@@ -106,8 +110,8 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new AlsoEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
+		service = new AlsoEnergyCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),
@@ -119,7 +123,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -177,7 +181,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		final String password = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -185,10 +189,9 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 			.clientId(randomString())
 			.clientSecret(randomString())
 			.tokenUri(tokenUri)
@@ -206,8 +209,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		final URI sitesForPartnerId = AlsoEnergyCloudIntegrationService.BASE_URI
 				.resolve(AlsoEnergyCloudIntegrationService.LIST_SITES_URL);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -216,6 +218,14 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		// THEN
 		// @formatter:off
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URI is site for partner ID")
+			.returns(sitesForPartnerId, from(RequestEntity::getUrl))
+			;
 
 		and.then(authRequestCaptor.getValue())
 			.as("OAuth request provided")

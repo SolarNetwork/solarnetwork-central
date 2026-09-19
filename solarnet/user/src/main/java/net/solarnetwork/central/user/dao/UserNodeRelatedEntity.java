@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao;
 
+import java.io.Serializable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -33,18 +34,11 @@ import net.solarnetwork.central.user.domain.UserNodePK;
  * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 2.1
  */
-public interface UserNodeRelatedEntity<K> extends UserRelatedEntity<K>, NodeIdRelated {
-
-	/**
-	 * Get node ID this entity relates to.
-	 * 
-	 * @return the node ID
-	 */
-	@Override
-	Long getNodeId();
+public interface UserNodeRelatedEntity<K extends Comparable<K> & Serializable>
+		extends UserRelatedEntity<K>, NodeIdRelated {
 
 	/**
 	 * Get the user and node key that this entity relates to.

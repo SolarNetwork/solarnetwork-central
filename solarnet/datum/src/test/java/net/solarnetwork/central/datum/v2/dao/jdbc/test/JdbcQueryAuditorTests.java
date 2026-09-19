@@ -114,15 +114,11 @@ public class JdbcQueryAuditorTests {
 
 	private void stopAuditingAndWaitForFlush() {
 		auditor.disableWriting();
-		sleep(Math.round(FLUSH_DELAY * 2));
+		sleep(FLUSH_DELAY * 2);
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
-		pk.setCreated(date);
-		pk.setNodeId(nodeId);
-		pk.setSourceId(sourceId);
-		return pk;
+		return new GeneralNodeDatumPK(nodeId, date, sourceId);
 	}
 
 	@Test

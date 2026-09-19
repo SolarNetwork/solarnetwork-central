@@ -199,6 +199,10 @@ table.table *.borderless tr th {
 	border: none;
 }
 
+tr.borderless-row > td,
+tr.borderless-row > th {
+	border: none !important;
+}
 
 table.table-body-borderless tbody td,
 table.table-body-borderless tbody th {

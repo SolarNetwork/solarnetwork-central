@@ -21,13 +21,18 @@ The following Spring runtime profiles are available:
 
 | Profile | Description |
 |:--------|:------------|
+| `c2c` | Enable Cloud Integrations support for controls. |
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
+| `devmode` | Enable some developer-only services. |
 | `mqtt` | Enables publishing aggregates to SolarFlux. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
+| `node-service-auditor` | Enables auditing node service events like instruction counts. See [InstructorBizConfig][InstructorBizConfig], [JdbcNodeServiceAuditorConfig][JdbcNodeServiceAuditorConfig].|
 | `rate-limit` | Enables rate-limiting maintenance jobs. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 | `ocpp-jobs` | Enable OCPP specific jobs. See [OcppJobsConfig][OcppJobsConfig]. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. |
+| `user-service-auditor` | Enable user service auditing. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as
@@ -46,7 +51,7 @@ working directory of the application, or via profile-specific files like
 
 # Building
 
-The build is managed by Gradle, and requires a Java Development Kit version 21+ to build (and run).
+The build is managed by Gradle, and requires a Java Development Kit version 25+ to build (and run).
 
 ```sh
 # Unix-like OS:
@@ -71,6 +76,8 @@ The build produces an executable JAR at `build/libs/solarjobs-x.y.z.jar`.
 [solarnet-user-billing]: ../user-billing/
 [solarnet-user-datum]: ../user-datum/
 [solarnet-user-ocpp]: ../user-ocpp/
+[InstructorBizConfig]: ../instructor/src/main/java/net/solarnetwork/central/instructor/config/InstructorBizConfig.java
+[JdbcNodeServiceAuditorConfig]: ../common/src/main/java/net/solarnetwork/central/common/config/JdbcNodeServiceAuditorConfig.java
 [OcppJobsConfig]: src/main/java/net/solarnetwork/central/jobs/config/OcppJobsConfig.java
 [RateLimitConfig]: src/main/java/net/solarnetwork/central/jobs/config/RateLimitConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java

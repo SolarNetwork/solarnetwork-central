@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.AggregationFilter;
  * @author matt
  * @version 1.0
  */
-public interface AggregateGeneralLocationDatumFilter extends GeneralLocationDatumFilter,
-		AggregationFilter {
+public interface AggregateGeneralLocationDatumFilter
+		extends GeneralLocationDatumFilter, AggregationFilter {
 
 }

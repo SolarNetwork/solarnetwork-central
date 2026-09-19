@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for datum-related collection helper functions.
@@ -40,10 +41,12 @@ public interface DatumCollectionFunctions {
 	 *        the first map
 	 * @param maps
 	 *        the additional maps
-	 * @return a new map that is a union of all given maps
+	 * @return a new map that is a union of all given maps, or {@code null} if
+	 *         {@code map} is {@code null}
 	 */
 	@SuppressWarnings("unchecked")
-	default Map<Object, Object> union(Map<?, ?> map, Map<String, ?>... maps) {
+	default @Nullable Map<Object, Object> union(@Nullable Map<?, ?> map,
+			Map<String, ?> @Nullable... maps) {
 		if ( map == null ) {
 			return null;
 		}

@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.din.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -47,8 +50,8 @@ public class CredentialConfiguration
 	private static final long serialVersionUID = 4246051639093121204L;
 
 	private String username;
-	private String password;
-	private Instant expires;
+	private @Nullable String password;
+	private @Nullable Instant expires;
 
 	/**
 	 * Constructor.
@@ -57,11 +60,14 @@ public class CredentialConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param username
+	 *        the username
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CredentialConfiguration(UserLongCompositePK id, Instant created) {
+	public CredentialConfiguration(UserLongCompositePK id, Instant created, String username) {
 		super(id, created);
+		this.username = requireNonNullArgument(username, "username");
 	}
 
 	/**
@@ -73,11 +79,13 @@ public class CredentialConfiguration
 	 *        the credential ID
 	 * @param created
 	 *        the creation date
+	 * @param username
+	 *        the username
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CredentialConfiguration(Long userId, Long credentialId, Instant created) {
-		this(new UserLongCompositePK(userId, credentialId), created);
+	public CredentialConfiguration(Long userId, Long credentialId, Instant created, String username) {
+		this(new UserLongCompositePK(userId, credentialId), created, username);
 	}
 
 	@Override
@@ -87,7 +95,7 @@ public class CredentialConfiguration
 
 	@Override
 	public CredentialConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CredentialConfiguration(id, getCreated());
+		var copy = new CredentialConfiguration(id, created(), username);
 		copyTo(copy);
 		return copy;
 	}
@@ -101,15 +109,15 @@ public class CredentialConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(CredentialConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CredentialConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.username, other.username)
-				&& Objects.equals(this.password, other.password)
-				&& Objects.equals(this.expires, other.expires)
+		return Objects.equals(this.username, o.username)
+				&& Objects.equals(this.password, o.password)
+				&& Objects.equals(this.expires, o.expires)
 				;
 		// @formatter:on
 	}
@@ -149,9 +157,8 @@ public class CredentialConfiguration
 	 *
 	 * @return the credential ID
 	 */
-	public Long getCredentialId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getCredentialId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -159,7 +166,7 @@ public class CredentialConfiguration
 	 *
 	 * @return the username
 	 */
-	public String getUsername() {
+	public final String getUsername() {
 		return username;
 	}
 
@@ -168,9 +175,12 @@ public class CredentialConfiguration
 	 *
 	 * @param username
 	 *        the username to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setUsername(String username) {
-		this.username = username;
+	public final void setUsername(String username) {
+		this.username = requireNonNullArgument(username, "username");
+		;
 	}
 
 	/**
@@ -178,7 +188,7 @@ public class CredentialConfiguration
 	 *
 	 * @return the password
 	 */
-	public String getPassword() {
+	public final @Nullable String getPassword() {
 		return password;
 	}
 
@@ -187,8 +197,10 @@ public class CredentialConfiguration
 	 *
 	 * @param password
 	 *        the password to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setPassword(String password) {
+	public final void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
@@ -197,7 +209,7 @@ public class CredentialConfiguration
 	 *
 	 * @return the expiration date
 	 */
-	public Instant getExpires() {
+	public final @Nullable Instant getExpires() {
 		return expires;
 	}
 
@@ -207,7 +219,7 @@ public class CredentialConfiguration
 	 * @param expires
 	 *        the expiration date to set
 	 */
-	public void setExpires(Instant expires) {
+	public final void setExpires(@Nullable Instant expires) {
 		this.expires = expires;
 	}
 
@@ -217,7 +229,7 @@ public class CredentialConfiguration
 	 * @return {@literal true} if {@code expires} is set and is before the
 	 *         current time
 	 */
-	public boolean isExpired() {
+	public final boolean isExpired() {
 		return expires != null && expires.isBefore(Instant.now());
 	}
 

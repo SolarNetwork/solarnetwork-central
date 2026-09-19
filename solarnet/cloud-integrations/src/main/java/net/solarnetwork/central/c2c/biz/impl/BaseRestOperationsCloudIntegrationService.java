@@ -27,12 +27,14 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
@@ -45,7 +47,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseRestOperationsCloudIntegrationService extends BaseCloudIntegrationService {
 
@@ -61,6 +63,8 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 *        the display name
 	 * @param datumStreamServices
 	 *        the datum stream services
+	 * @param controlServices
+	 *        the control services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -72,21 +76,20 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 * @param restOpsHelper
 	 *        the REST operations helper
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseRestOperationsCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
-			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls,
+			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
+			TextEncryptor encryptor, List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls,
 			RestOperationsHelper restOpsHelper) {
-		super(serviceIdentifier, displayName, datumStreamServices, userEventAppenderBiz, encryptor,
-				settings, wellKnownUrls);
+		super(serviceIdentifier, displayName, datumStreamServices, controlServices, userEventAppenderBiz,
+				encryptor, settings, wellKnownUrls);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 
 	@Override
-	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
-		super.setUserServiceAuditor(userServiceAuditor);
+	public void didSetUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
 	}
 
@@ -103,7 +106,7 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 * @return the result
 	 * @since 1.2
 	 */
-	public static <T> Result<T> validationResult(RemoteServiceException e, T body) {
+	public static <T> Result<T> validationResult(RemoteServiceException e, @Nullable T body) {
 		if ( e.getCause() instanceof HttpClientErrorException h ) {
 			if ( h.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS) ) {
 				return new Result<>(true, "BCI.0002",

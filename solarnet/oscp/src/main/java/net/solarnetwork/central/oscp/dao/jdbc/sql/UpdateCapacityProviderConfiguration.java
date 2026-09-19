@@ -55,7 +55,7 @@ public final class UpdateCapacityProviderConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCapacityProviderConfiguration(UserLongCompositePK id,
 			CapacityProviderConfiguration entity) {

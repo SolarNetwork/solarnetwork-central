@@ -25,6 +25,7 @@ package net.solarnetwork.central.inin.security;
 import static net.solarnetwork.central.inin.security.SecurityUtils.jwtTokenIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 import org.springframework.core.convert.converter.Converter;
@@ -77,9 +78,16 @@ public class CredentialJwtAuthenticationConverter
 	@Override
 	public AbstractAuthenticationToken convert(Jwt jwt) {
 		Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
+		URL issuer = jwt.getIssuer();
+		if ( issuer == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no issuer).");
+		}
 		String principalClaimValue = jwt.getClaimAsString(this.principalClaimName);
+		if ( principalClaimValue == null ) {
+			throw new BadCredentialsException("Invalid JWT token (no principal claim).");
+		}
 
-		String token = jwtTokenIdentifier(jwt.getIssuer(), principalClaimValue);
+		String token = jwtTokenIdentifier(issuer, principalClaimValue);
 
 		EndpointUserDetails info = authDao.oAuthCredentials(token);
 		if ( info == null ) {
@@ -96,8 +104,9 @@ public class CredentialJwtAuthenticationConverter
 
 		private final EndpointUserDetails info;
 
-		public EndpointJwtAuthenticatedToken(Jwt jwt, Collection<? extends GrantedAuthority> authorities,
-				String name, EndpointUserDetails info) {
+		private EndpointJwtAuthenticatedToken(Jwt jwt,
+				Collection<? extends GrantedAuthority> authorities, String name,
+				EndpointUserDetails info) {
 			super(jwt, authorities, name);
 			this.info = requireNonNullArgument(info, "info");
 		}

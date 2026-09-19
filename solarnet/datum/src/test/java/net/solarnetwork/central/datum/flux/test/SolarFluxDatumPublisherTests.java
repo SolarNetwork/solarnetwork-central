@@ -27,6 +27,7 @@ import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat
 import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat.MonthlyDatumPublished;
 import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat.RawDatumPublished;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.Aggregation.Day;
 import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.domain.datum.Aggregation.Month;
@@ -43,8 +44,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -52,12 +53,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -66,7 +65,8 @@ import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
 import net.solarnetwork.central.datum.flux.domain.FluxPublishSettingsInfo;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonDateUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -74,6 +74,8 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
 
 /**
  * Unit tests for the {@link SolarFluxDatumPublisher}.
@@ -95,11 +97,11 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	private SolarFluxDatumPublisher publisher;
 
 	private ObjectMapper createObjectMapper() {
-		return JsonUtils.createObjectMapper(null, JsonUtils.JAVA_TIMESTAMP_MODULE)
-				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(JsonDateUtils.JAVA_TIMESTAMP_MODULE)
+				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build();
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		setupMqttServer();
 
@@ -121,7 +123,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		publisher.setMqttStats(mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
-				Collections.singletonList(publisher));
+				List.of(publisher));
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();
@@ -135,7 +137,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		}
 	}
 
-	@After
+	@AfterEach
 	@Override
 	public void teardown() {
 		super.teardown();
@@ -173,53 +175,12 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	}
 
 	private static final FluxPublishSettingsInfo PUB_RETAINED = new FluxPublishSettingsInfo(true, true);
-	private static final FluxPublishSettingsInfo PUB_NOT_RETAINED = new FluxPublishSettingsInfo(true,
-			false);
-
-	@Test
-	public void publishRawDatum() throws Exception {
-		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
-		DatumSamples samples = new DatumSamples();
-		samples.putInstantaneousSampleValue("foo", 123);
-		samples.putAccumulatingSampleValue("bar", 234L);
-		datum.setSamples(samples);
-
-		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
-				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
-
-		expect(fluxPublishSettingsDao.nodeSourcePublishConfiguration(TEST_USER_ID, TEST_NODE_ID,
-				datum.getSourceId())).andReturn(PUB_RETAINED);
-
-		final TestingInterceptHandler session = getTestingInterceptHandler();
-
-		// WHEN
-		replayAll();
-		boolean success = publisher.processDatum(datum, None);
-
-		stopMqttServer(); // to flush messages
-
-		// THEN
-		assertThat("Datum published", success, equalTo(true));
-		assertThat("Stat published count", publisher.getMqttStats().get(RawDatumPublished), equalTo(1L));
-		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
-		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
-		assertThat(msg.getTopicName(),
-				equalTo(datumTopic(TEST_USER_ID, datum.getNodeId(), None, datum.getSourceId())));
-		assertPublishedDatumEqualTo("MQTT published datum", session.getPublishMessageAtIndex(0),
-				session.getPublishPayloadAtIndex(0), datum, true);
-	}
 
 	@Test
 	public void publishRawDatum_notRetained() throws Exception {
 		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), UUID.randomUUID().toString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -227,9 +188,6 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 
 		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
 				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
-
-		expect(fluxPublishSettingsDao.nodeSourcePublishConfiguration(TEST_USER_ID, TEST_NODE_ID,
-				datum.getSourceId())).andReturn(PUB_NOT_RETAINED);
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
@@ -253,10 +211,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishHourDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -291,10 +247,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishDayDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.DAYS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.DAYS), randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -329,11 +283,9 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishMonthDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(ZonedDateTime.now().with(TemporalAdjusters.firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS).toInstant());
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID, ZonedDateTime.now()
+				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
+				randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);

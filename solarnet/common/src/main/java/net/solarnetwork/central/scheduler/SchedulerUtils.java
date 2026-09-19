@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
@@ -62,7 +63,7 @@ public final class SchedulerUtils {
 	 * <p>
 	 * The {@code expression} can be either an integer number representing a
 	 * {@code timeUnit} frequency or else a cron expression. If
-	 * {@code randomize} is {@literal true} then if the cron expression seconds
+	 * {@code randomized} is {@literal true} then if the cron expression seconds
 	 * value is a constant value it
 	 * </p>
 	 *
@@ -72,12 +73,13 @@ public final class SchedulerUtils {
 	 *        the time unit to use for periodic triggers
 	 * @param randomized
 	 *        {@literal true} to randomize the second field of cron triggers
-	 * @return the trigger, or {@literal null} if the expression cannot be
-	 *         parsed into one
+	 * @return the trigger, or {@code null} if the expression cannot be parsed
+	 *         into one
 	 * @since 2.0
 	 */
-	public static Trigger triggerForExpression(final String expression, TimeUnit timeUnit,
-			boolean randomized) {
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
+	public static @Nullable Trigger triggerForExpression(final @Nullable String expression,
+			TimeUnit timeUnit, boolean randomized) {
 		if ( expression != null ) {
 			try {
 				try {

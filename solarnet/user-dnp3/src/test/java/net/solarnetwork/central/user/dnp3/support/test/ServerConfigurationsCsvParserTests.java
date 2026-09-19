@@ -1,34 +1,30 @@
 /* ==================================================================
  * ServerConfigurationsCsvParserTests.java - 12/08/2023 9:53:51 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.dnp3.support.test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
-import static org.supercsv.prefs.CsvPreference.STANDARD_PREFERENCE;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -38,8 +34,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationsInput;
@@ -49,7 +45,7 @@ import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
 
 /**
  * Test cases for the {@link ServerConfigurationsCsvParser} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -66,9 +62,9 @@ public class ServerConfigurationsCsvParserTests {
 		locale = Locale.getDefault();
 	}
 
-	private CsvListReader csvResource(String resource) {
-		return new CsvListReader(new InputStreamReader(getClass().getResourceAsStream(resource), UTF_8),
-				STANDARD_PREFERENCE);
+	private CsvReader<CsvRecord> csvResource(String resource) {
+		return CsvReader.builder().allowExtraFields(true).allowMissingFields(true)
+				.ofCsvRecord(getClass().getResourceAsStream(resource));
 	}
 
 	@Test
@@ -77,7 +73,7 @@ public class ServerConfigurationsCsvParserTests {
 
 		// WHEN
 		ServerConfigurationsInput result = null;
-		try (ICsvListReader in = csvResource("server-confs-example-01.csv")) {
+		try (CsvReader<CsvRecord> in = csvResource("server-confs-example-01.csv")) {
 			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
 		}
 
@@ -116,8 +112,8 @@ public class ServerConfigurationsCsvParserTests {
 		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getScale)
 			.as("Parsed measurement scale values")
 			.containsExactly(3, 1);
-	
-		
+
+
 		then(result.getControlConfigs()).map(ServerControlConfigurationInput::isEnabled)
 			.as("Control enabled set to TRUE")
 			.allMatch(Boolean.TRUE::equals);
@@ -125,31 +121,31 @@ public class ServerConfigurationsCsvParserTests {
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getNodeId)
 			.as("Parsed control node ID values")
 			.containsExactly(234L, 345L);
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getSourceId)
 			.as("Parsed control control ID values")
 			.containsExactly("switch/1", "setpoint/1");
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getProperty)
 			.as("Parsed control property values")
 			.containsExactly(null, null);
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getType)
 			.as("Parsed control type values")
 			.containsExactly(ControlType.Binary, ControlType.Analog);
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getMultiplier)
 			.as("Parsed control multiplier values")
 			.containsExactly(null, new BigDecimal("0.1"));
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getOffset)
 			.as("Parsed control offset values")
 			.containsExactly(null, new BigDecimal("100"));
-	
+
 		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getScale)
 			.as("Parsed control scale values")
 			.containsExactly(null, 1);
-	
+
 		// @formatter:on
 	}
 
@@ -159,8 +155,8 @@ public class ServerConfigurationsCsvParserTests {
 				""".concat(body);
 	}
 
-	private CsvListReader csvData(String data) {
-		return new CsvListReader(new StringReader(csv(data)), STANDARD_PREFERENCE);
+	private CsvReader<CsvRecord> csvData(String data) {
+		return CsvReader.builder().ofCsvRecord(csv(data));
 	}
 
 	private final Pattern ROW_COL_REGEX = Pattern.compile("row (\\d+) column (\\d+)");
@@ -199,7 +195,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -219,7 +215,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					blah,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -239,7 +235,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -259,7 +255,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123, ,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -279,7 +275,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -299,7 +295,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1, ,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -318,7 +314,7 @@ public class ServerConfigurationsCsvParserTests {
 
 		// WHEN
 		ServerConfigurationsInput result = null;
-		try (ICsvListReader in = csvData("""
+		try (CsvReader<CsvRecord> in = csvData("""
 				123,switch/1,,ControlBinary
 				""")) {
 			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
@@ -346,7 +342,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,watts,,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser( messageSource, locale)
@@ -366,7 +362,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,watts,FooBar,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser( messageSource, locale)
@@ -385,7 +381,7 @@ public class ServerConfigurationsCsvParserTests {
 
 		// WHEN
 		ServerConfigurationsInput result = null;
-		try (ICsvListReader in = csvData("""
+		try (CsvReader<CsvRecord> in = csvData("""
 				123,switch/1,,ControlBinary,NO WAY NO HOW
 				""")) {
 			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
@@ -413,7 +409,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,a,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)
@@ -433,7 +429,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,1,a,1
 					""")) {
 				new ServerConfigurationsCsvParser( messageSource, locale)
@@ -453,7 +449,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		// @formatter:off
 		thenThrownBy(() -> {
-			try (ICsvListReader in = csvData("""
+			try (CsvReader<CsvRecord> in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,1,1,a
 					""")) {
 				new ServerConfigurationsCsvParser(messageSource, locale)

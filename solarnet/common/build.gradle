@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.5' apply false
+	id 'org.springframework.boot' version '4.1.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,17 +16,9 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '3.8.0'
 
 base {
 	archivesName = 'solarnet-common'
-}
-
-configurations {
-	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'javax.servlet'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -44,7 +36,7 @@ dependencies {
 	// DAO
 	implementation 'org.mybatis:mybatis'
 	implementation 'org.mybatis:mybatis-spring'
-	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.postgresql:postgresql'
 	
 	// JAXB
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
@@ -56,9 +48,8 @@ dependencies {
 
 	// JSON
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
-	implementation 'com.fasterxml.jackson.core:jackson-core'
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'tools.jackson.core:jackson-core'
+	implementation 'tools.jackson.core:jackson-databind'
 	
 	// Netty
 	implementation 'io.netty:netty-buffer'
@@ -70,21 +61,24 @@ dependencies {
 	implementation 'io.netty:netty-transport'
 
 	// Utilities
-	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
-	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
-	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
 	implementation "com.cronutils:cron-utils:${cronUtilsVersion}"
 	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.13.0'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
+	implementation 'org.slf4j:jcl-over-slf4j'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
+	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"
@@ -98,7 +92,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'commons-beanutils:commons-beanutils:1.10.0'
+	api 'commons-beanutils:commons-beanutils:1.11.0'
 	api "com.cronutils:cron-utils:${cronUtilsVersion}"
 	api 'org.apache.commons:commons-compress:1.27.1'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
@@ -107,10 +101,10 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "org.threeten:threeten-extra:${threetenExtraVersion}"
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
     testImplementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
-    
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 
 jar.manifest {
@@ -150,7 +144,7 @@ publishing {
 	repositories {
 		maven {
 			name = "OSSRH"
-			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 			credentials {
 				username = ossrhUsername
 				password = ossrhPassword

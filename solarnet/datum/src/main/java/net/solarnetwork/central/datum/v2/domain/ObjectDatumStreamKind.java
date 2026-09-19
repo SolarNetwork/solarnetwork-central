@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -49,11 +51,13 @@ public final class ObjectDatumStreamKind implements Serializable {
 	 *        the object ID
 	 * @param kind
 	 *        the object kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ObjectDatumStreamKind(Long objectId, ObjectDatumKind kind) {
 		super();
-		this.objectId = objectId;
-		this.kind = kind;
+		this.objectId = requireNonNullArgument(objectId, "objectId");
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
@@ -62,7 +66,7 @@ public final class ObjectDatumStreamKind implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -94,7 +98,7 @@ public final class ObjectDatumStreamKind implements Serializable {
 	 *
 	 * @return the objectId
 	 */
-	public Long getObjectId() {
+	public final Long getObjectId() {
 		return objectId;
 	}
 
@@ -103,7 +107,7 @@ public final class ObjectDatumStreamKind implements Serializable {
 	 *
 	 * @return the kind
 	 */
-	public ObjectDatumKind getKind() {
+	public final ObjectDatumKind getKind() {
 		return kind;
 	}
 

@@ -29,6 +29,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The overall interval range something can be reported on.
@@ -39,7 +42,7 @@ import java.time.temporal.TemporalAdjusters;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class ReportableInterval {
 
@@ -57,7 +60,7 @@ public final class ReportableInterval {
 	 * @param zone
 	 *        the node's time zone
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ReportableInterval(ZonedDateTime startDate, ZonedDateTime endDate, ZoneId zone) {
 		super();
@@ -76,11 +79,50 @@ public final class ReportableInterval {
 	 * @param zone
 	 *        the node's time zone
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ReportableInterval(Instant startDate, Instant endDate, ZoneId zone) {
 		this(startDate != null && zone != null ? startDate.atZone(zone) : null,
 				endDate != null && zone != null ? endDate.atZone(zone) : null, zone);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(endDate, startDate);
+	}
+
+	/**
+	 * Compare start/end dates.
+	 * 
+	 * <p>
+	 * Note the {@code zone} property is ignored, and the start/end dates are
+	 * compared without respect to time zones.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(@Nullable Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof ReportableInterval other) ) {
+			return false;
+		}
+		return startDate.isEqual(other.startDate) && endDate.isEqual(other.endDate);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ReportableInterval{startDate=");
+		builder.append(startDate);
+		builder.append(", endDate=");
+		builder.append(endDate);
+		builder.append(", zone=");
+		builder.append(zone);
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**
@@ -94,7 +136,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return count of days within the interval
 	 */
-	public long getDayCount() {
+	public final long getDayCount() {
 		return ChronoUnit.DAYS.between(startDate, endDate) + 1;
 	}
 
@@ -109,7 +151,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return count of months within the interval
 	 */
-	public long getMonthCount() {
+	public final long getMonthCount() {
 		return ChronoUnit.MONTHS.between(startDate.with(TemporalAdjusters.firstDayOfMonth()),
 				endDate.with(TemporalAdjusters.firstDayOfMonth())) + 1;
 	}
@@ -125,7 +167,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return count of months within the interval
 	 */
-	public long getYearCount() {
+	public final long getYearCount() {
 		return ChronoUnit.YEARS.between(startDate.with(TemporalAdjusters.firstDayOfYear()),
 				endDate.with(TemporalAdjusters.firstDayOfYear())) + 1;
 	}
@@ -133,18 +175,40 @@ public final class ReportableInterval {
 	/**
 	 * Get the start date.
 	 * 
-	 * @return the startDate
+	 * @return the start date
+	 * @since 2.1
 	 */
-	public LocalDateTime getStartDate() {
-		return startDate.toLocalDateTime();
+	@JsonIgnore
+	public final ZonedDateTime startDate() {
+		return startDate;
 	}
 
 	/**
 	 * Get the end date.
 	 * 
-	 * @return the endDate
+	 * @return the end date
+	 * @since 2.1
 	 */
-	public LocalDateTime getEndDate() {
+	@JsonIgnore
+	public final ZonedDateTime endDate() {
+		return endDate;
+	}
+
+	/**
+	 * Get the local start date.
+	 * 
+	 * @return the local start date
+	 */
+	public final LocalDateTime getStartDate() {
+		return startDate.toLocalDateTime();
+	}
+
+	/**
+	 * Get the local end date.
+	 * 
+	 * @return the local end date
+	 */
+	public final LocalDateTime getEndDate() {
 		return endDate.toLocalDateTime();
 	}
 
@@ -153,7 +217,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return the end date in milliseconds
 	 */
-	public Long getEndDateMillis() {
+	public final long getEndDateMillis() {
 		return endDate.toInstant().toEpochMilli();
 	}
 
@@ -162,7 +226,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return the start date in milliseconds
 	 */
-	public Long getStartDateMillis() {
+	public final long getStartDateMillis() {
 		return startDate.toInstant().toEpochMilli();
 	}
 
@@ -171,7 +235,7 @@ public final class ReportableInterval {
 	 * 
 	 * @return the zone
 	 */
-	public ZoneId getTimeZone() {
+	public final ZoneId getTimeZone() {
 		return zone;
 	}
 

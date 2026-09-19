@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.AppWarmUpTask;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
@@ -44,12 +42,14 @@ import ocpp.v201.ConnectorStatusEnum;
 import ocpp.v201.RegistrationStatusEnum;
 import ocpp.v201.StatusNotificationRequest;
 import ocpp.v201.StatusNotificationResponse;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Component to "warm up" the application OCPP v16 components.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Component
 @Profile(SolarOcppOcppV201WarmUpTask.PROFILE)

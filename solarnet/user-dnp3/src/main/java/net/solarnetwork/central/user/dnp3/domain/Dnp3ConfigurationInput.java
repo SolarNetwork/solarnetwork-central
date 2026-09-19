@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dnp3.domain;
 
+import java.io.Serializable;
 import java.time.Instant;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 
@@ -33,9 +34,9 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
  * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface Dnp3ConfigurationInput<T extends UserRelatedEntity<K>, K> {
+public interface Dnp3ConfigurationInput<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable> {
 
 	/**
 	 * Create an entity from the input properties and a given primary key.

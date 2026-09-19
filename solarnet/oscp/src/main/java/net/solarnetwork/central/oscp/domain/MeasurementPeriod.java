@@ -61,7 +61,7 @@ public enum MeasurementPeriod implements CodedValue {
 
 	private final int seconds;
 
-	private MeasurementPeriod(int seconds) {
+	MeasurementPeriod(int seconds) {
 		this.seconds = seconds;
 	}
 

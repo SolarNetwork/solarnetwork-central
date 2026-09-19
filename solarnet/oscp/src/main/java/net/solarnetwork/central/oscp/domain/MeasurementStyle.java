@@ -48,7 +48,7 @@ public enum MeasurementStyle implements CodedValue {
 
 	private final char code;
 
-	private MeasurementStyle(char code) {
+	MeasurementStyle(char code) {
 		this.code = code;
 	}
 

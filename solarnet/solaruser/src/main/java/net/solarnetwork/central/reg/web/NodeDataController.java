@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 
@@ -68,7 +68,7 @@ public class NodeDataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{nodeId}/sources", method = RequestMethod.GET)
-	public Result<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
+	public Result<Set<String>> getAvailableSources(@PathVariable Long nodeId) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(nodeId);
 		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);

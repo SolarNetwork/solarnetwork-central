@@ -19,7 +19,7 @@ package net.solarnetwork.flux.vernemq.webhook.test;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-
+import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
@@ -31,45 +31,45 @@ import org.springframework.util.FileCopyUtils;
  */
 public abstract class TestSupport {
 
-  /** A class-level logger. */
-  protected final Logger log = LoggerFactory.getLogger(getClass());
+	/** A class-level logger. */
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  /**
-   * Load a class-path relative resource.
-   * 
-   * @param resourceName
-   *        the resource
-   * @return the content
-   * @throws RuntimeException
-   *         if any {@link IOException} occurs
-   */
-  protected byte[] classResourceAsBytes(String resourceName) {
-    try {
-      return FileCopyUtils.copyToByteArray(getClass().getResourceAsStream(resourceName));
-    } catch (IOException e) {
-      throw new RuntimeException("Error loading class " + getClass().getSimpleName() + " resource ["
-          + resourceName + "]: " + e.getMessage(), e);
-    }
-  }
+	/**
+	 * Load a class-path relative resource.
+	 * 
+	 * @param resourceName
+	 *        the resource
+	 * @return the content
+	 * @throws RuntimeException
+	 *         if any {@link IOException} occurs
+	 */
+	protected byte[] classResourceAsBytes(String resourceName) {
+		try {
+			return FileCopyUtils.copyToByteArray(getClass().getResourceAsStream(resourceName));
+		} catch ( IOException e ) {
+			throw new RuntimeException("Error loading class " + getClass().getSimpleName()
+					+ " resource [" + resourceName + "]: " + e.getMessage(), e);
+		}
+	}
 
-  /**
-   * Load a class-path relative resource as a string.
-   * 
-   * @param resourceName
-   *        the resource
-   * @param charsetName
-   *        the charset to use
-   * @return the content
-   * @throws RuntimeException
-   *         if any {@link IOException} occurs
-   */
-  protected String classResourceAsString(String resourceName, String charsetName) {
-    try {
-      return FileCopyUtils.copyToString(
-          new InputStreamReader(getClass().getResourceAsStream(resourceName), charsetName));
-    } catch (IOException e) {
-      throw new RuntimeException("Error loading class " + getClass().getSimpleName() + " resource ["
-          + resourceName + "]: " + e.getMessage(), e);
-    }
-  }
+	/**
+	 * Load a class-path relative resource as a string.
+	 * 
+	 * @param resourceName
+	 *        the resource
+	 * @param charset
+	 *        the charset to use
+	 * @return the content
+	 * @throws RuntimeException
+	 *         if any {@link IOException} occurs
+	 */
+	protected String classResourceAsString(String resourceName, Charset charset) {
+		try {
+			return FileCopyUtils.copyToString(
+					new InputStreamReader(getClass().getResourceAsStream(resourceName), charset));
+		} catch ( IOException e ) {
+			throw new RuntimeException("Error loading class " + getClass().getSimpleName()
+					+ " resource [" + resourceName + "]: " + e.getMessage(), e);
+		}
+	}
 }

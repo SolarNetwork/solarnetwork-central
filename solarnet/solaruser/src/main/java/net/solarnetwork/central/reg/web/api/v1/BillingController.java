@@ -122,7 +122,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
-	public Result<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
+	public Result<Invoice> getInvoice(@PathVariable String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( userId == null ) {
@@ -157,7 +157,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}/render", method = RequestMethod.GET)
-	public ResponseEntity<Resource> renderInvoice(@PathVariable("invoiceId") String invoiceId,
+	public ResponseEntity<Resource> renderInvoice(@PathVariable String invoiceId,
 			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		BillingBiz biz = billingBiz();
@@ -196,7 +196,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}/render/pdf", method = RequestMethod.GET)
-	public ResponseEntity<Resource> renderPdfInvoice(@PathVariable("invoiceId") String invoiceId,
+	public ResponseEntity<Resource> renderPdfInvoice(@PathVariable String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		return renderInvoice(invoiceId, "application/pdf", userId, locale);
 	}

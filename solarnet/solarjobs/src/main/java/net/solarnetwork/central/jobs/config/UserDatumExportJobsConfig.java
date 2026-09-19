@@ -29,17 +29,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.scheduler.ManagedJob;
-import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
-import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
-import net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService;
-import net.solarnetwork.central.user.export.jobs.UserExportJobsService;
-import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
+import net.solarnetwork.central.user.datum.export.biz.UserExportTaskBiz;
+import net.solarnetwork.central.user.datum.export.dao.UserDatumExportConfigurationDao;
+import net.solarnetwork.central.user.datum.export.jobs.DefaultUserExportJobsService;
+import net.solarnetwork.central.user.datum.export.jobs.UserExportJobsService;
+import net.solarnetwork.central.user.datum.export.jobs.UserExportTaskPopulatorJob;
 
 /**
  * User datum export jobs configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDatumExportJobsConfig {
@@ -63,7 +63,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob hourlyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Hourly,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorHourly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -73,7 +72,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob dailyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Daily,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorDaily");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -83,17 +81,15 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob weeklyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Weekly,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorWeekly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
 
 	@ConfigurationProperties(prefix = "app.job.user-datum-export.monthly")
 	@Bean
-	public ManagedJob monthlyTaskPopulatorJob() {
+	public ManagedJob monthlyTaskPopulatorJob(UserExportJobsService userExportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Monthly,
-				userExportJobsService());
-		job.setId("UserExportTaskPopulatorMonthly");
+				userExportJobsService);
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

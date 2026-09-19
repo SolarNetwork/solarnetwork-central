@@ -125,9 +125,8 @@ public class PkiDogtagConfig {
 	@Qualifier(DOGTAG)
 	@Bean
 	public SSLContextFactory sslContextFactory(DogtagSettings settings) {
-		SSLContextFactory sslFactory = new SSLContextFactory();
-		sslFactory.setKeystoreResource(settings.keystoreResource);
-		sslFactory.setKeystorePassword(settings.keystorePassword);
+		SSLContextFactory sslFactory = new SSLContextFactory(settings.keystoreResource,
+				settings.keystorePassword);
 		sslFactory.setDisabledCipherSuites(
 				StringUtils.commaDelimitedListToStringArray(settings.disabledCiphers));
 		sslFactory.setTrustedCertificateExpireWarningDays(settings.expireWarningDays);
@@ -137,12 +136,8 @@ public class PkiDogtagConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DogtagPKIBiz pkiBiz(DogtagSettings settings,
 			@Qualifier(DOGTAG) SSLContextFactory sslFactory) {
-		DogtagPKIBiz biz = new DogtagPKIBiz();
-		biz.setBaseUrl(settings.baseUrl);
-		biz.setDogtagProfileId(settings.profileId);
-		biz.setRestOps(sslFactory.createRestOps());
-		biz.setCertificateService(certificateService);
-		return biz;
+		return new DogtagPKIBiz(certificateService, sslFactory.createRestOps(), settings.baseUrl,
+				settings.profileId);
 	}
 
 }

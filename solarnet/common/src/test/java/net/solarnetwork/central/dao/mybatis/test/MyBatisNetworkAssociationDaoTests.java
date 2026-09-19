@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisNetworkAssociationDao;
 import net.solarnetwork.domain.NetworkAssociation;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisNetworkAssociationDao} class.
@@ -43,20 +43,20 @@ public class MyBatisNetworkAssociationDaoTests extends AbstractMyBatisDaoTestSup
 	private static final String TEST_USERNAME = "test@localhost";
 	private static final String TEST_SECURITY_PHRASE = "test phrase";
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new MyBatisNetworkAssociationDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
-		executeSqlScript(
-				"net/solarnetwork/central/dao/mybatis/test/create-test-network-association.sql", false);
+		executeSqlScript("net/solarnetwork/central/dao/mybatis/test/create-test-network-association.sql",
+				false);
 	}
 
 	@Test
 	public void queryForAssociation() {
 		NetworkAssociation result = dao.getNetworkAssociationForConfirmationKey(TEST_USERNAME,
 				TEST_CONF_CODE);
-		assertNotNull("Association should not be null", result);
-		assertEquals(TEST_CONF_CODE, result.getConfirmationKey());
-		assertEquals(TEST_SECURITY_PHRASE, result.getSecurityPhrase());
+		then(result).as("Association should not be null").isNotNull()
+				.returns(TEST_CONF_CODE, from(NetworkAssociation::getConfirmationKey))
+				.returns(TEST_SECURITY_PHRASE, from(NetworkAssociation::getSecurityPhrase));
 	}
 }

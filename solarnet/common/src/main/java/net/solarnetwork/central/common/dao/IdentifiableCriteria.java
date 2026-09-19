@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for {@code Identifiable} related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface IdentifiableCriteria {
 
@@ -40,7 +42,7 @@ public interface IdentifiableCriteria {
 	 * 
 	 * @return the first service identifier, or {@code null} if not available
 	 */
-	default String getServiceIdentifier() {
+	default @Nullable String getServiceIdentifier() {
 		String[] idents = getServiceIdentifiers();
 		return (idents != null && idents.length > 0 ? idents[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface IdentifiableCriteria {
 	 * 
 	 * @return array of service identifiers (may be {@code null})
 	 */
-	String[] getServiceIdentifiers();
+	String @Nullable [] getServiceIdentifiers();
 
 	/**
 	 * Test if this filter has any service identifier criteria.
@@ -59,6 +61,40 @@ public interface IdentifiableCriteria {
 	 */
 	default boolean hasServiceIdentifierCriteria() {
 		return getServiceIdentifier() != null;
+	}
+
+	/**
+	 * Get the first service identifier.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasServiceIdentifierCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 * 
+	 * @return the first service identifier (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String serviceIdentifier() {
+		return getServiceIdentifier();
+	}
+
+	/**
+	 * Get an array of service identifiers.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasServiceIdentifierCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of service identifiers (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] serviceIdentifiers() {
+		return getServiceIdentifiers();
 	}
 
 }

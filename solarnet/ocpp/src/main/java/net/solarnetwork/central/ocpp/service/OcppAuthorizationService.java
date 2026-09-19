@@ -23,8 +23,10 @@
 package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
@@ -51,7 +53,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	private final CentralAuthorizationDao authorizationDao;
 	private final CentralChargePointDao chargePointDao;
 
-	private Set<String> wildcardIdTagPrefixes;
+	private @Nullable Set<String> wildcardIdTagPrefixes;
 
 	/**
 	 * Constructor.
@@ -61,7 +63,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 * @param chargePointDao
 	 *        the {@link ChargePoint} DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppAuthorizationService(CentralAuthorizationDao authorizationDao,
 			CentralChargePointDao chargePointDao) {
@@ -71,7 +73,8 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	}
 
 	@Override
-	public AuthorizationInfo authorize(final ChargePointIdentity identity, final String idTag) {
+	public AuthorizationInfo authorize(final @Nullable ChargePointIdentity identity,
+			final String idTag) {
 		Authorization auth = null;
 		if ( identity != null && idTag != null ) {
 			CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
@@ -79,7 +82,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 				auth = authorizationDao.getForToken(cp.getUserId(), idTag);
 				if ( auth == null && wildcardIdTagPrefixes != null
 						&& !wildcardIdTagPrefixes.isEmpty() ) {
-					final String idTagLc = idTag.toLowerCase();
+					final String idTagLc = idTag.toLowerCase(Locale.ENGLISH);
 					for ( String prefix : wildcardIdTagPrefixes ) {
 						if ( idTagLc.startsWith(prefix) ) {
 							auth = authorizationDao.getForToken(cp.getUserId(), prefix + "*");
@@ -100,8 +103,8 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 				result.withStatus(AuthorizationStatus.Accepted);
 			}
 		} else {
-			log.info("Invliad IdTag received from charge point {}: [{}]", identity.getIdentifier(),
-					idTag);
+			log.info("Invliad IdTag received from charge point {}: [{}]",
+					(identity != null ? identity.getIdentifier() : null), idTag);
 			result.withStatus(AuthorizationStatus.Invalid);
 		}
 		return result.build();
@@ -112,7 +115,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 * 
 	 * @return the prefixes
 	 */
-	public Set<String> getWildcardIdTagPrefixes() {
+	public final @Nullable Set<String> getWildcardIdTagPrefixes() {
 		return wildcardIdTagPrefixes;
 	}
 
@@ -134,9 +137,9 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 * @param wildcardIdTagPrefixes
 	 *        the prefixes to set
 	 */
-	public void setWildcardIdTagPrefixes(Set<String> wildcardIdTagPrefixes) {
+	public final void setWildcardIdTagPrefixes(@Nullable Set<String> wildcardIdTagPrefixes) {
 		Set<String> prefixes = (wildcardIdTagPrefixes != null ? wildcardIdTagPrefixes.stream()
-				.map(p -> p.toLowerCase()).collect(Collectors.toUnmodifiableSet()) : null);
+				.map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet()) : null);
 		this.wildcardIdTagPrefixes = prefixes;
 	}
 

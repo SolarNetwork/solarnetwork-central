@@ -23,11 +23,14 @@
 package net.solarnetwork.central.dao.mybatis.support;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -40,16 +43,16 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  * @since 2.1
  */
-public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
-		implements GenericDao<T, K> {
+public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
-	/** The query name used for {@link GenericDao#get(Object)}. */
+	/** The query name used for {@link GenericDao#get(Comparable)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
 
 	/** The query name used for {@link GenericDao#getAll(List)}. */
@@ -88,7 +91,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param keyType
 	 *        the key type
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public BaseMyBatisGenericDaoSupport(Class<? extends T> objectType, Class<? extends K> keyType) {
 		super();
@@ -112,7 +115,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	/**
 	 * Get the main domain object type.
 	 *
-	 * @return the object type, never {@literal null}
+	 * @return the object type, never {@code null}
 	 */
 	@Override
 	public Class<? extends T> getObjectType() {
@@ -122,19 +125,19 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	/**
 	 * Get the primary key type.
 	 *
-	 * @return the key type, never {@literal null}
+	 * @return the key type, never {@code null}
 	 */
 	public Class<? extends K> getKeyType() {
 		return keyType;
 	}
 
 	@Override
-	public T get(K id) {
+	public @Nullable T get(K id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
 	@Override
-	public Collection<T> getAll(List<SortDescriptor> sorts) {
+	public Collection<T> getAll(@Nullable List<SortDescriptor> sorts) {
 		List<T> results;
 		if ( sorts != null && !sorts.isEmpty() ) {
 			results = getSqlSession().selectList(this.queryForAll,
@@ -176,7 +179,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 			preprocessInsert(entity);
 			getSqlSession().insert(getInsert(), entity);
 		}
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	/**
@@ -190,7 +193,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 		if ( count < 0 ) {
 			List<BatchResult> updates = getSqlSession().flushStatements();
 			if ( updates != null && !updates.isEmpty() ) {
-				BatchResult br = updates.get(updates.size() - 1);
+				BatchResult br = updates.getLast();
 				int[] counts = br.getUpdateCounts();
 				if ( counts != null && counts.length > 0 ) {
 					count = counts[counts.length - 1];
@@ -216,7 +219,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *        the primary key of the entity to delete
 	 * @return the number of deleted rows
 	 */
-	protected int handleDelete(K id) {
+	protected int handleDelete(@Nullable K id) {
 		if ( id == null ) {
 			return 0;
 		}
@@ -266,7 +269,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 */
 	protected K handleUpdate(T entity) {
 		getSqlSession().update(this.update, entity);
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	/**
@@ -284,7 +287,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	protected K handleInsert(T entity) {
 		int updated = getSqlSession().insert(this.insert, entity);
 		log.debug("Insert of {} updated {} rows", entity, updated);
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	/**
@@ -307,7 +310,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *
 	 * @return the query name; defaults to {@link #QUERY_FOR_ID}
 	 */
-	public String getQueryForId() {
+	public final String getQueryForId() {
 		return queryForId;
 	}
 
@@ -317,7 +320,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param queryForId
 	 *        the query name to set
 	 */
-	public void setQueryForId(String queryForId) {
+	public final void setQueryForId(String queryForId) {
 		this.queryForId = queryForId;
 	}
 
@@ -326,7 +329,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *
 	 * @return the query name; defaults to {@link #QUERY_FOR_ALL}
 	 */
-	public String getQueryForAll() {
+	public final String getQueryForAll() {
 		return queryForAll;
 	}
 
@@ -336,7 +339,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param queryForAll
 	 *        the query name to set
 	 */
-	public void setQueryForAll(String queryForAll) {
+	public final void setQueryForAll(String queryForAll) {
 		this.queryForAll = queryForAll;
 	}
 
@@ -345,7 +348,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *
 	 * @return the query name; defaults to {@link #INSERT_OBJECT}
 	 */
-	public String getInsert() {
+	public final String getInsert() {
 		return insert;
 	}
 
@@ -355,7 +358,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param insert
 	 *        the query name to set
 	 */
-	public void setInsert(String insert) {
+	public final void setInsert(String insert) {
 		this.insert = insert;
 	}
 
@@ -365,7 +368,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param update
 	 *        the query name to set
 	 */
-	public void setUpdate(String update) {
+	public final void setUpdate(String update) {
 		this.update = update;
 	}
 
@@ -374,7 +377,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *
 	 * @return the query name; defaults to {@link #UPDATE_OBJECT}
 	 */
-	public String getUpdate() {
+	public final String getUpdate() {
 		return update;
 	}
 
@@ -383,7 +386,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 *
 	 * @return the query name; defaults to {@link #DELETE_OBJECT}
 	 */
-	public String getDelete() {
+	public final String getDelete() {
 		return delete;
 	}
 
@@ -393,7 +396,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * @param delete
 	 *        the delete to set
 	 */
-	public void setDelete(String delete) {
+	public final void setDelete(String delete) {
 		this.delete = delete;
 	}
 

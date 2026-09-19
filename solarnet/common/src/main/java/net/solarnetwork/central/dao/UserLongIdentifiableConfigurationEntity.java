@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serializable;
 import net.solarnetwork.central.domain.CompositeKey2;
 
 /**
@@ -29,10 +30,10 @@ import net.solarnetwork.central.domain.CompositeKey2;
  * {@code Long} secondary key component.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserLongIdentifiableConfigurationEntity<PK extends CompositeKey2<Long, Long>>
-		extends UserRelatedIdentifiableConfigurationEntity<PK> {
+public interface UserLongIdentifiableConfigurationEntity<K extends Comparable<K> & Serializable & CompositeKey2<Long, Long>>
+		extends UserRelatedIdentifiableConfigurationEntity<K> {
 
 	// nothing else
 

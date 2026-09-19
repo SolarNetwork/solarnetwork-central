@@ -1,35 +1,36 @@
 /* ==================================================================
  * MyBatisSnfInvoiceItemDaoTests.java - 21/07/2020 5:04:41 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
-import static org.hamcrest.Matchers.equalTo;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 
 /**
  * Test cases for the {@link MyBatisSnfInvoiceItemDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -57,7 +58,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 
 	private SnfInvoiceItem last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		addressDao = new MyBatisAddressDao();
 		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -78,11 +79,9 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
+				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
-		entity.setCurrencyCode("NZD");
-		entity.setStartDate(LocalDate.of(2019, 12, 1));
-		entity.setEndDate(LocalDate.of(2020, 1, 1));
 		return invoiceDao.get(invoiceDao.save(entity));
 	}
 
@@ -91,7 +90,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 		SnfInvoice invoice = createTestInvoice();
 
 		SnfInvoiceItem entity = SnfInvoiceItem.newItem(invoice.getId().getId(), InvoiceItemType.Fixed,
-				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"));
+				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"), MS_CLOCK.instant());
 		UUID pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
 		assertAccountBalance(invoice.getAccountId(), entity.getAmount(), BigDecimal.ZERO);

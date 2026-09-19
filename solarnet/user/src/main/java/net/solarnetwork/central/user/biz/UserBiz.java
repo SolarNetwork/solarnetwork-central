@@ -24,25 +24,28 @@ package net.solarnetwork.central.user.biz;
 
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
+import net.solarnetwork.central.user.dao.UserNodeFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * API for registered user tasks.
  *
  * @author matt
- * @version 3.2
+ * @version 4.1
  */
 public interface UserBiz {
 
@@ -51,8 +54,9 @@ public interface UserBiz {
 	 *
 	 * @param id
 	 *        the ID of the User to get
-	 * @return the User, or <em>null</em> if not found
+	 * @return the User, or {@code null} if not found
 	 */
+	@Nullable
 	User getUser(Long id) throws AuthorizationException;
 
 	/**
@@ -68,6 +72,18 @@ public interface UserBiz {
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
 	List<UserNode> getUserNodes(Long userId) throws AuthorizationException;
+
+	/**
+	 * Find user node information matching a search filter.
+	 * 
+	 * @param userId
+	 *        the id of the user to get the information records for
+	 * @param filter
+	 *        the search criteria
+	 * @return the filter results
+	 * @since 4.1
+	 */
+	FilterResults<UserNodeInfo, Long> findUserNodeInfos(Long userId, UserNodeFilter filter);
 
 	/**
 	 * Get a specific node belonging to a specific user.
@@ -145,8 +161,9 @@ public interface UserBiz {
 	 *
 	 * @param userNodeConfirmationId
 	 *        the ID of the pending confirmation
-	 * @return the pending confirmation, or <em>null</em> if not found
+	 * @return the pending confirmation, or {@code null} if not found
 	 */
+	@Nullable
 	UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
 
 	/**
@@ -156,8 +173,9 @@ public interface UserBiz {
 	 *        the user ID
 	 * @param nodeId
 	 *        the node ID
-	 * @return the certificate, or <em>null</em> if not available
+	 * @return the certificate, or {@code null} if not available
 	 */
+	@Nullable
 	UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId);
 
 	/**
@@ -172,6 +190,7 @@ public interface UserBiz {
 	 * @return the generated token
 	 * @since 1.3
 	 */
+	@Nullable
 	UserAuthToken generateUserAuthToken(Long userId, SecurityTokenType type, SecurityPolicy policy);
 
 	/**
@@ -197,7 +216,7 @@ public interface UserBiz {
 	 * @since 3.2
 	 */
 	FilterResults<UserAuthToken, String> listUserAuthTokensForUser(Long userId,
-			UserAuthTokenFilter filter);
+			@Nullable UserAuthTokenFilter filter);
 
 	/**
 	 * Delete a user auth token.
@@ -219,6 +238,8 @@ public interface UserBiz {
 	 * @param newStatus
 	 *        the desired status
 	 * @return the updated token
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to update the given token
 	 */
 	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, SecurityTokenStatus newStatus);
 
@@ -236,6 +257,8 @@ public interface UserBiz {
 	 *        or {@code false} to merge the provided policy properties into the
 	 *        existing policy
 	 * @return the updated token
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to update the given token
 	 */
 	UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace);
@@ -252,6 +275,8 @@ public interface UserBiz {
 	 *        used
 	 * @return the updated token
 	 * @since 3.1
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to update the given token
 	 */
 	UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info);
 
@@ -270,9 +295,10 @@ public interface UserBiz {
 	 *        the UserAuthToken ID to use
 	 * @param signingDate
 	 *        the date to generate the signing key with
-	 * @return the builder
+	 * @return the builder, or {@code null} if the token is not available
 	 * @since 2.0
 	 */
+	@Nullable
 	Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(Long userId, String tokenId,
 			Instant signingDate);
 }

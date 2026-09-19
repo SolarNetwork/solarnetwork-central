@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.UserEventFilter;
@@ -51,13 +52,13 @@ public final class SelectUserEvent
 	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventFilter filter;
 	private final int fetchSize;
-	private final SearchFilter searchFilter;
+	private final @Nullable SearchFilter searchFilter;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param filter
-	 * 		the filter criteria
+	 *        the filter criteria
 	 */
 	public SelectUserEvent(UserEventFilter filter) {
 		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter, DEFAULT_FETCH_SIZE);
@@ -67,11 +68,11 @@ public final class SelectUserEvent
 	 * Constructor.
 	 *
 	 * @param uuidTimestampDecoder
-	 * 		the UUID timestamp decoder
+	 *        the UUID timestamp decoder
 	 * @param filter
-	 * 		the filter criteria
+	 *        the filter criteria
 	 * @param fetchSize
-	 * 		the fetch size to use, or {@literal 0} to leave unspecified
+	 *        the fetch size to use, or {@literal 0} to leave unspecified
 	 */
 	public SelectUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventFilter filter,
 			int fetchSize) {

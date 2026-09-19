@@ -42,33 +42,44 @@ import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER;
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.FroniusCloudIntegrationService.LIST_SYSTEMS_URL;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationMetadata;
+import static net.solarnetwork.central.c2c.biz.impl.test.CloudIntegrationTestUtils.timeGapValidationPropertyMetadata;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TIME_GAP_VALIDATION_TYPE;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,13 +87,12 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
@@ -98,40 +108,53 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link FroniusCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class FroniusCloudDatumStreamServiceTests {
+public class FroniusCloudDatumStreamServiceTests implements CloudIntegrationsUserEvents {
 
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
 
+	@Captor
+	private ArgumentCaptor<LogEventInfo> eventCaptor;
+
 	@Mock
 	private RestOperations restOps;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -148,15 +171,18 @@ public class FroniusCloudDatumStreamServiceTests {
 	@Mock
 	private Cache<String, CloudDataValue> systemCache;
 
-	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
+	@Mock
+	private DatumEntityDao datumDao;
 
 	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<DatumCriteria> datumCriteriaCaptor;
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
-	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
+	private MutableClock clock = MutableClock.of(Instant.now(), UTC);
 
 	private FroniusCloudDatumStreamService service;
 
@@ -173,6 +199,8 @@ public class FroniusCloudDatumStreamServiceTests {
 		service.setMessageSource(msg);
 
 		service.setSystemCache(systemCache);
+
+		clock.setInstant(Instant.now().truncatedTo(ChronoUnit.DAYS));
 	}
 
 	@Test
@@ -182,7 +210,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String apiSecret = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, apiKey,
@@ -194,8 +222,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-systems-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -203,18 +230,18 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(FroniusCloudIntegrationService.BASE_URI.resolve(LIST_SYSTEMS_URL))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(FroniusCloudIntegrationService.BASE_URI.resolve(LIST_SYSTEMS_URL), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -279,7 +306,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String systemId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, apiKey,
@@ -291,8 +318,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-devices-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -301,27 +327,24 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.satisfies(uri -> {
-				URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
-					.path(SYSTEM_DEVICES_URL_TEMPLATE)
-					.buildAndExpand(systemId)
-					.toUri()
-					;
-				and.then(uri)
-					.as("Request devices for system")
-					.isEqualTo(expectedUri)
-					;
-			})
+		URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
+			.path(SYSTEM_DEVICES_URL_TEMPLATE)
+			.buildAndExpand(systemId)
+			.toUri()
 			;
 
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request devices for system")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -396,7 +419,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, apiKey,
@@ -408,7 +431,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-device-history-inverter-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(res);
 
 		// WHEN
@@ -419,30 +442,27 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.satisfies(uri -> {
-				URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
-					.path(DEVICE_HISTORY_URL_TEMPLATE)
-					.queryParam(START_AT_PARAM, clock.instant().truncatedTo(HOURS).minus(1, DAYS))
-					.queryParam(END_AT_PARAM, clock.instant().truncatedTo(HOURS))
-					.queryParam(LIMIT_PARAM, 1)
-					.buildAndExpand(systemId, deviceId)
-					.toUri()
-					;
-				and.then(uri)
-					.as("Request device history for past day, limited to first result")
-					.isEqualTo(expectedUri)
-					;
-			})
+		URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
+			.path(DEVICE_HISTORY_URL_TEMPLATE)
+			.queryParam(START_AT_PARAM, clock.instant().truncatedTo(HOURS).minus(1, DAYS))
+			.queryParam(END_AT_PARAM, clock.instant().truncatedTo(HOURS))
+			.queryParam(LIMIT_PARAM, 1)
+			.buildAndExpand(systemId, deviceId)
+			.toUri()
 			;
 
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request device history for past day, limited to first result")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -505,7 +525,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String device2Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, accessKeyId,
@@ -518,8 +538,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -527,43 +546,31 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		final String channel1Name = "EnergyExported";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh_exp");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setEnabled(true);
 
 		final String channel2Name = "EnergyImported";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh_imp");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setEnabled(true);
 
 		final String channel3Name = "GridEnergyImported";
 		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop3.setEnabled(true);
-		prop3.setPropertyType(DatumSamplesType.Instantaneous);
-		prop3.setPropertyName("wh_imp");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel3Name));
 		prop3.setScale(0);
-		prop3.setValueType(CloudDatumStreamValueType.Reference);
-		prop3.setValueReference(systemDevicePlaceholderComponentValueRef(channel3Name));
+		prop3.setEnabled(true);
 
 		final String channel4Name = "GridEnergyExported";
 		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop4.setEnabled(true);
-		prop4.setPropertyType(DatumSamplesType.Instantaneous);
-		prop4.setPropertyName("wh_exp");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel4Name));
 		prop4.setScale(0);
-		prop4.setValueType(CloudDatumStreamValueType.Reference);
-		prop4.setValueReference(systemDevicePlaceholderComponentValueRef(channel4Name));
+		prop4.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2, prop3, prop4));
@@ -573,14 +580,15 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String inv1SourceId = "inv/1";
 		final String met1SourceId = "met/1";
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		datumStream.setServiceProps(
-				Map.of(SOURCE_ID_MAP_SETTING, Map.of("/%s/%s".formatted(systemId, device1Id),
-						inv1SourceId, "/%s/%s".formatted(systemId, device2Id), met1SourceId)));
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId, device1Id), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId, device2Id), met1SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// look up lastImport date for system; first try is cache miss, second as cache hit
 		final Instant lastImportDate = Instant.parse("2025-03-24T16:45:08Z");
@@ -591,45 +599,12 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// HTTP requests: first for system info (cache miss), then one for each device
 
-		// @formatter:off
-		final URI expectedSystemInfoUri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(FroniusCloudDatumStreamService.SYSTEM_URL_TEMPLATE)
-				.buildAndExpand(systemId)
-				.toUri();
-
-		URI expectedDevice1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
-				.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 1)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice2Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
-				.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 1)
-				.buildAndExpand(systemId, device2Id)
-				.toUri()
-				;
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedSystemInfoUri), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(
-						getObjectFromJSON(utf8StringResource("fronius-system-01.json", getClass()),
-								ObjectNode.class),
-						OK));
-
-		given(restOps.exchange(eq(expectedDevice1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-system-01.json", getClass()), ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-01.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice2Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-smartmeter-01.json", getClass()),
 						ObjectNode.class), OK));
@@ -639,20 +614,59 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(3)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("Request headers contains API key")
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
+					.as("Request headers contains API secret")
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
+					;
+			})
+			.satisfies(reqs -> {
+				final URI expectedSystemInfoUri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(FroniusCloudDatumStreamService.SYSTEM_URL_TEMPLATE)
+						.buildAndExpand(systemId)
+						.toUri();
+
+				final URI expectedDevice1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
+						.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 1)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				final URI expectedDevice2Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
+						.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 1)
+						.buildAndExpand(systemId, device2Id)
+						.toUri()
+						;
+				and.then(reqs).element(0)
+					.as("Request system info")
+					.returns(expectedSystemInfoUri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 1")
+					.returns(expectedDevice1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(2)
+					.as("Request device 2")
+					.returns(expectedDevice2Uri, from(RequestEntity::getUrl))
 					;
 			})
 			;
-
 
 		and.then(result)
 			.as("Datum parsed from HTTP response")
@@ -709,7 +723,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String device1Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, accessKeyId,
@@ -722,8 +736,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -731,23 +744,17 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		final String channel1Name = "EnergyExported";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh_exp");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setEnabled(true);
 
 		final String channel2Name = "EnergyImported";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh_imp");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -756,9 +763,8 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String inv1SourceId = "inv/1";
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
@@ -769,50 +775,13 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Instant startDate = clock.instant().minus(48, HOURS);
 		final Instant endDate = clock.instant();
 
-		// @formatter:off
-		URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice1Day1Page2Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(OFFSET_PARAM, 2L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice1Day2Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page2Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-03.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice1Day2Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-04.json", getClass()),
 						ObjectNode.class), OK));
@@ -827,16 +796,62 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(3)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("Request headers contains API key")
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
+					.as("Request headers contains API secret")
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				URI expectedDevice1Day1Page2Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(OFFSET_PARAM, 2L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				URI expectedDevice1Day2Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 1 day 1 page 2")
+					.returns(expectedDevice1Day1Page2Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(2)
+					.as("Request device 1 day 2 page 1")
+					.returns(expectedDevice1Day2Page1Uri, from(RequestEntity::getUrl))
 					;
 			})
 			;
@@ -885,7 +900,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final String device1Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				ACCESS_KEY_ID_SETTING, accessKeyId,
@@ -898,8 +913,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -907,23 +921,17 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		final String channel1Name = "EnergyExported";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh_exp");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setEnabled(true);
 
 		final String channel2Name = "EnergyImported";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh_imp");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -932,9 +940,8 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String inv1SourceId = "inv/1";
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
@@ -982,10 +989,13 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Instant usedEndDate = startDate.plus(7, DAYS);
 
 		List<Instant> datumTimestamps = new ArrayList<>();
+		List<URI> expectedUris = new ArrayList<>();
+
+		BDDMyOngoingStubbing<ResponseEntity<JsonNode>> reqStub = null;
 
 		for ( int i = 0; i < 7; i++ ) {
 			// @formatter:off
-			URI expectedDevice1DayUri = UriComponentsBuilder.fromUri(BASE_URI)
+			URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
 					.path(DEVICE_HISTORY_URL_TEMPLATE)
 					.queryParam(START_AT_PARAM, startDate.plus(i, DAYS))
 					.queryParam(END_AT_PARAM, startDate.plus(i + 1, DAYS))
@@ -995,16 +1005,19 @@ public class FroniusCloudDatumStreamServiceTests {
 					.toUri()
 					;
 			// @formatter:on
+			expectedUris.add(expectedUri);
 
 			Instant datumTimestamp = startDate.plus(i + 1, DAYS).minusSeconds(300);
 			datumTimestamps.add(datumTimestamp);
 
-			given(restOps.exchange(eq(expectedDevice1DayUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
-							responseJsonTemplate
-									.formatted(JsonUtils.getJSONString(datumTimestamp.toString())),
-							ObjectNode.class), OK));
-
+			var res = new ResponseEntity<>(getObjectFromJSON(
+					responseJsonTemplate.formatted(JsonUtils.getJSONString(datumTimestamp.toString())),
+					JsonNode.class), OK);
+			if ( reqStub == null ) {
+				reqStub = given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+			} else {
+				reqStub = reqStub.willReturn(res);
+			}
 		}
 
 		// WHEN
@@ -1015,16 +1028,27 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(7)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(7)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
+		and.then(httpRequestCaptor.getAllValues())
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
+			;
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					;
+			})
 			.extracting(HttpEntity::getHeaders)
 			.allSatisfy(headers -> {
-				and.then(headers)
+				and.then(headers.toSingleValueMap())
 					.as("API ID provided in HTTP request header")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("API secret provided in HTTP request header")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			;
@@ -1054,6 +1078,682 @@ public class FroniusCloudDatumStreamServiceTests {
 			.extracting(Datum::getTimestamp)
 			.as("All datum from day HTTP requests returned")
 			.containsExactlyElementsOf(datumTimestamps)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datum_mappedSourceIds_withPlaceholders_multiStreamLag_withinTolerance() {
+		// GIVEN
+		final String accessKeyId = randomString();
+		final String accessKeySecret = randomString();
+		final String systemId1 = randomString();
+		final String device1Id1 = randomString();
+		final String systemId2 = randomString();
+		final String device1Id2 = randomString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				ACCESS_KEY_ID_SETTING, accessKeyId,
+				ACCESS_KEY_SECRET_SETTING, accessKeySecret
+			));
+		// @formatter:on
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties for energy imp/exp, that support both inverter and meter channels
+
+		final String channel1Name = "EnergyExported";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final String channel2Name = "EnergyImported";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setScale(0);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String inv1SourceId = "inv/1";
+		final String inv2SourceId = "inv/2";
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId("unused");
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId1, device1Id1), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId2, device1Id2), inv2SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
+
+		// setup clock to be near end of requested data period
+
+		final Instant startDate = Instant.parse("2025-03-23T01:00:00Z");
+		final Instant endDate = startDate.plus(1L, HOURS);
+
+		clock.setInstant(endDate.plusSeconds(1));
+
+		// HTTP requests: 1x per device
+
+		given(restOps.exchange(any(), eq(JsonNode.class)))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
+						ObjectNode.class), OK))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-device-history-inverter-02a.json", getClass()),
+						ObjectNode.class), OK));
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("Request headers contains API key")
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
+					.as("Request headers contains API secret")
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId1, device1Id1)
+						.toUri()
+						;
+
+				URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId2, device1Id2)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 2 day 1 page 2")
+					.returns(expectedDevice2Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+			})
+			;
+
+		and.then(result.getUsedQueryFilter())
+			.as("Used query filter provided")
+			.isNotNull()
+			.as("Used query start date is filter start date truncated to hours")
+			.returns(filter.getStartDate().truncatedTo(HOURS), from(DateRangeCriteria::getStartDate))
+			.as("Used query end date is filter end date truncated to hours")
+			.returns(filter.getEndDate().truncatedTo(HOURS), from(DateRangeCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses")
+			.hasSize(3)
+			.elements(0, 1)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream sourceIdMap")
+					.returns(inv1SourceId, from(Datum::getSourceId))
+					;
+			})
+			.extracting(Datum::getTimestamp)
+			.as("All datum from HTTP request for stream 1 returned")
+			.containsExactly(
+					  Instant.parse("2025-03-23T01:25:00Z")
+					, Instant.parse("2025-03-23T01:30:00Z")
+					)
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses")
+			.elements(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream sourceIdMap")
+					.returns(inv2SourceId, from(Datum::getSourceId))
+					;
+			})
+			.extracting(Datum::getTimestamp)
+			.as("All datum from HTTP request for stream 2 returned")
+			.containsExactly(
+					  Instant.parse("2025-03-23T01:25:00Z")
+					)
+			;
+
+
+		and.then(result)
+			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
+			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
+			.as("Next query filter returned")
+			.isNotNull()
+			.as("01:25 returned, as the least of all greatest timestamps per stream")
+			.returns(Instant.parse("2025-03-23T01:25:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datum_mappedSourceIds_withPlaceholders_multiStreamLag_outsideTolerance() {
+		// GIVEN
+		final String accessKeyId = randomString();
+		final String accessKeySecret = randomString();
+		final String systemId1 = randomString();
+		final String device1Id1 = randomString();
+		final String systemId2 = randomString();
+		final String device1Id2 = randomString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				ACCESS_KEY_ID_SETTING, accessKeyId,
+				ACCESS_KEY_SECRET_SETTING, accessKeySecret
+			));
+		// @formatter:on
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties for energy imp/exp, that support both inverter and meter channels
+
+		final String channel1Name = "EnergyExported";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final String channel2Name = "EnergyImported";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setScale(0);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String inv1SourceId = "inv/1";
+		final String inv2SourceId = "inv/2";
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId("unused");
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId1, device1Id1), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId2, device1Id2), inv2SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
+
+		// setup clock to be 1y after end of requested data period
+
+		final Instant startDate = Instant.parse("2025-03-23T01:00:00Z");
+		final Instant endDate = startDate.plus(1L, HOURS);
+
+		clock.setInstant(endDate.plus(365, DAYS));
+
+		// HTTP requests: 1x per device
+
+		given(restOps.exchange(any(), eq(JsonNode.class)))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
+						ObjectNode.class), OK))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-device-history-inverter-02a.json", getClass()),
+						ObjectNode.class), OK));
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+					.as("Request headers contains API key")
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
+					.as("Request headers contains API secret")
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId1, device1Id1)
+						.toUri()
+						;
+
+				URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId2, device1Id2)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 2 day 1 page 2")
+					.returns(expectedDevice2Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+			})
+			;
+
+		and.then(result.getUsedQueryFilter())
+			.as("Used query filter provided")
+			.isNotNull()
+			.as("Used query start date is filter start date truncated to hours")
+			.returns(filter.getStartDate().truncatedTo(HOURS), from(DateRangeCriteria::getStartDate))
+			.as("Used query end date is filter end date truncated to hours")
+			.returns(filter.getEndDate().truncatedTo(HOURS), from(DateRangeCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses")
+			.hasSize(3)
+			.elements(0, 1)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream sourceIdMap")
+					.returns(inv1SourceId, from(Datum::getSourceId))
+					;
+			})
+			.extracting(Datum::getTimestamp)
+			.as("All datum from HTTP request for stream 1 returned")
+			.containsExactly(
+					  Instant.parse("2025-03-23T01:25:00Z")
+					, Instant.parse("2025-03-23T01:30:00Z")
+					)
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses")
+			.elements(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream sourceIdMap")
+					.returns(inv2SourceId, from(Datum::getSourceId))
+					;
+			})
+			.extracting(Datum::getTimestamp)
+			.as("All datum from HTTP request for stream 2 returned")
+			.containsExactly(
+					  Instant.parse("2025-03-23T01:25:00Z")
+					)
+			;
+
+
+		and.then(result)
+			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
+			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
+			.as("No next query filter returned because clock is beyond multi stream lag tolerance")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datum_timeJump() {
+		// GIVEN
+		service.setDatumDao(datumDao);
+
+		final String accessKeyId = randomString();
+		final String accessKeySecret = randomString();
+		final String systemId = randomString();
+		final String device1Id = randomString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				ACCESS_KEY_ID_SETTING, accessKeyId,
+				ACCESS_KEY_SECRET_SETTING, accessKeySecret
+			));
+		// @formatter:on
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties for energy imp/exp, that support both inverter and meter channels
+
+		final String channel1Name = "EnergyExported";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh_exp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel1Name));
+		prop1.setScale(0);
+		prop1.setEnabled(true);
+
+		final String channel2Name = "EnergyImported";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh_imp", Reference,
+				systemDevicePlaceholderComponentValueRef(channel2Name));
+		prop2.setScale(0);
+		prop2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String inv1SourceId = "inv/1";
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId("unused");
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+				Map.of("/%s/%s".formatted(systemId, device1Id), inv1SourceId)));
+
+		// HTTP requests: 1x for device day, max 7 days
+
+		final String responseJsonTemplate = """
+				{
+				  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
+				  "deviceId": "3b482b62-1754-48f1-a0ca-000000000000",
+				  "data": [
+				    {
+				      "logDateTime": %s,
+				      "logDuration": 300,
+				      "channels": [
+				        {
+				          "channelName": "EnergyExported",
+				          "channelType": "Energy",
+				          "unit": "Wh",
+				          "value": 1.0
+				        },
+				        {
+				          "channelName": "EnergyImported",
+				          "channelType": "Energy",
+				          "unit": "Wh",
+				          "value": 2.0
+				        }
+				      ]
+				    }
+				  ],
+				  "links": {
+				    "first": "https://api",
+				    "prev": null,
+				    "self": "https://api",
+				    "next": null,
+				    "last": "https://api",
+				    "totalItemsCount": 1
+				  }
+				}
+				""";
+
+		final Instant startDate = clock.instant().minus(8, DAYS);
+		final Instant endDate = clock.instant();
+		final Instant usedEndDate = startDate.plus(7, DAYS);
+
+		List<Instant> datumTimestamps = new ArrayList<>();
+		List<URI> expectedUris = new ArrayList<>();
+
+		BDDMyOngoingStubbing<ResponseEntity<JsonNode>> reqStub = null;
+
+		for ( int i = 0; i < 7; i++ ) {
+			// @formatter:off
+			URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
+					.path(DEVICE_HISTORY_URL_TEMPLATE)
+					.queryParam(START_AT_PARAM, startDate.plus(i, DAYS))
+					.queryParam(END_AT_PARAM, startDate.plus(i + 1, DAYS))
+					.queryParam(OFFSET_PARAM, 0L)
+					.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+					.buildAndExpand(systemId, device1Id)
+					.toUri()
+					;
+			// @formatter:on
+			expectedUris.add(expectedUri);
+
+			Instant datumTimestamp = startDate.plus(i + 1, DAYS).minusSeconds(300);
+			datumTimestamps.add(datumTimestamp);
+
+			var res = new ResponseEntity<>(getObjectFromJSON(
+					responseJsonTemplate.formatted(JsonUtils.getJSONString(datumTimestamp.toString())),
+					JsonNode.class), OK);
+			if ( reqStub == null ) {
+				reqStub = given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+			} else {
+				reqStub = reqStub.willReturn(res);
+			}
+		}
+
+		// lookup previous datum for first datum in result set
+		final Instant firstDatumTs = datumTimestamps.getFirst();
+		final Instant prevDatumTs = firstDatumTs.minus(100, ChronoUnit.HOURS);
+		final String deviceRef = "/%s/%s".formatted(systemId, device1Id);
+		final var prevDatum = new DatumEntity(new DatumPK(UUID.randomUUID(), prevDatumTs), null,
+				new DatumProperties());
+		given(datumDao
+				.findFiltered(any()))
+						.willReturn(
+								new BasicObjectDatumStreamFilterResults<>(
+										Map.of(prevDatum.streamId(),
+												emptyMeta(prevDatum.streamId(), "UTC",
+														datumStream.getKind(), nodeId, inv1SourceId)),
+										List.of(prevDatum)));
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(7)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
+			;
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					;
+			})
+			.extracting(HttpEntity::getHeaders)
+			.allSatisfy(headers -> {
+				and.then(headers.toSingleValueMap())
+					.as("API ID provided in HTTP request header")
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
+					.as("API secret provided in HTTP request header")
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
+					;
+			})
+			;
+
+		// lookup prev datum
+		then(datumDao).should().findFiltered(datumCriteriaCaptor.capture());
+		and.then(datumCriteriaCaptor.getValue())
+			.as("Prev datum query is for most recent")
+			.returns(true, from(DatumCriteria::isMostRecent))
+			.as("Prev datum query end date is first datum timestamp")
+			.returns(firstDatumTs, from(DatumCriteria::getEndDate))
+			.as("Prev datum query is for CloudDatumStream kind")
+			.returns(datumStream.getKind(), from(DatumCriteria::getObjectKind))
+			.as("Prev datum query is for CloudDatumStream object (node) ID")
+			.returns(datumStream.getObjectId(), from(DatumCriteria::getNodeId))
+			.as("Prev datum query is for expected source ID")
+			.returns(inv1SourceId, from(DatumCriteria::getSourceId))
+			;
+
+		and.then(result.getUsedQueryFilter())
+			.as("Used query filter provided")
+			.isNotNull()
+			.as("Used query start date is filter start date truncated to hours")
+			.returns(filter.getStartDate().truncatedTo(HOURS), from(DateRangeCriteria::getStartDate))
+			.as("Used query end date is filter end date truncated to maximum filter time range")
+			.returns(usedEndDate, from(DateRangeCriteria::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP responses (one per day)")
+			.hasSize(7)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream sourceIdMap")
+					.returns(inv1SourceId, from(Datum::getSourceId))
+					;
+			})
+			.extracting(Datum::getTimestamp)
+			.as("All datum from day HTTP requests returned")
+			.containsExactlyElementsOf(datumTimestamps)
+			;
+
+		// validate that Mark records created for time gap
+		and.then(result.getAuxiliary())
+			.as("Auxiliary records created for start/end time gap events")
+			.hasSize(2)
+			.allSatisfy(r -> {
+				and.then(r)
+					.as("Event type is Mark")
+					.returns(DatumAuxiliaryType.Mark, from(DatumAuxiliaryRecord::getType))
+					.as("Event kind is Cloud datum Stream kind")
+					.returns(datumStream.getKind(), from(DatumAuxiliaryRecord::getKind))
+					.as("Event object ID is Cloud Datum Stream ID")
+					.returns(datumStream.getObjectId(), from(DatumAuxiliaryRecord::getObjectId))
+					.as("Event for expected source")
+					.returns(inv1SourceId, from(DatumAuxiliaryRecord::getSourceId))
+					;
+			})
+			.satisfies(records -> {
+				final Instant timeGapStartTs = prevDatumTs;
+				final Instant timeGapEndTs = firstDatumTs;
+
+				and.then(records).element(0, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap start validation event datum")
+					.returns(timeGapStartTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsAllEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, timeGapStartTs, timeGapEndTs, true, null))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+				and.then(records).element(1, type(DatumAuxiliaryRecord.class))
+					.as("Timestamp for time-gap end validation event datum")
+					.returns(timeGapEndTs, from(DatumAuxiliaryRecord::getTimestamp))
+					.extracting(DatumAuxiliaryRecord::getMetadata)
+					.satisfies(meta -> {
+						and.then(meta.getInfo())
+							.as("Metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationMetadata())
+							;
+						and.then(meta.getPropertyInfo(TIME_GAP_VALIDATION_TYPE))
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Property metadata for time-gap start event datum")
+							.containsExactlyInAnyOrderEntriesOf(timeGapValidationPropertyMetadata(
+									deviceRef, expectedUris.get(0), null, timeGapStartTs, timeGapEndTs, false,
+									records.toArray(DatumAuxiliaryRecord[]::new)[0].getMetadata().getInfoString(
+											TIME_GAP_VALIDATION_TYPE, CORRELATION_ID_DATA_KEY)))
+							.as("Correlation ID provided")
+							.containsKey(CORRELATION_ID_DATA_KEY)
+							;
+					})
+					;
+			})
 			;
 		// @formatter:on
 	}

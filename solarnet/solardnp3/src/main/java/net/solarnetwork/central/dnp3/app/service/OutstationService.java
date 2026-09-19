@@ -26,18 +26,19 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.dnp3.app.service.Dnp3Utils.copySettings;
 import static net.solarnetwork.central.instructor.biz.InstructorBiz.createErrorResultParameters;
 import static net.solarnetwork.domain.InstructionStatus.createStatus;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.automatak.dnp3.AnalogInput;
@@ -104,7 +105,7 @@ import net.solarnetwork.util.StringUtils;
  * DNP3 Outstation service.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OutstationService
 		implements ServiceLifecycleObserver, ChannelListener, Dnp3UserEvents, Consumer<ObjectDatum> {
@@ -143,11 +144,11 @@ public class OutstationService
 	private final Map<Long, Map<String, List<ServerMeasurementConfiguration>>> datumMeasurements;
 	private final Map<Long, Map<String, List<ServerControlConfiguration>>> datumControls;
 
-	private Executor taskExecutor;
+	private @Nullable Executor taskExecutor;
 	private int eventBufferSize = DEFAULT_EVENT_BUFFER_SIZE;
 	private int startupDelaySecs = DEFAULT_STARTUP_DELAY_SECONDS;
 
-	private Outstation outstation;
+	private @Nullable Outstation outstation;
 	private ChannelState channelState = ChannelState.CLOSED;
 
 	/**
@@ -166,7 +167,7 @@ public class OutstationService
 	 * @param port
 	 *        the listen port
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OutstationService(DNP3Manager manager, UserEventAppenderBiz userEventAppenderBiz,
 			InstructorBiz instructorBiz, ServerAuthConfiguration auth, String bindAddress, int port,
@@ -197,8 +198,10 @@ public class OutstationService
 			return;
 		}
 		outstation = createOutstation();
-		outstation.enable();
-		log.info("DNP3 outstation [{}] enabled", getUid());
+		if ( outstation != null ) {
+			outstation.enable();
+			log.info("DNP3 outstation [{}] enabled", getUid());
+		}
 	}
 
 	@Override
@@ -239,7 +242,7 @@ public class OutstationService
 	 * =========================================================================
 	 */
 
-	private class Application extends BaseOutstationApplication {
+	private static class Application extends BaseOutstationApplication {
 
 	}
 
@@ -275,7 +278,7 @@ public class OutstationService
 
 			final Runnable task = () -> {
 				try {
-					operateBinaryControl(command, index, opType, config);
+					operateBinaryControl(command, index, config);
 				} catch ( Exception e ) {
 					userEventAppenderBiz.addEvent(auth.getUserId(),
 							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
@@ -299,30 +302,30 @@ public class OutstationService
 		@Override
 		public CommandStatus operate(AnalogOutputInt16 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputInt16", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputInt16", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputInt32 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputInt32", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputInt32", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputFloat32 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputFloat32", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputFloat32", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputDouble64 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputDouble64",
-					command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputDouble64", command.value);
 		}
 
-		private CommandStatus handleAnalogOperation(Object command, int index, Database database,
-				String opDescription, Number value) {
+		private CommandStatus handleAnalogOperation(int index,
+				@SuppressWarnings("UnusedVariable") Database database, String opDescription,
+				Number value) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Analog, index);
 			if ( config == null ) {
 				userEventAppenderBiz.addEvent(auth.getUserId(),
@@ -340,7 +343,7 @@ public class OutstationService
 
 			final Runnable task = () -> {
 				try {
-					operateAnalogControl(command, index, opDescription, config, value);
+					operateAnalogControl(index, opDescription, config, value);
 				} catch ( Exception e ) {
 					userEventAppenderBiz.addEvent(auth.getUserId(),
 							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
@@ -362,7 +365,8 @@ public class OutstationService
 		}
 	}
 
-	private ServerControlConfiguration controlConfigForIndex(ControlType controlType, int index) {
+	private @Nullable ServerControlConfiguration controlConfigForIndex(ControlType controlType,
+			int index) {
 		MeasurementType measType = (controlType == ControlType.Analog
 				? MeasurementType.AnalogOutputStatus
 				: MeasurementType.BinaryOutputStatus);
@@ -377,18 +381,19 @@ public class OutstationService
 
 	private static final String INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER = "SetControlParameter";
 
-	private InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
-			OperateType opType, ServerControlConfiguration config) {
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
+	private @Nullable InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
+			ServerControlConfiguration config) {
 		Instruction instr = null;
 		switch (command.opType) {
 			case LATCH_ON:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-				instr.addParameter(config.getControlId(), Boolean.TRUE.toString());
+				instr.addParameter(config.getControlId(), String.valueOf(true));
 				break;
 
 			case LATCH_OFF:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-				instr.addParameter(config.getControlId(), Boolean.FALSE.toString());
+				instr.addParameter(config.getControlId(), String.valueOf(false));
 				break;
 
 			default:
@@ -397,15 +402,15 @@ public class OutstationService
 		return issueInstruction("CROB " + command.opType, index, config, instr);
 	}
 
-	private InstructionStatus operateAnalogControl(Object type, int index, String opDescription,
+	private @Nullable InstructionStatus operateAnalogControl(int index, String opDescription,
 			ServerControlConfiguration config, Number value) {
 		Instruction instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
 		instr.addParameter(config.getControlId(), value.toString());
 		return issueInstruction(opDescription, index, config, instr);
 	}
 
-	private InstructionStatus issueInstruction(String opDescription, int index,
-			ServerControlConfiguration config, Instruction instr) {
+	private @Nullable InstructionStatus issueInstruction(String opDescription, int index,
+			ServerControlConfiguration config, @Nullable Instruction instr) {
 		InstructionStatus result = null;
 		try {
 			if ( instr != null ) {
@@ -433,7 +438,7 @@ public class OutstationService
 					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
 							opDescription + " control operation failed.", result.getResultParameters(),
 							ERROR_TAG));
-		} else {
+		} else if ( instr != null ) {
 			Map<String, Object> eventData = new LinkedHashMap<>(2);
 			eventData.put(TOPIC_DATA_KEY, instr.getTopic());
 			if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
@@ -474,11 +479,11 @@ public class OutstationService
 		}
 	}
 
-	private static <T> List<T> nonNullList(List<T> list) {
-		return (list != null ? list : Collections.emptyList());
+	private static <T> List<T> nonNullList(@Nullable List<T> list) {
+		return (list != null ? list : List.of());
 	}
 
-	private OutstationChangeSet changeSetForDatumCapturedEvent(final Datum datum) {
+	private @Nullable OutstationChangeSet changeSetForDatumCapturedEvent(final @Nullable Datum datum) {
 		if ( datum == null || (measurementTypes.isEmpty() && controlTypes.isEmpty()) ) {
 			return null;
 		}
@@ -506,6 +511,9 @@ public class OutstationService
 		OutstationChangeSet changes = null;
 
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
+			if ( config.getProperty() == null ) {
+				continue;
+			}
 			Object propVal = datum.asSampleOperations().findSampleValue(config.getProperty());
 			if ( propVal instanceof Number propNum ) {
 				if ( config.getMultiplier() != null ) {
@@ -516,7 +524,7 @@ public class OutstationService
 				}
 				propVal = propNum;
 			}
-			final int idx = measurementTypes.get(config.getType()).indexOf(config);
+			final int idx = nonNullList(measurementTypes.get(config.getType())).indexOf(config);
 			if ( idx < 0 ) {
 				// really shouldn't be here
 				continue;
@@ -581,7 +589,7 @@ public class OutstationService
 
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			final Object controlVal = controlValue(datum, config.getProperty());
-			final int idx = controlTypes.get(config.getType()).indexOf(config);
+			final int idx = nonNullList(controlTypes.get(config.getType())).indexOf(config);
 			if ( idx < 0 ) {
 				// really shouldn't be here
 				continue;
@@ -599,15 +607,18 @@ public class OutstationService
 				case Analog -> {
 					try {
 						Number n;
-						if ( controlVal instanceof Number controlNum ) {
+						if ( controlVal == null ) {
+							n = null;
+						} else if ( controlVal instanceof Number controlNum ) {
 							n = controlNum;
 						} else {
 							n = new BigDecimal(controlVal.toString());
 						}
-						changes.update(
-								new AnalogOutputStatus(n.doubleValue(),
-										new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
-								index);
+						if ( n != null ) {
+							changes.update(new AnalogOutputStatus(n.doubleValue(),
+									new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
+									index);
+						}
 					} catch ( NumberFormatException e ) {
 						log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
 								controlVal, e.getMessage());
@@ -647,9 +658,9 @@ public class OutstationService
 	 *        the datum
 	 * @param property
 	 *        the optional datum property name to extract
-	 * @return the control value, or {@literal null}
+	 * @return the control value, or {@code null}
 	 */
-	private static Object controlValue(final Datum datum, final String property) {
+	private static @Nullable Object controlValue(final Datum datum, final @Nullable String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();
 		if ( property != null && !property.isBlank() ) {
 			return ops.findSampleValue(property);
@@ -677,11 +688,13 @@ public class OutstationService
 		return (list != null ? list.size() : 0);
 	}
 
-	private boolean booleanPropertyValue(Object propVal) {
-		if ( propVal instanceof Boolean ) {
-			return (Boolean) propVal;
-		} else if ( propVal instanceof Number ) {
-			return ((Number) propVal).intValue() != 0;
+	private boolean booleanPropertyValue(@Nullable Object propVal) {
+		if ( propVal == null ) {
+			return false;
+		} else if ( propVal instanceof Boolean b ) {
+			return b;
+		} else if ( propVal instanceof Number n ) {
+			return n.intValue() != 0;
 		} else {
 			return StringUtils.parseBoolean(propVal.toString());
 		}
@@ -691,7 +704,7 @@ public class OutstationService
 		if ( decimalScale < 0 ) {
 			return value;
 		}
-		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		BigDecimal v = nonnull(NumberUtils.bigDecimalForNumber(value), "Value");
 		if ( v.scale() > decimalScale ) {
 			v = v.setScale(decimalScale, RoundingMode.HALF_UP);
 		}
@@ -702,11 +715,11 @@ public class OutstationService
 		if ( BigDecimal.ONE.compareTo(multiplier) == 0 ) {
 			return value;
 		}
-		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		BigDecimal v = nonnull(NumberUtils.bigDecimalForNumber(value), "Value");
 		return v.multiply(multiplier);
 	}
 
-	private Outstation createOutstation() {
+	private @Nullable Outstation createOutstation() {
 		TcpServerChannelConfiguration conf = new TcpServerChannelConfiguration();
 		conf.setBindAddress(bindAddress);
 		conf.setPort(port);
@@ -746,8 +759,8 @@ public class OutstationService
 				measurementConfigs.size());
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
 			if ( config.isValid() ) {
-				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
-						.computeIfAbsent(config.getSourceId(), k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(config.getNodeId(), _ -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getSourceId(), _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -758,8 +771,8 @@ public class OutstationService
 				measurementConfigs.size());
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			if ( config.isValid() ) {
-				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
-						.computeIfAbsent(config.getControlId(), k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(config.getNodeId(), _ -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getControlId(), _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -771,7 +784,7 @@ public class OutstationService
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
 			MeasurementType type = config.getType();
 			if ( type != null && config.getProperty() != null && !config.getProperty().isEmpty() ) {
-				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(type, _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -783,7 +796,7 @@ public class OutstationService
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			ControlType type = config.getType();
 			if ( type != null && config.getControlId() != null && !config.getControlId().isEmpty() ) {
-				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(type, _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -814,6 +827,7 @@ public class OutstationService
 		}
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private DatabaseConfig createDatabaseConfig(
 			Map<MeasurementType, List<ServerMeasurementConfiguration>> configs,
 			Map<ControlType, List<ServerControlConfiguration>> controlConfigs) {
@@ -897,6 +911,7 @@ public class OutstationService
 				frozenCounterCount, boStatusCount, aoStatusCount);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private EventBufferConfig createEventBufferConfig(
 			Map<MeasurementType, List<ServerMeasurementConfiguration>> configs,
 			Map<ControlType, List<ServerControlConfiguration>> controlConfigs) {
@@ -1014,7 +1029,7 @@ public class OutstationService
 	 *
 	 * @return the task executor
 	 */
-	public Executor getTaskExecutor() {
+	public @Nullable Executor getTaskExecutor() {
 		return taskExecutor;
 	}
 
@@ -1024,7 +1039,7 @@ public class OutstationService
 	 * @param taskExecutor
 	 *        the task executor to set
 	 */
-	public void setTaskExecutor(Executor taskExecutor) {
+	public void setTaskExecutor(@Nullable Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 

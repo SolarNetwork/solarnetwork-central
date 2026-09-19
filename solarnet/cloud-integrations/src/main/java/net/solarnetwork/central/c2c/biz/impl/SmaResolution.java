@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAmount;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum SmaResolution {
 
 	/** One minute resolution. */
@@ -63,7 +65,7 @@ public enum SmaResolution {
 	private final String key;
 	private final TemporalAmount tickAmount;
 
-	private SmaResolution(String key, TemporalAmount tickAmount) {
+	SmaResolution(String key, TemporalAmount tickAmount) {
 		this.key = key;
 		this.tickAmount = tickAmount;
 	}
@@ -71,7 +73,7 @@ public enum SmaResolution {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;
@@ -80,7 +82,7 @@ public enum SmaResolution {
 	/**
 	 * Get a clock tick duration appropriate for this granularity.
 	 *
-	 * @return the duration, never {@literal null}
+	 * @return the duration, never {@code null}
 	 */
 	public TemporalAmount getTickAmount() {
 		return tickAmount;
@@ -130,13 +132,13 @@ public enum SmaResolution {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #FiveMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static SmaResolution fromValue(String value) {
+	public static SmaResolution fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return FiveMinute;
 		}

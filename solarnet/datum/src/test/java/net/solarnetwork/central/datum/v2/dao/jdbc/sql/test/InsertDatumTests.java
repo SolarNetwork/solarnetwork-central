@@ -1,21 +1,21 @@
 /* ==================================================================
  * InsertDatumTests.java - 19/11/2020 6:11:01 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,9 +31,9 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -46,7 +46,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -55,7 +55,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Test cases for the {@link InsertDatum} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -84,19 +84,6 @@ public class InsertDatumTests {
 	}
 
 	@Test
-	public void sql_insert_noTimestamp() {
-		// GIVEN
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), null, Instant.now(), testProps());
-
-		// WHEN
-		String sql = new InsertDatum(d).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("insert-datum-noTimestamp.sql", TestSqlResources.class));
-	}
-
-	@Test
 	public void sql_insert_noReceived() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -108,19 +95,6 @@ public class InsertDatumTests {
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("insert-datum-noReceived.sql", TestSqlResources.class));
-	}
-
-	@Test
-	public void sql_insert_noTimestampOrReceived() {
-		// GIVEN
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), null, null, testProps());
-
-		// WHEN
-		String sql = new InsertDatum(d).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("insert-datum-noTimestampOrReceived.sql", TestSqlResources.class));
 	}
 
 	@Test
@@ -145,6 +119,9 @@ public class InsertDatumTests {
 		Capture<Timestamp> recvCaptor = new Capture<>();
 		stmt.setTimestamp(eq(3), capture(recvCaptor));
 
+		// array helper gets connection from statement
+		expect(stmt.getConnection()).andReturn(con).times(4);
+
 		Array iArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("NUMERIC"), aryEq(d.getProperties().getInstantaneous())))
 				.andReturn(iArray);
@@ -158,12 +135,12 @@ public class InsertDatumTests {
 		aArray.free();
 
 		Array sArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("TEXT"), aryEq(d.getProperties().getStatus()))).andReturn(sArray);
+		expect(con.createArrayOf(eq("text"), aryEq(d.getProperties().getStatus()))).andReturn(sArray);
 		stmt.setArray(6, sArray);
 		sArray.free();
 
 		Array tArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("TEXT"), aryEq(d.getProperties().getTags()))).andReturn(tArray);
+		expect(con.createArrayOf(eq("text"), aryEq(d.getProperties().getTags()))).andReturn(tArray);
 		stmt.setArray(7, tArray);
 		tArray.free();
 

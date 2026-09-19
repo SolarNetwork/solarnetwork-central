@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,13 +41,13 @@ import javax.xml.transform.Templates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
 import net.solarnetwork.central.inin.biz.impl.XsltRequestTransformService;
 import net.solarnetwork.central.inin.biz.impl.XsltResponseTransformService;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.util.CachedResult;
@@ -77,14 +76,14 @@ public class XsltResponseTransformServiceTests {
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
 		templatesCache = new BasicSharedValueCache<>(primaryCache, sharedCache);
-		service = new XsltResponseTransformService(dbf, tf, JsonUtils.newDatumObjectMapper(),
+		service = new XsltResponseTransformService(dbf, tf, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
 				Duration.ZERO, templatesCache);
 	}
 
 	@Test
 	public void empty() throws IOException {
 		// GIVEN
-		List<NodeInstruction> instructions = Collections.emptyList();
+		List<NodeInstruction> instructions = List.of();
 
 		final String xslt = ClassUtils.getResourceAsString("test-xform-res-01.xsl", getClass());
 
@@ -113,10 +112,10 @@ public class XsltResponseTransformServiceTests {
 		// GIVEN
 		List<NodeInstruction> instructions = new ArrayList<>();
 		NodeInstruction instr1 = new NodeInstruction("LatestDatum", Instant.now().minusSeconds(1), 123L);
-		instr1.setParams(Map.of("foo", "bar", "bim", "bam"));
-		instr1.setState(InstructionState.Completed);
-		instr1.setStatusDate(Instant.now());
-		instr1.setResultParametersJson("""
+		instr1.getInstruction().setParams(Map.of("foo", "bar", "bim", "bam"));
+		instr1.getInstruction().setState(InstructionState.Completed);
+		instr1.getInstruction().setStatusDate(Instant.now());
+		instr1.getInstruction().setResultParametersJson("""
 				{"datum": [
 					{
 						"sourceId": "test/1",

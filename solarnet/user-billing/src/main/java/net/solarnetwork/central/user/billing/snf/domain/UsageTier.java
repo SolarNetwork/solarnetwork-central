@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 
 /**
@@ -67,22 +69,7 @@ public class UsageTier implements NamedCost {
 	}
 
 	/**
-	 * Create a tier without a date.
-	 *
-	 * @param key
-	 *        the key
-	 * @param quantity
-	 *        the quantity
-	 * @param cost
-	 *        the cost
-	 * @return the new tier instance
-	 */
-	public static UsageTier tier(String key, long quantity, BigDecimal cost) {
-		return new UsageTier(key, quantity, cost);
-	}
-
-	/**
-	 * Create a tier without a date.
+	 * Create a tier.
 	 *
 	 * @param key
 	 *        the key
@@ -93,28 +80,15 @@ public class UsageTier implements NamedCost {
 	 * @param date
 	 *        the associated date
 	 * @return the new tier instance
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public static UsageTier tier(String key, long quantity, BigDecimal cost, LocalDate date) {
-		return new UsageTier(key, quantity, cost, date);
+		return new UsageTier(key, BigInteger.valueOf(quantity), cost, date);
 	}
 
 	/**
-	 * Create a tier without a date.
-	 *
-	 * @param key
-	 *        the key
-	 * @param quantity
-	 *        the quantity
-	 * @param cost
-	 *        the cost as a string
-	 * @return the new tier instance
-	 */
-	public static UsageTier tier(String key, long quantity, String cost) {
-		return new UsageTier(key, quantity, new BigDecimal(cost));
-	}
-
-	/**
-	 * Create a tier without a date.
+	 * Create a tier.
 	 *
 	 * @param key
 	 *        the key
@@ -125,39 +99,11 @@ public class UsageTier implements NamedCost {
 	 * @param date
 	 *        the associated date
 	 * @return the new tier instance
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public static UsageTier tier(String key, long quantity, String cost, LocalDate date) {
-		return new UsageTier(key, quantity, new BigDecimal(cost), date);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param key
-	 *        the tier key
-	 * @param quantity
-	 *        the tier quantity
-	 * @param cost
-	 *        the cost associated with the tier
-	 */
-	public UsageTier(String key, long quantity, BigDecimal cost) {
-		this(key, BigInteger.valueOf(quantity), cost, null);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param key
-	 *        the tier key
-	 * @param quantity
-	 *        the tier quantity
-	 * @param cost
-	 *        the cost associated with the tier
-	 * @param date
-	 *        the associated date
-	 */
-	public UsageTier(String key, long quantity, BigDecimal cost, LocalDate date) {
-		this(key, BigInteger.valueOf(quantity), cost, date);
+		return new UsageTier(key, BigInteger.valueOf(quantity), new BigDecimal(cost), date);
 	}
 
 	/**
@@ -172,22 +118,13 @@ public class UsageTier implements NamedCost {
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code date} is {@literal null}
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public UsageTier(String key, BigInteger quantity, BigDecimal cost, LocalDate date) {
 		super();
-		if ( key == null ) {
-			throw new IllegalArgumentException("The key argument must be provided.");
-		}
-		this.key = key;
-		if ( quantity == null ) {
-			throw new IllegalArgumentException("The quantity argument must be provided.");
-		}
-		this.quantity = quantity;
-		if ( cost == null ) {
-			throw new IllegalArgumentException("The cost argument must be provided.");
-		}
-		this.cost = cost;
+		this.key = requireNonNullArgument(key, "key");
+		this.quantity = requireNonNullArgument(quantity, "quantity");
+		this.cost = requireNonNullArgument(cost, "cost");
 		this.date = date;
 	}
 
@@ -197,7 +134,7 @@ public class UsageTier implements NamedCost {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -288,7 +225,7 @@ public class UsageTier implements NamedCost {
 	 * The {@code date} might be interpreted as an effective date.
 	 * </p>
 	 *
-	 * @return the date, or {@literal null}
+	 * @return the date
 	 */
 	public LocalDate getDate() {
 		return date;

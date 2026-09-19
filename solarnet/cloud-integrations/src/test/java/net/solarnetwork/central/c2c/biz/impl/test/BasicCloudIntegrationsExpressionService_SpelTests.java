@@ -23,7 +23,10 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService.USER_SECRET_TOPIC_ID;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -46,19 +49,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -76,7 +79,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
 public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private SolarNodeMetadataReadOnlyDao metadataDao;
@@ -151,6 +154,70 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	}
 
 	@Test
+	public void wattHours_32bitFloatMath() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long integrationId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		// populate a "wh" float
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "wh", 3.0f);
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "prevWattHours", 41577468);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				now(), Accumulating, "wattHours", SpelExpression, "wh + prevWattHours");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		// WHEN
+		DatumExpressionRoot root = service.createDatumExpressionRoot(userId, integrationId, datum,
+				parameters, null, null, null);
+		final Object result = service.evaluateDatumPropertyExpression(config, root, null, Object.class);
+
+		// THEN
+		// @formatter:off
+		thenObject(result)
+			.as("32-bit float + integer does 32-bit float addition to arrive at unexpected result (not 41577471)")
+			.isEqualTo(41577470f)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void wattHours_32bitFloatMath_floor() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long integrationId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		// populate a "wh" float
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "wh", 3.0f);
+		datum.putSampleValue(DatumSamplesType.Instantaneous, "prevWattHours", 41577468);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				now(), Accumulating, "wattHours", SpelExpression, "floor(wh) + prevWattHours");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		// WHEN
+		DatumExpressionRoot root = service.createDatumExpressionRoot(userId, integrationId, datum,
+				parameters, null, null, null);
+		final Object result = service.evaluateDatumPropertyExpression(config, root, null, Object.class);
+
+		// THEN
+		// @formatter:off
+		thenObject(result)
+			.as("floor(32-bit float) + integer does BigDecimal addition to arrive at expected result")
+			.isEqualTo(new BigDecimal("41577471"))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void evaluate_nodeMetadata() {
 		// GIVEN
 		final Long integrationId = randomLong();
@@ -161,9 +228,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
-				Instant.now());
-		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference("nodeMetadata('/m/setpoint') * (a * b + 1)");
+				now(), Instantaneous, "r", SpelExpression, "nodeMetadata('/m/setpoint') * (a * b + 1)");
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -207,10 +272,9 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 		final String tariffSchedulePath = "/pm/tariffs/foo";
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
-				Instant.now());
-		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
-				.formatted(tariffSchedulePath));
+				now(), Instantaneous, "r", SpelExpression,
+				"(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+						.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -237,7 +301,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 			.isNotNull()
 			;
 
-		BigDecimal expectedResult = schedule.resolveTariff(LocalDateTime.now(), null)
+		BigDecimal expectedResult = schedule.resolveTariff(LocalDateTime.now(UTC), null)
 			.getRates().get("E").getAmount()
 			.multiply(new BigDecimal(3));
 
@@ -260,10 +324,9 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 		final String tariffSchedulePath = "/pm/tariffs/foo";
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
-				Instant.now());
-		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
-				.formatted(tariffSchedulePath));
+				now(), Instantaneous, "r", SpelExpression,
+				"(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+						.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -311,9 +374,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(nodeOwnership);
 
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
-				Instant.now());
-		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference("now(node.zone)");
+				now(), Instantaneous, "r", SpelExpression, "now(node.zone)");
 
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
@@ -338,9 +399,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
 
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
-				Instant.now());
-		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference("secret('foo')");
+				now(), Instantaneous, "r", SpelExpression, "secret('foo')");
 
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 

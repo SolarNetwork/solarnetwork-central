@@ -58,19 +58,19 @@ public class NewNodeRequest {
 		this.locale = locale;
 	}
 
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
-	public String getSecurityPhrase() {
+	public final String getSecurityPhrase() {
 		return securityPhrase;
 	}
 
-	public TimeZone getTimeZone() {
+	public final TimeZone getTimeZone() {
 		return timeZone;
 	}
 
-	public Locale getLocale() {
+	public final Locale getLocale() {
 		return locale;
 	}
 

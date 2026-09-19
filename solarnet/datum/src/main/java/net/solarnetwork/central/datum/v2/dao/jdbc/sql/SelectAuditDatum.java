@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * filter.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 3.8
  */
 public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlProvider,
@@ -51,6 +51,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	protected final AuditDatumCriteria filter;
 	protected final Aggregation aggregation;
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AuditDatumCriteria filter) {
 		// limit aggregation to specific supported ones
 		Aggregation aggregation = Aggregation.Day;
@@ -75,7 +76,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectAuditDatum(AuditDatumCriteria filter) {
 		this(filter, aggregation(filter));
@@ -89,12 +90,12 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param aggregation
 	 *        the aggregation
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
-		this.aggregation = aggregation;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
 	}
 
 	/**
@@ -277,10 +278,11 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 		}
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private void sqlRollupGroup(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() && !filter.hasDatumRollupType(DatumRollupType.All) ) {
 			StringBuilder group = new StringBuilder();
-			for ( DatumRollupType t : filter.getDatumRollupTypes() ) {
+			for ( DatumRollupType t : filter.datumRollupTypes() ) {
 				switch (t) {
 					case Time:
 						group.append(", datum.ts_start");
@@ -298,7 +300,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 						// ignore
 				}
 			}
-			if ( group.length() > 0 ) {
+			if ( !group.isEmpty() ) {
 				buf.append("GROUP BY ").append(group.substring(2)).append("\n");
 			}
 		}
@@ -326,7 +328,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 					order.append(", aud_source_id");
 				}
 			}
-			if ( order.length() > 0 ) {
+			if ( !order.isEmpty() ) {
 				buf.append("ORDER BY ").append(order.substring(idx));
 			}
 		}
@@ -344,7 +346,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
 		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}

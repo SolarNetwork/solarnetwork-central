@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,25 +42,25 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link MqttNodeInstructionQueueHook} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
@@ -79,7 +78,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 	public void setup() throws Exception {
 		setupMqttServer();
 
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(JsonUtils.DATUM_MODULE).build();
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -94,7 +93,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 				nodeInstructionDao, mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
-				Collections.singletonList(service));
+				List.of(service));
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();
@@ -123,7 +122,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queued);
+		input.getInstruction().setState(InstructionState.Queued);
 
 		// WHEN
 		NodeInstruction instr = service.willQueueNodeInstruction(input);
@@ -132,8 +131,10 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
 		// THEN
 		assertThat("Same instance", instr, sameInstance(input));
-		assertThat("State changed", instr.getState(), equalTo(InstructionState.Queuing));
-		assertThat("Topic unchanged", instr.getTopic(), equalTo(TEST_INSTRUCTION_TOPIC));
+		assertThat("State changed", instr.getInstruction().getState(),
+				equalTo(InstructionState.Queuing));
+		assertThat("Topic unchanged", instr.getInstruction().getTopic(),
+				equalTo(TEST_INSTRUCTION_TOPIC));
 		assertThat("Node ID unchanged", instr.getNodeId(), equalTo(TEST_NODE_ID));
 	}
 
@@ -142,7 +143,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queuing);
+		input.getInstruction().setState(InstructionState.Queuing);
 
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
 
@@ -182,7 +183,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queuing);
+		input.getInstruction().setState(InstructionState.Queuing);
 
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
 

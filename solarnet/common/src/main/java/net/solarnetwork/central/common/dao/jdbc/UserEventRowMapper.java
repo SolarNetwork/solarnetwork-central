@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -56,8 +57,8 @@ public class UserEventRowMapper implements RowMapper<UserEvent> {
 	@Override
 	public UserEvent mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Long userId = rs.getLong(1);
-		UUID eventId = getUuid(rs, 2);
-		String[] tags = CommonJdbcUtils.getArray(rs, 3);
+		UUID eventId = nonnull(getUuid(rs, 2), "eventId");
+		String[] tags = nonnull(CommonJdbcUtils.getArray(rs, 3), "tags");
 		String message = rs.getString(4);
 		String json = rs.getString(5);
 		return new UserEvent(userId, eventId, tags, message, json);

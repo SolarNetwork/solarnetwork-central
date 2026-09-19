@@ -27,10 +27,12 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 /**
  * API for a standard identifiable configuration entity input DTO.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
  * @version 1.0
  */
-public interface UserRelatedStdIdentifiableConfigurationInput<C extends UserRelatedStdIdentifiableConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedStdInput<C, K> {
+public interface UserRelatedStdIdentifiableConfigurationInput<T extends UserRelatedStdIdentifiableConfigurationEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedStdInput<T, K> {
 	// empty
 }

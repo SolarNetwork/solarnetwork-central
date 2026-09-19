@@ -1,3 +1,4 @@
 UPDATE example.foo
-SET enabled = ?, modified = CURRENT_TIMESTAMP
+SET enabled = ?
+	, modified = CURRENT_TIMESTAMP
 WHERE pk1 = ?

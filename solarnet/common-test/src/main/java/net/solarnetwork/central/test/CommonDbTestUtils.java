@@ -23,20 +23,31 @@
 package net.solarnetwork.central.test;
 
 import static java.util.stream.Collectors.joining;
-import java.security.SecureRandom;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import java.time.Clock;
+import java.time.InstantSource;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 
 /**
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.4
  */
 public final class CommonDbTestUtils {
+
+	/**
+	 * A millisecond precise clock to avoid database precision differences
+	 * (nanos vs micros).
+	 */
+	public static InstantSource MS_CLOCK = Clock.tickMillis(ZoneOffset.UTC);
 
 	/**
 	 * Insert a new user with a randomly assigned user ID and username.
@@ -52,7 +63,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, String.format("test%d@localhost", newId), "password",
 				String.format("Test User %d", newId));
 		return newId;
@@ -70,7 +81,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate, String username) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, username, "password", String.format("Test User %d", newId));
 		return newId;
 	}
@@ -93,7 +104,7 @@ public final class CommonDbTestUtils {
 			String displayName) {
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
-				id, username, DigestUtils.sha256Hex(password), displayName, Boolean.TRUE);
+				id, username, DigestUtils.sha256Hex(password), displayName, true);
 	}
 
 	/**
@@ -157,11 +168,61 @@ public final class CommonDbTestUtils {
 	 * @param archived
 	 *        {@literal true} to make the node "archived"
 	 */
-	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId, String name,
-			boolean requiresAuth, boolean archived) {
+	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId,
+			@Nullable String name, boolean requiresAuth, boolean archived) {
+		insertUserNode(jdbcTemplate, userId, nodeId, name, null, requiresAuth, archived);
+	}
+
+	/**
+	 * Insert a new user-node mapping.
+	 *
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param name
+	 *        the name
+	 * @param requiresAuth
+	 *        {@literal true} for a "private" node
+	 * @param archived
+	 *        {@literal true} to make the node "archived"
+	 * @since 1.3
+	 */
+	public static void insertUserNode(JdbcOperations jdbcTemplate, Long userId, Long nodeId,
+			@Nullable String name, @Nullable String description, boolean requiresAuth,
+			boolean archived) {
 		jdbcTemplate.update(
-				"insert into solaruser.user_node (user_id,node_id,disp_name,private,archived) values (?,?,?,?,?)",
-				userId, nodeId, name, requiresAuth, archived);
+				"insert into solaruser.user_node (user_id,node_id,disp_name,description,private,archived) values (?,?,?,?,?,?)",
+				userId, nodeId, name, description, requiresAuth, archived);
+	}
+
+	/**
+	 * Insert a security token.
+	 *
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the owner user ID
+	 * @param status
+	 *        the status, i.e.
+	 *        {@code net.solarnetwork.central.security.SecurityTokenStatus}
+	 * @param type
+	 *        the type, i.e.
+	 *        {@code  net.solarnetwork.central.security.SecurityTokenType}
+	 * @param policy
+	 *        the policy
+	 * @since 1.2
+	 */
+	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
+			String tokenSecret, Long userId, Enum<?> status, Enum<?> type, String policy) {
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, status.name(), type.name(),
+				policy);
 	}
 
 	/**
@@ -204,7 +265,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertLocation(JdbcOperations jdbcTemplate, String country, String timeZoneId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertLocation(jdbcTemplate, newId, country, timeZoneId);
 		return newId;
 	}
@@ -239,7 +300,7 @@ public final class CommonDbTestUtils {
 	 *        the time zone ID to use
 	 */
 	public static void insertLocation(JdbcOperations jdbcTemplate, Long id, String country,
-			String region, String postalCode, String timeZoneId) {
+			@Nullable String region, @Nullable String postalCode, String timeZoneId) {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
 				id, country, region, postalCode, timeZoneId);
@@ -255,7 +316,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertNode(JdbcOperations jdbcTemplate, Long locationId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertNode(jdbcTemplate, newId, locationId);
 		return newId;
 	}
@@ -287,13 +348,53 @@ public final class CommonDbTestUtils {
 	 * @return the rows
 	 * @since 1.1
 	 */
-	public static List<Map<String, Object>> allTableData(Logger log, JdbcOperations jdbcOps,
+	public static List<Map<String, @Nullable Object>> allTableData(Logger log, JdbcOperations jdbcOps,
 			String table, String order) {
-		List<Map<String, Object>> data = jdbcOps
+		List<Map<String, @Nullable Object>> data = jdbcOps
 				.queryForList("SELECT * FROM %s ORDER BY %s".formatted(table, order));
 		log.debug("%s table has {} items: [{}]".formatted(table), data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
+	}
+
+	/**
+	 * Insert roles for a given user ID.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @param roles
+	 *        the roles to insert
+	 * @since 1.2
+	 */
+	public static void insertUserRoles(JdbcOperations jdbcOps, Long userId, String... roles) {
+		jdbcOps.execute("""
+				INSERT INTO solaruser.user_role (user_id, role_name)
+				VALUES (?,?)
+				""", (PreparedStatementCallback<?>) ps -> {
+			ps.setObject(1, userId);
+			for ( String role : roles ) {
+				ps.setString(2, role);
+				ps.executeUpdate();
+			}
+			return true;
+		});
+	}
+
+	/**
+	 * Set the enabled state of a SolarNetwork user.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC ops
+	 * @param userId
+	 *        the user ID
+	 * @param enabled
+	 *        {@literal true} to enable the user, {@literal false} to disable
+	 * @since 1.4
+	 */
+	public static void setUserEnabled(JdbcOperations jdbcOps, Long userId, boolean enabled) {
+		jdbcOps.update("UPDATE solaruser.user_user SET enabled = ? WHERE id = ?", enabled, userId);
 	}
 
 }

@@ -27,6 +27,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -72,7 +73,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	 * @param chargePointIdentifier
 	 *        the Charge Point identifier
 	 * @param evseId
-	 *        the EVSE ID (if {@literal null} then {@literal 0} will be used)
+	 *        the EVSE ID (if {@code null} then {@literal 0} will be used)
 	 * @param connectorId
 	 *        the connector ID, or {@literal 0} for the charger itself
 	 * @param action
@@ -83,10 +84,11 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	 *        the timestamp
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code evseId} or {@code connectorId}
-	 *         are {@literal null}
+	 *         are {@code null}
 	 */
-	public ChargePointActionStatusUpdate(Long userId, String chargePointIdentifier, Integer evseId,
-			Integer connectorId, String action, String messageId, Instant date) {
+	public ChargePointActionStatusUpdate(Long userId, String chargePointIdentifier,
+			@Nullable Integer evseId, @Nullable Integer connectorId, String action, String messageId,
+			Instant date) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,
@@ -178,7 +180,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	/**
 	 * Get the action.
 	 *
-	 * @return the action, never {@literal null}
+	 * @return the action, never {@code null}
 	 */
 	public String getAction() {
 		return action;

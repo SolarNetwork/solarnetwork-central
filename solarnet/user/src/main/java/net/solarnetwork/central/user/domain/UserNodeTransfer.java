@@ -22,14 +22,13 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
-import java.io.Serializable;
-import java.time.Instant;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A node ownership transfer request. This entity is associated with the node
@@ -37,26 +36,26 @@ import net.solarnetwork.domain.SerializeIgnore;
  * this entity.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public class UserNodeTransfer
-		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
+@JsonIgnoreProperties({ "id" })
+public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
+		implements UserRelatedEntity<UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = -1316805739552206861L;
 
-	private UserNodePK id = new UserNodePK();
-	private Instant created;
-	private String email;
+	private @Nullable String email;
 
-	private User user;
-	private SolarNode node;
+	private @Nullable User user;
+	private @Nullable SolarNode node;
 
 	/**
 	 * Default constructor.
 	 */
 	public UserNodeTransfer() {
 		super();
+		setId(new UserNodePK());
 	}
 
 	/**
@@ -81,7 +80,7 @@ public class UserNodeTransfer
 	 *
 	 * @return The email address.
 	 */
-	public String getEmail() {
+	public final @Nullable String getEmail() {
 		return email;
 	}
 
@@ -91,17 +90,8 @@ public class UserNodeTransfer
 	 * @param email
 	 *        The email address to set.
 	 */
-	public void setEmail(String email) {
+	public final void setEmail(@Nullable String email) {
 		this.email = email;
-	}
-
-	@Override
-	public Instant getCreated() {
-		return created;
-	}
-
-	public void setCreated(Instant created) {
-		this.created = created;
 	}
 
 	/**
@@ -109,7 +99,8 @@ public class UserNodeTransfer
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
+		UserNodePK id = getId();
 		return (id == null ? null : id.getNodeId());
 	}
 
@@ -119,9 +110,11 @@ public class UserNodeTransfer
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setNodeId(nodeId);
 	}
@@ -132,8 +125,8 @@ public class UserNodeTransfer
 	 * @return the userId
 	 */
 	@Override
-	public Long getUserId() {
-		return (id == null ? null : id.getUserId());
+	public final Long getUserId() {
+		return nonnull(nonnull(getId(), "id").getUserId(), "id.userId");
 	}
 
 	/**
@@ -142,80 +135,33 @@ public class UserNodeTransfer
 	 * @param userId
 	 *        the userId to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setUserId(userId);
 	}
 
-	@JsonIgnore
-	@SerializeIgnore
-	@Override
-	public UserNodePK getId() {
-		return id;
-	}
-
-	public void setId(UserNodePK id) {
-		this.id = id;
-	}
-
-	@Override
-	public int compareTo(UserNodePK o) {
-		return id.compareTo(o);
-	}
-
-	@Override
-	public UserNodeTransfer clone() {
-		try {
-			return (UserNodeTransfer) super.clone();
-		} catch ( CloneNotSupportedException e ) {
-			// should not get here
-			return null;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
-			return false;
-		}
-		UserNodeTransfer other = (UserNodeTransfer) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
 	@Override
 	public String toString() {
-		return "UserNodeTransfer{" + id + "}";
+		return "UserNodeTransfer{" + getId() + "}";
 	}
 
-	public User getUser() {
+	public final @Nullable User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public final void setUser(@Nullable User user) {
 		this.user = user;
 	}
 
-	public SolarNode getNode() {
+	public final @Nullable SolarNode getNode() {
 		return node;
 	}
 
-	public void setNode(SolarNode node) {
+	public void setNode(final @Nullable SolarNode node) {
 		this.node = node;
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.DeleteUserSettingsEntity;
@@ -48,7 +49,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserSettingsEntityDao(JdbcOperations jdbcOps) {
 		super();
@@ -65,19 +66,19 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 		Long userId = requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId");
 		final var sql = new UpsertUserSettingsEntity(userId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? userId : null);
+		jdbcOps.update(sql);
+		return userId;
 	}
 
 	@Override
-	public UserSettingsEntity get(Long id) {
+	public @Nullable UserSettingsEntity get(Long id) {
 		var sql = new SelectUserSettingsEntity(id);
 		List<UserSettingsEntity> results = jdbcOps.query(sql, UserSettingsEntityRowMapper.INSTANCE);
 		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override
-	public List<UserSettingsEntity> getAll(List<SortDescriptor> sortDescriptors) {
+	public List<UserSettingsEntity> getAll(@Nullable List<SortDescriptor> sortDescriptors) {
 		throw new UnsupportedOperationException();
 	}
 

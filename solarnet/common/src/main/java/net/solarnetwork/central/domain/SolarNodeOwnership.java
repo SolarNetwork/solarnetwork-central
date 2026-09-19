@@ -23,22 +23,22 @@
 package net.solarnetwork.central.domain;
 
 import java.time.ZoneId;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for node ownership details.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface SolarNodeOwnership {
+public interface SolarNodeOwnership extends UserIdRelated {
 
 	/**
 	 * Get the node ID.
 	 * 
 	 * @return the node ID
 	 */
-	@NonNull
 	Long getNodeId();
 
 	/**
@@ -46,6 +46,7 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return the owner user ID
 	 */
+	@Override
 	@NonNull
 	Long getUserId();
 
@@ -54,6 +55,7 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return 2-character country code
 	 */
+	@Nullable
 	String getCountry();
 
 	/**
@@ -61,7 +63,6 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return the time zone
 	 */
-	@NonNull
 	ZoneId getZone();
 
 	/**

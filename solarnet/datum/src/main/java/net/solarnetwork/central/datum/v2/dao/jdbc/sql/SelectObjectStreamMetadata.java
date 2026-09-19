@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
@@ -40,7 +41,7 @@ import net.solarnetwork.util.SearchFilter;
  * Generate dynamic SQL for a "find stream metadata" query.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 3.8
  */
 public final class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
@@ -49,7 +50,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 
 	private final ObjectStreamCriteria filter;
 	private final ObjectDatumKind kind;
-	private final SearchFilter searchFilter;
+	private final @Nullable SearchFilter searchFilter;
 	private final MetadataSelectStyle style;
 
 	/**
@@ -63,10 +64,12 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
+	@SuppressWarnings("NullAway")
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter) {
-		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node);
+		this(requireNonNullArgument(filter, "filter"),
+				filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node);
 	}
 
 	/**
@@ -77,7 +80,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param kind
 	 *        the datum kind
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} or {@code kind} are {@literal null}
+	 *         if {@code filter} or {@code kind} are {@code null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind) {
 		this(filter, kind, null);
@@ -91,26 +94,27 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param kind
 	 *        the datum kind
 	 * @param style
-	 *        the select style
+	 *        the select style; if not provided then {@code WithGeography} will
+	 *        be used for location criteria, {@code Full} otherwise
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} or {@code kind} are {@literal null}
+	 *         if {@code filter} or {@code kind} are {@code null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind,
-			MetadataSelectStyle style) {
+			@Nullable MetadataSelectStyle style) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.kind = requireNonNullArgument(kind, "kind");
 		this.style = (style != null ? style
 				: filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
 						: MetadataSelectStyle.Full);
-		this.searchFilter = filter.searchFilter();
+		this.searchFilter = filter.toSearchFilter();
 	}
 
 	@Override
 	public String getSql() {
 		final boolean withNameFts = (kind == ObjectDatumKind.Location
 				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
-				&& filter.getLocation().getName() != null);
+				&& filter.location().getName() != null);
 
 		StringBuilder buf = new StringBuilder();
 		int idx;
@@ -160,11 +164,11 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		final boolean withNameFts = (kind == ObjectDatumKind.Location
 				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
-				&& filter.getLocation().getName() != null);
+				&& filter.location().getName() != null);
 
 		int p = 0;
 		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}
@@ -174,7 +178,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 		}
 
 		if ( withNameFts ) {
-			stmt.setString(++p, filter.getLocation().getName());
+			p = DatumSqlUtils.prepareObjectMetadataFilter(filter, kind, con, stmt, p);
 			if ( searchFilter != null ) {
 				DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
 			}

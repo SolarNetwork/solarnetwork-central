@@ -1,27 +1,29 @@
 /* ==================================================================
  * JCacheFactoryBean.java - 31/08/2017 9:22:34 AM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.Configuration;
@@ -41,19 +43,21 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Factory bean for {@link Cache} instances.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, InitializingBean {
 
 	/** Cache expiry policy type. */
-	public static enum ExpiryPolicy {
+	public enum ExpiryPolicy {
 		Accessed,
 		Created,
 		Updated,
@@ -66,45 +70,47 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	private final Class<V> valueType;
 
 	private String name = "default";
-	private boolean storeByValue = false;
-	private boolean statisticsEnabled = false;
-	private ExpiryPolicy expiryPolicy = null;
-	private Duration expiryDuration = null;
+	private boolean storeByValue;
+	private boolean statisticsEnabled;
+	private @Nullable ExpiryPolicy expiryPolicy;
+	private @Nullable Duration expiryDuration;
 
-	private Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory;
-	private boolean readThrough = false;
-	private Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory;
-	private boolean writeThrough = false;
+	private @Nullable Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory;
+	private boolean readThrough;
+	private @Nullable Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory;
+	private boolean writeThrough;
 
-	private Integer heapMaxEntries = null;
-	private Integer diskMaxSizeMB = null;
-	private boolean diskPersistent = false;
+	private @Nullable Integer heapMaxEntries;
+	private @Nullable Integer diskMaxSizeMB;
+	private boolean diskPersistent;
 
-	private Cache<K, V> cache;
+	private @Nullable Cache<K, V> cache;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param cacheManager
 	 *        the cache manager
 	 * @param keyType
 	 *        the key type
 	 * @param valueType
 	 *        the value type
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public JCacheFactoryBean(CacheManager cacheManager, Class<K> keyType, Class<V> valueType) {
 		super();
-		this.cacheManager = cacheManager;
-		this.keyType = keyType;
-		this.valueType = valueType;
+		this.cacheManager = requireNonNullArgument(cacheManager, "cacheManager");
+		this.keyType = requireNonNullArgument(keyType, "keyType");
+		this.valueType = requireNonNullArgument(valueType, "valueType");
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "StatementSwitchToExpressionSwitch" })
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		CachingProvider provider = cacheManager.getCachingProvider();
 		Configuration<K, V> cacheConfig = null;
-		if ( heapMaxEntries != null || diskMaxSizeMB != null
+		if ( (heapMaxEntries != null || diskMaxSizeMB != null)
 				&& "org.ehcache.jsr107.EhcacheCachingProvider".equals(provider.getClass().getName()) ) {
 			CacheConfigurationBuilder<K, V> cacheConfigBuilder = CacheConfigurationBuilder
 					.newCacheConfigurationBuilder(keyType, valueType,
@@ -118,7 +124,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 						diskPersistent);
 			}
 			cacheConfigBuilder = cacheConfigBuilder.withResourcePools(poolsBuilder);
-			if ( expiryPolicy != null ) {
+			if ( expiryPolicy != null && expiryDuration != null ) {
 				switch (expiryPolicy) {
 					case Accessed:
 					case Updated:
@@ -190,168 +196,165 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	}
 
 	@Override
-	public Cache<K, V> getObject() throws Exception {
+	public @NonNull Cache<K, V> getObject() throws Exception {
 		if ( cache == null ) {
 			afterPropertiesSet();
 		}
-		return cache;
+		return nonnull(cache, "cache");
 	}
 
 	@Override
-	public Class<?> getObjectType() {
+	public @NonNull Class<?> getObjectType() {
 		return (this.cache != null ? this.cache.getClass() : Cache.class);
-	}
-
-	@Override
-	public boolean isSingleton() {
-		return true;
 	}
 
 	/**
 	 * Set the cache name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
 	 * Set the store-by-value flag.
-	 * 
+	 *
 	 * @param storeByValue
 	 *        the store-by-value to set
 	 */
-	public void setStoreByValue(boolean storeByValue) {
+	public final void setStoreByValue(boolean storeByValue) {
 		this.storeByValue = storeByValue;
 	}
 
 	/**
 	 * Set the expiry policy.
-	 * 
+	 *
 	 * @param expiryPolicy
 	 *        the expiry policy to set
 	 */
-	public void setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+	public final void setExpiryPolicy(@Nullable ExpiryPolicy expiryPolicy) {
 		this.expiryPolicy = expiryPolicy;
 	}
 
 	/**
 	 * Set the expiry duration.
-	 * 
+	 *
 	 * @param expiryDuration
 	 *        the expiry duration to set
 	 */
-	public void setExpiryDuration(Duration expiryDuration) {
+	public final void setExpiryDuration(@Nullable Duration expiryDuration) {
 		this.expiryDuration = expiryDuration;
 	}
 
 	/**
 	 * Set the read-through flag.
-	 * 
+	 *
 	 * @param readThrough
 	 *        the read-through to set
 	 */
-	public void setReadThrough(boolean readThrough) {
+	public final void setReadThrough(boolean readThrough) {
 		this.readThrough = readThrough;
 	}
 
 	/**
 	 * Set the write-through flag.
-	 * 
+	 *
 	 * @param writeThrough
 	 *        the write-through to set
 	 */
-	public void setWriteThrough(boolean writeThrough) {
+	public final void setWriteThrough(boolean writeThrough) {
 		this.writeThrough = writeThrough;
 	}
 
 	/**
 	 * Set the statistics-enabled flag.
-	 * 
+	 *
 	 * @param statisticsEnabled
 	 *        the statistics-enabled to set
 	 */
-	public void setStatisticsEnabled(boolean statisticsEnabled) {
+	public final void setStatisticsEnabled(boolean statisticsEnabled) {
 		this.statisticsEnabled = statisticsEnabled;
 	}
 
 	/**
 	 * Set the read-through loader factory.
-	 * 
+	 *
 	 * @param readThroughLoaderFactory
 	 *        the loader to set
 	 */
-	public void setReadThroughLoaderFactory(
+	public final void setReadThroughLoaderFactory(
 			Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory) {
 		this.readThroughLoaderFactory = readThroughLoaderFactory;
 	}
 
 	/**
 	 * Set the write-through writer factory.
-	 * 
+	 *
 	 * @param writeThroughWriterFactory
 	 *        the writer to set
 	 */
-	public void setWriteThroughWriterFactory(
+	public final void setWriteThroughWriterFactory(
 			Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory) {
 		this.writeThroughWriterFactory = writeThroughWriterFactory;
 	}
 
 	/**
 	 * Set the maximum entries to store in main memory.
-	 * 
+	 *
 	 * <p>
 	 * This is an EhCache specific vendor extension, that only works if EhCache
 	 * is available on the classpath.
 	 * </p>
-	 * 
+	 *
 	 * @param heapMaxEntries
 	 *        the max heap entries to configure
 	 * @since 1.1
 	 */
-	public void setHeapMaxEntries(Integer heapMaxEntries) {
+	public final void setHeapMaxEntries(@Nullable Integer heapMaxEntries) {
 		this.heapMaxEntries = heapMaxEntries;
 	}
 
 	/**
 	 * Set the maximum size, in MB, to store on disk.
-	 * 
+	 *
 	 * <p>
 	 * This is an EhCache specific vendor extension, that only works if EhCache
 	 * is available on the classpath.
 	 * </p>
-	 * 
+	 *
 	 * @param diskMaxSizeMB
 	 *        the max disk size to store
 	 * @since 1.1
 	 */
-	public void setDiskMaxSizeMB(Integer diskMaxSizeMB) {
+	public final void setDiskMaxSizeMB(@Nullable Integer diskMaxSizeMB) {
 		this.diskMaxSizeMB = diskMaxSizeMB;
 	}
 
 	/**
 	 * Get the disk persistence setting.
-	 * 
+	 *
 	 * @return {@literal true} if disk storage should be persistent across
 	 *         restarts; defaults to {@literal false}
 	 * @since 1.2
 	 */
-	public boolean isDiskPersistent() {
+	public final boolean isDiskPersistent() {
 		return diskPersistent;
 	}
 
 	/**
 	 * Set the disk persistence setting.
-	 * 
+	 *
 	 * @param diskPersistent
 	 *        {@literal true} if disk storage should be persistent across
 	 *        restarts; defaults to {@literal false}, {@literal false} to clear
 	 *        the disk storage on restart
 	 * @since 1.2
 	 */
-	public void setDiskPersistent(boolean diskPersistent) {
+	public final void setDiskPersistent(boolean diskPersistent) {
 		this.diskPersistent = diskPersistent;
 	}
 

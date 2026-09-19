@@ -416,7 +416,7 @@
 						<div class="tz-picker-container"></div>
 					</fieldset>
 					<fieldset class="form-horizontal" id="edit-node-location-details"
-						data-th-data-lookup-url="${@environment.getProperty('app.network-identity.service-urls.solarquery') + '/api/v1/pub/location'}">
+						data-th-data-lookup-url="${serviceUrls['solarquery'] + '/api/v1/pub/location'}">
 						<p data-th-utext="#{my-nodes.edit-node.choose-location.intro}">Choose a location.</p>
 						<div class="form-group">
 				 			<label class="col-sm-3 control-label" for="edit-node-location-postal-code" data-th-text="#{location.postalCode.label}">Postal code</label>

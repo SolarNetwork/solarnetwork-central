@@ -8,7 +8,7 @@ WITH s AS (
 , datum AS (
 	-- leading partial agg
 	SELECT datum.stream_id,
-		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
@@ -22,7 +22,7 @@ WITH s AS (
 	-- middle main agg (
 	UNION ALL
 	SELECT datum.stream_id,
-		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
@@ -36,7 +36,7 @@ WITH s AS (
 	-- trailing partial agg	
 	UNION ALL
 	SELECT datum.stream_id,
-		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+		date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
@@ -50,4 +50,4 @@ WITH s AS (
 SELECT datum.*
 FROM datum
 INNER JOIN s ON s.stream_id = datum.stream_id
-ORDER BY ts, node_id, source_id
+ORDER BY ts_start, node_id, source_id

@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
-import java.util.Collections;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.List;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -60,11 +63,11 @@ public class CachingSolarNodeMetadataDao
 
 	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
-		if ( filter.hasNodeCriteria() && filter.getNodeIds().length == 1 ) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
+		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1 ) {
 			// use cache when looking for single node ID
-			SolarNodeMetadata meta = get(filter.getNodeId());
-			return new BasicFilterResults<>(meta != null ? List.of(meta) : Collections.emptyList());
+			SolarNodeMetadata meta = get(nonnull(filter.getNodeId(), "nodeId"));
+			return new BasicFilterResults<>(meta != null ? singletonList(meta) : emptyList());
 		}
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}

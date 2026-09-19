@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.domain;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HexFormat;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -35,19 +36,20 @@ import jakarta.validation.constraints.Size;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class UserSecretInput {
 
 	@NotBlank
 	@Size(max = 64)
-	private String key;
+	private @Nullable String key;
 
 	@NotBlank
 	@Size(max = 64)
-	private String topic;
+	private @Nullable String topic;
 
 	@NotEmpty
 	@Size(max = 4096)
-	private byte[] secret;
+	private byte @Nullable [] secret;
 
 	/**
 	 * Constructor.
@@ -61,7 +63,7 @@ public class UserSecretInput {
 	 * 
 	 * @return the key name
 	 */
-	public String getKey() {
+	public final @Nullable String getKey() {
 		return key;
 	}
 
@@ -71,7 +73,7 @@ public class UserSecretInput {
 	 * @param key
 	 *        the key name to set
 	 */
-	public void setKey(String key) {
+	public final void setKey(@Nullable String key) {
 		this.key = key;
 	}
 
@@ -80,7 +82,7 @@ public class UserSecretInput {
 	 * 
 	 * @return the topic
 	 */
-	public String getTopic() {
+	public final @Nullable String getTopic() {
 		return topic;
 	}
 
@@ -90,7 +92,7 @@ public class UserSecretInput {
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		this.topic = topic;
 	}
 
@@ -99,7 +101,7 @@ public class UserSecretInput {
 	 * 
 	 * @return the secret
 	 */
-	public byte[] getSecret() {
+	public final byte @Nullable [] getSecret() {
 		return secret;
 	}
 
@@ -109,7 +111,7 @@ public class UserSecretInput {
 	 * @param secret
 	 *        the secret to set
 	 */
-	public void setSecret(byte[] secret) {
+	public final void setSecret(byte @Nullable [] secret) {
 		this.secret = secret;
 	}
 
@@ -123,7 +125,7 @@ public class UserSecretInput {
 	 * @param value
 	 *        the secret value
 	 */
-	public void setSecretValue(String value) {
+	public final void setSecretValue(@Nullable String value) {
 		secret = (value != null ? value.getBytes(StandardCharsets.UTF_8) : null);
 	}
 
@@ -133,7 +135,7 @@ public class UserSecretInput {
 	 * @param value
 	 *        the secret value
 	 */
-	public void setSecretBase64(String value) {
+	public final void setSecretBase64(@Nullable String value) {
 		secret = (value != null ? Base64.getDecoder().decode(value) : null);
 	}
 
@@ -143,7 +145,7 @@ public class UserSecretInput {
 	 * @param value
 	 *        the secret value
 	 */
-	public void setSecretHex(String value) {
+	public final void setSecretHex(@Nullable String value) {
 		secret = (value != null ? HexFormat.of().parseHex(value) : null);
 	}
 

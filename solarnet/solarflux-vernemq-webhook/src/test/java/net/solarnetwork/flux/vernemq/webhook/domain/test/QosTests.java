@@ -17,22 +17,15 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.io.IOException;
-
-import org.junit.jupiter.api.BeforeEach;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.skyscreamer.jsonassert.JSONAssert;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 
 /**
  * Test cases for the {@link Qos} enum.
@@ -41,41 +34,30 @@ import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
  */
 public class QosTests {
 
-  private ObjectMapper objectMapper;
+	@Test
+	public void toJson() throws JSONException {
+		for ( Qos qos : Qos.values() ) {
+			String json = JSON_MAPPER.writeValueAsString(qos);
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+			JSONAssert.assertEquals("Qos " + qos, String.valueOf(qos.getKey()), json, true);
+		}
+	}
 
-  @Test
-  public void toJson() throws JsonProcessingException {
-    for (Qos qos : Qos.values()) {
-      String json = objectMapper.writeValueAsString(qos);
+	@Test
+	public void fromJson() throws IOException {
+		for ( Qos qos : Qos.values() ) {
+			String json = String.valueOf(qos.getKey());
 
-      // @formatter:off
-      assertThat("Qos " + qos, json, isJsonStringMatching(
-          jsonInt(qos.getKey())
-      ));
-      // @formatter:on
-    }
-  }
+			Qos q = JSON_MAPPER.readValue(json, Qos.class);
+			assertThat("Qos " + qos, q, equalTo(qos));
+		}
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    for (Qos qos : Qos.values()) {
-      String json = String.valueOf(qos.getKey());
-
-      Qos q = objectMapper.readValue(json, Qos.class);
-      assertThat("Qos " + qos, q, equalTo(qos));
-    }
-  }
-
-  @Test
-  public void forKeyBadValue() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      Qos.forKey(-1);
-    });
-  }
+	@Test
+	public void forKeyBadValue() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			Qos.forKey(-1);
+		});
+	}
 
 }

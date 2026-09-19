@@ -40,7 +40,7 @@ public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
 	 *        the username
 	 * @param confirmationKey
 	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * @return the association, or {@code null} if not available
 	 */
 	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
 

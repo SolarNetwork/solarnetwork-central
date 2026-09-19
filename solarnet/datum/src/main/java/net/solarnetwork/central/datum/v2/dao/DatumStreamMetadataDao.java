@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -33,7 +33,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO API for datum stream metadata.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  * @since 2.8
  */
 public interface DatumStreamMetadataDao {
@@ -41,11 +41,30 @@ public interface DatumStreamMetadataDao {
 	/**
 	 * Get the metadata associated with a datum stream.
 	 *
+	 * <p>
+	 * The criteria must include values that uniquely identify a single datum
+	 * stream, one of:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>a {@link ObjectMetadataCriteria#getStreamId() stream ID}</li>
+	 * <li>a {@link ObjectMetadataCriteria#getObjectKind() stream kind},
+	 * {@link ObjectMetadataCriteria#getObjectId() object ID}, and
+	 * {@link ObjectMetadataCriteria#getSourceId() source ID}</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * If a stream ID is provided, all other criteria will be ignored.
+	 * </p>
+	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the metadata, or {@literal null} if not available
+	 * @return the metadata, or {@code null} if not available
+	 * @throws IllegalStateException
+	 *         if insufficient criteria is provided
 	 */
-	ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter);
+	@Nullable
+	ObjectDatumStreamMetadata findStreamMetadata(ObjectMetadataCriteria filter);
 
 	/**
 	 * Find all available object datum stream metadata for a given search
@@ -59,7 +78,7 @@ public interface DatumStreamMetadataDao {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 */
 	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
 
@@ -81,21 +100,10 @@ public interface DatumStreamMetadataDao {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 * @since 2.0
 	 */
 	Iterable<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
-
-	/**
-	 * Get a mapping of stream IDs to {@link ObjectDatumStreamMetadataId}
-	 * instances.
-	 *
-	 * @param streamIds
-	 *        the stream IDs to look up
-	 * @return the mapping, never {@literal null}
-	 * @since 2.2
-	 */
-	Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds);
 
 	/**
 	 * Replace the JSON metadata associated with an object datum stream.
@@ -103,9 +111,9 @@ public interface DatumStreamMetadataDao {
 	 * @param id
 	 *        the ID of the stream to update
 	 * @param json
-	 *        the new JSON, or {@literal null} to remove
+	 *        the new JSON, or {@code null} to remove
 	 */
-	void replaceJsonMeta(ObjectSourcePK id, String json);
+	void replaceJsonMeta(ObjectSourcePK id, @Nullable String json);
 
 	/**
 	 * Update the object and/or source IDs associated with a stream.
@@ -115,18 +123,19 @@ public interface DatumStreamMetadataDao {
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to keep unchanged
+	 *        the object ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to keep unchanged
-	 * @return the updated stream metadata ID, or {@literal null} if the
-	 *         metadata was not updated
+	 *        the source ID to set, or {@code null} to keep unchanged
+	 * @return the updated stream metadata ID, or {@code null} if the metadata
+	 *         was not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@literal null} or
-	 *         both {@code objectId} and {@code sourceId} are {@literal null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or
+	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 * @since 2.1
 	 */
-	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId);
+	@Nullable
+	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId);
 
 	/**
 	 * Update the object and/or source IDs associated with a stream.
@@ -142,27 +151,29 @@ public interface DatumStreamMetadataDao {
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to keep unchanged
+	 *        the object ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to keep unchanged
+	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@literal null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@literal null} or
-	 *         all other arguments are {@literal null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 2.3
 	 */
-	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties);
+	@Nullable
+	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties);
 
 }

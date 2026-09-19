@@ -44,7 +44,7 @@ public enum RegistrationStatus implements CodedValue {
 
 	private final char code;
 
-	private RegistrationStatus(char c) {
+	RegistrationStatus(char c) {
 		this.code = c;
 	}
 

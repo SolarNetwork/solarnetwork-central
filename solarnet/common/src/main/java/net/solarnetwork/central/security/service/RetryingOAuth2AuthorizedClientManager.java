@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.service;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.oauth2.client.ClientAuthorizationException;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -55,7 +56,7 @@ public class RetryingOAuth2AuthorizedClientManager implements OAuth2AuthorizedCl
 	 * @param clientService
 	 *        the client service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public RetryingOAuth2AuthorizedClientManager(OAuth2AuthorizedClientManager delegate,
 			OAuth2AuthorizedClientService clientService) {
@@ -65,7 +66,7 @@ public class RetryingOAuth2AuthorizedClientManager implements OAuth2AuthorizedCl
 	}
 
 	@Override
-	public OAuth2AuthorizedClient authorize(OAuth2AuthorizeRequest authorizeRequest) {
+	public @Nullable OAuth2AuthorizedClient authorize(OAuth2AuthorizeRequest authorizeRequest) {
 		try {
 			return delegate.authorize(authorizeRequest);
 		} catch ( ClientAuthorizationException e ) {

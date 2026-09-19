@@ -28,10 +28,12 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 /**
  * API for a standard entity input DTO.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
  * @version 1.0
  */
-public interface UserRelatedStdInput<C extends UserRelatedStdEntity<C, K>, K extends UserRelatedCompositeKey<K>> {
+public interface UserRelatedStdInput<T extends UserRelatedStdEntity<T, K>, K extends UserRelatedCompositeKey<K>> {
 
 	/**
 	 * Create an entity from the input properties and a given primary key.
@@ -42,7 +44,7 @@ public interface UserRelatedStdInput<C extends UserRelatedStdEntity<C, K>, K ext
 	 *        the creation date to use
 	 * @return the new entity
 	 */
-	C toEntity(K id, Instant date);
+	T toEntity(K id, Instant date);
 
 	/**
 	 * Create an entity from the input properties and a given primary key.
@@ -55,7 +57,7 @@ public interface UserRelatedStdInput<C extends UserRelatedStdEntity<C, K>, K ext
 	 *        the primary key to use
 	 * @return the new entity
 	 */
-	default C toEntity(K id) {
+	default T toEntity(K id) {
 		return toEntity(id, Instant.now());
 	}
 

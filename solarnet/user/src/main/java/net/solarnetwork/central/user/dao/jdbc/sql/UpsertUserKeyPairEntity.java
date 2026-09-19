@@ -62,7 +62,7 @@ public class UpsertUserKeyPairEntity implements PreparedStatementCreator, SqlPro
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertUserKeyPairEntity(Long userId, UserKeyPairEntity entity) {
 		super();

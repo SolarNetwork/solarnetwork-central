@@ -27,8 +27,8 @@ import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.random.RandomGenerator;
 import javax.cache.Cache;
@@ -37,12 +37,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -75,9 +76,10 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
-import net.solarnetwork.central.c2c.http.CachableRequestEntity;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -95,7 +97,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
  * Configuration for the Sma cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -105,7 +107,14 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 	public static final String SMA = "sma";
 
 	/** A qualifier for SMA system time zone configuration. */
-	public static final String SMA_SYSTEM_TZ = "solaredge-system-tz";
+	public static final String SMA_SYSTEM_TZ = "sma-system-tz";
+
+	/**
+	 * A qualifier for SMA system inventory configuration.
+	 *
+	 * @since 1.3
+	 */
+	public static final String SMA_SYSTEM_INVENTORY = "sma-system-inventory";
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppender;
@@ -178,6 +187,10 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Autowired
 	private CacheManager cacheManager;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(SMA_SYSTEM_TZ)
 	@ConfigurationProperties(prefix = "app.c2c.cache.sma-system-tz")
@@ -193,13 +206,28 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 	}
 
 	@Bean
+	@Qualifier(SMA_SYSTEM_INVENTORY)
+	@ConfigurationProperties(prefix = "app.c2c.cache.sma-system-inventory")
+	public CacheSettings smaSystemInventoryCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(SMA_SYSTEM_INVENTORY)
+	public Cache<String, CloudDataValue[]> smaSystenInventoryCache(
+			@Qualifier(SMA_SYSTEM_INVENTORY) CacheSettings settings) {
+		return settings.createCache(cacheManager, String.class, CloudDataValue[].class,
+				SMA_SYSTEM_INVENTORY + "-cache");
+	}
+
+	@Bean
 	@Qualifier(SMA)
 	public OAuth2AuthorizedClientManager smaOauthAuthorizedClientManager(@Autowired(
 			required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, SmaCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, encryptor,
-				integrationServiceIdentifier -> SmaCloudIntegrationService.SECURE_SETTINGS);
+				_ -> SmaCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}
@@ -215,7 +243,7 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
 						? new BufferingClientHttpRequestFactory(reqFactory)
 						: reqFactory)
-				.messageConverters(Arrays.asList(
+				.messageConverters(List.of(
 						new FormHttpMessageConverter(),
 						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
@@ -261,7 +289,8 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(SMA)
 	public CloudDatumStreamService smaCloudDatumStreamService(
 			@Qualifier(SMA) OAuth2AuthorizedClientManager oauthClientManager,
-			@Qualifier(SMA_SYSTEM_TZ) Cache<String, ZoneId> timeZoneCache) {
+			@Qualifier(SMA_SYSTEM_TZ) Cache<String, ZoneId> timeZoneCache,
+			@Qualifier(SMA_SYSTEM_INVENTORY) Cache<String, CloudDataValue[]> inventoryCache) {
 		var service = new SmaCloudDatumStreamService(userEventAppender, encryptor, expressionService,
 				integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
@@ -272,6 +301,7 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
@@ -281,6 +311,7 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		service.setSystemTimeZoneCache(timeZoneCache);
+		service.setSystemInventoryCache(inventoryCache);
 
 		return service;
 	}

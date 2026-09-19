@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumMetadataController.java - Oct 3, 2014 2:13:51 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -53,7 +53,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Controller for datum metadata actions.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -67,7 +67,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataCollectorBiz
 	 *        the DataCollectorBiz to use
 	 * @param datumMetadataBiz
@@ -96,7 +96,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
-			@PathVariable("nodeId") Long requestNodeId, @PathVariable("sourceId") String sourceId,
+			@PathVariable("nodeId") Long requestNodeId, @PathVariable String sourceId,
 			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
@@ -122,7 +122,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
 	public Result<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
-			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+			@PathVariable String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);
@@ -140,7 +140,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Find the stream metadata for a given object ID and source ID.
-	 * 
+	 *
 	 * @param objectId
 	 *        the object ID
 	 * @param sourceId
@@ -154,7 +154,7 @@ public class DatumMetadataController {
 	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.GET,
 			params = { "!sourceId" })
 	public Result<ObjectDatumStreamMetadata> findStreamMetadata(@PathVariable("nodeId") Long objectId,
-			@PathVariable("sourceId") String sourceId,
+			@PathVariable String sourceId,
 			@RequestParam(name = "kind", required = false, defaultValue = "Node") ObjectDatumKind kind) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		if ( kind == net.solarnetwork.domain.datum.ObjectDatumKind.Location ) {
@@ -178,7 +178,7 @@ public class DatumMetadataController {
 	/**
 	 * Find the stream metadata for a given node and source, using a query
 	 * parameter for the source ID.
-	 * 
+	 *
 	 * @param objectId
 	 *        the object ID
 	 * @param sourceId

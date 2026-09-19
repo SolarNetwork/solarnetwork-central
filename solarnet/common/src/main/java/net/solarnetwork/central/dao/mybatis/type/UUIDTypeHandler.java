@@ -31,6 +31,7 @@ import java.util.UUID;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
+import org.jspecify.annotations.Nullable;
 
 /**
  * MyBatis {@link TypeHandler} for native {@link UUID} support, as supported by
@@ -43,23 +44,23 @@ import org.apache.ibatis.type.TypeHandler;
 public class UUIDTypeHandler extends BaseTypeHandler<UUID> {
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, UUID parameter, JdbcType jdbcType)
-			throws SQLException {
+	public void setNonNullParameter(PreparedStatement ps, int i, UUID parameter,
+			@Nullable JdbcType jdbcType) throws SQLException {
 		ps.setObject(i, parameter, (jdbcType != null ? jdbcType.TYPE_CODE : Types.OTHER));
 	}
 
 	@Override
-	public UUID getNullableResult(ResultSet rs, String columnName) throws SQLException {
+	public @Nullable UUID getNullableResult(ResultSet rs, String columnName) throws SQLException {
 		return (UUID) rs.getObject(columnName);
 	}
 
 	@Override
-	public UUID getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+	public @Nullable UUID getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
 		return (UUID) rs.getObject(columnIndex);
 	}
 
 	@Override
-	public UUID getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+	public @Nullable UUID getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
 		return (UUID) cs.getObject(columnIndex);
 	}
 

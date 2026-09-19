@@ -74,7 +74,7 @@ public class UserCloudIntegrationsOAuthController {
 	/**
 	 * Get the {@link UserCloudIntegrationsBiz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */
@@ -154,7 +154,7 @@ public class UserCloudIntegrationsOAuthController {
 			} else {
 				b.queryParam("errorMessage", error);
 			}
-			return new ModelAndView("redirect:" + b.build(false).toString());
+			return new ModelAndView("redirect:" + b.build(false));
 		}
 
 		var service = requireNonNullObject(biz.integrationService(integration.getServiceIdentifier()),

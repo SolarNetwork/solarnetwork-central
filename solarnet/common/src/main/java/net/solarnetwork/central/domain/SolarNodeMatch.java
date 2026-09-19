@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -43,7 +44,7 @@ public class SolarNodeMatch extends SolarNode implements SolarNodeFilterMatch {
 	@Serial
 	private static final long serialVersionUID = 7972204667914199552L;
 
-	private String metaJson;
+	private @Nullable String metaJson;
 
 	/**
 	 * Constructor.
@@ -60,11 +61,11 @@ public class SolarNodeMatch extends SolarNode implements SolarNodeFilterMatch {
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		return metaJson;
 	}
 
-	public void setMetaJson(String infoJson) {
+	public final void setMetaJson(@Nullable String infoJson) {
 		this.metaJson = infoJson;
 	}
 

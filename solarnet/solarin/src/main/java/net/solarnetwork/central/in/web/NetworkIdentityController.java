@@ -82,7 +82,8 @@ public class NetworkIdentityController {
 	 *        the optional network association confirmation key
 	 * @return the view name
 	 */
-	@RequestMapping(value = "/solarin/identity.do", method = RequestMethod.GET, produces = MediaType.TEXT_XML_VALUE)
+	@RequestMapping(value = "/solarin/identity.do", method = RequestMethod.GET,
+			produces = MediaType.TEXT_XML_VALUE)
 	public String getNetworkIdentityKey(Model model,
 			@RequestParam(value = "username", required = false) String username,
 			@RequestParam(value = "key", required = false) String confirmationKey) {
@@ -107,7 +108,8 @@ public class NetworkIdentityController {
 	 * @return the identity information
 	 * @since 1.2
 	 */
-	@RequestMapping(value = "/solarin/identity.do", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/solarin/identity.do", method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public Result<NetworkIdentity> getNetworkIdentityKeyJson(
 			@RequestParam(value = "username", required = false) String username,

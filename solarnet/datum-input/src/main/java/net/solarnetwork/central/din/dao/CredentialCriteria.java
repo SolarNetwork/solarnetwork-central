@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.din.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for credential related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CredentialCriteria {
 
@@ -35,12 +37,12 @@ public interface CredentialCriteria {
 	 *
 	 * <p>
 	 * This returns the first available credential ID from the
-	 * {@link #getCredentialIds()} array, or {@literal null} if not available.
+	 * {@link #getCredentialIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first credential ID, or {@literal null} if not available
+	 * @return the first credential ID, or {@code null} if not available
 	 */
-	default Long getCredentialId() {
+	default @Nullable Long getCredentialId() {
 		final Long[] array = getCredentialIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CredentialCriteria {
 	/**
 	 * Get an array of credential IDs.
 	 *
-	 * @return array of credential IDs (may be {@literal null})
+	 * @return array of credential IDs (may be {@code null})
 	 */
-	Long[] getCredentialIds();
+	Long @Nullable [] getCredentialIds();
 
 	/**
 	 * Test if this filter has any credential criteria.
@@ -59,6 +61,40 @@ public interface CredentialCriteria {
 	 */
 	default boolean hasCredentialCriteria() {
 		return getCredentialId() != null;
+	}
+
+	/**
+	 * Get the first credential ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCredentialCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first credential ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long credentialId() {
+		return getCredentialId();
+	}
+
+	/**
+	 * Get an array of credential IDs
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCredentialCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of credential IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] credentialIds() {
+		return getCredentialIds();
 	}
 
 }

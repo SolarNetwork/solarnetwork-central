@@ -64,7 +64,7 @@ public abstract class BaseUserRelatedStdInput<C extends BaseUserModifiableEntity
 	 *
 	 * @return the enabled
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -74,7 +74,7 @@ public abstract class BaseUserRelatedStdInput<C extends BaseUserModifiableEntity
 	 * @param enabled
 	 *        the enabled to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 

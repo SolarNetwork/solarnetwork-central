@@ -1,0 +1,22 @@
+{
+  "siteId": 93082,
+  "name": "Smith, John CRM1234",
+  "accountId": 123456,
+  "peakPower": 6.14,
+  "installationDate": "2022-11-10",
+  "lastUpdateTime": "2023-02-08T13:32:57.597429300+02:00",
+  "location": {
+    "address": "2888 Main St",
+	"address2": "P.O. Box 123",
+	"latitude": -1.7976931348623157e+308,
+	"longitude": -1.7976931348623157e+308,
+    "city": "Green Bay",
+    "state": "Wisconsin",
+    "zip": "54311",
+    "country": "United States",
+	"countryCode": "US",
+	"timezone": "America/Chicago"
+  },
+  "activationStatus": "ACTIVE",
+  "note": "Created via API, triggered from CRM"
+}

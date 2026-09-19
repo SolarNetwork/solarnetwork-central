@@ -52,7 +52,7 @@ public enum Phase implements CodedValue {
 
 	private final char code;
 
-	private Phase(char code) {
+	Phase(char code) {
 		this.code = code;
 	}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.dao.jdbc.test;
 
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.allInputDataEntityData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -30,7 +31,6 @@ import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,8 +63,8 @@ public class JdbcInputDataEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void insert() {
 		// GIVEN
-		InputDataEntity entity = new InputDataEntity(userId, randomLong(), randomString(), Instant.now(),
-				new byte[] { 1, 2, 3 });
+		InputDataEntity entity = new InputDataEntity(userId, randomLong(), randomString(),
+				MS_CLOCK.instant(), new byte[] { 1, 2, 3 });
 
 		// WHEN
 		UserLongStringCompositePK result = dao.save(entity);
@@ -131,7 +131,7 @@ public class JdbcInputDataEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 		insert();
 
 		// WHEN
-		InputDataEntity conf = new InputDataEntity(last.getId(), Instant.now().plusSeconds(1),
+		InputDataEntity conf = new InputDataEntity(last.getId(), MS_CLOCK.instant().plusSeconds(1),
 				new byte[] { 2, 3, 4 });
 
 		UserLongStringCompositePK result = dao.save(conf);
@@ -206,8 +206,8 @@ public class JdbcInputDataEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void update_data_noPrevious() {
 		// GIVEN
-		InputDataEntity entity = new InputDataEntity(userId, randomLong(), randomString(), Instant.now(),
-				new byte[] { 1, 2, 3 });
+		InputDataEntity entity = new InputDataEntity(userId, randomLong(), randomString(),
+				MS_CLOCK.instant(), new byte[] { 1, 2, 3 });
 
 		// WHEN
 		byte[] prevData = dao.getAndPut(entity.getId(), entity.getData());

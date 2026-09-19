@@ -23,13 +23,13 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +50,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.DeferredResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -68,12 +68,13 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.7
+ * @version 3.2
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -113,11 +114,12 @@ public class NodeInstructionController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
-			NodeInstructionDao nodeInstructionDao, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+			NodeInstructionDao nodeInstructionDao,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");
@@ -137,8 +139,8 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "!ids")
 	@ResponseBody
-	public Result<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
-		Instruction instruction = instructorBiz.getInstruction(instructionId);
+	public Result<NodeInstruction> viewInstruction(@RequestParam("id") Long instructionId) {
+		var instruction = instructorBiz.getInstruction(instructionId);
 		return success(instruction);
 	}
 
@@ -149,15 +151,22 @@ public class NodeInstructionController {
 	 *        the IDs of the instructions to view
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "ids")
 	@ResponseBody
-	public void viewInstruction(@RequestParam("ids") Set<Long> instructionIds,
+	public void viewInstructions(
+	// @formatter:off
+			@RequestParam("ids") Set<Long> instructionIds,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		final var filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(instructionIds.toArray(Long[]::new));
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
@@ -166,6 +175,8 @@ public class NodeInstructionController {
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
 			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -176,15 +187,22 @@ public class NodeInstructionController {
 	 *        the ID of the node to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public void activeInstructions(@RequestParam("nodeId") Long nodeId,
+	public void activeInstructions(
+	// @formatter:off
+			@RequestParam("nodeId") Long nodeId,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
-		activeInstructions(Set.of(nodeId), accept, response);
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
+		activeInstructions(Set.of(nodeId), accept, request, response);
 	}
 
 	/**
@@ -194,15 +212,22 @@ public class NodeInstructionController {
 	 *        the IDs of the nodes to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public void activeInstructions(@RequestParam("nodeIds") Set<Long> nodeIds,
+	public void activeInstructions(
+	// @formatter:off
+			@RequestParam("nodeIds") Set<Long> nodeIds,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		final var filter = new SimpleInstructionFilter();
 		filter.setNodeIds(nodeIds.toArray(Long[]::new));
 		filter.setState(InstructionState.Queued);
@@ -212,6 +237,8 @@ public class NodeInstructionController {
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
 			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -222,16 +249,23 @@ public class NodeInstructionController {
 	 *        the ID of the node to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.1
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public void pendingInstructions(@RequestParam("nodeId") Long nodeId,
+	public void pendingInstructions(
+	// @formatter:off
+			@RequestParam("nodeId") final Long nodeId,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
-		pendingInstructions(Set.of(nodeId), accept, response);
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
+		pendingInstructions(Set.of(nodeId), accept, request, response);
 	}
 
 	/**
@@ -241,15 +275,22 @@ public class NodeInstructionController {
 	 *        the IDs of the nodes to get instructions for
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public void pendingInstructions(@RequestParam("nodeIds") Set<Long> nodeIds,
+	public void pendingInstructions(
+	// @formatter:off
+			@RequestParam("nodeIds") final Set<Long> nodeIds,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		final var filter = new SimpleInstructionFilter();
 		filter.setNodeIds(nodeIds.toArray(Long[]::new));
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
@@ -260,6 +301,8 @@ public class NodeInstructionController {
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
 			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -269,13 +312,17 @@ public class NodeInstructionController {
 	 * @param input
 	 *        the instruction data to add to the queue
 	 * @return the node instruction
+	 * @since 3.0
 	 */
 	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "!nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Result<NodeInstruction> queueInstruction(NodeInstruction input) {
-		validateInstruction(input);
-		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+	public Result<NodeInstruction> queueInstruction(@RequestParam("nodeId") Long nodeId,
+			Instruction input) {
+		var nodeInstrInput = new NodeInstruction(input);
+		nodeInstrInput.setNodeId(nodeId);
+		validateInstruction(nodeInstrInput);
+		NodeInstruction instr = instructorBiz.queueInstruction(nodeId, input);
 		return success(instr);
 	}
 
@@ -291,7 +338,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstructionBody(@RequestBody NodeInstruction input) {
 		validateInstruction(input);
-		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(),
+				input.getInstruction());
 		return success(instr);
 	}
 
@@ -308,15 +356,15 @@ public class NodeInstructionController {
 	 * @param input
 	 *        the other instruction data
 	 * @return the node instruction
-	 * @since 1.3
+	 * @since 3.0
 	 */
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Result<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
-			NodeInstruction input) {
+	public Result<NodeInstruction> queueInstruction(@PathVariable String topic,
+			@RequestParam("nodeId") Long nodeId, Instruction input) {
 		input.setTopic(topic);
-		return queueInstruction(input);
+		return queueInstruction(nodeId, input);
 	}
 
 	/**
@@ -337,11 +385,11 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Result<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
+	public Result<NodeInstruction> queueInstructionBody(@PathVariable String topic,
 			@RequestBody NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		validateInstruction(input);
-		return queueInstruction(input);
+		return queueInstruction(input.getNodeId(), input.getInstruction());
 	}
 
 	/**
@@ -358,8 +406,8 @@ public class NodeInstructionController {
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public Result<List<NodeInstruction>> queueInstruction(@RequestParam("nodeIds") Set<Long> nodeIds,
-			NodeInstruction input) {
-		validateInstruction(input, nodeIds);
+			Instruction input) {
+		validateInstruction(input, null, nodeIds);
 		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input);
 		return success(results);
 	}
@@ -379,23 +427,23 @@ public class NodeInstructionController {
 	 * @param input
 	 *        the instruction data to add to the queue
 	 * @return the node instructions
-	 * @since 1.3
+	 * @since 3.0
 	 */
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Result<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
-			@RequestParam("nodeIds") Set<Long> nodeIds, NodeInstruction input) {
+	public Result<List<NodeInstruction>> queueInstruction(@PathVariable String topic,
+			@RequestParam("nodeIds") Set<Long> nodeIds, Instruction input) {
 		input.setTopic(topic);
 		return queueInstruction(nodeIds, input);
 	}
 
 	private void validateInstruction(NodeInstruction instr) {
-		validateInstruction(instr, null);
+		validateInstruction(instr.getInstruction(), instr.getNodeId(), null);
 	}
 
-	private void validateInstruction(NodeInstruction instr, Set<Long> nodeIds) {
-		if ( (nodeIds == null && instr.getNodeId() == null) || (nodeIds != null && nodeIds.isEmpty()) ) {
+	private void validateInstruction(Instruction instr, Long nodeId, Set<Long> nodeIds) {
+		if ( (nodeIds == null && nodeId == null) || (nodeIds != null && nodeIds.isEmpty()) ) {
 			throw new IllegalArgumentException("The nodeId parameter is required.");
 		}
 		if ( instr.getTopic() == null || instr.getTopic().isEmpty() ) {
@@ -452,7 +500,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<Collection<Long>> updateInstructionsState(final SimpleInstructionFilter filter,
 			@RequestParam("state") InstructionState state) {
-		return success(instructorBiz.updateInstructionsStateForUser(getCurrentActorUserId(), filter, state));
+		return success(
+				instructorBiz.updateInstructionsStateForUser(getCurrentActorUserId(), filter, state));
 	}
 
 	/**
@@ -462,21 +511,30 @@ public class NodeInstructionController {
 	 *        the query criteria
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param request
+	 *        the HTTP request
 	 * @param response
 	 *        the HTTP response
 	 * @since 2.1
 	 */
 	@ResponseBody
 	@RequestMapping(value = "", method = RequestMethod.GET)
-	public void listInstructions(final SimpleInstructionFilter cmd,
+	public void listInstructions(
+	// @formatter:off
+			final SimpleInstructionFilter cmd,
 			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
-			final HttpServletResponse response) throws IOException {
+			final WebRequest request,
+			final HttpServletResponse response
+			// @formatter:on
+	) throws IOException {
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
 				.filteredResultsProcessorForType(acceptTypes, response,
 						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
 								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
 			instructorBiz.findFilteredNodeInstructions(cmd, processor);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, request, response);
 		}
 	}
 
@@ -495,9 +553,9 @@ public class NodeInstructionController {
 	@ResponseBody
 	public DeferredResult<Result<NodeInstruction>> execInstruction(
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
-			NodeInstruction input) {
-		validateInstruction(input);
-		return handleAsyncResult(instructorBiz.queueInstruction(input.getNodeId(), input), maxWaitMs);
+			@RequestParam("nodeId") Long nodeId, Instruction input) {
+		validateInstruction(input, nodeId, null);
+		return handleAsyncResult(instructorBiz.queueInstruction(nodeId, input), maxWaitMs);
 	}
 
 	/**
@@ -517,7 +575,8 @@ public class NodeInstructionController {
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestBody NodeInstruction input) {
 		validateInstruction(input);
-		return handleAsyncResult(instructorBiz.queueInstruction(input.getNodeId(), input), maxWaitMs);
+		return handleAsyncResult(
+				instructorBiz.queueInstruction(input.getNodeId(), input.getInstruction()), maxWaitMs);
 	}
 
 	/**
@@ -540,11 +599,11 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "!nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable("topic") String topic,
+	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
-			NodeInstruction input) {
+			@RequestParam("nodeId") Long nodeId, Instruction input) {
 		input.setTopic(topic);
-		return execInstruction(maxWaitMs, input);
+		return execInstruction(maxWaitMs, nodeId, input);
 	}
 
 	/**
@@ -567,13 +626,11 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<NodeInstruction>> execInstructionBody(
-			@PathVariable("topic") String topic,
+	public DeferredResult<Result<NodeInstruction>> execInstructionBody(@PathVariable String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestBody NodeInstruction input) {
-		input.setTopic(topic);
-		validateInstruction(input);
-		return execInstruction(maxWaitMs, input);
+		input.getInstruction().setTopic(topic);
+		return execInstruction(maxWaitMs, input.getNodeId(), input.getInstruction());
 	}
 
 	/**
@@ -593,9 +650,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(
 			@RequestParam("nodeIds") Set<Long> nodeIds,
-			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
-			NodeInstruction input) {
-		validateInstruction(input, nodeIds);
+			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs, Instruction input) {
+		validateInstruction(input, null, nodeIds);
 		return handleAsyncResult(instructorBiz.queueInstructions(nodeIds, input), maxWaitMs);
 	}
 
@@ -621,10 +677,9 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(
-			@PathVariable("topic") String topic, @RequestParam("nodeIds") Set<Long> nodeIds,
-			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
-			NodeInstruction input) {
+	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(@PathVariable String topic,
+			@RequestParam("nodeIds") Set<Long> nodeIds,
+			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs, Instruction input) {
 		input.setTopic(topic);
 		return execInstruction(nodeIds, maxWaitMs, input);
 	}
@@ -651,8 +706,7 @@ public class NodeInstructionController {
 		if ( instruction == null ) {
 			return null;
 		}
-		List<NodeInstruction> results = waitForResults(Collections.singletonList(instruction),
-				maxWaitMs);
+		List<NodeInstruction> results = waitForResults(List.of(instruction), maxWaitMs);
 		if ( results != null && !results.isEmpty() ) {
 			return results.getFirst();
 		}
@@ -712,8 +766,8 @@ public class NodeInstructionController {
 						if ( instr == null ) {
 							String msg = "Instruction [%d] not found".formatted(instruction.getId());
 							throw new IllegalStateException(msg);
-						} else if ( instr.getState() == InstructionState.Completed
-								|| instr.getState() == InstructionState.Declined ) {
+						} else if ( instr.getInstruction().getState() == InstructionState.Completed
+								|| instr.getInstruction().getState() == InstructionState.Declined ) {
 							results.put(instruction.getId(), instr);
 						}
 					} finally {
@@ -736,7 +790,7 @@ public class NodeInstructionController {
 				instr = updated;
 			} else {
 				instr = instr.clone();
-				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
+				instr.getInstruction().setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
 			}
 			finalInstructions.add(instr);
 		}
@@ -749,7 +803,7 @@ public class NodeInstructionController {
 	 *
 	 * @param executionResultDelay
 	 *        the execution delay to set; defaults to
-	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@code null} or not
 	 *        positive
 	 */
 	public void setExecutionResultDelay(Duration executionResultDelay) {

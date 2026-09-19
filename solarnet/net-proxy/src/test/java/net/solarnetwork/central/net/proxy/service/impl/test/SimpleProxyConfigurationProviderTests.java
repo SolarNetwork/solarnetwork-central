@@ -34,6 +34,7 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,7 +55,7 @@ import net.solarnetwork.pki.bc.BCCertificateService;
  * Test cases for the {@link SimpleProxyConfigurationProvider} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class SimpleProxyConfigurationProviderTests {
@@ -131,7 +132,8 @@ public class SimpleProxyConfigurationProviderTests {
 
 		// WHEN
 		X509Certificate[] ident = new X509Certificate[] { clientSignedCert };
-		SimpleProxyConnectionRequest req = new SimpleProxyConnectionRequest(principal, ident);
+		SimpleProxyConnectionRequest req = new SimpleProxyConnectionRequest(principal,
+				Arrays.asList(ident));
 		ProxyConnectionSettings conf = service.authorize(req);
 
 		// THEN

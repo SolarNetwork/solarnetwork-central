@@ -1,21 +1,21 @@
 /* ==================================================================
  * Dnp3ProxyConfigurationProvider.java - 8/08/2023 3:50:33 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,7 +26,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import java.io.IOException;
@@ -34,13 +34,13 @@ import java.security.KeyStore;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.automatak.dnp3.DNP3Manager;
@@ -70,15 +70,16 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * DNP3 proxy configuration provider.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvider, Dnp3UserEvents {
 
@@ -98,12 +99,12 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	private final DatumEntityDao datumDao;
 	private final UserEventAppenderBiz userEventAppenderBiz;
 
-	private Executor taskExecutor;
-	private Cache<Long, KeyStore> userTrustStoreCache;
+	private @Nullable Executor taskExecutor;
+	private @Nullable Cache<Long, KeyStore> userTrustStoreCache;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param manager
 	 *        the manager to use
 	 * @param instructorBiz
@@ -125,7 +126,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * @param userEventAppenderBiz
 	 *        the user event appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public Dnp3ProxyConfigurationProvider(DNP3Manager manager, InstructorBiz instructorBiz,
 			DynamicPortRegistrar portRegistrar, TrustedIssuerCertificateDao trustedCertDao,
@@ -151,20 +152,20 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	public Iterable<X509Certificate> acceptedIdentityIssuers() {
 		// in future if needed this iterator could do dynamic, paginated iteration over live DAO results;
 		// for now just return nothing
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
-	public ProxyConnectionSettings authorize(ProxyConnectionRequest request)
+	public @Nullable ProxyConnectionSettings authorize(ProxyConnectionRequest request)
 			throws AuthorizationException {
-		final X509Certificate[] clientIdentity = requireNonNullArgument(request, "request")
+		final List<X509Certificate> clientIdentity = requireNonNullArgument(request, "request")
 				.principalIdentity();
 		// assume client certificate is first
-		if ( clientIdentity.length < 1 ) {
+		if ( clientIdentity.isEmpty() ) {
 			return null;
 		}
 
-		final String clientSubjectDn = CertificateUtils.canonicalSubjectDn(clientIdentity[0]);
+		final String clientSubjectDn = CertificateUtils.canonicalSubjectDn(clientIdentity.getFirst());
 		final ServerAuthConfiguration auth = requireNonNullObject(
 				serverAuthDao.findForIdentifier(clientSubjectDn), clientSubjectDn);
 
@@ -178,7 +179,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		// validate certificate
 		try {
 			PKIXCertPathValidatorResult vr = CertificateUtils.validateCertificateChain(trustStore,
-					clientIdentity);
+					clientIdentity.toArray(X509Certificate[]::new));
 			if ( log.isInfoEnabled() ) {
 				TrustAnchor ta = vr.getTrustAnchor();
 				log.info("Validated connection authorization request identity [{}], trusted by [{}]",
@@ -227,7 +228,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * {@link ProxyConnectionSettings} that also implements
 	 * {@link ServiceLifecycleObserver} and resolves a dynamic unused port when
 	 * {@link #serviceDidStartup()} is invoked.
-	 * 
+	 *
 	 * <p>
 	 * This class extends {@link BasicStreamDatumFilteredResultsProcessor} for
 	 * convenience, to support the initial data load of the DNP3 server.
@@ -242,7 +243,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		private int port = 0;
 		private int datumLoadCount = 0;
 
-		private OutstationService server;
+		private @Nullable OutstationService server;
 
 		private DynamicConnectionSettings(ProxyConnectionRequest request, ServerAuthConfiguration auth,
 				KeyStore trustStore) {
@@ -308,7 +309,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
 					SESSION_TAGS, "Server starting with %d and %d control configurations.", START_TAG));
 
-			server = new OutstationService(manager, userEventAppenderBiz, instructorBiz, auth,
+			var server = new OutstationService(manager, userEventAppenderBiz, instructorBiz, auth,
 					destinationHost(), newPort, mConfigs, cConfigs);
 			server.setTaskExecutor(taskExecutor);
 			server.serviceDidStartup();
@@ -357,6 +358,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			}
 
 			port = newPort;
+			this.server = server;
 		}
 
 		@Override
@@ -385,11 +387,15 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		@Override
 		public void handleResultItem(StreamDatum resultItem) throws IOException {
 			final OutstationService server = this.server;
-			if ( server == null ) {
+			final ObjectDatumStreamMetadataProvider metadataProvider = getMetadataProvider();
+			if ( server == null || metadataProvider == null ) {
 				return;
 			}
-			ObjectDatumStreamMetadata meta = getMetadataProvider()
+			final ObjectDatumStreamMetadata meta = metadataProvider
 					.metadataForStreamId(resultItem.getStreamId());
+			if ( meta == null ) {
+				return;
+			}
 			ObjectDatum d = ObjectDatum.forStreamDatum(resultItem, auth.getUserId(),
 					DatumId.nodeId(meta.getObjectId(), meta.getSourceId(), resultItem.getTimestamp()),
 					meta);
@@ -401,39 +407,39 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Get the task executor.
-	 * 
+	 *
 	 * @return the taskExecutor
 	 */
-	public Executor getTaskExecutor() {
+	public final @Nullable Executor getTaskExecutor() {
 		return taskExecutor;
 	}
 
 	/**
 	 * Set the task executor.
-	 * 
+	 *
 	 * @param taskExecutor
 	 *        the taskExecutor to set
 	 */
-	public void setTaskExecutor(Executor taskExecutor) {
+	public final void setTaskExecutor(@Nullable Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 
 	/**
 	 * Get the user trust store cache.
-	 * 
+	 *
 	 * @return the cache
 	 */
-	public Cache<Long, KeyStore> getUserTrustStoreCache() {
+	public final @Nullable Cache<Long, KeyStore> getUserTrustStoreCache() {
 		return userTrustStoreCache;
 	}
 
 	/**
 	 * Set the user trust store cache.
-	 * 
+	 *
 	 * @param userTrustStoreCache
 	 *        the userTrustStoreCache to set
 	 */
-	public void setUserTrustStoreCache(Cache<Long, KeyStore> userTrustStoreCache) {
+	public final void setUserTrustStoreCache(@Nullable Cache<Long, KeyStore> userTrustStoreCache) {
 		this.userTrustStoreCache = userTrustStoreCache;
 	}
 

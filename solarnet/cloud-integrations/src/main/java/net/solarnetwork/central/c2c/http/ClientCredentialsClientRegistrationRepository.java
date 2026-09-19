@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -41,6 +42,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.GenericDao;
 
@@ -56,7 +58,7 @@ import net.solarnetwork.dao.GenericDao;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ClientCredentialsClientRegistrationRepository implements ClientRegistrationRepository {
 
@@ -64,7 +66,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	private final URI tokenUri;
 	private final ClientAuthenticationMethod clientAuthMethod;
 	private final TextEncryptor textEncryptor;
-	private final Function<String, Set<String>> sensitiveKeysProvider;
+	private final Function<String, @Nullable Set<String>> sensitiveKeysProvider;
 
 	/**
 	 * Constructor.
@@ -76,12 +78,12 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 * @param clientAuthMethod
 	 *        the OAuth client authentication method
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			CloudIntegrationConfigurationDao configurationDao, URI tokenUri,
 			ClientAuthenticationMethod clientAuthMethod, TextEncryptor textEncryptor,
-			Function<String, Set<String>> sensitiveKeysProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeysProvider) {
 		super();
 		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
 		this.tokenUri = requireNonNullArgument(tokenUri, "tokenUri");
@@ -91,7 +93,6 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 				"sensitiveKeysProvider");
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public ClientRegistration findByRegistrationId(String registrationId) {
 		final List<Long> ids = systemIdentifierLongComponents(registrationId, true);
@@ -105,7 +106,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 			throw new EmptyResultDataAccessException(
 					"Configuration for registration ID %s not found.".formatted(registrationId), 1);
 		}
-		conf.clone();
+		conf = conf.clone();
 		conf.unmaskSensitiveInformation(sensitiveKeysProvider, textEncryptor);
 
 		final String clientId = nonEmptyString(
@@ -131,7 +132,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 		}
 
 		if ( username != null && password != null ) {
-			builder.authorizationGrantType(AuthorizationGrantType.PASSWORD);
+			builder.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE);
 		} else {
 			builder.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS);
 		}

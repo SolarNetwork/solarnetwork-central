@@ -23,7 +23,10 @@
 package net.solarnetwork.central.oscp.dao.mqtt.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.now;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Completed;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Executing;
@@ -43,7 +46,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,7 +59,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -68,20 +69,23 @@ import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.GroupCapacityComplianceError;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OscpMqttInstructionHandler} class.
@@ -94,11 +98,12 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 	private static final Logger log = LoggerFactory.getLogger(OscpMqttInstructionHandlerTests.class);
 
-	private static final Long TEST_NODE_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_USER_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_CO_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_CP_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final String TEST_CG_IDENT = UUID.randomUUID().toString();
+	private static final Long TEST_NODE_ID = randomLong();
+	private static final Long TEST_USER_ID = randomLong();
+	private static final Long TEST_FP_ID = randomLong();
+	private static final Long TEST_CO_ID = randomLong();
+	private static final Long TEST_CP_ID = randomLong();
+	private static final String TEST_CG_IDENT = randomString();
 
 	@Mock
 	private NodeInstructionDao nodeInstructionDao;
@@ -138,7 +143,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 	@BeforeEach
 	public void setup() {
-		mapper = JsonUtils.newObjectMapper();
+		mapper = JsonUtils.JSON_OBJECT_MAPPER;
 		handler = new OscpMqttInstructionHandler(new StatTracker("SolarOSCP-MQTT", null, log, 1),
 				new CallingThreadExecutorService(), mapper, nodeInstructionDao, capacityGroupDao,
 				capacityOptimizerDao, capacityProviderDao, client);
@@ -210,7 +215,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void notQueueing() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -243,7 +248,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_unknownCapacityOptimizer() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -285,7 +290,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -299,7 +305,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_disabledCapacityOptimizer() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -322,7 +328,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(false);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
@@ -344,7 +350,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -358,7 +365,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_unknownCapacityGroup() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -381,7 +388,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
@@ -407,7 +414,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -421,7 +429,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_disabledCapacityGroup() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -444,17 +452,15 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
 		// lookup capacity group
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(false);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
@@ -476,7 +482,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -490,7 +497,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_unknownCapacityProvider() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -513,17 +520,15 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
 		// lookup capacity group
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
@@ -549,7 +554,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -563,7 +569,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_disabledCapacityProvider() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var json = instructionJson(instructionId, action, """
 				{
@@ -586,24 +592,22 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
 		// lookup capacity group
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		// lookup capacity provider
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(false);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -625,7 +629,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -639,7 +644,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage_invalidAction() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String action = "NotSupported";
 		var json = instructionJson(instructionId, action, """
 				{
@@ -662,24 +667,22 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
 		// lookup capacity group
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		// lookup capacity provider
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -701,7 +704,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -715,7 +719,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@Test
 	public void handleMessage() throws IOException {
 		// GIVEN
-		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final Long instructionId = randomLong();
 		final String correlationId = UUID.randomUUID().toString();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var msgJson = """
@@ -740,24 +744,22 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 		// lookup capacity optimizer
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
 		// lookup capacity group
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		// lookup capacity provider
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -792,7 +794,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		log.debug("Got events: {}", events);
 
 		LogEventInfo event = events.get(0);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -808,7 +811,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 				hasEntry(CORRELATION_ID_DATA_KEY, correlationId));
 
 		event = events.get(1);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_OUT_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_OUT_TAGS.toArray(String[]::new))));
 		eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));

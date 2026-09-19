@@ -23,14 +23,17 @@
 package net.solarnetwork.central.din.app.web.api;
 
 import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
+import static net.solarnetwork.central.web.WebUtils.throwUnlessCommitted;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -51,7 +54,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Instruction input controller.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestController("v1InstructionInputController")
 @RequestMapping("/api/v1/instr/endpoint/{endpointId}")
@@ -68,7 +71,7 @@ public class InstructionInputController {
 	 * @param maxInputLength
 	 *        the maximum datum input length
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InstructionInputController(InstructionInputEndpointBiz inputBiz,
 			@Value("${app.inin.max-input-length}") long maxInputLength) {
@@ -100,19 +103,24 @@ public class InstructionInputController {
 	 *         if an IO error occurs
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public void postInstruction(@PathVariable("endpointId") UUID endpointId,
+	public void postInstruction(
+	// @formatter:off
+			@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
-			InputStream in, @RequestHeader(value = "Accept", required = true) String accept,
-			@RequestHeader(value = "Accept-Encoding", required = false) String acceptEncoding,
-			HttpServletResponse response) throws IOException {
+			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
+			WebRequest req, InputStream in,
+			@RequestHeader(value = "Accept", required = true) String accept,
+			@RequestHeader(value = "Accept-Encoding", required = false) @Nullable String acceptEncoding,
+			HttpServletResponse response
+	// @formatter:on
+	) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType inputType = MediaType.parseMediaType(contentType);
 		final MediaType outputType = MediaType.parseMediaType(accept);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 
@@ -146,6 +154,8 @@ public class InstructionInputController {
 
 			inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out,
 					params);
+		} catch ( RuntimeException e ) {
+			throwUnlessCommitted(e, req, response);
 		}
 	}
 

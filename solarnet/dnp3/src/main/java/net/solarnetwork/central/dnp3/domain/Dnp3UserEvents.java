@@ -23,9 +23,12 @@
 package net.solarnetwork.central.dnp3.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.dao.Entity;
@@ -34,7 +37,7 @@ import net.solarnetwork.dao.Entity;
  * Constants and helpers for DNP3 user event handling.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface Dnp3UserEvents {
 
@@ -102,16 +105,15 @@ public interface Dnp3UserEvents {
 	String UPDATE_LIST_DATA_KEY = "updates";
 
 	/** User event tags for authorization events. */
-	String[] AUTHORIZATION_TAGS = new String[] { DNP3_TAG, AUTHORIZATION_TAG };
+	List<String> AUTHORIZATION_TAGS = List.of(DNP3_TAG, AUTHORIZATION_TAG);
 
 	/** User event tags for session events. */
-	String[] SESSION_TAGS = new String[] { DNP3_TAG, SESSION_TAG };
+	List<String> SESSION_TAGS = List.of(DNP3_TAG, SESSION_TAG);
 
 	/** User event tags for datum events. */
-	String[] DATUM_TAGS = new String[] { DNP3_TAG, DATUM_TAG };
+	List<String> DATUM_TAGS = List.of(DNP3_TAG, DATUM_TAG);
 
-	/** User event tags for instruction events. */
-	String[] INSTRUCTION_TAGS = new String[] { DNP3_TAG, INSTRUCTION_TAG };
+	List<String> INSTRUCTION_TAGS = List.of(DNP3_TAG, INSTRUCTION_TAG);
 
 	/**
 	 * Get a user log event for a configuration.
@@ -126,8 +128,8 @@ public interface Dnp3UserEvents {
 	 *        optional extra tags
 	 * @return the log event
 	 */
-	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, String[] baseTags,
-			String message, String... extraTags) {
+	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
+			@Nullable String message, String @Nullable... extraTags) {
 		return eventWithEntity(entity, baseTags, message, null, extraTags);
 	}
 
@@ -146,8 +148,9 @@ public interface Dnp3UserEvents {
 	 *        optional extra tags
 	 * @return the log event
 	 */
-	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, String[] baseTags,
-			String message, Map<String, ?> extraData, String... extraTags) {
+	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
+			@Nullable String message, @Nullable Map<String, ?> extraData,
+			String @Nullable... extraTags) {
 		Map<String, Object> data = eventDataForEntity(entity, extraData);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
@@ -169,12 +172,12 @@ public interface Dnp3UserEvents {
 	 * @param entity
 	 *        the entity
 	 * @param extraData
-	 *        optional extra data to include, or {@literal null}
+	 *        optional extra data to include, or {@code null}
 	 * @return the data map
 	 */
 	static Map<String, Object> eventDataForEntity(Entity<? extends CompositeKey> entity,
-			Map<String, ?> extraData) {
-		final CompositeKey id = entity.getId();
+			@Nullable Map<String, ?> extraData) {
+		final CompositeKey id = nonnull(entity.getId(), "ID");
 		Map<String, Object> data = new LinkedHashMap<>(
 				id.keyComponentLength() + 2 + (extraData != null ? extraData.size() : 0));
 		if ( extraData != null ) {
@@ -184,25 +187,11 @@ public interface Dnp3UserEvents {
 		final int keyLength = id.keyComponentLength();
 		for ( int i = 1; i < keyLength; i++ ) { // skip first key: presume user ID
 			Object v = id.keyComponent(i);
-			String k = null;
-			switch (i) {
-				case 1:
-					if ( isCert ) {
-						k = IDENTIFIER_DATA_KEY;
-					} else {
-						k = SERVER_ID_DATA_KEY;
-					}
-					break;
-				case 2:
-					if ( v instanceof Integer ) {
-						k = INDEX_DATA_KEY;
-					} else {
-						k = IDENTIFIER_DATA_KEY;
-					}
-					break;
-				default:
-					// ignore
-			}
+			String k = switch (i) {
+				case 1 -> isCert ? IDENTIFIER_DATA_KEY : SERVER_ID_DATA_KEY;
+				case 2 -> v instanceof Integer ? INDEX_DATA_KEY : IDENTIFIER_DATA_KEY;
+				default -> null;
+			};
 			if ( k != null ) {
 				data.put(k, v);
 			}

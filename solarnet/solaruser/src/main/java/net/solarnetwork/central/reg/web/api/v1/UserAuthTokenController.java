@@ -33,21 +33,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
+import net.solarnetwork.central.user.domain.GeneratedUserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Web service API for {@link UserAuthToken} management.
  *
  * @author matt
- * @version 2.2
+ * @version 3.1
  */
 @GlobalExceptionRestController
 @RestController("v1UserAuthTokenController")
@@ -108,15 +109,15 @@ public class UserAuthTokenController {
 	 *        The type of token to generate.
 	 * @param policy
 	 *        An optional policy to attach to the token.
-	 * @return The generated token.
+	 * @return The generated token, including the token secret.
 	 */
 	@RequestMapping(value = "/generate/{type}", method = RequestMethod.POST)
-	public Result<UserAuthToken> generateToken(Principal principal,
-			@PathVariable("type") SecurityTokenType type,
-			@RequestBody(required = false) BasicSecurityPolicy policy) {
+	public Result<GeneratedUserAuthToken> generateToken(Principal principal,
+			@PathVariable SecurityTokenType type,
+			@RequestBody(required = false) SecurityPolicy policy) {
 		final Long actorUserId = getActorUserId(principal);
 		UserAuthToken token = userBiz.generateUserAuthToken(actorUserId, type, policy);
-		return success(token);
+		return success(new GeneratedUserAuthToken(token));
 	}
 
 	/**
@@ -138,7 +139,7 @@ public class UserAuthTokenController {
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description) {
 		final Long actorUserId = getActorUserId(principal);
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, actorUserId);
 		info.setName(name != null && !name.isBlank() ? name : null);
 		info.setDescription(description != null && !description.isBlank() ? description : null);
 		userBiz.updateUserAuthTokenInfo(actorUserId, tokenId, info);
@@ -174,7 +175,7 @@ public class UserAuthTokenController {
 	 */
 	@RequestMapping(value = "/policy", method = RequestMethod.PATCH, consumes = "application/json")
 	public Result<UserAuthToken> mergePolicy(Principal principal,
-			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
+			@RequestParam("tokenId") String tokenId, @RequestBody SecurityPolicy policy) {
 		final Long actorUserId = getActorUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, false);
 		return success(token);
@@ -193,7 +194,7 @@ public class UserAuthTokenController {
 	 */
 	@RequestMapping(value = "/policy", method = RequestMethod.PUT, consumes = "application/json")
 	public Result<UserAuthToken> replacePolicy(Principal principal,
-			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
+			@RequestParam("tokenId") String tokenId, @RequestBody SecurityPolicy policy) {
 		final Long actorUserId = getActorUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, true);
 		return success(token);

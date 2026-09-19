@@ -24,6 +24,7 @@ package net.solarnetwork.central.mail;
 
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 
 /**
@@ -74,10 +75,11 @@ public interface MessageTemplateDataSource extends MessageDataSource {
 	 * Get a character column index at which to hard-wrap message text at.
 	 * Return <code>0</code> to indicate no wrapping should occur.
 	 * 
-	 * @return The word wrap character column index, or <em>null</em> if
+	 * @return The word wrap character column index, or {@code null} if
 	 *         unspecified.
 	 * @since 1.1
 	 */
+	@Nullable
 	Integer getWordWrapCharacterIndex();
 
 }

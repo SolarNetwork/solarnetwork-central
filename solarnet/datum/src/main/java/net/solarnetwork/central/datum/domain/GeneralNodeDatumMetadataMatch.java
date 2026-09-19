@@ -42,4 +42,30 @@ public class GeneralNodeDatumMetadataMatch extends GeneralNodeDatumMetadata
 	@Serial
 	private static final long serialVersionUID = 8655943853504680748L;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumMetadataMatch(NodeSourcePK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumMetadataMatch(Long nodeId, String sourceId) {
+		super(nodeId, sourceId);
+	}
+
 }

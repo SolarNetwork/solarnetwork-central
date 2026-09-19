@@ -94,7 +94,7 @@ public final class SelectChargePointActionStatus implements PreparedStatementCre
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectChargePointActionStatus(ChargePointActionStatusFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
@@ -108,7 +108,7 @@ public final class SelectChargePointActionStatus implements PreparedStatementCre
 	 * @param fetchSize
 	 *        the row fetch size
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectChargePointActionStatus(ChargePointActionStatusFilter filter, int fetchSize) {
 		super();

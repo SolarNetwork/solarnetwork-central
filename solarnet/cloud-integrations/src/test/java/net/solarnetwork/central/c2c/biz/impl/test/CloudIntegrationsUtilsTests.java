@@ -31,7 +31,11 @@ import static org.assertj.core.api.BDDAssertions.then;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.Period;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -93,7 +97,26 @@ public class CloudIntegrationsUtilsTests {
 		then(result)
 			.as("Date truncated to Monday week boundary start")
 			.isEqualTo(ts.atZone(ZoneOffset.UTC).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-					.toInstant().truncatedTo(ChronoUnit.DAYS))
+					.truncatedTo(ChronoUnit.DAYS).toInstant())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void truncateDate_week_tz() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("America/New_York");
+		LocalDateTime dt = LocalDateTime.of(2026, Month.SEPTEMBER, 8, 1, 2);
+		Instant ts = dt.atZone(zone).toInstant();
+
+		// WHEN
+		Instant result = CloudIntegrationsUtils.truncateDate(ts, Period.ofWeeks(1), zone);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Date truncated to Monday week boundary start")
+			.isEqualTo(LocalDate.of(dt.getYear(), dt.getMonth(), 7).atStartOfDay(zone).toInstant())
 			;
 		// @formatter:on
 	}
@@ -111,7 +134,26 @@ public class CloudIntegrationsUtilsTests {
 		then(result)
 			.as("Date truncated to month boundary start")
 			.isEqualTo(ts.atZone(ZoneOffset.UTC).with(TemporalAdjusters.firstDayOfMonth())
-					.toInstant().truncatedTo(ChronoUnit.DAYS))
+					.truncatedTo(ChronoUnit.DAYS).toInstant())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void truncateDate_month_tz() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("America/New_York");
+		LocalDateTime dt = LocalDateTime.of(2026, Month.SEPTEMBER, 8, 1, 2);
+		Instant ts = dt.atZone(zone).toInstant();
+
+		// WHEN
+		Instant result = CloudIntegrationsUtils.truncateDate(ts, Period.ofMonths(1), zone);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Date truncated to month boundary start")
+			.isEqualTo(LocalDate.of(dt.getYear(), dt.getMonth(), 1).atStartOfDay(zone).toInstant())
 			;
 		// @formatter:on
 	}
@@ -130,6 +172,25 @@ public class CloudIntegrationsUtilsTests {
 			.as("Date truncated to year boundary start")
 			.isEqualTo(ts.atZone(ZoneOffset.UTC).with(TemporalAdjusters.firstDayOfYear())
 					.toInstant().truncatedTo(ChronoUnit.DAYS))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void truncateDate_year_tz() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("America/New_York");
+		LocalDateTime dt = LocalDateTime.of(2026, Month.SEPTEMBER, 8, 1, 2);
+		Instant ts = dt.atZone(zone).toInstant();
+
+		// WHEN
+		Instant result = CloudIntegrationsUtils.truncateDate(ts, Period.ofYears(1), zone);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Date truncated to year boundary start")
+			.isEqualTo(LocalDate.of(dt.getYear(), 1, 1).atStartOfDay(zone).toInstant())
 			;
 		// @formatter:on
 	}
@@ -205,6 +266,25 @@ public class CloudIntegrationsUtilsTests {
 	}
 
 	@Test
+	public void nextTickStart_month_tz() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("Australia/Sydney");
+		Period p = Period.ofMonths(1);
+		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), p, zone);
+
+		// WHEN
+		Instant result = CloudIntegrationsUtils.nextTickStart(p, ts, zone);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Date shifted to next boundary start")
+			.isEqualTo(ts.atZone(zone).plusMonths(1).toInstant())
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void nextTickStart_year() {
 		// GIVEN
 		Period p = Period.ofYears(1);
@@ -218,6 +298,25 @@ public class CloudIntegrationsUtilsTests {
 		then(result)
 			.as("Date shifted to next boundary start")
 			.isEqualTo(ts.atZone(UTC).plusYears(1).toInstant())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nextTickStart_year_tz() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("Australia/Sydney");
+		Period p = Period.ofYears(1);
+		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), p, zone);
+
+		// WHEN
+		Instant result = CloudIntegrationsUtils.nextTickStart(p, ts, zone);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Date shifted to next boundary start")
+			.isEqualTo(ts.atZone(zone).plusYears(1).toInstant())
 			;
 		// @formatter:on
 	}

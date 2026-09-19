@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralLocationDatumMapPropertySerializerTests.java - Oct 17, 2014 2:37:14 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,8 +30,8 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.support.GeneralLocationDatumMapPropertySerializer;
@@ -39,13 +39,13 @@ import net.solarnetwork.domain.datum.DatumSamples;
 
 /**
  * Test cases for the {@link GeneralLocationDatumMapPropertySerializer} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class GeneralLocationDatumMapPropertySerializerTests {
 
-	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_LOCATION_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final LocalDateTime TEST_DATE = LocalDateTime.of(2014, 8, 22, 12, 1, 2,
 			(int) TimeUnit.MILLISECONDS.toNanos(345));
@@ -54,11 +54,9 @@ public class GeneralLocationDatumMapPropertySerializerTests {
 	private GeneralLocationDatumMapPropertySerializer serializer;
 
 	private GeneralLocationDatum getTestInstance() {
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setLocationId(TEST_NODE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOCATION_ID, TEST_TIMESTAMP,
+				TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -84,7 +82,7 @@ public class GeneralLocationDatumMapPropertySerializerTests {
 				is(d.getSamples().getAccumulatingSampleInteger("rotations")));
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		serializer = new GeneralLocationDatumMapPropertySerializer();
 	}
@@ -102,10 +100,8 @@ public class GeneralLocationDatumMapPropertySerializerTests {
 	@Test
 	public void serializeReporting() {
 		GeneralLocationDatum d = getTestInstance();
-		ReportingGeneralLocationDatum rd = new ReportingGeneralLocationDatum();
-		rd.setCreated(d.getCreated());
-		rd.setLocationId(d.getLocationId());
-		rd.setSourceId(d.getSourceId());
+		ReportingGeneralLocationDatum rd = new ReportingGeneralLocationDatum(d.getLocationId(),
+				d.getCreated(), d.getSourceId());
 		rd.setSamples(d.getSamples());
 		rd.setLocalDateTime(TEST_DATE);
 		Object result = serializer.serialize(null, null, rd);

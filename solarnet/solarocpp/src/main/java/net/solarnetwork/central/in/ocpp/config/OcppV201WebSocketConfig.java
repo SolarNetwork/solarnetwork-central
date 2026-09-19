@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +39,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistration;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppNodeInstructionProvider;
@@ -65,12 +65,13 @@ import net.solarnetwork.ocpp.v201.domain.Action;
 import net.solarnetwork.ocpp.v201.service.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v2.0.1 web socket configuration.
  * 
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 @Configuration
 @EnableWebSocket
@@ -128,6 +129,7 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	@Qualifier(OCPP_V201)
 	private List<ActionMessageProcessor<?, ?>> ocppActions;
 
+	@ConfigurationProperties(prefix = "app.ocpp.v201.ws")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	@Qualifier(OCPP_V201)
 	public CentralOcppWebSocketHandler<Action, Action> ocppWebSocketHandler_v201() {

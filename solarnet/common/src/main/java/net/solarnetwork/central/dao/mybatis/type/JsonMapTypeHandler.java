@@ -31,7 +31,8 @@ import java.util.Map;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
-import net.solarnetwork.codec.JsonUtils;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * MyBatis {@link TypeHandler} for mapping between a {@link Map} with string
@@ -50,24 +51,25 @@ public class JsonMapTypeHandler extends BaseTypeHandler<Map<String, Object>> {
 
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, Map<String, Object> parameter,
-			JdbcType jdbcType) throws SQLException {
+			@Nullable JdbcType jdbcType) throws SQLException {
 		String json = JsonUtils.getJSONString(parameter, "{}");
 		ps.setObject(i, json, (jdbcType != null ? jdbcType.TYPE_CODE : Types.VARCHAR));
-
 	}
 
 	@Override
-	public Map<String, Object> getNullableResult(ResultSet rs, String columnName) throws SQLException {
+	public @Nullable Map<String, Object> getNullableResult(ResultSet rs, String columnName)
+			throws SQLException {
 		return JsonUtils.getStringMap(rs.getString(columnName));
 	}
 
 	@Override
-	public Map<String, Object> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+	public @Nullable Map<String, Object> getNullableResult(ResultSet rs, int columnIndex)
+			throws SQLException {
 		return JsonUtils.getStringMap(rs.getString(columnIndex));
 	}
 
 	@Override
-	public Map<String, Object> getNullableResult(CallableStatement cs, int columnIndex)
+	public @Nullable Map<String, Object> getNullableResult(CallableStatement cs, int columnIndex)
 			throws SQLException {
 		return JsonUtils.getStringMap(cs.getString(columnIndex));
 	}

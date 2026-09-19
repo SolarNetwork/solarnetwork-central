@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
@@ -41,7 +43,7 @@ public final class UpdateObjectStreamMetadataJson implements PreparedStatementCr
 
 	private final ObjectMetadataCriteria filter;
 	private final ObjectDatumKind kind;
-	private final String json;
+	private final @Nullable String json;
 
 	/**
 	 * Constructor.
@@ -56,11 +58,12 @@ public final class UpdateObjectStreamMetadataJson implements PreparedStatementCr
 	 * @param json
 	 *        the JSON to save
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
-	public UpdateObjectStreamMetadataJson(ObjectMetadataCriteria filter, String json) {
-		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node,
-				json);
+	@SuppressWarnings("NullAway")
+	public UpdateObjectStreamMetadataJson(ObjectMetadataCriteria filter, @Nullable String json) {
+		this(requireNonNullArgument(filter, "filter"),
+				filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node, json);
 	}
 
 	/**
@@ -74,10 +77,10 @@ public final class UpdateObjectStreamMetadataJson implements PreparedStatementCr
 	 *        the JSON to save
 	 *
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public UpdateObjectStreamMetadataJson(ObjectMetadataCriteria filter, ObjectDatumKind kind,
-			String json) {
+			@Nullable String json) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");

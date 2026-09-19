@@ -147,6 +147,9 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void delete_forKey() {
 		// GIVEN
+		final Collection<AppSetting> existing = jdbcTemplate.query(new SelectAppSetting(null, null),
+				AppSettingRowMapper.INSTANCE);
+
 		final String[] keys = new String[] { "k1", "k2" };
 		final String[] types = new String[] { "t1", "t2", "t3" };
 		for ( String k : keys ) {
@@ -165,7 +168,8 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 				AppSettingRowMapper.INSTANCE);
 		// @formatter:off
 		then(remaining).describedAs("Remaining settings not deleted")
-			.hasSize(3)
+			.hasSize(3 + existing.size())
+			.filteredOn(s -> List.of(keys).contains(s.getKey()))
 			.allSatisfy(s -> {
 				then(s.getKey()).describedAs("key 1 not deleted").isEqualTo("k1");
 			}).extracting(AppSetting::getType)
@@ -184,8 +188,9 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		then(locked).describedAs("No locked setting when row doesn't exist").isNull();
 	}
 
-	private void deleteAll() {
-		jdbcTemplate.update("delete from solarcommon.app_setting");
+	private void deleteTestSettings() {
+		// only delete settings created by these tests, to preserve others like the DB migration tag
+		jdbcTemplate.update("delete from solarcommon.app_setting where skey = ?", "foo");
 	}
 
 	@Test
@@ -255,7 +260,7 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 			TestTransaction.end();
 
 			// clean up from manual insert
-			deleteAll();
+			deleteTestSettings();
 		}
 	}
 
@@ -340,7 +345,7 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 		} finally {
 			// clean up from manual insert
-			deleteAll();
+			deleteTestSettings();
 		}
 	}
 
@@ -413,7 +418,7 @@ public class JdbcAppSettingDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 			TestTransaction.end();
 
 			// clean up from manual insert
-			deleteAll();
+			deleteTestSettings();
 		}
 	}
 

@@ -112,7 +112,7 @@ public class DefaultMeasurementDaoTests {
 		final Long cgId = randomUUID().getMostSignificantBits();
 
 		final Long userId = randomUUID().getMostSignificantBits();
-		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
 				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
 
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
@@ -197,7 +197,7 @@ public class DefaultMeasurementDaoTests {
 		final Long cgId = randomUUID().getMostSignificantBits();
 
 		final Long userId = randomUUID().getMostSignificantBits();
-		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
 				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
 		asset.getEnergy().setPropertyNames(new String[] { "wattHours1", "wattHours2" });
 
@@ -294,7 +294,7 @@ public class DefaultMeasurementDaoTests {
 		final Long cgId = randomUUID().getMostSignificantBits();
 
 		final Long userId = randomUUID().getMostSignificantBits();
-		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
 				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
 
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
@@ -355,7 +355,7 @@ public class DefaultMeasurementDaoTests {
 		final Long cgId = randomUUID().getMostSignificantBits();
 
 		final Long userId = randomUUID().getMostSignificantBits();
-		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
 				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
 
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
@@ -440,7 +440,7 @@ public class DefaultMeasurementDaoTests {
 		final Long cgId = randomUUID().getMostSignificantBits();
 
 		final Long userId = randomUUID().getMostSignificantBits();
-		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
 				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
 
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);

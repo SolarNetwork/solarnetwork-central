@@ -36,14 +36,14 @@ import java.util.UUID;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 
@@ -56,7 +56,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 	/** A test user ID. */
 	protected static final Long TEST_USER_ID = UUID.randomUUID().getMostSignificantBits();
@@ -80,7 +80,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		this.sqlSessionFactory = sqlSessionFactory;
 	}
 
-	@After
+	@AfterEach
 	public void flushStatements() {
 		getSqlSessionTemplate().flushStatements();
 	}
@@ -127,11 +127,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 * @since 2.1
 	 */
 	protected Address createTestAddress(Instant created) {
-		Address s = new Address(null, created);
-		s.setName("Tester Dude");
-		s.setEmail("test@localhost");
-		s.setCountry("NZ");
-		s.setTimeZoneId("Pacific/Auckland");
+		Address s = new Address(null, created, TEST_USER_ID, "Tester Dude", "test@localhost", "NZ",
+				"Pacific/Auckland");
 		s.setRegion("Region");
 		s.setStateOrProvince("State");
 		s.setLocality("Wellington");
@@ -150,10 +147,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 */
 	protected Account createTestAccount(Address address) {
 		Account account = new Account(null, TEST_USER_ID,
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), "NZD", "en_NZ");
 		account.setAddress(address);
-		account.setCurrencyCode("NZD");
-		account.setLocale("en_NZ");
 		return account;
 	}
 

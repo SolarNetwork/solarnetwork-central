@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import net.solarnetwork.central.common.dao.NodeCriteria;
+
 /**
  * A filter for cloud datum stream property mapping entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface CloudDatumStreamMappingFilter extends CloudIntegrationsFilter,
-		CloudIntegrationCriteria, CloudDatumStreamMappingCriteria {
+public interface CloudDatumStreamMappingFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria,
+		CloudDatumStreamMappingCriteria, NodeCriteria {
 
 }

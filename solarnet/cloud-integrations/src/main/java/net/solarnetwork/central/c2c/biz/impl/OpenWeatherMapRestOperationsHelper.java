@@ -25,12 +25,16 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.APPID_PARAM;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -46,7 +50,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * style authentication.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class OpenWeatherMapRestOperationsHelper extends RestOperationsHelper {
 
@@ -55,6 +59,8 @@ public class OpenWeatherMapRestOperationsHelper extends RestOperationsHelper {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock to use
 	 * @param log
 	 *        the logger
 	 * @param userEventAppenderBiz
@@ -68,18 +74,20 @@ public class OpenWeatherMapRestOperationsHelper extends RestOperationsHelper {
 	 * @param sensitiveKeyProvider
 	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public OpenWeatherMapRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
+	public OpenWeatherMapRestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
 	}
 
 	@Override
 	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
+			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
 		return super.httpGet(description, configuration, responseType, (headers) -> {
 			headers.setAccept(ACCEPT_JSON);
 			URI result = setup.apply(headers);

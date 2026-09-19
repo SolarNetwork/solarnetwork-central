@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,11 +32,11 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
@@ -54,7 +55,7 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 	private Long nodeId;
 	private UserSettings last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisUserSettingsDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -155,13 +156,7 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		Collection<UserSettings> results = dao.getAll(null);
 		List<UserSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<UserSettings>() {
-
-			@Override
-			public int compare(UserSettings o1, UserSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 
@@ -172,10 +167,10 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
 	public void deleteByUserId_noMatch() {
 		insert();
-		dao.delete(userId - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.delete(userId - 1));
 	}
 
 }

@@ -59,7 +59,7 @@ public final class InsertTransformConfiguration implements PreparedStatementCrea
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertTransformConfiguration(Long userId, TransformConfiguration entity) {
 		super();

@@ -23,8 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import static java.lang.String.format;
-import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
-import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.usageMetadata;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.API_DATA_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.CLOUD_INTEGRATIONS_DATA_KEY;
@@ -41,6 +40,9 @@ import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_C
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils.invoiceForSnfInvoice;
+import static net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils.usageMetadata;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,10 +62,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -102,6 +106,7 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.TemplateRenderer;
 
@@ -109,7 +114,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -126,7 +131,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public static final Long DRAFT_INVOICE_ID = Long.valueOf(Invoice.DRAFT_INVOICE_ID);
 
 	/** The invoice number used for dry-run (draft) invoice generation. */
-	public static final String DRAFT_INVOICE_NUMBER = SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID);
+	public static final String DRAFT_INVOICE_NUMBER = nonnull(
+			SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID), "Draft invoice number");
 
 	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { GLOBAL_MESSAGE_BUNDLE_NAME,
 			MESSAGE_BUNDLE_NAME };
@@ -140,10 +146,10 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private final NodeUsageDao usageDao;
 	private final TaxCodeDao taxCodeDao;
 	private final VersionedMessageDao messageDao;
-	private SnfTaxCodeResolver taxCodeResolver;
-	private List<SnfInvoiceDeliverer> deliveryServices;
-	private List<SnfInvoiceRendererResolver> rendererResolvers;
-	private Cache<String, VersionedMessages> messageCache;
+	private @Nullable SnfTaxCodeResolver taxCodeResolver;
+	private @Nullable List<SnfInvoiceDeliverer> deliveryServices;
+	private @Nullable List<SnfInvoiceRendererResolver> rendererResolvers;
+	private @Nullable Cache<String, VersionedMessages> messageCache;
 	private String datumPropertiesInKey = DATUM_PROPS_IN_KEY;
 	private String datumOutKey = DATUM_OUT_KEY;
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
@@ -178,7 +184,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param messageDao
 	 *        the message DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DefaultSnfInvoicingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
 			SnfInvoiceItemDao invoiceItemDao, SnfInvoiceNodeUsageDao invoiceNodeUsageDao,
@@ -195,14 +201,15 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public Account accountForUser(Long userId) {
+	public @Nullable Account accountForUser(Long userId) {
 		return accountDao.getForUser(userId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
-		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(accountId.getId());
+	public @Nullable SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
+		SnfInvoiceFilter filter = SnfInvoiceFilter
+				.forAccount(requireNonNullArgument(accountId.getId(), "accountId.id"));
 		filter.setIgnoreCreditOnly(true);
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
@@ -212,13 +219,14 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
+	public @Nullable SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			SnfInvoicingSystem.InvoiceGenerationOptions options) {
 		// get account
-		Account account = accountDao.getForUser(userId, endDate);
+		final Account account = accountDao.getForUser(userId, endDate);
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
+		final Long accountId = account.getAccountId();
 
 		final boolean dryRun = (options != null && options.isDryRun());
 		final boolean useCredit = (options != null ? options.isUseAccountCredit() : !dryRun);
@@ -238,24 +246,23 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 
 		// turn usage into invoice items
-		final SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now());
+		final SnfInvoice invoice = new SnfInvoice(accountId, userId, Instant.now(), startDate, endDate,
+				account.getCurrencyCode());
 		invoice.setAddress(account.getAddress());
-		invoice.setCurrencyCode(account.getCurrencyCode());
-		invoice.setStartDate(startDate);
-		invoice.setEndDate(endDate);
 
 		// query for node usage counts
 		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);
 
 		// for dryRun support, we generate a negative invoice ID
-		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, DRAFT_INVOICE_ID)
+		final UserLongPK invoicePk = (dryRun ? new UserLongPK(userId, DRAFT_INVOICE_ID)
 				: invoiceDao.save(invoice));
-		invoice.getId().setId(invoiceId.getId()); // for return
+		final Long invoiceId = nonnull(invoicePk.getId(), "Invoice ID");
+		invoice.setInvoiceId(invoiceId); // for return
 
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
 		for ( NodeUsage usage : usages ) {
-			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 1 ) {
+			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 0 ) {
 				// no cost for this node
 				log.debug("No usage cost for node {} invoice date {}", usage.getId(), startDate);
 				continue;
@@ -263,7 +270,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			final Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
 			final Map<String, UsageInfo> usageInfo = usage.getUsageInfo();
 			if ( usage.getDatumPropertiesIn().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumPropertiesInKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, datumPropertiesInKey,
 						new BigDecimal(usage.getDatumPropertiesIn()), usage.getDatumPropertiesInCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_PROPS_IN_KEY));
 				if ( !dryRun ) {
@@ -272,7 +279,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getDatumOut().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumOutKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, datumOutKey,
 						new BigDecimal(usage.getDatumOut()), usage.getDatumOutCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_OUT_KEY));
 				if ( !dryRun ) {
@@ -281,7 +288,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getDatumDaysStored().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, datumDaysStoredKey,
 						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_DAYS_STORED_KEY));
 				if ( !dryRun ) {
@@ -290,7 +297,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getInstructionsIssued().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, instructionsIssuedKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, instructionsIssuedKey,
 						new BigDecimal(usage.getInstructionsIssued()),
 						usage.getInstructionsIssuedCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, INSTRUCTIONS_ISSUED_KEY));
@@ -300,7 +307,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getFluxDataIn().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataInKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, fluxDataInKey,
 						new BigDecimal(usage.getFluxDataIn()), usage.getFluxDataInCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_IN_KEY));
 				if ( !dryRun ) {
@@ -309,7 +316,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getFluxDataOut().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataOutKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, fluxDataOutKey,
 						new BigDecimal(usage.getFluxDataOut()), usage.getFluxDataOutCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_OUT_KEY));
 				if ( !dryRun ) {
@@ -318,7 +325,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getOcppChargers().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, ocppChargersKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, ocppChargersKey,
 						new BigDecimal(usage.getOcppChargers()), usage.getOcppChargersCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OCPP_CHARGERS_KEY));
 				if ( !dryRun ) {
@@ -327,7 +334,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getOscpCapacityGroups().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oscpCapacityGroupsKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, oscpCapacityGroupsKey,
 						new BigDecimal(usage.getOscpCapacityGroups()),
 						usage.getOscpCapacityGroupsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_GROUPS_KEY));
@@ -337,7 +344,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getOscpCapacity().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oscpCapacityKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, oscpCapacityKey,
 						new BigDecimal(usage.getOscpCapacity()), usage.getOscpCapacityCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_KEY));
 				if ( !dryRun ) {
@@ -346,7 +353,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getDnp3DataPoints().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, dnp3DataPointsKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, dnp3DataPointsKey,
 						new BigDecimal(usage.getDnp3DataPoints()), usage.getDnp3DataPointsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DNP3_DATA_POINTS_KEY));
 				if ( !dryRun ) {
@@ -355,7 +362,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getOauthClientCredentials().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oauthClientCredentialsKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, oauthClientCredentialsKey,
 						new BigDecimal(usage.getOauthClientCredentials()),
 						usage.getOauthClientCredentialsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OAUTH_CLIENT_CREDENTIALS_KEY));
@@ -365,7 +372,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getCloudIntegrationsData().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, cloudIntegrationsDataKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, cloudIntegrationsDataKey,
 						new BigDecimal(usage.getCloudIntegrationsData()),
 						usage.getCloudIntegrationsDataCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, CLOUD_INTEGRATIONS_DATA_KEY));
@@ -385,6 +392,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			}
 		}
 
+		// add items to invoice now in case total amount needed for tax/credit calculations below
 		invoice.setItems(new LinkedHashSet<>(items));
 
 		List<SnfInvoiceItem> taxItems = computeInvoiceTaxItems(invoice);
@@ -392,7 +400,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			if ( !dryRun ) {
 				invoiceItemDao.save(taxItem);
 			}
-			invoice.getItems().add(taxItem);
+			invoice.addItem(taxItem);
 		}
 
 		// claim credit, if available
@@ -403,28 +411,31 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						invoiceTotal);
 				if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
 					AccountBalance balance = accountDao.getBalanceForUser(invoice.getUserId());
-					SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
-							accountCreditKey, BigDecimal.ONE, credit.negate());
-					creditItem.setMetadata(Collections.singletonMap(META_AVAILABLE_CREDIT,
-							balance.getAvailableCredit().toPlainString()));
-					if ( !dryRun ) {
-						invoiceItemDao.save(creditItem);
+					if ( balance != null ) {
+						SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice,
+								InvoiceItemType.Credit, accountCreditKey, BigDecimal.ONE,
+								credit.negate());
+						creditItem.setMetadata(Map.of(META_AVAILABLE_CREDIT,
+								balance.getAvailableCredit().toPlainString()));
+						if ( !dryRun ) {
+							invoiceItemDao.save(creditItem);
+						}
+						invoice.addItem(creditItem);
 					}
-					invoice.getItems().add(creditItem);
 				}
 			}
 		}
 
 		// populate node usages
 		if ( nodeUsages != null ) {
-			nodeUsages.sort(NodeUsage.SORT_BY_NODE_ID);
+			Collections.sort(nodeUsages);
 			List<SnfInvoiceNodeUsage> invoiceNodeUsages = new ArrayList<>(nodeUsages.size());
 			for ( NodeUsage nodeUsage : nodeUsages ) {
-				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
-						invoice.getCreated(), nodeUsage.getDescription(),
-						nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
-						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued(),
-						nodeUsage.getFluxDataIn());
+				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId,
+						nonnull(nodeUsage.getId(), "NodeUsage node ID"), invoice.getCreated(),
+						nodeUsage.getDescription(), nodeUsage.getDatumPropertiesIn(),
+						nodeUsage.getDatumOut(), nodeUsage.getDatumDaysStored(),
+						nodeUsage.getInstructionsIssued(), nodeUsage.getFluxDataIn());
 				invoiceNodeUsages.add(u);
 				if ( !dryRun ) {
 					invoiceNodeUsageDao.save(u);
@@ -454,7 +465,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
 
-		SnfInvoiceDeliverer deliverer = invoiceDeliverer(invoice.getUserId());
+		SnfInvoiceDeliverer deliverer = invoiceDeliverer();
 		if ( deliverer == null ) {
 			String msg = format("No invoice delivery service available to delivery invoice %d",
 					invoiceId.getId());
@@ -490,7 +501,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 	}
 
-	private SnfInvoiceDeliverer invoiceDeliverer(Long userId) {
+	private @Nullable SnfInvoiceDeliverer invoiceDeliverer() {
 		Iterable<SnfInvoiceDeliverer> iterable = getDeliveryServices();
 		Iterator<SnfInvoiceDeliverer> itr = (iterable != null ? iterable.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);
@@ -539,16 +550,16 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			extension = "." + outputType.getSubtype();
 		}
 		Object[] filenameArgs = new Object[] {
-				DRAFT_INVOICE_ID.equals(invoice.getId().getId())
+				DRAFT_INVOICE_ID.equals(invoice.getInvoiceId())
 						? messageSource.getMessage("draftInvoice", null, "DRAFT", locale)
-						: SnfBillingUtils.invoiceNumForId(invoice.getId().getId()),
+						: SnfBillingUtils.invoiceNumForId(invoice.getInvoiceId()),
 				YearMonth.from(invoice.getStartDate()).toString(), extension };
 		String filename = messageSource.getMessage("invoice.filename", filenameArgs,
 				"SolarNetwork Invoice {0} - {1}{2}", locale);
 		return new ByteArrayResource(data) {
 
 			@Override
-			public String getFilename() {
+			public @Nullable String getFilename() {
 				return filename;
 			}
 
@@ -577,22 +588,22 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * {@inheritDoc}
 	 */
 	@Override
-	public TaxCodeFilter taxCodeFilterForInvoice(SnfInvoice invoice) {
-		SnfTaxCodeResolver service = this.taxCodeResolver;
+	public TaxCodeFilter taxCodeFilterForInvoice(final SnfInvoice invoice) {
+		final SnfTaxCodeResolver service = this.taxCodeResolver;
 		if ( service != null ) {
 			return service.taxCodeFilterForInvoice(invoice);
 		}
 		if ( invoice == null ) {
 			throw new IllegalArgumentException("The invoice argument must be provided.");
 		}
-		Address addr = invoice.getAddress();
+		final Address addr = invoice.getAddress();
 		if ( addr == null ) {
 			throw new IllegalArgumentException("The invoice must provide an address.");
 		}
 		if ( addr.getCountry() == null || addr.getCountry().trim().isEmpty() ) {
 			throw new IllegalArgumentException("The address must provide a country.");
 		}
-		List<String> zones = new ArrayList<>(2);
+		final List<String> zones = new ArrayList<>(2);
 		zones.add(addr.getCountry());
 		if ( addr.getStateOrProvince() != null && !addr.getStateOrProvince().trim().isEmpty() ) {
 			zones.add(String.format("%s.%s", addr.getCountry(), addr.getStateOrProvince()));
@@ -608,7 +619,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		LocalDate date = invoice.getStartDate();
 		if ( date == null ) {
-			date = LocalDate.now();
+			date = LocalDate.now(UTC);
 		}
 		filter.setDate(date.atStartOfDay(tz).toInstant());
 		return filter;
@@ -637,35 +648,37 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @param invoice
 	 *        the invoice to compute tax items for
-	 * @return the list of tax items, never {@literal null}
+	 * @return the list of tax items, never {@code null}
 	 */
-	public List<SnfInvoiceItem> computeInvoiceTaxItems(SnfInvoice invoice) {
-		SnfTaxCodeResolver taxResolver = (taxCodeResolver != null ? taxCodeResolver : this);
-		TaxCodeFilter taxFilter = taxResolver.taxCodeFilterForInvoice(invoice);
-		List<SnfInvoiceItem> taxItems = new ArrayList<>(8);
+	public List<SnfInvoiceItem> computeInvoiceTaxItems(final SnfInvoice invoice) {
+		final SnfTaxCodeResolver taxResolver = (taxCodeResolver != null ? taxCodeResolver : this);
+		final TaxCodeFilter taxFilter = taxResolver.taxCodeFilterForInvoice(invoice);
+		final List<SnfInvoiceItem> taxItems = new ArrayList<>(8);
 		if ( taxFilter != null ) {
-			net.solarnetwork.dao.FilterResults<TaxCode, Long> taxes = taxCodeDao.findFiltered(taxFilter,
-					null, null, null);
+			FilterResults<TaxCode, Long> taxes = taxCodeDao.findFiltered(taxFilter);
 			if ( taxes != null && taxes.getReturnedResultCount() > 0 ) {
 				Map<String, BigDecimal> taxAmounts = new LinkedHashMap<>(taxes.getReturnedResultCount());
-				for ( SnfInvoiceItem item : invoice.getItems() ) {
-					final InvoiceItemType itemType = item.getItemType();
-					if ( itemType == InvoiceItemType.Tax ) {
-						continue;
-					}
-					final String itemKey = item.getKey();
-					final BigDecimal itemAmount = item.getAmount();
-					if ( itemKey == null || itemAmount == null ) {
-						continue;
-					}
-					for ( TaxCode tax : taxes ) {
-						final String taxCode = tax.getCode();
-						final BigDecimal taxRate = tax.getRate();
-						if ( taxCode == null || taxRate == null ) {
+				final Set<SnfInvoiceItem> items = invoice.getItems();
+				if ( items != null ) {
+					for ( SnfInvoiceItem item : items ) {
+						final InvoiceItemType itemType = item.getItemType();
+						if ( itemType == InvoiceItemType.Tax ) {
 							continue;
 						}
-						if ( itemKey.equalsIgnoreCase(tax.getItemKey()) ) {
-							taxAmounts.merge(taxCode, taxRate.multiply(itemAmount), BigDecimal::add);
+						final String itemKey = item.getKey();
+						final BigDecimal itemAmount = item.getAmount();
+						if ( itemKey == null || itemAmount == null ) {
+							continue;
+						}
+						for ( TaxCode tax : taxes ) {
+							final String taxCode = tax.getCode();
+							final BigDecimal taxRate = tax.getRate();
+							if ( taxCode == null || taxRate == null ) {
+								continue;
+							}
+							if ( itemKey.equalsIgnoreCase(tax.getItemKey()) ) {
+								taxAmounts.merge(taxCode, taxRate.multiply(itemAmount), BigDecimal::add);
+							}
 						}
 					}
 				}
@@ -684,7 +697,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the key; defaults to {@link NodeUsages#DATUM_PROPS_IN_KEY}
 	 */
-	public String getDatumPropertiesInKey() {
+	public final String getDatumPropertiesInKey() {
 		return datumPropertiesInKey;
 	}
 
@@ -694,9 +707,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumPropertiesInKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setDatumPropertiesInKey(String datumPropertiesInKey) {
+	public final void setDatumPropertiesInKey(String datumPropertiesInKey) {
 		this.datumPropertiesInKey = requireNonNullArgument(datumPropertiesInKey, "datumPropertiesInKey");
 	}
 
@@ -705,7 +718,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the key; defaults to {@link NodeUsages#DATUM_OUT_KEY}
 	 */
-	public String getDatumOutKey() {
+	public final String getDatumOutKey() {
 		return datumOutKey;
 	}
 
@@ -715,9 +728,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumOutKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setDatumOutKey(String datumOutKey) {
+	public final void setDatumOutKey(String datumOutKey) {
 		this.datumOutKey = requireNonNullArgument(datumOutKey, "datumOutKey");
 	}
 
@@ -726,7 +739,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the key; defaults to {@link NodeUsages#DATUM_DAYS_STORED_KEY}
 	 */
-	public String getDatumDaysStoredKey() {
+	public final String getDatumDaysStoredKey() {
 		return datumDaysStoredKey;
 	}
 
@@ -736,9 +749,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumDaysStoredKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setDatumDaysStoredKey(String datumDaysStoredKey) {
+	public final void setDatumDaysStoredKey(String datumDaysStoredKey) {
 		this.datumDaysStoredKey = requireNonNullArgument(datumDaysStoredKey, "datumDaysStoredKey");
 	}
 
@@ -748,7 +761,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @return the key
 	 * @since 1.3
 	 */
-	public String getInstructionsIssuedKey() {
+	public final String getInstructionsIssuedKey() {
 		return instructionsIssuedKey;
 	}
 
@@ -758,10 +771,10 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param instructionsIssuedKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.3
 	 */
-	public void setInstructionsIssuedKey(String instructionsIssuedKey) {
+	public final void setInstructionsIssuedKey(String instructionsIssuedKey) {
 		this.instructionsIssuedKey = requireNonNullArgument(instructionsIssuedKey,
 				"instructionsIssuedKey");
 	}
@@ -769,7 +782,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for SolarFlux data in.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#FLUX_DATA_IN_KEY}
 	 * @since 1.5
 	 */
@@ -783,7 +796,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param fluxDataInKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setFluxDataInKey(String fluxDataInKey) {
@@ -793,7 +806,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for SolarFlux data out.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#FLUX_DATA_OUT_KEY}
 	 * @since 1.5
 	 */
@@ -807,7 +820,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param fluxDataOutKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setFluxDataOutKey(String fluxDataOutKey) {
@@ -817,11 +830,11 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OCPP chargers.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OCPP_CHARGERS_KEY}
 	 * @since 1.1
 	 */
-	public String getOcppChargersKey() {
+	public final String getOcppChargersKey() {
 		return ocppChargersKey;
 	}
 
@@ -831,21 +844,21 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param ocppChargersKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.1
 	 */
-	public void setOcppChargersKey(String ocppChargersKey) {
+	public final void setOcppChargersKey(String ocppChargersKey) {
 		this.ocppChargersKey = requireNonNullArgument(ocppChargersKey, "ocppChargersKey");
 	}
 
 	/**
 	 * Get the item key for OSCP Capacity Groups.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_GROUPS_KEY}
 	 * @since 1.1
 	 */
-	public String getOscpCapacityGroupsKey() {
+	public final String getOscpCapacityGroupsKey() {
 		return oscpCapacityGroupsKey;
 	}
 
@@ -855,10 +868,10 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oscpCapacityGroupsKey
 	 *        the oscpCapacityGroupsKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.1
 	 */
-	public void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
+	public final void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
 		this.oscpCapacityGroupsKey = requireNonNullArgument(oscpCapacityGroupsKey,
 				"oscpCapacityGroupsKey");
 	}
@@ -866,11 +879,11 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OSCP Capacity.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_KEY}
 	 * @since 1.4
 	 */
-	public String getOscpCapacityKey() {
+	public final String getOscpCapacityKey() {
 		return oscpCapacityKey;
 	}
 
@@ -880,21 +893,21 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oscpCapacityKey
 	 *        the oscpCapacityKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.4
 	 */
-	public void setOscpCapacityKey(String oscpCapacityKey) {
+	public final void setOscpCapacityKey(String oscpCapacityKey) {
 		this.oscpCapacityKey = requireNonNullArgument(oscpCapacityKey, "oscpCapacityKey");
 	}
 
 	/**
 	 * Get the item key for DNP3 Data Points.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#DNP3_DATA_POINTS_KEY}
 	 * @since 1.2
 	 */
-	public String getDnp3DataPointsKey() {
+	public final String getDnp3DataPointsKey() {
 		return dnp3DataPointsKey;
 	}
 
@@ -904,17 +917,17 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param dnp3DataPointsKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.2
 	 */
-	public void setDnp3DataPointsKey(String dnp3DataPointsKey) {
+	public final void setDnp3DataPointsKey(String dnp3DataPointsKey) {
 		this.dnp3DataPointsKey = requireNonNullArgument(dnp3DataPointsKey, "dnp3DataPointsKey");
 	}
 
 	/**
 	 * Get the item key for OAuth client credentials.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OAUTH_CLIENT_CREDENTIALS_KEY}
 	 * @since 1.5
 	 */
@@ -928,7 +941,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oauthClientCredentialsKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setOauthClientCredentialsKey(String oauthClientCredentialsKey) {
@@ -939,7 +952,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for Cloud Integrations data.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#CLOUD_INTEGRATIONS_DATA_KEY}
 	 * @since 1.6
 	 */
@@ -953,7 +966,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param cloudIntegrationsDataKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.6
 	 */
 	public final void setCloudIntegrationsDataKey(String cloudIntegrationsDataKey) {
@@ -990,7 +1003,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the key; defaults to {@link AccountBalance#ACCOUNT_CREDIT_KEY}
 	 */
-	public String getAccountCreditKey() {
+	public final String getAccountCreditKey() {
 		return accountCreditKey;
 	}
 
@@ -1000,9 +1013,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param accountCreditKey
 	 *        the accountCreditKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setAccountCreditKey(String accountCreditKey) {
+	public final void setAccountCreditKey(String accountCreditKey) {
 		this.accountCreditKey = requireNonNullArgument(accountCreditKey, "accountCreditKey");
 	}
 
@@ -1016,7 +1029,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the service
 	 */
-	public SnfTaxCodeResolver getTaxCodeResolver() {
+	public final @Nullable SnfTaxCodeResolver getTaxCodeResolver() {
 		return taxCodeResolver;
 	}
 
@@ -1026,7 +1039,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param taxCodeResolver
 	 *        the service to set
 	 */
-	public void setTaxCodeResolver(SnfTaxCodeResolver taxCodeResolver) {
+	public final void setTaxCodeResolver(@Nullable SnfTaxCodeResolver taxCodeResolver) {
 		this.taxCodeResolver = taxCodeResolver;
 	}
 
@@ -1035,7 +1048,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the cache
 	 */
-	public Cache<String, VersionedMessages> getMessageCache() {
+	public final @Nullable Cache<String, VersionedMessages> getMessageCache() {
 		return messageCache;
 	}
 
@@ -1045,7 +1058,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param messageCache
 	 *        the cache to set
 	 */
-	public void setMessageCache(Cache<String, VersionedMessages> messageCache) {
+	public final void setMessageCache(@Nullable Cache<String, VersionedMessages> messageCache) {
 		this.messageCache = messageCache;
 	}
 
@@ -1054,7 +1067,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the services
 	 */
-	public List<SnfInvoiceDeliverer> getDeliveryServices() {
+	public final @Nullable List<SnfInvoiceDeliverer> getDeliveryServices() {
 		return deliveryServices;
 	}
 
@@ -1064,7 +1077,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param deliveryServices
 	 *        the services to set
 	 */
-	public void setDeliveryServices(List<SnfInvoiceDeliverer> deliveryServices) {
+	public final void setDeliveryServices(@Nullable List<SnfInvoiceDeliverer> deliveryServices) {
 		this.deliveryServices = deliveryServices;
 	}
 
@@ -1073,7 +1086,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the services
 	 */
-	public List<SnfInvoiceRendererResolver> getRendererResolvers() {
+	public final @Nullable List<SnfInvoiceRendererResolver> getRendererResolvers() {
 		return rendererResolvers;
 	}
 
@@ -1083,7 +1096,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param rendererResolvers
 	 *        the services to set
 	 */
-	public void setRendererResolvers(List<SnfInvoiceRendererResolver> rendererResolvers) {
+	public final void setRendererResolvers(
+			@Nullable List<SnfInvoiceRendererResolver> rendererResolvers) {
 		this.rendererResolvers = rendererResolvers;
 	}
 
@@ -1093,7 +1107,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @return the timeout, in seconds
 	 */
-	public int getDeliveryTimeoutSecs() {
+	public final int getDeliveryTimeoutSecs() {
 		return deliveryTimeoutSecs;
 	}
 
@@ -1103,7 +1117,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param deliveryTimeoutSecs
 	 *        the timeout to set, in seconds, or {@literal 0} for no timeout
 	 */
-	public void setDeliveryTimeoutSecs(int deliveryTimeoutSecs) {
+	public final void setDeliveryTimeoutSecs(int deliveryTimeoutSecs) {
 		this.deliveryTimeoutSecs = deliveryTimeoutSecs;
 	}
 

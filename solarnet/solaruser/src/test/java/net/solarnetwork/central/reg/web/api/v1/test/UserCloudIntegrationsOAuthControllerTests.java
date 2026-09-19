@@ -189,8 +189,7 @@ public class UserCloudIntegrationsOAuthControllerTests {
 
 		final UserLongCompositePK integrationPk = new UserLongCompositePK(userId, integrationId);
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(
-				integrationPk, now());
-		integration.setServiceIdentifier(serviceId);
+				integrationPk, now(), randomString(), serviceId);
 
 		// look up integration
 		given(userCloudIntegrationsBiz.configurationForId(integrationPk,
@@ -242,8 +241,7 @@ public class UserCloudIntegrationsOAuthControllerTests {
 
 		final UserLongCompositePK integrationPk = new UserLongCompositePK(userId, integrationId);
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(
-				integrationPk, now());
-		integration.setServiceIdentifier(serviceId);
+				integrationPk, now(), randomString(), serviceId);
 
 		// look up integration
 		given(userCloudIntegrationsBiz.configurationForId(integrationPk,

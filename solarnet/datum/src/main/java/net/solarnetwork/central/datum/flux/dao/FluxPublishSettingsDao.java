@@ -42,9 +42,9 @@ public interface FluxPublishSettingsDao {
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
-	 * @return the configuration to use, never {@literal null}
+	 * @return the configuration to use, never {@code null}
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	FluxPublishSettings nodeSourcePublishConfiguration(Long userId, Long nodeId, String sourceId);
 

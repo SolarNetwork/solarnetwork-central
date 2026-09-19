@@ -22,20 +22,22 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.UserFilterCommand;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
@@ -45,7 +47,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisUserDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -74,15 +76,14 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	 */
 	@Test
 	public void storeNewUser() {
-		User newUser = new User();
-		newUser.setCreated(Instant.now());
-		newUser.setEmail(TEST_EMAIL);
+		User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
 		Long id = userDao.save(newUser);
 		log.debug("Got new user PK: " + id);
-		assertNotNull(id);
+		then(id).isNotNull();
 		userId = id;
 	}
 
@@ -93,14 +94,145 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void getByPrimaryKey() {
 		storeNewUser();
 		User user = userDao.get(this.userId);
-		assertNotNull(user);
-		assertEquals(this.userId, user.getId());
-		assertEquals(TEST_NAME, user.getName());
-		assertEquals(TEST_PASSWORD, user.getPassword());
-		assertEquals(TEST_EMAIL, user.getEmail());
-		assertNotNull(user.getEnabled());
-		assertTrue(user.getEnabled());
-		assertNotNull(user.getCreated());
+		// @formatter:off
+		then(user)
+			.isNotNull()
+			.returns(userId, from(User::getId))
+			.returns(TEST_NAME, from(User::getName))
+			.returns(TEST_PASSWORD, from(User::getPassword))
+			.returns(TEST_EMAIL, from(User::getEmail))
+			.returns(true, from(User::getEnabled))
+			.as("English language defaulted by database")
+			.returns(Locale.ENGLISH.getLanguage(), from(User::getLang))
+			.extracting(User::getCreated)
+			.isNotNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getWithLocation() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+		final String timeZoneId = "America/Mexico_City";
+		final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, locale.getCountry(),
+				timeZoneId);
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(MS_CLOCK.instant());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+		newUser.setLocationId(locId);
+
+		// WHEN
+		final User result = userDao.getUserWithLocation(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(locale.getLanguage(), from(User::getLang))
+			.as("Locale resolved from user lang and SolarLocation country")
+			.returns(locale, from(User::locale))
+			.extracting(User::getLocation)
+			.as("Location instance provided")
+			.isNotNull()
+			.as("Matches user's location ID")
+			.returns(locId, from(SolarLocation::getId))
+			.as("Location country populated")
+			.returns(locale.getCountry(), from(SolarLocation::getCountry))
+			.as("Location time zone populated")
+			.returns(timeZoneId, from(SolarLocation::getTimeZoneId))
+			;
+		// @formatter:on
+
+		userId = result.getId();
+	}
+
+	@Test
+	public void getWithLocation_noLocationId() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(MS_CLOCK.instant());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+
+		// WHEN
+		final User result = userDao.getUserWithLocation(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is returned")
+			.isNotNull()
+			.as("No location instance available")
+			.returns(null, from(User::getLocation))
+			.extracting(User::getLocation)
+			;
+		// @formatter:on
+
+		userId = result.getId();
+	}
+
+	@Test
+	public void storeNewUser_explicitLang() {
+		// GIVEN
+		User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(MS_CLOCK.instant());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(Locale.JAPANESE.getLanguage());
+
+		// WHEN
+		final User result = userDao.get(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(Locale.JAPANESE.getLanguage(), from(User::getLang))
+			;
+		// @formatter:on
+		userId = result.getId();
+	}
+
+	@Test
+	public void storeNewUser_langAndCountry() {
+		// GIVEN
+		final Locale locale = Locale.of("es", "MX");
+		final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, "MX", "America/Mexico_City");
+
+		final User newUser = new User(TEST_EMAIL);
+		newUser.setCreated(MS_CLOCK.instant());
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		newUser.setLang(locale.getLanguage());
+		newUser.setLocationId(locId);
+
+		// WHEN
+		final User result = userDao.get(userDao.save(newUser));
+
+		// @formatter:off
+		then(result)
+			.as("User is persisted")
+			.isNotNull()
+			.as("Explicit language preserved")
+			.returns(locale.getLanguage(), from(User::getLang))
+			.as("Locale resolved from user lang but default country without SolarLocation instance")
+			.returns(Locale.of(locale.getLanguage(), Locale.US.getCountry()), from(User::locale))
+			;
+		// @formatter:on
+
+		userId = result.getId();
 	}
 
 	/**
@@ -116,16 +248,19 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		user.setEmail("New Email");
 		user.setEnabled(Boolean.FALSE);
 		Long id = userDao.save(user);
-		assertNotNull(id);
-		assertEquals(this.userId, id);
+		then(id).isNotNull().isEqualTo(userId);
 		User updatedUser = userDao.get(id);
-		assertNotNull(updatedUser);
-		assertEquals(this.userId, updatedUser.getId());
-		assertEquals(user.getEmail(), updatedUser.getEmail());
-		assertEquals(user.getName(), updatedUser.getName());
-		assertEquals(user.getPassword(), updatedUser.getPassword());
-		assertEquals(user.getEnabled(), updatedUser.getEnabled());
-		assertEquals(created, updatedUser.getCreated());
+		// @formatter:off
+		then(updatedUser)
+			.isNotNull()
+			.returns(userId, from(User::getId))
+			.returns(user.getName(), from(User::getName))
+			.returns(user.getPassword(), from(User::getPassword))
+			.returns(user.getEmail(), from(User::getEmail))
+			.returns(user.getEnabled(), from(User::getEnabled))
+			.returns(created, from(User::getCreated))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -134,10 +269,10 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		User user = userDao.get(this.userId);
 		user.putInternalDataValue("bim", "bam");
 		Long userId = userDao.save(user);
-		assertEquals(user.getId(), userId);
+		then(userId).isEqualTo(user.getId());
 		User updated = userDao.get(user.getId());
-		assertEquals("Intenral data not changed by update", Collections.singletonMap("foo", "bar"),
-				updated.getInternalData());
+		then(updated.getInternalData()).as("Intenral data not changed by update")
+				.isEqualTo(Map.of("foo", "bar"));
 	}
 
 	/**
@@ -160,9 +295,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeRole();
 		User user = userDao.get(this.userId);
 		Set<String> roles = userDao.getUserRoles(user);
-		assertNotNull(roles);
-		assertEquals(1, roles.size());
-		assertEquals(TEST_ROLE_1, roles.iterator().next());
+		then(roles).isNotNull().containsExactly(TEST_ROLE_1);
 	}
 
 	/**
@@ -186,10 +319,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeRoles();
 		User user = userDao.get(this.userId);
 		Set<String> roles = userDao.getUserRoles(user);
-		assertNotNull(roles);
-		assertEquals(2, roles.size());
-		assertTrue(roles.contains(TEST_ROLE_1));
-		assertTrue(roles.contains(TEST_ROLE_2));
+		then(roles).isNotNull().containsExactlyInAnyOrder(TEST_ROLE_1, TEST_ROLE_2);
 	}
 
 	@Test
@@ -199,27 +329,30 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		User user = userDao.get(this.userId);
 		user.setLocationId(TEST_LOC_ID);
 		Long id = userDao.save(user);
-		assertEquals(this.userId, id);
+		then(id).isEqualTo(this.userId);
 
-		Map<String, Object> data = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> data = Map.of("bim", (Object) "bam");
 		userDao.storeInternalData(id, data);
 
 		User updatedUser = userDao.get(id);
-		assertNotNull(updatedUser);
-		assertEquals(this.userId, updatedUser.getId());
-		assertEquals(user.getEmail(), updatedUser.getEmail());
-		assertEquals(user.getName(), updatedUser.getName());
-		assertEquals(user.getPassword(), updatedUser.getPassword());
-		assertEquals(user.getEnabled(), updatedUser.getEnabled());
-		assertEquals(TEST_LOC_ID, updatedUser.getLocationId());
-
-		assertEquals(data, updatedUser.getInternalData());
+		// @formatter:off
+		then(updatedUser)
+			.isNotNull()
+			.returns(userId, from(User::getId))
+			.returns(user.getName(), from(User::getName))
+			.returns(user.getPassword(), from(User::getPassword))
+			.returns(user.getEmail(), from(User::getEmail))
+			.returns(user.getEnabled(), from(User::getEnabled))
+			.returns(user.getCreated(), from(User::getCreated))
+			.returns(TEST_LOC_ID, from(User::getLocationId))
+			.returns(data, from(User::getInternalData))
+			;
+		// @formatter:on
 	}
 
 	private Long storeTestUser(String email) {
-		User newUser = new User();
-		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
+		User newUser = new User(email);
+		newUser.setCreated(MS_CLOCK.instant());
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -235,24 +368,22 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		criteria.setEmail(TEST_EMAIL);
 
 		FilterResults<UserFilterMatch, Long> results = userDao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, results.getReturnedResultCount());
-		UserFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Match ID", userId, match.getId());
+		then(results.getTotalResults()).isEqualTo(1L);
+		then(results.getReturnedResultCount()).isEqualTo(1);
+		then(results).first().returns(userId, from(UserFilterMatch::getId));
 	}
 
 	@Test
 	public void findFilteredForInternalProperty() {
 		storeNewUser();
 		User user1 = userDao.get(userId);
-		Map<String, Object> billingData1 = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> billingData1 = Map.of("bim", (Object) "bam");
 		user1.setInternalData(billingData1);
 		userDao.storeInternalData(user1.getId(), billingData1);
 
 		Long userId2 = storeTestUser("bar@example.com");
 		User user2 = userDao.get(userId2);
-		Map<String, Object> billingData2 = Collections.singletonMap("bim", (Object) "baz");
+		Map<String, Object> billingData2 = Map.of("bim", (Object) "baz");
 		user2.setInternalData(billingData2);
 		userDao.storeInternalData(user2.getId(), billingData2);
 
@@ -260,30 +391,26 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		criteria.setInternalData(billingData1);
 
 		FilterResults<UserFilterMatch, Long> results = userDao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, results.getReturnedResultCount());
-		UserFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Match ID", userId, match.getId());
+		then(results.getTotalResults()).isEqualTo(1L);
+		then(results.getReturnedResultCount()).isEqualTo(1);
+		then(results).first().returns(userId, from(UserFilterMatch::getId));
 
 		criteria.setInternalData(billingData2);
 		results = userDao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, results.getReturnedResultCount());
-		match = results.getResults().iterator().next();
-		assertEquals("Match ID", userId2, match.getId());
+		then(results.getTotalResults()).isEqualTo(1L);
+		then(results.getReturnedResultCount()).isEqualTo(1);
+		then(results).first().returns(userId2, from(UserFilterMatch::getId));
 	}
 
 	@Test
 	public void storeInternalPropertyNullColumn() {
 		storeNewUser();
 
-		Map<String, Object> data = Collections.singletonMap("foo", (Object) "bar");
+		Map<String, Object> data = Map.of("foo", (Object) "bar");
 		userDao.storeInternalData(userId, data);
 
 		User user = userDao.get(userId);
-		assertEquals("Internal data", data, user.getInternalData());
+		then(user.getInternalData()).as("Internal data").isEqualTo(data);
 	}
 
 	@Test
@@ -291,13 +418,13 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> billingData = Map.of("bim", (Object) "bam");
 		userDao.storeInternalData(user.getId(), billingData);
 
 		User updated = userDao.get(userId);
 		Map<String, Object> expected = new HashMap<String, Object>(user.getInternalData());
 		expected.put("bim", "bam");
-		assertEquals("Internal data updated", expected, updated.getInternalData());
+		then(updated.getInternalData()).as("Internal data updated").isEqualTo(expected);
 	}
 
 	@Test
@@ -305,36 +432,37 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = Collections.singletonMap("foo", (Object) "bam");
+		Map<String, Object> billingData = Map.of("foo", (Object) "bam");
 		userDao.storeInternalData(user.getId(), billingData);
 
 		User updated = userDao.get(userId);
-		assertEquals("Internal data updated", billingData, updated.getInternalData());
+		then(updated.getInternalData()).as("Internal data updated").isEqualTo(billingData);
 	}
 
 	@Test
 	public void storeInternalPropertyNullValue() {
 		storeNewUser();
 
+		// note can not use Map.of() here because that does not support null values
 		Map<String, Object> billingData = Collections.singletonMap("foo", null);
 		userDao.storeInternalData(userId, billingData);
 
 		User updated = userDao.get(userId);
-		assertEquals("Internal data updated", Collections.emptyMap(), updated.getInternalData());
+		then(updated.getInternalData()).as("Internal data updated").isEqualTo(Map.of());
 	}
 
 	@Test
 	public void getInternalPropertiesNull() {
 		storeNewUser();
 		Map<String, Object> result = userDao.getInternalData(userId);
-		assertNull(result);
+		then(result).isNull();
 	}
 
 	@Test
 	public void getInternalProperties() {
 		storeInternalPropertyNullColumn();
 		Map<String, Object> result = userDao.getInternalData(userId);
-		assertEquals(Collections.singletonMap("foo", (Object) "bar"), result);
+		then(result).isEqualTo(Map.of("foo", "bar"));
 	}
 
 }

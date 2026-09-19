@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
+import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -29,6 +32,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.domain.UserFilterCommand;
@@ -42,6 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -49,7 +54,7 @@ import net.solarnetwork.dao.FilterResults;
  * generated.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class InvoiceGenerationTaskCreator {
 
@@ -73,13 +78,15 @@ public class InvoiceGenerationTaskCreator {
 	 *        the invoicing system
 	 * @param accountTaskDao
 	 *        the account task DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public InvoiceGenerationTaskCreator(UserDao userDao, SnfInvoicingSystem invoicingSystem,
 			AccountTaskDao accountTaskDao) {
 		super();
-		this.userDao = userDao;
-		this.invoicingSystem = invoicingSystem;
-		this.accountTaskDao = accountTaskDao;
+		this.userDao = requireNonNullArgument(userDao, "userDao");
+		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
+		this.accountTaskDao = requireNonNullArgument(accountTaskDao, "accountTaskDao");
 	}
 
 	/**
@@ -88,7 +95,7 @@ public class InvoiceGenerationTaskCreator {
 	 */
 	public void createTasks() {
 		// get the invoice end date, which is the start of the current month (exclusive)
-		final LocalDate endDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
+		final LocalDate endDate = LocalDateTime.now(UTC).truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
 				.toLocalDate();
 		createTasks(endDate);
 	}
@@ -137,6 +144,8 @@ public class InvoiceGenerationTaskCreator {
 			return;
 		}
 
+		final UserLongPK accountPk = account.getId();
+
 		// grab current account time zone
 		final ZoneId accountTimeZone = account.getTimeZone();
 		if ( accountTimeZone == null ) {
@@ -147,7 +156,7 @@ public class InvoiceGenerationTaskCreator {
 		final ZonedDateTime invoiceEndDate = endDate.atStartOfDay(accountTimeZone);
 
 		// find up to what point in time invoicing has already been completed
-		final ZonedDateTime invoicedThroughDate = invoicedThroughDate(account,
+		final ZonedDateTime invoicedThroughDate = invoicedThroughDate(accountPk,
 				invoiceEndDate.minusMonths(1));
 		if ( !invoicedThroughDate.isBefore(invoiceEndDate) ) {
 			log.debug("User {} invoicing up to date, nothing further to do.", user.getEmail());
@@ -159,7 +168,7 @@ public class InvoiceGenerationTaskCreator {
 		do {
 			log.info("Generating invoice for user {} for month {}", user.getEmail(), currInvoiceDate);
 			AccountTask task = AccountTask.newTask(currInvoiceDate.toInstant(),
-					AccountTaskType.GenerateInvoice, account.getId().getId());
+					AccountTaskType.GenerateInvoice, account.getAccountId());
 			accountTaskDao.save(task);
 			log.info("InvoiceImpl generation task created for user {} for month {}", user.getEmail(),
 					currInvoiceDate);
@@ -167,12 +176,13 @@ public class InvoiceGenerationTaskCreator {
 		} while ( currInvoiceDate.isBefore(invoiceEndDate) );
 	}
 
-	private Account accountForUser(final UserFilterMatch user) {
-		return invoicingSystem.accountForUser(user.getId());
+	private @Nullable Account accountForUser(final UserFilterMatch user) {
+		return invoicingSystem.accountForUser(nonnull(user.getId(), "User ID"));
 	}
 
-	private ZonedDateTime invoicedThroughDate(Account account, ZonedDateTime initialInvoiceStartDate) {
-		SnfInvoice invoice = invoicingSystem.findLatestInvoiceForAccount(account.getId());
+	private ZonedDateTime invoicedThroughDate(UserLongPK accountPk,
+			ZonedDateTime initialInvoiceStartDate) {
+		SnfInvoice invoice = invoicingSystem.findLatestInvoiceForAccount(accountPk);
 		if ( invoice == null ) {
 			return initialInvoiceStartDate;
 		}

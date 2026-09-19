@@ -14,18 +14,23 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_near_rows(
 		tolerance 		INTERVAL DEFAULT INTERVAL '3 months'
 	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 10 AS
 $$
+	-- find if stream even has accumulating properties, to avoid costly scan
+	WITH meta AS (
+		SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE) AS has_no_a
+ 		FROM solardatm.find_metadata_for_stream(sid)
+	)
 	-- choose earliest first/last rows for start/end dates, which may be exact time matches
-	WITH d AS (
+	, d AS (
 		(
 		SELECT d.*, 0::SMALLINT AS rtype
-		FROM solardatm.find_datm_around(sid, start_ts, tolerance, TRUE) AS d
+		FROM meta, solardatm.find_datm_around_ts(sid, start_ts, tolerance, TRUE, meta.has_no_a) AS d
 		ORDER BY d.ts
 		LIMIT 1
 		)
 		UNION
 		(
 		SELECT d.*, 0::SMALLINT AS rtype
-		FROM solardatm.find_datm_around(sid, end_ts, tolerance, TRUE) AS d
+		FROM meta, solardatm.find_datm_around_ts(sid, end_ts, tolerance, TRUE, meta.has_no_a) AS d
 		ORDER BY d.ts
 		LIMIT 1
 		)

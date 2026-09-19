@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * General node group information.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface NodeGroupInformation extends NodeGroupIdentity {
 
@@ -35,27 +37,33 @@ public interface NodeGroupInformation extends NodeGroupIdentity {
 	 * 
 	 * @return the group name
 	 */
+	@Nullable
 	String getName();
-	
+
 	/**
 	 * Get the location of the node.
 	 * 
 	 * @return location
 	 */
+	@Nullable
 	Location getLocation();
 
 	/**
-	 * Get a theoretical maximum power generation capacity of all group members combined.
+	 * Get a theoretical maximum power generation capacity of all group members
+	 * combined.
 	 * 
 	 * @return generation capacity watts
 	 */
+	@Nullable
 	Long getGenerationCapacityWatts();
-	
+
 	/**
-	 * Get a theoretical maximum power storage capacity of all group members combined.
+	 * Get a theoretical maximum power storage capacity of all group members
+	 * combined.
 	 * 
 	 * @return storage capacity in watt hours
 	 */
+	@Nullable
 	Long getStorageCapacityWattHours();
-	
+
 }

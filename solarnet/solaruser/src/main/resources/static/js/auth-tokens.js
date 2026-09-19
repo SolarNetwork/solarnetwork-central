@@ -20,7 +20,7 @@ $(document).ready(function() {
 		}
 	})();
 	
-	function handleAuthTokenCreated(json, status, xhr, form) {
+	function handleAuthTokenCreated(json, _status, _xhr, form) {
 		if ( json.success === true && json.data ) {
 			tokenCreated = true;
 			const f = form[0];
@@ -155,29 +155,35 @@ $(document).ready(function() {
 		});
 	}
 
-	$('#create-user-auth-token').on('hidden.bs.modal', resetAuthTokenForm).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			beforeSerialize: setupActivePolicyFromForm,
-			beforeSubmit: beforeSubmitTokenForm,
-			success: handleAuthTokenCreated,
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
-			}
+	$('#create-user-auth-token')
+		.on('hidden.bs.modal', resetAuthTokenForm)
+		.on('keyup keypress', 'input[type="text"]', SolarReg.preventEnterKeyDefault)
+		.each(function() {
+			$(this).ajaxForm({
+				dataType: 'json',
+				beforeSerialize: setupActivePolicyFromForm,
+				beforeSubmit: beforeSubmitTokenForm,
+				success: handleAuthTokenCreated,
+				error: function(_xhr, _status, statusText) {
+					SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
+				}
+			});
 		});
-	});
 	
-	$('#create-data-auth-token').on('hidden.bs.modal', resetAuthTokenForm).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			beforeSerialize: setupActivePolicyFromForm,
-			beforeSubmit: beforeSubmitTokenForm,
-			success: handleAuthTokenCreated,
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-			}
+	$('#create-data-auth-token')
+		.on('hidden.bs.modal', resetAuthTokenForm)
+		.on('keyup keypress', 'input[type="text"]', SolarReg.preventEnterKeyDefault)
+		.each(function() {
+			$(this).ajaxForm({
+				dataType: 'json',
+				beforeSerialize: setupActivePolicyFromForm,
+				beforeSubmit: beforeSubmitTokenForm,
+				success: handleAuthTokenCreated,
+				error: function(_xhr, _status, statusText) {
+					SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+				}
+			});
 		});
-	});
 	
 	$('.create-auth-token-download-csv').on('click', function downloadTokenCsv() {
 		const link = this;
@@ -214,11 +220,11 @@ $(document).ready(function() {
 	$('#edit-auth-token-info').each(function() {
 		$(this).ajaxForm({
 			dataType: 'json',
-			success: function(json, status, xhr, form) {
+			success: function(_json, _status, _xhr, form) {
 				form.modal('hide');
 				document.location.reload(true);
 			},
-			error: function(xhr, status, statusText) {
+			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore('#edit-auth-token-info .modal-body > *:first-child', 'alert-error', statusText);
 			}
 		});
@@ -236,11 +242,11 @@ $(document).ready(function() {
 	$('#delete-auth-token').each(function() {
 		$(this).ajaxForm({
 			dataType: 'json',
-			success: function(json, status, xhr, form) {
+			success: function(_json, _status, _xhr, form) {
 				form.modal('hide');
 				document.location.reload(true);
 			},
-			error: function(xhr, status, statusText) {
+			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore('#delete-auth-token .modal-body > *:first-child', 'alert-error', statusText);
 			}
 		});

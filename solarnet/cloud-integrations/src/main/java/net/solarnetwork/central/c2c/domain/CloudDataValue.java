@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.util.StringUtils;
 
@@ -40,7 +41,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.6
+ * @version 1.10
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -114,6 +115,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	public static final String ACTIVE_METADATA = "active";
 
 	/**
+	 * Standard metadata key for an activation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String ACTIVATED_AT_METADATA = "activatedAt";
+
+	/**
+	 * Standard metadata key for a deactivation date (timestamp).
+	 *
+	 * @since 1.8
+	 */
+	public static final String DEACTIVATED_AT_METADATA = "deactivatedAt";
+
+	/**
 	 * Standard metadata key for an azimuth angle value, in degrees.
 	 *
 	 * @since 1.6
@@ -135,6 +150,34 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	public static final String START_DATE_METADATA = "startDate";
 
 	/**
+	 * Standard metadata key for a reference to another data value that replaced
+	 * this one.
+	 *
+	 * <p>
+	 * This can be used to correlate different pieces of equipment that
+	 * logically represent the same stream of data, for example when equipment
+	 * is replaced.
+	 * </p>
+	 *
+	 * @since 1.7
+	 */
+	public static final String REPLACED_BY_METADATA = "replacedBy";
+
+	/**
+	 * Standard metadata key for a rated (peak) power value, in watts.
+	 *
+	 * @since 1.9
+	 */
+	public static final String RATED_POWER_METADATA = "ratedPower";
+
+	/**
+	 * Standard metadata key for a related identifier.
+	 *
+	 * @since 1.10
+	 */
+	public static final String RELATED_IDENTIFIER_METADATA = "relatedIdentifier";
+
+	/**
 	 * A wildcard identifier value.
 	 *
 	 * @since 1.1
@@ -143,18 +186,18 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 
 	private final List<String> identifiers;
 	private final String name;
-	private final String reference;
-	private final Map<String, ?> metadata;
-	private final Collection<CloudDataValue> children;
+	private final @Nullable String reference;
+	private final @Nullable Map<String, ?> metadata;
+	private final @Nullable Collection<CloudDataValue> children;
 
 	/**
 	 * Generate a path-like reference value out of a list of identifiers.
 	 *
 	 * @param identifiers
 	 *        the identifiers
-	 * @return the reference value, never {@literal null}
+	 * @return the reference value, never {@code null}
 	 */
-	public static String pathReferenceValue(Collection<String> identifiers) {
+	public static String pathReferenceValue(@Nullable Collection<String> identifiers) {
 		var buf = new StringBuilder();
 		if ( identifiers != null && !identifiers.isEmpty() ) {
 			for ( String ident : identifiers ) {
@@ -172,7 +215,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers
@@ -180,7 +223,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param name
 	 *        the component name
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 * @since 1.3
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name) {
@@ -192,7 +235,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers
@@ -202,10 +245,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
-			Map<String, ?> metadata) {
+			@Nullable Map<String, ?> metadata) {
 		return new CloudDataValue(identifiers, name, pathReferenceValue(identifiers), metadata);
 	}
 
@@ -219,10 +262,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
-			Map<String, ?> metadata) {
+			@Nullable Map<String, ?> metadata) {
 		return new CloudDataValue(identifiers, name, null, metadata);
 	}
 
@@ -238,11 +281,11 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 * @since 1.1
 	 */
 	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
-			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+			@Nullable Map<String, ?> metadata, @Nullable Collection<CloudDataValue> children) {
 		return new CloudDataValue(identifiers, name, null, metadata, children);
 	}
 
@@ -251,7 +294,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers
@@ -263,10 +306,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
-			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+			@Nullable Map<String, ?> metadata, @Nullable Collection<CloudDataValue> children) {
 		return new CloudDataValue(identifiers, name, pathReferenceValue(identifiers), metadata,
 				children);
 	}
@@ -283,10 +326,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
-	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
-			Map<String, ?> metadata) {
+	public static CloudDataValue dataValue(List<String> identifiers, String name,
+			@Nullable String reference, @Nullable Map<String, ?> metadata) {
 		return new CloudDataValue(identifiers, name, reference, metadata);
 	}
 
@@ -304,11 +347,32 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
-	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
-			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+	public static CloudDataValue dataValue(List<String> identifiers, String name,
+			@Nullable String reference, @Nullable Map<String, ?> metadata,
+			@Nullable Collection<CloudDataValue> children) {
 		return new CloudDataValue(identifiers, name, reference, metadata, children);
+	}
+
+	/**
+	 * Search for the first value with a given set of identifiers.
+	 *
+	 * @param values
+	 *        the values to search
+	 * @param identifiers
+	 *        the identifiers to search for
+	 * @return the first matching value, or {@code null}
+	 * @since 1.9
+	 */
+	public static @Nullable CloudDataValue findFirst(CloudDataValue[] values, List<String> identifiers) {
+		for ( int i = 0; i < values.length; i++ ) {
+			var result = values[i].findFirst(identifiers);
+			if ( result != null ) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -323,10 +387,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
-	public CloudDataValue(List<String> identifiers, String name, String reference,
-			Map<String, ?> metadata) {
+	public CloudDataValue(List<String> identifiers, String name, @Nullable String reference,
+			@Nullable Map<String, ?> metadata) {
 		this(identifiers, name, reference, metadata, null);
 	}
 
@@ -344,10 +408,10 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
-	public CloudDataValue(List<String> identifiers, String name, String reference,
-			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+	public CloudDataValue(List<String> identifiers, String name, @Nullable String reference,
+			@Nullable Map<String, ?> metadata, @Nullable Collection<CloudDataValue> children) {
 		super();
 		this.identifiers = requireNonNullArgument(identifiers, "identifiers");
 		this.name = requireNonNullArgument(name, "name");
@@ -372,6 +436,42 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 			return 1;
 		}
 		return 0;
+	}
+
+	/**
+	 * Search for the first value with a given set of identifiers.
+	 *
+	 * @param identifiers
+	 *        the identifiers to search for
+	 * @return the first matching value, or {@code null}
+	 * @since 1.9
+	 */
+	public @Nullable CloudDataValue findFirst(List<String> identifiers) {
+		if ( this.identifiers.equals(identifiers) ) {
+			return this;
+		}
+		if ( this.identifiers.size() < identifiers.size() ) {
+			boolean prefixMatch = true;
+			for ( int i = 0, max = this.identifiers.size(); prefixMatch && i < max; i++ ) {
+				if ( !this.identifiers.get(i).equals(identifiers.get(i)) ) {
+					prefixMatch = false;
+				}
+			}
+			if ( !prefixMatch ) {
+				// abort
+				return null;
+			}
+		}
+		Collection<CloudDataValue> children = getChildren();
+		if ( children != null ) {
+			for ( CloudDataValue child : children ) {
+				var result = child.findFirst(identifiers);
+				if ( result != null ) {
+					return result;
+				}
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -408,36 +508,36 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * Get the data value hierarchy identifier.
 	 *
 	 * @return the identifiers, unique within the overall hierarchy, never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
-	public List<String> getIdentifiers() {
+	public final List<String> getIdentifiers() {
 		return identifiers;
 	}
 
 	/**
 	 * Get the component name.
 	 *
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
 	/**
 	 * Get the reference.
 	 *
-	 * @return the reference, or {@literal null}
+	 * @return the reference, or {@code null}
 	 */
-	public String getReference() {
+	public final @Nullable String getReference() {
 		return reference;
 	}
 
 	/**
 	 * Get the component metadata.
 	 *
-	 * @return the metadata, or {@literal null}
+	 * @return the metadata, or {@code null}
 	 */
-	public Map<String, ?> getMetadata() {
+	public final @Nullable Map<String, ?> getMetadata() {
 		return metadata;
 	}
 
@@ -446,7 +546,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * @return the children
 	 */
-	public Collection<CloudDataValue> getChildren() {
+	public final @Nullable Collection<CloudDataValue> getChildren() {
 		return children;
 	}
 

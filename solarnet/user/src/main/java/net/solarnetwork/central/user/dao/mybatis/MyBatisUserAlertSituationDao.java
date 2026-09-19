@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
@@ -57,7 +58,7 @@ public class MyBatisUserAlertSituationDao extends BaseMyBatisGenericDao<UserAler
 	}
 
 	@Override
-	public UserAlertSituation getActiveAlertSituationForAlert(Long alertId) {
+	public @Nullable UserAlertSituation getActiveAlertSituationForAlert(Long alertId) {
 		return selectFirst(QUERY_ACTIVE_FOR_ALERT, alertId);
 	}
 

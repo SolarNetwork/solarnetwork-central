@@ -25,32 +25,32 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  */
 public interface Message {
 
-  /**
-   * Get the topic.
-   * 
-   * @return the topic
-   */
-  String getTopic();
+	/**
+	 * Get the topic.
+	 * 
+	 * @return the topic
+	 */
+	String getTopic();
 
-  /**
-   * Get the quality of service level.
-   * 
-   * @return the quality of service
-   */
-  Qos getQos();
+	/**
+	 * Get the quality of service level.
+	 * 
+	 * @return the quality of service
+	 */
+	Qos getQos();
 
-  /**
-   * Get the message content.
-   * 
-   * @return the message content
-   */
-  byte[] getPayload();
+	/**
+	 * Get the message content.
+	 * 
+	 * @return the message content
+	 */
+	byte[] getPayload();
 
-  /**
-   * Get the "retain" flag.
-   * 
-   * @return {@literal true} to have the message retained by the broker
-   */
-  Boolean getRetain();
+	/**
+	 * Get the "retain" flag.
+	 * 
+	 * @return {@literal true} to have the message retained by the broker
+	 */
+	Boolean getRetain();
 
 }

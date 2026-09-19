@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -34,13 +35,15 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +67,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.PropertyNameFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
@@ -76,7 +80,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.datum.v2.domain.PropertyRestrictedObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -84,6 +88,7 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Securable;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -93,16 +98,18 @@ import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 
 /**
  * Implementation of {@link QueryBiz}.
  *
  * @author matt
- * @version 4.5
+ * @version 4.7
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -137,7 +144,7 @@ public class DaoQueryBiz implements QueryBiz {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
 			ReadingDatumDao readingDao, SolarNodeOwnershipDao nodeOwnershipDao) {
@@ -164,6 +171,31 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	public ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter) {
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
+		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);
+		ReportableInterval result = null;
+		for ( DatumDateInterval interval : results ) {
+			if ( result == null ) {
+				result = new ReportableInterval(interval.getStart(), interval.getEnd(),
+						interval.getZone());
+			} else {
+				if ( interval.getStart().isBefore(result.startDate().toInstant()) ) {
+					result = new ReportableInterval(interval.getStart(), result.endDate().toInstant(),
+							result.getTimeZone());
+				}
+				if ( interval.getEnd().isAfter(result.endDate().toInstant()) ) {
+					result = new ReportableInterval(result.startDate().toInstant(), interval.getEnd(),
+							result.getTimeZone());
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
@@ -179,6 +211,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
+		c.setSorts(SimpleSortDescriptor.sorts("node", "source"));
 		validateDatumCriteria(c);
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
 		return stream(results.spliterator(), false)
@@ -194,29 +227,30 @@ public class DaoQueryBiz implements QueryBiz {
 			c = new BasicDatumCriteria();
 		}
 		c.setObjectKind(ObjectDatumKind.Node);
-		if ( actor instanceof SecurityNode ) {
-			Long nodeId = ((SecurityNode) actor).getNodeId();
+		if ( actor instanceof SecurityNode a ) {
+			Long nodeId = a.getNodeId();
 			c.setNodeId(nodeId);
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			c.setTokenId(tokenId);
 		} else {
 			return Collections.emptySet();
 		}
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
-		return stream(results.spliterator(), false)
+		Set<NodeSourcePK> result = stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
+		return Collections.unmodifiableSet(result);
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
-		if ( actor instanceof SecurityNode ) {
-			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		if ( actor instanceof SecurityNode a ) {
+			nodeIds = Set.of(a.getNodeId());
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);
 			nodeIds = (ids != null ? new LinkedHashSet<>(Arrays.asList(ids)) : null);
 		}
@@ -236,11 +270,41 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
+	}
+
+	private static ObjectDatumStreamMetadata metadataForStreamId(UUID streamId,
+			ObjectDatumStreamMetadataProvider provider, PropertyNameFilter filter,
+			Map<UUID, ObjectDatumStreamMetadata> cache) {
+		if ( provider == null || streamId == null ) {
+			return null;
+		}
+		ObjectDatumStreamMetadata meta = null;
+		if ( cache != null && filter.getPropertyName() != null ) {
+			meta = cache.get(streamId);
+			if ( meta != null ) {
+				return meta;
+			}
+		}
+
+		meta = provider.metadataForStreamId(streamId);
+		if ( filter == null || filter.getPropertyName() == null ) {
+			return meta;
+		}
+		meta = new PropertyRestrictedObjectDatumStreamMetadata(meta,
+				new LinkedHashSet<>(List.of(filter.getPropertyNames())));
+		if ( cache != null ) {
+			cache.put(streamId, meta);
+		}
+		return meta;
 	}
 
 	@Override
@@ -253,8 +317,12 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -270,12 +338,11 @@ public class DaoQueryBiz implements QueryBiz {
 		Object startDate;
 		Object endDate;
 		long diffDays;
-		if ( filter instanceof LocalDateRangeFilter
-				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
-			LocalDateTime s = ((LocalDateRangeFilter) filter).getLocalStartDate();
-			LocalDateTime e = ((LocalDateRangeFilter) filter).getLocalEndDate();
+		if ( filter instanceof LocalDateRangeFilter f && f.getLocalStartDate() != null ) {
+			LocalDateTime s = f.getLocalStartDate();
+			LocalDateTime e = f.getLocalEndDate();
 			if ( e == null ) {
-				e = LocalDateTime.now();
+				e = LocalDateTime.now(UTC);
 			}
 			startDate = s;
 			endDate = e;
@@ -285,7 +352,7 @@ public class DaoQueryBiz implements QueryBiz {
 			Instant e = filter.getEndDate();
 			if ( s == null && e != null ) {
 				// treat start date as SolarNetwork epoch (may want to make epoch configurable)
-				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC);
+				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(UTC);
 			} else if ( s != null && e == null ) {
 				// treat end date as now for purposes of this calculating query range
 				e = Instant.now();
@@ -380,13 +447,17 @@ public class DaoQueryBiz implements QueryBiz {
 					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
 		}
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
-				sortDescriptors, offset, max);
+				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -400,11 +471,17 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
+		c.setOffset(limitFilterOffset(c.getOffset()));
+		c.setMax(limitFilterMaximum(c.getMax()));
 		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -475,8 +552,12 @@ public class DaoQueryBiz implements QueryBiz {
 				limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<GeneralLocationDatumFilterMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralLocationDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -491,8 +572,12 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		Map<UUID, ObjectDatumStreamMetadata> metaCache = (filter.getPropertyName() != null
+				? new HashMap<>(daoResults.metadataStreamIds().size())
+				: null);
 		List<ReportingGeneralLocationDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
+				.map(e -> toGeneralLocationDatum(e,
+						metadataForStreamId(e.getStreamId(), daoResults, filter, metaCache)))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());

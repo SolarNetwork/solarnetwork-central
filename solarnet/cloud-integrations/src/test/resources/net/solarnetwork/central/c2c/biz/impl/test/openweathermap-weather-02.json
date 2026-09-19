@@ -1,0 +1,43 @@
+{
+	"coord": {
+		"lon": 174.78,
+		"lat": -41.29
+	},
+	"weather": [
+		{
+			"id": 500,
+			"main": "Rain",
+			"description": "light rain",
+			"icon": "10n"
+		}
+	],
+	"base": "stations",
+	"main": {
+		"temp": 14,
+		"pressure": 1016,
+		"humidity": 87,
+		"temp_min": 14,
+		"temp_max": 14
+	},
+	"visibility": 10000,
+	"wind": {
+		"speed": 9.8,
+		"deg": 350,
+		"gust": 14.9
+	},
+	"clouds": {
+		"all": 44
+	},
+	"dt": 1730400000,
+	"sys": {
+      "type": 2,
+      "id": 2017837,
+      "country": "US",
+      "sunrise": 1730385275,
+      "sunset": 1730423515
+	},
+	"timezone": -25200,
+	"id": 2179537,
+	"name": "Wellington",
+	"cod": 200
+}

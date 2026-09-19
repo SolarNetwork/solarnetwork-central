@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
@@ -56,7 +57,7 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcTrustedIssuerCertificateDao(JdbcOperations jdbcOps) {
 		super();
@@ -71,12 +72,13 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 	@Override
 	public UserStringCompositePK create(Long userId, TrustedIssuerCertificate entity) {
 		final var sql = new UpsertTrustedIssuerCertificate(userId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.id();
 	}
 
 	@Override
-	public Collection<TrustedIssuerCertificate> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<TrustedIssuerCertificate> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectTrustedIssuerCertificate(filter);
@@ -91,7 +93,7 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 	}
 
 	@Override
-	public TrustedIssuerCertificate get(UserStringCompositePK id) {
+	public @Nullable TrustedIssuerCertificate get(UserStringCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -103,7 +105,7 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 	}
 
 	@Override
-	public Collection<TrustedIssuerCertificate> getAll(List<SortDescriptor> sorts) {
+	public Collection<TrustedIssuerCertificate> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -112,21 +114,22 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 
 	@Override
 	public void delete(TrustedIssuerCertificate entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
 	public FilterResults<TrustedIssuerCertificate, UserStringCompositePK> findFiltered(
-			CertificateFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			CertificateFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTrustedIssuerCertificate(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, TrustedIssuerCertificateRowMapper.INSTANCE);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CertificateFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CertificateFilter filter, boolean enabled) {
 		var sql = new UpdateEnabledCertificateFilter(TABLE_NAME, userId, filter, enabled);
 		return jdbcOps.update(sql);
 	}

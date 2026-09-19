@@ -23,18 +23,18 @@
 package net.solarnetwork.central.in.web;
 
 import java.util.List;
-import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
  * Result object for bulk upload operations.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class BulkUploadResult {
 
 	private List<Object> datum;
-	private List<Instruction> instructions;
+	private List<NodeInstruction> instructions;
 
 	/**
 	 * Default constructor.
@@ -67,7 +67,7 @@ public class BulkUploadResult {
 	 * 
 	 * @return the instructions
 	 */
-	public List<Instruction> getInstructions() {
+	public List<NodeInstruction> getInstructions() {
 		return instructions;
 	}
 
@@ -77,7 +77,7 @@ public class BulkUploadResult {
 	 * @param instructions
 	 *        the list to set
 	 */
-	public void setInstructions(List<Instruction> instructions) {
+	public void setInstructions(List<NodeInstruction> instructions) {
 		this.instructions = instructions;
 	}
 

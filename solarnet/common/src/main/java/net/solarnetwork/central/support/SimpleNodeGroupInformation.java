@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BaseIdentity;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.NodeGroupInformation;
@@ -40,9 +42,9 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	@Serial
 	private static final long serialVersionUID = -1983417976743765775L;
 
-	private String name;
-	private Location location;
-	private SolarCapability capability;
+	private @Nullable String name;
+	private @Nullable Location location;
+	private @Nullable SolarCapability capability;
 
 	/**
 	 * Default constructor.
@@ -61,21 +63,23 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	 * @param location
 	 *        the location
 	 */
-	public SimpleNodeGroupInformation(String name, SolarNodeGroupCapability capability,
-			Location location) {
-		setId(capability.getGroupId());
+	public SimpleNodeGroupInformation(@Nullable String name,
+			@Nullable SolarNodeGroupCapability capability, @Nullable Location location) {
+		if ( capability != null ) {
+			setId(capability.getGroupId());
+		}
 		this.name = name;
 		this.capability = capability;
 		this.location = location;
 	}
 
 	@Override
-	public Location getLocation() {
+	public final @Nullable Location getLocation() {
 		return location;
 	}
 
 	@Override
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -85,8 +89,13 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	 * @param amount
 	 *        the amount to add
 	 */
-	public void addGenerationCapacityWatts(Long amount) {
-		capability.setGenerationCapacityWatts(capability.getGenerationCapacityWatts() + amount);
+	public void addGenerationCapacityWatts(final @Nullable Long amount) {
+		if ( amount == null ) {
+			return;
+		}
+		final var c = nonnull(this.capability, "capability");
+		final Long curr = c.getGenerationCapacityWatts();
+		c.setGenerationCapacityWatts(curr != null ? curr + amount : amount);
 	}
 
 	/**
@@ -95,24 +104,35 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	 * @param amount
 	 *        the amount to add
 	 */
-	public void addStorageCapacityWattHours(Long amount) {
-		capability.setStorageCapacityWattHours(capability.getStorageCapacityWattHours() + amount);
+	public void addStorageCapacityWattHours(final @Nullable Long amount) {
+		if ( amount == null ) {
+			return;
+		}
+		final var c = nonnull(this.capability, "capability");
+		final Long curr = c.getGenerationCapacityWatts();
+		c.setStorageCapacityWattHours(curr != null ? curr + amount : amount);
 	}
 
 	/**
-	 * @return the generationCapacityWatts
+	 * Get the generation capacity.
+	 * 
+	 * @return the generation capacity, in watts
 	 */
 	@Override
-	public Long getGenerationCapacityWatts() {
-		return capability.getGenerationCapacityWatts();
+	public final @Nullable Long getGenerationCapacityWatts() {
+		final var c = this.capability;
+		return (c != null ? c.getGenerationCapacityWatts() : null);
 	}
 
 	/**
-	 * @return the storageCapacityWattHours
+	 * Get the storage capacity.
+	 * 
+	 * @return the storage capacity, in watt-hours
 	 */
 	@Override
-	public Long getStorageCapacityWattHours() {
-		return capability.getStorageCapacityWattHours();
+	public final @Nullable Long getStorageCapacityWattHours() {
+		final var c = this.capability;
+		return (c != null ? c.getStorageCapacityWattHours() : null);
 	}
 
 }

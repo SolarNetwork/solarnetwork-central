@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.SearchFilter;
 import net.solarnetwork.util.SearchFilter.CompareOperator;
 import net.solarnetwork.util.SearchFilter.LogicOperator;
@@ -36,8 +39,9 @@ import net.solarnetwork.util.StringUtils;
  * Utilities for working with {@link SearchFilter} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("JdkObsolete")
 public final class SearchFilterUtils {
 
 	private SearchFilterUtils() {
@@ -70,7 +74,8 @@ public final class SearchFilterUtils {
 	 *        the filter
 	 * @return the JSON Path expression
 	 */
-	public static String toSqlJsonPath(SearchFilter filter) {
+	@SuppressWarnings({ "StatementSwitchToExpressionSwitch", "ReferenceEquality", "NullAway" })
+	public static @Nullable String toSqlJsonPath(@Nullable SearchFilter filter) {
 		if ( filter == null ) {
 			return null;
 		}
@@ -79,7 +84,7 @@ public final class SearchFilterUtils {
 		filter.walk(new VisitorCallback() {
 
 			@Override
-			public boolean visit(SearchFilter node, SearchFilter parentNode) {
+			public boolean visit(SearchFilter node, @Nullable SearchFilter parentNode) {
 				StackObj ref = null;
 				if ( parentNode == null ) {
 					buf.append("$ ? (");
@@ -105,7 +110,7 @@ public final class SearchFilterUtils {
 					ancestors.add(ref);
 				}
 				if ( node.hasNestedFilter() ) {
-					if ( ref.count > 0 ) {
+					if ( ref != null && ref.count > 0 ) {
 						switch (ref.op) {
 							case AND:
 								buf.append(" && ");
@@ -117,7 +122,7 @@ public final class SearchFilterUtils {
 								// nothing
 						}
 					}
-					if ( node.getLogicOperator() == LogicOperator.NOT ) {
+					if ( node.getLogicOperator() == LogicOperator.NOT && ref != null ) {
 						ref.count++;
 					}
 					if ( node.getLogicOperator() != LogicOperator.NOT && parentNode != null ) {
@@ -125,16 +130,17 @@ public final class SearchFilterUtils {
 					}
 				}
 				if ( !node.hasNestedFilter() ) {
-					LogicOperator op = ref.op;
-					for ( Entry<String, ?> e : node.getFilter().entrySet() ) {
+					final LogicOperator op = (ref != null ? ref.op : LogicOperator.AND);
+					final Map<String, ?> filter = nonnull(node.getFilter(), "filter");
+					for ( Entry<String, ?> e : filter.entrySet() ) {
 						switch (op) {
 							case AND:
-								if ( ref.count > 0 ) {
+								if ( ref != null && ref.count > 0 ) {
 									buf.append(" && ");
 								}
 								break;
 							case OR:
-								if ( ref.count > 0 ) {
+								if ( ref != null && ref.count > 0 ) {
 									buf.append(" || ");
 								}
 								break;
@@ -142,11 +148,11 @@ public final class SearchFilterUtils {
 								buf.append("!(");
 								break;
 						}
-						String k = e.getKey();
-						Object v = e.getValue();
+						final String k = metadataFilterPathToSqlJsonPath(e.getKey());
+						final Object v = e.getValue();
 						if ( k != null && v != null ) {
-							String s = v.toString();
-							Number n = StringUtils.numberValue(s);
+							final String s = v.toString();
+							final Number n = StringUtils.numberValue(s);
 							if ( node.getCompareOperator() == CompareOperator.PRESENT ) {
 								buf.append("exists (@.").append(k).append(")");
 							} else {
@@ -206,7 +212,7 @@ public final class SearchFilterUtils {
 								}
 							}
 						}
-						if ( op != LogicOperator.NOT ) {
+						if ( op != LogicOperator.NOT && ref != null ) {
 							ref.count++;
 						}
 					}
@@ -238,6 +244,19 @@ public final class SearchFilterUtils {
 			}
 		}
 		return (!buf.isEmpty() ? buf.toString() : null);
+	}
+
+	/**
+	 * Convert a metadata filter path to a SQL JSON path.
+	 * 
+	 * @param filterPath
+	 *        the metadata filter path, for example {@code m/room}
+	 * @return the SQL JSON path
+	 * @since 1.2
+	 */
+	public static String metadataFilterPathToSqlJsonPath(String filterPath) {
+		String result = filterPath.replace('/', '.');
+		return (result.startsWith(".") ? result.substring(1) : result);
 	}
 
 }

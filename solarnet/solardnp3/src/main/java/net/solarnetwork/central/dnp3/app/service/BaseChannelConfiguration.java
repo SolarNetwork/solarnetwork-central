@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseChannelConfiguration.java - 21/02/2019 8:34:15 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,7 +27,7 @@ import com.automatak.dnp3.LogMasks;
 
 /**
  * A basic set of configuration options for a DNP3 channel.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -48,100 +48,103 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the log levels.
-	 * 
+	 *
 	 * @return the log levels
 	 */
-	public int getLogLevels() {
+	public final int getLogLevels() {
 		return logLevels;
 	}
 
 	/**
 	 * Set the DNP3 log levels bitmask.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param logLevels
 	 *        the log levels value to set
 	 * @see com.automatak.dnp3.LogLevels
 	 * @see com.automatak.dnp3.LogMasks
 	 */
-	public void setLogLevels(int logLevels) {
+	public final void setLogLevels(int logLevels) {
 		this.logLevels = logLevels;
 	}
 
 	/**
 	 * Get the minimum retry delay.
-	 * 
+	 *
 	 * @return the minimum retry delay
 	 */
-	public Duration getMinRetryDelay() {
+	public final Duration getMinRetryDelay() {
 		return minRetryDelay;
 	}
 
 	/**
 	 * Set the minimum retry delay.
-	 * 
+	 *
 	 * @param minRetryDelay
+	 *        the minimum delay; if {@code null} then
+	 *        {@link #DEFAULT_MIN_RETRY_DELAY} will be used
 	 */
-	public void setMinRetryDelay(Duration minRetryDelay) {
-		this.minRetryDelay = minRetryDelay;
+	public final void setMinRetryDelay(Duration minRetryDelay) {
+		this.minRetryDelay = (minRetryDelay != null ? minRetryDelay : DEFAULT_MIN_RETRY_DELAY);
 	}
 
 	/**
 	 * Get the maximum retry delay.
-	 * 
+	 *
 	 * @return the maximum delay
 	 */
-	public Duration getMaxRetryDelay() {
+	public final Duration getMaxRetryDelay() {
 		return maxRetryDelay;
 	}
 
 	/**
 	 * Set the maximum retry delay.
-	 * 
+	 *
 	 * @param maxRetryDelay
-	 *        the maximum delay
+	 *        the maximum delay; if {@code null} then
+	 *        {@link #DEFAULT_MAX_RETRY_DELAY} will be used
 	 */
-	public void setMaxRetryDelay(Duration maxRetryDelay) {
-		this.maxRetryDelay = maxRetryDelay;
+	public final void setMaxRetryDelay(Duration maxRetryDelay) {
+		this.maxRetryDelay = (maxRetryDelay != null ? maxRetryDelay : DEFAULT_MAX_RETRY_DELAY);
 	}
 
 	/**
 	 * Get the minimum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @return the number of seconds
 	 */
-	public int getMinRetryDelaySecs() {
+	public final int getMinRetryDelaySecs() {
 		Duration d = getMinRetryDelay();
 		return (d != null ? (int) (d.toMillis() / 1000) : 0);
 	}
 
 	/**
 	 * Set the minimum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @param minRetryDelaySecs
 	 *        the number of seconds
 	 */
-	public void setMinRetryDelaySecs(int minRetryDelaySecs) {
+	public final void setMinRetryDelaySecs(int minRetryDelaySecs) {
 		setMinRetryDelay(Duration.ofSeconds(minRetryDelaySecs));
 	}
 
 	/**
 	 * Get the maximum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @return the number of seconds
 	 */
-	public int getMaxRetryDelaySecs() {
+	public final int getMaxRetryDelaySecs() {
 		Duration d = getMaxRetryDelay();
 		return (d != null ? (int) (d.toMillis() / 1000) : 0);
 	}
 
 	/**
 	 * Set the maximum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @param maxRetryDelaySecs
 	 *        the number of seconds
 	 */
-	public void setMaxRetryDelaySecs(int maxRetryDelaySecs) {
+	public final void setMaxRetryDelaySecs(int maxRetryDelaySecs) {
 		setMaxRetryDelay(Duration.ofSeconds(maxRetryDelaySecs));
 	}
 

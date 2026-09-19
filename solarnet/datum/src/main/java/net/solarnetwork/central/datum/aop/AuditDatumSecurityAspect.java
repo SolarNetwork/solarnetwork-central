@@ -26,6 +26,7 @@ import java.util.Arrays;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -34,8 +35,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -74,26 +75,25 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	private Long requireCurrentActorHasUserId() {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
-		if ( actor instanceof SecurityToken ) {
+		if ( actor instanceof SecurityToken token ) {
 			// require a User token
-			SecurityTokenType tokenType = ((SecurityToken) actor).getTokenType();
+			SecurityTokenType tokenType = token.getTokenType();
 			if ( !SecurityTokenType.User.equals(tokenType) ) {
-				log.warn("Access DENIED for non-user token actor: {}",
-						((SecurityToken) actor).getToken());
+				log.warn("Access DENIED for non-user token actor: {}", token.getToken());
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
 		}
 		try {
 			// the next method will return the user ID from the User token, or the User actor
 			return SecurityUtils.getCurrentActorUserId();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED for actor without user ID");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 
 	}
 
-	private void requireUserId(Long userId, Long[] userIds) {
+	private void requireUserId(Long userId, Long @Nullable [] userIds) {
 		if ( userIds == null || userIds.length != 1 || !userId.equals(userIds[0]) ) {
 			log.warn("Access DENIED for user {} on audit filter without identical user ID: {}", userId,
 					Arrays.toString(userIds));

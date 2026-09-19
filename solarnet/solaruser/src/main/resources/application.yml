@@ -8,9 +8,22 @@ app:
       mail.from: accounts@localhost
       html-template-cache:
         ttl: 3600
-  cache.persistence.path: "var/cache"
+  cache:
+    persistence.path: "var/cache"
+    user-metadata-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    user-metadata-path-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
   c2c:
     cache:
+      also-energy-site-inventory:
+        ttl: 3600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
       datum-stream-meta-cache:
         ttl: 900
         heap-max-entries: 5000
@@ -37,6 +50,10 @@ app:
         ttl: 0
         heap-max-entries: 5000
         disk-max-size-mb: 0
+      sma-system-inventory:
+        ttl: 3600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
       sma-system-tz:
         tti: 3600
         ttl: 0
@@ -45,7 +62,7 @@ app:
       solaredge-site-inventory:
         ttl: 3600
         heap-max-entries: 1000
-        disk-max-size-mb: 5
+        disk-max-size-mb: 0
       solaredge-site-tz:
         tti: 3600
         ttl: 0
@@ -58,6 +75,11 @@ app:
     encryptor:
       password: "Secret123"
       salt-hex: "01234567"
+    ds-poll:
+      retry:
+        delay: "1s"
+        max-retries: 3
+        multiplier: 2.0        
   datasource:
     hikari:
       minimumIdle: 1
@@ -105,6 +127,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   din:
     max-datum-input-length: 8196
     xslt:
@@ -128,7 +154,7 @@ app:
       connection-request-timeout: "15s"
       connection-time-to-live: "60s"
       connection-validate-after-inactivity: "15s"
-      socket-timeout: "20s"
+      socket-timeout: "75s"
   inin:
     max-input-length: 8196
     xslt:
@@ -290,11 +316,65 @@ app:
           disk-max-size-mb: 0
     reg:
       biz:
-        network-certificate-subject-format: "UID=%s,O=SolarNetwork"
+        network-certificate-subject-format: "UID=%1$s,CN=%1$s,OU=SolarNode,O=SolarNetwork"
         approve-csr-maximum-wait-secs: 15
         node-certificate-renewal-period-months: 3
       mail.template:
         from: "nobody@localhost.localdomain"
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 0
+      write-concurrency: 1
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      ping-test-timeout: "2s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
+  user-instr:
+    allow-http-local-hosts: false
+    cache:
+      expression-cache:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+      http-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      locks:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+    encryptor:
+      password: "Secret123"
+      salt-hex: "01234567"
+    executor:
+      thread-name-prefix: "SolarNet-UserInstr-"
+      core-pool-size: 2
+      max-pool-size: 2
+      queue-capacity: 0
+      allow-core-thread-time-out: true
+    service:
+      shutdown-max-wait: "5m"
+  user-service-auditor:
+    update-delay: 100
+    flush-delay: 10000
+    connection-recovery-delay: 15000
+    stat-log-update-count: 50000
   versioned-messages-cache:
       ttl: 600
   web.rate-limit:
@@ -341,6 +421,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     ocpp-auth-cache-flush: 900000
     ocpp-charge-point-cache-flush: 900000
@@ -358,15 +439,24 @@ mybatis:
 server:
   compression:
     enabled: true
-    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types:
+      - "application/cbor"
+      - "application/json"
+      - "application/javascript"
+      - "application/octet-stream"
+      - "image/svg+xml"
+      - "text/css"
+      - "text/html"
+      - "text/plain"
+      - "text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9081
   servlet:
     context-path: "/solaruser"
     session:
       cookie:
         http-only: true
+        same-site: "lax"
       timeout: "15m"
       tracking-modes: "COOKIE"
   tomcat:
@@ -390,6 +480,7 @@ spring:
   session.jdbc:
     initialize-schema: "never"
     table-name: "solaruser.http_session"
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

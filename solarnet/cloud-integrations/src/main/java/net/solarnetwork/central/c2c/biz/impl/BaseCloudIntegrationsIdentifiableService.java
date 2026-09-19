@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
@@ -36,11 +37,10 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 2.1
  */
-public abstract class BaseCloudIntegrationsIdentifiableService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements CloudIntegrationsUserEvents {
+public abstract class BaseCloudIntegrationsIdentifiableService extends
+		BaseSettingsSpecifierLocalizedServiceInfoProvider implements CloudIntegrationsUserEvents {
 
 	/** The display name. */
 	protected final String displayName;
@@ -55,7 +55,7 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	protected final List<SettingSpecifier> settings;
 
 	/** A user service auditor. */
-	protected UserServiceAuditor userServiceAuditor;
+	protected @Nullable UserServiceAuditor userServiceAuditor;
 
 	/**
 	 * Constructor.
@@ -71,7 +71,7 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	 * @param settings
 	 *        the service settings
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudIntegrationsIdentifiableService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -94,12 +94,23 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	}
 
 	/**
+	 * Called after the {@code userServiceAuditor} property is configured.
+	 *
+	 * @param userServiceAuditor
+	 *        the auditor that was configured
+	 * @since 2.1
+	 */
+	protected void didSetUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
+		// extending classes can override
+	}
+
+	/**
 	 * Get the user service auditor.
 	 *
-	 * @return the auditor, or {@literal null}
+	 * @return the auditor, or {@code null}
 	 * @since 1.1
 	 */
-	public UserServiceAuditor getUserServiceAuditor() {
+	public final @Nullable UserServiceAuditor getUserServiceAuditor() {
 		return userServiceAuditor;
 	}
 
@@ -107,11 +118,12 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	 * Set the user service auditor.
 	 *
 	 * @param userServiceAuditor
-	 *        the auditor to set, or {@literal null}
+	 *        the auditor to set, or {@code null}
 	 * @since 1.1
 	 */
-	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
+	public final void setUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		this.userServiceAuditor = userServiceAuditor;
+		didSetUserServiceAuditor(userServiceAuditor);
 	}
 
 }

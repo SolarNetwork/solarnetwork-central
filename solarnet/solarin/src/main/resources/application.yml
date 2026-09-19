@@ -23,6 +23,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
@@ -68,18 +72,6 @@ app:
     user-events:
       publish-qos-level: 0
   solarin:
-    async-collector:
-      threads: 2
-      shutdown-wait-secs: 30
-      queue-size: 200
-      queue-refill-threshold: 0.1
-      queue-refill-wait-ms: 20
-      stat-frequency: 200
-      datum-cache-removal-alert-threshold: 500
-    datum-buffer:
-      temp-max-entries: 100
-      heap-max-entries: 0
-      disk-max-size-mb: 2000
     sqs-collector:
       region: "us-west-2"
       queue-name: "datum-queue"
@@ -93,8 +85,9 @@ app:
       read-max-message-count: 10
       read-max-wait-time: "20s"
       read-sleep-min: "0s"
-      read-sleep-max: "30s"
-      read-sleep-throttle-step: "1s"
+      read-sleep-max: "10s"
+      read-sleep-throttle-step: "100ms"
+      ping-test-timeout: "2s"
       shutdown-wait: "30s"
       stat-frequency: 200
   solarqueue:
@@ -125,14 +118,30 @@ app:
     remove-on-cancel-policy: true
   user.reg:
     biz:
-      network-certificate-subject-format: "UID=%s,O=SolarNetwork"
+      network-certificate-subject-format: "UID=%1$s,CN=%1$s,OU=SolarNode,O=SolarNetwork"
       approve-csr-maximum-wait-secs: 15
       node-certificate-renewal-period-months: 3
-  user.events:
-    async-appender:
-      threads: 1
-      stat-frequency: 500
-      queue-lag-alert-threshold: 500
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 0
+      write-concurrency: 1
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      ping-test-timeout: "2s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
 
 logging:
   level:
@@ -161,6 +170,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000
@@ -175,9 +185,17 @@ mybatis:
 server:
   compression:
     enabled: true
-    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types:
+      - "application/cbor"
+      - "application/json"
+      - "application/javascript"
+      - "application/octet-stream"
+      - "image/svg+xml"
+      - "text/css"
+      - "text/html"
+      - "text/plain"
+      - "text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9083
   tomcat.threads:
     min-spare: 10
@@ -189,6 +207,7 @@ spring:
     date: "iso"
     date-time: "iso"
     time: "iso"
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

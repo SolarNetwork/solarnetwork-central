@@ -1,28 +1,32 @@
 /* ==================================================================
  * JCacheContentCachingServiceTests.java - 1/10/2018 10:51:55 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.web.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -32,7 +36,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertArrayEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,21 +45,23 @@ import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.CachedContent;
 import net.solarnetwork.central.web.support.JCacheContentCachingService;
 import net.solarnetwork.central.web.support.SimpleCachedContent;
 
 /**
  * Test cases for the {@link JCacheContentCachingService} class.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -65,7 +70,7 @@ public class JCacheContentCachingServiceTests {
 	private Cache<String, CachedContent> cache;
 
 	@SuppressWarnings("unchecked")
-	@Before
+	@BeforeEach
 	public void setup() {
 		cache = EasyMock.createMock(Cache.class);
 
@@ -78,9 +83,10 @@ public class JCacheContentCachingServiceTests {
 		EasyMock.replay(cache);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(cache);
+		SecurityUtils.removeAuthentication();
 	}
 
 	@Test
@@ -154,10 +160,12 @@ public class JCacheContentCachingServiceTests {
 	}
 
 	@Test
-	public void keyWithAuthV1() {
+	public void keyWithAuth() {
 		// given
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION, "SolarNetworkWS foo:bar");
 
 		cache.registerCacheEntryListener(anyObject());
 
@@ -167,14 +175,16 @@ public class JCacheContentCachingServiceTests {
 		String key = service.keyForRequest(req);
 
 		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath")));
+		assertThat("Cache key", key, equalTo(md5Hex(tokenId + "@GET/somepath")));
 	}
 
 	@Test
-	public void keyWithAuthV1AndQueryParameters() {
+	public void keyWithAuthAndQueryParameters() {
 		// given
+		final String tokenId = randomString();
+		final Long userId = randomLong();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.ReadNodeData, userId, null);
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION, "SolarNetworkWS foo:bar");
 		req.addParameter("bim", "bam");
 		req.addParameter("yin", "yang");
 
@@ -186,45 +196,7 @@ public class JCacheContentCachingServiceTests {
 		String key = service.keyForRequest(req);
 
 		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath?bim=bam&yin=yang")));
-	}
-
-	@Test
-	public void keyWithAuthV2() {
-		// given
-		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION,
-				"SNWS2 Credential=foo,SignedHeaders=Date,Signature=abc123");
-
-		cache.registerCacheEntryListener(anyObject());
-
-		// when
-		replayAll();
-		JCacheContentCachingService service = new JCacheContentCachingService(cache);
-		String key = service.keyForRequest(req);
-
-		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath")));
-	}
-
-	@Test
-	public void keyWithAuthV2AndQueryParameters() {
-		// given
-		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
-		req.addHeader(HttpHeaders.AUTHORIZATION,
-				"SNWS2 Credential=foo,SignedHeaders=Date,Signature=abc123");
-		req.addParameter("bim", "bam");
-		req.addParameter("yin", "yang");
-
-		cache.registerCacheEntryListener(anyObject());
-
-		// when
-		replayAll();
-		JCacheContentCachingService service = new JCacheContentCachingService(cache);
-		String key = service.keyForRequest(req);
-
-		// then
-		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath?bim=bam&yin=yang")));
+		assertThat("Cache key", key, equalTo(md5Hex(tokenId + "@GET/somepath?bim=bam&yin=yang")));
 	}
 
 	@Test
@@ -396,8 +368,7 @@ public class JCacheContentCachingServiceTests {
 		final String contentType = "text/plain;charset=UTF-8";
 		headers.setContentType(MediaType.parseMediaType(contentType));
 		final String body = "Hello, world.";
-		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes("UTF-8"),
-				null);
+		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes(UTF_8), null);
 		expect(cache.get(key)).andReturn(content);
 
 		// when
@@ -418,7 +389,7 @@ public class JCacheContentCachingServiceTests {
 	private byte[] compress(String content) throws IOException {
 		try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
 				GZIPOutputStream out = new GZIPOutputStream(byos)) {
-			FileCopyUtils.copy(new ByteArrayInputStream(content.getBytes("UTF-8")), out);
+			FileCopyUtils.copy(new ByteArrayInputStream(content.getBytes(UTF_8)), out);
 			return byos.toByteArray();
 		}
 	}
@@ -427,7 +398,7 @@ public class JCacheContentCachingServiceTests {
 		try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
 				GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(content))) {
 			FileCopyUtils.copy(in, byos);
-			return new String(byos.toByteArray(), "UTF-8");
+			return new String(byos.toByteArray(), UTF_8);
 		}
 	}
 
@@ -517,7 +488,7 @@ public class JCacheContentCachingServiceTests {
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -526,7 +497,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Response Content-Encoding", content.getContentEncoding(), nullValue());
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertThat("Cached data", new String(cachedBody, "UTF-8"), equalTo("Hello, world."));
+		assertThat("Cached data", new String(cachedBody, UTF_8), equalTo("Hello, world."));
 	}
 
 	@Test
@@ -551,7 +522,7 @@ public class JCacheContentCachingServiceTests {
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.setCompressMinimumLength(8);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -560,7 +531,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Content encoding", content.getContentEncoding(), equalTo("gzip"));
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertArrayEquals("Compressed cached data", compressedBody, cachedBody);
+		then(cachedBody).as("Compressed cached data").isEqualTo(compressedBody);
 	}
 
 	@Test
@@ -615,7 +586,7 @@ public class JCacheContentCachingServiceTests {
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -624,7 +595,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Content encoding", content.getContentEncoding(), equalTo("foo"));
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertThat("Cached data", new String(cachedBody, "UTF-8"), equalTo(body));
+		assertThat("Cached data", new String(cachedBody, UTF_8), equalTo(body));
 	}
 
 }

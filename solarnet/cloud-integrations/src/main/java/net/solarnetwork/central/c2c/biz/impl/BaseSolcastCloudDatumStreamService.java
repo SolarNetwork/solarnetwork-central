@@ -26,7 +26,6 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -53,7 +52,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseSolcastCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -94,7 +93,8 @@ public abstract class BaseSolcastCloudDatumStreamService
 	protected static final String QUERY_PARAM_USE_LIVE_DATA = "live";
 
 	/**
-	 * An internal parameter map with just the {@link #USE_LIVE_DATA} value set.
+	 * An internal parameter map with just the
+	 * {@link #QUERY_PARAM_USE_LIVE_DATA} value set.
 	 *
 	 * @since 1.2
 	 */
@@ -103,7 +103,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
 	static {
-		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(List.of(
 		// @formatter:off
 				Duration.ofMinutes(5),
 				Duration.ofMinutes(10),
@@ -136,7 +136,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 		Map<String, String> resolutionMenuValues = new LinkedHashMap<>(SUPPORTED_RESOLUTIONS.size());
 		for ( Duration d : SUPPORTED_RESOLUTIONS ) {
 			String key = d.toString();
-			resolutionMenuValues.put(key, (d.getSeconds() / 60) + " minute");
+			resolutionMenuValues.put(key, (d.toSeconds() / 60) + " minute");
 		}
 		resolutionSpec.setValueTitles(resolutionMenuValues);
 		RESOLUTION_SETTING_SPECIFIER = resolutionSpec;
@@ -171,7 +171,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseSolcastCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -183,9 +183,9 @@ public abstract class BaseSolcastCloudDatumStreamService
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
 		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
-				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
+				new SolcastRestOperationsHelper(clock, restOpsLogger, userEventAppenderBiz, restOps,
 						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
+						_ -> SolcastCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	/**
@@ -200,7 +200,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 *
 	 * @param datumStream
 	 *        the datum stream to resolve the resolution setting from
-	 * @return the resolution, never {@literal null}
+	 * @return the resolution, never {@code null}
 	 */
 	public static Duration resolveResolution(CloudDatumStreamConfiguration datumStream) {
 		String resoValue = nonEmptyString(datumStream.serviceProperty(RESOLUTION_SETTING, String.class));

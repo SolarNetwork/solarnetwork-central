@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
@@ -34,11 +35,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.unit.DataSize;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to clean out expired files from a directory.
@@ -63,14 +64,16 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	/**
 	 * Constructor.
 	 *
+	 * @param id
+	 *        the job ID
 	 * @param directory
 	 *        the directory to remove files from
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public DirectoryCleanerJob(Path directory) {
-		super();
-		this.directory = ObjectUtils.requireNonNullArgument(directory, "directory");
+	public DirectoryCleanerJob(String id, Path directory) {
+		super("System", id);
+		this.directory = requireNonNullArgument(directory, "directory");
 		this.minimumAge = DEFAULT_MINIMUM_AGE;
 		this.freeSpaceWarningSize = DEFAULT_FREE_SPACE_WARNING_SIZE;
 		this.fileDeleteCount = 0;
@@ -145,7 +148,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * @param minutes
 	 *        the minimum age to set, in minutes
 	 */
-	public void setMinutesOlder(int minutes) {
+	public final void setMinutesOlder(int minutes) {
 		setMinimumAge(Duration.ofMinutes(minutes));
 	}
 
@@ -154,7 +157,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 *
 	 * @return the minimum age
 	 */
-	public Duration getMinimumAge() {
+	public final Duration getMinimumAge() {
 		return minimumAge;
 	}
 
@@ -162,10 +165,10 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * Set the minimum age of files that can be deleted.
 	 *
 	 * @param minimumAge
-	 *        the age to set; if {@literal null} then
-	 *        {@link #DEFAULT_MINIMUM_AGE} will be set instead
+	 *        the age to set; if {@code null} then {@link #DEFAULT_MINIMUM_AGE}
+	 *        will be set instead
 	 */
-	public void setMinimumAge(Duration minimumAge) {
+	public final void setMinimumAge(@Nullable Duration minimumAge) {
 		this.minimumAge = (minimumAge != null ? minimumAge : DEFAULT_MINIMUM_AGE);
 	}
 
@@ -176,7 +179,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * @return the free space size; defaults to
 	 *         {@link #DEFAULT_FREE_SPACE_WARNING_SIZE}
 	 */
-	public DataSize getFreeSpaceWarningSize() {
+	public final DataSize getFreeSpaceWarningSize() {
 		return freeSpaceWarningSize;
 	}
 
@@ -185,10 +188,12 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * directory before {@link #performPingTest()} will fail.
 	 *
 	 * @param freeSpaceWarningSize
-	 *        the free space size to set
+	 *        the free space size to set; if {@code null} then
+	 *        {@link #DEFAULT_FREE_SPACE_WARNING_SIZE} will be used
 	 */
-	public void setFreeSpaceWarningSize(DataSize freeSpaceWarningSize) {
-		this.freeSpaceWarningSize = freeSpaceWarningSize;
+	public final void setFreeSpaceWarningSize(@Nullable DataSize freeSpaceWarningSize) {
+		this.freeSpaceWarningSize = (freeSpaceWarningSize != null ? freeSpaceWarningSize
+				: DEFAULT_FREE_SPACE_WARNING_SIZE);
 	}
 
 }

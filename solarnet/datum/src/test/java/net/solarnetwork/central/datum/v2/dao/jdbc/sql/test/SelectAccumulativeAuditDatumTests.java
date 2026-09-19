@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumRollupType;

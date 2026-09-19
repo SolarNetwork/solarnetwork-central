@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
@@ -45,35 +46,37 @@ public class NodeInstructionTests {
 	public void clone_ok() {
 		// GIVEN
 		var instrDate = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-		NodeInstruction src = new NodeInstruction(randomString(), instrDate, randomLong(),
+		NodeInstruction ni = new NodeInstruction(randomString(), instrDate, randomLong(),
 				instrDate.plusSeconds(1));
-		src.setState(InstructionState.Completed);
-		src.setStatusDate(instrDate.plusMillis(1));
-		src.setParams(Map.of("foo", randomString()));
-		src.setResultParameters(Map.of("out", randomString()));
+		ni.getInstruction().setState(InstructionState.Completed);
+		ni.getInstruction().setStatusDate(instrDate.plusMillis(1));
+		ni.getInstruction().setParams(Map.of("foo", randomString()));
+		ni.getInstruction().setResultParameters(Map.of("out", randomString()));
 
 		// WHEN
-		NodeInstruction result = src.clone();
+		NodeInstruction result = ni.clone();
 
 		// THEN
+		final Instruction src = result.getInstruction();
 		// @formatter:off
 		then(result)
-			.as("Topic copied")
-			.returns(src.getTopic(), from(NodeInstruction::getTopic))
-			.as("Instruction date copied")
-			.returns(src.getInstructionDate(), from(NodeInstruction::getInstructionDate))
-			.as("State copied")
-			.returns(src.getState(), from(NodeInstruction::getState))
-			.as("Status date copied")
-			.returns(src.getStatusDate(), from(NodeInstruction::getStatusDate))
-			.as("Instruction parameters copied")
-			.returns(src.getParameters(), from(NodeInstruction::getParameters))
-			.as("Instruction date copied")
-			.returns(src.getResultParameters(), from(NodeInstruction::getResultParameters))
 			.as("Node ID copied")
-			.returns(src.getNodeId(), from(NodeInstruction::getNodeId))
+			.returns(ni.getNodeId(), from(NodeInstruction::getNodeId))
+			.extracting(NodeInstruction::getInstruction)
+			.as("Topic copied")
+			.returns(src.getTopic(), from(Instruction::getTopic))
+			.as("Instruction date copied")
+			.returns(src.getInstructionDate(), from(Instruction::getInstructionDate))
+			.as("State copied")
+			.returns(src.getState(), from(Instruction::getState))
+			.as("Status date copied")
+			.returns(src.getStatusDate(), from(Instruction::getStatusDate))
+			.as("Instruction parameters copied")
+			.returns(src.getParameters(), from(Instruction::getParameters))
+			.as("Instruction date copied")
+			.returns(src.getResultParameters(), from(Instruction::getResultParameters))
 			.as("Expiration date copied")
-			.returns(src.getExpirationDate(), from(NodeInstruction::getExpirationDate))
+			.returns(src.getExpirationDate(), from(Instruction::getExpirationDate))
 			;
 		// @formatter:on
 	}
@@ -82,35 +85,37 @@ public class NodeInstructionTests {
 	public void copyConstructor_ok() {
 		// GIVEN
 		var instrDate = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-		NodeInstruction src = new NodeInstruction(randomString(), instrDate, randomLong(),
+		NodeInstruction ni = new NodeInstruction(randomString(), instrDate, randomLong(),
 				instrDate.plusSeconds(1));
-		src.setState(InstructionState.Completed);
-		src.setStatusDate(instrDate.plusMillis(1));
-		src.setParams(Map.of("foo", randomString()));
-		src.setResultParameters(Map.of("out", randomString()));
+		ni.getInstruction().setState(InstructionState.Completed);
+		ni.getInstruction().setStatusDate(instrDate.plusMillis(1));
+		ni.getInstruction().setParams(Map.of("foo", randomString()));
+		ni.getInstruction().setResultParameters(Map.of("out", randomString()));
 
 		// WHEN
-		NodeInstruction result = new NodeInstruction(src);
+		NodeInstruction result = new NodeInstruction(ni);
 
 		// THEN
+		final Instruction src = result.getInstruction();
 		// @formatter:off
 		then(result)
-			.as("Topic copied")
-			.returns(src.getTopic(), from(NodeInstruction::getTopic))
-			.as("Instruction date copied")
-			.returns(src.getInstructionDate(), from(NodeInstruction::getInstructionDate))
-			.as("State copied")
-			.returns(src.getState(), from(NodeInstruction::getState))
-			.as("Status date copied")
-			.returns(src.getStatusDate(), from(NodeInstruction::getStatusDate))
-			.as("Instruction parameters copied")
-			.returns(src.getParameters(), from(NodeInstruction::getParameters))
-			.as("Instruction date copied")
-			.returns(src.getResultParameters(), from(NodeInstruction::getResultParameters))
 			.as("Node ID copied")
-			.returns(src.getNodeId(), from(NodeInstruction::getNodeId))
+			.returns(ni.getNodeId(), from(NodeInstruction::getNodeId))
+			.extracting(NodeInstruction::getInstruction)
+			.as("Topic copied")
+			.returns(src.getTopic(), from(Instruction::getTopic))
+			.as("Instruction date copied")
+			.returns(src.getInstructionDate(), from(Instruction::getInstructionDate))
+			.as("State copied")
+			.returns(src.getState(), from(Instruction::getState))
+			.as("Status date copied")
+			.returns(src.getStatusDate(), from(Instruction::getStatusDate))
+			.as("Instruction parameters copied")
+			.returns(src.getParameters(), from(Instruction::getParameters))
+			.as("Instruction date copied")
+			.returns(src.getResultParameters(), from(Instruction::getResultParameters))
 			.as("Expiration date copied")
-			.returns(src.getExpirationDate(), from(NodeInstruction::getExpirationDate))
+			.returns(src.getExpirationDate(), from(Instruction::getExpirationDate))
 			;
 		// @formatter:on
 	}

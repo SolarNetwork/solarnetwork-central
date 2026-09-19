@@ -135,8 +135,7 @@ public class HandshakeController {
 
 	@PostMapping(path = "/sim/system/{systemId}/handshake", consumes = APPLICATION_JSON_VALUE)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void initiateHandshake(@PathVariable("systemId") UUID systemId,
-			@RequestBody SystemSettings input) {
+	public void initiateHandshake(@PathVariable UUID systemId, @RequestBody SystemSettings input) {
 		requireNonNullArgument(input.measurementStyles(), "measurementStyles");
 		SystemConfiguration conf = capacityProviderDao.systemConfiguration(systemId);
 		synchronized ( conf ) {

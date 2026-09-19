@@ -69,7 +69,7 @@ public interface CapacityProviderDao {
 	 * @param handler
 	 *        a function that will be passed an external system that needs to
 	 *        have a heartbeat sent, and returns a new heartbeat date if a
-	 *        heartbeat was successfully sent, or {@literal null} otherwise
+	 *        heartbeat was successfully sent, or {@code null} otherwise
 	 * @return the number of heartbeat dates updated
 	 */
 	int processExpiredHeartbeats(Function<SystemConfiguration, Instant> handler);

@@ -22,24 +22,29 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.time.Instant.now;
-import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.within;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
@@ -55,7 +60,7 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -63,7 +68,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamPollTaskDao} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -92,11 +97,26 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		return entity;
 	}
 
+	@FunctionalInterface
+	public static interface DatumStreamPopulatorCallback {
+
+		void populate(CloudDatumStreamConfiguration conf);
+
+	}
+
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
 			Map<String, Object> props) {
+		return createDatumStream(userId, datumStreamMappingId, props, null);
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
+			Map<String, Object> props, DatumStreamPopulatorCallback callback) {
 		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
 				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
 				randomString(), randomString(), props);
+		if ( callback != null ) {
+			callback.populate(conf);
+		}
 		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
 		return entity;
 	}
@@ -135,13 +155,13 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 				mapping.getConfigId(), null);
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
-				now().truncatedTo(ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
 				randomString(),
 				props)
 				;
@@ -225,8 +245,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 							userId,
 							streamId,
 							BasicClaimableJobState.Queued,
-							Instant.now(),
-							Instant.now(),
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
 							randomString(),
 							null
 							);
@@ -272,8 +292,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 							userId,
 							streamId,
 							BasicClaimableJobState.values()[s % BasicClaimableJobState.values().length],
-							Instant.now(),
-							Instant.now(),
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
 							randomString(),
 							null
 							);
@@ -303,6 +323,313 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	}
 
 	@Test
+	public void findFiltered_forUserAndNodes() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final var datumStream = createDatumStream(userId, mappingId, Map.of("bim", "bam"));
+					datumStreams.add(datumStream);
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							datumStream.getConfigId(),
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final List<Long> userDatumStreamNodeIds = userDatumStreams.stream()
+				.map(CloudDatumStreamConfiguration::getObjectId).toList();
+
+		final Set<Long> randomNodeIds = new HashSet<>();
+		while ( randomNodeIds.size() < 2 ) {
+			randomNodeIds.add(userDatumStreamNodeIds.get(RNG.nextInt(userDatumStreamNodeIds.size())));
+		}
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return userDatumStreams.stream().filter(ds -> e.getDatumStreamId().equals(ds.getConfigId())
+					&& randomNodeIds.contains(ds.getObjectId())).findAny().isPresent();
+		}).toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndSources() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, Map.of(randomString(),
+								randomSourceId(), randomString(), randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							datumStream.getConfigId(),
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final Set<String> randomSourceIds = new HashSet<>(3);
+		while ( randomSourceIds.size() < 3 ) {
+			CloudDatumStreamConfiguration conf = userDatumStreams
+					.get(RNG.nextInt(userDatumStreams.size()));
+			final List<String> sources = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING).values()
+					.stream().toList();
+			randomSourceIds.add(sources.get(RNG.nextInt(sources.size())));
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceIds(randomSourceIds.toArray(String[]::new));
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( randomSourceIds.contains(mapped) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user and source ID prefix returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndSourcePattern() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+								Map.of(randomString(), randomPrefix + randomSourceId(), randomString(),
+										randomPrefix + randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							datumStream.getConfigId(),
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( mapped.startsWith(randomSourceIdPrefix) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user and source ID prefix returned")
+				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndNodesAndSources() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<String> sourceIdPrefixes = List.of("/AAA", "/BBB", "/CCC");
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+
+					final var datumStream = createDatumStream(userId, mappingId, null, conf -> {
+						String randomPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+						conf.setSourceId("unused");
+						conf.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING,
+								Map.of(randomString(), randomPrefix + randomSourceId(), randomString(),
+										randomPrefix + randomSourceId())));
+					});
+					datumStreams.add(datumStream);
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							datumStream.getConfigId(),
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant(),
+							MS_CLOCK.instant(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+
+		final String randomSourceIdPrefix = sourceIdPrefixes.get(RNG.nextInt(sourceIdPrefixes.size()));
+		final Set<Long> randomNodeIds = new HashSet<>(3);
+		while ( randomNodeIds.size() < 3 ) {
+			randomNodeIds.add(userDatumStreams.get(RNG.nextInt(userDatumStreams.size())).getObjectId());
+		}
+
+		// WHEN
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		filter.setSourceId(randomSourceIdPrefix + "/**");
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		final Set<Long> expectedDatumStreamIds = userDatumStreams.stream().filter(conf -> {
+			if ( !randomNodeIds.contains(conf.getObjectId()) ) {
+				return false;
+			}
+			final Map<String, String> mappings = conf.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
+			for ( String mapped : mappings.values() ) {
+				if ( mapped.startsWith(randomSourceIdPrefix) ) {
+					return true;
+				}
+			}
+			return false;
+		}).map(conf -> conf.getDatumStreamId()).collect(toSet());
+
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return expectedDatumStreamIds.contains(e.getDatumStreamId());
+		}).sorted().toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user and nodes source ID prefix returned")
+				.containsExactly(expected);
+	}
+
+	@Test
 	public void update() {
 		// GIVEN
 		insert();
@@ -310,11 +637,11 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamPollTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
-		conf.setStartAt(now().plusMillis(4747474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
+		conf.setStartAt(MS_CLOCK.instant().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -327,7 +654,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 
@@ -339,11 +666,11 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamPollTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Claimed);
-		conf.setExecuteAt(now().plusMillis(474));
-		conf.setStartAt(now().plusMillis(4747474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
+		conf.setStartAt(MS_CLOCK.instant().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Queued);
@@ -363,7 +690,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated))
+			.matches(c -> c.isSameAs(conf))
 			;
 		// @formatter:on
 	}
@@ -376,11 +703,11 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamPollTaskEntity conf = last.copyWithId(last.getId());
 		conf.setState(BasicClaimableJobState.Completed);
-		conf.setExecuteAt(now().plusMillis(474));
-		conf.setStartAt(now().plusMillis(4747474));
+		conf.setExecuteAt(MS_CLOCK.instant().plusMillis(474));
+		conf.setStartAt(MS_CLOCK.instant().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Claimed);
@@ -408,6 +735,24 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// GIVEN
 		insert();
 
+		// insert a 2nd row to validate not updated
+		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
+				lastMapping.getConfigId(), null);
+
+		Map<String, Object> props = Map.of("foo", "bar");
+		// @formatter:off
+		CloudDatumStreamPollTaskEntity conf2 = newCloudDatumStreamPollTaskEntity(userId,
+				datumStream2.getConfigId(),
+				BasicClaimableJobState.Queued,
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
+				randomString(),
+				props)
+				;
+		// @formatter:on
+
+		UserLongCompositePK conf2Pk = dao.create(userId, conf2);
+
 		// WHEN
 		final BasicClaimableJobState newState = BasicClaimableJobState.Claimed;
 		boolean result = dao.updateTaskState(last.getId(), newState, BasicClaimableJobState.Queued);
@@ -415,7 +760,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// THEN
 		List<Map<String, Object>> data = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1);
+		then(data).as("Table has 1 row").hasSize(2);
 
 		// @formatter:off
 		then(result)
@@ -431,6 +776,12 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.isEqualTo(last)
 			.as("Entity saved updated state")
 			.matches(c -> c.isSameAs(expected))
+			;
+
+		CloudDatumStreamPollTaskEntity unchanged = dao.get(conf2Pk);
+		then(unchanged)
+			.as("Update did not change other entity")
+			.matches(c -> c.isSameAs(conf2))
 			;
 		// @formatter:on
 	}
@@ -476,6 +827,116 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	}
 
 	@Test
+	public void delete_filter_datumStream() {
+		final int userCount = 1;
+		final int integrationCount = 1;
+		final int streamCount = 2;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final Long streamId = createDatumStream(userId, mappingId, Map.of("bim", "bam"))
+							.getConfigId();
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							streamId,
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
+							MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamPollTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setDatumStreamId(randomConf.getDatumStreamId());
+		int result = dao.delete(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Task for given datum stream deleted")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream()
+				.filter(e -> !(randomConf.getUserId().equals(e.getUserId())
+						&& randomConf.getDatumStreamId().equals(e.getDatumStreamId())))
+				.toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(dao.getAll(null)).as("Expected tasks deleted").containsOnlyOnce(expected);
+	}
+
+	@Test
+	public void delete_filter_user() {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 2;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final Long streamId = createDatumStream(userId, mappingId, Map.of("bim", "bam"))
+							.getConfigId();
+
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							streamId,
+							BasicClaimableJobState.Queued,
+							MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
+							MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamPollTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		int result = dao.delete(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Count of tasks for given user deleted")
+			.isEqualTo(integrationCount * streamCount)
+			;
+		// @formatter:on
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream()
+				.filter(e -> !randomConf.getUserId().equals(e.getUserId()))
+				.toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(dao.getAll(null)).as("Expected tasks deleted").containsOnlyOnce(expected);
+	}
+
+	@Test
 	public void claimTask_noRows() {
 		// GIVEN
 
@@ -504,8 +965,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamPollTaskEntity conf2 = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Completed,
-				now().truncatedTo(ChronoUnit.SECONDS),
-				now().truncatedTo(ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
 				randomString(),
 				null)
 				;
@@ -517,9 +978,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// WHEN
 		CloudDatumStreamPollTaskEntity result = dao.claimQueuedTask();
 
-		//TestTransaction.flagForCommit();
-
 		// THEN
+		final Instant afterClaim = MS_CLOCK.instant();
 		CloudDatumStreamPollTaskEntity expected = last.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -528,6 +988,32 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.as("Retrieved entity matches with with Queued state")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
+			;
+
+		var pollData = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		then(pollData)
+			.as("Table has rows for each task")
+			.hasSize(2)
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsEntry("ds_id", last.getDatumStreamId())
+					.as("Queued task row claimed")
+					.containsEntry("status", BasicClaimableJobState.Claimed.keyValue())
+					.hasEntrySatisfying("exec_at", ts -> {
+						then(((Timestamp)ts).toInstant())
+							.as("Queued task row execution date reset to 'now'")
+							.isCloseTo(afterClaim, within(Duration.ofSeconds(1)))
+							;
+					})
+					;
+				then(l).element(1, map(String.class, Object.class))
+					.containsEntry("ds_id", conf2.getDatumStreamId())
+					.as("Completed task row not claimed")
+					.containsEntry("status", BasicClaimableJobState.Completed.keyValue())
+					.as("Completed task row execution date unchanged")
+					.containsEntry("exec_at", Timestamp.from(conf2.getExecuteAt()))
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -548,8 +1034,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamPollTaskEntity conf1 = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream1.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
-				now().truncatedTo(ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).plus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
 				randomString(),
 				null)
 				;
@@ -558,8 +1044,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamPollTaskEntity conf2 = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream2.getConfigId(),
 				BasicClaimableJobState.Queued,
-				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
-				now().truncatedTo(ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
 				randomString(),
 				null)
 				;
@@ -574,6 +1060,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamPollTaskEntity result = dao.claimQueuedTask();
 
 		// THEN
+		final Instant afterClaim = MS_CLOCK.instant();
 		CloudDatumStreamPollTaskEntity expected = conf2.clone();
 		expected.setState(BasicClaimableJobState.Claimed);
 
@@ -583,6 +1070,32 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
 			;
+
+		var pollData = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		then(pollData)
+			.as("Table has rows for each task")
+			.hasSize(2)
+			.satisfies(l -> {
+				then(l).element(0, map(String.class, Object.class))
+					.containsEntry("ds_id", conf1.getDatumStreamId())
+					.as("Future task row not claimed")
+					.containsEntry("status", BasicClaimableJobState.Queued.keyValue())
+					.as("Future task row execution date unchanged")
+					.containsEntry("exec_at", Timestamp.from(conf1.getExecuteAt()))
+					;
+				then(l).element(1, map(String.class, Object.class))
+					.containsEntry("ds_id", conf2.getDatumStreamId())
+					.as("Past task row claimed")
+					.containsEntry("status", BasicClaimableJobState.Claimed.keyValue())
+					.hasEntrySatisfying("exec_at", ts -> {
+						then(((Timestamp)ts).toInstant())
+							.as("Past task row execution date reset to 'now'")
+							.isCloseTo(afterClaim, within(Duration.ofSeconds(1)))
+							;
+					})
+					;
+			})
+			;
 		// @formatter:on
 	}
 
@@ -590,7 +1103,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	public void resetAbandoned() {
 		// GIVEN
 		final int datumStreamCount = 10;
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant start = MS_CLOCK.instant().truncatedTo(ChronoUnit.HOURS);
 		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
 		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
 				integration.getConfigId(), null);
@@ -605,7 +1118,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 					i == 0 || RNG.nextBoolean() ? BasicClaimableJobState.Executing
 							: RNG.nextBoolean() ? BasicClaimableJobState.Claimed
 									: BasicClaimableJobState.Queued,
-					start.plusSeconds(60 * i), now().truncatedTo(ChronoUnit.DAYS), randomString(), null);
+					start.plusSeconds(60 * i), MS_CLOCK.instant().truncatedTo(ChronoUnit.DAYS),
+					randomString(), null);
 			pollTasks.add(dao.get(dao.save(conf)));
 		}
 

@@ -23,19 +23,19 @@
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerAuthConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerAuthConfigurationDao;
@@ -74,13 +74,12 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 	public void insert() {
 		// GIVEN
 		lastServer = serverDao.get(serverDao.create(userId,
-				Dnp3JdbcTestUtils.newServerConfiguration(userId, UUID.randomUUID().toString())));
+				Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString())));
 
 		// WHEN
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, lastServer.getServerId(),
-				UUID.randomUUID().toString(), Instant.now());
-		conf.setModified(Instant.now().plusMillis(234L));
-		conf.setName(UUID.randomUUID().toString());
+				randomString(), MS_CLOCK.instant(), randomString());
+		conf.setModified(MS_CLOCK.instant().plusMillis(234L));
 		UserLongStringCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -137,8 +136,8 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 		// WHEN
 		ServerAuthConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
-		conf.setModified(Instant.now().plusMillis(474));
-		conf.setName(UUID.randomUUID().toString());
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
+		conf.setName(randomString());
 
 		UserLongStringCompositePK result = dao.save(conf);
 		ServerAuthConfiguration updated = dao.get(result);
@@ -182,15 +181,14 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), UUID.randomUUID().toString(), Instant.now());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
-					conf.setName(UUID.randomUUID().toString());
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -222,16 +220,15 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), UUID.randomUUID().toString(), Instant.now());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
-					conf.setName(UUID.randomUUID().toString());
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -265,16 +262,15 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				server.setEnabled(true);
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
-							server.getServerId(), UUID.randomUUID().toString(), Instant.now());
+							server.getServerId(), randomString(), MS_CLOCK.instant(), randomString());
 					conf.setModified(conf.getCreated());
-					conf.setName(UUID.randomUUID().toString());
 					conf.setEnabled(true);
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
@@ -293,16 +289,14 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 	@Test
 	public void findForIdentifier_disabledServer() {
 		// GIVEN
-		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-				UUID.randomUUID().toString());
+		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString());
 		server.setEnabled(false);
 		UserLongCompositePK serverId = serverDao.create(userId, server);
 		server = server.copyWithId(serverId);
 
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
-				UUID.randomUUID().toString(), Instant.now());
+				randomString(), MS_CLOCK.instant(), randomString());
 		conf.setModified(conf.getCreated());
-		conf.setName(UUID.randomUUID().toString());
 		conf.setEnabled(true);
 		dao.create(userId, server.getServerId(), conf);
 
@@ -316,16 +310,14 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 	@Test
 	public void findForIdentifier_disabledAuth() {
 		// GIVEN
-		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-				UUID.randomUUID().toString());
+		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString());
 		server.setEnabled(true);
 		UserLongCompositePK serverId = serverDao.create(userId, server);
 		server = server.copyWithId(serverId);
 
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
-				UUID.randomUUID().toString(), Instant.now());
+				randomString(), MS_CLOCK.instant(), randomString());
 		conf.setModified(conf.getCreated());
-		conf.setName(UUID.randomUUID().toString());
 		conf.setEnabled(false);
 		dao.create(userId, server.getServerId(), conf);
 

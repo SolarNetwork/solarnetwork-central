@@ -23,16 +23,15 @@
 package net.solarnetwork.central.common.mail.javamail.test;
 
 import static java.util.Collections.singleton;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mail.SimpleMailMessage;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.DefaultMailService;
 import net.solarnetwork.central.mail.support.SimpleMessageDataSource;
-import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
 
 /**
  * Test cases for the {@link DefaultMailService} class using JavaMailSender.
@@ -40,15 +39,13 @@ import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
  * @author matt
  * @version 1.0
  */
+@EnabledIfSystemProperty(named = "test.smtp", matches = ".*")
 public class DefaultMailServiceTests extends AbstractJavaMailTestSupport {
-
-	@ClassRule
-	public static SystemPropertyMatchTestRule SMTP_RULE = new SystemPropertyMatchTestRule("smtp");
 
 	private DefaultMailService mailService;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		super.setup();
 

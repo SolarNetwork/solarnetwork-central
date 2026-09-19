@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -61,7 +61,7 @@ public class DatumStreamMetadataController {
 	 * @param datumStreamMetadataBiz
 	 *        the stream metadata biz to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumStreamMetadataController(DatumStreamMetadataBiz datumStreamMetadataBiz) {
 		super();
@@ -74,7 +74,7 @@ public class DatumStreamMetadataController {
 	 *
 	 * <p>
 	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
-	 * either is {@literal null} that ID will remain unchanged.
+	 * either is {@code null} that ID will remain unchanged.
 	 * </p>
 	 *
 	 * @param streamId
@@ -85,8 +85,8 @@ public class DatumStreamMetadataController {
 	 *        the new source ID to associate with the stream
 	 * @return the updated stream metadata ID
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null} or both {@code nodeId} and
-	 *         {@code sourceId} are {@literal null}
+	 *         if {@code streamId} is {@code null} or both {@code nodeId} and
+	 *         {@code sourceId} are {@code null}
 	 */
 	@RequestMapping(method = RequestMethod.PATCH, path = "/node")
 	public Result<ObjectDatumStreamMetadataId> updateNodeDatumStreamMetadataIdAttributes(
@@ -106,7 +106,7 @@ public class DatumStreamMetadataController {
 	 *
 	 * <p>
 	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
-	 * either is {@literal null} that ID will remain unchanged.
+	 * either is {@code null} that ID will remain unchanged.
 	 * </p>
 	 *
 	 * @param streamId
@@ -117,13 +117,12 @@ public class DatumStreamMetadataController {
 	 *        the new source ID to associate with the stream
 	 * @return the updated stream metadata ID
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null} or both {@code nodeId} and
-	 *         {@code sourceId} are {@literal null}
+	 *         if {@code streamId} is {@code null} or both {@code nodeId} and
+	 *         {@code sourceId} are {@code null}
 	 */
 	@RequestMapping(method = RequestMethod.PATCH, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadataId> updateNodeDatumStreamMetadataIdAttributesViaPath(
-			@PathVariable("streamId") UUID streamId,
-			@RequestParam(value = "nodeId", required = false) Long nodeId,
+			@PathVariable UUID streamId, @RequestParam(value = "nodeId", required = false) Long nodeId,
 			@RequestParam(value = "sourceId", required = false) String sourceId) {
 		if ( nodeId == null && sourceId == null ) {
 			throw new IllegalArgumentException("One of nodeId or sourceId parameters is required.");
@@ -138,29 +137,29 @@ public class DatumStreamMetadataController {
 	 *
 	 * <p>
 	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
-	 * either is {@literal null} that ID will remain unchanged.
+	 * either is {@code null} that ID will remain unchanged.
 	 * </p>
 	 *
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param nodeId
-	 *        the node ID to set, or {@literal null} to keep unchanged
+	 *        the node ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to keep unchanged
+	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@literal null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@literal null} or
-	 *         all other arguments are {@literal null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 1.1
 	 */
 	@RequestMapping(method = RequestMethod.POST, path = "/node")
@@ -182,35 +181,34 @@ public class DatumStreamMetadataController {
 	 *
 	 * <p>
 	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
-	 * either is {@literal null} that ID will remain unchanged.
+	 * either is {@code null} that ID will remain unchanged.
 	 * </p>
 	 *
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param nodeId
-	 *        the node ID to set, or {@literal null} to keep unchanged
+	 *        the node ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to keep unchanged
+	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@literal null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@literal null} or
-	 *         all other arguments are {@literal null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 1.1
 	 */
 	@RequestMapping(method = RequestMethod.POST, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadata> updateNodeDatumStreamMetadataAttributesViaPath(
-			@PathVariable("streamId") UUID streamId,
-			@RequestParam(value = "nodeId", required = false) Long nodeId,
+			@PathVariable UUID streamId, @RequestParam(value = "nodeId", required = false) Long nodeId,
 			@RequestParam(value = "sourceId", required = false) String sourceId,
 			@RequestParam(name = "i", required = false) String[] instantaneousProperties,
 			@RequestParam(name = "a", required = false) String[] accumulatingProperties,
@@ -228,7 +226,7 @@ public class DatumStreamMetadataController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadata> viewNodeDatumStreamMetadataViaPath(
-			@PathVariable("streamId") UUID streamId) {
+			@PathVariable UUID streamId) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(streamId);
 		SecurityActor actor = SecurityUtils.getCurrentActor();

@@ -19,7 +19,7 @@
 				<button type="submit" class="btn btn-primary" name="_eventId_next" data-th-text="#{continue.label}">Continue</button>
 			</div>
 		</div>
-		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}">
+		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}"  data-th-if="${_csrf}">
 	</form>
 </main>
 </body>

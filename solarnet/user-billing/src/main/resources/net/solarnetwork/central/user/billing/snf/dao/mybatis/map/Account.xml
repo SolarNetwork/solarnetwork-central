@@ -37,9 +37,9 @@
 			<idArg column="bill_account_id" javaType="Long"/>
 			<arg column="bill_account_user_id" javaType="Long"/>
 			<arg column="bill_account_created" javaType="java.time.Instant"/>
+			<arg column="bill_account_currency" javaType="String"/>
+			<arg column="bill_account_locale" javaType="String"/>
 		</constructor>
-		<result property="currencyCode" column="bill_account_currency"/>
-		<result property="locale" column="bill_account_locale"/>
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 	</resultMap>
 	

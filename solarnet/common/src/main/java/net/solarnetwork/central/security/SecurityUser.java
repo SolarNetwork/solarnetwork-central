@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
 
 /**
@@ -37,6 +38,7 @@ public interface SecurityUser extends SecurityActor, UserIdRelated {
 	 * 
 	 * @return display name
 	 */
+	@Nullable
 	String getDisplayName();
 
 	/**

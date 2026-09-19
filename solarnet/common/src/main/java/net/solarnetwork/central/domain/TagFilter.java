@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Filter API for tags.
  * 
@@ -36,18 +38,19 @@ public interface TagFilter {
 	 * 
 	 * <p>
 	 * This returns the first available tag from the {@link #getTags()} array,
-	 * or {@literal null} if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first tag, or {@literal null} if not available
+	 * @return the first tag, or {@code null} if not available
 	 */
+	@Nullable
 	String getTag();
 
 	/**
 	 * Get an array of tags.
 	 * 
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
-	String[] getTags();
+	String @Nullable [] getTags();
 
 }

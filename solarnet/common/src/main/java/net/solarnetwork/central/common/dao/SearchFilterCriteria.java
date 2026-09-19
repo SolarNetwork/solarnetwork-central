@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.SearchFilter;
 
 /**
@@ -33,7 +34,7 @@ import net.solarnetwork.util.SearchFilter;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface SearchFilterCriteria {
 
@@ -47,6 +48,7 @@ public interface SearchFilterCriteria {
 	 * 
 	 * @return the search filter
 	 */
+	@Nullable
 	String getSearchFilter();
 
 	/**
@@ -61,11 +63,28 @@ public interface SearchFilterCriteria {
 	/**
 	 * Parse the search filter string into a {@link SearchFilter} instance.
 	 * 
-	 * @return the instance, or {@literal null} if no search filter is defined
-	 *         or the filter has an invalid syntax
+	 * @return the instance, or {@code null} if no search filter is defined or
+	 *         the filter has an invalid syntax
 	 */
-	default SearchFilter searchFilter() {
+	default @Nullable SearchFilter toSearchFilter() {
 		return SearchFilter.forLDAPSearchFilterString(getSearchFilter());
+	}
+
+	/**
+	 * Get the search filter.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasSearchFilterCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 2.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String searchFilter() {
+		return getSearchFilter();
 	}
 
 }

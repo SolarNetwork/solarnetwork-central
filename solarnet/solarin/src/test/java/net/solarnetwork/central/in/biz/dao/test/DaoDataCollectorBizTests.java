@@ -23,8 +23,10 @@
 package net.solarnetwork.central.in.biz.dao.test;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -36,8 +38,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -45,9 +45,9 @@ import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
@@ -55,6 +55,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -91,7 +92,7 @@ public class DaoDataCollectorBizTests {
 	private SolarNodeDao nodeDao;
 	private DatumMetadataBiz datumMetadataBiz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
@@ -105,7 +106,7 @@ public class DaoDataCollectorBizTests {
 		biz.setSolarNodeDao(nodeDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao);
 	}
@@ -132,8 +133,8 @@ public class DaoDataCollectorBizTests {
 		List<LocationMatch> results = biz.findLocations(filter);
 
 		// THEN
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		assertThat(results, notNullValue());
+		assertThat(results.size(), equalTo(1));
 
 		LocationMatch loc = results.get(0);
 		assertThat("Expected location returned", loc, sameInstance(l));
@@ -158,10 +159,7 @@ public class DaoDataCollectorBizTests {
 	@Test
 	public void postGeneralNodeDatum() {
 		// GIVEN
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		d.setSourceId(TEST_SOURCE_ID);
-		d.setCreated(Instant.now());
+		GeneralNodeDatum d = new GeneralNodeDatum(randomLong(), Instant.now(), TEST_SOURCE_ID);
 		d.setSamples(new DatumSamples());
 		d.getSamples().putInstantaneousSampleValue("foo", 1);
 
@@ -187,7 +185,7 @@ public class DaoDataCollectorBizTests {
 		DatumPK datumPk = new DatumPK(d.getStreamId(), d.getTimestamp());
 
 		// lookup stream metadata
-		Capture<StreamMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectMetadataCriteria> metaCriteriaCaptor = new Capture<>();
 		expect(metaDao.findStreamMetadata(capture(metaCriteriaCaptor))).andReturn(meta);
 
 		// save datum
@@ -242,7 +240,7 @@ public class DaoDataCollectorBizTests {
 		assertThat("DAO location returned", result, is(sameInstance(loc)));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void getNodeLocation_unauthorized() {
 		// GIVEN
 		final Long nodeId = 1L;
@@ -250,7 +248,7 @@ public class DaoDataCollectorBizTests {
 		// WHEN
 		replayAll();
 		SecurityUtils.becomeNode(2L);
-		biz.getLocationForNode(nodeId);
+		thenThrownBy(() -> biz.getLocationForNode(nodeId)).isInstanceOf(AuthorizationException.class);
 	}
 
 	@Test

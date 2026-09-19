@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebSecurityConfig.java - 9/10/2021 3:10:26 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.query.config;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,7 +47,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
@@ -55,21 +55,22 @@ import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
- * 
+ *
  * @author matt
- * @version 1.6
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-	private static String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+	private static final String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
 			Role.ROLE_NODE.toString(), Role.ROLE_READNODEDATA.toString(), };
 
-	private static String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+	private static final String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
 			Role.ROLE_NODE.toString(), Role.ROLE_WRITENODEDATA.toString(), };
 
 	@Autowired
@@ -100,8 +101,7 @@ public class WebSecurityConfig {
 	}
 
 	private AuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
@@ -197,12 +197,19 @@ public class WebSecurityConfig {
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
-			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec", securityTokenFilterSettings);
-			filter.setUserDetailsService(tokenUserDetailsService());
-			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
+			return new SecurityTokenAuthenticationFilter(tokenUserDetailsService(),
+					unauthorizedEntryPoint(), null, pathMatcher, "/api/v1/sec",
+					securityTokenFilterSettings);
+		}
 
-			return filter;
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<SecurityTokenAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				SecurityTokenAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean

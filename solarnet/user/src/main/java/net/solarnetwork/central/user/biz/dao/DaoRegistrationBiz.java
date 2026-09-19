@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getOriginalEmail;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -45,6 +49,7 @@ import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -57,10 +62,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
@@ -80,7 +85,7 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -115,7 +120,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 3.0
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -170,39 +175,86 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private UserDao userDao;
-	private UserNodeDao userNodeDao;
-	private UserNodeConfirmationDao userNodeConfirmationDao;
-	private UserNodeCertificateDao userNodeCertificateDao;
-	private Validator userValidator;
-	private SolarNodeDao solarNodeDao;
-	private SolarLocationDao solarLocationDao;
-	private NetworkIdentificationBiz networkIdentificationBiz;
-	private PasswordEncoder passwordEncoder;
+	private final UserDao userDao;
+	private final UserNodeDao userNodeDao;
+	private final UserNodeConfirmationDao userNodeConfirmationDao;
+	private final UserNodeCertificateDao userNodeCertificateDao;
+	private final SolarNodeDao solarNodeDao;
+	private final SolarLocationDao solarLocationDao;
+	private final NetworkIdentificationBiz networkIdentificationBiz;
+	private final CertificateService certificateService;
+	private final NodePKIBiz nodePKIBiz;
+	private final InstructorBiz instructorBiz;
+	private final PasswordEncoder passwordEncoder;
+	private @Nullable Validator userValidator;
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES;
 	private JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
-	private Cache<String, Boolean> emailThrottleCache;
-	private CertificateService certificateService;
-	private NodePKIBiz nodePKIBiz;
+	private @Nullable Cache<String, Boolean> emailThrottleCache;
 	private int nodePrivateKeySize = 2048;
 	private String nodeKeystoreAlias = "node";
 	private ExecutorService executorService = Executors.newCachedThreadPool();
 	private int approveCsrMaximumWaitSecs = DEFAULT_APPROVE_CSR_MAX_WAIT_SECS;
-	private InstructorBiz instructorBiz;
 	private int instructionParamMaxLength = INSTRUCTION_PARAM_DEFAULT_MAX_LENGTH;
 
 	private Period invitationExpirationPeriod = Period.ofWeeks(1);
-	private Period nodeCertificateRenewalPeriod = Period.ofMonths(3);
+	private @Nullable Period nodeCertificateRenewalPeriod = Period.ofMonths(3);
 	private String defaultSolarLocationName = "Unknown";
 	private String networkCertificateSubjectFormat = DEFAULT_CERT_SUBJECT_FORMAT;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param userDao
+	 *        the user DAO
+	 * @param userNodeDao
+	 *        the user node DAO
+	 * @param userNodeConfirmationDao
+	 *        the user node confirmation DAO
+	 * @param userNodeCertificateDao
+	 *        the user node certificate DAO
+	 * @param solarNodeDao
+	 *        the SolarNode DAO
+	 * @param solarLocationDao
+	 *        the location DAO
+	 * @param networkIdentificationBiz
+	 *        the network identification service
+	 * @param certificateService
+	 *        the certificate service
+	 * @param nodePKIBiz
+	 *        the node PKI service
+	 * @param instructorBiz
+	 *        the instruction service
+	 * @param passwordEncoder
+	 *        the password encoder
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DaoRegistrationBiz(UserDao userDao, UserNodeDao userNodeDao,
+			UserNodeConfirmationDao userNodeConfirmationDao,
+			UserNodeCertificateDao userNodeCertificateDao, SolarNodeDao solarNodeDao,
+			SolarLocationDao solarLocationDao, NetworkIdentificationBiz networkIdentificationBiz,
+			CertificateService certificateService, NodePKIBiz nodePKIBiz, InstructorBiz instructorBiz,
+			PasswordEncoder passwordEncoder) {
+		super();
+		this.userDao = requireNonNullArgument(userDao, "userDao");
+		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.userNodeConfirmationDao = requireNonNullArgument(userNodeConfirmationDao,
+				"userNodeConfirmationDao");
+		this.userNodeCertificateDao = requireNonNullArgument(userNodeCertificateDao,
+				"userNodeCertificateDao");
+		this.solarNodeDao = requireNonNullArgument(solarNodeDao, "solarNodeDao");
+		this.solarLocationDao = requireNonNullArgument(solarLocationDao, "solarLocationDao");
+		this.networkIdentificationBiz = requireNonNullArgument(networkIdentificationBiz,
+				"networkIdentificationBiz");
+		this.certificateService = requireNonNullArgument(certificateService, "certificateService");
+		this.nodePKIBiz = requireNonNullArgument(nodePKIBiz, "nodePKIBiz");
+		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
+		this.passwordEncoder = requireNonNullArgument(passwordEncoder, "passwordEncoder");
+	}
+
 	private User getCurrentUser() {
-		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-		User user = null;
-		if ( currentUserEmail != null ) {
-			user = userDao.getUserByEmail(currentUserEmail);
-		}
-		return user;
+		String currentUserEmail = SecurityUtils.getCurrentUser().getEmail();
+		return nonnull(userDao.getUserByEmail(currentUserEmail), "Current user");
 	}
 
 	@Override
@@ -223,7 +275,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			}
 		}
 
-		User clone = (User) user.clone();
+		User clone = user.clone();
 
 		// store user
 		prepareUserForStorage(clone);
@@ -233,7 +285,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		User entity;
 		try {
-			entity = userDao.get(userDao.save(clone));
+			entity = nonnull(userDao.get(userDao.save(clone)), "user");
 		} catch ( DataIntegrityViolationException e ) {
 			log.warn("Duplicate user registration: {}", clone.getEmail());
 			throw new AuthorizationException(user.getEmail(),
@@ -266,7 +318,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		final String unregEmail = receipt.getUsername();
-		entity = userDao.getUserByEmail(unregEmail);
+		entity = (unregEmail != null ? userDao.getUserByEmail(unregEmail) : null);
 		if ( entity == null ) {
 			throw new AuthorizationException(receipt.getUsername(),
 					AuthorizationException.Reason.UNKNOWN_EMAIL);
@@ -283,7 +335,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		entity.setEmail(confirmedEmail);
 
 		// update confirmed user
-		entity = userDao.get(userDao.save(entity));
+		entity = nonnull(userDao.get(userDao.save(entity)), "user");
 
 		// store initial user roles
 		userDao.storeUserRoles(entity, confirmedUserRoles);
@@ -293,8 +345,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	}
 
 	private String calculateConfirmationCode(User user) {
-		return DigestUtils.sha256Hex(
-				user.getCreated().toEpochMilli() + user.getId() + user.getEmail() + user.getPassword());
+		final Instant ts = nonnull(user.getCreated(), "created");
+		final Long id = nonnull(user.getId(), "id");
+		final String email = nonnull(user.getEmail(), "email");
+		final String pw = nonnull(user.getPassword(), "password");
+		return DigestUtils.sha256Hex(ts.toEpochMilli() + id + email + pw);
 	}
 
 	private void prepareUserForStorage(User user) throws AuthorizationException {
@@ -302,7 +357,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// check for "unchanged" password value
 		if ( user.getId() != null && DO_NOT_CHANGE_VALUE.equals(user.getPassword()) ) {
 			// retrieve user from back-end and copy that password onto our user
-			User realUser = userDao.get(user.getId());
+			User realUser = nonnull(userDao.get(user.getId()), "user");
 			user.setPassword(realUser.getPassword());
 		}
 
@@ -321,7 +376,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			user.setEmail(user.getEmail().trim());
 		}
 		User existingUser = userDao.getUserByEmail(user.getEmail());
-		if ( existingUser != null && !existingUser.getId().equals(user.getId()) ) {
+		if ( existingUser != null && !nonnull(existingUser.getId(), "id").equals(user.getId()) ) {
 			throw new AuthorizationException(user.getEmail(),
 					AuthorizationException.Reason.DUPLICATE_EMAIL);
 		}
@@ -329,6 +384,27 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// sent enabled if not configured
 		if ( user.getEnabled() == null ) {
 			user.setEnabled(Boolean.TRUE);
+		}
+
+		// save location details if provided
+		if ( user.getLocation() != null && (user.getLocationId() == null
+				|| !Objects.equals(user.getLocationId(), user.getLocation().getId())) ) {
+			if ( user.getLocation().getId() != null ) {
+				// just update user's location ID
+				user.setLocationId(user.getLocation().getId());
+			} else {
+				final String country = nonnull(user.getLocation().getCountry(), "Country");
+				final String timeZoneId = nonnull(user.getLocation().getTimeZoneId(), "Time zone ID");
+				// look up location for Country + Time Zone
+				SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(country, timeZoneId);
+				if ( loc == null ) {
+					loc = new SolarLocation();
+					loc.setCountry(country);
+					loc.setTimeZoneId(timeZoneId);
+					loc = solarLocationDao.get(solarLocationDao.save(loc));
+				}
+				user.setLocation(loc);
+			}
 		}
 	}
 
@@ -359,7 +435,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				}
 			}
 		}
-		return byos.toString();
+		return byos.toString(StandardCharsets.US_ASCII);
 	}
 
 	@Override
@@ -369,9 +445,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( request.getUserId() == null ) {
 			user = getCurrentUser();
 		} else {
-			user = userDao.get(request.getUserId());
+			user = requireNonNullObject(userDao.get(request.getUserId()), request.getUserId());
 		}
-		assert user != null;
 
 		Instant now = Instant.now();
 		NetworkIdentity ident = networkIdentificationBiz.getNetworkIdentity();
@@ -397,9 +472,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setTermsOfService(ident.getTermsOfService());
 
 		// create UserNodeConfirmation now
-		UserNodeConfirmation conf = new UserNodeConfirmation();
+		UserNodeConfirmation conf = new UserNodeConfirmation(user);
 		conf.setCreated(now);
-		conf.setUser(user);
 		conf.setConfirmationKey(confKey);
 		conf.setSecurityPhrase(request.getSecurityPhrase());
 		conf.setCountry(request.getLocale().getCountry());
@@ -427,19 +501,19 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public NetworkAssociation getNodeAssociation(final Long userNodeConfirmationId)
 			throws AuthorizationException {
-		final UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConfirmationId);
-		if ( conf == null ) {
-			return null;
-		}
+		final UserNodeConfirmation conf = requireNonNullObject(
+				userNodeConfirmationDao.get(userNodeConfirmationId), userNodeConfirmationId);
 		final NetworkIdentity ident = networkIdentificationBiz.getNetworkIdentity();
-		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		final User user = nonnull(conf.getUser(), "user");
+
+		final NetworkAssociationDetails details = new NetworkAssociationDetails();
 		details.setHost(ident.getHost());
 		details.setPort(ident.getPort());
 		details.setForceTLS(ident.isForceTLS());
 		details.setNetworkId(conf.getNodeId());
 		details.setIdentityKey(ident.getIdentityKey());
-		details.setUsername(conf.getUser().getEmail());
-		details.setExpiration(conf.getCreated().plus(invitationExpirationPeriod));
+		details.setUsername(user.getEmail());
+		details.setExpiration(nonnull(conf.getCreated(), "created").plus(invitationExpirationPeriod));
 		details.setConfirmationKey(conf.getConfirmationKey());
 
 		String xml = encodeNetworkAssociationDetails(details);
@@ -456,10 +530,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void cancelNodeAssociation(Long userNodeConfirmationId) throws AuthorizationException {
 		final UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConfirmationId);
-		if ( conf == null ) {
-			return;
+		if ( conf != null ) {
+			userNodeConfirmationDao.delete(conf);
 		}
-		userNodeConfirmationDao.delete(conf);
 	}
 
 	private String calculateNodeAssociationConfirmationCode(Instant date, Long nodeId) {
@@ -472,35 +545,26 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( association == null ) {
 			throw new IllegalArgumentException("NetworkAssociation must be provided.");
 		}
-		final String username = association.getUsername();
-		final String confirmationKey = association.getConfirmationKey();
-		final String keystorePassword = association.getKeystorePassword();
-		if ( (username == null) || (confirmationKey == null) || (keystorePassword == null) ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
+		final String username = requireNonNullObject(association.getUsername(), "username");
+		final String confirmationKey = requireNonNullObject(association.getConfirmationKey(),
+				"confirmationKey");
+		final String keystorePassword = requireNonNullObject(association.getKeystorePassword(),
+				"keystorePassword");
 
 		final User user = userDao.getUserByEmail(username);
 		if ( user == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, username);
 		}
+		final Long userId = nonnull(user.getId(), "User ID");
 
-		final UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),
-				confirmationKey);
-		if ( conf == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
-					confirmationKey);
-		}
+		final UserNodeConfirmation conf = requireNonNullObject(
+				userNodeConfirmationDao.getConfirmationForKey(userId, confirmationKey), confirmationKey);
 
-		final Long nodeId = conf.getNodeId();
-		if ( nodeId == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
+		final Long nodeId = requireNonNullObject(conf.getNodeId(), conf.getNodeId());
 
-		final UserNodeCertificate cert = userNodeCertificateDao
-				.get(new UserNodePK(user.getId(), nodeId));
-		if ( cert == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
+		final var userNodeId = new UserNodePK(userId, nodeId);
+		final UserNodeCertificate cert = requireNonNullObject(userNodeCertificateDao.get(userNodeId),
+				userNodeId);
 
 		final KeyStore keystore;
 		try {
@@ -524,7 +588,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		details.setNetworkId(nodeId);
 		details.setConfirmationKey(confirmationKey);
-		details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		details.setNetworkCertificateStatus(nonnull(cert.getStatus(), "Certificate status").getValue());
 		return details;
 	}
 
@@ -539,28 +603,19 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			throw new IllegalArgumentException("Keystore password must be provided.");
 		}
 
-		final Long nodeId = userNode.getId();
-		if ( nodeId == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
-		final UserNodeCertificate cert = userNodeCertificateDao
-				.get(new UserNodePK(userNode.getUser().getId(), nodeId));
+		final Long nodeId = requireNonNullObject(userNode.getId(), userNode.getId());
+		final var userNodeId = new UserNodePK(userNode.getUser().getId(), nodeId);
+		final UserNodeCertificate cert = userNodeCertificateDao.get(userNodeId);
 		return renewNodeCertificate(cert, keystorePassword);
 	}
 
-	private UserNodeCertificateRenewal renewNodeCertificate(final UserNodeCertificate cert,
+	private UserNodeCertificateRenewal renewNodeCertificate(final @Nullable UserNodeCertificate cert,
 			final String keystorePassword) {
 		if ( cert == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
-		final User user = cert.getUser();
-		if ( user == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
-		final Long nodeId = cert.getNodeId();
-		if ( nodeId == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
+		final User user = requireNonNullObject(cert.getUser(), "user");
+		final Long nodeId = requireNonNullObject(cert.getNodeId(), "nodeId");
 
 		final KeyStore keystore;
 		try {
@@ -591,11 +646,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		cert.setRequestId(renewRequestID);
 		cert.setStatus(UserNodeCertificateStatus.a);
 
-		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
+		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId);
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword, user,
 				cert);
-		Instruction installInstruction = null;
+		NodeInstruction installInstruction = null;
 		try {
 			UserNodeCertificate renewedCert = approval.get(approveCsrMaximumWaitSecs, TimeUnit.SECONDS);
 			cert.setStatus(renewedCert.getStatus());
@@ -605,7 +660,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		} catch ( TimeoutException e ) {
 			log.debug("Timeout waiting for {} cert renewal approval", certSubjectDN);
 			// save to DB when we do get our reply
-			executorService.submit(() -> {
+			var _ = executorService.submit(() -> {
 				try {
 					UserNodeCertificate renewedCert = approval.get();
 					cert.setStatus(renewedCert.getStatus());
@@ -635,9 +690,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		BasicUserNodeCertificateRenewal details = new BasicUserNodeCertificateRenewal();
 		details.setNetworkId(nodeId);
-		details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		details.setNetworkCertificateStatus(nonnull(cert.getStatus(), "Certificate status").getValue());
 		if ( cert.getStatus() == UserNodeCertificateStatus.v ) {
-			details.setNetworkCertificate(getCertificateAsString(cert.getKeystoreData()));
+			details.setNetworkCertificate(getCertificateAsString(
+					nonnull(cert.getKeystoreData(), "Certificate keystore data")));
 		}
 		details.setNetworkCertificateSubjectDN(certSubjectDN);
 
@@ -651,7 +707,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificateRenewal getPendingNodeCertificateRenewal(UserNode userNode,
+	public @Nullable UserNodeCertificateRenewal getPendingNodeCertificateRenewal(UserNode userNode,
 			String confirmationKey) {
 		Long instructionId;
 		try {
@@ -661,7 +717,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			return null;
 		}
 		NodeInstruction instruction = instructorBiz.getInstruction(instructionId);
-		if ( instruction == null ) {
+		if ( instruction == null || instruction.getNodeId() == null ) {
 			return null;
 		}
 
@@ -670,8 +726,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( nodeId == null && userNode.getNode() != null ) {
 			nodeId = userNode.getNode().getId();
 		}
-		if ( !(instruction.getNodeId().equals(nodeId)
-				&& INSTRUCTION_TOPIC_RENEW_CERTIFICATE.equals(instruction.getTopic())) ) {
+		if ( !(instruction.getNodeId().equals(nodeId) && INSTRUCTION_TOPIC_RENEW_CERTIFICATE
+				.equals(instruction.getInstruction().getTopic())) ) {
 			return null;
 		}
 
@@ -679,19 +735,23 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setNetworkId(userNode.getId());
 		details.setConfirmationKey(instructionId.toString());
 
-		UserNodeCertificateInstallationStatus installStatus = switch (instruction.getState()) {
+		UserNodeCertificateInstallationStatus installStatus = switch (instruction.getInstruction()
+				.getState()) {
 			case Queued -> UserNodeCertificateInstallationStatus.RequestQueued;
 			case Received, Executing -> UserNodeCertificateInstallationStatus.RequestReceived;
 			case Completed -> UserNodeCertificateInstallationStatus.Installed;
 			case Declined -> UserNodeCertificateInstallationStatus.Declined;
-			default -> null;
+			case null, default -> null;
 		};
 
 		details.setInstallationStatus(installStatus);
 
-		if ( instruction.getParameters() != null ) {
+		if ( instruction.getInstruction().getParameters() != null ) {
 			StringBuilder buf = new StringBuilder();
-			for ( InstructionParameter param : instruction.getParameters() ) {
+			for ( InstructionParameter param : instruction.getInstruction().getParameters() ) {
+				if ( param.getName() == null || param.getValue() == null ) {
+					continue;
+				}
 				if ( INSTRUCTION_PARAM_CERTIFICATE.equals(param.getName()) ) {
 					buf.append(param.getValue());
 				}
@@ -713,17 +773,13 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 * @param keystorePassword
 	 *        The password to read the keystore with.
 	 */
-	private Instruction queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
-			final String keystorePassword) {
-		final InstructorBiz instructor = instructorBiz;
-		final CertificateService certService = certificateService;
-		if ( instructor == null || certService == null ) {
-			log.debug(
-					"Either InstructorBiz or CertificateService are null, cannot queue cert renewal instruction.");
-			return null;
-		}
+	private @Nullable NodeInstruction queueRenewedNodeCertificateInstruction(
+			final UserNodeCertificate cert, final String keystorePassword) {
 		if ( keystorePassword == null ) {
 			throw new IllegalArgumentException("Keystore password must be provided.");
+		}
+		if ( cert.getNodeId() == null ) {
+			throw new IllegalArgumentException("Certificate node ID must be provided.");
 		}
 		final KeyStore keystore;
 		try {
@@ -736,7 +792,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( certificate == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
-		String pem = certService
+		String pem = certificateService
 				.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
 		Instruction instr = new Instruction(INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now());
 		final int max = instructionParamMaxLength;
@@ -747,7 +803,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			instr.addParameter(INSTRUCTION_PARAM_CERTIFICATE, val);
 			i += max;
 		}
-		return instructor.queueInstruction(cert.getNodeId(), instr);
+		return instructorBiz.queueInstruction(cert.getNodeId(), instr);
 	}
 
 	@Override
@@ -797,17 +853,16 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( association == null ) {
 			throw new IllegalArgumentException("NetworkAssociation must be provided.");
 		}
-		final String username = association.getUsername();
-		final String confirmationKey = association.getConfirmationKey();
-		if ( (username == null) || (confirmationKey == null) ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
+		final String username = requireNonNullObject(association.getUsername(), "username");
+		final String confirmationKey = requireNonNullObject(association.getConfirmationKey(),
+				"confirmationKey");
 		final User user = userDao.getUserByEmail(username);
 		if ( user == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, null);
 		}
+		final Long userId = nonnull(user.getId(), "User ID");
 
-		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),
+		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(userId,
 				confirmationKey);
 		if ( conf == null ) {
 			log.info("Association failed: confirmation not found for username {} key {}", username,
@@ -819,13 +874,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// security check: user must be the same that invited node
 		if ( !user.equals(conf.getUser()) ) {
 			log.info("Association failed: confirmation user {} != confirming user {}",
-					conf.getUser().getId(), user.getId());
+					(conf.getUser() != null ? conf.getUser().getId() : null), userId);
 			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
 		// security check: must not be expired
-		Instant expiry = conf.getCreated().plus(invitationExpirationPeriod);
+		Instant expiry = nonnull(conf.getCreated(), "Confirmation created date")
+				.plus(invitationExpirationPeriod);
 		if ( expiry.isBefore(Instant.now()) ) {
 			log.info("Association failed: confirmation expired on {}", expiry);
 			throw new AuthorizationException(username,
@@ -846,16 +902,20 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		conf.setNodeId(nodeId);
 		userNodeConfirmationDao.save(conf);
 
-		UserNode userNode = createNewNode(conf.getCountry(), conf.getTimeZoneId(), user, nodeId,
+		UserNode userNode = createNewNode(nonnull(conf.getCountry(), "Confirmation country"),
+				nonnull(conf.getTimeZoneId(), "Confirmation time zone"), user, nodeId,
 				association.getKeystorePassword());
 
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
 		details.setNetworkId(nodeId);
-		details.setConfirmationKey(
-				calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(), nodeId));
+		details.setConfirmationKey(calculateNodeAssociationConfirmationCode(
+				nonnull(conf.getConfirmationDate(), "Confirmation date"), nodeId));
 		if ( userNode.getCertificate() != null ) {
-			details.setNetworkCertificateStatus(userNode.getCertificate().getStatus().getValue());
-			if ( userNode.getCertificate().getStatus() == UserNodeCertificateStatus.v ) {
+			final UserNodeCertificateStatus status = nonnull(userNode.getCertificate().getStatus(),
+					"Certificate status");
+			details.setNetworkCertificateStatus(status.getValue());
+			if ( status == UserNodeCertificateStatus.v
+					&& userNode.getCertificate().getKeystoreData() != null ) {
 				details.setNetworkCertificate(
 						getCertificateAsString(userNode.getCertificate().getKeystoreData()));
 			}
@@ -866,7 +926,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	}
 
 	private UserNode createNewNode(String countryCode, String timeZoneId, User user, Long nodeId,
-			String keystorePassword) {
+			@Nullable String keystorePassword) {
 		// find or create SolarLocation now, for country + time zone
 		SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(countryCode, timeZoneId);
 		if ( loc == null ) {
@@ -890,15 +950,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// create UserNode now if it doesn't already exist
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
-			userNode = new UserNode();
-			userNode.setNode(node);
-			userNode.setUser(user);
+			userNode = new UserNode(user, node);
 			userNodeDao.save(userNode);
 		}
-
-		//		conf.setConfirmationDate(Instant.now());
-		//		conf.setNodeId(nodeId);
-		//		userNodeConfirmationDao.save(conf);
 
 		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 
@@ -907,8 +961,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			// we must become the User now for CSR to be generated (if we are a node or token actor)
 			try {
 				SecurityUtils.getCurrentUser();
-			} catch ( SecurityException e ) {
-				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+			} catch ( BasicSecurityException e ) {
+				SecurityUtils.becomeUser(user.getEmail(), user.getName(),
+						nonnull(user.getId(), "User ID"));
 			}
 
 			// we'll generate a key and CSR for the user, encrypting with the provided password
@@ -929,7 +984,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			} catch ( TimeoutException e ) {
 				log.warn("Timeout waiting for {} CSR approval", certSubjectDN);
 				// save to DB when we do get our reply
-				executorService.submit(() -> {
+				var _ = executorService.submit(() -> {
 					try {
 						UserNodeCertificate approvedCert = approval.get();
 						userNodeCertificateDao.save(approvedCert);
@@ -960,9 +1015,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private Future<UserNodeCertificate> approveCSR(final String certSubjectDN,
 			final String keystorePassword, final User user, final UserNodeCertificate cert) {
 		return executorService.submit(() -> {
-			SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+			SecurityUtils.becomeUser(user.getEmail(), user.getName(), nonnull(user.getId(), "User ID"));
 			log.debug("Approving CSR {} request ID {}", certSubjectDN, cert.getRequestId());
-			X509Certificate[] chain = nodePKIBiz.approveCSR(cert.getRequestId());
+			X509Certificate[] chain = nodePKIBiz
+					.approveCSR(nonnull(cert.getRequestId(), "Certificate request ID"));
 			saveNodeSignedCertificate(keystorePassword, cert, chain);
 			return cert;
 		});
@@ -1008,7 +1064,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private UserNodeCertificate generateNodeCSR(String keystorePassword, final String certSubjectDN) {
 		log.info("Generating private key and CSR for node DN: {}", certSubjectDN);
 		try {
-			KeyStore keystore = loadKeyStore(keystorePassword, null);
+			KeyStore keystore = createKeyStore(keystorePassword);
 
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 			keyGen.initialize(nodePrivateKeySize, new SecureRandom());
@@ -1038,11 +1094,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 	}
 
-	private KeyStore loadKeyStore(String password, InputStream in) {
+	private KeyStore createKeyStore(String password) {
 		KeyStore keyStore;
 		try {
 			keyStore = KeyStore.getInstance("pkcs12");
-			keyStore.load(in, password.toCharArray());
+			keyStore.load(null, password.toCharArray());
 			return keyStore;
 		} catch ( KeyStoreException | NoSuchAlgorithmException
 				| java.security.cert.CertificateException e ) {
@@ -1055,14 +1111,6 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				msg = "Error loading certificate key store";
 			}
 			throw new CertificateException(msg, e);
-		} finally {
-			if ( in != null ) {
-				try {
-					in.close();
-				} catch ( IOException e ) {
-					// ignore this one
-				}
-			}
 		}
 	}
 
@@ -1088,7 +1136,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		assert userEntry != null;
 		assert userEntry.getId() != null;
 
-		User entity = userDao.get(userEntry.getId());
+		User entity = userDao.get(requireNonNullArgument(userEntry.getId(), "user.id"));
 		if ( entity == null ) {
 			throw new AuthorizationException(userEntry.getEmail(), Reason.UNKNOWN_EMAIL);
 		}
@@ -1103,11 +1151,29 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				&& !DO_NOT_CHANGE_VALUE.equals(userEntry.getPassword()) ) {
 			entity.setPassword(userEntry.getPassword());
 		}
+		if ( StringUtils.hasText(userEntry.getCountry()) ) {
+			entity.setCountry(userEntry.getCountry());
+		}
+		if ( StringUtils.hasText(userEntry.getTimeZoneId()) ) {
+			entity.setTimeZoneId(userEntry.getTimeZoneId());
+		}
+		if ( StringUtils.hasText(userEntry.getLang()) ) {
+			entity.setLang(userEntry.getLang());
+		}
+
+		// perform service-side validation
+		if ( this.userValidator != null ) {
+			Errors errors = new BindException(entity, "user");
+			this.userValidator.validate(entity, errors);
+			if ( errors.hasErrors() ) {
+				throw new ValidationException(errors);
+			}
+		}
 
 		prepareUserForStorage(entity);
 
 		try {
-			entity = userDao.get(userDao.save(entity));
+			entity = nonnull(userDao.getUserWithLocation(userDao.save(entity)), "User");
 		} catch ( DataIntegrityViolationException e ) {
 			log.warn("Duplicate user registration: {}", entity.getEmail());
 			throw new AuthorizationException(entity.getEmail(),
@@ -1137,7 +1203,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		return new BasicRegistrationReceipt(email, conf);
 	}
 
-	private String calculateResetPasswordConfirmationCode(User entity, String salt) {
+	private String calculateResetPasswordConfirmationCode(User entity, @Nullable String salt) {
 		StringBuilder buf = new StringBuilder();
 		if ( salt == null ) {
 			// generate 8-byte salt of "safe" ASCII characters a-z
@@ -1154,7 +1220,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		// use data from the existing user to create the confirmation hash
-		buf.append(salt).append(entity.getId()).append(entity.getCreated().toEpochMilli())
+		buf.append(salt).append(entity.getId())
+				.append(nonnull(entity.getCreated(), "User created date").toEpochMilli())
 				.append(entity.getPassword());
 
 		return salt + DigestUtils.sha256Hex(buf.toString());
@@ -1189,104 +1256,70 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		userDao.save(entity);
 	}
 
-	public Set<String> getConfirmedUserRoles() {
+	public final Set<String> getConfirmedUserRoles() {
 		return confirmedUserRoles;
 	}
 
-	public void setConfirmedUserRoles(Set<String> confirmedUserRoles) {
-		this.confirmedUserRoles = confirmedUserRoles;
+	public final void setConfirmedUserRoles(Set<String> confirmedUserRoles) {
+		this.confirmedUserRoles = requireNonNullArgument(confirmedUserRoles, "confirmedUserRoles");
 	}
 
-	public Period getInvitationExpirationPeriod() {
+	public final Period getInvitationExpirationPeriod() {
 		return invitationExpirationPeriod;
 	}
 
-	public void setInvitationExpirationPeriod(Period invitationExpirationPeriod) {
-		this.invitationExpirationPeriod = invitationExpirationPeriod;
+	public final void setInvitationExpirationPeriod(Period invitationExpirationPeriod) {
+		this.invitationExpirationPeriod = requireNonNullArgument(invitationExpirationPeriod,
+				"invitationExpirationPeriod");
 	}
 
-	public String getDefaultSolarLocationName() {
+	public final String getDefaultSolarLocationName() {
 		return defaultSolarLocationName;
 	}
 
-	public void setDefaultSolarLocationName(String defaultSolarLocationName) {
-		this.defaultSolarLocationName = defaultSolarLocationName;
+	public final void setDefaultSolarLocationName(String defaultSolarLocationName) {
+		this.defaultSolarLocationName = requireNonNullArgument(defaultSolarLocationName,
+				"defaultSolarLocationName");
 	}
 
-	public void setUserDao(UserDao userDao) {
-		this.userDao = userDao;
-	}
-
-	public void setUserNodeDao(UserNodeDao userNodeDao) {
-		this.userNodeDao = userNodeDao;
-	}
-
-	public void setUserNodeConfirmationDao(UserNodeConfirmationDao userNodeConfirmationDao) {
-		this.userNodeConfirmationDao = userNodeConfirmationDao;
-	}
-
-	public void setUserValidator(Validator userValidator) {
+	public final void setUserValidator(@Nullable Validator userValidator) {
 		this.userValidator = userValidator;
 	}
 
-	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
-		this.solarNodeDao = solarNodeDao;
-	}
-
-	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
-		this.solarLocationDao = solarLocationDao;
-	}
-
-	public void setNetworkIdentificationBiz(NetworkIdentificationBiz networkIdentityBiz) {
-		this.networkIdentificationBiz = networkIdentityBiz;
-	}
-
-	public void setUserNodeCertificateDao(UserNodeCertificateDao userNodeCertificateDao) {
-		this.userNodeCertificateDao = userNodeCertificateDao;
-	}
-
-	public void setNetworkCertificateSubjectFormat(String networkCertificateSubjectFormat) {
+	public final void setNetworkCertificateSubjectFormat(String networkCertificateSubjectFormat) {
 		this.networkCertificateSubjectFormat = networkCertificateSubjectFormat;
 	}
 
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-		this.passwordEncoder = passwordEncoder;
-	}
-
-	public void setXmlSerializer(JavaBeanXmlSerializer xmlSerializer) {
+	public final void setXmlSerializer(JavaBeanXmlSerializer xmlSerializer) {
 		this.xmlSerializer = xmlSerializer;
 	}
 
-	public void setEmailThrottleCache(Cache<String, Boolean> emailThrottleCache) {
+	public final void setEmailThrottleCache(@Nullable Cache<String, Boolean> emailThrottleCache) {
 		this.emailThrottleCache = emailThrottleCache;
 	}
 
-	public void setNodePKIBiz(NodePKIBiz nodePKIBiz) {
-		this.nodePKIBiz = nodePKIBiz;
-	}
-
-	public void setNodePrivateKeySize(int nodePrivateKeySize) {
+	public final void setNodePrivateKeySize(int nodePrivateKeySize) {
 		this.nodePrivateKeySize = nodePrivateKeySize;
 	}
 
-	public void setNodeKeystoreAlias(String nodeKeystoreAlias) {
+	public final void setNodeKeystoreAlias(String nodeKeystoreAlias) {
 		this.nodeKeystoreAlias = nodeKeystoreAlias;
 	}
 
-	public void setExecutorService(ExecutorService executorService) {
+	public final void setExecutorService(ExecutorService executorService) {
 		this.executorService = executorService;
 	}
 
-	public void setApproveCsrMaximumWaitSecs(int approveCsrMaximumWaitSecs) {
+	public final void setApproveCsrMaximumWaitSecs(int approveCsrMaximumWaitSecs) {
 		this.approveCsrMaximumWaitSecs = approveCsrMaximumWaitSecs;
 	}
 
 	@Override
-	public Period getNodeCertificateRenewalPeriod() {
+	public final @Nullable Period getNodeCertificateRenewalPeriod() {
 		return nodeCertificateRenewalPeriod;
 	}
 
-	public void setNodeCertificateRenewalPeriod(Period nodeCertificateRenewalPeriod) {
+	public final void setNodeCertificateRenewalPeriod(@Nullable Period nodeCertificateRenewalPeriod) {
 		this.nodeCertificateRenewalPeriod = nodeCertificateRenewalPeriod;
 	}
 
@@ -1305,30 +1338,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 *        not enforce any limit.
 	 * @since 1.8
 	 */
-	public void setNodeCertificateRenewalPeriodMonths(int months) {
+	public final void setNodeCertificateRenewalPeriodMonths(int months) {
 		setNodeCertificateRenewalPeriod(months > 0 ? Period.ofMonths(months) : null);
-	}
-
-	/**
-	 * Set the InstructorBiz to use for queuing instructions.
-	 *
-	 * @param instructorBiz
-	 *        The service to use.
-	 * @since 1.8
-	 */
-	public void setInstructorBiz(InstructorBiz instructorBiz) {
-		this.instructorBiz = instructorBiz;
-	}
-
-	/**
-	 * Set the {@link CertificateService} to use.
-	 *
-	 * @param certificateService
-	 *        The service to use.
-	 * @since 1.8
-	 */
-	public void setCertificateService(CertificateService certificateService) {
-		this.certificateService = certificateService;
 	}
 
 	/**
@@ -1338,7 +1349,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 *        The maximum length.
 	 * @since 1.8
 	 */
-	public void setInstructionParamMaxLength(int instructionParamMaxLength) {
+	public final void setInstructionParamMaxLength(int instructionParamMaxLength) {
 		this.instructionParamMaxLength = instructionParamMaxLength;
 	}
 

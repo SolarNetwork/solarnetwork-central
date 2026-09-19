@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -43,7 +44,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -51,7 +52,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Security AOP support for {@link DatumAuxiliaryBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.5
  */
 @Aspect
@@ -154,6 +155,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		}
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findAuxiliary(filter)", argNames = "pjp,filter")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp,
 			GeneralNodeDatumAuxiliaryFilter filter) throws Throwable {
@@ -198,7 +200,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 			requireNodeReadAccess(nodeId);
 		}
 
-		return policyEnforcerCheck(filter);
+		return nonnull(policyEnforcerCheck(filter), "filter");
 	}
 
 }

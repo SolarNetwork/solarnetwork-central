@@ -40,7 +40,7 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
  * Insert {@link CapacityProviderConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class InsertCapacityProviderConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -55,7 +55,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCapacityProviderConfiguration(Long userId, CapacityProviderConfiguration entity) {
 		super();
@@ -68,14 +68,14 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		StringBuilder buf = new StringBuilder("""
 				INSERT INTO solaroscp.oscp_cp_conf (
 					created, modified, user_id""");
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			buf.append(", id");
 		}
 		buf.append("""
 				, enabled, fp_id, reg_status, cname, url, sprops
 				)
 				VALUES (""");
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			buf.append("?,");
 		}
 		buf.append("?,?,?,?,?,?,?,?,?::jsonb)");
@@ -90,7 +90,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, ts);
 		stmt.setObject(++p, userId);
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			stmt.setObject(++p, entity.getEntityId());
 		}
 		stmt.setBoolean(++p, entity.isEnabled());
@@ -99,7 +99,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

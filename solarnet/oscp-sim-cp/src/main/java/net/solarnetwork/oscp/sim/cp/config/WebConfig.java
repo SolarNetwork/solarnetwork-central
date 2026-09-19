@@ -44,7 +44,7 @@ import net.solarnetwork.service.PingTest;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class, WebServiceGlobalControllerSupport.class })
@@ -62,10 +62,11 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		// allow cross-origin access without credentials, as requests are authenticated with the
+		// Authorization header rather than cookies
 		// @formatter:off
 		registry.addMapping("/**")
-			.allowCredentials(true)
-			.allowedOriginPatterns(CorsConfiguration.ALL)
+			.allowedOrigins(CorsConfiguration.ALL)
 			.maxAge(TimeUnit.HOURS.toSeconds(24))
 			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS")
 			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest")
@@ -76,7 +77,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Bean
 	public MappedInterceptor responseSentInterceptor() {
 		return new MappedInterceptor(new String[] { "/**" },
-				new ThreadLocalCompletableHandlerInterceptor<Void>(RESPONSE_SENT, null));
+				new ThreadLocalCompletableHandlerInterceptor<>(RESPONSE_SENT, null));
 	}
 
 }

@@ -35,7 +35,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.REDIRECT_
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -45,14 +45,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,10 +64,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -79,8 +80,6 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
@@ -91,12 +90,14 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link SmaCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -126,10 +127,12 @@ public class SmaCloudIntegrationServiceTests {
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
 	@Captor
-	private ArgumentCaptor<HttpEntity<JsonNode>> jsonHttpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<String>> stringRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	@Captor
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
+
+	private TextEncryptor encryptor = noOpText();
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -137,9 +140,8 @@ public class SmaCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new SmaCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, integrationDao, rng, restOps, oauthClientManager, clock,
-				null);
+		service = new SmaCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, integrationDao, rng, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SmaCloudIntegrationService.class.getName(),
@@ -151,7 +153,7 @@ public class SmaCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -216,7 +218,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -243,11 +245,8 @@ public class SmaCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystems = SmaCloudIntegrationService.BASE_URI
-				.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -255,6 +254,19 @@ public class SmaCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(stringRequestCaptor.capture(), eq(String.class));
+
+		and.then(stringRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(SmaCloudIntegrationService.BASE_URI
+					.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
+			;
+
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
 
 		and.then(authRequestCaptor.getValue())
@@ -281,7 +293,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String clientId = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId
@@ -343,7 +355,7 @@ public class SmaCloudIntegrationServiceTests {
 		final Locale locale = Locale.getDefault();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				integrationId, now());
+				integrationId, now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -357,16 +369,9 @@ public class SmaCloudIntegrationServiceTests {
 				.willReturn(true);
 
 		// request token
-		final URI getTokenUri = UriComponentsBuilder
-				.fromUri(SmaCloudIntegrationService.AUTHORIZATION_BASE_URI)
-				.path(SmaCloudIntegrationService.TOKEN_PATH)
-				.queryParam("grant_type", "authorization_code")
-				.queryParam(AUTHORIZATION_CODE_PARAM, code).queryParam(REDIRECT_URI_PARAM, redirectUri)
-				.queryParam("scope", "offline_access").buildAndExpand().toUri();
-
 		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-token-01.json", getClass()),
 				ObjectNode.class);
-		given(restOps.exchange(eq(getTokenUri), eq(HttpMethod.POST), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<JsonNode>(resJson, HttpStatus.OK));
 
 		// WHEN
@@ -376,19 +381,28 @@ public class SmaCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(eq(getTokenUri), eq(HttpMethod.POST), jsonHttpEntityCaptor.capture(),
-				eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		// confirm basic auth provided
-		and.then(jsonHttpEntityCaptor.getValue()).extracting(HttpEntity<JsonNode>::getHeaders)
-			.satisfies(h -> {
-				HttpHeaders expected = new HttpHeaders();
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for token")
+			.returns(UriComponentsBuilder
+					.fromUri(SmaCloudIntegrationService.AUTHORIZATION_BASE_URI)
+					.path(SmaCloudIntegrationService.TOKEN_PATH)
+					.queryParam("grant_type", "authorization_code")
+					.queryParam(AUTHORIZATION_CODE_PARAM, code).queryParam(REDIRECT_URI_PARAM, redirectUri)
+					.queryParam("scope", "offline_access").buildAndExpand().toUri(), from(RequestEntity::getUrl))
+			.satisfies(req -> {
+				final HttpHeaders expected = new HttpHeaders();
 				expected.setBasicAuth(clientId, clientSecret);
-				and.then(h.getFirst(HttpHeaders.AUTHORIZATION))
-					.as("Basic auth provided using cilent ID/secret from integration")
+
+				and.then(req.getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+					.as("Basic auth provided")
 					.isEqualTo(expected.getFirst(HttpHeaders.AUTHORIZATION))
 					;
-			});
+			})
+			;
 
 		and.then(result)
 			.asInstanceOf(map(String.class, Object.class))

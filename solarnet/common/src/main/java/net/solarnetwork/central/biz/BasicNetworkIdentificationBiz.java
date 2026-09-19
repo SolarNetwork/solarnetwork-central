@@ -64,7 +64,7 @@ public class BasicNetworkIdentificationBiz implements NetworkIdentificationBiz {
 	 * @param networkServiceUrls
 	 *        map of network service URLs to advertise
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BasicNetworkIdentificationBiz(String networkIdentityKey, Resource termsOfService, String host,
 			Integer port, boolean forceTLS, Map<String, String> networkServiceUrls) {

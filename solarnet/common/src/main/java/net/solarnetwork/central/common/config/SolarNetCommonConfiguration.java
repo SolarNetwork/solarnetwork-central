@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
  * Marker interface for the common application configuration package.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.6
  */
 @Configuration
 @ComponentScan
@@ -64,5 +64,40 @@ public class SolarNetCommonConfiguration {
 	 * @since 1.3
 	 */
 	public static final String USER_SERVICE_AUDITOR = "user-service-auditor";
+
+	/**
+	 * A qualifier for "developer mode".
+	 * 
+	 * @since 1.4
+	 */
+	public static final String DEVMODE = "devmode";
+
+	/**
+	 * A qualifier for "user events".
+	 * 
+	 * @since 1.5
+	 */
+	public static final String USER_EVENTS = "user-events";
+
+	/**
+	 * A qualifier for HTML content.
+	 * 
+	 * @since 1.6
+	 */
+	public static final String HTML = "html";
+
+	/**
+	 * A qualifier for PDF content.
+	 * 
+	 * @since 1.6
+	 */
+	public static final String PDF = "pdf";
+
+	/**
+	 * A qualifier for plain text content.
+	 * 
+	 * @since 1.6
+	 */
+	public static final String TEXT = "text";
 
 }

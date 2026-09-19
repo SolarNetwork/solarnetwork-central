@@ -22,11 +22,12 @@
 
 package net.solarnetwork.central.c2c.http.test;
 
+import static net.solarnetwork.central.common.http.OAuth2Utils.PASSWORD_ATTRIBUTE_NAME;
+import static net.solarnetwork.central.common.http.OAuth2Utils.USERNAME_ATTRIBUTE_NAME;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 
@@ -34,7 +35,7 @@ import net.solarnetwork.central.c2c.http.OAuth2Utils;
  * Test cases for the {@link OAuth2Utils} class.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class OAuth2UtilsTests {
 
@@ -55,9 +56,9 @@ public class OAuth2UtilsTests {
 			.as("Result provided with expected attribute count")
 			.hasSize(2)
 			.as("Username attribute populated from Authentication principal")
-			.containsEntry(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, auth.getPrincipal())
+			.containsEntry(USERNAME_ATTRIBUTE_NAME, auth.getPrincipal())
 			.as("Password attribute populated from Authentication credentials")
-			.containsEntry(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME, auth.getCredentials())
+			.containsEntry(PASSWORD_ATTRIBUTE_NAME, auth.getCredentials())
 			;
 		// @formatter:on
 	}

@@ -24,6 +24,7 @@ package net.solarnetwork.central.cloud.aws.biz;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.service.RemoteServiceException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -51,8 +52,8 @@ import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundExce
 public class AwsSecretsBiz implements SecretsBiz {
 
 	private final SecretsManagerClient client;
-	private Cache<String, String> secretCache;
-	private Cache<String, byte[]> secretDataCache;
+	private @Nullable Cache<String, String> secretCache;
+	private @Nullable Cache<String, byte[]> secretDataCache;
 
 	/**
 	 * Constructor.
@@ -63,9 +64,11 @@ public class AwsSecretsBiz implements SecretsBiz {
 	 *        the access key
 	 * @param accessKeySecret
 	 *        the access key secret
+	 * @throws IllegalArgumentException
+	 *         if {@code region} is {@code null}
 	 */
 	public AwsSecretsBiz(String region, String accessKey, String accessKeySecret) {
-		this(Region.of(region), StaticCredentialsProvider
+		this(Region.of(requireNonNullArgument(region, "region")), StaticCredentialsProvider
 				.create(AwsBasicCredentials.create(accessKey, accessKeySecret)));
 	}
 
@@ -76,6 +79,8 @@ public class AwsSecretsBiz implements SecretsBiz {
 	 *        the AWS region
 	 * @param credentialsProvider
 	 *        the credentials provider
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AwsSecretsBiz(Region region, AwsCredentialsProvider credentialsProvider) {
 		super();
@@ -133,7 +138,7 @@ public class AwsSecretsBiz implements SecretsBiz {
 	}
 
 	@Override
-	public String getSecret(String secretName) {
+	public @Nullable String getSecret(String secretName) {
 		final Cache<String, String> cache = this.secretCache;
 		if ( cache != null ) {
 			String result = cache.get(secretName);
@@ -155,7 +160,7 @@ public class AwsSecretsBiz implements SecretsBiz {
 	}
 
 	@Override
-	public byte[] getSecretData(String secretName) {
+	public byte @Nullable [] getSecretData(String secretName) {
 		final Cache<String, byte[]> cache = this.secretDataCache;
 		if ( cache != null ) {
 			byte[] result = cache.get(secretName);
@@ -198,7 +203,7 @@ public class AwsSecretsBiz implements SecretsBiz {
 	 * @param secretCache
 	 *        the cache
 	 */
-	public void setSecretCache(Cache<String, String> secretCache) {
+	public final void setSecretCache(@Nullable Cache<String, String> secretCache) {
 		this.secretCache = secretCache;
 	}
 
@@ -208,7 +213,7 @@ public class AwsSecretsBiz implements SecretsBiz {
 	 * @param secretDataCache
 	 *        the cache
 	 */
-	public void setSecretDataCache(Cache<String, byte[]> secretDataCache) {
+	public final void setSecretDataCache(@Nullable Cache<String, byte[]> secretDataCache) {
 		this.secretDataCache = secretDataCache;
 	}
 

@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -38,29 +41,57 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 
 	@Serial
 	private static final long serialVersionUID = -3247965742224565205L;
 
-	private String description;
-	private String name;
+	private @Nullable String description;
+	private @Nullable String name;
 	private boolean requiresAuthorization = false;
 
 	private User user;
 	private SolarNode node;
 
 	// transient
-	private UserNodeCertificate certificate;
-	private UserNodeTransfer transfer;
+	private @Nullable UserNodeCertificate certificate;
+	private @Nullable UserNodeTransfer transfer;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
 	public UserNode() {
+		this(new User(), new SolarNode());
+	}
+
+	/**
+	 * Construct for a node.
+	 *
+	 * @param id
+	 *        the ID (node ID)
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.5
+	 */
+	@SuppressWarnings("NullAway")
+	public UserNode(Long id) {
 		super();
+		setId(requireNonNullArgument(id, "id"));
+	}
+
+	/**
+	 * Construct for a user and node.
+	 *
+	 * @param user
+	 *        the user
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.5
+	 */
+	public UserNode(User user) {
+		this(user, new SolarNode());
 	}
 
 	/**
@@ -70,26 +101,28 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 	 *        the user
 	 * @param node
 	 *        the node
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public UserNode(User user, SolarNode node) {
 		super();
-		setUser(user);
-		setNode(node);
+		this.user = requireNonNullArgument(user, "user");
+		this.node = requireNonNullArgument(node, "node");
 	}
 
-	public String getDescription() {
+	public final @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public final void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -100,7 +133,7 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 	 * @return The node ID and name as a string.
 	 * @since 1.3
 	 */
-	public String getIdAndName() {
+	public final String getIdAndName() {
 		StringBuilder buf = new StringBuilder();
 		if ( node != null ) {
 			buf.append(node.getId());
@@ -111,58 +144,57 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 		return buf.toString();
 	}
 
-	public User getUser() {
+	public final User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public final void setUser(User user) {
+		this.user = requireNonNullArgument(user, "user");
 	}
 
 	@Override
-	public Long getUserId() {
-		User user = getUser();
-		return (user != null ? user.getId() : null);
+	public final Long getUserId() {
+		return nonnull(user.getId(), "user.id");
 	}
 
-	public SolarNode getNode() {
+	public final SolarNode getNode() {
 		return node;
 	}
 
-	public void setNode(SolarNode node) {
-		this.node = node;
+	public final void setNode(SolarNode node) {
+		this.node = requireNonNullArgument(node, "node");
 	}
 
-	public UserNodeCertificate getCertificate() {
+	public final @Nullable UserNodeCertificate getCertificate() {
 		return certificate;
 	}
 
-	public void setCertificate(UserNodeCertificate certificate) {
+	public final void setCertificate(@Nullable UserNodeCertificate certificate) {
 		this.certificate = certificate;
 	}
 
-	public boolean isRequiresAuthorization() {
+	public final boolean isRequiresAuthorization() {
 		return requiresAuthorization;
 	}
 
-	public void setRequiresAuthorization(boolean requiresAuthorization) {
+	public final void setRequiresAuthorization(boolean requiresAuthorization) {
 		this.requiresAuthorization = requiresAuthorization;
 	}
 
 	/**
 	 * Exposed as a top-level property so that it can be marshalled to clients.
 	 *
-	 * @return the location, or {@literal null}
+	 * @return the location, or {@code null}
 	 */
-	public SolarLocation getNodeLocation() {
+	public final @Nullable SolarLocation getNodeLocation() {
 		return (node != null ? node.getLocation() : null);
 	}
 
-	public UserNodeTransfer getTransfer() {
+	public final @Nullable UserNodeTransfer getTransfer() {
 		return transfer;
 	}
 
-	public void setTransfer(UserNodeTransfer transfer) {
+	public final void setTransfer(@Nullable UserNodeTransfer transfer) {
 		this.transfer = transfer;
 	}
 

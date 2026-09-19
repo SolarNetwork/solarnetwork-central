@@ -1,27 +1,28 @@
 /* ==================================================================
  * ContentCachingFilterTests.java - 30/09/2018 9:45:46 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.web.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.synchronizedList;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -37,7 +38,6 @@ import static org.hamcrest.Matchers.equalTo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,9 +50,9 @@ import java.util.random.RandomGenerator;
 import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -75,7 +75,7 @@ import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link ContentCachingFilter} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -93,7 +93,7 @@ public class ContentCachingFilterTests {
 
 	private MockHttpServletResponse response;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		chain = EasyMock.createMock(FilterChain.class);
 		service = EasyMock.createMock(ContentCachingService.class);
@@ -110,7 +110,7 @@ public class ContentCachingFilterTests {
 		EasyMock.replay(chain, service);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(chain, service);
 	}
@@ -501,8 +501,7 @@ public class ContentCachingFilterTests {
 
 			String content = "hit! " + key;
 			HttpHeaders headers = new HttpHeaders();
-			keyToContentMap.put(key,
-					new SimpleCachedContent(headers, content.getBytes(StandardCharsets.UTF_8)));
+			keyToContentMap.put(key, new SimpleCachedContent(headers, content.getBytes(UTF_8)));
 		}
 
 		expect(service.keyForRequest(anyObject())).andAnswer(() -> {
@@ -554,8 +553,7 @@ public class ContentCachingFilterTests {
 
 				msgLog.add("Generating content for URL %s key %s".formatted(url, key));
 
-				FileCopyUtils.copy(("miss! " + key).getBytes(StandardCharsets.UTF_8),
-						resp.getOutputStream());
+				FileCopyUtils.copy(("miss! " + key).getBytes(UTF_8), resp.getOutputStream());
 			}
 
 		}));

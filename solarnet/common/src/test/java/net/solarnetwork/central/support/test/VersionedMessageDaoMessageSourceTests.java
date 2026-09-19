@@ -36,9 +36,9 @@ import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
@@ -55,7 +55,7 @@ public class VersionedMessageDaoMessageSourceTests {
 	private Cache<String, VersionedMessages> cache;
 
 	@SuppressWarnings("unchecked")
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = EasyMock.createMock(VersionedMessageDao.class);
 		cache = EasyMock.createMock(Cache.class);
@@ -65,7 +65,7 @@ public class VersionedMessageDaoMessageSourceTests {
 		EasyMock.replay(dao, cache);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(dao, cache);
 	}

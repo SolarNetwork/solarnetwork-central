@@ -40,8 +40,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
-import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.datum.event.biz.UserEventHookBiz;
+import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -68,7 +68,7 @@ public class NodeEventController {
 	 * @param eventHookBiz
 	 *        the event hook biz to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NodeEventController(@Autowired(required = false) UserEventHookBiz eventHookBiz) {
 		super();
@@ -104,7 +104,7 @@ public class NodeEventController {
 		if ( eventHookBiz != null ) {
 			configs = maskConfigurations(
 					eventHookBiz.configurationsForUser(userId, UserNodeEventHookConfiguration.class),
-					serviceSettings, (Void) -> eventHookBiz.availableNodeEventHookServices());
+					serviceSettings, eventHookBiz::availableNodeEventHookServices);
 		}
 		return success(configs);
 	}
@@ -122,7 +122,7 @@ public class NodeEventController {
 				config = eventHookBiz.configurationForUser(id.keyComponent1(),
 						UserNodeEventHookConfiguration.class, id.keyComponent2());
 				return success(maskConfiguration(config, serviceSettings,
-						(Void) -> eventHookBiz.availableNodeEventHookServices()));
+						eventHookBiz::availableNodeEventHookServices));
 			}
 		}
 		return error();
@@ -130,15 +130,14 @@ public class NodeEventController {
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.GET)
-	public Result<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
-			@PathVariable("id") Long id) {
+	public Result<UserNodeEventHookConfiguration> viewNodeHookConfiguration(@PathVariable Long id) {
 		UserNodeEventHookConfiguration result = null;
 		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = eventHookBiz.configurationForUser(userId, UserNodeEventHookConfiguration.class, id);
 			if ( result != null ) {
 				result = maskConfiguration(result, serviceSettings,
-						(Void) -> eventHookBiz.availableNodeEventHookServices());
+						eventHookBiz::availableNodeEventHookServices);
 			}
 		}
 		return success(result);
@@ -146,7 +145,7 @@ public class NodeEventController {
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteNodeHookConfiguration(@PathVariable Long id) {
 		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserNodeEventHookConfiguration config = eventHookBiz.configurationForUser(userId,

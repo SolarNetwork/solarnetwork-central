@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralLocationDatumTests.java - Oct 17, 2014 2:40:32 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,22 +32,22 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralLocationDatum} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class GeneralLocationDatumTests {
 
-	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_LOCATION_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final LocalDateTime TEST_DATE = LocalDateTime.of(2014, 8, 22, 12, 1, 2,
 			(int) TimeUnit.MILLISECONDS.toNanos(345));
@@ -56,17 +56,15 @@ public class GeneralLocationDatumTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralLocationDatum getTestInstance() {
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setLocationId(TEST_NODE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOCATION_ID, TEST_TIMESTAMP,
+				TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -106,10 +104,11 @@ public class GeneralLocationDatumTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"samples\":{\"i\":{\"temp_f\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+				+ "\",\"locationId\":-1,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"temp_f\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralLocationDatum datum = objectMapper.readValue(json, GeneralLocationDatum.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getLocationId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getSamples(), is(notNullValue()));
 		assertThat(datum.getSamples().getInstantaneousSampleInteger("temp_f"), is(89));

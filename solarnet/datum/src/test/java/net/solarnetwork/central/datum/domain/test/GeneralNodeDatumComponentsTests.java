@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralNodeDatumComponentsTests.java - 13/11/2018 7:30:20 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,17 +34,17 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralNodeDatumComponents} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -59,17 +59,15 @@ public class GeneralNodeDatumComponentsTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralNodeDatumComponents getTestInstance() {
-		GeneralNodeDatumComponents datum = new GeneralNodeDatumComponents();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
+		GeneralNodeDatumComponents datum = new GeneralNodeDatumComponents(TEST_NODE_ID, TEST_TIMESTAMP,
+				TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -88,11 +86,8 @@ public class GeneralNodeDatumComponentsTests {
 
 	@Test
 	public void copy() {
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setCreated(Instant.now());
-		d.setNodeId(TEST_NODE_ID);
+		GeneralNodeDatum d = new GeneralNodeDatum(TEST_NODE_ID, Instant.now(), TEST_SOURCE_ID);
 		d.setPosted(Instant.now());
-		d.setSourceId(TEST_SOURCE_ID);
 		d.setSamples(new DatumSamples());
 
 		GeneralNodeDatumComponents dc = new GeneralNodeDatumComponents(d);
@@ -126,11 +121,12 @@ public class GeneralNodeDatumComponentsTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+				+ "\",\"nodeId\":-1,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralNodeDatumComponents datum = objectMapper.readValue(json,
 				GeneralNodeDatumComponents.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getNodeId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getSamples(), notNullValue());
 		assertThat(datum.getSamples().getInstantaneousSampleInteger("watts"), is(89));

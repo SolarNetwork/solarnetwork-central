@@ -126,35 +126,18 @@ public class RegistrationBizConfig implements SolarNetUserConfiguration {
 	@ConfigurationProperties(prefix = "app.user.reg.biz")
 	@Bean
 	public DaoRegistrationBiz registrationBiz() {
-		DaoRegistrationBiz biz = new DaoRegistrationBiz();
-		biz.setUserDao(userDao);
-		biz.setUserNodeDao(userNodeDao);
-		biz.setUserNodeConfirmationDao(userNodeConfirmationDao);
-		biz.setUserNodeCertificateDao(userNodeCertificateDao);
-		biz.setSolarNodeDao(solarNodeDao);
-		biz.setSolarLocationDao(solarLocationDao);
-		biz.setNetworkIdentificationBiz(networkIdentificationBiz);
+		DaoRegistrationBiz biz = new DaoRegistrationBiz(userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao, solarNodeDao, solarLocationDao, networkIdentificationBiz,
+				certificateService, nodePkiBiz, instructorBiz, passwordEncoder);
 		biz.setUserValidator(userValidator);
-		biz.setPasswordEncoder(passwordEncoder);
 		biz.setEmailThrottleCache(emailThottleCache);
-		biz.setNodePKIBiz(nodePkiBiz);
-		biz.setInstructorBiz(instructorBiz);
-		biz.setCertificateService(certificateService);
 		return biz;
 	}
 
 	@Bean
 	public DaoUserBiz userBiz() {
-		DaoUserBiz biz = new DaoUserBiz();
-		biz.setUserDao(userDao);
-		biz.setUserAlertDao(userAlertDao);
-		biz.setUserNodeDao(userNodeDao);
-		biz.setUserNodeCertificateDao(userNodeCertificateDao);
-		biz.setUserNodeCertificateDao(userNodeCertificateDao);
-		biz.setUserNodeConfirmationDao(userNodeConfirmationDao);
-		biz.setUserAuthTokenDao(userAuthTokenDao);
-		biz.setSolarNodeDao(solarNodeDao);
-		biz.setSolarLocationDao(solarLocationDao);
+		DaoUserBiz biz = new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao, solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao);
 		biz.setUserAuthTokenCache(userAuthTokenCache);
 		return biz;
 	}

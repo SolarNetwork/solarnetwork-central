@@ -23,7 +23,11 @@
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedLikeSubstringParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereEqual;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedLike;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -40,7 +44,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public final class SelectCloudIntegrationConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -89,9 +93,14 @@ public final class SelectCloudIntegrationConfiguration
 					, ci.cname, ci.sident, ci.sprops
 				FROM solardin.cin_integration ci
 				""");
-		if ( filter.hasDatumStreamCriteria() ) {
+		if ( filter.hasDatumStreamMappingCriteria() || filter.hasDatumStreamCriteria() ) {
 			buf.append("""
 					INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.int_id = ci.id
+					""");
+
+		}
+		if ( filter.hasDatumStreamCriteria() ) {
+			buf.append("""
 					INNER JOIN solardin.cin_datum_stream cds ON cds.map_id = cdsm.id
 					""");
 		}
@@ -109,8 +118,17 @@ public final class SelectCloudIntegrationConfiguration
 		if ( filter.hasServiceIdentifierCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getServiceIdentifiers(), "ci.sident", where);
 		}
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cdsm.id", where);
+		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			idx += whereEqual(filter.getEnabled(), "ci.enabled", where);
+		}
+		if ( filter.hasNameCriteria() ) {
+			idx += whereOptimizedLike(filter.getNames(), "ci.cname", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -143,8 +161,17 @@ public final class SelectCloudIntegrationConfiguration
 		if ( filter.hasServiceIdentifierCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServiceIdentifiers());
 		}
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
+		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
+		}
+		if ( filter.hasEnabledCriteria() ) {
+			p = prepareParameter(stmt, p, filter.getEnabled());
+		}
+		if ( filter.hasNameCriteria() ) {
+			p = prepareOptimizedLikeSubstringParameter(stmt, p, filter.getNames());
 		}
 		return p;
 	}

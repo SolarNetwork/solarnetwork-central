@@ -24,6 +24,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * General node information.
  * 
@@ -37,20 +39,23 @@ public interface NodeInformation extends NodeIdentity {
 	 * 
 	 * @return generation capacity watts
 	 */
+	@Nullable
 	Long getGenerationCapacityWatts();
-	
+
 	/**
 	 * Get a theoretical maximum power storage capacity.
 	 * 
 	 * @return storage capacity in watt hours
 	 */
+	@Nullable
 	Long getStorageCapacityWattHours();
-	
+
 	/**
 	 * Get the location of the node.
 	 * 
 	 * @return location
 	 */
+	@Nullable
 	Location getLocation();
 
 }

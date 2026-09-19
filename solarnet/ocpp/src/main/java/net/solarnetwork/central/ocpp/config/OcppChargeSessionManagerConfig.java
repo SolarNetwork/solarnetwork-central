@@ -37,7 +37,6 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.service.OcppSessionDatumManager;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.service.AuthorizationService;
-import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
 
 /**
  * OCPP charge session manager configuration.
@@ -73,7 +72,7 @@ public class OcppChargeSessionManagerConfig {
 
 	@ConfigurationProperties(prefix = "app.ocpp.session-datum")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public ChargeSessionManager ocppSessionDatumManager() {
+	public OcppSessionDatumManager ocppSessionDatumManager() {
 		OcppSessionDatumManager manager = new OcppSessionDatumManager(ocppAuthorizationService,
 				ocppChargePointDao, ocppChargeSessionDao, datumDao, ocppChargePointSettingsDao);
 		manager.setFluxPublisher(fluxPublisher);

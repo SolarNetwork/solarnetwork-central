@@ -55,10 +55,10 @@ public class DatumAggJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.agg.hourly")
 	@Bean
 	public ManagedJob staleDatumProcessorHourly() {
-		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations);
+		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations,
+				"StaleDatumStreamProcessor-Hourly");
 		processor.setParallelTaskExecutor(taskExecutor);
 		processor.setDatumAppEventAcceptors(datumAppEventAcceptors);
-		processor.setId("StaleDatumStreamProcessorHourly");
 		processor.setAggregateProcessType(Aggregation.Hour.getKey());
 		return processor;
 	}
@@ -66,10 +66,10 @@ public class DatumAggJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.agg.daily")
 	@Bean
 	public ManagedJob staleDatumProcessorDaily() {
-		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations);
+		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations,
+				"StaleDatumStreamProcessor-Daily");
 		processor.setParallelTaskExecutor(taskExecutor);
 		processor.setDatumAppEventAcceptors(datumAppEventAcceptors);
-		processor.setId("StaleDatumStreamProcessorDaily");
 		processor.setAggregateProcessType(Aggregation.Day.getKey());
 		return processor;
 	}
@@ -77,10 +77,10 @@ public class DatumAggJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.agg.monthly")
 	@Bean
 	public ManagedJob staleDatumProcessorMonthly() {
-		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations);
+		StaleDatumStreamProcessor processor = new StaleDatumStreamProcessor(jdbcOperations,
+				"StaleDatumStreamProcessor-Monthly");
 		processor.setParallelTaskExecutor(taskExecutor);
 		processor.setDatumAppEventAcceptors(datumAppEventAcceptors);
-		processor.setId("StaleDatumStreamProcessorMonthly");
 		processor.setAggregateProcessType(Aggregation.Month.getKey());
 		return processor;
 	}

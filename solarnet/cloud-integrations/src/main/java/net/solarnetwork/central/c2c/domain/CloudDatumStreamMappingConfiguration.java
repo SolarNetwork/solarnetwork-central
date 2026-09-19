@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,7 +37,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.service.ServiceConfiguration;
 
 /**
  * Cloud datum stream mapping configuration.
@@ -45,15 +49,16 @@ import net.solarnetwork.codec.JsonUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @see CloudDatumStreamPropertyConfiguration
  */
-@JsonIgnoreProperties({ "id", "enabled", "fullyConfigured" })
+@JsonIgnoreProperties({ "id", "enabled", "fullyConfigured", "datumStreamMappingId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "integrationId",
 		"serviceProperties" })
 public final class CloudDatumStreamMappingConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
-		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> {
+		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
+		CloudDatumStreamMappingIdRelated, CloudIntegrationIdRelated, ServiceConfiguration {
 
 	@Serial
 	private static final long serialVersionUID = -5099340175851992871L;
@@ -65,10 +70,10 @@ public final class CloudDatumStreamMappingConfiguration extends
 	private String name;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private volatile transient Map<String, Object> serviceProps;
+	private volatile transient @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -77,11 +82,18 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param integrationId
+	 *        the integration ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamMappingConfiguration(UserLongCompositePK id, Instant created) {
+	public CloudDatumStreamMappingConfiguration(UserLongCompositePK id, Instant created, String name,
+			Long integrationId) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
+		this.integrationId = requireNonNullArgument(integrationId, "integrationId");
 	}
 
 	/**
@@ -93,16 +105,21 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param integrationId
+	 *        the integration ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamMappingConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public CloudDatumStreamMappingConfiguration(Long userId, Long configId, Instant created, String name,
+			Long integrationId) {
+		this(new UserLongCompositePK(userId, configId), created, name, integrationId);
 	}
 
 	@Override
 	public CloudDatumStreamMappingConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamMappingConfiguration(id, getCreated());
+		var copy = new CloudDatumStreamMappingConfiguration(id, created(), name, integrationId);
 		copyTo(copy);
 		return copy;
 	}
@@ -116,16 +133,16 @@ public final class CloudDatumStreamMappingConfiguration extends
 	}
 
 	@Override
-	public boolean isSameAs(CloudDatumStreamMappingConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CloudDatumStreamMappingConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.integrationId, other.integrationId)
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.integrationId, o.integrationId)
 				// compare decoded JSON, as JSON key order not assumed
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}
@@ -168,9 +185,13 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return id().getEntityId();
+	}
+
+	@Override
+	public final Long getDatumStreamMappingId() {
+		return getConfigId();
 	}
 
 	/**
@@ -178,7 +199,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -187,9 +208,11 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @param name
 	 *        the name to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -198,7 +221,8 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the integration ID
 	 */
-	public Long getIntegrationId() {
+	@Override
+	public final Long getIntegrationId() {
 		return integrationId;
 	}
 
@@ -208,19 +232,21 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @param integrationId
 	 *        the integration ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setIntegrationId(Long integrationId) {
-		this.integrationId = integrationId;
+	public final void setIntegrationId(Long integrationId) {
+		this.integrationId = requireNonNullArgument(integrationId, "integrationId");
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -238,7 +264,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -254,7 +280,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -273,7 +299,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
@@ -284,7 +310,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putServiceProps(Map<String, Object> props) {
+	public final void putServiceProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> serviceProps = getServiceProps();
 		if ( serviceProps == null ) {
 			serviceProps = props;
@@ -299,7 +325,8 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, ?> getServiceProperties() {
+	@Override
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

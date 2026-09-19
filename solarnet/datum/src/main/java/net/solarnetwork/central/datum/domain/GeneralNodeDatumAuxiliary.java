@@ -22,18 +22,22 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -42,7 +46,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * before/after samples at a specific point in time for a node data stream.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 1.35
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start",
@@ -53,21 +57,27 @@ public class GeneralNodeDatumAuxiliary
 	@Serial
 	private static final long serialVersionUID = -1132588952509774037L;
 
-	private GeneralNodeDatumAuxiliaryPK id = new GeneralNodeDatumAuxiliaryPK();
-	private Instant updated;
-	private DatumSamples samplesFinal;
-	private String sampleJsonFinal;
-	private DatumSamples samplesStart;
-	private String sampleJsonStart;
-	private String notes;
-	private GeneralDatumMetadata meta;
-	private String metaJson;
+	private final GeneralNodeDatumAuxiliaryPK id;
+	private @Nullable Instant updated;
+	private @Nullable DatumSamples samplesFinal;
+	private @Nullable String sampleJsonFinal;
+	private @Nullable DatumSamples samplesStart;
+	private @Nullable String sampleJsonStart;
+	private @Nullable String notes;
+	private @Nullable GeneralDatumMetadata meta;
+	private @Nullable String metaJson;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public GeneralNodeDatumAuxiliary() {
+	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
 		super();
+		this.id = requireNonNullArgument(id, "id");
 	}
 
 	/**
@@ -79,120 +89,43 @@ public class GeneralNodeDatumAuxiliary
 	 *        the final samples
 	 * @param samplesStart
 	 *        the starting samples
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 */
-	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id, DatumSamples samplesFinal,
-			DatumSamples samplesStart) {
-		super();
-		setId(id);
+	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id, @Nullable DatumSamples samplesFinal,
+			@Nullable DatumSamples samplesStart) {
+		this(id);
 		setSamplesFinal(samplesFinal);
 		setSamplesStart(samplesStart);
 	}
 
 	/**
-	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
-	 *
-	 * @return the nodeId
-	 */
-	public Long getNodeId() {
-		return (id == null ? null : id.getNodeId());
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setNodeId(Long)}.
+	 * Constructor.
 	 *
 	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public void setNodeId(Long nodeId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumAuxiliaryPK();
-		}
-		id.setNodeId(nodeId);
-	}
-
-	/**
-	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getSourceId()}.
-	 *
-	 * @return the sourceId
-	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumAuxiliaryPK();
-		}
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setCreated(Instant)}.
-	 *
+	 *        the node ID
 	 * @param created
-	 *        the created to set
-	 */
-	public void setCreated(Instant created) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumAuxiliaryPK();
-		}
-		id.setCreated(created);
-	}
-
-	@Override
-	public Instant getCreated() {
-		return (id == null ? null : id.getCreated());
-	}
-
-	/**
-	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getType()}.
-	 *
-	 * @return the type
-	 */
-	public DatumAuxiliaryType getType() {
-		return (id == null ? null : id.getType());
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setType(DatumAuxiliaryType)}.
-	 *
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
 	 * @param type
-	 *        the type to set
+	 *        the type
+	 * @param samplesFinal
+	 *        the final samples
+	 * @param samplesStart
+	 *        the starting samples
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 */
-	public void setType(DatumAuxiliaryType type) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumAuxiliaryPK();
-		}
-		id.setType(type);
-	}
-
-	public Instant getUpdated() {
-		return updated;
-	}
-
-	public void setUpdated(Instant updated) {
-		this.updated = updated;
-	}
-
-	@Override
-	@JsonIgnore
-	@SerializeIgnore
-	public GeneralNodeDatumAuxiliaryPK getId() {
-		return id;
-	}
-
-	public void setId(GeneralNodeDatumAuxiliaryPK id) {
-		this.id = id;
+	@JsonCreator
+	public GeneralNodeDatumAuxiliary(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId,
+			@JsonProperty(value = "type", required = false) @Nullable DatumAuxiliaryType type,
+			@Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart) {
+		this(new GeneralNodeDatumAuxiliaryPK(nodeId, created, sourceId,
+				type != null ? type : DatumAuxiliaryType.Reset));
+		setSamplesFinal(samplesFinal);
+		setSamplesStart(samplesStart);
 	}
 
 	@Override
@@ -206,26 +139,12 @@ public class GeneralNodeDatumAuxiliary
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
-	}
-
-	@Override
 	public int hashCode() {
 		return Objects.hash(id);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -236,17 +155,76 @@ public class GeneralNodeDatumAuxiliary
 	}
 
 	/**
+	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
+	 *
+	 * @return the nodeId
+	 */
+	public final Long getNodeId() {
+		return id.getNodeId();
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getSourceId()}.
+	 *
+	 * @return the sourceId
+	 */
+	public final String getSourceId() {
+		return id.getSourceId();
+	}
+
+	@Override
+	public final Instant getCreated() {
+		return id.getCreated();
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getType()}.
+	 *
+	 * @return the type
+	 */
+	public final DatumAuxiliaryType getType() {
+		return id.getType();
+	}
+
+	public final @Nullable Instant getUpdated() {
+		return updated;
+	}
+
+	public final void setUpdated(@Nullable Instant updated) {
+		this.updated = updated;
+	}
+
+	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	@SuppressWarnings("NullAway")
+	public GeneralNodeDatumAuxiliaryPK pk() {
+		return getId();
+	}
+
+	@Override
+	@JsonIgnore
+	@SerializeIgnore
+	public final GeneralNodeDatumAuxiliaryPK getId() {
+		return id;
+	}
+
+	/**
 	 * Get the final {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJsonFinal() {
+	public final @Nullable String getSampleJsonFinal() {
 		if ( sampleJsonFinal == null ) {
 			sampleJsonFinal = DatumUtils.getJSONString(samplesFinal, "{}");
 		}
@@ -267,13 +245,13 @@ public class GeneralNodeDatumAuxiliary
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJsonFinal(String json) {
+	public final void setSampleJsonFinal(@Nullable String json) {
 		sampleJsonFinal = json;
 		samplesFinal = null;
 	}
 
 	@JsonProperty("final")
-	public DatumSamples getSamplesFinal() {
+	public final @Nullable DatumSamples getSamplesFinal() {
 		if ( samplesFinal == null && sampleJsonFinal != null ) {
 			samplesFinal = DatumUtils.getObjectFromJSON(sampleJsonFinal, DatumSamples.class);
 		}
@@ -292,7 +270,7 @@ public class GeneralNodeDatumAuxiliary
 	 *        the samples instance to set
 	 */
 	@JsonProperty("final")
-	public void setSamplesFinal(DatumSamples samples) {
+	public final void setSamplesFinal(@Nullable DatumSamples samples) {
 		samplesFinal = samples;
 		sampleJsonFinal = null;
 	}
@@ -300,11 +278,11 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public Map<String, ?> getSampleDataFinal() {
+	public final @Nullable Map<String, ?> getSampleDataFinal() {
 		DatumSamples s = getSamplesFinal();
 		return (s == null ? null : s.getSampleData());
 	}
@@ -313,14 +291,14 @@ public class GeneralNodeDatumAuxiliary
 	 * Get the start {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJsonStart() {
+	public final @Nullable String getSampleJsonStart() {
 		if ( sampleJsonStart == null ) {
 			sampleJsonStart = DatumUtils.getJSONString(samplesStart, "{}");
 		}
@@ -341,13 +319,13 @@ public class GeneralNodeDatumAuxiliary
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJsonStart(String json) {
+	public final void setSampleJsonStart(@Nullable String json) {
 		sampleJsonStart = json;
 		samplesStart = null;
 	}
 
 	@JsonProperty("start")
-	public DatumSamples getSamplesStart() {
+	public final @Nullable DatumSamples getSamplesStart() {
 		if ( samplesStart == null && sampleJsonStart != null ) {
 			samplesStart = DatumUtils.getObjectFromJSON(sampleJsonStart, DatumSamples.class);
 		}
@@ -366,7 +344,7 @@ public class GeneralNodeDatumAuxiliary
 	 *        the samples instance to set
 	 */
 	@JsonProperty("start")
-	public void setSamplesStart(DatumSamples samples) {
+	public final void setSamplesStart(@Nullable DatumSamples samples) {
 		samplesStart = samples;
 		sampleJsonStart = null;
 	}
@@ -374,11 +352,11 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@JsonIgnore
 	@SerializeIgnore
-	public Map<String, ?> getSampleDataStart() {
+	public final @Nullable Map<String, ?> getSampleDataStart() {
 		DatumSamples s = getSamplesStart();
 		return (s == null ? null : s.getSampleData());
 	}
@@ -388,7 +366,7 @@ public class GeneralNodeDatumAuxiliary
 	 *
 	 * @return the notes
 	 */
-	public String getNotes() {
+	public final @Nullable String getNotes() {
 		return notes;
 	}
 
@@ -398,7 +376,7 @@ public class GeneralNodeDatumAuxiliary
 	 * @param notes
 	 *        the notes
 	 */
-	public void setNotes(String notes) {
+	public final void setNotes(@Nullable String notes) {
 		this.notes = notes;
 	}
 
@@ -412,7 +390,7 @@ public class GeneralNodeDatumAuxiliary
 	 * @return the metadata
 	 * @since 1.1
 	 */
-	public GeneralDatumMetadata getMeta() {
+	public final @Nullable GeneralDatumMetadata getMeta() {
 		if ( meta == null && metaJson != null ) {
 			meta = DatumUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
@@ -431,7 +409,7 @@ public class GeneralNodeDatumAuxiliary
 	 *        the metadata to set
 	 * @since 1.1
 	 */
-	public void setMeta(GeneralDatumMetadata meta) {
+	public final void setMeta(@Nullable GeneralDatumMetadata meta) {
 		this.meta = meta;
 		this.metaJson = null;
 	}
@@ -448,7 +426,7 @@ public class GeneralNodeDatumAuxiliary
 	 */
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		if ( metaJson == null ) {
 			metaJson = DatumUtils.getJSONString(meta, "{}");
 			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
@@ -466,7 +444,7 @@ public class GeneralNodeDatumAuxiliary
 	 * @param metaJson
 	 *        the metadata
 	 */
-	public void setMetaJson(String metaJson) {
+	public final void setMetaJson(@Nullable String metaJson) {
 		this.metaJson = metaJson;
 		this.meta = null;
 	}

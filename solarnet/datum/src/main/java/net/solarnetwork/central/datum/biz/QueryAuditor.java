@@ -45,7 +45,7 @@ public interface QueryAuditor {
 	 * This clock may bucket time into discreet intervals.
 	 * </p>
 	 *
-	 * @return the clock never {@literal null}
+	 * @return the clock never {@code null}
 	 * @since 1.2
 	 */
 	Clock getAuditClock();
@@ -84,7 +84,7 @@ public interface QueryAuditor {
 	 * </p>
 	 *
 	 *
-	 * @return the map, never {@literal null}
+	 * @return the map, never {@code null}
 	 * @since 1.1
 	 */
 	Map<GeneralNodeDatumPK, Integer> currentAuditResults();

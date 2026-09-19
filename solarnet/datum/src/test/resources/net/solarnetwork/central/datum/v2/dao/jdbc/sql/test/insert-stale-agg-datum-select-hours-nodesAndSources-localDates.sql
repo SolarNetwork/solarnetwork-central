@@ -7,9 +7,19 @@ WITH s AS (
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
-SELECT datum.stream_id, datum.ts_start, 'h' AS agg_kind
-FROM s
-INNER JOIN solardatm.find_datm_hours(s.stream_id, 
-	? AT TIME ZONE s.time_zone, 
-	? AT TIME ZONE s.time_zone) datum ON TRUE
+(
+	SELECT datum.stream_id, datum.ts_start, 'h' AS agg_kind
+	FROM s
+	INNER JOIN solardatm.find_datm_hours(s.stream_id, 
+		? AT TIME ZONE s.time_zone, 
+		? AT TIME ZONE s.time_zone) datum ON TRUE
+)
+UNION
+(
+	SELECT datum.stream_id, datum.ts_start, 'h' AS agg_kind
+	FROM s
+	INNER JOIN solardatm.agg_datm_hourly datum ON datum.stream_id = s.stream_id
+	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
+		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+)
 ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING

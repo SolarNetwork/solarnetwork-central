@@ -23,6 +23,10 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Queued;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Retracted;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Staged;
 import static net.solarnetwork.domain.Result.error;
 import static net.solarnetwork.domain.Result.success;
 import java.io.IOException;
@@ -112,7 +116,7 @@ public class DatumImportController {
 	 */
 	@ExceptionHandler(DatumImportValidationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleDatumImportValidationException(DatumImportValidationException e) {
 		log.debug("DatumImportValidationException in {} controller", getClass().getSimpleName(), e);
 		return datumImportExceptionResponse(e, "DI.00400");
@@ -132,6 +136,7 @@ public class DatumImportController {
 		return datumImportExceptionResponse(e, "DI.00401");
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private static Result<Object> datumImportExceptionResponse(DatumImportException e, String code) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
@@ -222,9 +227,9 @@ public class DatumImportController {
 	 * @return an asynchronous result
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/jobs/{id}/preview", method = RequestMethod.GET)
+	@RequestMapping(value = "/jobs/{jobId}/preview", method = RequestMethod.GET)
 	public Callable<Result<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>> previewStagedImport(
-			@PathVariable("id") String jobId,
+			@PathVariable String jobId,
 			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
 		final Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> future;
 		if ( importBiz != null ) {
@@ -252,8 +257,8 @@ public class DatumImportController {
 								"Import not allowed for node " + ae.getId());
 					}
 				}
-				if ( t instanceof Exception ) {
-					throw (Exception) t;
+				if ( t instanceof Exception ex ) {
+					throw ex;
 				}
 				throw e;
 			}
@@ -270,7 +275,7 @@ public class DatumImportController {
 	 *
 	 * @param states
 	 *        an optional array of states to limit the results to, or
-	 *        {@literal null} to include all states
+	 *        {@code null} to include all states
 	 * @return the statuses
 	 */
 	@ResponseBody
@@ -305,7 +310,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
-	public Result<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> jobStatus(@PathVariable String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -328,12 +333,12 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
-	public Result<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> confirmStagedJob(@PathVariable String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
-					Collections.singleton(DatumImportState.Staged));
+					Set.of(DatumImportState.Staged));
 		}
 		return success(result);
 	}
@@ -354,7 +359,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.POST)
-	public Result<DatumImportStatus> updateJob(@PathVariable("id") String id,
+	public Result<DatumImportStatus> updateJob(@PathVariable String id,
 			@RequestBody BasicConfiguration config) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
@@ -374,19 +379,21 @@ public class DatumImportController {
 	 *
 	 * @param id
 	 *        the ID of the job to retract
+	 * @param force
+	 *        {@code true} to retract regardless of the job's current state
 	 * @return the status
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
-	public Result<DatumImportStatus> retractJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> retractJob(@PathVariable String id,
+			@RequestParam(name = "force", required = false, defaultValue = "false") boolean force) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted,
-					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
-							DatumImportState.Claimed));
+			result = importBiz.updateDatumImportJobStateForUser(userId, id, Retracted,
+					force ? null : EnumSet.of(Staged, Queued, Claimed));
 			if ( result != null ) {
-				importBiz.deleteDatumImportJobsForUser(userId, singleton(id));
+				importBiz.deleteDatumImportJobsForUser(userId, singleton(id), force);
 			}
 		}
 		return success(result);

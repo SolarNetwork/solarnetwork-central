@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.config;
 
+import java.util.UUID;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,13 +31,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
  * JDBC datum support DAO configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class SolarNodeOwnershipDaoConfig {
@@ -46,6 +48,13 @@ public class SolarNodeOwnershipDaoConfig {
 	 */
 	public static final String NODE_OWNERSHIP_CACHE = "ownership-for-node";
 
+	/**
+	 * A cache name to use for stream metadata ID objects.
+	 *
+	 * @since 1.1
+	 */
+	public static final String STREAM_METADATA_ID_CACHE_NAME = "metadata-id-for-stream";
+
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
@@ -53,10 +62,15 @@ public class SolarNodeOwnershipDaoConfig {
 	@Qualifier(NODE_OWNERSHIP_CACHE)
 	private Cache<Long, SolarNodeOwnership> nodeOwnershipCache;
 
+	@Autowired
+	@Qualifier(STREAM_METADATA_ID_CACHE_NAME)
+	private Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache;
+
 	@Bean
 	public SolarNodeOwnershipDao nodeOwnershipDao() {
 		JdbcSolarNodeOwnershipDao dao = new JdbcSolarNodeOwnershipDao(jdbcOperations);
-		dao.setUserNodeCache(nodeOwnershipCache);
+		dao.setNodeOwnershipCache(nodeOwnershipCache);
+		dao.setStreamMetadataIdCache(streamMetadataIdCache);
 		return dao;
 	}
 

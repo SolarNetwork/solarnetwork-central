@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -73,8 +74,9 @@ public interface InstructorBiz {
 	 *        the node ID
 	 * @param instruction
 	 *        the instruction
-	 * @return the persisted instruction, or {@literal null} if not accepted
+	 * @return the persisted instruction, or {@code null} if not accepted
 	 */
+	@Nullable
 	NodeInstruction queueInstruction(Long nodeId, Instruction instruction);
 
 	/**
@@ -95,8 +97,9 @@ public interface InstructorBiz {
 	 * 
 	 * @param instructionId
 	 *        the instruction ID
-	 * @return the found instruction, or {@literal null} if not found
+	 * @return the found instruction, or {@code null} if not found
 	 */
+	@Nullable
 	NodeInstruction getInstruction(Long instructionId);
 
 	/**
@@ -162,7 +165,7 @@ public interface InstructorBiz {
 	 * @since 1.2
 	 */
 	void updateInstructionState(Long instructionId, InstructionState state,
-			Map<String, ?> resultParameters);
+			@Nullable Map<String, ?> resultParameters);
 
 	/**
 	 * Update the state of a specific instruction.
@@ -182,7 +185,7 @@ public interface InstructorBiz {
 	 * @since 1.3
 	 */
 	void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
-			Map<Long, Map<String, ?>> resultParameters);
+			@Nullable Map<Long, Map<String, ?>> resultParameters);
 
 	/**
 	 * Create a result parameter map for an error message and/or code.
@@ -191,7 +194,7 @@ public interface InstructorBiz {
 	 *        the message
 	 * @param code
 	 *        the code
-	 * @return the map, never {@literal null}
+	 * @return the map, never {@code null}
 	 * @since 1.6
 	 */
 	static Map<String, Object> createErrorResultParameters(String message, String code) {

@@ -24,11 +24,10 @@ package net.solarnetwork.central.dao.mybatis.type.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionTemplate;
 import net.solarnetwork.central.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
 
@@ -65,7 +64,7 @@ public class JsonMapTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 		JsonMapBean result = sqlSession.selectOne("test-get-json-map");
 
 		// THEN
-		assertThat("Result map", result.getMap(), equalTo(Collections.singletonMap("foo", "bar")));
+		assertThat("Result map", result.getMap(), equalTo(Map.of("foo", "bar")));
 	}
 
 }

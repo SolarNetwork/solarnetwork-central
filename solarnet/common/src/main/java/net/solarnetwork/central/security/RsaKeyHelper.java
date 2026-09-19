@@ -45,6 +45,7 @@ import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Reads RSA key pairs using BC provider classes but without the need to specify
@@ -52,7 +53,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
  * 
  * <p>
  * Shamelessly adapted from
- * {@link org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
+ * {@code org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
  * class is package-private.
  * </p>
  * 
@@ -76,10 +77,20 @@ public final class RsaKeyHelper {
 
 	private static final byte[] PREFIX = new byte[] { 0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a' };
 
+	/**
+	 * A maximum length to allow when parsing input security data, to prevent
+	 * regular expression attacks.
+	 */
+	private static final int MAX_INPUT_DATA_LENGTH = 16_384;
+
 	private RsaKeyHelper() {
 	}
 
 	public static KeyPair parseKeyPair(String pemData) {
+		if ( pemData.length() > MAX_INPUT_DATA_LENGTH ) {
+			throw new IllegalArgumentException("Key pair data too long; maximum of %d is supported."
+					.formatted(MAX_INPUT_DATA_LENGTH));
+		}
 		Matcher m = PEM_DATA.matcher(pemData.replaceAll("\n *", "").trim());
 
 		if ( !m.matches() ) {
@@ -162,6 +173,7 @@ public final class RsaKeyHelper {
 		}
 	}
 
+	@SuppressWarnings("ByteBufferBackingArray")
 	private static byte[] base64Decode(String string) {
 		try {
 			ByteBuffer bytes = UTF8.newEncoder().encode(CharBuffer.wrap(string));
@@ -185,7 +197,7 @@ public final class RsaKeyHelper {
 	public static KeyPair generateKeyPair() {
 		try {
 			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(1024);
+			keyGen.initialize(2048);
 			return keyGen.generateKeyPair();
 		} catch ( NoSuchAlgorithmException ex ) {
 			throw new IllegalStateException(ex);
@@ -195,7 +207,11 @@ public final class RsaKeyHelper {
 
 	private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)");
 
-	private static RSAPublicKey extractPublicKey(String key) {
+	private static @Nullable RSAPublicKey extractPublicKey(String key) {
+		if ( key.length() > MAX_INPUT_DATA_LENGTH ) {
+			throw new IllegalArgumentException(
+					"Key data too long; maximum of %d is supported.".formatted(MAX_INPUT_DATA_LENGTH));
+		}
 
 		Matcher m = SSH_PUB_KEY.matcher(key);
 

@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -44,7 +45,7 @@ public final class InsertHeartbeatDate implements PreparedStatementCreator, SqlP
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;
-	private final Instant ts;
+	private final @Nullable Instant ts;
 
 	/**
 	 * Constructor.
@@ -56,10 +57,10 @@ public final class InsertHeartbeatDate implements PreparedStatementCreator, SqlP
 	 * @param ts
 	 *        the value to set
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code ts} is {@literal null} or the
+	 *         if any argument except {@code ts} is {@code null} or the
 	 *         {@code id} is not assigned
 	 */
-	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant ts) {
+	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, @Nullable Instant ts) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");

@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,10 +56,9 @@ import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.header.HeaderWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
@@ -70,12 +70,13 @@ import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.10
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -153,8 +154,7 @@ public class WebSecurityConfig {
 	}
 
 	private AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService);
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
@@ -195,7 +195,7 @@ public class WebSecurityConfig {
 		public SecurityFilterChain filterChainBrowser(HttpSecurity http) throws Exception {
 			// Add a special header to the login page, so JavaScript can reliably detect when redirected there
 			HeaderWriter loginHeaderWriter = new DelegatingRequestMatcherHeaderWriter(
-					new AntPathRequestMatcher("/login"),
+					PathPatternRequestMatcher.withDefaults().matcher("/login"),
 					new StaticHeadersWriter(LOGIN_PAGE_HEADER, "true"));
 
 			// opt-in to Spring Security 6 behavior
@@ -311,12 +311,19 @@ public class WebSecurityConfig {
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
-			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec", securityTokenFilterSettings);
-			filter.setUserDetailsService(tokenUserDetailsService());
-			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
+			return new SecurityTokenAuthenticationFilter(tokenUserDetailsService(),
+					unauthorizedEntryPoint(), null, pathMatcher, "/api/v1/sec",
+					securityTokenFilterSettings);
+		}
 
-			return filter;
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<SecurityTokenAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				SecurityTokenAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean

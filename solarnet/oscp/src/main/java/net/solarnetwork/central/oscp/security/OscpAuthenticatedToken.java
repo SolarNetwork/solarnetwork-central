@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
 import java.io.Serial;
 import java.util.Collection;
+import java.util.Locale;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import net.solarnetwork.central.oscp.domain.AuthRoleContainer;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
  * An OSCP authenticated token.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
@@ -57,10 +58,11 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	 * @param info
 	 *        the auth role info
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpAuthenticatedToken(AuthRoleInfo info) {
-		this(info, createAuthorityList(format("ROLE_%s", info.role().toString().toUpperCase())));
+		this(info, createAuthorityList(
+				format("ROLE_%s", info.role().toString().toUpperCase(Locale.ENGLISH))));
 	}
 
 	/**
@@ -71,7 +73,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	 * @param authorities
 	 *        the granted authorities
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpAuthenticatedToken(AuthRoleInfo info,
 			Collection<? extends GrantedAuthority> authorities) {
@@ -97,27 +99,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
 	@Override
 	public String getUsername() {
-		return null;
-	}
-
-	@Override
-	public boolean isAccountNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isAccountNonLocked() {
-		return true;
-	}
-
-	@Override
-	public boolean isCredentialsNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isEnabled() {
-		return true;
+		return "";
 	}
 
 }

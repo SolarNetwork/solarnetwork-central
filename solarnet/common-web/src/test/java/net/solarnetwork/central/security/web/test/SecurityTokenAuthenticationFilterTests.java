@@ -1,31 +1,34 @@
 /* ==================================================================
  * SecurityTokenAuthenticationFilterTests.java - Dec 13, 2012 6:08:36 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.security.web.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
+import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.TEST_HOST;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -34,8 +37,6 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -47,8 +48,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -61,21 +62,22 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.AntPathMatcher;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthenticatedToken;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
- * 
+ *
  * @author matt
- * @version 2.2
+ * @version 2.5
  */
 public class SecurityTokenAuthenticationFilterTests {
 
@@ -95,10 +97,10 @@ public class SecurityTokenAuthenticationFilterTests {
 	}
 
 	private void validateAuthentication() {
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		assertNotNull(auth);
-		assertEquals(TEST_AUTH_TOKEN, auth.getName());
+		then(auth).isNotNull();
+		then(auth.getName()).isEqualTo(TEST_AUTH_TOKEN);
 	}
 
 	private void validateUnauthorizedResponse(AuthenticationScheme scheme, String expectedMessage) {
@@ -109,8 +111,7 @@ public class SecurityTokenAuthenticationFilterTests {
 			String expectedMessage) {
 		assertThat("Status code", response.getStatus(), is(expectedStatusCode));
 		if ( expectedStatusCode == HttpServletResponse.SC_UNAUTHORIZED ) {
-			assertEquals("WWW-Authenticate", scheme.getSchemeName(),
-					response.getHeader("WWW-Authenticate"));
+			then(response.getHeader("WWW-Authenticate")).isEqualTo(scheme.getSchemeName());
 		}
 		assertThat("Content type is JSON", response.getContentType(),
 				is(MediaType.APPLICATION_JSON_VALUE));
@@ -124,7 +125,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		filterChain = EasyMock.createMock(FilterChain.class);
 		response = new MockHttpServletResponse();
@@ -133,9 +134,8 @@ public class SecurityTokenAuthenticationFilterTests {
 		List<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
 		roles.add(new SimpleGrantedAuthority("ROLE_TEST"));
 		userDetails = new User(TEST_AUTH_TOKEN, TEST_PASSWORD, roles);
-		filter = new SecurityTokenAuthenticationFilter(new AntPathMatcher(), "/mock");
-		filter.setUserDetailsService(userDetailsService);
-		filter.setAuthenticationEntryPoint(entryPoint);
+		filter = new SecurityTokenAuthenticationFilter(userDetailsService, entryPoint, null,
+				new AntPathMatcher(), "/mock", null);
 	}
 
 	@Test
@@ -155,7 +155,6 @@ public class SecurityTokenAuthenticationFilterTests {
 		setupAuthorizationHeader(request, "FooScheme ABC:DOEIJLSIEWOSEIHLSISYEOIHEOIJ");
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-
 	}
 
 	@Test
@@ -250,7 +249,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -266,7 +265,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -283,7 +282,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -300,7 +299,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -316,7 +315,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -332,7 +331,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -352,7 +351,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -373,7 +372,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -395,7 +394,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -417,7 +416,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -429,18 +428,18 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbd8";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -452,18 +451,18 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbd8";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -475,13 +474,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbFF";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V1, "Content md5 digest value mismatch");
@@ -495,13 +494,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbFF";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content md5 digest value mismatch");
@@ -515,7 +514,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "m7WPJhkuS6APAeLnsTa72A==";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
@@ -525,7 +524,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -537,18 +536,18 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "m7WPJhkuS6APAeLnsTa72A==";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -560,18 +559,18 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String digestSHA256 = "eji/gfOD9pQzrW6QDTWz4jhVk/dqe3q11DVbi6Qe4ks=";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Digest", "sha-256=" + digestSHA256);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -583,13 +582,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String digestSHA256 = "Ix2SImWvBXHmqXTuPAaDHz16KeaOlIokZObv6cU+Ie8=";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Digest", "sha-256=" + digestSHA256);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content sha-256 digest value mismatch");
@@ -604,7 +603,7 @@ public class SecurityTokenAuthenticationFilterTests {
 				SecurityTokenType.ReadNodeData, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
-		final Date now = new Date(System.currentTimeMillis() - 16L * 60L * 1000L);
+		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request,
 				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
@@ -613,6 +612,30 @@ public class SecurityTokenAuthenticationFilterTests {
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Expired token");
+	}
+
+	@Test
+	public void expiredToken_invalidSignature() throws ServletException, IOException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNotAfter(Instant.now().minusSeconds(1)).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.ReadNodeData, -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+
+		// create header from wrong time for invalid signature
+		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
+				TEST_PASSWORD, request, new Date(now.getTime() + 1000)));
+
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+
+		// the signature validation should happen before expired token check
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Bad credentials");
 	}
 
 	@Test
@@ -638,7 +661,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -668,6 +691,33 @@ public class SecurityTokenAuthenticationFilterTests {
 	}
 
 	@Test
+	public void apiPathV2SimpleDenied_invalidSignature() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(singleton("/foo/**"))
+				.build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+
+		// create header from wrong time for invalid signature
+		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
+				TEST_PASSWORD, request, new Date(now.getTime() + 1000)));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Bad credentials");
+	}
+
+	@Test
 	public void apiPathV2InvertedAllowed() throws ServletException, IOException {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -690,7 +740,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -742,7 +792,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -769,7 +819,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -799,6 +849,108 @@ public class SecurityTokenAuthenticationFilterTests {
 	}
 
 	@Test
+	public void apiPathV2SimpleAllowed_encodedPath() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %61 is an encoded "a", so this request maps to /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/p%61th/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedPath() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %61 is an encoded "a", so this request maps to the denied /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/p%61th/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedPrefix() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %6F is an encoded "o", so this request maps to the denied /mock/path/here
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/m%6Fck/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied_encodedSlash() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/do/*")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
+
+		// %2F is an encoded "/", which makes the decoded path ambiguous
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/a%2Fb");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
 	public void multipartFormDataRequestTooLargeV2() throws ServletException, IOException {
 		// GIVEN
 		final Date now = new Date();
@@ -806,14 +958,15 @@ public class SecurityTokenAuthenticationFilterTests {
 		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
 		request.addHeader("Date", now);
-		setupAuthorizationHeader(request,
-				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, now);
 
 		// create new request as we read the input stream above
 		request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
 		request.addHeader("Date", now);
+		setupAuthorizationHeader(request, authHeader);
 
 		// WHEN
 		filter.setMaxRequestBodySize(1);
@@ -823,6 +976,128 @@ public class SecurityTokenAuthenticationFilterTests {
 		// THEN
 		verify(filterChain, userDetailsService);
 		assertThat("Status code", response.getStatus(), is(403));
+	}
+
+	@Test
+	public void invalidMimeTypeV2() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType("Invalid!");
+		replay(filterChain, userDetailsService);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, new Date()));
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+		assertThat("Status code", response.getStatus(), is(403));
+	}
+
+	@Test
+	public void multipartFormDataNoAuthorizationHeader() throws ServletException, IOException {
+		// GIVEN
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		then(request.isContentRead()).as("Content not read without authorization data to verify")
+				.isFalse();
+	}
+
+	@Test
+	public void multipartFormDataInvalidScheme() throws ServletException, IOException {
+		// GIVEN
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		setupAuthorizationHeader(request, "FooScheme ABC:DOEIJLSIEWOSEIHLSISYEOIHEOIJ");
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		then(request.isContentRead()).as("Content not read for unsupported authorization scheme")
+				.isFalse();
+	}
+
+	@Test
+	public void multipartFormDataV2() throws ServletException, IOException {
+		// GIVEN
+		final Date now = new Date();
+		final MockHttpServletRequest signedRequest = new MockHttpServletRequest("POST",
+				"/mock/path/here");
+		signedRequest.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		signedRequest.setContent("foo=bar".getBytes(UTF_8));
+		signedRequest.addHeader("Date", now);
+		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				signedRequest, now);
+
+		// create new request as we read the input stream above
+		final ContentTrackingRequest request = new ContentTrackingRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(UTF_8));
+		request.addHeader("Date", now);
+		request.addHeader("Host", TEST_HOST);
+		setupAuthorizationHeader(request, authHeader);
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+
+		// WHEN
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		validateAuthentication();
+		// @formatter:off
+		then(request.isParametersReadBeforeContent())
+				.as("Content read before parameters, so the servlet container does not parse the parts")
+				.isFalse()
+				;
+		// @formatter:on
+	}
+
+	/**
+	 * Request that tracks when its content and parameters are accessed.
+	 */
+	private static final class ContentTrackingRequest extends MockHttpServletRequest {
+
+		private boolean contentRead;
+		private boolean parametersReadBeforeContent;
+
+		private ContentTrackingRequest(String method, String requestURI) {
+			super(method, requestURI);
+		}
+
+		@Override
+		public ServletInputStream getInputStream() {
+			contentRead = true;
+			return super.getInputStream();
+		}
+
+		@Override
+		public Map<String, String[]> getParameterMap() {
+			if ( !contentRead ) {
+				parametersReadBeforeContent = true;
+			}
+			return super.getParameterMap();
+		}
+
+		private boolean isContentRead() {
+			return contentRead;
+		}
+
+		private boolean isParametersReadBeforeContent() {
+			return parametersReadBeforeContent;
+		}
+
 	}
 
 }

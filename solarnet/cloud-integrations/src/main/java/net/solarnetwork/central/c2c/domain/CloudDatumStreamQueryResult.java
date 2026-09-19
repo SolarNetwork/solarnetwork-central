@@ -23,13 +23,15 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.util.SequencedCollection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumAuxiliaryRecord;
 
 /**
  * Cloud datum stream query results API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 
@@ -73,18 +75,18 @@ public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 	 * different date range due to query constraints.
 	 * </p>
 	 *
-	 * @return a query filter, or {@literal null}
+	 * @return a query filter, or {@code null}
 	 */
-	default CloudDatumStreamQueryFilter getUsedQueryFilter() {
+	default @Nullable CloudDatumStreamQueryFilter getUsedQueryFilter() {
 		return null;
 	}
 
 	/**
 	 * Get a query filter configured to return the next set of results, if any.
 	 *
-	 * @return a query filter, or {@literal null}
+	 * @return a query filter, or {@code null}
 	 */
-	default CloudDatumStreamQueryFilter getNextQueryFilter() {
+	default @Nullable CloudDatumStreamQueryFilter getNextQueryFilter() {
 		return null;
 	}
 
@@ -98,5 +100,20 @@ public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 	 * @return the results, never {@code node}
 	 */
 	SequencedCollection<Datum> getResults();
+
+	/**
+	 * Get any generated auxiliary records.
+	 *
+	 * <p>
+	 * These records are used to capture observations or other metadata about
+	 * the resolved datum.
+	 * </p>
+	 *
+	 * @return the auxiliary records, or {@code null}
+	 * @since 1.2
+	 */
+	default @Nullable SequencedCollection<DatumAuxiliaryRecord> getAuxiliary() {
+		return null;
+	}
 
 }

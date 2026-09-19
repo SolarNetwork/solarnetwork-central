@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.io.IOException;
@@ -34,11 +37,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.io.ICsvListWriter;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
@@ -164,7 +167,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.0
+ * @version 1.5
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -173,7 +176,10 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	public static final MimeType TEXT_CSV_MIME_TYPE = CsvFilteredResultsProcessor.TEXT_CSV_MIME_TYPE;
 
 	/** The output destination. */
-	private final ICsvListWriter writer;
+	private final CsvWriter writer;
+
+	/** A set of allowed output property names. */
+	private final @Nullable Set<String> allowedPropertyNames;
 
 	/**
 	 * A mapping of column names to associated column index; linked so insertion
@@ -181,8 +187,8 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 */
 	private final Map<String, Integer> streamColumnIndexes = new LinkedHashMap<>(8);
 
-	private ObjectDatumStreamMetadataProvider metadataProvider;
-	private Collection<UUID> streamIds;
+	private @Nullable ObjectDatumStreamMetadataProvider metadataProvider;
+	private @Nullable Collection<UUID> streamIds;
 	private int columnCount = 0;
 	private int metaColumnCount = 0;
 
@@ -191,12 +197,32 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 *
 	 * @param out
 	 *        the output destination
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public CsvStreamDatumFilteredResultsProcessor(Writer out) {
-		super();
-		this.writer = new CsvListWriter(requireNonNullArgument(out, "out"),
-				CsvPreference.STANDARD_PREFERENCE);
+		this(out, null);
 
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param out
+	 *        the output destination
+	 * @param allowedPropertyNames
+	 *        optional set of restricted property names to allow, or
+	 *        {@code null} to allow all properties
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code allowedPropertyNames} is
+	 *         {@code null}
+	 * @since 1.5
+	 */
+	public CsvStreamDatumFilteredResultsProcessor(Writer out,
+			@Nullable Set<String> allowedPropertyNames) {
+		super();
+		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
+		this.allowedPropertyNames = allowedPropertyNames;
 	}
 
 	@Override
@@ -205,20 +231,15 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	}
 
 	@Override
-	public void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException {
+	public void start(@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		if ( attributes == null || !(attributes
 				.get(METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider) ) {
 			throw new IllegalArgumentException("No metadata provider provided.");
 		}
 		metadataProvider = (ObjectDatumStreamMetadataProvider) attributes.get(METADATA_PROVIDER_ATTR);
 	}
-
-	private static final String COUNT_FORMAT = "%s_count";
-	private static final String MIN_FORMAT = "%s_min";
-	private static final String MAX_FORMAT = "%s_max";
-	private static final String START_FORMAT = "%s_start";
-	private static final String END_FORMAT = "%s_end";
 
 	@Override
 	public void handleResultItem(StreamDatum resultItem) throws IOException {
@@ -240,39 +261,51 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				for ( UUID streamId : streamIds ) {
 					ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(streamId);
 					if ( meta != null ) {
-						String[] propNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
+						String[] propNames = meta.propertyNamesForType(Instantaneous);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
-										streamColumnIndexes.put(COUNT_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_count".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(MIN_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_min".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(MAX_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_max".formatted(propName),
 												colIndex++);
 									}
 								}
 							}
 						}
-						propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
+						propNames = meta.propertyNamesForType(Accumulating);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
-										streamColumnIndexes.put(START_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_start".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(END_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_end".formatted(propName),
 												colIndex++);
 									}
 								}
 							}
 						}
-						propNames = meta.propertyNamesForType(DatumSamplesType.Status);
+						propNames = meta.propertyNamesForType(Status);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 								}
@@ -296,7 +329,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				header[header.length - 1] = "tags";
 				String[] propNames = streamColumnIndexes.keySet().toArray(String[]::new);
 				System.arraycopy(propNames, 0, header, metaColumnCount, propNames.length);
-				writer.writeHeader(header);
+				writer.writeRecord(header);
 			}
 		}
 
@@ -319,15 +352,15 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		}
 		Arrays.fill(row, metaColumnCount, row.length, "");
 
-		populateRow(meta, resultItem, agg, DatumSamplesType.Instantaneous, row);
-		populateRow(meta, resultItem, agg, DatumSamplesType.Accumulating, row);
-		populateRow(meta, resultItem, agg, DatumSamplesType.Status, row);
+		populateRow(meta, resultItem, agg, reading, Instantaneous, row);
+		populateRow(meta, resultItem, agg, reading, Accumulating, row);
+		populateRow(meta, resultItem, agg, reading, Status, row);
 		row[row.length - 1] = arrayToCommaDelimitedString(resultItem.getProperties().getTags());
-		writer.write(row);
+		writer.writeRecord(row);
 	}
 
 	private void populateRow(ObjectDatumStreamMetadata meta, StreamDatum resultItem, final boolean agg,
-			final DatumSamplesType type, final String[] row) {
+			final boolean reading, final DatumSamplesType type, final String[] row) {
 		final DatumProperties props = resultItem.getProperties();
 		final String[] propNames = meta.propertyNamesForType(type);
 		if ( propNames != null ) {
@@ -335,7 +368,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				case Instantaneous -> props.getInstantaneous();
 				case Accumulating -> props.getAccumulating();
 				case Status -> props.getStatus();
-				case Tag -> throw new IllegalArgumentException("Tag type not supported.");
+				case Tag, Metadata -> throw new IllegalArgumentException("Tag type not supported.");
 			};
 			if ( propVals == null ) {
 				return;
@@ -349,15 +382,21 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				if ( idx >= row.length ) {
 					continue;
 				}
-				row[idx] = (type == DatumSamplesType.Status ? formatObject(propVals[i])
-						: formatDecimal((BigDecimal) propVals[i]));
 
-				if ( agg && type == DatumSamplesType.Instantaneous ) {
+				// for Reading datum Accumulating type, show AccumulatingDifference from stats,
+				// otherwise the normal property value
+				row[idx] = (type == Status ? formatObject(propVals[i])
+						: formatDecimal(reading && type == Accumulating
+								? ((ReadingDatum) resultItem).getStatistics()
+										.getAccumulatingDifference(i)
+								: (BigDecimal) propVals[i]));
+
+				if ( agg && type == Instantaneous ) {
 					DatumPropertiesStatistics stats = ((AggregateDatum) resultItem).getStatistics();
 					row[idx + 1] = formatDecimal(stats.getInstantaneousCount(i));
 					row[idx + 2] = formatDecimal(stats.getInstantaneousMinimum(i));
 					row[idx + 3] = formatDecimal(stats.getInstantaneousMaximum(i));
-				} else if ( agg && type == DatumSamplesType.Accumulating ) {
+				} else if ( agg && type == Accumulating ) {
 					DatumPropertiesStatistics stats = ((AggregateDatum) resultItem).getStatistics();
 					row[idx + 1] = formatDecimal(stats.getAccumulatingStart(i));
 					row[idx + 2] = formatDecimal(stats.getAccumulatingEnd(i));
@@ -366,21 +405,21 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		}
 	}
 
-	private static String formatInstant(Instant ts) {
+	private static String formatInstant(@Nullable Instant ts) {
 		if ( ts == null ) {
 			return "";
 		}
 		return DateTimeFormatter.ISO_INSTANT.format(ts);
 	}
 
-	private static String formatDecimal(BigDecimal obj) {
+	private static String formatDecimal(@Nullable BigDecimal obj) {
 		if ( obj == null ) {
 			return "";
 		}
 		return obj.toPlainString();
 	}
 
-	private static String formatObject(Object obj) {
+	private static String formatObject(@Nullable Object obj) {
 		if ( obj == null ) {
 			return "";
 		}

@@ -52,6 +52,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 5
+    stream-object-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   network-identity:
     network-identity-key: "solarquery:identity:here"
     terms-of-service: "solarquery:tos:here"
@@ -120,6 +124,7 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
   configuration-properties:
+    location-cache-flush: 900000
     node-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000
@@ -144,7 +149,16 @@ springdoc:
 server:
   compression:
     enabled: true
-    mime-types: "application/cbor,application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types:
+      - "application/cbor"
+      - "application/json"
+      - "application/javascript"
+      - "application/octet-stream"
+      - "image/svg+xml"
+      - "text/css"
+      - "text/html"
+      - "text/plain"
+      - "text/xml"
     min-response-size: 2048
   port: 9082
   servlet.context-path: /solarquery

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.scheduler;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Information about a scheduled job.
@@ -73,17 +74,19 @@ public interface JobInfo {
 	 * started.
 	 * </p>
 	 * 
-	 * @return the previous execution time, or {@literal null} if the job has
-	 *         never run before
+	 * @return the previous execution time, or {@code null} if the job has never
+	 *         run before
 	 */
+	@Nullable
 	Instant getPreviousExecutionTime();
 
 	/**
 	 * Get the next execution time of the job.
 	 * 
-	 * @return the next execution time, or {@literal null} if no more executions
+	 * @return the next execution time, or {@code null} if no more executions
 	 *         are scheduled
 	 */
+	@Nullable
 	Instant getNextExecutionTime();
 
 	/**

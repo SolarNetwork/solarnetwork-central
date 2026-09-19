@@ -25,6 +25,8 @@ package net.solarnetwork.central.user.billing.snf.jobs.test;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -41,9 +43,9 @@ import java.util.List;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
@@ -77,7 +79,7 @@ public class InvoiceGenerationTaskCreatorTests {
 	private AccountTaskDao accountTaskDao;
 	private InvoiceGenerationTaskCreator creator;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		userDao = EasyMock.createMock(UserDao.class);
 		invoicingSystem = EasyMock.createMock(SnfInvoicingSystem.class);
@@ -90,22 +92,18 @@ public class InvoiceGenerationTaskCreatorTests {
 		EasyMock.replay(userDao, invoicingSystem, accountTaskDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(userDao, invoicingSystem, accountTaskDao);
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
-		addr.setCountry(country);
-		addr.setTimeZoneId(timeZoneId);
+		Address addr = new Address(randomLong(), randomString(), randomString(), country, timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
-		account.setLocale(locale);
+		final Account account = new Account(randomLong(), userId, Instant.now(), "NZD", locale);
 		account.setAddress(address);
 		return account;
 	}
@@ -213,9 +211,8 @@ public class InvoiceGenerationTaskCreatorTests {
 		// get latest invoice for account, which is a few months behind
 		SnfInvoice lastInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getId().getId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
-		lastInvoice.setStartDate(LocalDate.of(2019, 9, 1));
-		lastInvoice.setEndDate(LocalDate.of(2019, 10, 1));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 9, 1),
+				LocalDate.of(2019, 10, 1), "NZD");
 		lastInvoice.setAddress(account.getAddress());
 		expect(invoicingSystem.findLatestInvoiceForAccount(account.getId())).andReturn(lastInvoice);
 

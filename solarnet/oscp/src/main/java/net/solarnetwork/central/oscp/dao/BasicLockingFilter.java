@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -31,7 +32,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 1.1
  */
-public record BasicLockingFilter(Integer max, Long offset, boolean lockResults,
+public record BasicLockingFilter(@Nullable Integer max, @Nullable Long offset, boolean lockResults,
 		boolean skipLockedResults) implements LockingFilter {
 
 	/** A locking filter for selecting just one with result rows locked. */
@@ -54,17 +55,17 @@ public record BasicLockingFilter(Integer max, Long offset, boolean lockResults,
 	}
 
 	@Override
-	public List<SortDescriptor> getSorts() {
+	public @Nullable List<SortDescriptor> getSorts() {
 		return null;
 	}
 
 	@Override
-	public Long getOffset() {
+	public @Nullable Long getOffset() {
 		return offset;
 	}
 
 	@Override
-	public Integer getMax() {
+	public @Nullable Integer getMax() {
 		return max;
 	}
 

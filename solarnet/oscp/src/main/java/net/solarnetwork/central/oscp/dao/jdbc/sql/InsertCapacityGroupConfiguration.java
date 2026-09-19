@@ -40,7 +40,7 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
  * Insert {@link CapacityGroupConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class InsertCapacityGroupConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -62,7 +62,7 @@ public final class InsertCapacityGroupConfiguration implements PreparedStatement
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCapacityGroupConfiguration(Long userId, CapacityGroupConfiguration entity) {
 		super();
@@ -93,7 +93,7 @@ public final class InsertCapacityGroupConfiguration implements PreparedStatement
 		stmt.setObject(++p, entity.getCapacityProviderId());
 		stmt.setObject(++p, entity.getCapacityOptimizerId());
 
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

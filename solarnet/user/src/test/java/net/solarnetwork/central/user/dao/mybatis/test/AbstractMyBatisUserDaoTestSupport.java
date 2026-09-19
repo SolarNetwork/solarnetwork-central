@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
@@ -91,15 +91,14 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractJUnit5Ce
 	 * @return the primary key
 	 */
 	protected Long storeNewUser(String email) {
-		User newUser = new User();
+		User newUser = new User(email);
 		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
 		Long id = userDao.save(newUser);
 		log.debug("Got new user PK: " + id);
-		assertNotNull(id);
+		then(id).isNotNull();
 		return id;
 	}
 

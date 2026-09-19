@@ -51,9 +51,9 @@ public class DatumAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.audit.raw")
 	@Bean
 	public ManagedJob staleAuditDatumProcessorRaw() {
-		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations);
+		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations,
+				"StaleAuditNodeDatumProcessor-Raw");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditNodeDatumProcessorRaw");
 		processor.setTierProcessType(Aggregation.None.getKey());
 		return processor;
 	}
@@ -61,9 +61,9 @@ public class DatumAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.audit.hourly")
 	@Bean
 	public ManagedJob staleAuditDatumProcessorHourly() {
-		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations);
+		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations,
+				"StaleAuditNodeDatumProcessor-Hourly");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditNodeDatumProcessorHourly");
 		processor.setTierProcessType(Aggregation.Hour.getKey());
 		return processor;
 	}
@@ -71,9 +71,9 @@ public class DatumAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.audit.daily")
 	@Bean
 	public ManagedJob staleAuditDatumProcessorDaily() {
-		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations);
+		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations,
+				"StaleAuditNodeDatumProcessor-Daily");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditNodeDatumProcessorDaily");
 		processor.setTierProcessType(Aggregation.Day.getKey());
 		return processor;
 	}
@@ -81,9 +81,9 @@ public class DatumAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.audit.monthly")
 	@Bean
 	public ManagedJob staleAuditDatumProcessorMonthly() {
-		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations);
+		StaleAuditDataProcessor processor = new StaleAuditDataProcessor(jdbcOperations,
+				"StaleAuditNodeDatumProcessor-Monthly");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditNodeDatumProcessorMonthly");
 		processor.setTierProcessType(Aggregation.Month.getKey());
 		return processor;
 	}
@@ -91,8 +91,7 @@ public class DatumAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.datum.audit.missing")
 	@Bean
 	public ManagedJob auditDatumDailyMissingPopulator() {
-		JdbcCallJob job = new JdbcCallJob(jdbcOperations);
-		job.setId("AuditDatumDailyMissingPopulator");
+		JdbcCallJob job = new JdbcCallJob(jdbcOperations, "Audit", "AuditDatumDailyMissingPopulator");
 		job.setJdbcCall("{? = call solardatm.populate_audit_datm_daily_missing()}");
 		return job;
 	}

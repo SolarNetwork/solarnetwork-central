@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,7 +52,7 @@ public class DatumEndpointAuthenticationProvider implements AuthenticationProvid
 	 * @param passwordEncoder
 	 *        the password encoder
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumEndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
 			PasswordEncoder passwordEncoder) {
@@ -66,7 +67,8 @@ public class DatumEndpointAuthenticationProvider implements AuthenticationProvid
 	}
 
 	@Override
-	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+	public @Nullable Authentication authenticate(Authentication authentication)
+			throws AuthenticationException {
 		if ( authentication.getDetails() instanceof EndpointAuthenticationDetails endpointDetails
 				&& endpointDetails.getEndpointId() != null
 				&& authentication.getPrincipal() instanceof String username

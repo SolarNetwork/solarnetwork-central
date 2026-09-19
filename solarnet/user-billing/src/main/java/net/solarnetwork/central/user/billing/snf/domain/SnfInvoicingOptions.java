@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 
 /**
@@ -41,7 +42,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 * {@code useAccountCredit} will be {@literal true}.
 	 * </p>
 	 *
-	 * @return the options, never {@literal null}
+	 * @return the options, never {@code null}
 	 */
 	public static SnfInvoicingOptions defaultOptions() {
 		return new SnfInvoicingOptions();
@@ -55,7 +56,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 * {@code useAccountCredit} will be {@literal false}.
 	 * </p>
 	 *
-	 * @return the options, never {@literal null}
+	 * @return the options, never {@code null}
 	 */
 	public static SnfInvoicingOptions dryRunOptions() {
 		return new SnfInvoicingOptions(true, false);
@@ -107,7 +108,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -118,7 +119,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	}
 
 	@Override
-	public boolean isDryRun() {
+	public final boolean isDryRun() {
 		return dryRun;
 	}
 
@@ -129,12 +130,12 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 *        {@literal true} if an invoice should be generated but not
 	 *        persisted
 	 */
-	public void setDryRun(boolean dryRun) {
+	public final void setDryRun(boolean dryRun) {
 		this.dryRun = dryRun;
 	}
 
 	@Override
-	public boolean isUseAccountCredit() {
+	public final boolean isUseAccountCredit() {
 		return useAccountCredit;
 	}
 
@@ -145,7 +146,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 *        {@literal true} to use available account credit by adding a credit
 	 *        item to the generated invoice
 	 */
-	public void setUseAccountCredit(boolean useAccountCredit) {
+	public final void setUseAccountCredit(boolean useAccountCredit) {
 		this.useAccountCredit = useAccountCredit;
 	}
 

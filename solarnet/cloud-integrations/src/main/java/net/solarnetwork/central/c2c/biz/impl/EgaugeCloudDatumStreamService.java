@@ -27,7 +27,9 @@ import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudIntegrationService.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
+import static net.solarnetwork.central.datum.domain.DatumValidationType.TimeGap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
@@ -50,13 +52,14 @@ import java.util.random.RandomGenerator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -75,14 +78,16 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.datum.domain.DatumValidationType;
+import net.solarnetwork.central.datum.support.OrderedDatumSamplesBuffer;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.DatumStreamId;
+import net.solarnetwork.domain.datum.DatumStreamIdentity;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -91,6 +96,7 @@ import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.IntRangeSet;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * eGauge implementation of {@link CloudDatumStreamService}.
@@ -116,7 +122,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.6
+ * @version 2.1
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -131,13 +137,17 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
-				new BasicTextFieldSettingSpecifier(DEVICE_ID_FILTER, null),
-				BaseCloudIntegrationService.USERNAME_SETTING_SPECIFIER,
-				BaseCloudIntegrationService.PASSWORD_SETTING_SPECIFIER,
-				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null)
+				  new BasicTextFieldSettingSpecifier(DEVICE_ID_FILTER, null)
+				, BaseCloudIntegrationService.USERNAME_SETTING_SPECIFIER
+				, BaseCloudIntegrationService.PASSWORD_SETTING_SPECIFIER
+				, new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null)
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, VALIDATION_IGNORE_SETTING_SPECIFIER
+				, TIME_GAP_VALIDATION_THRESHOLD_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
@@ -169,7 +179,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * used to resolve the register index values for a given reference register
 	 * name.
 	 */
-	private Cache<String, CloudDataValue[]> deviceRegistersCache;
+	private @Nullable Cache<String, CloudDataValue[]> deviceRegistersCache;
 
 	/**
 	 * Constructor.
@@ -197,7 +207,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * @param clientAccessTokenDao
 	 *        the client access token DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EgaugeCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -212,8 +222,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				new EgaugeRestOperationsHelper(
 						LoggerFactory.getLogger(EgaugeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						datumStreamServiceIdentifier -> SECURE_SETTINGS, clock, rng,
-						clientAccessTokenDao, integrationDao));
+						_ -> SECURE_SETTINGS, clock, rng, clientAccessTokenDao, integrationDao));
 	}
 
 	@Override
@@ -224,6 +233,18 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	@Override
 	protected boolean dataValuesRequireDatumStream() {
 		return true;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> supportedValidations(Locale locale) {
+		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+		List<LocalizedServiceInfo> result = new ArrayList<>(2);
+		for ( String key : new String[] { DatumValidationType.TimeGap.getKey() } ) {
+			result.add(new BasicLocalizedServiceInfo(key, locale,
+					ms.getMessage("validationType.%s.key".formatted(key), null, key, locale),
+					ms.getMessage("validationType.%s.desc".formatted(key), null, null, locale), null));
+		}
+		return result;
 	}
 
 	@Override
@@ -238,16 +259,16 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return result;
 	}
 
+	@SuppressWarnings("BadInstanceof")
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
-		requireNonNullArgument(filters, "filters");
+			@Nullable Map<String, ?> filters) {
+		final Map<String, ?> f = requireNonNullArgument(filters, "filters");
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
 		final Long datumStreamId = requireNonNullArgument(
-				filters.get(DATUM_STREAM_ID_FILTER) instanceof Object o ? Long.valueOf(o.toString())
-						: null,
+				f.get(DATUM_STREAM_ID_FILTER) instanceof Object o ? Long.valueOf(o.toString()) : null,
 				"filters.datumStreamId");
 		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
 				datumStreamDao.get(new UserLongCompositePK(integrationId.getUserId(), datumStreamId)),
@@ -256,7 +277,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
 				"datumStream.serviceProperties.deviceId");
 		List<CloudDataValue> result = deviceRegisters(integration, datumStream, deviceId);
-		Collections.sort(result);
+		result.sort(null);
 		return result;
 	}
 
@@ -274,11 +295,12 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 		final var result = datum(datumStream, filter);
 		if ( result == null || result.isEmpty() ) {
-			return null;
+			return List.of();
 		}
 		return result.getResults();
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	@Override
 	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
@@ -304,10 +326,17 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 			final Duration granularity = resolveGranularity(ds);
 
+			// validation support
+			final Set<String> ignoredValidations = ds
+					.servicePropertyStringSet(VALIDATION_IGNORE_SETTING);
+
 			BasicQueryFilter nextQueryFilter = null;
 
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity, UTC);
+			if ( endDate.isBefore(filterEndDate) ) {
+				endDate = CloudIntegrationsUtils.nextTickStart(granularity, endDate, UTC);
+			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {
@@ -332,34 +361,38 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					ds, deviceId, valueProps);
 			final String queryRegisters = registerQueryParam(refsByRegisterName.values());
 
-			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", ds,
-					JsonNode.class,
-					req -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+			final OrderedDatumSamplesBuffer streamBuffer = new OrderedDatumSamplesBuffer();
+
+			restOpsHelper.httpGet("List register data", ds, JsonNode.class,
+					_ -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 							.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
 							.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
 							.buildAndExpand(deviceId).toUri(),
-					res -> parseDatum(res.getBody(), ds, deviceId, refsByRegisterName));
+					(req, res) -> parseDatum(req, res.getBody(), ds, deviceId, refsByRegisterName,
+							ignoredValidations, streamBuffer));
+
+			final List<GeneralDatum> resultDatum = streamBuffer.datum(GeneralDatum::new);
 
 			// evaluate expressions on final datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList(), streamBuffer.auxiliaryOrNull());
 		});
 	}
 
 	private List<CloudDataValue> deviceRegisters(CloudIntegrationConfiguration integration,
 			CloudDatumStreamConfiguration datumStream, String deviceId) {
 		return restOpsHelper.httpGet("List registers", datumStream, JsonNode.class,
-				(req) -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				_ -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(REGISTER_URL_PATH).buildAndExpand(deviceId).toUri(),
-				res -> parseDeviceRegisters(deviceId, res.getBody()));
+				(_, res) -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
-	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, JsonNode json) {
+	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, @Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(0);
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -374,8 +407,10 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		*/
 		final var result = new ArrayList<CloudDataValue>(16);
 		for ( JsonNode regNode : json.path("registers") ) {
-			String name = nonEmptyString(regNode.path("name").asText());
-
+			String name = nonEmptyString(regNode.path("name").asString());
+			if ( name == null ) {
+				continue;
+			}
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNumberValue(regNode, "idx", REGISTER_INDEX_METADATA, meta);
 			populateNonEmptyValue(regNode, "type", REGISTER_TYPE_METADATA, meta);
@@ -417,7 +452,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/(.+)");
 
-	private static record ValueRef(String deviceId, String registerName, int registerIndex,
+	private record ValueRef(String deviceId, String registerName, int registerIndex,
 			EgaugeTypeCode registerType, CloudDatumStreamPropertyConfiguration property) {
 
 	}
@@ -466,7 +501,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					&& reg.getMetadata().get(REGISTER_TYPE_METADATA) instanceof String t ) {
 				try {
 					EgaugeTypeCode type = EgaugeTypeCode.fromValue(t);
-					result.computeIfAbsent(regName, k -> new ArrayList<>(2))
+					result.computeIfAbsent(regName, _ -> new ArrayList<>(2))
 							.add(new ValueRef(deviceId, regName, n.intValue(), type, config));
 				} catch ( IllegalArgumentException e ) {
 					// ignore and continue
@@ -524,7 +559,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 *        the device ID
 	 * @return the data values
 	 */
-	private CloudDataValue[] resolveDeviceRegisters(CloudIntegrationConfiguration integration,
+	private CloudDataValue @Nullable [] resolveDeviceRegisters(CloudIntegrationConfiguration integration,
 			CloudDatumStreamConfiguration datumStream, String deviceId) {
 		assert datumStream != null && deviceId != null;
 		final var cache = getDeviceRegistersCache();
@@ -552,23 +587,21 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * This method can return a timestamp value for fields like these examples:
 	 * </p>
 	 *
-	 * <pre>{@code
-	 * {
-	 *   "ts":    "1729907680",
-	 *   "ts2":   "1729907680.123",
-	 *   "delta": 60.000,
-	 * }
-	 * }</pre>
+	 * <pre>{@code { "ts": "1729907680", "ts2": "1729907680.123", "delta":
+	 * 60.000, } }</pre>
 	 *
 	 * @param json
 	 *        the JSON node
 	 * @param field
 	 *        the name of the JSON field to extract the timestamp from
-	 * @return the parsed timestamp, or {@literal null}
+	 * @return the parsed timestamp, or {@code null}
 	 */
-	private static Instant parseTimestamp(JsonNode json, String field) {
+	private static @Nullable Instant parseTimestamp(@Nullable JsonNode json, String field) {
+		if ( json == null ) {
+			return null;
+		}
 		JsonNode fieldNode = json.path(field);
-		if ( !(fieldNode.isNumber() || fieldNode.isTextual()) ) {
+		if ( !(fieldNode.isNumber() || fieldNode.isString()) ) {
 			return null;
 		}
 		BigDecimal n = null;
@@ -576,7 +609,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			n = fieldNode.decimalValue();
 		} else {
 			try {
-				n = new BigDecimal(fieldNode.asText());
+				n = new BigDecimal(fieldNode.asString());
 			} catch ( NumberFormatException e ) {
 				// ignore, return null
 				return null;
@@ -587,13 +620,13 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return Instant.ofEpochSecond(secs.longValue(), nanos.longValue());
 	}
 
-	private static List<GeneralDatum> parseDatum(JsonNode json,
+	private Void parseDatum(RequestEntity<?> request, @Nullable JsonNode json,
 			CloudDatumStreamConfiguration datumStream, String deviceId,
-			Map<String, List<ValueRef>> refsByRegisterName) {
+			Map<String, List<ValueRef>> refsByRegisterName, Set<String> ignoredValidations,
+			OrderedDatumSamplesBuffer streamBuffer) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return null;
 		}
-		List<GeneralDatum> result = new ArrayList<>(32);
 		/*- EXAMPLE JSON:
 		{
 		    "ts": "1729879790",
@@ -626,15 +659,23 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		                ],
 		 */
 
+		final Duration timeGapDuration = (!ignoredValidations.contains(TimeGap.getKey())
+				? resolveTimeGapValidationThreshold(datumStream)
+				: null);
+
+		final String hardwareRef = "/%s".formatted(deviceId);
+		final DatumStreamIdentity streamId = new DatumStreamId(datumStream.getKind(),
+				datumStream.getObjectId(), datumStream.getSourceId()).toIdentity();
+
 		JsonNode regsNode = json.findPath("registers");
 		if ( !regsNode.isArray() ) {
-			return result;
+			return null;
 		}
 		String[] regNames = new String[regsNode.size()];
 
 		for ( int i = 0, len = regsNode.size(); i < len; i++ ) {
 			JsonNode regNode = regsNode.get(i);
-			regNames[i] = regNode.path("name").asText();
+			regNames[i] = regNode.path("name").asString();
 		}
 
 		for ( JsonNode rangeNode : json.findPath("ranges") ) {
@@ -654,18 +695,19 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			// iterate up to n-1 of rows, as we calculate differences between n, n+1
 			JsonNode rowsNode = rangeNode.path("rows");
 			int rowCount = rowsNode.size();
+			Instant prevTs = null;
 			for ( int rowIdx = 0, maxRowIdx = rowCount - 1; rowIdx < maxRowIdx; rowIdx++ ) {
-				JsonNode rowNode = rowsNode.get(rowIdx);
-				DatumSamples samples = new DatumSamples();
+				final JsonNode rowNode = rowsNode.get(rowIdx);
 				ts = ts.minus(deltaDur); // datum timestamp will be start of delta period
+				final DatumSamples samples = streamBuffer.getOrCreate(streamId, ts);
 				for ( int i = 0, len = rowNode.size(); i < len && i < regNames.length; i++ ) {
 					String regName = regNames[i];
 					List<ValueRef> refs = refsByRegisterName.get(regName);
 					if ( refs == null ) {
 						continue;
 					}
-					String val = nonEmptyString(rowNode.get(i).asText());
-					String nextVal = nonEmptyString(rowsNode.get(rowIdx + 1).path(i).asText());
+					String val = nonEmptyString(rowNode.get(i).asString());
+					String nextVal = nonEmptyString(rowsNode.get(rowIdx + 1).path(i).asString());
 					if ( val == null || nextVal == null ) {
 						continue;
 					}
@@ -688,14 +730,27 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 								property.applyValueTransforms(datumVal));
 					}
 				}
-				if ( !samples.isEmpty() ) {
-					result.add(new GeneralDatum(new DatumId(datumStream.getKind(),
-							datumStream.getObjectId(), datumStream.getSourceId(), ts), samples));
+				if ( samples.isEmpty() ) {
+					streamBuffer.removeTimestamp(streamId, ts, samples);
+				} else {
+					if ( prevTs == null ) {
+						// look up previous datum so we can perform validation
+						final var prevDatum = lookupPreviousDatum(datumStream,
+								nonnull(datumStream.getSourceId(), "Source ID"), ts);
+						if ( prevDatum != null ) {
+							prevTs = prevDatum.getTimestamp();
+						}
+					}
+					if ( timeGapDuration != null && prevTs != null ) {
+						streamBuffer.addAuxiliary(streamId, validateTimeGap(datumStream, request,
+								hardwareRef, null, timeGapDuration, prevTs, streamId.datumIdentity(ts)));
+					}
+					prevTs = ts;
 				}
 			}
 		}
 
-		return result;
+		return null;
 	}
 
 	/**
@@ -703,7 +758,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 *
 	 * @return the cache
 	 */
-	public final Cache<String, CloudDataValue[]> getDeviceRegistersCache() {
+	public final @Nullable Cache<String, CloudDataValue[]> getDeviceRegistersCache() {
 		return deviceRegistersCache;
 	}
 
@@ -713,7 +768,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * @param deviceRegistersCache
 	 *        the cache to set
 	 */
-	public final void setDeviceRegistersCache(Cache<String, CloudDataValue[]> deviceRegistersCache) {
+	public final void setDeviceRegistersCache(
+			@Nullable Cache<String, CloudDataValue[]> deviceRegistersCache) {
 		this.deviceRegistersCache = deviceRegistersCache;
 	}
 

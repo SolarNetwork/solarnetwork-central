@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toCollection;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamMappingConfiguration;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -34,32 +36,40 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link JdbcCloudDatumStreamMappingConfigurationDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcCloudIntegrationConfigurationDao integrationDao;
+	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
 	private JdbcCloudDatumStreamMappingConfigurationDao dao;
 	private Long userId;
 
@@ -70,12 +80,22 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		dao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		integrationDao = new JdbcCloudIntegrationConfigurationDao(jdbcTemplate);
+		datumStreamDao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
 	}
 
 	private CloudIntegrationConfiguration createIntegration(Long userId, Map<String, Object> props) {
 		CloudIntegrationConfiguration conf = CinJdbcTestUtils.newCloudIntegrationConfiguration(userId,
 				randomString(), randomString(), props);
 		CloudIntegrationConfiguration entity = integrationDao.get(integrationDao.save(conf));
+		return entity;
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
+			Map<String, Object> props) {
+		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
+				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
+				randomString(), randomString(), props);
+		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
 		return entity;
 	}
 
@@ -98,9 +118,9 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 	public void insert() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId,
-				singletonMap("bim", "bam"));
+				Map.of("bim", "bam"));
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
 				integration.getConfigId(),
@@ -170,7 +190,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -183,7 +203,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 
@@ -209,7 +229,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		final List<Long> integrationIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -219,7 +239,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
 
-					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 					integrationIds.add(integrationId);
 				} else {
 					userId = userIds.get(u);
@@ -259,7 +279,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		final List<Long> integrationIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -269,7 +289,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
 
-					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 					integrationIds.add(integrationId);
 				} else {
 					userId = userIds.get(u);
@@ -301,6 +321,239 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 				.filter(e -> userId.equals(e.getUserId()))
 				.toArray(CloudDatumStreamMappingConfiguration[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	/*-
+	 * This test finds mappings that either
+	 *
+	 * 1) have no reference by a cloud datum stream, or
+	 * 2) have a reference to a cloud datum stream of Node type with one of a given set of node ID criteria
+	 */
+	@Test
+	public void findFiltered_forNodeIds() throws Exception {
+		// GIVEN
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 6;
+
+		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>();
+		final Map<Long, CloudDatumStreamConfiguration> mappingToDatumStreams = new HashMap<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
+				for ( int m = 0; m < mappingCount; m++ ) {
+					// @formatter:off
+					CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(
+							userId,
+							integrationId,
+							randomString(),
+							null
+							);
+					// @formatter:on
+
+					UserLongCompositePK id = dao.create(userId, conf);
+					conf = conf.copyWithId(id);
+					confs.add(conf);
+
+					// create a datum stream, every other one associated with this mapping
+					CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+							i % 2 == 0 ? conf.getConfigId() : null, null);
+					if ( datumStream.getDatumStreamMappingId() != null ) {
+						mappingToDatumStreams.put(conf.getConfigId(), datumStream);
+					}
+				}
+			}
+		}
+
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
+		allCloudDatumStreamConfigurationData(jdbcTemplate);
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = mappingToDatumStreams.values()
+				.stream().filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final SortedSet<Long> userNodeIds = userDatumStreams.stream().map(c -> c.getObjectId())
+				.collect(toCollection(TreeSet::new));
+		final Set<Long> randomNodeIds = Set.of(userNodeIds.first(), userNodeIds.last());
+
+		final List<CloudDatumStreamMappingConfiguration> expected = confs.stream().filter(c -> {
+			if ( !randomUserId.equals(c.getUserId()) ) {
+				return false;
+			}
+			var datumStream = mappingToDatumStreams.get(c.getConfigId());
+			return (datumStream == null || randomNodeIds.contains(datumStream.getObjectId()));
+		}).sorted().toList();
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+
+		FilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		then(results).as("Results for node IDs returned").containsExactlyElementsOf(expected);
+	}
+
+	@Test
+	public void mergeServiceProps_mode_simple() {
+		// GIVEN
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"other", randomString()
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("foo", randomString(), "baz", randomString());
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.Simple, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"other", conf.getServiceProperties().get("other"),
+				"foo", newProps.get("foo"),
+				"baz", newProps.get("baz")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursive() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id, MergeMode.RecursiveObjects,
+				newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProps_mode_recursiveArrays() {
+		// GIVEN
+		final String n1 = randomString();
+		final String n2 = randomString();
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId,
+				Map.of("bim", "bam"));
+
+		// @formatter:off
+		final Map<String, Object> sprops = Map.of(
+				"foo", randomString(),
+				"bar", randomString(),
+				"obj", Map.of(
+						"n1", n1
+					),
+				"ary", List.of("a1")
+			);
+		// @formatter:on
+
+		final CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(), randomString(), sprops);
+
+		final UserLongCompositePK id = dao.create(userId, conf);
+
+		// @formatter:off
+		final Map<String, Object> newProps = Map.of(
+				"foo", randomString(),
+				"baz", randomString(),
+				"obj", Map.of(
+						"n2", n2
+					),
+				"ary", List.of("a2")
+			);
+		// @formatter:on
+
+		// WHEN
+		final Map<String, Object> result = dao.mergeServiceProperties(id,
+				MergeMode.RecursiveObjectsAndArrays, newProps);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Record updated")
+			.isNotNull()
+			.as("Service properties are merged, with recursive objects and arrays")
+			.containsExactlyInAnyOrderEntriesOf(Map.of(
+				"foo", newProps.get("foo"),
+				"bar", conf.getServiceProperties().get("bar"),
+				"baz", newProps.get("baz"),
+				"obj", Map.of(
+						"n1", n1,
+						"n2", n2
+					),
+				"ary", List.of("a1", "a2")
+			))
+			;
+		// @formatter:on
 	}
 
 }

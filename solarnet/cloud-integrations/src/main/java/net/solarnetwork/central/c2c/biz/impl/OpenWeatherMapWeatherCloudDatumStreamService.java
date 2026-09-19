@@ -23,16 +23,16 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -41,19 +41,19 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DayDatum;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * OpenWeatherMap implementation of {@link CloudDatumStreamService} using the
  * weather API.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class OpenWeatherMapWeatherCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {
@@ -68,16 +68,17 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 		SETTINGS = List.of(
 				new BasicTextFieldSettingSpecifier(LATITUDE_SETTING, null),
 				new BasicTextFieldSettingSpecifier(LONGITUDE_SETTING, null),
-				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null)
+				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null),
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -101,7 +102,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OpenWeatherMapWeatherCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -119,29 +120,30 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
-		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+		return performAction(datumStream, (ms, ds, mapping, integration, _, exprProps) -> {
 
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
 					WEATHER_URL_PATH);
 
 			final GeneralDatum datum = restOpsHelper.httpGet("Get weather conditions", integration,
-					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds));
+					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
+					(_, res) -> parseDatum(res.getBody(), ds));
 
-			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)
-					: Collections.emptyList());
+			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum) : List.of());
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList();
+			return r.stream().sorted().map(Datum.class::cast).toList();
 		});
 	}
 
-	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
-		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
-				datumStream.getSourceId());
+	private @Nullable GeneralDatum parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream) {
+		GeneralDatum d = parseWeatherData(json, datumStream.getKind(),
+				nonnull(datumStream.getObjectId(), "Object ID"),
+				nonnull(datumStream.getSourceId(), "Source ID"));
 		if ( d != null ) {
 			// remove DayDatum keys from weather
 			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MINIMUM_KEY, null);

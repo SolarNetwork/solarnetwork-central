@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 
 /**
@@ -39,10 +40,12 @@ public class BasicBillingSystemInfo implements BillingSystemInfo {
 	 * 
 	 * @param accountingSystemKey
 	 *        the accounting system key to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public BasicBillingSystemInfo(String accountingSystemKey) {
 		super();
-		this.accountingSystemKey = accountingSystemKey;
+		this.accountingSystemKey = requireNonNullArgument(accountingSystemKey, "accountingSystemKey");
 	}
 
 	@Override

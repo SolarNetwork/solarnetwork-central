@@ -40,13 +40,11 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
@@ -79,7 +77,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatum> results = Collections.emptyList();
+		List<AggregateDatum> results = List.of();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			results = jdbcTemplate.query(
@@ -103,7 +101,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatum> results = Collections.emptyList();
+		List<AggregateDatum> results = List.of();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {

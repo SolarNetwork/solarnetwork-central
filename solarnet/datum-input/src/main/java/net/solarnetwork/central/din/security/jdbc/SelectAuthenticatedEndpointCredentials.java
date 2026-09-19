@@ -51,7 +51,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 * @param username
 	 *        the username
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthenticatedEndpointCredentials(UUID endpointId, String username) {
 		super();

@@ -23,6 +23,8 @@
 package net.solarnetwork.central.support;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,6 +38,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A combination of {@link BlockingQueue} and {@link Set}.
@@ -67,7 +70,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * not necessarily the current leader, is signalled. So waiting threads must
 	 * be prepared to acquire and lose leadership while waiting.
 	 */
-	private Thread leader;
+	private @Nullable Thread leader;
 
 	/**
 	 * Condition signalled when a newer element becomes available at the head of
@@ -97,10 +100,12 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 *
 	 * @param delegateSet
 	 *        a specific set instance to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DelayQueueSet(Set<E> delegateSet) {
 		super();
-		this.s = delegateSet;
+		this.s = requireNonNullArgument(delegateSet, "delegateSet");
 	}
 
 	/**
@@ -140,6 +145,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws NullPointerException
 	 *         if the specified element is null
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean offer(E e) {
 		final ReentrantLock lock = this.lock;
@@ -160,9 +166,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 
 	/**
 	 * Inserts the specified element into this delay queue. As the queue is
-	 * unbounded this method will never block
-	 *
-	 * {@inheritDoc}
+	 * unbounded this method will never block {@inheritDoc}
 	 */
 	@Override
 	public void put(E e) {
@@ -195,7 +199,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 *         queue has no elements with an expired delay
 	 */
 	@Override
-	public E poll() {
+	public @Nullable E poll() {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
@@ -206,8 +210,10 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		}
 	}
 
-	private E removed(E el) {
-		s.remove(el);
+	private @Nullable E removed(@Nullable E el) {
+		if ( el != null ) {
+			s.remove(el);
+		}
 		return el;
 	}
 
@@ -220,6 +226,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws InterruptedException
 	 *         if interrupted while waiting
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public E take() throws InterruptedException {
 		final ReentrantLock lock = this.lock;
@@ -232,7 +239,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 				} else {
 					long delay = first.getDelay(NANOSECONDS);
 					if ( delay <= 0L ) {
-						return removed(q.poll());
+						return nonnull(removed(q.poll()), "removed");
 					}
 					first = null; // don't retain ref while waiting
 					if ( leader != null ) {
@@ -270,8 +277,9 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @throws InterruptedException
 	 *         if interrupted while waiting
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+	public @Nullable E poll(long timeout, TimeUnit unit) throws InterruptedException {
 		long nanos = unit.toNanos(timeout);
 		final ReentrantLock lock = this.lock;
 		lock.lockInterruptibly();
@@ -328,7 +336,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 */
 	@Override
 	public E remove() {
-		return removed(super.remove());
+		return nonnull(removed(super.remove()), "removed");
 	}
 
 	/**
@@ -341,7 +349,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 *         empty
 	 */
 	@Override
-	public E peek() {
+	public @Nullable E peek() {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
@@ -367,6 +375,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		return drainTo(c, Integer.MAX_VALUE);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
 		Objects.requireNonNull(c);
@@ -518,7 +527,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	/**
 	 * Identity-based version for use in Itr.remove.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "ReferenceEquality" })
 	void removeEQ(Object o) {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
@@ -571,7 +580,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "unchecked", "AssignmentExpression" })
 		public E next() {
 			if ( cursor >= array.length ) {
 				throw new NoSuchElementException();

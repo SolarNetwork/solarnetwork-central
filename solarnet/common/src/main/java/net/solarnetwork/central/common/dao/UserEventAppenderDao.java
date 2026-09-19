@@ -23,21 +23,14 @@
 package net.solarnetwork.central.common.dao;
 
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * DAO API for write-only access to creating user events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface UserEventAppenderDao {
-
-	/**
-	 * Add an event.
-	 * 
-	 * @param event
-	 *        the event to add
-	 */
-	void add(UserEvent event);
+public interface UserEventAppenderDao extends GenericWriteOnlyDao<UserEvent, UserUuidPK> {
 
 }

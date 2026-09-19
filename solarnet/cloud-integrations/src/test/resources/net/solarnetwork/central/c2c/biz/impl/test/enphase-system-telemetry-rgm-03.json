@@ -1,0 +1,75 @@
+{
+  "system_id": 2875,
+  "total_devices": 3,
+  "intervals": [
+    {
+      "end_at": 1741088700,
+      "devices_reporting": 3,
+      "wh_del": 0
+    },
+    {
+      "end_at": 1741089600,
+      "devices_reporting": 3,
+      "wh_del": 5
+    },
+    {
+      "end_at": 1741090500,
+      "devices_reporting": 2,
+      "wh_del": 21
+    },
+    {
+      "end_at": 1741091400,
+      "devices_reporting": 1,
+      "wh_del": 44
+    },
+    {
+      "end_at": 1741092300,
+      "devices_reporting": 1,
+      "wh_del": 97
+    }
+  ],
+  "meta": {
+    "status": "normal",
+    "last_report_at": 1741118911,
+    "last_energy_at": 1741094199,
+    "operational_at": 1657080000
+  },
+  "meter_intervals": [
+    {
+      "meter_serial_number": "000005058195EIM1",
+      "envoy_serial_number": "000005058195",
+      "intervals": [
+        {
+          "channel": 1,
+          "wh_del": 0.0,
+          "curr_w": 0,
+          "end_at": 1741088700
+        },
+        {
+          "channel": 1,
+          "wh_del": 2.0,
+          "curr_w": 32,
+          "end_at": 1741089600
+        },
+        {
+          "channel": 1,
+          "wh_del": 11.0,
+          "curr_w": 52,
+          "end_at": 1741090500
+        },
+        {
+          "channel": 1,
+          "wh_del": 22.0,
+          "curr_w": 140,
+          "end_at": 1741091400
+        },
+        {
+          "channel": 1,
+          "wh_del": 49.0,
+          "curr_w": 255,
+          "end_at": 1741092300
+        }
+      ]
+    }
+  ]
+}

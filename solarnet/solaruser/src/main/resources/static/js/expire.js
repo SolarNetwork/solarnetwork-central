@@ -63,7 +63,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, dataServices);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			populateDataConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, expireConfigs.dataConfigs);
 		}, function serializeDataConfigForm(form) {
@@ -100,7 +100,7 @@ $(document).ready(function() {
 		var config = SolarReg.Templates.findContextItem(this);
 		$(this).find('.config-name').text(config ? config.name : '');
 	})
-	.on('shown.bs.modal', function(event) {
+	.on('shown.bs.modal', function(_event) {
 		var me = this,
 			config = SolarReg.Templates.findContextItem(this);
 		if ( config && config.id ) {
@@ -121,7 +121,7 @@ $(document).ready(function() {
 				}
 
 				// in case not all expected properties returned by server, set to 0 now
-				modal.find('.expire-preview-counts *[data-tprop]').each(function(idx, el) {
+				modal.find('.expire-preview-counts *[data-tprop]').each(function(_idx, el) {
 					if ( counts[el.dataset.tprop] === undefined ) {
 						counts[el.dataset.tprop] = "0";
 					}
@@ -277,7 +277,7 @@ $(document).ready(function() {
 		var modal = $(this);
 		$('#edit-datum-delete-job-modal').ajaxSubmit({
 			dataType: 'json',
-			success: function(json, status, xhr, form) {
+			success: function(json, _status, _xhr, _form) {
 				if ( !json && json.success ) {
 					// TODO handle error
 					return;
@@ -293,7 +293,7 @@ $(document).ready(function() {
 				modal.find('.ready').removeClass('hidden').end()
 					.find('.waiting').addClass('hidden');
 			},
-			error: function(xhr, status, statusText) {
+			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
 			}
 		});
@@ -324,7 +324,7 @@ $(document).ready(function() {
 			// perform delete
 			modal.ajaxSubmit({
 				dataType: 'json',
-				success: function(json, status, xhr, form) {
+				success: function(json, _status, _xhr, _form) {
 					if ( json && json.success === true ) {
 						deleteJobs = [json.data].concat(deleteJobs);
 						handleDatumDeleteJobs(deleteJobs, false);
@@ -334,7 +334,7 @@ $(document).ready(function() {
 						SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 					}
 				},
-				error: function(xhr, status, statusText) {
+				error: function(_xhr, _status, statusText) {
 					SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
 				}
 			});

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.pki.dev;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -46,10 +48,11 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.UUID;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -62,7 +65,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Developer implementation of {@link NodePKIBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
@@ -72,13 +75,51 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	private static final String DIR_REQUESTS = "requests";
 	private static final String PASSWORD_FILE = "secret";
 
-	private CertificateService certificateService;
-	private CertificationAuthorityService caService;
-	private File baseDir = new File("var/DeveloperCA");
+	private final CertificateService certificateService;
+	private final CertificationAuthorityService caService;
+	private final File baseDir;
+	private final String caDN;
 	private int keySize = 2048;
-	private String caDN = "CN=Developer CA, O=SolarDev";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param certificateService
+	 *        the certificate service
+	 * @param caService
+	 *        the CA service
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DevNodePKIBiz(CertificateService certificateService,
+			CertificationAuthorityService caService) {
+		this(certificateService, caService, new File("var/DeveloperCA"), "CN=Developer CA, O=SolarDev");
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param certificateService
+	 *        the certificate service
+	 * @param caService
+	 *        the CA service
+	 * @param baseDir
+	 *        the base directory
+	 * @param caDN
+	 *        the CA DN
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DevNodePKIBiz(CertificateService certificateService, CertificationAuthorityService caService,
+			File baseDir, String caDN) {
+		super();
+		this.certificateService = requireNonNullArgument(certificateService, "certificateService");
+		this.caService = requireNonNullArgument(caService, "caService");
+		this.baseDir = requireNonNullArgument(baseDir, "baseDir");
+		this.caDN = requireNonNullArgument(caDN, "caDN");
+	}
 
 	/**
 	 * Initialize this service after all properties are configured.
@@ -224,7 +265,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
 	@Override
 	public String submitCSR(X509Certificate certificate, PrivateKey privateKey)
-			throws SecurityException {
+			throws BasicSecurityException {
 		final SecurityUser requestor = SecurityUtils.getCurrentUser(); // mimic Dogtag
 		log.info("Submitting CSR for user {} - {} <{}>", requestor.getUserId(),
 				requestor.getDisplayName(), requestor.getEmail());
@@ -249,7 +290,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	}
 
 	@Override
-	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
+	public String submitRenewalRequest(X509Certificate certificate) throws BasicSecurityException {
 		final String csr = certificateService
 				.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
 		final String csrID = DigestUtils.md5Hex(csr);
@@ -358,7 +399,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		File pwFile = new File(baseDir, PASSWORD_FILE);
 		if ( pwFile.canRead() ) {
 			try {
-				return new String(FileCopyUtils.copyToByteArray(pwFile), StandardCharsets.US_ASCII);
+				return new String(FileCopyUtils.copyToByteArray(pwFile), US_ASCII);
 			} catch ( UnsupportedEncodingException e ) {
 				throw new CertificateException(
 						"Error decoding keystore secret file " + pwFile.getAbsolutePath(), e);
@@ -374,7 +415,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 			baseDir.mkdirs();
 		}
 		try {
-			FileCopyUtils.copy(pw.getBytes(), pwFile);
+			FileCopyUtils.copy(pw.getBytes(US_ASCII), pwFile);
 		} catch ( IOException e ) {
 			throw new CertificateException(
 					"Unable to save keystore secret file " + pwFile.getAbsolutePath(), e);
@@ -400,7 +441,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 	}
 
-	private KeyStore loadKeyStore(String type, InputStream in, String password) {
+	private KeyStore loadKeyStore(String type, @Nullable InputStream in, @Nullable String password) {
 		if ( password == null ) {
 			password = "";
 		}
@@ -430,7 +471,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 	}
 
-	private synchronized void saveKeyStore(KeyStore keyStore) {
+	private synchronized void saveKeyStore(@Nullable KeyStore keyStore) {
 		if ( keyStore == null ) {
 			return;
 		}
@@ -448,28 +489,23 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 	}
 
-	public void setCertificateService(CertificateService certificateService) {
-		this.certificateService = certificateService;
-	}
-
-	public void setBaseDir(File baseDir) {
-		this.baseDir = baseDir;
-	}
-
-	public File getBaseDir() {
+	/**
+	 * Get the base directory.
+	 * 
+	 * @return the base directory
+	 */
+	public final File getBaseDir() {
 		return baseDir;
 	}
 
-	public void setCaService(CertificationAuthorityService caService) {
-		this.caService = caService;
-	}
-
-	public void setKeySize(int keySize) {
+	/**
+	 * Set the key size.
+	 * 
+	 * @param keySize
+	 *        the key size
+	 */
+	public final void setKeySize(int keySize) {
 		this.keySize = keySize;
-	}
-
-	public void setCaDN(String caDN) {
-		this.caDN = caDN;
 	}
 
 }

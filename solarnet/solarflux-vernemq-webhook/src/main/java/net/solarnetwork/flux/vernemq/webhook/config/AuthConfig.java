@@ -20,7 +20,6 @@ package net.solarnetwork.flux.vernemq.webhook.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.SimpleAuthorizationEvaluator;
@@ -34,23 +33,23 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.SimpleAuthorizationEva
 @Configuration(proxyBeanMethods = false)
 public class AuthConfig {
 
-  @Value("${auth.userTopicPrefixEnabled:true}")
-  private boolean userTopicPrefix = true;
+	@Value("${auth.userTopicPrefixEnabled:true}")
+	private boolean userTopicPrefix = true;
 
-  @Value("${mqtt.maxQos:1}")
-  private int maxQos = Qos.AtLeastOnce.getKey();
+	@Value("${mqtt.maxQos:1}")
+	private int maxQos = Qos.AtLeastOnce.getKey();
 
-  /**
-   * The {@link AuthorizationEvaluator}.
-   * 
-   * @return the evaluator service
-   */
-  @Bean
-  public SimpleAuthorizationEvaluator authorizationEvaluator() {
-    SimpleAuthorizationEvaluator ae = new SimpleAuthorizationEvaluator();
-    ae.setUserTopicPrefix(userTopicPrefix);
-    ae.setMaxQos(Qos.forKey(maxQos));
-    return ae;
-  }
+	/**
+	 * The {@link AuthorizationEvaluator}.
+	 * 
+	 * @return the evaluator service
+	 */
+	@Bean
+	public SimpleAuthorizationEvaluator authorizationEvaluator() {
+		SimpleAuthorizationEvaluator ae = new SimpleAuthorizationEvaluator();
+		ae.setUserTopicPrefix(userTopicPrefix);
+		ae.setMaxQos(Qos.forKey(maxQos));
+		return ae;
+	}
 
 }

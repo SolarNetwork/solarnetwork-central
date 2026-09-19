@@ -60,7 +60,7 @@ public final class UpdateServerConfiguration implements PreparedStatementCreator
 	 * @param entity
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateServerConfiguration(UserLongCompositePK id, ServerConfiguration entity) {
 		super();

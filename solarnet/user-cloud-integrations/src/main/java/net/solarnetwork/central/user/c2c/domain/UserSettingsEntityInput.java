@@ -58,7 +58,7 @@ public class UserSettingsEntityInput {
 	 *
 	 * @return {@literal true} if data should be published to SolarIn
 	 */
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -68,7 +68,7 @@ public class UserSettingsEntityInput {
 	 * @param publishToSolarIn
 	 *        {@literal true} if data should be published to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
@@ -77,7 +77,7 @@ public class UserSettingsEntityInput {
 	 *
 	 * @return {@literal true} if data should be published to SolarFlux
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -87,7 +87,7 @@ public class UserSettingsEntityInput {
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data should be published to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 

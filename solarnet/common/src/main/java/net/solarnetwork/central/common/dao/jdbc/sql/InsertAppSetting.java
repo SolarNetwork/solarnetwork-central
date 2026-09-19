@@ -52,7 +52,7 @@ public final class InsertAppSetting implements PreparedStatementCreator, SqlProv
 	 * @param upsert
 	 *        use an "upsert" style query
 	 * @throws IllegalArgumentException
-	 *         if {@code setting} is {@literal null}
+	 *         if {@code setting} is {@code null}
 	 */
 	public InsertAppSetting(AppSetting setting, boolean upsert) {
 		super();

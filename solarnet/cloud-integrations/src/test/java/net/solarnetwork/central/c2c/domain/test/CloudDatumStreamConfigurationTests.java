@@ -30,7 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.DateUtils;
 
@@ -46,15 +46,13 @@ public class CloudDatumStreamConfigurationTests {
 	public void toJson() {
 		// GIVEN
 		CloudDatumStreamConfiguration entity = new CloudDatumStreamConfiguration(randomLong(),
-				randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS), randomString(),
+				randomString(), ObjectDatumKind.Node);
 		entity.setModified(entity.getCreated().plusSeconds(1));
 		entity.setEnabled(true);
-		entity.setServiceIdentifier(randomString());
 		entity.setServiceProps(Map.of("foo", "bar"));
-		entity.setName(randomString());
 		entity.setDatumStreamMappingId(randomLong());
 		entity.setSchedule(randomString());
-		entity.setKind(ObjectDatumKind.Node);
 		entity.setObjectId(randomLong());
 		entity.setSourceId(randomString());
 

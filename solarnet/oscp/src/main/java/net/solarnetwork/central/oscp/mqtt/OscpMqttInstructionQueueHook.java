@@ -30,18 +30,16 @@ import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSA
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchemaFactory;
+import org.jspecify.annotations.Nullable;
+import com.networknt.schema.SchemaRegistry;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -58,7 +56,7 @@ import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -66,6 +64,8 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Node instruction queue hook to publish OSCP v2.0 instructions to a MQTT
@@ -78,20 +78,18 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final UserNodeDao userNodeDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final ObjectMapper objectMapper;
-	private JsonSchemaFactory jsonSchemaFactory;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable SchemaRegistry jsonSchemaRegistry;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 	private String mqttTopic = MQTT_TOPIC_V20;
 
 	/**
@@ -110,7 +108,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * @param capacityProviderDao
 	 *        the capacity provider DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OscpMqttInstructionQueueHook(StatTracker stats, ObjectMapper objectMapper,
 			UserNodeDao userNodeDao, CapacityGroupConfigurationDao capacityGroupDao,
@@ -128,8 +126,11 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 	@Override
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
-		final String topic = instruction.getTopic();
+		final String topic = instruction.getInstruction().getTopic();
 		final Long nodeId = instruction.getNodeId();
+		if ( nodeId == null ) {
+			return instruction;
+		}
 		log.trace("Inspecting {} instruction for node {}", topic, nodeId);
 		if ( !OscpInstructionUtils.OSCP_V20_TOPIC.equals(topic) ) {
 			return instruction;
@@ -137,10 +138,19 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
 			log.trace("UserNode not found for node {}; ignoring OSCPv20 instruction {}", nodeId, topic);
-			instruction.setState(Declined);
+			instruction.getInstruction().setState(Declined);
 			return instruction;
 		}
-		final Map<String, String> params = instruction.getParams();
+		final Map<String, String> params = instruction.getInstruction().getParams();
+		if ( params == null ) {
+			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
+					"Missing OSCP parameters", null);
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Missing OSCP parameters"));
+			return instruction;
+		}
+
 		final Map<String, Object> eventData = new HashMap<>(4);
 		eventData.put(INSTRUCTION_ID_DATA_KEY, instruction.getId());
 
@@ -148,8 +158,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( action == null || action.isBlank() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS, "Missing OSCP action",
 					null);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Missing OSCP action"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Missing OSCP action"));
 			return instruction;
 		}
 		eventData.put(ACTION_DATA_KEY, action);
@@ -158,8 +169,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( coIdString == null ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Missing capacity optimizer ID", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Missing capacity optimizer ID"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Missing capacity optimizer ID"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
@@ -171,8 +183,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		} catch ( NumberFormatException e ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Invalid capacity optimizer ID", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Invalid capacity optimizer ID"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Invalid capacity optimizer ID"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
@@ -182,8 +195,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cgIdent == null || cgIdent.isBlank() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Missing group identifier", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Missing group identifier"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Missing group identifier"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
@@ -194,8 +208,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( co == null || !co.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown capacity optimizer", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Unknown capacity optimizer"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Unknown capacity optimizer"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
@@ -205,8 +220,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cg == null || !cg.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown group identifier", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Unknown group identifier"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Unknown group identifier"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
@@ -216,15 +232,16 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cp == null || !cp.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown capacity provider", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", "Unknown capacity provider"));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction()
+					.setResultParameters(singletonMap("error", "Unknown capacity provider"));
 			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 
 		try {
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params,
-					jsonSchemaFactory);
+					jsonSchemaRegistry);
 
 			// for AdjustGroupCapacityForecast make sure group fixed to instruction group
 			if ( msg instanceof AdjustGroupCapacityForecast m ) {
@@ -244,42 +261,46 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS, "Invalid OSCP message",
 					eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", e.getMessage()));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction().setResultParameters(singletonMap("error", e.getMessage()));
 		} catch ( Exception e ) {
-			log.error("Error queuing OSCP {} instruction with data {}: {}", action, eventData,
-					e.toString(), e);
+			log.error("Error queuing OSCP {} instruction with data {}: {}", action, eventData, e, e);
 			incrementInstructionErrorStat(action);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Error handling OSCP message", eventData);
-			instruction.setState(Declined);
-			instruction.setResultParameters(singletonMap("error", e.getMessage()));
+			instruction.getInstruction().setState(Declined);
+			instruction.getInstruction().setResultParameters(singletonMap("error", e.getMessage()));
 		}
 		return instruction;
 	}
 
 	private void incrementInstructionQueuedStat(String action) {
-		getMqttStats().increment(OscpMqttCountStat.InstructionsQueued);
+		mqttStats().increment(OscpMqttCountStat.InstructionsQueued);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionReceivedStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().increment(actionStat);
+			mqttStats().increment(actionStat);
 		}
 	}
 
-	private void incrementInstructionErrorStat(String action) {
-		getMqttStats().increment(OscpMqttCountStat.InstructionErrors);
+	private void incrementInstructionErrorStat(@Nullable String action) {
+		mqttStats().increment(OscpMqttCountStat.InstructionErrors);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionErrorStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().increment(actionStat);
+			mqttStats().increment(actionStat);
 		}
 	}
 
-	public void publishOscpInstructionMessage(Long instructionId, Long nodeId, Long userId,
+	@SuppressWarnings("NullAway")
+	private StatTracker mqttStats() {
+		return getMqttStats(); // required in constructor
+	}
+
+	public void publishOscpInstructionMessage(Long instructionId, @Nullable Long nodeId, Long userId,
 			CapacityGroupConfiguration group, CapacityProviderConfiguration provider,
 			Map<String, Object> eventData, String action, Object msg) {
 		log.info("Queueing OSCP instruction {} to MQTT topic {} for Capacity Provider {}", action,
-				mqttTopic, provider.getId().ident());
+				mqttTopic, provider.id().ident());
 		eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
 		MqttConnection conn = mqttConnection.get();
 		if ( conn != null && conn.isEstablished() ) {
@@ -299,23 +320,23 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
 				incrementInstructionQueuedStat(action);
 				generateUserEvent(userId, OSCP_INSTRUCTION_IN_TAGS, "Queued instruction", eventData);
-			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
+			} catch ( JacksonException | TimeoutException | ExecutionException
+					| InterruptedException e ) {
 				log.warn(
 						"Error queuing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}: {}",
-						instructionId, action, mqttTopic, provider.getId().ident(), e.toString());
+						instructionId, action, mqttTopic, provider.id().ident(), e.toString());
 				throw new RemoteServiceException(
 						"MQTT error queuing OSCP instruction %d action %s for Capacity Provider %s: %s"
-								.formatted(instructionId, action, provider.getId().ident(),
-										e.getMessage()),
+								.formatted(instructionId, action, provider.id().ident(), e.getMessage()),
 						e);
 			}
 		} else {
 			log.warn(
 					"MQTT connection not available to publish OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}",
-					instructionId, action, mqttTopic, provider.getId().ident());
+					instructionId, action, mqttTopic, provider.id().ident());
 			throw new RemoteServiceException(
 					"MQTT connection not available to publish OSCP instruction %d action %s for Capacity Provider %s"
-							.formatted(instructionId, action, provider.getId().ident()));
+							.formatted(instructionId, action, provider.id().ident()));
 		}
 	}
 
@@ -343,7 +364,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 				CapacityGroupConfiguration cg, CapacityProviderConfiguration cp,
 				Map<String, Object> eventData, String action, Object msg) {
 			super(instruction);
-			setState(state);
+			getInstruction().setState(state);
 			this.userId = userId;
 			this.cg = cg;
 			this.cp = cp;
@@ -354,33 +375,36 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message,
+			@Nullable Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 
 	/**
-	 * Get the JSON schema validator.
+	 * Get the JSON schema registry.
 	 *
-	 * @return the jsonSchemaFactory the validator
+	 * @return the the registry
+	 * @since 3.0
 	 */
-	public JsonSchemaFactory getJsonSchemaFactory() {
-		return jsonSchemaFactory;
+	public final @Nullable SchemaRegistry getJsonSchemaRegistry() {
+		return jsonSchemaRegistry;
 	}
 
 	/**
-	 * SEt the JSON schema validator to use for OSCP JSON messages.
+	 * SEt the JSON schema registry to use for OSCP JSON messages.
 	 *
-	 * @param jsonSchemaFactory
-	 *        the validator to set
+	 * @param jsonSchemaRegistry
+	 *        the registry to set
+	 * @since 3.0
 	 */
-	public void setJsonSchemaFactory(JsonSchemaFactory jsonSchemaFactory) {
-		this.jsonSchemaFactory = jsonSchemaFactory;
+	public final void setJsonSchemaRegistry(@Nullable SchemaRegistry jsonSchemaRegistry) {
+		this.jsonSchemaRegistry = jsonSchemaRegistry;
 	}
 
 	/**
@@ -388,7 +412,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 *
 	 * @return the service
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -398,7 +422,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
@@ -407,7 +431,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 *
 	 * @return the topic
 	 */
-	public String getMqttTopic() {
+	public final String getMqttTopic() {
 		return mqttTopic;
 	}
 
@@ -415,10 +439,10 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@literal null} or blank then
-	 *        {@link #MQTT_TOPIC_V20} will be set instead
+	 *        the topic; if {@code null} or blank then {@link #MQTT_TOPIC_V20}
+	 *        will be set instead
 	 */
-	public void setMqttTopic(String mqttTopic) {
+	public final void setMqttTopic(String mqttTopic) {
 		this.mqttTopic = (mqttTopic == null || mqttTopic.isBlank() ? MQTT_TOPIC_V20 : mqttTopic);
 	}
 

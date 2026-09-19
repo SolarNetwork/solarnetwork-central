@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A primary key based on a node, source, date, and "kind" flag.
@@ -40,14 +43,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 8861820278176468489L;
 
-	private String kind;
-
-	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumKindPK() {
-		super();
-	}
+	private final String kind;
 
 	/**
 	 * Constructor.
@@ -60,10 +56,12 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	 *        the source ID
 	 * @param kind
 	 *        the kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public GeneralNodeDatumKindPK(Long nodeId, Instant created, String sourceId, String kind) {
 		super(nodeId, sourceId, created);
-		setKind(kind);
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
@@ -80,7 +78,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -94,42 +92,35 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";k=");
-		if ( kind != null ) {
-			buf.append(kind);
-		}
+		buf.append(kind);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( kind != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("kind=").append(kind);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("kind=").append(kind);
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumKindPK o) {
+	public int compareTo(@Nullable GeneralNodeDatumKindPK o) {
 		int result = super.compareTo(o);
 		if ( result != 0 ) {
 			return result;
 		}
-		if ( o.kind == null ) {
-			return 1;
-		} else if ( kind == null ) {
-			return -1;
-		}
+		o = nonnull(o, "other");
 		return kind.compareTo(o.kind);
 	}
 
-	public String getKind() {
+	/**
+	 * Get the kind.
+	 *
+	 * @return the kind
+	 */
+	public final String getKind() {
 		return kind;
-	}
-
-	public void setKind(String kind) {
-		this.kind = kind;
 	}
 
 }

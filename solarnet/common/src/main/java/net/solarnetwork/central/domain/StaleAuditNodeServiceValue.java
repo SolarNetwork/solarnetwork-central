@@ -23,7 +23,8 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
-import net.solarnetwork.domain.Identity;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -31,9 +32,9 @@ import net.solarnetwork.domain.datum.Aggregation;
  * time for a specific audit level that needs to be computed.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface StaleAuditNodeServiceValue extends Identity<AggregateDatumId> {
+public interface StaleAuditNodeServiceValue extends Unique<AggregateDatumId> {
 
 	/**
 	 * Get the node ID this audit value is part of.
@@ -44,7 +45,7 @@ public interface StaleAuditNodeServiceValue extends Identity<AggregateDatumId> {
 	 * 
 	 * @return the node ID
 	 */
-	default Long getNodeId() {
+	default @Nullable Long getNodeId() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getObjectId() : null;
 	}
@@ -58,7 +59,7 @@ public interface StaleAuditNodeServiceValue extends Identity<AggregateDatumId> {
 	 * 
 	 * @return the service
 	 */
-	default String getService() {
+	default @Nullable String getService() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getSourceId() : null;
 	}
@@ -77,7 +78,7 @@ public interface StaleAuditNodeServiceValue extends Identity<AggregateDatumId> {
 	 * 
 	 * @return the timestamp for this datum
 	 */
-	default Instant getTimestamp() {
+	default @Nullable Instant getTimestamp() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getTimestamp() : null;
 	}
@@ -91,7 +92,7 @@ public interface StaleAuditNodeServiceValue extends Identity<AggregateDatumId> {
 	 * 
 	 * @return the aggregation
 	 */
-	default Aggregation getAggregation() {
+	default @Nullable Aggregation getAggregation() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getAggregation() : null;
 	}

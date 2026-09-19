@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.v16.vendor.abb;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@code MeterTransfer} message {@code measurand} value.
@@ -31,11 +32,11 @@ import java.util.regex.Pattern;
  * @param name
  *        the key name
  * @param phase
- *        the optional phase ({@literal null} if not phased)
+ *        the optional phase ({@code null} if not phased)
  * @author matt
  * @version 1.0
  */
-public record MeterTransferMeasurand(String name, String phase) {
+public record MeterTransferMeasurand(String name, @Nullable String phase) {
 
 	/** A pattern to match a phased key. */
 	public static final Pattern PHASED_KEY_PATTERN = Pattern.compile("(.*)\\.(ALL|L\\d)");
@@ -55,9 +56,9 @@ public record MeterTransferMeasurand(String name, String phase) {
 	 * 
 	 * @param key
 	 *        the key value to parse
-	 * @return the key instance, or {@literal null} if one cannot be extracted
+	 * @return the key instance, or {@code null} if one cannot be extracted
 	 */
-	public static MeterTransferMeasurand forKey(String key) {
+	public static @Nullable MeterTransferMeasurand forKey(@Nullable String key) {
 		if ( key == null || key.isEmpty() ) {
 			return null;
 		}

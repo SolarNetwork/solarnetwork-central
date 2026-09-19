@@ -83,8 +83,8 @@ public class CapacityForecastController {
 	@PostMapping(path = "/sim/system/{systemId}/group/{groupId}/capacity-forecast",
 			consumes = APPLICATION_JSON_VALUE)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void updateGroupCapcityForecast(@PathVariable("systemId") UUID systemId,
-			@PathVariable("groupId") String groupId, @RequestBody CapacityForecast input) {
+	public void updateGroupCapcityForecast(@PathVariable UUID systemId, @PathVariable String groupId,
+			@RequestBody CapacityForecast input) {
 		requireNonNullArgument(input.type(), "type");
 		requireNonEmptyArgument(input.blocks(), "blocks");
 		SystemConfiguration conf = capacityProviderDao.systemConfiguration(systemId);

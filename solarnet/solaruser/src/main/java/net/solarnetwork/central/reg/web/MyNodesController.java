@@ -24,7 +24,6 @@ package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.domain.Result.success;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -83,6 +83,9 @@ public class MyNodesController extends ControllerSupport {
 	@Autowired
 	private MessageSource messageSource;
 
+	@Autowired
+	private Environment environment;
+
 	/**
 	 * Constructor.
 	 *
@@ -126,12 +129,22 @@ public class MyNodesController extends ControllerSupport {
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
 		// now, only one alert type!
-		return Collections.singletonList(UserAlertType.NodeStaleData);
+		return List.of(UserAlertType.NodeStaleData);
 	}
 
 	@ModelAttribute("alertStatuses")
 	public UserAlertStatus[] alertStatuses() {
 		return UserAlertStatus.values();
+	}
+
+	@ModelAttribute("serviceUrls")
+	public Map<String, String> serviceUrls() {
+		Map<String, String> result = new HashMap<>(4);
+		String url = environment.getProperty("app.network-identity.service-urls.solarquery");
+		if ( url != null ) {
+			result.put("solarquery", url);
+		}
+		return result;
 	}
 
 	/**
@@ -233,9 +246,7 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	@ExceptionHandler(CertificateException.class)
 	public void handleCertificateException(CertificateException e, HttpServletResponse res) {
-		if ( log.isWarnEnabled() ) {
-			log.warn("Certificate exception: " + e.getMessage());
-		}
+		log.warn("Certificate exception: {}", e.getMessage());
 		res.setStatus(HttpServletResponse.SC_FORBIDDEN);
 	}
 

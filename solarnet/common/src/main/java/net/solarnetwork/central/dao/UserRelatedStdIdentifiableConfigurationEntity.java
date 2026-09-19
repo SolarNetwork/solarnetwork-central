@@ -25,13 +25,14 @@ package net.solarnetwork.central.dao;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Extension of {@link UserRelatedIdentifiableConfigurationEntity} that supports
  * {@link UserRelatedStdEntity}.
  *
- * @param <C>
+ * @param <T>
  *        the entity type
  * @param <K>
  *        the key type
@@ -39,8 +40,8 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * @author matt
  * @version 1.1
  */
-public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRelatedStdIdentifiableConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedStdEntity<C, K>, UserRelatedIdentifiableConfigurationEntity<K>, Serializable,
+public interface UserRelatedStdIdentifiableConfigurationEntity<T extends UserRelatedStdIdentifiableConfigurationEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedStdEntity<T, K>, UserRelatedIdentifiableConfigurationEntity<K>, Serializable,
 		Cloneable {
 
 	/**
@@ -56,11 +57,11 @@ public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRel
 	 * @param sensitiveKeyProvider
 	 *        a function that can supply a set of "sensitive" information keys
 	 *        (names) that should be masked
-	 * @returns this object for method chaining
+	 * @return this object for method chaining
 	 * @since 1.1
 	 */
-	default UserRelatedStdIdentifiableConfigurationEntity<C, K> digestSensitiveInformation(
-			Function<String, Set<String>> sensitiveKeyProvider) {
+	default UserRelatedStdIdentifiableConfigurationEntity<T, K> digestSensitiveInformation(
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		return this;
 	}
 

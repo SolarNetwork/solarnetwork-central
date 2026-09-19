@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,15 +32,12 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipException;
@@ -53,27 +51,26 @@ import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.CacheUtils;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.StatTracker;
-import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * Caching service backed by a {@link javax.cache.Cache}.
  *
  * @author matt
- * @version 1.7
+ * @version 2.1
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -84,10 +81,6 @@ public class JCacheContentCachingService
 
 	/** The default value for the {@code statLogAccessCount} property. */
 	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
-
-	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern
-			.compile("^" + AuthenticationScheme.V1.getSchemeName() + "\\s+([^:]+):");
-	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
 
 	private static final Logger log = LoggerFactory.getLogger(JCacheContentCachingService.class);
 
@@ -105,7 +98,7 @@ public class JCacheContentCachingService
 	 * @param cache
 	 *        the cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
@@ -148,6 +141,7 @@ public class JCacheContentCachingService
 		return new PingTestResult(true, "Cache active.", statMap);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private void handleCacheEntryEvent(
 			Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events) {
 		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
@@ -196,26 +190,16 @@ public class JCacheContentCachingService
 		}
 	}
 
-	private void addAuthorization(HttpServletRequest request, MessageDigest digest) {
-		AuthenticationScheme scheme = null;
-		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if ( header != null ) {
-			for ( AuthenticationScheme aScheme : AuthenticationScheme.values() ) {
-				if ( header.startsWith(aScheme.getSchemeName()) ) {
-					scheme = aScheme;
-					break;
-				}
-			}
-		}
-		Matcher m = null;
-		if ( scheme != null ) {
-			m = switch (scheme) {
-				case V1 -> SNWS_V1_KEY_PATTERN.matcher(header);
-				case V2 -> SNWS_V2_KEY_PATTERN.matcher(header);
-			};
-		}
-		if ( m != null && m.find() ) {
-			digest.update(m.group(1).getBytes());
+	/**
+	 * Add the active actor identifier, if available.
+	 * 
+	 * @param digest
+	 *        the digest to add to
+	 */
+	private void addAuthorization(MessageDigest digest) {
+		final String actorTokenId = SecurityUtils.currentTokenId();
+		if ( actorTokenId != null ) {
+			digest.update(actorTokenId.getBytes(UTF_8));
 			digest.update((byte) '@');
 		}
 	}
@@ -251,18 +235,18 @@ public class JCacheContentCachingService
 					} else {
 						digest.update((byte) '&');
 					}
-					digest.update(key.getBytes());
+					digest.update(key.getBytes(UTF_8));
 					digest.update((byte) '=');
-					digest.update(val.getBytes());
+					digest.update(val.getBytes(UTF_8));
 				}
 			}
 		}
 	}
 
 	private static final MediaType CSV_MEDIA_TYPE = MediaType.parseMediaType("text/csv");
-	private static final byte[] CSV_MEDIA_TYPE_COMPONENT = "+csv".getBytes();
-	private static final byte[] JSON_MEDIA_TYPE_COMPONENT = "+json".getBytes();
-	private static final byte[] XML_MEDIA_TYPE_COMPONENT = "+xml".getBytes();
+	private static final byte[] CSV_MEDIA_TYPE_COMPONENT = "+csv".getBytes(UTF_8);
+	private static final byte[] JSON_MEDIA_TYPE_COMPONENT = "+json".getBytes(UTF_8);
+	private static final byte[] XML_MEDIA_TYPE_COMPONENT = "+xml".getBytes(UTF_8);
 
 	public List<MediaType> getAccept(HttpServletRequest request) {
 		Enumeration<String> acceptHeader = request.getHeaders(HttpHeaders.ACCEPT);
@@ -274,7 +258,7 @@ public class JCacheContentCachingService
 			buf.append(acceptHeader.nextElement());
 		}
 		String value = buf.toString();
-		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : Collections.emptyList());
+		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : List.of());
 	}
 
 	private void addNormalizedAccept(HttpServletRequest request, MessageDigest digest) {
@@ -298,9 +282,9 @@ public class JCacheContentCachingService
 				return;
 			} else {
 				digest.update((byte) '+');
-				digest.update(type.getType().getBytes());
+				digest.update(type.getType().getBytes(UTF_8));
 				digest.update((byte) '/');
-				digest.update(type.getSubtype().getBytes());
+				digest.update(type.getSubtype().getBytes(UTF_8));
 			}
 		}
 	}
@@ -323,18 +307,18 @@ public class JCacheContentCachingService
 	 * </ol>
 	 */
 	@Override
-	public String keyForRequest(HttpServletRequest request) {
+	public @Nullable String keyForRequest(HttpServletRequest request) {
 		MessageDigest digest = org.apache.commons.codec.digest.DigestUtils.getMd5Digest();
-		addAuthorization(request, digest);
-		digest.update(request.getMethod().getBytes());
-		digest.update(request.getRequestURI().getBytes());
+		addAuthorization(digest);
+		digest.update(request.getMethod().getBytes(UTF_8));
+		digest.update(request.getRequestURI().getBytes(UTF_8));
 		addNormalizedQueryParameters(request, digest);
 		addNormalizedAccept(request, digest);
 		return HexFormat.of().formatHex(digest.digest());
 	}
 
 	@Override
-	public CachedContent sendCachedResponse(String key, HttpServletRequest request,
+	public @Nullable CachedContent sendCachedResponse(String key, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
@@ -345,9 +329,9 @@ public class JCacheContentCachingService
 		stats.increment(ContentCacheStats.Hit);
 		response.setStatus(200);
 
-		MultiValueMap<String, String> headers = content.getHeaders();
+		HttpHeaders headers = content.getHeaders();
 		if ( headers != null ) {
-			for ( Map.Entry<String, List<String>> me : headers.entrySet() ) {
+			for ( Map.Entry<String, List<String>> me : headers.headerSet() ) {
 				for ( String value : me.getValue() ) {
 					response.addHeader(me.getKey(), value);
 				}
@@ -389,9 +373,11 @@ public class JCacheContentCachingService
 				} catch ( ZipException e ) {
 					// should not be here! log some info to help troubleshoot
 					String base64Content = "";
-					try {
-						var byos = new ByteArrayOutputStream(content.getContentLength());
-						FileCopyUtils.copy(content.getContent(), byos);
+					try (InputStream in2 = content.getContent();
+							var byos = new ByteArrayOutputStream(content.getContentLength())) {
+						if ( in2 != null ) {
+							FileCopyUtils.copy(in2, byos);
+						}
 						base64Content = Base64.getEncoder().encodeToString(byos.toByteArray());
 					} catch ( Exception e2 ) {
 						// ignore exception and continue
@@ -419,8 +405,8 @@ public class JCacheContentCachingService
 
 	@Override
 	public void cacheResponse(String key, HttpServletRequest request, int statusCode,
-			HttpHeaders headers, InputStream content, CompressionType compressionType)
-			throws IOException {
+			HttpHeaders headers, @Nullable InputStream content,
+			@Nullable CompressionType compressionType) throws IOException {
 		byte[] data = FileCopyUtils.copyToByteArray(content);
 
 		String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
@@ -445,8 +431,8 @@ public class JCacheContentCachingService
 			}
 		}
 		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
-		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
-				metadata));
+		cache.put(key,
+				new SimpleCachedContent(new HttpHeaders(headers), data, contentEncoding, metadata));
 		stats.increment(ContentCacheStats.Stored);
 	}
 
@@ -454,9 +440,9 @@ public class JCacheContentCachingService
 	 * Get metadata for the cache content.
 	 *
 	 * <p>
-	 * This method returns {@literal null}, so extending classes can override.
-	 * Note that the returned object must implement {@link Serializable}, along
-	 * with all values in the map.
+	 * This method returns {@code null}, so extending classes can override. Note
+	 * that the returned object must implement {@link Serializable}, along with
+	 * all values in the map.
 	 * </p>
 	 *
 	 * @param key
@@ -467,9 +453,9 @@ public class JCacheContentCachingService
 	 *        the HTTP status code
 	 * @param headers
 	 *        the HTTP headers
-	 * @return the metadata, or {@literal null} if none
+	 * @return the metadata, or {@code null} if none
 	 */
-	protected Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
+	protected @Nullable Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
 			int statusCode, HttpHeaders headers) {
 		return null;
 	}
@@ -480,7 +466,7 @@ public class JCacheContentCachingService
 	 * @param compressibleMediaTypes
 	 *        compressible media types
 	 */
-	public void setCompressibleMediaTypes(Set<MediaType> compressibleMediaTypes) {
+	public final void setCompressibleMediaTypes(Set<MediaType> compressibleMediaTypes) {
 		this.compressibleMediaTypes = requireNonNullArgument(compressibleMediaTypes,
 				"compressibleMediaTypes");
 	}
@@ -491,7 +477,7 @@ public class JCacheContentCachingService
 	 * @param compressMinimumLength
 	 *        the minimum length, in bytes
 	 */
-	public void setCompressMinimumLength(int compressMinimumLength) {
+	public final void setCompressMinimumLength(int compressMinimumLength) {
 		this.compressMinimumLength = compressMinimumLength;
 	}
 
@@ -508,7 +494,7 @@ public class JCacheContentCachingService
 	 *        the access count the access count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
 	 */
-	public void setStatLogAccessCount(int statLogAccessCount) {
+	public final void setStatLogAccessCount(int statLogAccessCount) {
 		this.stats.setLogFrequency(statLogAccessCount);
 	}
 

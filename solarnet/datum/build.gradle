@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.4.5' apply false
+	id 'org.springframework.boot' version '4.1.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,17 +16,9 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.31.0'
 
 base {
 	archivesName = 'solarnet-datum'
-}
-
-configurations {
-	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'com.amazonaws'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -44,29 +36,30 @@ dependencies {
 	// Utilities
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'commons-net:commons-net:3.10.0'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
 	implementation "software.amazon.awssdk:netty-nio-client:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3:3.2.0'
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:1.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3:4.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
+	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	testImplementation 'org.eclipse.jetty:jetty-server'
 	testImplementation "org.tukaani:xz:${xzVersion}"
 	testImplementation 'org.mockftpserver:MockFtpServer:3.1.0'
-	implementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
+	testImplementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
 }
 
 jar.manifest {
@@ -79,7 +72,7 @@ publishing {
 			from components.java
 			pom {
 				name = project.description
-				description = 'Shared library for all SolarNet projects.'
+				description = 'Core datum library for all SolarNet projects.'
 				url = 'https://github.com/SolarNetwork/solarnetwork-central'
 				licenses {
 					license {
@@ -106,7 +99,7 @@ publishing {
 	repositories {
 		maven {
 			name = "OSSRH"
-			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 			credentials {
 				username = ossrhUsername
 				password = ossrhPassword

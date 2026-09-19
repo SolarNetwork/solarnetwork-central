@@ -34,9 +34,9 @@ import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -74,7 +74,7 @@ public class ConnectorStatusDatumPublisherTests {
 	private DatumProcessor fluxPublisher;
 	private ConnectorStatusDatumPublisher publisher;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
@@ -87,7 +87,7 @@ public class ConnectorStatusDatumPublisherTests {
 		publisher.setFluxPublisher(fluxPublisher);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(chargePointSettingsDao, chargePointConnectorDao, chargeSessionDao, datumDao,
 				fluxPublisher);

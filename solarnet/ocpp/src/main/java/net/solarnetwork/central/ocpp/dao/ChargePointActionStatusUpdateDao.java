@@ -45,7 +45,7 @@ public interface ChargePointActionStatusUpdateDao {
 	 * @param chargePointIdentifier
 	 *        the charge point identifier
 	 * @param connectorId
-	 *        the connector ID the message is related to, or {@literal null} or
+	 *        the connector ID the message is related to, or {@code null} or
 	 *        {@literal 0} for charger-wide actions
 	 * @param action
 	 *        the action name
@@ -54,7 +54,7 @@ public interface ChargePointActionStatusUpdateDao {
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code connectorId} is {@literal null}
+	 *         if any argument other than {@code connectorId} is {@code null}
 	 */
 	default void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
 			String action, String messageId, Instant date) {
@@ -73,10 +73,10 @@ public interface ChargePointActionStatusUpdateDao {
 	 * @param chargePointIdentifier
 	 *        the charge point identifier
 	 * @param evseId
-	 *        the EVSE ID the message is related to, or {@literal null} for
+	 *        the EVSE ID the message is related to, or {@code null} for
 	 *        charger-wide actions
 	 * @param connectorId
-	 *        the connector ID the message is related to, or {@literal null} or
+	 *        the connector ID the message is related to, or {@code null} or
 	 *        {@literal 0} for EVSE-wide actions
 	 * @param action
 	 *        the action name
@@ -85,7 +85,7 @@ public interface ChargePointActionStatusUpdateDao {
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code connectorId} is {@literal null}
+	 *         if any argument other than {@code connectorId} is {@code null}
 	 */
 	void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer evseId,
 			Integer connectorId, String action, String messageId, Instant date);

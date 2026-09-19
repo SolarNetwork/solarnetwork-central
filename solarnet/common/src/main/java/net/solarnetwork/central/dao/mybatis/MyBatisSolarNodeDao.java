@@ -26,13 +26,14 @@ import static java.util.stream.Collectors.toList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -94,7 +95,8 @@ public class MyBatisSolarNodeDao
 
 	@Override
 	public FilterResults<SolarNodeFilterMatch, Long> findFiltered(SolarNodeFilter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		// manually implemented to support metadataFilter
 		final String filterDomain = getMemberDomainKey(SolarNodeMatch.class);
 		final String query = getFilteredQuery(filterDomain, filter);
@@ -115,8 +117,8 @@ public class MyBatisSolarNodeDao
 			}).collect(toList());
 		}
 
-		return new BasicFilterResults<SolarNodeFilterMatch, Long>(rows, Long.valueOf(rows.size()),
-				offset != null ? offset : 0L, rows.size());
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset != null ? offset : 0L,
+				rows.size());
 	}
 
 }

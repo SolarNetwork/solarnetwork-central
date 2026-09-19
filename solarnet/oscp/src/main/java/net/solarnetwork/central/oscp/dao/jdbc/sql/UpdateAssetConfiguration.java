@@ -91,7 +91,7 @@ public final class UpdateAssetConfiguration implements PreparedStatementCreator,
 	 * @param entity
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateAssetConfiguration(UserLongCompositePK id, AssetConfiguration entity) {
 		super();

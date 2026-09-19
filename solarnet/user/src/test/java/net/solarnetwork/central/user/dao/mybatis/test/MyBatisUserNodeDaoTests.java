@@ -22,29 +22,37 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.central.user.dao.BasicUserNodeFilter;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
@@ -53,14 +61,18 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
+import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SimpleLocation;
 
 /**
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.3
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -98,10 +110,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		userNodeDao.setSqlSessionFactory(getSqlSessionFactory());
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		then(this.node).isNotNull();
 		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		storeNewUser();
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		userNodeId = null;
 	}
 
@@ -110,15 +122,13 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	 */
 	@Test
 	public void storeNewUserNode() {
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, this.node);
 		newUserNode.setNode(this.node);
-		newUserNode.setCreated(Instant.now());
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(this.node);
-		newUserNode.setUser(this.user);
 		Long id = userNodeDao.save(newUserNode);
-		assertNotNull(id);
+		then(id).isNotNull();
 		this.userNodeId = id;
 	}
 
@@ -129,13 +139,16 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void getByPrimaryKey() {
 		storeNewUserNode();
 		UserNode userNode = userNodeDao.get(this.userNodeId);
-		assertNotNull(userNode);
-		assertEquals(this.userNodeId, userNode.getId());
-		assertEquals(TEST_NAME, userNode.getName());
-		assertEquals(TEST_DESC, userNode.getDescription());
-		assertNotNull(userNode.getNode());
-		assertEquals(TEST_NODE_ID, userNode.getNode().getId());
-		assertNotNull(userNode.getUser());
+		// @formatter:off
+		then(userNode)
+			.isNotNull()
+			.returns(userNodeId, from(UserNode::getId))
+			.returns(TEST_NAME, from(UserNode::getName))
+			.returns(TEST_DESC, from(UserNode::getDescription))
+			.returns(node, from(UserNode::getNode))
+			.satisfies(un -> then(un.getUser()).isNotNull())
+			;
+		// @formatter:on
 	}
 
 	/**
@@ -150,12 +163,18 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		userNode.setName("New name");
 		userNode.setUser(userDao.get(user2Id));
 		Long id = userNodeDao.save(userNode);
-		assertNotNull(id);
-		assertEquals(this.userNodeId, id);
+		then(id).isNotNull().isEqualTo(userNodeId);
 		UserNode updated = userNodeDao.get(this.userNodeId);
-		assertEquals(userNode.getDescription(), updated.getDescription());
-		assertEquals(userNode.getName(), updated.getName());
-		assertEquals(TEST_NODE_ID, updated.getNode().getId());
+		// @formatter:off
+		then(updated)
+			.isNotNull()
+			.returns(userNodeId, from(UserNode::getId))
+			.returns(userNode.getName(), from(UserNode::getName))
+			.returns(userNode.getDescription(), from(UserNode::getDescription))
+			.returns(node, from(UserNode::getNode))
+			;
+		// @formatter:on
+
 	}
 
 	@Test
@@ -202,26 +221,26 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Thread.sleep(100); // to give users different create dates
 
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
-		newUserNode.setCreated(Instant.now());
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
-		assertNotNull(userNode2);
+		then(userNode2).isNotNull();
 
 		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
-		assertNotNull(results);
-		assertEquals(2, results.size());
+		then(results).isNotNull().hasSize(2);
 
 		UserNode n1 = results.get(0);
-		assertNotNull(n1);
-		assertEquals(this.userNodeId, n1.getId());
-		assertEquals(this.node, n1.getNode());
-		assertEquals(this.user, n1.getUser());
-
-		assertNull("Certificate", n1.getCertificate());
+		// @formatter:off
+		then(n1)
+			.isNotNull()
+			.returns(userNodeId, from(UserNode::getId))
+			.returns(node, from(UserNode::getNode))
+			.returns(user, from(UserNode::getUser))
+			.satisfies(un -> then(un.getCertificate()).isNull());
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -242,25 +261,25 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
-		newUserNode.setCreated(Instant.now());
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
-		assertNotNull(userNode2);
+		then(userNode2).isNotNull();
 
 		List<UserNode> results = userNodeDao.findArchivedUserNodesForUser(this.user.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		then(results).isNotNull().hasSize(1);
 
 		UserNode n1 = results.get(0);
-		assertNotNull(n1);
-		assertEquals(this.node.getId(), n1.getId());
-		assertEquals(this.node, n1.getNode());
-		assertEquals(this.user, n1.getUser());
-		assertNull("Certificate", n1.getCertificate());
+		// @formatter:off
+		then(n1)
+			.isNotNull()
+			.returns(node, from(UserNode::getNode))
+			.returns(user, from(UserNode::getUser))
+			.satisfies(un -> then(un.getCertificate()).isNull());
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -269,24 +288,25 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
-		newUserNode.setCreated(Instant.now());
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
-		assertNotNull(userNode2);
+		then(userNode2).isNotNull();
 
 		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		then(results).isNotNull().hasSize(1);
 
 		UserNode n1 = results.get(0);
-		assertNotNull(n1);
-		assertEquals(TEST_ID_2, n1.getId());
-		assertEquals(this.user, n1.getUser());
-		assertNull("Certificate", n1.getCertificate());
+		// @formatter:off
+		then(n1)
+			.isNotNull()
+			.returns(TEST_ID_2, from(UserNode::getId))
+			.returns(user, from(UserNode::getUser))
+			.satisfies(un -> then(un.getCertificate()).isNull());
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -294,21 +314,23 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		archiveNode();
 
 		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
-		assertNotNull(results);
-		assertEquals(0, results.size());
+		then(results).isNotNull().isEmpty();
 
 		userNodeDao.updateUserNodeArchivedStatus(this.user.getId(), new Long[] { this.node.getId() },
 				false);
 
 		results = userNodeDao.findUserNodesForUser(this.user);
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		then(results).isNotNull().hasSize(1);
 
 		UserNode n1 = results.get(0);
-		assertNotNull(n1);
-		assertEquals(this.user, n1.getUser());
-		assertEquals(this.node, n1.getNode());
-		assertNull("Certificate", n1.getCertificate());
+		// @formatter:off
+		then(n1)
+			.isNotNull()
+			.returns(node, from(UserNode::getNode))
+			.returns(user, from(UserNode::getUser))
+			.satisfies(un -> then(un.getCertificate()).isNull());
+			;
+		// @formatter:on
 	}
 
 	private void storeNewUser() {
@@ -317,14 +339,14 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private UserNodeCertificate storeNewCert(UserNodeCertificateStatus status) {
 		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
-		newUserNodeCert.setCreated(Instant.now());
+		newUserNodeCert.setCreated(MS_CLOCK.instant());
 		newUserNodeCert.setNodeId(this.node.getId());
 		newUserNodeCert.setUserId(this.user.getId());
 		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(status);
 		newUserNodeCert.setRequestId("test req ID");
 		UserNodePK id = userNodeCertificateDao.save(newUserNodeCert);
-		assertNotNull(id);
+		then(id).isNotNull();
 		return userNodeCertificateDao.get(id);
 	}
 
@@ -332,9 +354,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void findForUserWithNoCertificate() {
 		storeNewUserNode();
 		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
-		assertNull("Certificate not present", results.get(0).getCertificate());
+		then(results).isNotNull().hasSize(1).first().as("Certificate not present").returns(null,
+				UserNode::getCertificate);
 	}
 
 	@Test
@@ -343,20 +364,18 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final UserNodeCertificate cert1 = storeNewCert(UserNodeCertificateStatus.v);
 
 		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
-		assertEquals(cert1, results.get(0).getCertificate());
+		then(results).isNotNull().hasSize(1).first().returns(cert1, UserNode::getCertificate);
 	}
 
 	private UserNodeTransfer storeNewTransfer(Long nodeId) {
 		UserNodeTransfer newUserNodeTransfer = new UserNodeTransfer();
-		newUserNodeTransfer.setCreated(Instant.now());
+		newUserNodeTransfer.setCreated(MS_CLOCK.instant());
 		newUserNodeTransfer.setNodeId(nodeId);
 		newUserNodeTransfer.setUserId(this.user.getId());
 		newUserNodeTransfer.setEmail(TEST_EMAIL_2);
 		userNodeDao.storeUserNodeTransfer(newUserNodeTransfer);
 		UserNodeTransfer stored = userNodeDao.getUserNodeTransfer(newUserNodeTransfer.getId());
-		assertNotNull("Inserted UserNodeTransfer", stored);
+		then(stored).as("Inserted UserNodeTransfer").isNotNull();
 		return stored;
 	}
 
@@ -364,10 +383,15 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void insertUserNodeTransfer() {
 		storeNewUserNode();
 		final UserNodeTransfer xfer1 = storeNewTransfer(this.node.getId());
-		assertNotNull("Creation date", xfer1.getCreated());
-		assertEquals(this.node.getId(), xfer1.getNodeId());
-		assertEquals(this.user.getId(), xfer1.getUserId());
-		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+		// @formatter:off
+		then(xfer1)
+			.isNotNull()
+			.returns(node.getId(), from(UserNodeTransfer::getNodeId))
+			.returns(user.getId(), from(UserNodeTransfer::getUserId))
+			.returns(TEST_EMAIL_2, from(UserNodeTransfer::getEmail))
+			.satisfies(x -> then(x.getCreated()).isNotNull())
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -379,10 +403,16 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		userNodeDao.storeUserNodeTransfer(xfer1);
 
 		UserNodeTransfer xfer2 = userNodeDao.getUserNodeTransfer(xfer1.getId());
-		assertNotNull("Updated UserNodeTransfer", xfer2);
-		assertEquals("Creation date unchanged", xfer1.getCreated(), xfer2.getCreated());
-		assertEquals(xfer1.getId(), xfer2.getId());
-		assertEquals(xfer1.getEmail(), xfer2.getEmail());
+
+		// @formatter:off
+		then(xfer2)
+			.isNotNull()
+			.as("Creation date unchanged")
+			.returns(xfer1.getCreated(), from(UserNodeTransfer::getCreated))
+			.returns(xfer1.getId(), from(UserNodeTransfer::getId))
+			.returns(xfer1.getEmail(), from(UserNodeTransfer::getEmail))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -392,15 +422,14 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 				.getUserNodeTransfer(new UserNodePK(this.user.getId(), this.node.getId()));
 		userNodeDao.deleteUserNodeTransfer(xfer1);
 		xfer1 = userNodeDao.getUserNodeTransfer(xfer1.getId());
-		assertNull("UserNodeTransfer deleted", xfer1);
+		then(xfer1).as("UserNodeTransfer deleted").isNull();
 	}
 
 	@Test
 	public void findUserNodeTransferForEmailNoMatch() {
 		List<UserNodeTransfer> results = userNodeDao
 				.findUserNodeTransferRequestsForEmail(this.user.getEmail());
-		assertNotNull("UserNodeTransfers for email results", results);
-		assertEquals(0, results.size());
+		then(results).as("UserNodeTransfers for email results").isNotNull().isEmpty();
 	}
 
 	@Test
@@ -417,32 +446,23 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeNewTransfer(node2.getId());
 
 		List<UserNodeTransfer> results = userNodeDao.findUserNodeTransferRequestsForEmail(TEST_EMAIL_2);
-		assertNotNull("UserNodeTransfers for email results", results);
-		assertEquals(2, results.size());
+		then(results).as("UserNodeTransfers for email results").isNotNull().hasSize(2);
 
 		// results will have same creation time from unit test transaction, so sorted by node ID ascending
+		then(results).extracting(UserNodeTransfer::getNodeId).as("Results sorted by node ID ascending")
+				.containsExactly(node2.getId(), node.getId());
 
-		UserNodeTransfer xfer1 = results.get(0);
-		assertEquals(new UserNodePK(user.getId(), node2.getId()), xfer1.getId());
-		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
-
-		UserNodeTransfer xfer2 = results.get(1);
-		assertEquals(new UserNodePK(user.getId(), node.getId()), xfer2.getId());
-		assertEquals(TEST_EMAIL_2, xfer2.getEmail());
+		then(results).extracting(UserNodeTransfer::getEmail).containsOnly(TEST_EMAIL_2);
 	}
 
 	@Test
 	public void findForUserWithTransferRequest() {
 		insertUserNodeTransfer();
 		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
-
-		UserNodeTransfer xfer1 = results.get(0).getTransfer();
-		assertNotNull("Associated UserNodeTransfer", xfer1);
-		assertEquals(user.getId(), xfer1.getUserId());
-		assertEquals(node.getId(), xfer1.getNodeId());
-		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+		then(results).isNotNull().hasSize(1).first().extracting(UserNode::getTransfer)
+				.returns(user.getId(), from(UserNodeTransfer::getUserId))
+				.returns(node.getId(), from(UserNodeTransfer::getNodeId))
+				.returns(TEST_EMAIL_2, from(UserNodeTransfer::getEmail));
 	}
 
 	@Test
@@ -451,12 +471,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
-		newUserNode.setCreated(Instant.now());
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
+		newUserNode.setCreated(MS_CLOCK.instant());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
 		assertThat("UserNode created", userNode2, notNullValue());
 
@@ -469,7 +487,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final Long nodeId2 = -2L;
 		setupTestNode(nodeId2);
 		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
@@ -488,13 +506,9 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private UserAuthToken tokenForUser(SecurityTokenType type) {
 		final String tokenId = randomTokenId();
-		UserAuthToken authToken = new UserAuthToken();
-		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
+		UserAuthToken authToken = new UserAuthToken(tokenId, this.user.getId(), type);
+		authToken.setCreated(MS_CLOCK.instant());
 		authToken.setAuthSecret("password");
-		authToken.setAuthToken(tokenId);
-		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(type);
 		return authToken;
 	}
 
@@ -539,12 +553,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
-			newUserNode.setCreated(Instant.now());
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 			expectedNodeIds.add(nodeId);
 		}
@@ -561,12 +573,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
-			newUserNode.setCreated(Instant.now());
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 		}
 
@@ -584,12 +594,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
-			newUserNode.setCreated(Instant.now());
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
+			newUserNode.setCreated(MS_CLOCK.instant());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 		}
 
@@ -601,4 +609,383 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
 	}
+
+	private List<UserNode> populateTestEntities() {
+		final int userCount = 2;
+		final int locCount = 2;
+		final int nodeCount = 5;
+		final List<UserNode> entities = new ArrayList<>(userCount * locCount * nodeCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int l = 0; l < locCount; l++ ) {
+				final String country = RNG.nextBoolean() ? "NZ" : "US";
+				final String timeZoneId = ("NZ".equals(country) ? "Pacific/Auckland"
+						: "America/New_York");
+				final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, country, timeZoneId);
+				for ( int n = 0; n < nodeCount; n++ ) {
+					final Long nodeId = CommonDbTestUtils.insertNode(jdbcTemplate, locId);
+					final String name = randomString(6) + ' ' + randomString(6);
+					final String desc = randomString(6) + ' ' + randomString(6);
+					final boolean archived = RNG.nextBoolean();
+					CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId, name, desc,
+							RNG.nextBoolean(), archived);
+					if ( !archived ) {
+						final UserNode un = userNodeDao.get(nodeId);
+						entities.add(un);
+					}
+				}
+			}
+		}
+		return entities;
+	}
+
+	@Test
+	public void findFiltered_user() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(longs = { 0, 3, 6, 9 })
+	public void findFiltered_user_pages(long offset) {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setMax(3);
+		filter.setOffset(offset);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.sorted()
+				.skip(offset)
+				.limit(filter.getMax())
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Result page for user returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndNodeIds() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+		final List<Long> randomUserNodeIds = List.copyOf(entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId())).map(e -> e.getId()).collect(toSet()));
+		final Set<Long> randomNodeIds = new HashSet<>(2);
+		while ( randomNodeIds.size() < 2 ) {
+			randomNodeIds.add(randomUserNodeIds.get(RNG.nextInt(randomUserNodeIds.size())));
+		}
+
+		// WHEN
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && randomNodeIds.contains(e.getId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and node IDs returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndCountry() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf("NZ", null, null);
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getCountry().equals(e.getNodeLocation().getCountry()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and country returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndTimeZone() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var location = SimpleLocation.locationOf(null, null, "Pacific/Auckland");
+
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setLocation(location);
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()) && location.getTimeZoneId().equals(e.getNodeLocation().getTimeZoneId()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByCreated() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("created"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::created))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByNodeDescending() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("node~"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::nodeId).reversed())
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByName() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("name"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing(UserNodeInfo::name, CASE_INSENSITIVE_NATURAL_SORT))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_user_sortByTimeZone() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomUserId);
+		filter.setOrderBy(List.of("zone", "node"));
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> randomUserId.equals(e.getUserId()))
+				.map(UserNodeInfo::forUserNode)
+				.sorted(Comparator.comparing((UserNodeInfo r) -> r.timeZone().getId()).thenComparing(UserNodeInfo::nodeId))
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and time zone returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndName_name() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final UserNode randomEntity = entities.get(RNG.nextInt(entities.size()));
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomEntity.getUserId());
+		filter.setName(
+				randomEntity.getName().substring(randomEntity.getName().indexOf(' ') + 1).toUpperCase());
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> e.getUserId().equals(randomEntity.getUserId()) 
+						&& e.getName().toLowerCase().contains(filter.getName().toLowerCase()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and name substring returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_userAndName_description() {
+		// GIVEN
+		final List<UserNode> entities = populateTestEntities();
+
+		final UserNode randomEntity = entities.get(RNG.nextInt(entities.size()));
+
+		// WHEN
+		final var filter = new BasicUserNodeFilter();
+		filter.setUserId(randomEntity.getUserId());
+		filter.setName(randomEntity.getDescription().substring(randomEntity.getName().indexOf(' ') + 1)
+				.toUpperCase());
+
+		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		final UserNodeInfo[] expected = entities.stream()
+				.filter(e -> e.getUserId().equals(randomEntity.getUserId()) 
+						&& e.getDescription().toLowerCase().contains(filter.getName().toLowerCase()))
+				.sorted()
+				.map(UserNodeInfo::forUserNode)
+				.toArray(UserNodeInfo[]::new)
+				;
+
+		then(results)
+			.as("Results for user and name substring returned")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
 }

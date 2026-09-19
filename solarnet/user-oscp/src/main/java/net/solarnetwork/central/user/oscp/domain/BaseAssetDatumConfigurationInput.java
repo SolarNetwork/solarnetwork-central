@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.math.BigDecimal;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.oscp.domain.BaseAssetDatumConfiguration;
@@ -35,19 +36,21 @@ import net.solarnetwork.central.oscp.domain.StatisticType;
  * @author matt
  * @version 1.0
  */
-public abstract class BaseAssetDatumConfigurationInput {
+@SuppressWarnings("MultipleNullnessAnnotations")
+public abstract sealed class BaseAssetDatumConfigurationInput
+		permits AssetEnergyDatumConfigurationInput, AssetInstantaneousDatumConfigurationInput {
 
 	@NotNull
 	@NotEmpty
-	private String[] propertyNames;
+	private String @Nullable [] propertyNames;
 
 	@NotNull
-	private MeasurementUnit unit;
+	private @Nullable MeasurementUnit unit;
 
-	private BigDecimal multiplier;
+	private @Nullable BigDecimal multiplier;
 
 	@NotNull
-	private StatisticType statisticType;
+	private @Nullable StatisticType statisticType;
 
 	/**
 	 * Populate an entity configuration with values from this input.
@@ -55,6 +58,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 * @param conf
 	 *        the configuration to populate
 	 */
+	@SuppressWarnings("NullAway")
 	public void populateConfiguration(BaseAssetDatumConfiguration conf) {
 		conf.setPropertyNames(propertyNames);
 		conf.setUnit(unit);
@@ -67,7 +71,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 *
 	 * @return the property names.
 	 */
-	public String[] getPropertyNames() {
+	public final String @Nullable [] getPropertyNames() {
 		return propertyNames;
 	}
 
@@ -77,7 +81,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 * @param propertyNames
 	 *        the property names to set
 	 */
-	public void setPropertyNames(String[] propertyNames) {
+	public final void setPropertyNames(String @Nullable [] propertyNames) {
 		this.propertyNames = propertyNames;
 	}
 
@@ -86,7 +90,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 *
 	 * @return the unit
 	 */
-	public MeasurementUnit getUnit() {
+	public final @Nullable MeasurementUnit getUnit() {
 		return unit;
 	}
 
@@ -96,7 +100,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 * @param unit
 	 *        the unit to set
 	 */
-	public void setUnit(MeasurementUnit unit) {
+	public final void setUnit(@Nullable MeasurementUnit unit) {
 		this.unit = unit;
 	}
 
@@ -104,9 +108,9 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 * Get the datum stream property value multiplier.
 	 *
 	 * @return the multiplier to convert property values into {@code unit}, or
-	 *         {@literal null} for no conversion
+	 *         {@code null} for no conversion
 	 */
-	public BigDecimal getMultiplier() {
+	public final @Nullable BigDecimal getMultiplier() {
 		return multiplier;
 	}
 
@@ -115,9 +119,9 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 *
 	 * @param multiplier
 	 *        the multiplier to convert property values into
-	 *        {@code instantaneousUnit}, or {@literal null} for no conversion
+	 *        {@code instantaneousUnit}, or {@code null} for no conversion
 	 */
-	public void setMultiplier(BigDecimal multiplier) {
+	public final void setMultiplier(@Nullable BigDecimal multiplier) {
 		this.multiplier = multiplier;
 	}
 
@@ -126,7 +130,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 *
 	 * @return the statistic type
 	 */
-	public StatisticType getStatisticType() {
+	public final @Nullable StatisticType getStatisticType() {
 		return statisticType;
 	}
 
@@ -136,7 +140,7 @@ public abstract class BaseAssetDatumConfigurationInput {
 	 * @param statisticType
 	 *        the statistic type to set
 	 */
-	public void setStatisticType(StatisticType statisticType) {
+	public final void setStatisticType(@Nullable StatisticType statisticType) {
 		this.statisticType = statisticType;
 	}
 

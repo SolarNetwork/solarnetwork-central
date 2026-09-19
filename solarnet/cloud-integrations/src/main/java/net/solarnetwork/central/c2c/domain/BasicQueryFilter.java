@@ -25,8 +25,7 @@ package net.solarnetwork.central.c2c.domain;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.solarnetwork.central.common.dao.ParameterCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SimplePagination;
 
@@ -34,14 +33,14 @@ import net.solarnetwork.domain.SimplePagination;
  * Basic implementation of {@link CloudDatumStreamQueryFilter}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class BasicQueryFilter extends SimplePagination
 		implements CloudDatumStreamQueryFilter, PaginationCriteria {
 
-	private Instant startDate;
-	private Instant endDate;
-	private Map<String, ?> parameters;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private @Nullable Map<String, ?> parameters;
 
 	/**
 	 * Create a query filter for a given date range.
@@ -71,9 +70,9 @@ public final class BasicQueryFilter extends SimplePagination
 	 *
 	 * @param filter
 	 *        the filter to copy
-	 * @return the copy of {@code criteria}
+	 * @return a new filter instance with properties copied from {@code filter}
 	 */
-	public static BasicQueryFilter copyOf(CloudDatumStreamQueryFilter filter) {
+	public static BasicQueryFilter copyOf(@Nullable CloudDatumStreamQueryFilter filter) {
 		return copyOf(filter, null);
 	}
 
@@ -81,13 +80,14 @@ public final class BasicQueryFilter extends SimplePagination
 	 * Create a copy of a filter.
 	 *
 	 * @param filter
-	 *        the filter to copy
+	 *        the optional filter to copy
 	 * @param parameters
 	 *        optional parameters to override in the copy
-	 * @return the copy of {@code criteria}
+	 * @return a new filter instance with properties copied from {@code filter}
+	 *         and {@code parameters}
 	 */
-	public static BasicQueryFilter copyOf(CloudDatumStreamQueryFilter filter,
-			Map<String, ?> parameters) {
+	public static BasicQueryFilter copyOf(@Nullable CloudDatumStreamQueryFilter filter,
+			@Nullable Map<String, ?> parameters) {
 		BasicQueryFilter copy = new BasicQueryFilter();
 		if ( filter instanceof BasicQueryFilter f ) {
 			copy.setStartDate(f.getStartDate());
@@ -95,14 +95,13 @@ public final class BasicQueryFilter extends SimplePagination
 			if ( f.getParameters() != null ) {
 				copy.setParameters(new LinkedHashMap<>(f.getParameters()));
 			}
-		} else {
-			if ( filter instanceof DateRangeCriteria f ) {
-				copy.setStartDate(f.getStartDate());
-				copy.setEndDate(f.getEndDate());
-			}
-			if ( filter instanceof ParameterCriteria f ) {
-				copy.setParameters(new LinkedHashMap<>(f.getParameters()));
-			}
+		} else if ( filter != null ) {
+			// DateRangeCriteria
+			copy.setStartDate(filter.getStartDate());
+			copy.setEndDate(filter.getEndDate());
+
+			// ParameterCriteria
+			copy.setParameters(new LinkedHashMap<>(filter.getParameters()));
 		}
 		if ( parameters != null ) {
 			copy.setParameters(parameters);
@@ -126,7 +125,7 @@ public final class BasicQueryFilter extends SimplePagination
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -136,12 +135,12 @@ public final class BasicQueryFilter extends SimplePagination
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -151,12 +150,12 @@ public final class BasicQueryFilter extends SimplePagination
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
-	public Map<String, ?> getParameters() {
+	public final @Nullable Map<String, ?> getParameters() {
 		return parameters;
 	}
 
@@ -166,7 +165,7 @@ public final class BasicQueryFilter extends SimplePagination
 	 * @param parameters
 	 *        the parameters to set
 	 */
-	public void setParameters(Map<String, ?> parameters) {
+	public final void setParameters(@Nullable Map<String, ?> parameters) {
 		this.parameters = parameters;
 	}
 

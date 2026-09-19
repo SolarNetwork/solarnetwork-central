@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -57,13 +58,14 @@ public class StaleAuditNodeServiceValueRowMapper implements RowMapper<StaleAudit
 	@Override
 	public StaleAuditNodeServiceValue mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Timestamp timestamp = rs.getTimestamp(1);
-		Number nodeId = (Number) rs.getObject(2);
+		Number nodeId = (Number) nonnull(rs.getObject(2), "nodeId");
 		String service = rs.getString(3);
 		Aggregation aggregation = Aggregation.forKey(rs.getString(4));
 		Timestamp created = rs.getTimestamp(5);
-		return new StaleAuditNodeServiceEntity(AggregateDatumId.nodeId(
-				nodeId instanceof Long l ? l : nodeId != null ? nodeId.longValue() : null, service,
-				timestamp.toInstant(), aggregation), created.toInstant());
+		return new StaleAuditNodeServiceEntity(
+				AggregateDatumId.nodeId(nodeId instanceof Long l ? l : nodeId.longValue(), service,
+						timestamp.toInstant(), aggregation),
+				created.toInstant());
 	}
 
 }

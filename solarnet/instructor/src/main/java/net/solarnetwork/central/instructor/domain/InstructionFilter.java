@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
@@ -40,15 +41,16 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	 *
 	 * @return the node ID
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 *
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@code null})
 	 * @since 1.2
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 	/**
 	 * Test if a node ID is present.
@@ -63,10 +65,10 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	/**
 	 * Get an array of instruction IDs.
 	 *
-	 * @return array of instruction IDs (may be {@literal null})
+	 * @return array of instruction IDs (may be {@code null})
 	 * @since 1.2
 	 */
-	Long[] getInstructionIds();
+	Long @Nullable [] getInstructionIds();
 
 	/**
 	 * Test if an instruction ID is present.
@@ -84,6 +86,7 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	 *
 	 * @return the state
 	 */
+	@Nullable
 	InstructionState getState();
 
 	/**
@@ -92,6 +95,7 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	 * @return the states, treated as a logical <em>or</em> so an instruction
 	 *         matches if its state is contained in this set
 	 */
+	@Nullable
 	List<InstructionState> getStates();
 
 	/**

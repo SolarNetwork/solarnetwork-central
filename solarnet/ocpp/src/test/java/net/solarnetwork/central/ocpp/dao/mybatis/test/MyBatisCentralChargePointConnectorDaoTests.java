@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,8 +36,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
@@ -65,7 +67,7 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	private Long nodeId;
 	private CentralChargePointConnector last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
 		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -494,11 +496,11 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void insert_defaultStatus() {
 		// given
-		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+		CentralChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
 
 		// when
-		ChargePointConnector conn = new ChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
-				Instant.now());
+		var conn = new CentralChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
+				cp.getUserId(), MS_CLOCK.instant());
 		conn.setInfo(StatusNotification.builder().withConnectorId(1).withTimestamp(conn.getCreated())
 				.build());
 		ChargePointConnectorKey pk = dao.save(conn);
@@ -521,10 +523,11 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		assertThat("User ID", entity.getUserId(), equalTo(userId));
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void findByUserAndId_noMatch() {
 		insert();
-		dao.get(userId, new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1));
+		thenExceptionOfType(DataRetrievalFailureException.class).isThrownBy(() -> dao.get(userId,
+				new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1)));
 	}
 
 	@Test
@@ -541,10 +544,11 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void deleteByUserAndId_noMatch() {
 		insert();
-		dao.delete(userId, new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1));
+		thenExceptionOfType(DataRetrievalFailureException.class).isThrownBy(() -> dao.delete(userId,
+				new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1)));
 	}
 
 }

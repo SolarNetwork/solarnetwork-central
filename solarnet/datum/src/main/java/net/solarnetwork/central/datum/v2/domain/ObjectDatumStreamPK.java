@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Primary key for a datum based on object/source/timestamp values.
@@ -55,6 +58,8 @@ public class ObjectDatumStreamPK extends BasePK
 	 * @param timestamp
 	 *        the timestamp
 	 * @return the key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static NodeDatumStreamPK nodeId(Long nodeId, String sourceId, Instant timestamp) {
 		return new NodeDatumStreamPK(nodeId, sourceId, timestamp);
@@ -70,6 +75,8 @@ public class ObjectDatumStreamPK extends BasePK
 	 * @param timestamp
 	 *        the timestamp
 	 * @return the key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static LocationDatumStreamPK locationId(Long locationId, String sourceId, Instant timestamp) {
 		return new LocationDatumStreamPK(locationId, sourceId, timestamp);
@@ -92,6 +99,8 @@ public class ObjectDatumStreamPK extends BasePK
 		 *        the source ID
 		 * @param timestamp
 		 *        the timestamp
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@code null}
 		 */
 		public NodeDatumStreamPK(Long nodeId, String sourceId, Instant timestamp) {
 			super(nodeId, sourceId, timestamp);
@@ -130,6 +139,8 @@ public class ObjectDatumStreamPK extends BasePK
 		 *        the source ID
 		 * @param timestamp
 		 *        the timestamp
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@code null}
 		 */
 		public LocationDatumStreamPK(Long locationId, String sourceId, Instant timestamp) {
 			super(locationId, sourceId, timestamp);
@@ -160,12 +171,14 @@ public class ObjectDatumStreamPK extends BasePK
 	 *        ID the stream source ID
 	 * @param timestamp
 	 *        the time stamp
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ObjectDatumStreamPK(Long objectId, String sourceId, Instant timestamp) {
 		super();
-		this.objectId = objectId;
-		this.sourceId = sourceId;
-		this.timestamp = timestamp;
+		this.objectId = requireNonNullArgument(objectId, "objectId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
+		this.timestamp = requireNonNullArgument(timestamp, "timestamp");
 	}
 
 	@Override
@@ -214,8 +227,9 @@ public class ObjectDatumStreamPK extends BasePK
 		}
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
-	public int compareTo(ObjectDatumStreamPK o) {
+	public int compareTo(@Nullable ObjectDatumStreamPK o) {
 		if ( this == o ) {
 			return 0;
 		}
@@ -240,7 +254,7 @@ public class ObjectDatumStreamPK extends BasePK
 			} else if ( o.sourceId == null ) {
 				return -1;
 			}
-			result = sourceId.compareTo(o.sourceId);
+			result = StringUtils.naturalSortCompare(sourceId, o.sourceId, true);
 			if ( result != 0 ) {
 				return result;
 			}
@@ -261,7 +275,7 @@ public class ObjectDatumStreamPK extends BasePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -277,7 +291,7 @@ public class ObjectDatumStreamPK extends BasePK
 	 *
 	 * @return the object ID
 	 */
-	public Long getObjectId() {
+	public final Long getObjectId() {
 		return objectId;
 	}
 
@@ -286,7 +300,7 @@ public class ObjectDatumStreamPK extends BasePK
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final String getSourceId() {
 		return sourceId;
 	}
 
@@ -295,7 +309,7 @@ public class ObjectDatumStreamPK extends BasePK
 	 *
 	 * @return the timestamp
 	 */
-	public Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return timestamp;
 	}
 

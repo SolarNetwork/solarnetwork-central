@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.Unique;
+
 /**
  * API for capability information for some identifiable object, such as a node,
  * node group, etc.
@@ -31,18 +34,19 @@ package net.solarnetwork.central.domain;
  * measurements, depending on the context it is used in.
  * </p>
  * 
- * @param <PK>
+ * @param <K>
  *        the identity type
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.Identity<PK> {
+public interface SolarCapabilityInformation<K> extends Unique<K> {
 
 	/**
 	 * Get the name of the object.
 	 * 
 	 * @return the name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -50,6 +54,7 @@ public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.
 	 * 
 	 * @return generation capacity watts
 	 */
+	@Nullable
 	Long getGenerationCapacityWatts();
 
 	/**
@@ -57,6 +62,7 @@ public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.
 	 * 
 	 * @return storage capacity in watt hours
 	 */
+	@Nullable
 	Long getStorageCapacityWattHours();
 
 	/**
@@ -64,6 +70,7 @@ public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.
 	 * 
 	 * @return location
 	 */
+	@Nullable
 	Location getLocation();
 
 }

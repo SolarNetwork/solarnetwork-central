@@ -272,13 +272,11 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 	@Test
 	public void select_unencryptedRefreshToken() {
 		// GIVEN
+		final Instant issueDate = now().truncatedTo(ChronoUnit.MILLIS);
 		final ClientAccessTokenEntity entity = new ClientAccessTokenEntity(userId,
-				"%d:%s".formatted(userId, randomString()), randomString(),
-				now().truncatedTo(ChronoUnit.MILLIS));
-		entity.setAccessTokenType(TokenType.BEARER.getValue());
-		entity.setAccessToken(randomString().getBytes(UTF_8));
-		entity.setAccessTokenIssuedAt(now().truncatedTo(ChronoUnit.MILLIS));
-		entity.setAccessTokenExpiresAt(entity.getAccessTokenIssuedAt().plusSeconds(3600L));
+				"%d:%s".formatted(userId, randomString()), randomString(), issueDate,
+				TokenType.BEARER.getValue(), randomString().getBytes(UTF_8), issueDate,
+				issueDate.plusSeconds(3600L));
 		entity.setAccessTokenScopes(Set.of());
 		entity.setRefreshToken(randomString().getBytes(UTF_8));
 		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));

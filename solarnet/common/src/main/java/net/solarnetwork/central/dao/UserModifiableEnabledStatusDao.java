@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * DAO API for updating user-modifiable enabled status on entities.
  *
@@ -43,6 +45,6 @@ public interface UserModifiableEnabledStatusDao<F> {
 	 *        the enabled status to set
 	 * @return the number of entities updated
 	 */
-	int updateEnabledStatus(Long userId, F filter, boolean enabled);
+	int updateEnabledStatus(Long userId, @Nullable F filter, boolean enabled);
 
 }

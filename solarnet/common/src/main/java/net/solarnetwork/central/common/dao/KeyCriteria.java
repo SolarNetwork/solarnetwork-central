@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for keyed entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface KeyCriteria {
 
@@ -35,14 +37,14 @@ public interface KeyCriteria {
 	 * 
 	 * @return the keys
 	 */
-	String[] getKeys();
+	String @Nullable [] getKeys();
 
 	/**
 	 * Get a single key criteria.
 	 * 
 	 * @return the first available key criteria
 	 */
-	default String getKey() {
+	default @Nullable String getKey() {
 		String[] keys = getKeys();
 		return (keys != null && keys.length > 0 ? keys[0] : null);
 	}
@@ -54,6 +56,40 @@ public interface KeyCriteria {
 	 */
 	default boolean hasKeyCriteria() {
 		return getKey() != null;
+	}
+
+	/**
+	 * Get the first key.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasKeyCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first key (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String key() {
+		return getKey();
+	}
+
+	/**
+	 * Get an array of keys.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasKeyCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of keys (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] keys() {
+		return getKeys();
 	}
 
 }

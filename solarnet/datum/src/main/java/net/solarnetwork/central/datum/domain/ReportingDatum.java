@@ -26,6 +26,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic reporting-level Datum API.
@@ -41,7 +42,8 @@ public interface ReportingDatum {
 	 *
 	 * @return local date
 	 */
-	public LocalDate getLocalDate();
+	@Nullable
+	LocalDate getLocalDate();
 
 	/**
 	 * Get a "local" time for this datum, local to the node or location the
@@ -49,6 +51,7 @@ public interface ReportingDatum {
 	 *
 	 * @return local time
 	 */
-	public LocalTime getLocalTime();
+	@Nullable
+	LocalTime getLocalTime();
 
 }

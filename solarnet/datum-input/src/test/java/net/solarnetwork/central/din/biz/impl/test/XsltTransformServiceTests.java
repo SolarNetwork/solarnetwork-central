@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,12 +41,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.DataUriResolver;
 import net.solarnetwork.central.din.biz.impl.XsltTransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -78,8 +77,8 @@ public class XsltTransformServiceTests {
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
 		templatesCache = new BasicSharedValueCache<>(primaryCache, sharedCache);
-		service = new XsltTransformService(dbf, tf, JsonUtils.newDatumObjectMapper(), Duration.ZERO,
-				templatesCache);
+		service = new XsltTransformService(dbf, tf, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
+				Duration.ZERO, templatesCache);
 	}
 
 	@Test
@@ -383,7 +382,7 @@ public class XsltTransformServiceTests {
 				XsltTransformService.SETTING_XSLT_CACHE_DURATION, 600L));
 
 		// WHEN
-		var params = Collections.singletonMap(XsltTransformService.PARAM_CONFIGURATION_CACHE_KEY, "a");
+		var params = Map.of(XsltTransformService.PARAM_CONFIGURATION_CACHE_KEY, "a");
 		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
 				params);
 		Iterable<Datum> results2 = service.transform(xmlInput2, XsltTransformService.XML_TYPE, conf,

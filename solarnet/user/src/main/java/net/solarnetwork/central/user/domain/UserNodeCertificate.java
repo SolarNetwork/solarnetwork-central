@@ -22,22 +22,22 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
-import java.io.Serializable;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.service.CertificateException;
 
@@ -45,10 +45,11 @@ import net.solarnetwork.service.CertificateException;
  * A user node certificate. The certificate is expected to be in X.509 format.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public class UserNodeCertificate
-		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
+@JsonIgnoreProperties({ "id", "keystoreData", "node", "user" })
+public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
+		implements UserRelatedEntity<UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = 3070315335910395052L;
@@ -59,14 +60,17 @@ public class UserNodeCertificate
 	/** The alias of the node certificate in the keystore. */
 	public static final String KEYSTORE_NODE_ALIAS = "node";
 
-	private UserNodePK id = new UserNodePK();
-	private Instant created;
-	private byte[] keystoreData;
-	private UserNodeCertificateStatus status;
-	private String requestId;
+	private byte @Nullable [] keystoreData;
+	private @Nullable UserNodeCertificateStatus status;
+	private @Nullable String requestId;
 
-	private User user;
-	private SolarNode node;
+	private @Nullable User user;
+	private @Nullable SolarNode node;
+
+	public UserNodeCertificate() {
+		super();
+		setId(new UserNodePK());
+	}
 
 	/**
 	 * Get the node certificate from a keystore. The certificate is expected to
@@ -74,9 +78,9 @@ public class UserNodeCertificate
 	 *
 	 * @param keyStore
 	 *        the keystore
-	 * @return the certificate, or <em>null</em> if not available
+	 * @return the certificate, or {@code null} if not available
 	 */
-	public X509Certificate getNodeCertificate(KeyStore keyStore) {
+	public @Nullable X509Certificate getNodeCertificate(KeyStore keyStore) {
 		X509Certificate nodeCert;
 		try {
 			nodeCert = (X509Certificate) keyStore.getCertificate(KEYSTORE_NODE_ALIAS);
@@ -92,9 +96,9 @@ public class UserNodeCertificate
 	 *
 	 * @param keyStore
 	 *        the keystore
-	 * @return the certificate chain, or <em>null</em> if not available
+	 * @return the certificate chain, or {@code null} if not available
 	 */
-	public X509Certificate[] getNodeCertificateChain(KeyStore keyStore) {
+	public X509Certificate @Nullable [] getNodeCertificateChain(KeyStore keyStore) {
 		Certificate[] chain;
 		try {
 			chain = keyStore.getCertificateChain(KEYSTORE_NODE_ALIAS);
@@ -116,10 +120,10 @@ public class UserNodeCertificate
 	 * Open the key store from {@link #getKeystoreData()}.
 	 *
 	 * @param password
-	 *        the password to use to open, or <em>null</em> for no password
+	 *        the password to use to open, or {@code null} for no password
 	 * @return the KeyStore
 	 */
-	public KeyStore getKeyStore(String password) {
+	public KeyStore getKeyStore(@Nullable String password) {
 		KeyStore keyStore;
 		InputStream in = null;
 		if ( keystoreData != null ) {
@@ -156,7 +160,8 @@ public class UserNodeCertificate
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
+		UserNodePK id = getId();
 		return (id == null ? null : id.getNodeId());
 	}
 
@@ -166,9 +171,11 @@ public class UserNodeCertificate
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setNodeId(nodeId);
 	}
@@ -179,8 +186,8 @@ public class UserNodeCertificate
 	 * @return the userId
 	 */
 	@Override
-	public Long getUserId() {
-		return (id == null ? null : id.getUserId());
+	public final Long getUserId() {
+		return nonnull(nonnull(getId(), "id").getUserId(), "id.userId");
 	}
 
 	/**
@@ -189,102 +196,52 @@ public class UserNodeCertificate
 	 * @param userId
 	 *        the userId to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setUserId(userId);
 	}
 
-	@JsonIgnore
-	@SerializeIgnore
-	@Override
-	public UserNodePK getId() {
-		return id;
-	}
-
-	public void setId(UserNodePK id) {
-		this.id = id;
-	}
-
-	@Override
-	public int compareTo(UserNodePK o) {
-		return id.compareTo(o);
-	}
-
-	@Override
-	public UserNodeCertificate clone() {
-		try {
-			return (UserNodeCertificate) super.clone();
-		} catch ( CloneNotSupportedException e ) {
-			// should not get here
-			return null;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
-			return false;
-		}
-		UserNodeCertificate other = (UserNodeCertificate) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
 	@Override
 	public String toString() {
-		return "UserNodeCertificate{" + id + "}";
+		return "UserNodeCertificate{" + getId() + "}";
 	}
 
-	@JsonIgnore
 	@SerializeIgnore
-	public byte[] getKeystoreData() {
+	public final byte @Nullable [] getKeystoreData() {
 		return keystoreData;
 	}
 
-	public void setKeystoreData(byte[] keystoreData) {
+	public final void setKeystoreData(byte @Nullable [] keystoreData) {
 		this.keystoreData = keystoreData;
 	}
 
-	public UserNodeCertificateStatus getStatus() {
+	public final @Nullable UserNodeCertificateStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(UserNodeCertificateStatus status) {
+	public final void setStatus(@Nullable UserNodeCertificateStatus status) {
 		this.status = status;
 	}
 
-	@JsonIgnore
 	@SerializeIgnore
-	public User getUser() {
+	public final @Nullable User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public final void setUser(@Nullable User user) {
 		this.user = user;
 	}
 
-	@JsonIgnore
 	@SerializeIgnore
-	public SolarNode getNode() {
+	public @Nullable SolarNode getNode() {
 		return node;
 	}
 
-	public void setNode(SolarNode node) {
+	public final void setNode(@Nullable SolarNode node) {
 		this.node = node;
 	}
 
@@ -295,21 +252,12 @@ public class UserNodeCertificate
 	 * @return the request ID
 	 * @since 1.1
 	 */
-	public String getRequestId() {
+	public final @Nullable String getRequestId() {
 		return requestId;
 	}
 
-	public void setRequestId(String requestID) {
-		this.requestId = requestID;
-	}
-
-	@Override
-	public Instant getCreated() {
-		return created;
-	}
-
-	public void setCreated(Instant created) {
-		this.created = created;
+	public final void setRequestId(@Nullable String requestId) {
+		this.requestId = requestId;
 	}
 
 }

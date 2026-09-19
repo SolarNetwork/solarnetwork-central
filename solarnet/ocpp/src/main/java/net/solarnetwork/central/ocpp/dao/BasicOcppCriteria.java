@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
@@ -38,22 +39,22 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Basic implementation of OCPP criteria APIs.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class BasicOcppCriteria extends BasicCoreCriteria
 		implements ChargePointStatusFilter, ChargePointActionStatusFilter, ChargeSessionFilter {
 
-	private Long[] chargePointIds;
-	private String[] identifiers;
-	private Integer[] evseIds;
-	private Integer[] connectorIds;
-	private String[] actions;
-	private Instant startDate;
-	private Instant endDate;
-	private UUID[] chargeSessionIds;
-	private Boolean active;
-	private String[] transactionIds;
-	private ChargeSessionEndReason[] endReasons;
+	private Long @Nullable [] chargePointIds;
+	private String @Nullable [] identifiers;
+	private Integer @Nullable [] evseIds;
+	private Integer @Nullable [] connectorIds;
+	private String @Nullable [] actions;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private UUID @Nullable [] chargeSessionIds;
+	private @Nullable Boolean active;
+	private String @Nullable [] transactionIds;
+	private ChargeSessionEndReason @Nullable [] endReasons;
 
 	/**
 	 * Copy the properties of another criteria into this instance.
@@ -67,7 +68,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the criteria to copy
 	 */
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicOcppCriteria c ) {
 			setChargePointIds(c.chargePointIds);
@@ -119,7 +120,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the criteria to copy
 	 * @return the copy
 	 */
-	public static BasicOcppCriteria copy(PaginationCriteria criteria) {
+	public static BasicOcppCriteria copy(@Nullable PaginationCriteria criteria) {
 		BasicOcppCriteria c = new BasicOcppCriteria();
 		c.copyFrom(criteria);
 		return c;
@@ -147,7 +148,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -232,6 +233,25 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		return builder.toString();
 	}
 
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (actions != null && actions.length > 0)
+				|| active != null
+				|| (chargePointIds != null && chargePointIds.length > 0)
+				|| (chargeSessionIds != null && chargeSessionIds.length > 0)
+				|| (connectorIds != null && connectorIds.length > 0)
+				|| endDate != null
+				|| (endReasons != null && endReasons.length > 0)
+				|| (evseIds != null && evseIds.length > 0)
+				|| (identifiers != null && identifiers.length > 0)
+				|| startDate != null
+				|| (transactionIds != null && transactionIds.length > 0)
+				;
+		// @formatter:on
+	}
+
 	/**
 	 * Set a single charge point ID.
 	 *
@@ -246,20 +266,21 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargePointId
 	 *        the ID of the charge point
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setChargePointId(Long chargePointId) {
+	public final void setChargePointId(@Nullable Long chargePointId) {
 		this.chargePointIds = (chargePointId == null ? null : new Long[] { chargePointId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Long getChargePointId() {
+	public final @Nullable Long getChargePointId() {
 		return (this.chargePointIds == null || this.chargePointIds.length < 1 ? null
 				: this.chargePointIds[0]);
 	}
 
 	@Override
-	public Long[] getChargePointIds() {
+	public final Long @Nullable [] getChargePointIds() {
 		return chargePointIds;
 	}
 
@@ -269,7 +290,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargePointIds
 	 *        The charge point IDs to filter on.
 	 */
-	public void setChargePointIds(Long[] chargePointIds) {
+	public final void setChargePointIds(Long @Nullable [] chargePointIds) {
 		this.chargePointIds = chargePointIds;
 	}
 
@@ -288,19 +309,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the ID of the EVSE
 	 * @since 1.2
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setEvseId(Integer evseId) {
+	public final void setEvseId(@Nullable Integer evseId) {
 		this.evseIds = (evseId == null ? null : new Integer[] { evseId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Integer getEvseId() {
+	public final @Nullable Integer getEvseId() {
 		return (this.evseIds == null || this.evseIds.length < 1 ? null : this.evseIds[0]);
 	}
 
 	@Override
-	public Integer[] getEvseIds() {
+	public final Integer @Nullable [] getEvseIds() {
 		return evseIds;
 	}
 
@@ -311,7 +333,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        The EVSE IDs to filter on.
 	 * @since 1.2
 	 */
-	public void setEvseIds(Integer[] evseIds) {
+	public final void setEvseIds(Integer @Nullable [] evseIds) {
 		this.evseIds = evseIds;
 	}
 
@@ -329,19 +351,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param connectorId
 	 *        the ID of the charge point
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setConnectorId(Integer connectorId) {
+	public final void setConnectorId(@Nullable Integer connectorId) {
 		this.connectorIds = (connectorId == null ? null : new Integer[] { connectorId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Integer getConnectorId() {
+	public final @Nullable Integer getConnectorId() {
 		return (this.connectorIds == null || this.connectorIds.length < 1 ? null : this.connectorIds[0]);
 	}
 
 	@Override
-	public Integer[] getConnectorIds() {
+	public final Integer @Nullable [] getConnectorIds() {
 		return connectorIds;
 	}
 
@@ -351,7 +374,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param connectorIds
 	 *        The connector IDs to filter on.
 	 */
-	public void setConnectorIds(Integer[] connectorIds) {
+	public final void setConnectorIds(Integer @Nullable [] connectorIds) {
 		this.connectorIds = connectorIds;
 	}
 
@@ -369,19 +392,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param identifier
 	 *        the identifier to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		this.identifiers = (identifier == null ? null : new String[] { identifier });
 	}
 
 	@Override
 	@JsonIgnore
-	public String getIdentifier() {
+	public final @Nullable String getIdentifier() {
 		return (this.identifiers == null || this.identifiers.length < 1 ? null : this.identifiers[0]);
 	}
 
 	@Override
-	public String[] getIdentifiers() {
+	public final String @Nullable [] getIdentifiers() {
 		return identifiers;
 	}
 
@@ -391,7 +415,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param identifiers
 	 *        The identifiers to filter on.
 	 */
-	public void setIdentifiers(String[] identifiers) {
+	public final void setIdentifiers(String @Nullable [] identifiers) {
 		this.identifiers = identifiers;
 	}
 
@@ -409,19 +433,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param action
 	 *        the action to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setAction(String action) {
+	public final void setAction(@Nullable String action) {
 		this.actions = (action == null ? null : new String[] { action });
 	}
 
 	@Override
 	@JsonIgnore
-	public String getAction() {
+	public final @Nullable String getAction() {
 		return (this.actions == null || this.actions.length < 1 ? null : this.actions[0]);
 	}
 
 	@Override
-	public String[] getActions() {
+	public final String @Nullable [] getActions() {
 		return actions;
 	}
 
@@ -431,12 +456,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param actions
 	 *        The actions to filter on.
 	 */
-	public void setActions(String[] actions) {
+	public final void setActions(String @Nullable [] actions) {
 		this.actions = actions;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -446,12 +471,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -461,13 +486,13 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
 	@JsonIgnore
-	public UUID getChargeSessionId() {
+	public final @Nullable UUID getChargeSessionId() {
 		return (this.chargeSessionIds == null || this.chargeSessionIds.length < 1 ? null
 				: this.chargeSessionIds[0]);
 	}
@@ -486,13 +511,14 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargeSessionId
 	 *        the ID of the charge session
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setChargeSessionId(UUID chargeSessionId) {
+	public final void setChargeSessionId(@Nullable UUID chargeSessionId) {
 		this.chargeSessionIds = (chargeSessionId == null ? null : new UUID[] { chargeSessionId });
 	}
 
 	@Override
-	public UUID[] getChargeSessionIds() {
+	public final UUID @Nullable [] getChargeSessionIds() {
 		return chargeSessionIds;
 	}
 
@@ -502,13 +528,13 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargeSessionIds
 	 *        the charge session IDs to set
 	 */
-	public void setChargeSessionIds(UUID[] chargeSessionIds) {
+	public final void setChargeSessionIds(UUID @Nullable [] chargeSessionIds) {
 		this.chargeSessionIds = chargeSessionIds;
 	}
 
 	@Override
 	@JsonIgnore
-	public String getTransactionId() {
+	public final @Nullable String getTransactionId() {
 		return (this.transactionIds == null || this.transactionIds.length < 1 ? null
 				: this.transactionIds[0]);
 	}
@@ -527,13 +553,14 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param transactionId
 	 *        the ID of the transaction
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setTransactionId(String transactionId) {
+	public final void setTransactionId(@Nullable String transactionId) {
 		this.transactionIds = (transactionId == null ? null : new String[] { transactionId });
 	}
 
 	@Override
-	public String[] getTransactionIds() {
+	public final String @Nullable [] getTransactionIds() {
 		return transactionIds;
 	}
 
@@ -543,13 +570,13 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param transactionIds
 	 *        the transaction IDs to set
 	 */
-	public void setTransactionIds(String[] transactionIds) {
+	public final void setTransactionIds(String @Nullable [] transactionIds) {
 		this.transactionIds = transactionIds;
 	}
 
 	@Override
 	@JsonIgnore
-	public ChargeSessionEndReason getEndReason() {
+	public final @Nullable ChargeSessionEndReason getEndReason() {
 		return (this.endReasons == null || this.endReasons.length < 1 ? null : this.endReasons[0]);
 	}
 
@@ -567,19 +594,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param endReason
 	 *        the end reason
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setEndReason(ChargeSessionEndReason endReason) {
+	public final void setEndReason(@Nullable ChargeSessionEndReason endReason) {
 		this.endReasons = (endReason == null ? null : new ChargeSessionEndReason[] { endReason });
 	}
 
 	@Override
-	public ChargeSessionEndReason[] getEndReasons() {
+	public final ChargeSessionEndReason @Nullable [] getEndReasons() {
 		return endReasons;
 	}
 
 	@JsonIgnore
 	@Override
-	public Integer[] getEndReasonCodes() {
+	public final Integer @Nullable [] getEndReasonCodes() {
 		return ChargeSessionFilter.super.getEndReasonCodes();
 	}
 
@@ -589,12 +617,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param endReasons
 	 *        the end reasons to set
 	 */
-	public void setEndReasons(ChargeSessionEndReason[] endReasons) {
+	public final void setEndReasons(ChargeSessionEndReason @Nullable [] endReasons) {
 		this.endReasons = endReasons;
 	}
 
 	@Override
-	public Boolean getActive() {
+	public final @Nullable Boolean getActive() {
 		return active;
 	}
 
@@ -604,7 +632,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param active
 	 *        the active to set
 	 */
-	public void setActive(Boolean active) {
+	public final void setActive(@Nullable Boolean active) {
 		this.active = active;
 	}
 

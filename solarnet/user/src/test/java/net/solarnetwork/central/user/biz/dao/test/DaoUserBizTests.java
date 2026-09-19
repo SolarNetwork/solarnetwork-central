@@ -22,19 +22,18 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -60,13 +59,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.Location;
-import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
@@ -76,6 +72,8 @@ import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -84,6 +82,9 @@ import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.LocationPrecision;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -91,7 +92,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.4
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("static-access")
@@ -128,6 +129,12 @@ public class DaoUserBizTests {
 	private UserAlertDao userAlertDao;
 
 	@Mock
+	private UserNodeConfirmationDao userNodeConfirmationDao;
+
+	@Mock
+	private UserNodeCertificateDao userNodeCertificateDao;
+
+	@Mock
 	private Cache<UserStringCompositePK, UserAuthToken> tokenCache;
 
 	@Captor
@@ -150,9 +157,7 @@ public class DaoUserBizTests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		testUser = new User();
-		testUser.setEmail(TEST_EMAIL);
-		testUser.setId(TEST_USER_ID);
+		testUser = new User(TEST_USER_ID, TEST_EMAIL);
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
@@ -163,13 +168,8 @@ public class DaoUserBizTests {
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
 
-		userBiz = new DaoUserBiz();
-		userBiz.setSolarLocationDao(solarLocationDao);
-		userBiz.setSolarNodeDao(solarNodeDao);
-		userBiz.setUserDao(userDao);
-		userBiz.setUserAuthTokenDao(userAuthTokenDao);
-		userBiz.setUserNodeDao(userNodeDao);
-		userBiz.setUserAlertDao(userAlertDao);
+		userBiz = new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao, userNodeCertificateDao,
+				solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao);
 		userBiz.setUserAuthTokenCache(tokenCache);
 	}
 
@@ -184,13 +184,12 @@ public class DaoUserBizTests {
 				(SecurityPolicy) null);
 
 		// THEN
-		assertNotNull(generated);
-		assertNotNull(generated.getAuthToken());
-		assertEquals("Auth token should be exactly 20 characters", 20,
-				generated.getAuthToken().length());
-		assertNotNull(generated.getAuthSecret());
-		assertEquals(TEST_USER_ID, generated.getUserId());
-		assertEquals(SecurityTokenStatus.Active, generated.getStatus());
+		and.then(generated).isNotNull();
+		and.then(generated.getAuthToken()).isNotNull();
+		and.then(generated.getAuthToken()).as("Auth token should be exactly 20 characters").hasSize(20);
+		and.then(generated.getAuthSecret()).isNotNull();
+		and.then(generated.getUserId()).isEqualTo(TEST_USER_ID);
+		and.then(generated.getStatus()).isEqualTo(SecurityTokenStatus.Active);
 	}
 
 	@Test
@@ -200,15 +199,13 @@ public class DaoUserBizTests {
 		final String name = UUID.randomUUID().toString();
 		final String desc = UUID.randomUUID().toString();
 
-		final UserAuthToken entity = new UserAuthToken();
-		entity.setUserId(TEST_USER_ID);
-		entity.setAuthToken(tokenId);
+		final UserAuthToken entity = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 
 		given(userAuthTokenDao.get(tokenId)).willReturn(entity);
 		given(userAuthTokenDao.save(entity)).willReturn(tokenId);
 
 		// WHEN
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		info.setName(name);
 		info.setDescription(desc);
 		UserAuthToken updated = userBiz.updateUserAuthTokenInfo(TEST_USER_ID, tokenId, info);
@@ -226,16 +223,14 @@ public class DaoUserBizTests {
 		final String name = UUID.randomUUID().toString();
 		final String desc = UUID.randomUUID().toString();
 
-		final UserAuthToken entity = new UserAuthToken();
-		entity.setUserId(TEST_USER_ID);
-		entity.setAuthToken(tokenId);
+		final UserAuthToken entity = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		entity.setName(name);
 		entity.setDescription(desc);
 
 		given(userAuthTokenDao.get(tokenId)).willReturn(entity);
 
 		// WHEN
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		info.setName(name);
 		info.setDescription(desc);
 		UserAuthToken updated = userBiz.updateUserAuthTokenInfo(TEST_USER_ID, tokenId, info);
@@ -272,14 +267,11 @@ public class DaoUserBizTests {
 				SecurityTokenType.User);
 		given(userAuthTokenDao.get(TEST_AUTH_TOKEN)).willReturn(token);
 
-		try {
-			userBiz.deleteUserAuthToken(TEST_USER_ID - 1L, TEST_AUTH_TOKEN);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.ACCESS_DENIED, e.getReason());
-			assertEquals(TEST_AUTH_TOKEN, e.getId());
-		}
-
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> userBiz.deleteUserAuthToken(TEST_USER_ID - 1L, TEST_AUTH_TOKEN))
+				.returns(AuthorizationException.Reason.ACCESS_DENIED,
+						from(AuthorizationException::getReason))
+				.returns(TEST_AUTH_TOKEN, from(AuthorizationException::getId));
 	}
 
 	@Test
@@ -299,11 +291,11 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
-		assertEquals("Token state", SecurityTokenStatus.Disabled, updated.getStatus());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
+		and.then(updated.getStatus()).as("Token state").isEqualTo(SecurityTokenStatus.Disabled);
 	}
 
 	@Test
@@ -330,11 +322,11 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
-		assertEquals("Token policy", newPolicy, updated.getPolicy());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
+		and.then(updated.getPolicy()).as("Token policy").isEqualTo(newPolicy);
 	}
 
 	@Test
@@ -360,32 +352,32 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
 
 		BasicSecurityPolicy expectedPolicy = new BasicSecurityPolicy.Builder()
 				.withMinAggregation(Aggregation.Month).withMinLocationPrecision(LocationPrecision.Block)
 				.build();
 
-		assertEquals("Token policy", expectedPolicy, updated.getPolicy());
+		and.then(updated.getPolicy()).as("Token policy").isEqualTo(expectedPolicy);
 	}
 
 	@Test
 	public void saveUserNodeNoLocationChange() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		given(userNodeDao.get(testNode.getId())).willReturn(userNode);
 		given(solarLocationDao.getSolarLocationForLocation(any(loc.getClass()))).willReturn(loc);
@@ -404,17 +396,17 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeLocationChange() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		SolarLocation locMatch = new SolarLocation();
 		locMatch.setId(-9L);
@@ -460,17 +452,17 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeNewLocation() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		SolarLocation newLoc = new SolarLocation();
 		newLoc.setId(-99L);
@@ -506,6 +498,41 @@ public class DaoUserBizTests {
 			.as("Persisted location ID as given")
 			.returns(newLoc.getId(), SolarNode::getLocationId)
 			;
+
+		and.then(result)
+			.as("Result equals given")
+			.isEqualTo(userNode)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveUserNodeLocationNoCountry() {
+		// GIVEN
+		final UserNode userNode = new UserNode(testUser, testNode);
+		userNode.setCreated(Instant.now());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		given(userNodeDao.get(testNode.getId())).willReturn(userNode);
+		given(userNodeDao.save(userNode)).willReturn(testNode.getId());
+
+		// WHEN
+		UserNode entry = new UserNode(testUser, testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+
+		// THEN
+		// @formatter:off
+		then(solarLocationDao).shouldHaveNoInteractions();
+		
+		then(solarNodeDao).shouldHaveNoInteractions();
 
 		and.then(result)
 			.as("Result equals given")

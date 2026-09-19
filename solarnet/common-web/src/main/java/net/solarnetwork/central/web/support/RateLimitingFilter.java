@@ -26,10 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.MurmurHash2;
-import org.springframework.http.HttpHeaders;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -42,13 +40,23 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.RateLimitExceededException;
 
 /**
  * Filter for rate-limiting HTTP requests.
  *
+ * <p>
+ * Requests are keyed by the authenticated token ID, or by
+ * {@link HttpServletRequest#getRemoteAddr()} for anonymous requests. Headers
+ * like {@code X-Forwarded-For} are not read directly, as clients can set them
+ * to anything. Behind a proxy, the servlet container must be configured to
+ * resolve the remote address from trusted proxies instead, for example with
+ * Spring Boot's {@code server.forward-headers-strategy} setting.
+ * </p>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public final class RateLimitingFilter extends OncePerRequestFilter implements Filter {
 
@@ -61,20 +69,13 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 */
 	public static final String X_SN_RATE_LIMIT_RETRY_AFTER = "X-SN-Rate-Limit-Retry-After";
 
-	/** HTTP request header for a proxied client IP address. */
-	public static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
-
-	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern.compile("^SolarNetworkWS\s+([^:]+):");
-	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern
-			.compile("^SNWS2\s+.*Credential=([^,]+)(?:,|$)");
-
 	private static final Long GLOBAL_ANONYMOUS_KEY = -1L;
 
 	private final ProxyManager<Long> proxyManager;
 	private final Supplier<BucketConfiguration> bucketConfigurationProvider;
-	private final String keyPrefix;
+	private final @Nullable String keyPrefix;
 
-	private HandlerExceptionResolver exceptionResolver;
+	private @Nullable HandlerExceptionResolver exceptionResolver;
 
 	/**
 	 * Constructor.
@@ -106,7 +107,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 * @since 1.1
 	 */
 	public RateLimitingFilter(ProxyManager<Long> proxyManager,
-			Supplier<BucketConfiguration> bucketConfigurationProvider, String keyPrefix) {
+			Supplier<BucketConfiguration> bucketConfigurationProvider, @Nullable String keyPrefix) {
 		super();
 		this.proxyManager = requireNonNullArgument(proxyManager, "proxyManager");
 		this.bucketConfigurationProvider = requireNonNullArgument(bucketConfigurationProvider,
@@ -115,24 +116,9 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	}
 
 	private String requestKey(HttpServletRequest request) {
-		String key = null;
-		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if ( authHeader != null ) {
-			Matcher m = SNWS_V2_KEY_PATTERN.matcher(authHeader);
-			if ( m.find() ) {
-				key = m.group(1);
-			} else {
-				m = SNWS_V1_KEY_PATTERN.matcher(authHeader);
-				if ( m.find() ) {
-					key = m.group(1);
-				}
-			}
-		}
+		String key = SecurityUtils.currentTokenId();
 		if ( key == null ) {
-			key = request.getHeader(X_FORWARDED_FOR_HEADER);
-			if ( key == null ) {
-				key = request.getRemoteAddr();
-			}
+			key = request.getRemoteAddr();
 		}
 		return (keyPrefix != null ? keyPrefix + key : key);
 	}
@@ -160,7 +146,6 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 			response.addIntHeader(X_SN_RATE_LIMIT_REMAINING_HEADER, (int) probe.getRemainingTokens());
 			filterChain.doFilter(request, response);
 		} else {
-			response.addHeader(key, key);
 			final int waitMs = (int) TimeUnit.NANOSECONDS.toMillis(probe.getNanosToWaitForRefill());
 			response.setHeader(X_SN_RATE_LIMIT_RETRY_AFTER,
 					String.valueOf(System.currentTimeMillis() + waitMs));
@@ -180,7 +165,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 * @param exceptionResolver
 	 *        the resolver to set
 	 */
-	public void setExceptionResolver(HandlerExceptionResolver exceptionResolver) {
+	public void setExceptionResolver(@Nullable HandlerExceptionResolver exceptionResolver) {
 		this.exceptionResolver = exceptionResolver;
 	}
 

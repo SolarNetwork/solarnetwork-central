@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BaseObjectIdentity;
 import net.solarnetwork.dao.Entity;
 
@@ -33,25 +34,25 @@ import net.solarnetwork.dao.Entity;
  * primary key.
  *
  * @author matt
- * @version 2.0
+ * @version 3.1
  * @since 1.34
  */
-public class BaseObjectEntity<PK extends Comparable<PK> & Serializable> extends BaseObjectIdentity<PK>
-		implements Cloneable, Serializable, Entity<PK> {
+public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends BaseObjectIdentity<K>
+		implements Cloneable, Serializable, Entity<K> {
 
 	@Serial
 	private static final long serialVersionUID = 3752078598919814010L;
 
-	private Instant created = null;
-	private Instant modified = null;
+	private @Nullable Instant created;
+	private @Nullable Instant modified;
 
 	@Override
-	public BaseObjectEntity<PK> clone() {
-		return (BaseObjectEntity<PK>) super.clone();
+	public BaseObjectEntity<K> clone() {
+		return (BaseObjectEntity<K>) super.clone();
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
@@ -61,7 +62,7 @@ public class BaseObjectEntity<PK extends Comparable<PK> & Serializable> extends 
 	 * @param created
 	 *        the created to set
 	 */
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 
@@ -70,7 +71,7 @@ public class BaseObjectEntity<PK extends Comparable<PK> & Serializable> extends 
 	 *
 	 * @return the modification date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -80,7 +81,7 @@ public class BaseObjectEntity<PK extends Comparable<PK> & Serializable> extends 
 	 * @param modified
 	 *        the modification date to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 

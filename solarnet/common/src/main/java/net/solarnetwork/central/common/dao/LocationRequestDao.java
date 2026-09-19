@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -44,9 +45,9 @@ public interface LocationRequestDao extends GenericDao<LocationRequest, Long>,
 	 *        the primary key to retrieve
 	 * @param filter
 	 *        the optional filter
-	 * @return the domain object, or {@literal null} if not available
+	 * @return the matching requests
 	 */
-	List<LocationRequest> find(Long id, LocationRequestCriteria filter);
+	List<LocationRequest> find(Long id, @Nullable LocationRequestCriteria filter);
 
 	/**
 	 * Remove persisted entities.
@@ -57,6 +58,6 @@ public interface LocationRequestDao extends GenericDao<LocationRequest, Long>,
 	 *        optional filter to delete
 	 * @return the number of entities deleted
 	 */
-	int delete(Long id, LocationRequestCriteria filter);
+	int delete(Long id, @Nullable LocationRequestCriteria filter);
 
 }

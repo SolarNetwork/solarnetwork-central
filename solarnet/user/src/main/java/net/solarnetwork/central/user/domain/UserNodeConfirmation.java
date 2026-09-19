@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * The "pending confirmation" entity for after a user generates a node
@@ -33,80 +37,118 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
  * UserNode entity is created.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserNodeConfirmation extends BaseEntity implements UserRelatedEntity<Long> {
 
 	@Serial
 	private static final long serialVersionUID = -3535047613550046877L;
 
-	private User user;
-	private Long nodeId;
-	private String confirmationKey;
-	private Instant confirmationDate;
-	private String securityPhrase;
-	private String country;
-	private String timeZoneId;
+	private @Nullable User user;
+	private @Nullable Long nodeId;
+	private @Nullable String confirmationKey;
+	private @Nullable Instant confirmationDate;
+	private @Nullable String securityPhrase;
+	private @Nullable String country;
+	private @Nullable String timeZoneId;
 
-	public User getUser() {
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the confirmation ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public UserNodeConfirmation(Long id) {
+		super();
+		setId(requireNonNullArgument(id, "id"));
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param user
+	 *        the user
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public UserNodeConfirmation(User user) {
+		super();
+		this.user = requireNonNullArgument(user, "user");
+	}
+
+	/**
+	 * Get the user.
+	 * 
+	 * @return the user
+	 */
+	public final @Nullable User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	/**
+	 * Set the uesr.
+	 * 
+	 * @param user
+	 *        the user to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public final void setUser(User user) {
+		this.user = ObjectUtils.requireNonNullArgument(user, "user");
 	}
 
 	@Override
-	public Long getUserId() {
-		User user = getUser();
-		return (user != null ? user.getId() : null);
+	public final Long getUserId() {
+		return nonnull(nonnull(user, "user").getId(), "userId");
 	}
 
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
-	public String getConfirmationKey() {
+	public final @Nullable String getConfirmationKey() {
 		return confirmationKey;
 	}
 
-	public void setConfirmationKey(String confirmationKey) {
+	public final void setConfirmationKey(@Nullable String confirmationKey) {
 		this.confirmationKey = confirmationKey;
 	}
 
-	public Instant getConfirmationDate() {
+	public final @Nullable Instant getConfirmationDate() {
 		return confirmationDate;
 	}
 
-	public void setConfirmationDate(Instant confirmationDate) {
+	public final void setConfirmationDate(@Nullable Instant confirmationDate) {
 		this.confirmationDate = confirmationDate;
 	}
 
-	public String getSecurityPhrase() {
+	public final @Nullable String getSecurityPhrase() {
 		return securityPhrase;
 	}
 
-	public void setSecurityPhrase(String securityPhrase) {
+	public final void setSecurityPhrase(@Nullable String securityPhrase) {
 		this.securityPhrase = securityPhrase;
 	}
 
-	public String getCountry() {
+	public final @Nullable String getCountry() {
 		return country;
 	}
 
-	public void setCountry(String countryCode) {
+	public final void setCountry(@Nullable String countryCode) {
 		this.country = countryCode;
 	}
 
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
-	public void setTimeZoneId(String timeZoneName) {
+	public final void setTimeZoneId(@Nullable String timeZoneName) {
 		this.timeZoneId = timeZoneName;
 	}
 

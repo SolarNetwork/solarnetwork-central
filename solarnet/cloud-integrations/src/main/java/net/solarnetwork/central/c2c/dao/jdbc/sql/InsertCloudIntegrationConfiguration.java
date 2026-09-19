@@ -59,7 +59,7 @@ public final class InsertCloudIntegrationConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCloudIntegrationConfiguration(Long userId, CloudIntegrationConfiguration entity) {
 		super();

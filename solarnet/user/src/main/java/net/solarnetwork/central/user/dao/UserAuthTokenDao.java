@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -59,10 +60,11 @@ public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String>,
 	 *        the token ID to get a builder for
 	 * @param signingDate
 	 *        the date to use in the signing key
-	 * @return the builder, or {@literal null} if the given {@code tokenId} is
-	 *         not found
+	 * @return the builder, or {@code null} if the given {@code tokenId} is not
+	 *         found
 	 * @since 2.0
 	 */
+	@Nullable
 	Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(String tokenId, Instant signingDate);
 
 }

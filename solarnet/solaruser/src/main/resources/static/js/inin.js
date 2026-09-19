@@ -102,7 +102,7 @@ function ininManagement() {
 	 * @returns {Boolean} `false` to return from event callback
 	 */
 	function modalEditFormSubmit(event, renderFn) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 			renderFn([res], true);
 		});
 		return false;

@@ -115,7 +115,7 @@
 				<if test="filter.connectorId != null and filter.connectorId &gt;= 0">
 					AND cc.conn_id = #{filter.connectorId}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned">
 					AND cp.user_id = #{filter.userId}
 				</if>
 			</where>

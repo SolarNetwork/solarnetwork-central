@@ -39,7 +39,7 @@ public interface NodeServiceAuditor {
 	 * This clock may bucket time into discreet intervals.
 	 * </p>
 	 * 
-	 * @return the clock never {@literal null}
+	 * @return the clock never {@code null}
 	 */
 	Clock getAuditClock();
 

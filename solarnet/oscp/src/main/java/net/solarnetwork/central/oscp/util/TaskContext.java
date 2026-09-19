@@ -24,8 +24,10 @@ package net.solarnetwork.central.oscp.util;
 
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
@@ -36,7 +38,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  * API for system tasks.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 
@@ -66,14 +68,16 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the error tags
 	 */
-	String[] errorEventTags();
+	@Nullable
+	List<String> errorEventTags();
 
 	/**
 	 * Get event tags to use for success events.
 	 *
 	 * @return the success tags
 	 */
-	String[] successEventTags();
+	@Nullable
+	List<String> successEventTags();
 
 	/**
 	 * The configuration DAO.
@@ -87,6 +91,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the parameters
 	 */
+	@Nullable
 	Map<String, ?> parameters();
 
 	/**
@@ -96,11 +101,11 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *        the URL path, to add to the base URL
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the URI, or {@literal null} if none configured
+	 * @return the URI, or {@code null} if none configured
 	 * @throws ExternalSystemConfigurationException
 	 *         if an error occurs
 	 */
-	default URI systemUri(String path, String... extraErrorTags) {
+	default @Nullable URI systemUri(String path, String @Nullable... extraErrorTags) {
 		String baseUrl = config().getBaseUrl();
 		if ( baseUrl == null || baseUrl.isBlank() ) {
 			return null;
@@ -109,7 +114,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 			return URI.create(config().getBaseUrl() + path);
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			var msg = "[%s] task with %s %s failed because the OSCP URL [%s] is not valid: %s".formatted(
-					name(), role(), config().getId().ident(), config().getBaseUrl(), e.getMessage());
+					name(), role(), config().id().ident(), config().getBaseUrl(), e.getMessage());
 			LogEventInfo event = eventForConfiguration(config(), errorEventTags(), "Invalid URL",
 					extraErrorTags);
 			throw new ExternalSystemConfigurationException(role(), config(), event, msg);
@@ -121,10 +126,10 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the token, or {@literal null} if not available
+	 * @return the token, or {@code null} if not available
 	 */
-	default String authToken(String... extraErrorTags) {
-		return dao().getExternalSystemAuthToken(config().getId());
+	default @Nullable String authToken(String @Nullable... extraErrorTags) {
+		return dao().getExternalSystemAuthToken(config().id());
 	}
 
 	/**
@@ -135,10 +140,11 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
 	 */
-	default void verifySystemOscpVersion(Set<String> supportedVersions, String... extraErrorTags) {
+	default void verifySystemOscpVersion(Set<String> supportedVersions,
+			String @Nullable... extraErrorTags) {
 		if ( !supportedVersions.contains(config().getOscpVersion()) ) {
 			var msg = "[%s] task with %s %s failed because the OSCP version %s is not supported."
-					.formatted(name(), role(), config().getId().ident(), config().getOscpVersion());
+					.formatted(name(), role(), config().id().ident(), config().getOscpVersion());
 			LogEventInfo event = eventForConfiguration(config(), errorEventTags(),
 					"Unsupported OSCP version");
 			throw new ExternalSystemConfigurationException(role(), config(), event, msg);

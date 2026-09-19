@@ -53,7 +53,7 @@ public final class DeleteForCompositeKey implements PreparedStatementCreator, Sq
 	 * @param columnNames
 	 *        the column names that correspond to key indexes
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteForCompositeKey(CompositeKey pk, String tableName, String[] columnNames) {
 		super();

@@ -62,7 +62,7 @@ import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -81,8 +81,8 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * {@link #postStreamDatum(Iterable)} to provide an {@link AuthenticatedNode}
  * via the normal Spring Security {@link SecurityContextHolder} API. Any attempt
  * to post data for a node different from the currently authenticated node will
- * result in a {@link SecurityException}. If a {@link GeneralNodeDatum} is
- * posted with a <em>null</em> {@link GeneralNodeDatum#getNodeId()} value, this
+ * result in a {@link BasicSecurityException}. If a {@link GeneralNodeDatum} is
+ * posted with a {@code null} {@link GeneralNodeDatum#getNodeId()} value, this
  * service will set the node ID to the authenticated node ID automatically.
  * </p>
  *
@@ -140,9 +140,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 
 		for ( GeneralNodeDatum d : datums ) {
-			if ( d.getNodeId() == null ) {
-				d.setNodeId(authNode.getNodeId());
-			} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
+			if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
 				if ( log.isWarnEnabled() ) {
 					log.warn("Illegal datum post by node {} as node {}", authNode.getNodeId(),
 							d.getNodeId());
@@ -434,8 +432,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if ( auth != null ) {
 			Object principal = auth.getPrincipal();
-			if ( principal instanceof AuthenticatedNode ) {
-				return (AuthenticatedNode) principal;
+			if ( principal instanceof AuthenticatedNode n ) {
+				return n;
 			}
 		}
 		return null;
@@ -489,7 +487,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	/**
 	 * Get the configured node metadata biz.
 	 *
-	 * @return the service, or {@literal null} if not configured
+	 * @return the service, or {@code null} if not configured
 	 * @since 2.1
 	 */
 	public SolarNodeMetadataBiz getSolarNodeMetadataBiz() {

@@ -24,7 +24,7 @@ package net.solarnetwork.central.security.config;
 
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.SequencedMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -43,7 +43,7 @@ public class PasswordEncoderConfig {
 	@SuppressWarnings("deprecation")
 	@Bean
 	public DelegatingPasswordEncoder passwordEncoder() {
-		Map<String, PasswordEncoder> encoders = new LinkedHashMap<>(2);
+		SequencedMap<String, PasswordEncoder> encoders = new LinkedHashMap<>(2);
 		encoders.put("$2a$", new BCryptPasswordEncoder(BCryptPasswordEncoder.BCryptVersion.$2A, 12,
 				new SecureRandom()));
 		encoders.put("{SHA}", new net.solarnetwork.central.security.LegacyPasswordEncoder());

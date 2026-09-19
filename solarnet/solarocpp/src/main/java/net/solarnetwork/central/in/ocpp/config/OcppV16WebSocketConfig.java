@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +39,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistration;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppNodeInstructionProvider;
@@ -68,12 +68,13 @@ import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v1.6 web socket configuration.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @Configuration
 @EnableWebSocket
@@ -135,6 +136,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	@OcppCentralServiceQualifier(OCPP_V16)
 	private List<ActionMessageProcessor<?, ?>> ocppCentralServiceActions;
 
+	@ConfigurationProperties(prefix = "app.ocpp.v16.ws")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	@Qualifier(OCPP_V16)
 	public CentralOcppWebSocketHandler<ChargePointAction, CentralSystemAction> ocppWebSocketHandler_v16() {

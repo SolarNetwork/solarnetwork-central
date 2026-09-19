@@ -22,11 +22,10 @@
 
 package net.solarnetwork.central.ocpp.v16.vendor.hiconics;
 
-import java.io.IOException;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -36,15 +35,19 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
 import net.solarnetwork.util.ObjectUtils;
 import ocpp.v16.jakarta.cs.DataTransferRequest;
 import ocpp.v16.jakarta.cs.DataTransferResponse;
 import ocpp.v16.jakarta.cs.DataTransferStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish Hiconics data transfer vehicle MAC messages as a datum stream.
@@ -71,7 +74,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -100,6 +103,8 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	 *        the datum DAO
 	 * @param mapper
 	 *        the object mapper
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public VehicleMacDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -118,15 +123,17 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 			return false;
 		}
 		DataTransferRequest req = (DataTransferRequest) message.getMessage();
-		return (VENDOR_ID.equals(req.getVendorId()) && MESSAGE_ID.equals(req.getMessageId()));
+		return (req != null && VENDOR_ID.equals(req.getVendorId())
+				&& MESSAGE_ID.equals(req.getMessageId()));
 	}
 
 	@Override
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
-		DataTransferRequest req = message.getMessage();
-		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
+		final ChargePointIdentity clientId = nonnull(message.getClientId(), "Client ID");
+		final DataTransferRequest req = nonnull(message.getMessage(), "Message");
+		final CentralChargePoint cp = pubSupport.chargePoint(clientId);
+		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.id());
 
 		DataTransferResponse res = new DataTransferResponse();
 
@@ -141,7 +148,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		resultHandler.handleActionMessageResult(message, res, null);
 	}
 
-	private GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
+	private @Nullable GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
 			ChargePointSettings cps) {
 		String data = req.getData();
 		if ( data == null || data.isBlank() ) {
@@ -151,12 +158,12 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		final JsonNode root;
 		try {
 			root = mapper.readTree(data.trim());
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Failed to parse DataTransfer data JSON [{}]: {}", data, e);
 			return null;
 		}
 
-		final String vid = root.path("vehicleId").textValue();
+		final String vid = root.path("vehicleId").stringValue();
 		final Instant ts = JsonUtils.parseDateAttribute(root, "timestamp", DateTimeFormatter.ISO_INSTANT,
 				Instant::from);
 		final int connId = root.path("connectorId").intValue();
@@ -164,14 +171,12 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 			return null;
 		}
 
-		DatumSamples s = new DatumSamples();
+		final var s = new DatumSamples();
 		s.putStatusSampleValue("vid", vid);
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		final var d = new GeneralNodeDatum(cp.getNodeId(), ts, pubSupport.sourceId(cps,
+				nonnull(cp.getInfo().getId(), "ChargePoint identity"), null, connId));
 		d.setSamples(s);
-		d.setCreated(ts);
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, connId));
 		return d;
 	}
 
@@ -181,7 +186,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -201,6 +206,8 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
@@ -212,7 +219,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

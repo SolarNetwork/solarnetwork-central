@@ -35,7 +35,6 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -48,7 +47,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
@@ -62,6 +60,7 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Test cases for the {@link JdbcAuditDatumEntityDao} class.
@@ -86,12 +85,9 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 
 	private void assertAuditDatum(String prefix, AuditDatumRollup result, AuditDatumRollup expected) {
 		assertThat(prefix + " not null", result, notNullValue());
-		if ( expected.getTimestamp() != null ) {
-			assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
-		} else {
-			assertThat(prefix + " timestamp", result.getTimestamp(), nullValue());
-		}
-		assertThat(prefix + " stream ID", result.getStreamId(), nullValue());
+		assertThat(prefix + " stream ID", result.getStreamId(),
+				equalTo(StreamDatum.UNASSIGNED_STREAM_ID));
+		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
 		assertThat(prefix + " node ID", result.getNodeId(), equalTo(expected.getNodeId()));
 		assertThat(prefix + " source ID", result.getSourceId(), equalTo(expected.getSourceId()));
 		assertThat(prefix + " datum count", result.getDatumCount(), equalTo(expected.getDatumCount()));
@@ -340,7 +336,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Rolled up hour row for first 4 weeks returned", results.getReturnedResultCount(),
 				equalTo(1));
 		assertAuditDatum("Hour (All)", results.iterator().next(),
-				hourlyAuditDatumRollup(null, null, null, 720L, 1200L, 60L, 0L, 1_200_000L));
+				hourlyAuditDatumRollup(null, null, Instant.EPOCH, 720L, 1200L, 60L, 0L, 1_200_000L));
 	}
 
 	@Test
@@ -621,7 +617,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		// results combined from rollup; no ts; no node ID; no source ID
 		// e.g. raw = (3 * 100) + (3 * 100 * 2) + (3 * 100 * 3) + (3 * 100 * 4) = 3000
 		assertAuditDatum("Daily acc 1", results.iterator().next(),
-				accumulativeAuditDatumRollup(null, null, null, 3000L, 720L, 30, 12));
+				accumulativeAuditDatumRollup(null, null, Instant.EPOCH, 3000L, 720L, 30, 12));
 	}
 
 	@Test

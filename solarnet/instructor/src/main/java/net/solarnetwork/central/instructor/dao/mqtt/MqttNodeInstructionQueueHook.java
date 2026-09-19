@@ -22,16 +22,17 @@
 
 package net.solarnetwork.central.instructor.dao.mqtt;
 
+import static net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueHookStat.InstructionsPublished;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -40,6 +41,8 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -51,7 +54,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook {
@@ -83,7 +86,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        the MQTT stats to use; must support the
 	 *        {@link NodeInstructionQueueHookStat} stats
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
 			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {
@@ -95,11 +98,11 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	}
 
 	@Override
-	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
+	public @Nullable NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		if ( instruction != null && instruction.getNodeId() != null
-				&& InstructionState.Queued == instruction.getState() ) {
+				&& InstructionState.Queued == instruction.getInstruction().getState() ) {
 			// we will change this state to Queuing so batch processing does not pick up
-			instruction.setState(InstructionState.Queuing);
+			instruction.getInstruction().setState(InstructionState.Queuing);
 		}
 		return instruction;
 	}
@@ -107,10 +110,10 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	@Override
 	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
 		if ( instruction != null && instruction.getNodeId() != null && instructionId != null
-				&& InstructionState.Queuing == instruction.getState() ) {
+				&& InstructionState.Queuing == instruction.getInstruction().getState() ) {
 			try {
 				executor.execute(new PublishNodeInstructionTask(instruction, instructionId));
-			} catch ( JsonProcessingException e ) {
+			} catch ( JacksonException e ) {
 				log.error("Error encoding node instruction {} for MQTT payload: {}", instruction.getId(),
 						e.getMessage());
 			}
@@ -125,14 +128,13 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		private final byte[] payload;
 
 		private PublishNodeInstructionTask(NodeInstruction instruction, Long instructionId)
-				throws JsonProcessingException {
+				throws JacksonException {
 			super();
 			// create copy with ID set
 			this.instructionId = instructionId;
-			this.nodeId = instruction.getNodeId();
+			this.nodeId = nonnull(instruction.getNodeId(), "Node ID");
 			this.topic = String.format(nodeInstructionTopicTemplate, instruction.getNodeId());
-			Map<String, Object> data = Collections.singletonMap("instructions",
-					Collections.singleton(instruction));
+			Map<String, Object> data = Map.of("instructions", Set.of(instruction));
 			this.payload = objectMapper.writeValueAsBytes(data);
 		}
 
@@ -144,7 +146,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 					Future<?> f = conn
 							.publish(new BasicMqttMessage(topic, false, getPublishQos(), payload));
 					f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
-					getMqttStats().increment(NodeInstructionQueueHookStat.InstructionsPublished);
+					nonnull(getMqttStats(), "MQTT stats").increment(InstructionsPublished);
 				} else {
 					throw new RuntimeException("MQTT connection not available");
 				}
@@ -154,14 +156,14 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				if ( (e instanceof IOException) || (e instanceof TimeoutException) ) {
+				if ( (root instanceof IOException) || (e instanceof TimeoutException) ) {
 					log.info(
 							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
 							instructionId, nodeId, root.toString());
 				} else {
 					log.error(
 							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
-							instructionId, nodeId, root.toString(), e);
+							instructionId, nodeId, root, e);
 				}
 				nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId,
 						InstructionState.Queuing, InstructionState.Queued, null);
@@ -181,8 +183,10 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        the template to use; defaults to
 	 *        {@link #DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE}
 	 */
-	public void setNodeInstructionTopicTemplate(String nodeInstructionTopicTemplate) {
-		this.nodeInstructionTopicTemplate = nodeInstructionTopicTemplate;
+	public final void setNodeInstructionTopicTemplate(String nodeInstructionTopicTemplate) {
+		this.nodeInstructionTopicTemplate = (nodeInstructionTopicTemplate != null
+				? nodeInstructionTopicTemplate
+				: DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE);
 	}
 
 }

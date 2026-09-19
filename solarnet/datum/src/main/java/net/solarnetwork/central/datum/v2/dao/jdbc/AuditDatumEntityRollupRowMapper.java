@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
@@ -76,7 +77,7 @@ public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRoll
 		Number datumMonthlyCount = (Number) rs.getObject(12);
 		Number fluxDataInCount = (Number) rs.getObject(9);
 		return new AuditDatumEntityRollup(nodeId != null ? nodeId.longValue() : null, sourceId,
-				timestamp != null ? timestamp.toInstant() : null, aggregation,
+				timestamp != null ? timestamp.toInstant() : Instant.EPOCH, aggregation,
 				datumCount != null ? datumCount.longValue() : null,
 				datumHourlyCount != null ? datumHourlyCount.longValue() : null,
 				datumDailyCount != null ? datumDailyCount.intValue() : null,

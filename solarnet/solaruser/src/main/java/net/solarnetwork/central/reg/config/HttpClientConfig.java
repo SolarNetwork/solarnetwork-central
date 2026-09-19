@@ -40,8 +40,8 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
-import net.solarnetwork.central.support.HttpClientSettings;
-import net.solarnetwork.central.web.support.ContentLengthTrackingClientHttpRequestInterceptor;
+import net.solarnetwork.central.common.http.ContentLengthTrackingClientHttpRequestInterceptor;
+import net.solarnetwork.central.common.http.HttpClientSettings;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
@@ -129,7 +129,7 @@ public class HttpClientConfig {
 		ThreadLocal<AtomicLong> tl = ThreadLocal.withInitial(AtomicLong::new);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
 		debugTemplate.setInterceptors(List.of(new ContentLengthTrackingClientHttpRequestInterceptor(tl),
-				new LoggingHttpRequestInterceptor()));
+				new LoggingHttpRequestInterceptor(true)));
 		return debugTemplate;
 	}
 

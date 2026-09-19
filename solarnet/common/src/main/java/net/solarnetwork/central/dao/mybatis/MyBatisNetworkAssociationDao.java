@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.domain.NetworkAssociation;
@@ -43,7 +44,7 @@ public class MyBatisNetworkAssociationDao extends BaseMyBatisDao implements Netw
 	public static final String QUERY_FOR_CONFIRMATION_CODE = "get-NetworkAssociation-for-code";
 
 	@Override
-	public NetworkAssociation getNetworkAssociationForConfirmationKey(String username,
+	public @Nullable NetworkAssociation getNetworkAssociationForConfirmationKey(String username,
 			String confirmationCode) {
 		Map<String, Object> params = new HashMap<>(1);
 		params.put("key", confirmationCode);

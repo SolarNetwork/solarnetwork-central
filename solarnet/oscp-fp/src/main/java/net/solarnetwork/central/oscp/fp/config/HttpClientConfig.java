@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import java.util.Arrays;
+import java.util.List;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -39,7 +39,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
-import net.solarnetwork.central.support.HttpClientSettings;
+import net.solarnetwork.central.common.http.HttpClientSettings;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
@@ -121,10 +121,8 @@ public class HttpClientConfig {
 	@Profile(SolarNetCommonConfiguration.HTTP_TRACE)
 	@Bean
 	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
-		//var reqFactory = new SimpleClientHttpRequestFactory();
-		//reqFactory.setOutputStreaming(false);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
-		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+		debugTemplate.setInterceptors(List.of(new LoggingHttpRequestInterceptor()));
 		return debugTemplate;
 	}
 

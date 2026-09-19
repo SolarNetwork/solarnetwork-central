@@ -25,7 +25,9 @@ package net.solarnetwork.central.datum.v2.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 
@@ -33,7 +35,7 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
  * Implementation of {@link DatumStreamMetadata}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.2
  * @since 2.8
  */
 public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializable {
@@ -42,17 +44,17 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	private static final long serialVersionUID = 2292730487865098801L;
 
 	private final UUID streamId;
-	private final String timeZoneId;
-	private final String[] instantaneousProperties;
-	private final String[] accumulatingProperties;
-	private final String[] statusProperties;
+	private final @Nullable String timeZoneId;
+	private final String @Nullable [] instantaneousProperties;
+	private final String @Nullable [] accumulatingProperties;
+	private final String @Nullable [] statusProperties;
 
 	/**
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
-	 * If any array is empty, it will be treated as if it were {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. If
+	 * any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -66,10 +68,11 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, String[] instantaneousProperties,
-			String[] accumulatingProperties, String[] statusProperties) {
+	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties) {
 		super();
 		this.streamId = requireNonNullArgument(streamId, "streamId");
 		this.timeZoneId = timeZoneId;
@@ -87,10 +90,9 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
-	 * The other arguments are {@code Object} to work around MyBatis mapping
-	 * issues. If any array is empty, it will be treated as if it were
-	 * {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. The
+	 * other arguments are {@code Object} to work around MyBatis mapping issues.
+	 * If any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -104,58 +106,52 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, Object instantaneousProperties,
-			Object accumulatingProperties, Object statusProperties) {
-		this(streamId, timeZoneId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
-				(String[]) statusProperties);
+	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
+			@Nullable Object instantaneousProperties, @Nullable Object accumulatingProperties,
+			@Nullable Object statusProperties) {
+		this(streamId, timeZoneId, (String @Nullable []) instantaneousProperties,
+				(String @Nullable []) accumulatingProperties, (String @Nullable []) statusProperties);
 	}
 
 	@Override
-	public UUID getStreamId() {
+	public int hashCode() {
+		return Objects.hash(streamId);
+	}
+
+	/**
+	 * Compare for equality.
+	 *
+	 * <p>
+	 * Only the {@code streamId} is considered.
+	 * </p>
+	 *
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(@Nullable Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof BasicDatumStreamMetadata other) ) {
+			return false;
+		}
+		return Objects.equals(streamId, other.streamId);
+	}
+
+	@Override
+	public final UUID getStreamId() {
 		return streamId;
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
-	/**
-	 * Get the total number of instantaneous, accumulating, and status property
-	 * names.
-	 *
-	 * @return the total number of properties
-	 */
-	public int getPropertyNamesLength() {
-		return getInstantaneousLength() + getAccumulatingLength() + getStatusLength();
-	}
-
 	@Override
-	public String[] getPropertyNames() {
-		final int iLen = getInstantaneousLength();
-		final int aLen = getAccumulatingLength();
-		final int sLen = getStatusLength();
-		final int len = iLen + aLen + sLen;
-		if ( len < 1 ) {
-			return null;
-		}
-		String[] result = new String[len];
-		if ( iLen > 0 ) {
-			System.arraycopy(instantaneousProperties, 0, result, 0, iLen);
-		}
-		if ( aLen > 0 ) {
-			System.arraycopy(accumulatingProperties, 0, result, iLen, aLen);
-		}
-		if ( sLen > 0 ) {
-			System.arraycopy(statusProperties, 0, result, iLen + aLen, sLen);
-		}
-		return result;
-	}
-
-	@Override
-	public String[] propertyNamesForType(DatumSamplesType type) {
+	public String @Nullable [] propertyNamesForType(DatumSamplesType type) {
 		if ( type == null ) {
 			return null;
 		}
@@ -165,33 +161,6 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 			case Status -> statusProperties;
 			default -> null;
 		};
-	}
-
-	/**
-	 * Get the instantaneous property names array length.
-	 *
-	 * @return the number of instantaneous property names
-	 */
-	public int getInstantaneousLength() {
-		return (instantaneousProperties != null ? instantaneousProperties.length : 0);
-	}
-
-	/**
-	 * Get the accumulating property names array length.
-	 *
-	 * @return the number of accumulating property names
-	 */
-	public int getAccumulatingLength() {
-		return (accumulatingProperties != null ? accumulatingProperties.length : 0);
-	}
-
-	/**
-	 * Get the status property names array length.
-	 *
-	 * @return the number of status property names
-	 */
-	public int getStatusLength() {
-		return (statusProperties != null ? statusProperties.length : 0);
 	}
 
 }

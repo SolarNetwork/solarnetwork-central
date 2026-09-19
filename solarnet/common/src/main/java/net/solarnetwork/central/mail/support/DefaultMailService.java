@@ -22,20 +22,25 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.commons.text.WordUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.mail.MailMessage;
+import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import net.solarnetwork.central.mail.MailAddress;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.MessageDataSource;
@@ -45,14 +50,15 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  *
  * @author matt
- * @version 2.2
+ * @version 2.4
  */
 public class DefaultMailService implements MailService {
 
-	private final MailSender mailSender;
-	private SimpleMailMessage templateMessage;
-	private int hardWrapColumnIndex = 0;
-	private boolean html = false;
+	private final JavaMailSender mailSender;
+	private @Nullable SimpleMailMessage templateMessage;
+	private int hardWrapColumnIndex;
+	private boolean html;
+	private @Nullable Map<String, String> headers;
 
 	private final Logger log = LoggerFactory.getLogger(DefaultMailService.class);
 
@@ -61,15 +67,46 @@ public class DefaultMailService implements MailService {
 	 *
 	 * @param mailSender
 	 *        the {@link MailSender} to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public DefaultMailService(MailSender mailSender) {
-		this.mailSender = mailSender;
+	public DefaultMailService(JavaMailSender mailSender) {
+		this.mailSender = requireNonNullArgument(mailSender, "mailSender");
 	}
 
-	private void prepareMailMessage(MailMessage msg, MailAddress address,
+	/**
+	 * Apply settings.
+	 * 
+	 * @param settings
+	 *        the settings to apply
+	 */
+	public void applySettings(@Nullable MailServiceSettings settings) {
+		if ( settings == null ) {
+			return;
+		}
+		if ( settings.getHeaders() != null ) {
+			headers = settings.getHeaders();
+		}
+	}
+
+	private void prepareMailMessage(MimeMailMessage msg, MailAddress address,
 			MessageDataSource messageDataSource) {
 		if ( templateMessage != null ) {
 			templateMessage.copyTo(msg);
+		}
+		if ( headers != null ) {
+			MimeMessage mimeMsg = msg.getMimeMessage();
+			for ( Entry<String, String> header : headers.entrySet() ) {
+				if ( header.getValue() == null || header.getValue().isBlank() ) {
+					continue;
+				}
+				try {
+					mimeMsg.addHeader(header.getKey(), header.getValue());
+				} catch ( MessagingException ex ) {
+					throw new MailParseException("Error configuring message header [%s] value [%s]"
+							.formatted(header.getKey(), header.getValue()), ex);
+				}
+			}
 		}
 		msg.setTo(address.getTo());
 		if ( address.getFrom() != null ) {
@@ -92,7 +129,7 @@ public class DefaultMailService implements MailService {
 				if ( wrapColumn > 0 ) {
 					// WordUtils doesn't preserve paragraphs, so first split text into paragraph strings and wrap each of those
 					StringBuilder buf = new StringBuilder();
-					String[] paragraphs = msgText.split("\n{2,}");
+					String[] paragraphs = msgText.split("\n{2,}", -1);
 					for ( String para : paragraphs ) {
 						if ( !buf.isEmpty() ) {
 							buf.append("\n\n");
@@ -112,58 +149,52 @@ public class DefaultMailService implements MailService {
 		final Iterator<Resource> attachments = (messageDataSource.getAttachments() != null
 				? messageDataSource.getAttachments().iterator()
 				: null);
-		if ( html || attachments != null && attachments.hasNext() ) {
-			// need JavaMailSender to send attachments
-			if ( !(mailSender instanceof JavaMailSender sender) ) {
-				throw new RuntimeException("Cannot send mail attachments without a JavaMailSender.");
-			}
-			try {
-				MimeMailMessage msg = new MimeMailMessage(new MimeMessageHelper(
-						sender.createMimeMessage(), MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
+		try {
+			MimeMailMessage msg;
+			if ( html || (attachments != null && attachments.hasNext()) ) {
+				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
+						MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
 				if ( html ) {
-					msg.getMimeMessageHelper().setText(messageDataSource.getBody(), true);
-				}
-				prepareMailMessage(msg, address, messageDataSource);
-				if ( attachments != null ) {
-					while ( attachments.hasNext() ) {
-						Resource att = attachments.next();
-						if ( att == null ) {
-							continue;
-						}
-						msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
+					final String b = messageDataSource.getBody();
+					if ( b != null ) {
+						msg.getMimeMessageHelper().setText(b, true);
 					}
 				}
-				if ( log.isInfoEnabled() ) {
-					log.info("Sending MIME mail [{}] from [{}] to [{}]",
-							msg.getMimeMessage().getSubject(),
-							arrayToCommaDelimitedString(msg.getMimeMessage().getFrom()),
-							arrayToCommaDelimitedString(msg.getMimeMessage().getAllRecipients()));
-				}
-				sender.send(msg.getMimeMessage());
-			} catch ( MessagingException e ) {
-				String err = String.format("Error preparing mail [%s] to %s: %s",
-						messageDataSource.getSubject() != null ? messageDataSource.getSubject()
-								: templateMessage.getSubject(),
-						Arrays.toString(address.getTo()), e.getMessage());
-				throw new RuntimeException(err, e);
+			} else {
+				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
+						MimeMessageHelper.MULTIPART_MODE_NO));
 			}
-		} else {
-			SimpleMailMessage msg = new SimpleMailMessage();
 			prepareMailMessage(msg, address, messageDataSource);
-			if ( log.isInfoEnabled() ) {
-				log.info("Sending mail [{}] from [{}] to [{}]", msg.getSubject(), msg.getFrom(),
-						arrayToCommaDelimitedString(msg.getTo()));
+			if ( attachments != null ) {
+				while ( attachments.hasNext() ) {
+					Resource att = attachments.next();
+					if ( att == null || att.getFilename() == null ) {
+						continue;
+					}
+					msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
+				}
 			}
-			mailSender.send(msg);
+			if ( log.isInfoEnabled() ) {
+				log.info("Sending MIME mail [{}] from [{}] to [{}]", msg.getMimeMessage().getSubject(),
+						arrayToCommaDelimitedString(msg.getMimeMessage().getFrom()),
+						arrayToCommaDelimitedString(msg.getMimeMessage().getAllRecipients()));
+			}
+			mailSender.send(msg.getMimeMessage());
+		} catch ( MessagingException e ) {
+			String err = String.format("Error preparing mail [%s] to %s: %s",
+					messageDataSource.getSubject() != null ? messageDataSource.getSubject()
+							: templateMessage != null ? templateMessage.getSubject() : "No subject",
+					Arrays.toString(address.getTo()), e.getMessage());
+			throw new RuntimeException(err, e);
 		}
 	}
 
 	/**
 	 * Get the template to use as a starting point for all messages.
 	 *
-	 * @return the template message, or {@literal null}
+	 * @return the template message, or {@code null}
 	 */
-	public SimpleMailMessage getTemplateMessage() {
+	public final @Nullable SimpleMailMessage getTemplateMessage() {
 		return templateMessage;
 	}
 
@@ -177,7 +208,7 @@ public class DefaultMailService implements MailService {
 	 * @param templateMessage
 	 *        the template to use
 	 */
-	public void setTemplateMessage(SimpleMailMessage templateMessage) {
+	public final void setTemplateMessage(@Nullable SimpleMailMessage templateMessage) {
 		this.templateMessage = templateMessage;
 	}
 
@@ -187,7 +218,7 @@ public class DefaultMailService implements MailService {
 	 * @return The hard-wrap column.
 	 * @since 1.1
 	 */
-	public int getHardWrapColumnIndex() {
+	public final int getHardWrapColumnIndex() {
 		return hardWrapColumnIndex;
 	}
 
@@ -200,7 +231,7 @@ public class DefaultMailService implements MailService {
 	 *        to disable hard wrapping.
 	 * @since 1.1
 	 */
-	public void setHardWrapColumnIndex(int hardWrapColumnIndex) {
+	public final void setHardWrapColumnIndex(int hardWrapColumnIndex) {
 		this.hardWrapColumnIndex = hardWrapColumnIndex;
 	}
 
@@ -211,7 +242,7 @@ public class DefaultMailService implements MailService {
 	 *         plain text; defaults to {@literal false}
 	 * @since 1.3
 	 */
-	public boolean isHtml() {
+	public final boolean isHtml() {
 		return html;
 	}
 
@@ -223,8 +254,27 @@ public class DefaultMailService implements MailService {
 	 *        plain text
 	 * @since 1.3
 	 */
-	public void setHtml(boolean html) {
+	public final void setHtml(boolean html) {
 		this.html = html;
+	}
+
+	/**
+	 * Get headers to add to every message.
+	 * 
+	 * @return the headers
+	 */
+	public final @Nullable Map<String, String> getHeaders() {
+		return headers;
+	}
+
+	/**
+	 * Set headers to add to every message.
+	 * 
+	 * @param headers
+	 *        the headers to set
+	 */
+	public final void setHeaders(@Nullable Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 }

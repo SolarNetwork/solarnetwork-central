@@ -24,18 +24,19 @@ package net.solarnetwork.central.ocpp.util;
 
 import java.io.IOException;
 import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.SchemaValidationException;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utilities for OCPP instruction handling.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.2
  */
 public final class OcppInstructionUtils {
@@ -65,7 +66,7 @@ public final class OcppInstructionUtils {
 	 *        the return type
 	 */
 	@FunctionalInterface
-	public static interface JsonOcppInstructionMessageHandler<T> {
+	public interface JsonOcppInstructionMessageHandler<T> {
 
 		/**
 		 * Handle the results of decoding a JSON OCPP instruction message.
@@ -73,13 +74,14 @@ public final class OcppInstructionUtils {
 		 * @param e
 		 *        if any error occurs
 		 * @param jsonPayload
-		 *        the raw JSON message, or {@literal null} if an error occurred
+		 *        the raw JSON message, or {@code null} if an error occurred
 		 * @param payload
-		 *        the decoded OCPP message payload, or {@literal null} if an
-		 *        error occurred
+		 *        the decoded OCPP message payload, or {@code null} if an error
+		 *        occurred
 		 * @return the result
 		 */
-		T handleMessage(Exception e, ObjectNode jsonPayload, Object payload);
+		T handleMessage(@Nullable Exception e, @Nullable ObjectNode jsonPayload,
+				@Nullable Object payload);
 	}
 
 	/**
@@ -109,7 +111,7 @@ public final class OcppInstructionUtils {
 	 * @return the handler result
 	 */
 	public static <T> T decodeJsonOcppInstructionMessage(ObjectMapper objectMapper, Action action,
-			Map<String, String> params, ActionPayloadDecoder chargePointActionPayloadDecoder,
+			Map<String, String> params, @Nullable ActionPayloadDecoder chargePointActionPayloadDecoder,
 			JsonOcppInstructionMessageHandler<T> handler) {
 		if ( handler == null ) {
 			throw new IllegalArgumentException("The handler argument must be provided.");
@@ -121,8 +123,8 @@ public final class OcppInstructionUtils {
 				JsonNode jsonNode = objectMapper.readTree(params.get(OCPP_MESSAGE_PARAM));
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
-				} else if ( jsonNode instanceof ObjectNode ) {
-					jsonPayload = (ObjectNode) jsonNode;
+				} else if ( jsonNode instanceof ObjectNode on ) {
+					jsonPayload = on;
 				} else {
 					throw new IOException(
 							"OCPP " + OCPP_MESSAGE_PARAM + " parameter must be a JSON object.");
@@ -130,7 +132,7 @@ public final class OcppInstructionUtils {
 			} else {
 				jsonPayload = objectMapper.valueToTree(params);
 			}
-			if ( chargePointActionPayloadDecoder != null ) {
+			if ( chargePointActionPayloadDecoder != null && jsonPayload != null ) {
 				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
 						jsonPayload);
 			} else {

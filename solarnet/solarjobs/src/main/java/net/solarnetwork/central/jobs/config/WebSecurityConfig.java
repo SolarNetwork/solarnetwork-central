@@ -23,10 +23,11 @@
 package net.solarnetwork.central.jobs.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
-import java.util.Arrays;
+import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,7 +52,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -62,12 +62,13 @@ import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.7
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -107,8 +108,7 @@ public class WebSecurityConfig {
 	}
 
 	private AuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
@@ -130,9 +130,9 @@ public class WebSecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowCredentials(false);
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "X-SN-Date"));
+		configuration.setAllowedOrigins(List.of("*"));
+		configuration.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"));
+		configuration.setAllowedHeaders(List.of("Authorization", "X-SN-Date"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", configuration);
 		return source;
@@ -222,12 +222,19 @@ public class WebSecurityConfig {
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
-			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec", securityTokenFilterSettings);
-			filter.setUserDetailsService(tokenUserDetailsService());
-			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
+			return new SecurityTokenAuthenticationFilter(tokenUserDetailsService(),
+					unauthorizedEntryPoint(), null, pathMatcher, "/api/v1/sec",
+					securityTokenFilterSettings);
+		}
 
-			return filter;
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<SecurityTokenAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				SecurityTokenAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean

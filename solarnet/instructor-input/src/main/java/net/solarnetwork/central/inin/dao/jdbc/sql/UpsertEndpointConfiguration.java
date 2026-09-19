@@ -80,7 +80,7 @@ public final class UpsertEndpointConfiguration implements PreparedStatementCreat
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertEndpointConfiguration(Long userId, EndpointConfiguration entity) {
 		super();

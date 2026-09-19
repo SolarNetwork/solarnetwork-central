@@ -35,13 +35,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.EventDetailsProvider;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Service for publishing user events from authentication events.
@@ -71,7 +71,7 @@ public class AuthenticationUserEventPublisher {
 	 * @param userEventAppenderBiz
 	 *        the appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuthenticationUserEventPublisher(String context, UserEventAppenderBiz userEventAppenderBiz) {
 		super();
@@ -124,7 +124,7 @@ public class AuthenticationUserEventPublisher {
 		Authentication auth = event.getAuthentication();
 		try {
 			userId = SecurityUtils.getActorUserId(auth);
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			// ignore and return
 			return;
 		}
@@ -151,7 +151,7 @@ public class AuthenticationUserEventPublisher {
 			} else if ( actor instanceof SecurityToken tok ) {
 				data.put("token", tok.getToken());
 			}
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			// ignore and continue
 		}
 

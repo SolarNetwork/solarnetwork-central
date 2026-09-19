@@ -40,6 +40,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.jobs.ExpiredNodeInstructionUpdater;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
@@ -48,7 +49,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link ExpiredNodeInstructionUpdater} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -79,13 +80,13 @@ public class ExpiredNodeInstructionUpdaterTests {
 		then(dao).should().transitionExpiredInstructions(instructionCaptor.capture());
 
 		// @formatter:off
-		and.then(instructionCaptor.getValue())
+		and.then(instructionCaptor.getValue().getInstruction())
 			.as("Expiration date is 'now' truncated to seconds")
-			.returns(clock.instant().truncatedTo(SECONDS), from(NodeInstruction::getExpirationDate))
+			.returns(clock.instant().truncatedTo(SECONDS), from(Instruction::getExpirationDate))
 			.as("Final state as configured on job")
-			.returns(endState, from(NodeInstruction::getState))
+			.returns(endState, from(Instruction::getState))
 			.as("Final parameters as configured on job")
-			.returns(endParams, from(NodeInstruction::getResultParameters))
+			.returns(endParams, from(Instruction::getResultParameters))
 			;
 		// @formatter:on
 	}

@@ -26,20 +26,21 @@ import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfi
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.random.RandomGenerator;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.retry.RetryOperations;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -72,9 +73,9 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
-import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -91,7 +92,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
  * Configuration for the Enphase cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -168,6 +169,10 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_POLL)
+	private RetryOperations pollRetryOperations;
+
 	@Bean
 	@Qualifier(ENPHASE)
 	public OAuth2AuthorizedClientManager enphaseOauthAuthorizedClientManager(@Autowired(
@@ -175,7 +180,7 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, EnphaseCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, encryptor,
-				integrationServiceIdentifier -> EnphaseCloudIntegrationService.SECURE_SETTINGS);
+				_ -> EnphaseCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}
@@ -191,7 +196,7 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
 						? new BufferingClientHttpRequestFactory(reqFactory)
 						: reqFactory)
-				.messageConverters(Arrays.asList(
+				.messageConverters(List.of(
 						new FormHttpMessageConverter(),
 						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
@@ -247,6 +252,7 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setRetryOps(pollRetryOperations);
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);

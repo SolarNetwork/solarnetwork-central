@@ -34,7 +34,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,9 +47,7 @@ import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -62,8 +59,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
-import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
@@ -77,6 +73,10 @@ import net.solarnetwork.test.CallingThreadExecutorService;
 import ocpp.v16.jakarta.cs.ChargePointErrorCode;
 import ocpp.v16.jakarta.cs.ChargePointStatus;
 import ocpp.v16.jakarta.cs.StatusNotificationRequest;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 
 /**
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
@@ -119,10 +119,11 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		factory.setFeaturesToDisable(Arrays.asList(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
-		factory.setModules(Arrays.asList(new JakartaXmlBindAnnotationModule()));
-		mapper = factory.getObject();
+		mapper = JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.addModule(new JakartaXmlBindAnnotationModule()).build();
 
 		handler = new CentralOcppWebSocketHandler<>(ChargePointAction.class, CentralSystemAction.class,
 				new ErrorCodeResolver(), new TaskExecutorAdapter(new CallingThreadExecutorService()),

@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.SerializeIgnore;
@@ -41,11 +42,11 @@ import net.solarnetwork.domain.SerializeIgnore;
  */
 public class SimpleInstructionFilter implements InstructionFilter {
 
-	private Long[] nodeIds;
-	private Long[] instructionIds;
-	private List<InstructionState> states;
-	private Instant startDate;
-	private Instant endDate;
+	private Long @Nullable [] nodeIds;
+	private Long @Nullable [] instructionIds;
+	private @Nullable List<InstructionState> states;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
 
 	@Override
 	@SerializeIgnore
@@ -77,49 +78,52 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set a single node ID.
 	 *
 	 * <p>
-	 * This is a convenience method for requests that use a single node ID at a time. The node ID is
-	 * still stored on the {@code nodeIds} array, just as the first value. Calling this method replaces
-	 * any existing {@code nodeIds} value with a new array containing just the ID passed into this
-	 * method.
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
 	 * </p>
 	 *
 	 * @param nodeId
-	 * 		the ID of the node
+	 *        the ID of the node
 	 */
-	public void setNodeId(Long nodeId) {
-		this.nodeIds = new Long[] { nodeId };
+	@SuppressWarnings("InvalidParam")
+	public final void setNodeId(@Nullable Long nodeId) {
+		setNodeIds(nodeId != null ? new Long[] { nodeId } : null);
 	}
 
 	/**
 	 * Get the first node ID.
 	 *
 	 * <p>
-	 * This returns the first available node ID from the {@code nodeIds} array, or <em>null</em> if not
-	 * available.
+	 * This returns the first available node ID from the {@code nodeIds} array,
+	 * or {@code null} if not available.
 	 * </p>
 	 *
 	 * @return the first node ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
 	}
 
 	@Override
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
 	@Override
-	public InstructionState getState() {
+	public final @Nullable InstructionState getState() {
 		return (states != null && !states.isEmpty() ? states.getFirst() : null);
 	}
 
-	public void setState(InstructionState state) {
+	public final void setState(@Nullable InstructionState state) {
 		if ( state == null ) {
 			states = null;
 		} else {
@@ -128,17 +132,19 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	}
 
 	@Override
-	public List<InstructionState> getStates() {
+	public final @Nullable List<InstructionState> getStates() {
 		return states;
 	}
 
 	/**
-	 * Set the {@code states} property via a Set. This is useful when using an {@link EnumSet}.
+	 * Set the {@code states} property via a Set. This is useful when using an
+	 * {@link EnumSet}.
 	 *
 	 * @param stateSet
-	 * 		the Set to convert to a List of {@link InstructionState} values for the {@code states} property
+	 *        the Set to convert to a List of {@link InstructionState} values
+	 *        for the {@code states} property
 	 */
-	public void setStateSet(Set<InstructionState> stateSet) {
+	public final void setStateSet(@Nullable Set<InstructionState> stateSet) {
 		if ( stateSet == null ) {
 			this.states = null;
 		} else {
@@ -146,7 +152,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 		}
 	}
 
-	public void setStates(List<InstructionState> states) {
+	public final void setStates(@Nullable List<InstructionState> states) {
 		if ( states == null ) {
 			this.states = null;
 		} else {
@@ -162,7 +168,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * @since 1.1
 	 */
 	@Override
-	public Long[] getInstructionIds() {
+	public final Long @Nullable [] getInstructionIds() {
 		return instructionIds;
 	}
 
@@ -170,15 +176,15 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set an instruction IDs list.
 	 *
 	 * @param instructionIds
-	 * 		the IDs to set
+	 *        the IDs to set
 	 * @since 1.1
 	 */
-	public void setInstructionIds(Long[] instructionIds) {
+	public final void setInstructionIds(Long @Nullable [] instructionIds) {
 		this.instructionIds = instructionIds;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -186,15 +192,15 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set the start date (inclusive).
 	 *
 	 * @param startDate
-	 * 		the start date
+	 *        the start date
 	 * @since 2.1
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -202,10 +208,10 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set the end date (exclusive).
 	 *
 	 * @param endDate
-	 * 		the end date
+	 *        the end date
 	 * @since 2.1
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 

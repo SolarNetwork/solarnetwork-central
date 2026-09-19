@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.5' apply false
+	id 'org.springframework.boot' version '4.1.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,17 +14,9 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User Datum'
-version = '2.10.2'
 
 base {
 	archivesName = 'solarnet-user-datum'
-}
-
-configurations {
-	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -42,10 +34,11 @@ dependencies {
 	// JCache
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
-
+	
 	// Utilities
-	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:${snCommonTmplSt4}"
 	implementation 'org.aspectj:aspectjweaver'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

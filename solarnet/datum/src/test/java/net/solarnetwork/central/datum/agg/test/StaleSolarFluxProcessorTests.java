@@ -1,21 +1,21 @@
 /* ==================================================================
  * StaleSolarFluxProcessorTests.java - 1/11/2019 4:18:33 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -38,7 +38,6 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadFactory;
@@ -47,9 +46,9 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -66,24 +65,22 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.NumberUtils;
 
 /**
  * Test cases for the {@link StaleSolarFluxProcessor} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class StaleSolarFluxProcessorTests {
-
-	private static final String TEST_JOB_ID = "Test Stale SolarFlux Datum Processor";
 
 	private static final Long TEST_NODE_ID = 1L;
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -116,15 +113,13 @@ public class StaleSolarFluxProcessorTests {
 
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		processor = EasyMock.createMock(DatumProcessor.class);
 
 		job = new TestStaleSolarFluxDatumProcessor(jdbcTemplate, datumDao, processor);
-		job.setGroupId("Test");
-		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -141,7 +136,7 @@ public class StaleSolarFluxProcessorTests {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(jdbcTemplate, datumDao, processor);
 		if ( !otherMocks.isEmpty() ) {
@@ -213,7 +208,7 @@ public class StaleSolarFluxProcessorTests {
 		con.commit();
 
 		// GIVEN
-		List<Datum> datumResults = Collections.singletonList(mostRecentDatum);
+		List<Datum> datumResults = List.of(mostRecentDatum);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> filterResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(streamId, meta), datumResults);
 		Capture<DatumCriteria> filterCaptor = new Capture<>();

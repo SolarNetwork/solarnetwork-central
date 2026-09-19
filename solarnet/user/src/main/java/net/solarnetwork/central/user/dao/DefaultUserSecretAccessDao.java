@@ -26,6 +26,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.KeyPair;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.RsaAlgorithm;
 import org.springframework.security.crypto.encrypt.RsaSecretEncryptor;
@@ -49,8 +50,8 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	private final UserSecretEntityDao secretDao;
 	private final String secretEncryptionSalt;
 
-	private Cache<UserStringStringCompositePK, UserSecretEntity> secretCache;
-	private Cache<UserStringCompositePK, KeyPair> keyPairCache;
+	private @Nullable Cache<UserStringStringCompositePK, UserSecretEntity> secretCache;
+	private @Nullable Cache<UserStringCompositePK, KeyPair> keyPairCache;
 
 	/**
 	 * Constructor.
@@ -76,7 +77,7 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	}
 
 	@Override
-	public UserSecret getUserSecret(Long userId, String topicId, String key) {
+	public @Nullable UserSecret getUserSecret(Long userId, String topicId, String key) {
 		final var secretId = new UserStringStringCompositePK(requireNonNullArgument(userId, "id"),
 				requireNonNullArgument(topicId, "topicId"), requireNonNullArgument(key, "key"));
 
@@ -137,7 +138,7 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	 * 
 	 * @return the cache
 	 */
-	public Cache<UserStringStringCompositePK, UserSecretEntity> getSecretCache() {
+	public @Nullable Cache<UserStringStringCompositePK, UserSecretEntity> getSecretCache() {
 		return secretCache;
 	}
 
@@ -147,7 +148,8 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	 * @param secretCache
 	 *        the cache to set
 	 */
-	public void setSecretCache(Cache<UserStringStringCompositePK, UserSecretEntity> secretCache) {
+	public void setSecretCache(
+			@Nullable Cache<UserStringStringCompositePK, UserSecretEntity> secretCache) {
 		this.secretCache = secretCache;
 	}
 
@@ -156,7 +158,7 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	 * 
 	 * @return the cache
 	 */
-	public Cache<UserStringCompositePK, KeyPair> getKeyPairCache() {
+	public @Nullable Cache<UserStringCompositePK, KeyPair> getKeyPairCache() {
 		return keyPairCache;
 	}
 
@@ -166,7 +168,7 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 	 * @param keyPairCache
 	 *        the cache to set
 	 */
-	public void setKeyPairCache(Cache<UserStringCompositePK, KeyPair> keyPairCache) {
+	public void setKeyPairCache(@Nullable Cache<UserStringCompositePK, KeyPair> keyPairCache) {
 		this.keyPairCache = keyPairCache;
 	}
 

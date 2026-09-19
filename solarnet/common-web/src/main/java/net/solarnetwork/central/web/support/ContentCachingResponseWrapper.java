@@ -29,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.util.WebUtils;
@@ -55,7 +56,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  * </p>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -63,10 +64,10 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	private final FastByteArrayOutputStream content;
 	private final OutputStream cacheStream;
 	private final HttpHeaders headers;
-	private ServletOutputStream outputStream;
-	private PrintWriter outputWriter;
+	private @Nullable ServletOutputStream outputStream;
+	private @Nullable PrintWriter outputWriter;
 	private boolean cacheStreamFinished;
-	private IOException outputStreamException;
+	private @Nullable IOException outputStreamException;
 
 	/**
 	 * Create a new ContentCachingResponseWrapper for the given servlet
@@ -168,6 +169,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		this.content.reset();
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	private void finishContentStream() throws IOException {
 		if ( !cacheStreamFinished && cacheStream != content && outputStreamException == null ) {
 			try {
@@ -231,7 +233,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 		private final ServletOutputStream os;
 
-		public ResponseServletOutputStream(ServletOutputStream os) {
+		private ResponseServletOutputStream(ServletOutputStream os) {
 			this.os = os;
 		}
 
@@ -305,9 +307,10 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	}
 
-	private class ResponsePrintWriter extends PrintWriter {
+	private static class ResponsePrintWriter extends PrintWriter {
 
-		public ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
+		@SuppressWarnings("JdkObsolete")
+		private ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
 				throws UnsupportedEncodingException {
 			super(new OutputStreamWriter(os, characterEncoding));
 		}

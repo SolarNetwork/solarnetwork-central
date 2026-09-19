@@ -28,17 +28,18 @@ import static net.solarnetwork.domain.datum.Aggregation.None;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish OSCP action events as datum.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNodeDatum> {
 
@@ -75,7 +76,7 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 		this.consumer = new EventConsumer(this);
 	}
 
-	private static String topicForDatum(OwnedGeneralNodeDatum d) {
+	private static @Nullable String topicForDatum(OwnedGeneralNodeDatum d) {
 		Long userId = d.getUserId();
 		Long nodeId = d.getNodeId();
 		String sourceId = d.getSourceId();
@@ -110,7 +111,8 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 		@Override
 		public void accept(DatumPublishEvent event) {
 			Collection<OwnedGeneralNodeDatum> datum = event.datum();
-			if ( datum == null || !event.publishToSolarFlux() ) {
+			if ( datum == null || !event.publishToSolarFlux() || event.nodeId() == null
+					|| event.userId() == null ) {
 				return;
 			}
 			Long nodeId = event.nodeId();
@@ -121,7 +123,7 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 					// not allowed
 					continue;
 				}
-				delegate.apply(d);
+				var _ = delegate.apply(d);
 			}
 		}
 	}

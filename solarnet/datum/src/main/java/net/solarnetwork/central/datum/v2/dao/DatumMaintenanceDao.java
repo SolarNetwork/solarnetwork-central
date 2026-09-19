@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -85,8 +86,9 @@ public interface DatumMaintenanceDao {
 	 *
 	 * @param filter
 	 *        the search criteria
-	 * @return the count of matching records
+	 * @return the count of matching records, or {@code null} if none available
 	 */
+	@Nullable
 	DatumRecordCounts countDatumRecords(ObjectStreamCriteria filter);
 
 	/**

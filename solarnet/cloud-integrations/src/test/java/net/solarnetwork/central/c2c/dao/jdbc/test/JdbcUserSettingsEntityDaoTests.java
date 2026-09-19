@@ -24,12 +24,12 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allUserSettingsEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newUserSettingsEntity;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,7 +111,7 @@ public class JdbcUserSettingsEntityDaoTests extends AbstractJUnit5JdbcDaoTestSup
 
 		// WHEN
 		UserSettingsEntity conf = last.copyWithId(last.getId());
-		conf.setModified(Instant.now().plusMillis(474));
+		conf.setModified(MS_CLOCK.instant().plusMillis(474));
 		conf.setPublishToSolarIn(!conf.isPublishToSolarIn());
 		conf.setPublishToSolarFlux(!conf.isPublishToSolarFlux());
 
@@ -125,7 +125,7 @@ public class JdbcUserSettingsEntityDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 

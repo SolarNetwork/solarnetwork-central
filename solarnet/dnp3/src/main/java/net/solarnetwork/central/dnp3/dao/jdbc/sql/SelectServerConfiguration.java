@@ -133,7 +133,7 @@ public final class SelectServerConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

@@ -26,6 +26,7 @@ import static net.solarnetwork.central.oscp.domain.UserSettings.removeEmptySourc
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.util.StringUtils;
@@ -52,9 +53,11 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ArrayRecordComponent")
 public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSystemConfiguration<?> src,
 		BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
-		DatumPublishSettings settings, Collection<OwnedGeneralNodeDatum> datum, KeyValuePair... params) {
+		DatumPublishSettings settings, Collection<OwnedGeneralNodeDatum> datum,
+		KeyValuePair @Nullable... params) {
 
 	/** The parameter name for the role alias. */
 	public static final String ROLE_ALIAS_PARAM = "role";
@@ -100,7 +103,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	 *
 	 * @return the user ID
 	 */
-	public Long userId() {
+	public @Nullable Long userId() {
 		return (group != null ? group.getUserId()
 				: src != null ? src.getUserId() : dest != null ? dest.getUserId() : null);
 	}
@@ -108,19 +111,19 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	/**
 	 * Get the node ID.
 	 *
-	 * @return the settings node ID, or {@literal null} if not available
+	 * @return the settings node ID, or {@code null} if not available
 	 */
-	public Long nodeId() {
+	public @Nullable Long nodeId() {
 		return (settings != null ? settings.getNodeId() : null);
 	}
 
 	/**
 	 * Resolve the source ID according the configured settings and parameters.
 	 *
-	 * @return the source ID, or {@literal null} if no source ID template is
+	 * @return the source ID, or {@code null} if no source ID template is
 	 *         available
 	 */
-	public String sourceId() {
+	public @Nullable String sourceId() {
 		String template = (settings != null ? settings.sourceIdTemplate() : null);
 		if ( template == null ) {
 			return null;
@@ -146,7 +149,8 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 		return (settings != null && settings.isPublishToSolarFlux());
 	}
 
-	private void populateSystemId(BaseOscpExternalSystemConfiguration<?> sys, Map<String, Object> m) {
+	private void populateSystemId(@Nullable BaseOscpExternalSystemConfiguration<?> sys,
+			Map<String, Object> m) {
 		if ( sys == null || sys.getAuthRole() == null || sys.getAuthRole().role() == null ) {
 			return;
 		}

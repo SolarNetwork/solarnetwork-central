@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbDiffDatumTests.java - 17/11/2020 7:32:43 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,8 +28,10 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWit
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -48,7 +50,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -62,7 +63,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@literal solardatm.diff_datm} database stored procedure.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -129,6 +130,45 @@ public class DbDiffNearDatumTests extends BaseDatumJdbcTestSupport {
 		// THEN
 		assertReadingDatum("Typical readings just before start/end range", result, readingWith(streamId,
 				null, start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "100", "130")));
+	}
+
+	@Test
+	public void calcDiffDatum_noAccumulatingProperties() throws IOException {
+		// GIVEN
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-02a.txt",
+				getClass(), "UTC");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No result available because no accumulating data")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void calcDiffDatum_intermittentAccumulatingProperties() throws IOException {
+		// GIVEN
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-02b.txt",
+				getClass(), "UTC");
+
+		allTableData(log, jdbcTemplate, "solardatm.da_datm", "stream_id,ts");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertReadingDatum("Intermittnet readings just before start/end range", result,
+				readingWith(streamId, null, start.plusMinutes(29), end.minusMinutes(1),
+						decimalArray("15", "115", "130")));
 	}
 
 	@Test

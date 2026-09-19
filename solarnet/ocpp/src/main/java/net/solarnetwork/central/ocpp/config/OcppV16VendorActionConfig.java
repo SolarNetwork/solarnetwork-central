@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
@@ -41,12 +40,13 @@ import net.solarnetwork.central.ocpp.v16.vendor.zjbeny.DlbMeterDataTransferDatum
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import ocpp.v16.jakarta.cs.DataTransferRequest;
 import ocpp.v16.jakarta.cs.DataTransferResponse;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v1.6 vendor-specific configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)

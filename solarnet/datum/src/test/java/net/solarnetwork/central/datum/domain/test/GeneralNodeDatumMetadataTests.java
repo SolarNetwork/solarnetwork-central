@@ -1,27 +1,28 @@
 /* ==================================================================
  * GeneralNodeDatumTests.java - Aug 22, 2014 3:15:33 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -31,17 +32,16 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralNodeDatumMetadata} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -56,17 +56,15 @@ public class GeneralNodeDatumMetadataTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralNodeDatumMetadata getTestInstance() {
-		GeneralNodeDatumMetadata datum = new GeneralNodeDatumMetadata();
+		GeneralNodeDatumMetadata datum = new GeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID);
 		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
 		datum.setUpdated(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		GeneralDatumMetadata samples = new GeneralDatumMetadata();
 		datum.setMeta(samples);
@@ -82,10 +80,9 @@ public class GeneralNodeDatumMetadataTests {
 	@Test
 	public void serializeJson() throws Exception {
 		String json = objectMapper.writeValueAsString(getTestInstance());
-		Assert.assertEquals(
+		then(json).isEqualTo(
 				"{\"created\":\"" + TEST_TIMESTAMP_STRING + "\",\"updated\":\"" + TEST_TIMESTAMP_STRING
-						+ "\",\"nodeId\":-1,\"sourceId\":\"test.source\"," + "\"m\":{\"unit\":\"C\"}}",
-				json);
+						+ "\",\"nodeId\":-1,\"sourceId\":\"test.source\"," + "\"m\":{\"unit\":\"C\"}}");
 	}
 
 	@Test
@@ -102,10 +99,11 @@ public class GeneralNodeDatumMetadataTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}}";
+				+ "\",\"nodeId\":-1,\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}";
 		GeneralNodeDatumMetadata datum = objectMapper.readValue(json, GeneralNodeDatumMetadata.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getNodeId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getMeta(), is(notNullValue()));
 		assertThat(datum.getMeta().getInfoLong("ploc"), is(2502287L));

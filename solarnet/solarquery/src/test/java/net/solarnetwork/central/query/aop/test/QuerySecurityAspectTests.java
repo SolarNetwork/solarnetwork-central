@@ -22,19 +22,20 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,10 +49,9 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -65,9 +65,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
@@ -76,12 +75,12 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -89,32 +88,30 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class QuerySecurityAspectTests {
 
 	private static final Long TEST_USER_ID = -9999L;
 
 	private SolarNodeOwnershipDao nodeOwnershipDao;
-	private DatumStreamMetadataDao streamMetadataDao;
 	private QuerySecurityAspect service;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
-		streamMetadataDao = EasyMock.createMock(DatumStreamMetadataDao.class);
-		service = new QuerySecurityAspect(nodeOwnershipDao, streamMetadataDao);
+		service = new QuerySecurityAspect(nodeOwnershipDao);
 		service.setNodeIdNotRequiredSet(new HashSet<>(Arrays.asList("price", "weather")));
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
-		EasyMock.verify(nodeOwnershipDao, streamMetadataDao);
+		EasyMock.verify(nodeOwnershipDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	private void replayAll(Object... others) {
-		EasyMock.replay(nodeOwnershipDao, streamMetadataDao);
+		EasyMock.replay(nodeOwnershipDao);
 		if ( others != null ) {
 			EasyMock.replay(others);
 		}
@@ -125,7 +122,7 @@ public class QuerySecurityAspectTests {
 	}
 
 	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
-		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, emptyList(), false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
 		setUser(auth);
 		return node;
@@ -164,7 +161,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(node.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
+		then(result).isSameAs(criteria);
 	}
 
 	@Test
@@ -178,7 +175,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(ownership.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
+		then(result).isSameAs(criteria);
 	}
 
 	@Test
@@ -193,7 +190,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(ownership.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
+		then(result).isSameAs(criteria);
 	}
 
 	@Test
@@ -208,7 +205,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(node.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
+		then(result).isSameAs(criteria);
 	}
 
 	@Test
@@ -221,12 +218,9 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(ownership.getNodeId());
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
@@ -240,20 +234,17 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(ownership.getNodeId());
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
 	public void datumFilterPrivateNodeAsUserToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedUserToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -264,15 +255,15 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
 		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
-		Assert.assertEquals(nodeId, result.getNodeId());
+		then(result.getNodeId()).isEqualTo(nodeId);
 	}
 
 	@Test
 	public void datumFilterPrivateNodeAsSomeOtherUserToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedUserToken(-200L, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -282,20 +273,17 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -306,7 +294,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
 		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
-		Assert.assertEquals(nodeId, result.getNodeId());
+		then(result.getNodeId()).isEqualByComparingTo(nodeId);
 	}
 
 	@Test
@@ -324,15 +312,15 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
 		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
-		Assert.assertEquals(nodeId, result.getNodeId());
+		then(result.getNodeId()).isEqualTo(nodeId);
 	}
 
 	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUser() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		// note the actor is not the owner of the node
 		setAuthenticatedReadNodeDataToken(-200L, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
@@ -343,36 +331,27 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown SecurityException for non-owner user");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUserNonMatchingNode() {
 		final Long nodeId = -1L;
-		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(-2L)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(-2L)).build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown SecurityException for anonymous user");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.as("Should have thrown BasicSecurityException for anonymous user")
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
@@ -390,12 +369,10 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
-		try {
-			service.userNodeAccessCheck(criteria);
-			Assert.fail("Should have thrown SecurityException for node ID not owned by owner of token");
-		} catch ( AuthorizationException e ) {
-			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.as("Should have thrown BasicSecurityException for node ID not owned by owner of token")
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
@@ -405,7 +382,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "One", "Two" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -415,8 +392,8 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
-		Assert.assertEquals(nodeId, result.getNodeId());
-		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, result.getSourceIds());
+		then(result.getNodeId()).isEqualTo(nodeId);
+		then(result.getSourceIds()).as("Filled in source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -426,7 +403,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
@@ -443,8 +420,7 @@ public class QuerySecurityAspectTests {
 		criteria.setNodeId(nodeId);
 		@SuppressWarnings("unchecked")
 		Set<String> result = (Set<String>) service.reportableSourcesAccessCheck(pjp, nodeId);
-		Assert.assertEquals("Filtered source IDs",
-				new LinkedHashSet<String>(Arrays.asList("/A/B/watts", "/A/C/watts")), result);
+		then(result).as("Filtered source IDs").containsExactly("/A/B/watts", "/A/C/watts");
 	}
 
 	@Test
@@ -573,7 +549,7 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		criteria.setType("Weather");
 		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
+		then(result).isSameAs(criteria);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -582,8 +558,8 @@ public class QuerySecurityAspectTests {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
 		final Aggregation policyMinAgg = Aggregation.Day;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).withMinAggregation(policyMinAgg).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.withMinAggregation(policyMinAgg).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		setAuthenticatedReadNodeDataToken(userId, policy);
 
@@ -614,11 +590,11 @@ public class QuerySecurityAspectTests {
 		replayAll(pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
-		assertSame("Filtered results", filterResults, result);
+		then(result).isSameAs(filterResults);
 		AggregateGeneralNodeDatumFilter redirectedFilter = filterCapture.getValue();
-		Assert.assertEquals("Redirected filter node ID", nodeId, redirectedFilter.getNodeId());
-		Assert.assertEquals("Redirected filter aggregation", policyMinAgg,
-				redirectedFilter.getAggregation());
+		then(redirectedFilter.getNodeId()).as("Redirected filter node ID").isEqualTo(nodeId);
+		then(redirectedFilter.getAggregation()).as("Redirected filter aggregation")
+				.isEqualTo(policyMinAgg);
 
 		// THEN
 		verify(pjp, methodSig, queryBiz);
@@ -631,7 +607,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final QueryBiz queryBiz = EasyMock.createMock(QueryBiz.class);
 		final Signature methodSig = EasyMock.createMock(Signature.class);
@@ -667,17 +643,21 @@ public class QuerySecurityAspectTests {
 		replayAll(pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
-		assertSame("Filtered results", filterResults, result);
+		then(result).isSameAs(filterResults);
+		// @formatter:off
 		Object[] findFilteredArgs = proceedArgsCapture.getValue();
-		Assert.assertNotNull(findFilteredArgs);
-		Assert.assertEquals("findFilteredGeneralNodeDatum argument length", 4, findFilteredArgs.length);
-		Assert.assertNotSame("findFilteredGeneralNodeDatum filter argument changed", criteria,
-				findFilteredArgs[0]);
-		Assert.assertTrue("findFilteredGeneralNodeDatum filter",
-				findFilteredArgs[0] instanceof GeneralNodeDatumFilter);
-		GeneralNodeDatumFilter injectedFilter = (GeneralNodeDatumFilter) findFilteredArgs[0];
-		Assert.assertArrayEquals("Filtered source IDs", new String[] { "/A/B/watts", "/A/C/watts" },
-				injectedFilter.getSourceIds());
+		then(findFilteredArgs)
+			.isNotNull()
+			.as("findFilteredGeneralNodeDatum argument length")
+			.hasSize(4);
+		then(findFilteredArgs[0])
+			.as("findFilteredGeneralNodeDatum filter argument changed")
+			.isNotSameAs(criteria)
+			.as("findFilteredGeneralNodeDatum filter")
+			.asInstanceOf(type(GeneralNodeDatumFilter.class))
+			.returns(new String[] {"/A/B/watts", "/A/C/watts"}, from(GeneralNodeDatumFilter::getSourceIds))
+			;
+		// @formatter:on
 
 		// verify captured source ID filter
 		assertThat("Source ID filter node IDs", filterCapture.getValue().getNodeIds(),
@@ -697,7 +677,7 @@ public class QuerySecurityAspectTests {
 
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId, new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, -1L, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -706,12 +686,9 @@ public class QuerySecurityAspectTests {
 
 		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
 		criteria.setStreamIds(new UUID[] { streamId });
-		try {
-			service.userNodeAccessCheck(criteria);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertThat("Denied", e.getReason(), is(Reason.ACCESS_DENIED));
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
@@ -727,7 +704,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -752,7 +729,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -761,12 +738,9 @@ public class QuerySecurityAspectTests {
 
 		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
 		criteria.setStreamIds(new UUID[] { streamId });
-		try {
-			service.userNodeAccessCheck(criteria);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertThat("Denied becauase not node owner", e.getReason(), is(Reason.ACCESS_DENIED));
-		}
+		thenExceptionOfType(AuthorizationException.class).as("Denied becauase not node owner")
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 	@Test
@@ -783,7 +757,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -803,27 +777,22 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(-2L))
 				.build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		UUID streamId = UUID.randomUUID();
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
-
-		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		// WHEN
 		replayAll();
 
 		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
 		criteria.setStreamIds(new UUID[] { streamId });
-		try {
-			service.userNodeAccessCheck(criteria);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertThat("Denied because of node ID policy", e.getReason(), is(Reason.ACCESS_DENIED));
-		}
+		thenExceptionOfType(AuthorizationException.class).as("Denied because of node ID policy")
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
+
 	}
 
 	@Test
@@ -839,7 +808,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -864,7 +833,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -873,12 +842,9 @@ public class QuerySecurityAspectTests {
 
 		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
 		criteria.setStreamIds(new UUID[] { streamId });
-		try {
-			service.userNodeAccessCheck(criteria);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertThat("Denied because not node owner", e.getReason(), is(Reason.ACCESS_DENIED));
-		}
+		thenExceptionOfType(AuthorizationException.class).as("Denied because not node owner")
+				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
+				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
 
 }

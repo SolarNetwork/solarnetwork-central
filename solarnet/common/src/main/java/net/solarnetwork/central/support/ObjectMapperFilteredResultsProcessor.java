@@ -22,25 +22,25 @@
 
 package net.solarnetwork.central.support;
 
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.DATA_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.RETURNED_RESULT_COUNT_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.STARTING_OFFSET_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.DATA_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.RETURNED_RESULT_COUNT_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.STARTING_OFFSET_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonGenerator.Feature;
-import com.fasterxml.jackson.core.io.SerializedString;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.io.SerializedString;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
 /**
  * Basic {@link FilteredResultsProcessor} that serializes using Jackson JSON.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredResultsProcessor<R> {
 
@@ -48,8 +48,8 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	public static final SerializedString SUCCESS_FIELD_NAME = new SerializedString("success");
 
 	private final JsonGenerator generator;
-	private final SerializerProvider provider;
-	private final JsonSerializer<R> serializer;
+	private final SerializationContext provider;
+	private final @Nullable ValueSerializer<R> serializer;
 	private final MimeType mimeType;
 
 	private int resultIndex = 0;
@@ -58,52 +58,54 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	 * Constructor.
 	 * 
 	 * @param generator
-	 *        the generator to use
+	 *        the generator to use; <b>note</b> that
+	 *        {@code StreamWriteFeature.AUTO_CLOSE_TARGET} should be enabled for
+	 *        the underlying stream to be closed when {@code #close()} is called
 	 * @param provider
 	 *        the provider to use
 	 * @param mimeType
 	 *        the MIME type
 	 * @param serializer
-	 *        the serializer to use, or {@literal null} to rely on the
+	 *        the serializer to use, or {@code null} to rely on the
 	 *        {@link JsonGenerator}
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code serializer} is {@literal null}
+	 *         if any argument other than {@code serializer} is {@code null}
 	 */
-	public ObjectMapperFilteredResultsProcessor(JsonGenerator generator, SerializerProvider provider,
-			MimeType mimeType, JsonSerializer<R> serializer) {
+	public ObjectMapperFilteredResultsProcessor(JsonGenerator generator, SerializationContext provider,
+			MimeType mimeType, @Nullable ValueSerializer<R> serializer) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
 		this.serializer = serializer;
-		this.generator.enable(Feature.AUTO_CLOSE_TARGET);
 	}
 
 	@Override
-	public MimeType getMimeType() {
+	public final MimeType getMimeType() {
 		return mimeType;
 	}
 
 	@Override
-	public void start(final Long totalResultCount, final Integer startingOffset,
-			final Integer expectedResultCount, Map<String, ?> attributes) throws IOException {
+	public void start(final @Nullable Long totalResultCount, final @Nullable Integer startingOffset,
+			final @Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		int count = 1 + (expectedResultCount != null ? 1 : 0) + (startingOffset != null ? 1 : 0)
 				+ (totalResultCount != null ? 1 : 0);
 
 		generator.writeStartObject(this, count);
-		generator.writeFieldName(SUCCESS_FIELD_NAME);
+		generator.writeName(SUCCESS_FIELD_NAME);
 		generator.writeBoolean(true);
 
 		if ( expectedResultCount != null ) {
-			generator.writeFieldName(RETURNED_RESULT_COUNT_FIELD_NAME);
+			generator.writeName(RETURNED_RESULT_COUNT_FIELD_NAME);
 			generator.writeNumber(expectedResultCount);
 		}
 		if ( startingOffset != null ) {
-			generator.writeFieldName(STARTING_OFFSET_FIELD_NAME);
+			generator.writeName(STARTING_OFFSET_FIELD_NAME);
 			generator.writeNumber(startingOffset);
 		}
 		if ( totalResultCount != null ) {
-			generator.writeFieldName(TOTAL_RESULT_COUNT_FIELD_NAME);
+			generator.writeName(TOTAL_RESULT_COUNT_FIELD_NAME);
 			generator.writeNumber(totalResultCount);
 		}
 	}
@@ -111,13 +113,13 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	@Override
 	public void handleResultItem(R item) throws IOException {
 		if ( resultIndex == 0 ) {
-			generator.writeFieldName(DATA_FIELD_NAME);
+			generator.writeName(DATA_FIELD_NAME);
 			generator.writeStartArray();
 		}
 		if ( serializer != null ) {
 			serializer.serialize(item, generator, provider);
 		} else {
-			generator.writeObject(item);
+			generator.writePOJO(item);
 		}
 		resultIndex++;
 	}

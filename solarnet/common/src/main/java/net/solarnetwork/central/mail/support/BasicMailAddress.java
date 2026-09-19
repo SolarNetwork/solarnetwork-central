@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.mail.MailAddress;
 
 /**
@@ -33,20 +35,22 @@ import net.solarnetwork.central.mail.MailAddress;
 public class BasicMailAddress implements MailAddress {
 
 	private String[] to;
-	private String[] cc;
-	private String[] bcc;
-	private String from;
+	private String @Nullable [] cc;
+	private String @Nullable [] bcc;
+	private @Nullable String from;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param to
 	 *        the to email address list
+	 * @throws IllegalArgumentException
+	 *         if {@code to} is empty
 	 * @since 1.1
 	 */
 	public BasicMailAddress(String[] to) {
 		super();
-		this.to = to;
+		this.to = requireNonEmptyArgument(to, "to");
 	}
 
 	/**
@@ -57,35 +61,44 @@ public class BasicMailAddress implements MailAddress {
 	 * @param toAddress
 	 *        the email address
 	 */
-	public BasicMailAddress(String toName, String toAddress) {
-		this.to = new String[] { formatMailAddress(toName, toAddress) };
+	public BasicMailAddress(@Nullable String toName, String toAddress) {
+		this(new String[] { formatMailAddress(toName, toAddress) });
 	}
 
-	@Override
-	public String[] getBcc() {
-		return bcc == null ? null : bcc.clone();
-	}
-
-	@Override
-	public String[] getCc() {
-		return cc == null ? null : cc.clone();
-	}
-
-	@Override
-	public String getFrom() {
-		return from;
-	}
-
-	@Override
-	public String[] getTo() {
-		return to == null ? null : to.clone();
-	}
-
-	private String formatMailAddress(String name, String email) {
+	/**
+	 * Format an email address.
+	 * 
+	 * @param name
+	 *        the optional name
+	 * @param email
+	 *        the email
+	 * @return the formatted address
+	 */
+	public static String formatMailAddress(@Nullable String name, String email) {
 		if ( name == null || name.isEmpty() ) {
 			return email;
 		}
 		return "\"" + name + "\" <" + email + ">";
+	}
+
+	@Override
+	public final String @Nullable [] getBcc() {
+		return bcc == null ? null : bcc.clone();
+	}
+
+	@Override
+	public final String @Nullable [] getCc() {
+		return cc == null ? null : cc.clone();
+	}
+
+	@Override
+	public final @Nullable String getFrom() {
+		return from;
+	}
+
+	@Override
+	public final String[] getTo() {
+		return to.clone();
 	}
 
 	/**
@@ -93,9 +106,11 @@ public class BasicMailAddress implements MailAddress {
 	 *
 	 * @param to
 	 *        the recipients to set
+	 * @throws IllegalArgumentException
+	 *         if {@code to} is empty
 	 */
-	public void setTo(String[] to) {
-		this.to = to;
+	public final void setTo(String[] to) {
+		this.to = requireNonEmptyArgument(to, "to");
 	}
 
 	/**
@@ -104,7 +119,7 @@ public class BasicMailAddress implements MailAddress {
 	 * @param cc
 	 *        the cc recipients to set
 	 */
-	public void setCc(String[] cc) {
+	public final void setCc(String @Nullable [] cc) {
 		this.cc = cc;
 	}
 
@@ -114,7 +129,7 @@ public class BasicMailAddress implements MailAddress {
 	 * @param bcc
 	 *        the bcc recipients to set
 	 */
-	public void setBcc(String[] bcc) {
+	public final void setBcc(String @Nullable [] bcc) {
 		this.bcc = bcc;
 	}
 
@@ -124,7 +139,7 @@ public class BasicMailAddress implements MailAddress {
 	 * @param from
 	 *        the sender to set
 	 */
-	public void setFrom(String from) {
+	public final void setFrom(@Nullable String from) {
 		this.from = from;
 	}
 

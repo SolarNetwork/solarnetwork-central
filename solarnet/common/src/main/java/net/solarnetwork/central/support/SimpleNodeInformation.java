@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BaseIdentity;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.NodeInformation;
@@ -39,8 +40,8 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	@Serial
 	private static final long serialVersionUID = -7130984585644772072L;
 
-	private Location location;
-	private SolarNodeCapability capability;
+	private @Nullable Location location;
+	private @Nullable SolarNodeCapability capability;
 
 	/**
 	 * Default constructor.
@@ -57,8 +58,10 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	 * @param location
 	 *        the location
 	 */
-	public SimpleNodeInformation(SolarNodeCapability capability, Location location) {
-		setId(capability.getNodeId());
+	public SimpleNodeInformation(@Nullable SolarNodeCapability capability, @Nullable Location location) {
+		if ( capability != null ) {
+			setId(capability.getNodeId());
+		}
 		this.capability = capability;
 		this.location = location;
 	}
@@ -67,7 +70,7 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	 * @return the location
 	 */
 	@Override
-	public Location getLocation() {
+	public final @Nullable Location getLocation() {
 		return location;
 	}
 
@@ -75,16 +78,18 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	 * @return the generationCapacityWatts
 	 */
 	@Override
-	public Long getGenerationCapacityWatts() {
-		return capability.getGenerationCapacityWatts();
+	public final @Nullable Long getGenerationCapacityWatts() {
+		final var c = this.capability;
+		return (c != null ? c.getGenerationCapacityWatts() : null);
 	}
 
 	/**
 	 * @return the storageCapacityWattHours
 	 */
 	@Override
-	public Long getStorageCapacityWattHours() {
-		return capability.getStorageCapacityWattHours();
+	public final @Nullable Long getStorageCapacityWattHours() {
+		final var c = this.capability;
+		return (c != null ? c.getStorageCapacityWattHours() : null);
 	}
 
 }

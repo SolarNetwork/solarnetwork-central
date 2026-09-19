@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.dao.jdbc.test;
 
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_TIMESTAMP_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.computeHmacSha256;
@@ -41,34 +43,33 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.SqlReturnResultSet;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for authentication related database stored procedures.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
+public class AuthTokenStoredProcedureTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final String SQL_SNWS2_CANON_REQ_DATA = "{? = call solaruser.snws2_canon_request_data(?, ?, ?)}";
 	private static final String SQL_SNWS2_SIGNATURE_DATA = "{? = call solaruser.snws2_signature_data(?, ?)}";
@@ -215,7 +216,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void snwsValidateRequestDateSuccess() {
 		// given
-		final Date reqDate = new Date();
+		final Instant reqDate = Instant.now().truncatedTo(MILLIS);
 
 		// when
 		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
@@ -224,7 +225,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con.prepareCall(SQL_SNWS2_VALID_REQ_DATE);
 				stmt.registerOutParameter(1, Types.BOOLEAN);
-				stmt.setTimestamp(2, new Timestamp(reqDate.getTime()));
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
 				return stmt;
 			}
 		}, asList((SqlParameter) new SqlOutParameter("data", Types.BOOLEAN)));
@@ -236,7 +237,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void snwsValidateRequestDateSuccessSlightlyOld() {
 		// given
-		final Date reqDate = new Date(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
+		final Instant reqDate = Instant.now().truncatedTo(MILLIS).minus(1L, MINUTES);
 
 		// when
 		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
@@ -245,7 +246,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con.prepareCall(SQL_SNWS2_VALID_REQ_DATE);
 				stmt.registerOutParameter(1, Types.BOOLEAN);
-				stmt.setTimestamp(2, new Timestamp(reqDate.getTime()));
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
 				return stmt;
 			}
 		}, asList((SqlParameter) new SqlOutParameter("data", Types.BOOLEAN)));
@@ -257,7 +258,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void snwsValidateRequestDateSuccessSlightlyFuturistic() {
 		// given
-		final Date reqDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1));
+		final Instant reqDate = Instant.now().truncatedTo(MILLIS).plus(1L, MINUTES);
 
 		// when
 		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
@@ -266,7 +267,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con.prepareCall(SQL_SNWS2_VALID_REQ_DATE);
 				stmt.registerOutParameter(1, Types.BOOLEAN);
-				stmt.setTimestamp(2, new Timestamp(reqDate.getTime()));
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
 				return stmt;
 			}
 		}, asList((SqlParameter) new SqlOutParameter("data", Types.BOOLEAN)));
@@ -278,7 +279,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void snwsValidateRequestDateTooOld() {
 		// given
-		final Date reqDate = new Date(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(10));
+		final Instant reqDate = Instant.now().truncatedTo(MILLIS).minus(10L, MINUTES);
 
 		// when
 		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
@@ -287,7 +288,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con.prepareCall(SQL_SNWS2_VALID_REQ_DATE);
 				stmt.registerOutParameter(1, Types.BOOLEAN);
-				stmt.setTimestamp(2, new Timestamp(reqDate.getTime()));
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
 				return stmt;
 			}
 		}, asList((SqlParameter) new SqlOutParameter("data", Types.BOOLEAN)));
@@ -299,7 +300,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void snwsValidateRequestDateTooFuturistic() {
 		// given
-		final Date reqDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10));
+		final Instant reqDate = Instant.now().truncatedTo(MILLIS).plus(10L, MINUTES);
 
 		// when
 		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
@@ -308,7 +309,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con.prepareCall(SQL_SNWS2_VALID_REQ_DATE);
 				stmt.registerOutParameter(1, Types.BOOLEAN);
-				stmt.setTimestamp(2, new Timestamp(reqDate.getTime()));
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
 				return stmt;
 			}
 		}, asList((SqlParameter) new SqlOutParameter("data", Types.BOOLEAN)));
@@ -434,6 +435,40 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
 		assertThat("Result length", data, hasSize(0));
+	}
+
+	@Test
+	public void snwsFindVerifiedTokenDetailsUserDisabled() {
+		// GIVEN
+		final Instant reqDate = LocalDateTime.of(2017, 4, 25, 14, 30).atZone(ZoneOffset.UTC).toInstant();
+		final String tokenId = "123456789abcdefghijk";
+		final String tokenSecret = "password";
+		final Long userId = -1L;
+		createUser(userId, "test@localhost");
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
+				SecurityTokenType.ReadNodeData, null);
+		CommonDbTestUtils.setUserEnabled(jdbcTemplate, userId, false);
+
+		// WHEN
+		Map<String, Object> result = jdbcTemplate.call(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con.prepareCall(SQL_SNWS2_FIND_VERIFIED_TOKEN);
+				stmt.setString(1, tokenId);
+				stmt.setTimestamp(2, Timestamp.from(reqDate));
+				stmt.setString(3, "localhost");
+				stmt.setString(4, "/foobar");
+				stmt.setString(5, "f366ddc9e6299794928cc956e9fa409333078df6e6b9d94d4c1e64dbecf499db");
+				return stmt;
+			}
+		}, asList((SqlParameter) new SqlReturnResultSet("data", new ColumnMapRowMapper())));
+
+		// THEN
+		assertThat("Result available", result, hasKey("data"));
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+		assertThat("No result for token owned by disabled user", data, hasSize(0));
 	}
 
 	@Test

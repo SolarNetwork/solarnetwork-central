@@ -35,14 +35,15 @@ import net.solarnetwork.central.domain.CompositeKey;
  * Update the enabled status based on a primary key filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public final class UpdateEnabledIdFilter implements PreparedStatementCreator, SqlProvider {
 
-	private String tableName;
-	private String[] idColumnNames;
-	private CompositeKey filter;
-	private boolean enabled;
+	private final String tableName;
+	private final String[] idColumnNames;
+	private final CompositeKey filter;
+	private final boolean enabled;
+	private final boolean withoutModified;
 
 	/**
 	 * Constructor.
@@ -54,15 +55,37 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledIdFilter(String tableName, String[] idColumnNames, CompositeKey filter,
 			boolean enabled) {
+		this(tableName, idColumnNames, filter, enabled, false);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param tableName
+	 *        the table name to update
+	 * @param idColumnNames
+	 *        the ID column names
+	 * @param enabled
+	 *        the desired enabled state
+	 * @param withoutModified
+	 *        if {@code true} then omit updating a {@code modified} column to
+	 *        the current timestamp
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code filter} is {@code null}
+	 * @since 1.2
+	 */
+	public UpdateEnabledIdFilter(String tableName, String[] idColumnNames, CompositeKey filter,
+			boolean enabled, boolean withoutModified) {
 		super();
 		this.tableName = requireNonNullArgument(tableName, "tableName");
 		this.idColumnNames = requireNonEmptyArgument(idColumnNames, "idColumnNames");
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.enabled = enabled;
+		this.withoutModified = withoutModified;
 	}
 
 	@Override
@@ -76,8 +99,11 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				UPDATE %s
-				SET enabled = ?, modified = CURRENT_TIMESTAMP
+				SET enabled = ?
 				""".formatted(tableName));
+		if ( !withoutModified ) {
+			buf.append("\t, modified = CURRENT_TIMESTAMP\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -102,11 +128,11 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 		int p = 0;
 		stmt.setBoolean(++p, enabled);
 
-		p = prepareWhere(con, stmt, p);
+		prepareWhere(stmt, p);
 		return stmt;
 	}
 
-	private int prepareWhere(Connection con, PreparedStatement stmt, int p) throws SQLException {
+	private int prepareWhere(PreparedStatement stmt, int p) throws SQLException {
 		final int componentCount = filter.keyComponentLength();
 		for ( int i = 0; i < componentCount && i < idColumnNames.length; i++ ) {
 			if ( filter.keyComponentIsAssigned(i) ) {

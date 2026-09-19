@@ -23,7 +23,9 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -32,18 +34,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.net.URI;
-import java.util.Collections;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.time.Clock;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -76,15 +83,17 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	@Mock
 	private RestOperations restOps;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
 
 	private SolarEdgeV1CloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
-		service = new SolarEdgeV1CloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, restOps);
+		service = new SolarEdgeV1CloudIntegrationService(Set.of(datumStreamService),
+				userEventAppenderBiz, encryptor, restOps, Clock.systemUTC());
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SolarEdgeV1CloudIntegrationService.class.getName(),
@@ -96,7 +105,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -139,18 +148,15 @@ public class SolarEdgeCloudIntegrationServiceTests {
 		final String apiKey = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				SolarEdgeV1CloudIntegrationService.API_KEY_SETTING, apiKey
 			));
 		// @formatter:on
 
-		final URI listSitesUri = SolarEdgeV1CloudIntegrationService.BASE_URI
-				.resolve(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(listSitesUri), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -158,6 +164,19 @@ public class SolarEdgeCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
+					.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL)
+					.queryParam(API_KEY_PARAM, apiKey)
+					.build()
+					.toUri(), from(RequestEntity::getUrl))
+			;
+
 		and.then(result)
 			.as("Result generated")
 			.isNotNull()

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.TagCriteria;
 import net.solarnetwork.central.domain.UserMetadataFilter;
@@ -32,11 +33,11 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserMetadataFilter}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMetadataFilter {
 
-	private String[] tags;
+	private String @Nullable [] tags;
 
 	/**
 	 * Constructor.
@@ -61,7 +62,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof TagCriteria c ) {
 			setTags(c.getTags());
@@ -77,7 +78,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -88,7 +89,16 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 	}
 
 	@Override
-	public String[] getTags() {
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (tags != null && tags.length > 0)
+				;
+		// @formatter:on
+	}
+
+	@Override
+	public final String @Nullable [] getTags() {
 		return tags;
 	}
 
@@ -98,7 +108,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 	 * @param tag
 	 *        the tag to set
 	 */
-	public void setTag(String tag) {
+	public final void setTag(@Nullable String tag) {
 		setTags(tag != null ? new String[] { tag } : null);
 	}
 
@@ -108,7 +118,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 	 * @param tags
 	 *        the tags to set
 	 */
-	public void setTags(String[] tags) {
+	public final void setTags(String @Nullable [] tags) {
 		this.tags = tags;
 	}
 

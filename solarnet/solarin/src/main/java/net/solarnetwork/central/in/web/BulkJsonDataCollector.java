@@ -28,8 +28,10 @@ import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.getString
 import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.parseDatum;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +42,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -58,17 +58,20 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.6
+ * @version 4.0
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
@@ -151,10 +154,11 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	public Result<BulkUploadResult> postData(
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in,
 			Model model) throws IOException {
-		AuthenticatedNode authNode = getAuthenticatedNode(true);
+		final AuthenticatedNode authNode = getAuthenticatedNode(true);
+		final Instant now = Instant.now();
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 
@@ -171,7 +175,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 					Object o = handleNode(child);
 					if ( o instanceof Datum ) {
 						// convert to legacy form for compatibility between node 1.0/2.0
-						o = DatumUtils.convertGeneralDatum((Datum) o);
+						o = DatumUtils.convertGeneralDatum((Datum) o, now, authNode);
 					}
 					if ( o instanceof StreamDatum ) {
 						parsedStreamDatum.add((StreamDatum) o);
@@ -230,11 +234,11 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		// add instructions for the node
 		final InstructorBiz instructorBiz = getInstructorBiz();
 		if ( instructorBiz != null ) {
-			List<Instruction> instructions = new ArrayList<>(2);
+			List<NodeInstruction> instructions = new ArrayList<>(2);
 			var filter = new SimpleInstructionFilter();
 			filter.setNodeId(authNode.getNodeId());
 			filter.setState(InstructionState.Queued);
-			try (FilteredResultsProcessor<NodeInstruction> processor = new AbstractFilteredResultsProcessor<NodeInstruction>() {
+			try (FilteredResultsProcessor<NodeInstruction> processor = new AbstractFilteredResultsProcessor<>() {
 
 				@Override
 				public void handleResultItem(NodeInstruction resultItem) throws IOException {
@@ -266,7 +270,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 		try {
 			return parseDatum(objectMapper, node);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Unable to parse JSON {}: {}", node, e.getMessage());
 		}
 		return null;
@@ -290,7 +294,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			result.setId(id);
 			result.setState(s);
 			result.setResultParameters(resultParams);
-			return result;
 		}
 		return result;
 	}

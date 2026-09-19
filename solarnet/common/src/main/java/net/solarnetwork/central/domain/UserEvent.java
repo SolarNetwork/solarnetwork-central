@@ -29,9 +29,10 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.util.UuidUtils;
 
 /**
@@ -44,17 +45,17 @@ import net.solarnetwork.util.UuidUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.1
  */
-public class UserEvent extends BasicIdentity<UserUuidPK>
+public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
 
 	@Serial
 	private static final long serialVersionUID = -2418940464038903514L;
 
 	private final String[] tags;
-	private final String message;
-	private final String data;
+	private final @Nullable String message;
+	private final @Nullable String data;
 
 	/**
 	 * Constructor.
@@ -68,9 +69,9 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if {@code id} or {@code tags} are {@literal null}
+	 *         if {@code id} or {@code tags} are {@code null}
 	 */
-	public UserEvent(UserUuidPK id, String[] tags, String message, String data) {
+	public UserEvent(UserUuidPK id, String[] tags, @Nullable String message, @Nullable String data) {
 		super(requireNonNullArgument(id, "id"));
 		this.tags = requireNonEmptyArgument(tags, "tags");
 		this.message = message;
@@ -91,10 +92,11 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} other than {@code message} or
+	 *         if any argument is {@code null} other than {@code message} or
 	 *         {@code data}
 	 */
-	public UserEvent(Long userId, UUID eventId, String[] tags, String message, String data) {
+	public UserEvent(Long userId, UUID eventId, String[] tags, @Nullable String message,
+			@Nullable String data) {
 		this(new UserUuidPK(userId, eventId), tags, message, data);
 	}
 
@@ -135,13 +137,34 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	}
 
 	@Override
-	public Long getUserId() {
-		return getId().getUserId();
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return UuidUtils.extractTimestamp(getEventId(), UuidUtils.V7_MICRO_COUNT_PRECISION);
+	}
+
+	/**
+	 * Test if a specific tag is set.
+	 * 
+	 * @param tag
+	 *        the tag to look for
+	 * @return {@code true} if the {@code tags} array contains {@code tag}
+	 * @since 2.1
+	 */
+	@SuppressWarnings("InvalidParam")
+	public boolean hasTag(String tag) {
+		if ( tag == null || tags == null || tags.length < 1 ) {
+			return false;
+		}
+		for ( String t : tags ) {
+			if ( t != null && t.equals(tag) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -150,7 +173,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 * @return the event ID
 	 */
 	public UUID getEventId() {
-		return getId().getUuid();
+		return id().getUuid();
 	}
 
 	/**
@@ -158,7 +181,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 *
 	 * @return the tags
 	 */
-	public String[] getTags() {
+	public final String[] getTags() {
 		return tags;
 	}
 
@@ -167,7 +190,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -176,7 +199,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 *
 	 * @return the data
 	 */
-	public String getData() {
+	public final @Nullable String getData() {
 		return data;
 	}
 

@@ -1,0 +1,111 @@
+/* ==================================================================
+ * SolarEdgeV2RestOperationsHelper.java - 12 Aug 2026 8:24:15 am
+ *
+ * Copyright 2026 SolarNetwork.net Dev Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.c2c.biz.solaredge;
+
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
+import java.net.URI;
+import java.time.InstantSource;
+import java.util.List;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.web.client.RestOperations;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.c2c.http.RestOperationsHelper;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.service.IdentifiableConfiguration;
+
+/**
+ * Extension of {@link RestOperationsHelper} with support for SolarEdge V2 style
+ * fleet (API key) authentication.
+ *
+ * @author matt
+ * @version 1.0
+ */
+public class SolarEdgeV2RestOperationsHelper extends RestOperationsHelper {
+
+	/**
+	 * A JSON and {@code application/problem+json} media type list, suitable for
+	 * an HTTP Accept header.
+	 */
+	public static final List<MediaType> ACCEPT_JSON_AND_PROBLEM_JSON = List
+			.of(MediaType.APPLICATION_JSON, MediaType.valueOf("application/problem+json"));
+
+	/**
+	 * Constructor.
+	 *
+	 * @param clock
+	 *        the clock to use
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public SolarEdgeV2RestOperationsHelper(InstantSource clock, Logger log,
+			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			List<String> errorEventTags, TextEncryptor encryptor,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
+		super(clock, log, userEventAppenderBiz, restOps, errorEventTags, encryptor,
+				sensitiveKeyProvider);
+	}
+
+	@Override
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
+			BiFunction<RequestEntity<Void>, ResponseEntity<R>, T> handler) {
+		return super.httpGet(description, configuration, responseType, (headers) -> {
+			String apiKey = null;
+			if ( configuration instanceof IdentifiableConfiguration c
+					&& c.hasServiceProperty(API_KEY_SETTING) ) {
+				final var decrypted = configuration.copyWithId(configuration.getId());
+				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
+				apiKey = ((IdentifiableConfiguration) decrypted).serviceProperty(API_KEY_SETTING,
+						String.class);
+			}
+			if ( apiKey != null ) {
+				headers.set(SolarEdgeV2CloudIntegrationService.API_KEY_HEADER, apiKey);
+			}
+			headers.setAccept(ACCEPT_JSON_AND_PROBLEM_JSON);
+			return setup.apply(headers);
+		}, handler);
+	}
+
+}

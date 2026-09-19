@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
@@ -87,8 +88,8 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	private final EndpointAuthConfigurationDao endpointAuthDao;
 	private final Collection<TransformService> transformServices;
 
-	private Validator validator;
-	private PasswordEncoder passwordEncoder;
+	private @Nullable Validator validator;
+	private @Nullable PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructor.
@@ -104,7 +105,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 * @param transformServices
 	 *        the transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserDatumInputBiz(CredentialConfigurationDao credentialDao,
 			TransformConfigurationDao transformDao, EndpointConfigurationDao endpointDao,
@@ -126,7 +127,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
-			Long userId, DatumInputFilter filter, Class<C> configurationClass) {
+			Long userId, @Nullable DatumInputFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
 		BasicFilter f = new BasicFilter(filter);
@@ -142,7 +143,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForId(
+	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> @Nullable C configurationForId(
 			K id, Class<C> configurationClass) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
@@ -220,7 +221,8 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		dao.delete(pk);
 	}
 
-	private static Long nodeId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+	private static @Nullable Long nodeId(@Nullable EndpointConfiguration endpoint,
+			@Nullable Map<String, ?> parameters) {
 		Long nodeId = (endpoint != null ? endpoint.getNodeId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
 			try {
@@ -232,7 +234,8 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return nodeId;
 	}
 
-	private static String sourceId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+	private static @Nullable String sourceId(@Nullable EndpointConfiguration endpoint,
+			@Nullable Map<String, ?> parameters) {
 		String sourceId = (endpoint != null ? endpoint.getSourceId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
 			sourceId = parameters.get(PARAM_SOURCE_ID).toString();
@@ -240,10 +243,12 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return sourceId;
 	}
 
+	@SuppressWarnings("UnnecessaryStringBuilder")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId,
-			MimeType contentType, InputStream in, Map<String, ?> parameters) throws IOException {
+			MimeType contentType, InputStream in, @Nullable Map<String, ?> parameters)
+			throws IOException {
 		final UserLongCompositePK xformPk = new UserLongCompositePK(id.getUserId(),
 				requireNonNullArgument(id.getEntityId(), "transformId"));
 		final TransformConfiguration xform = requireNonNullObject(transformDao.get(xformPk), xformPk);
@@ -296,7 +301,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 				root = root.getCause();
 			}
 			msg = e.getMessage();
-			if ( !msg.equals(root.getMessage()) ) {
+			if ( msg != null && !msg.equals(root.getMessage()) ) {
 				msg += " " + root.getMessage();
 			}
 		}
@@ -304,7 +309,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return new TransformOutput(datum, xsltOutput.toString(), msg);
 	}
 
-	private TransformService transformService(String serviceId) {
+	private @Nullable TransformService transformService(String serviceId) {
 		for ( TransformService service : transformServices ) {
 			if ( serviceId.equals(service.getId()) ) {
 				return service;
@@ -313,11 +318,11 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return null;
 	}
 
-	private void validateInput(final Object input) {
+	private void validateInput(final @Nullable Object input) {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -337,13 +342,13 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			Class<C> clazz) {
 		GenericDao<C, K> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (credentialDao);
+			result = (GenericDao<C, K>) credentialDao;
 		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (transformDao);
+			result = (GenericDao<C, K>) transformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointDao);
+			result = (GenericDao<C, K>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointAuthDao);
+			result = (GenericDao<C, K>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -355,11 +360,11 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	private <F extends DatumInputFilter> UserModifiableEnabledStatusDao<F> statusDao(Class<?> clazz) {
 		UserModifiableEnabledStatusDao<F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (credentialDao);
+			result = (UserModifiableEnabledStatusDao<F>) credentialDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointAuthDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -372,13 +377,13 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			Class<C> clazz) {
 		FilterableDao<C, K, F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (credentialDao);
+			result = (FilterableDao<C, K, F>) credentialDao;
 		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (transformDao);
+			result = (FilterableDao<C, K, F>) transformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointDao);
+			result = (FilterableDao<C, K, F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointAuthDao);
+			result = (FilterableDao<C, K, F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -391,7 +396,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -401,7 +406,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -410,7 +415,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 *
 	 * @return the password encoder
 	 */
-	public PasswordEncoder getPasswordEncoder() {
+	public final @Nullable PasswordEncoder getPasswordEncoder() {
 		return passwordEncoder;
 	}
 
@@ -420,7 +425,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 * @param passwordEncoder
 	 *        the encoder to set
 	 */
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	public final void setPasswordEncoder(@Nullable PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
 	}
 

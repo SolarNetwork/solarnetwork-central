@@ -39,7 +39,7 @@ import net.solarnetwork.domain.Result;
  * Remote authentication for nodes.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1AuthenticationController")
 @GlobalExceptionRestController
@@ -64,6 +64,7 @@ public class AuthenticationController {
 			data.put("username", user.getEmail());
 			data.put("name", user.getDisplayName());
 		} else if ( actor instanceof SecurityToken token ) {
+			data.put("userId", token.getUserId());
 			data.put("token", token.getToken().trim());
 			data.put("tokenType", token.getTokenType());
 		}

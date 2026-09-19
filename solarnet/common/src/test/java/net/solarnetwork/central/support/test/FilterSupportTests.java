@@ -25,7 +25,7 @@ package net.solarnetwork.central.support.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.support.FilterSupport;
 
 /**

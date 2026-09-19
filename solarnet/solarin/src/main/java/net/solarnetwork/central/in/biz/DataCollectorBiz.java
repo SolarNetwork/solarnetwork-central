@@ -86,7 +86,7 @@ public interface DataCollectorBiz {
 	 *
 	 * @param nodeId
 	 *        the node ID to get the location for
-	 * @return the location, or {@literal null} if not available
+	 * @return the location, or {@code null} if not available
 	 * @since 3.2
 	 */
 	Location getLocationForNode(Long nodeId);
@@ -150,7 +150,7 @@ public interface DataCollectorBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 * @since 1.5
 	 */
 	FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
@@ -168,7 +168,7 @@ public interface DataCollectorBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
@@ -187,7 +187,7 @@ public interface DataCollectorBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 * @since 1.3
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(

@@ -1,21 +1,21 @@
 /* ==================================================================
  * AuditDatumRecordCountsTests.java - 12/07/2018 11:54:17 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,23 +27,24 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import java.time.Instant;
 import java.util.Map;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link AuditDatumRecordCounts} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class AuditDatumRecordCountsTests {
 
 	public ObjectMapper objectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper();
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	@Test
@@ -58,8 +59,8 @@ public class AuditDatumRecordCountsTests {
 	public void serializeJsonPrimaryKeyProperties() throws Exception {
 		// given
 		Instant ts = Instant.ofEpochMilli(1408665600000L);
-		AuditDatumRecordCounts c = new AuditDatumRecordCounts(100L, "test.source", 1L, 2L, 3, 4);
-		c.setCreated(ts);
+		AuditDatumRecordCounts c = new AuditDatumRecordCounts(
+				new ObjectRecordId(100L, "test.source", ts), 1L, 2L, 3, 4);
 
 		// when
 		JsonNode tree = objectMapper().valueToTree(c);
@@ -75,7 +76,7 @@ public class AuditDatumRecordCountsTests {
 
 	@Test
 	public void totalCountAllNull() {
-		AuditDatumRecordCounts c = new AuditDatumRecordCounts();
+		AuditDatumRecordCounts c = new AuditDatumRecordCounts(new ObjectRecordId(null, null, null));
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(0L));
 	}
 

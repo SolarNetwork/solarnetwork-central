@@ -1,0 +1,22 @@
+{
+  "estimated_actuals": [
+    {
+      "air_temp": 22,
+      "dhi": 270,
+      "dni": 639,
+      "ghi": 858,
+      "gti": 876,
+      "period_end": "2024-10-21T20:00:00+00:00",
+      "period": "PT30M"
+    },
+    {
+      "air_temp": 23,
+      "dhi": 223,
+      "dni": 731,
+      "ghi": 898,
+      "gti": 945,
+      "period_end": "2024-10-21T20:30:00+00:00",
+      "period": "PT30M"
+    }
+  ]
+}

@@ -28,10 +28,10 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.ibatis.session.ResultHandler;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -39,7 +39,7 @@ import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -112,7 +112,7 @@ public class MyBatisNodeInstructionDao
 	@Override
 	protected Long handleInsert(NodeInstruction datum) {
 		Long result = super.handleInsert(datum);
-		handleRelation(result, datum.getParameters(), InstructionParameter.class, null);
+		handleRelation(result, datum.getInstruction().getParameters(), InstructionParameter.class, null);
 		return result;
 	}
 
@@ -136,7 +136,8 @@ public class MyBatisNodeInstructionDao
 
 	@Override
 	public boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
-			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters) {
+			InstructionState expectedState, InstructionState state,
+			@Nullable Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
@@ -151,7 +152,7 @@ public class MyBatisNodeInstructionDao
 
 	@Override
 	public boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
-			Map<String, ?> resultParameters) {
+			@Nullable Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
@@ -175,8 +176,8 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	protected Long executeFilterCountQuery(final String countQueryName, InstructionFilter filter,
-			final Map<String, ?> sqlProps) {
+	protected @Nullable Long executeFilterCountQuery(final String countQueryName,
+			InstructionFilter filter, final @Nullable Map<String, ?> sqlProps) {
 		// count not supported, so don't bother trying
 		return null;
 	}
@@ -186,7 +187,7 @@ public class MyBatisNodeInstructionDao
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
-		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null, Map.of()); // TODO: support count total results/offset/max
 		try {
 			getSqlSession().select("findall-NodeInstruction-EntityMatch",
 					singletonMap(FILTER_PROPERTY, filter),

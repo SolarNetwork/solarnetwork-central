@@ -33,10 +33,10 @@ import net.solarnetwork.domain.Differentiable;
  * API for instruction input configuration entities.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface InstructionInputConfigurationEntity<C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated>
-		extends UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>, Serializable, Cloneable {
+		extends UserRelatedEntity<K>, CopyingIdentity<C, K>, Differentiable<C>, Serializable, Cloneable {
 
 	/**
 	 * Erase any sensitive credentials.

@@ -57,7 +57,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link DaoInstructorBiz} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -93,8 +93,8 @@ public class DaoInstructorBizTests {
 		given(nodeInstructionDao.save(any())).willReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
-		dbInstr.setState(InstructionState.Queued);
-		dbInstr.setParameters(instr.getParameters());
+		dbInstr.getInstruction().setState(InstructionState.Queued);
+		dbInstr.getInstruction().setParameters(instr.getParameters());
 		given(nodeInstructionDao.get(instrId)).willReturn(dbInstr);
 
 		// WHEN
@@ -107,14 +107,15 @@ public class DaoInstructorBizTests {
 		// @formatter:off
 		then(nodeInstructionDao).should().save(nodeInstructionCaptor.capture());
 		and.then(nodeInstructionCaptor.getValue())
-			.as("Stored same topic")
-			.returns(instr.getTopic(), from(NodeInstruction::getTopic))
-			.as("Stored same date")
-			.returns(instr.getCreated(), from(NodeInstruction::getCreated))
 			.as("Stored same node ID")
 			.returns(nodeId, from(NodeInstruction::getNodeId))
+			.extracting(NodeInstruction::getInstruction)
+			.as("Stored same topic")
+			.returns(instr.getTopic(), from(Instruction::getTopic))
+			.as("Stored same date")
+			.returns(instr.getCreated(), from(Instruction::getCreated))
 			.as("Stored same parameters")
-			.returns(instr.getParameters(), from(NodeInstruction::getParameters))
+			.returns(instr.getParameters(), from(Instruction::getParameters))
 			;
 		
 		and.then(result)
@@ -140,9 +141,9 @@ public class DaoInstructorBizTests {
 		given(nodeInstructionDao.save(any())).willReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
-		dbInstr.setState(InstructionState.Queued);
+		dbInstr.getInstruction().setState(InstructionState.Queued);
 		for ( int i = 0; i < buf.length(); i += biz.getMaxParamValueLength() ) {
-			dbInstr.addParameter("foo",
+			dbInstr.getInstruction().addParameter("foo",
 					buf.substring(i, i + Math.min(biz.getMaxParamValueLength(), buf.length() - i)));
 		}
 		given(nodeInstructionDao.get(instrId)).willReturn(dbInstr);
@@ -156,20 +157,21 @@ public class DaoInstructorBizTests {
 		
 		then(nodeInstructionDao).should().save(nodeInstructionCaptor.capture());
 		and.then(nodeInstructionCaptor.getValue())
-			.as("Stored same topic")
-			.returns(instr.getTopic(), from(NodeInstruction::getTopic))
-			.as("Stored same date")
-			.returns(instr.getCreated(), from(NodeInstruction::getCreated))
 			.as("Stored same node ID")
 			.returns(nodeId, from(NodeInstruction::getNodeId))
+			.extracting(NodeInstruction::getInstruction)
+			.as("Stored same topic")
+			.returns(instr.getTopic(), from(Instruction::getTopic))
+			.as("Stored same date")
+			.returns(instr.getCreated(), from(Instruction::getCreated))
 			.as("Stored SPLIT parameters")
-			.returns(dbInstr.getParameters(), from(NodeInstruction::getParameters))
+			.returns(dbInstr.getInstruction().getParameters(), from(Instruction::getParameters))
 			;
 		
 		and.then(result)
 			.as("DAO result returned")
 			.isSameAs(dbInstr)
-			.extracting(NodeInstruction::getParams, map(String.class, String.class))
+			.extracting(ni -> ni.getInstruction().getParams(), map(String.class, String.class))
 			.as("Auto-merge result same as initial value")
 			.containsEntry("foo", buf.toString())
 			;

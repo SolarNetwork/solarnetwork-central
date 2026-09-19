@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.din.domain.InputDataEntity;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.dao.GenericDao;
@@ -41,8 +42,8 @@ public interface InputDataEntityDao extends GenericDao<InputDataEntity, UserLong
 	 *        the ID to update
 	 * @param data
 	 *        the data to save
-	 * @return the previous data, or {@literal null} if none available
+	 * @return the previous data, or {@code null} if none available
 	 */
-	byte[] getAndPut(UserLongStringCompositePK id, byte[] data);
+	byte @Nullable [] getAndPut(UserLongStringCompositePK id, byte[] data);
 
 }

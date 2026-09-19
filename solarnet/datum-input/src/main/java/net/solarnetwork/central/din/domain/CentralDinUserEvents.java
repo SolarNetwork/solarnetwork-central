@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.din.domain;
 
+import java.util.List;
+
 /**
  * Constants for central datum input (DIN) user events.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CentralDinUserEvents {
 
@@ -52,7 +54,7 @@ public interface CentralDinUserEvents {
 	String TRANSFORM_SERVICE_ID_DATA_KEY = "transformServiceId";
 
 	/** User event tags for datum events. */
-	String[] DATUM_TAGS = new String[] { DIN_TAG, DATUM_TAG };
+	List<String> DATUM_TAGS = List.of(DIN_TAG, DATUM_TAG);
 
 	/**
 	 * User event data key for a {@code Map} of additional parameters, for

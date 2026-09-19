@@ -24,25 +24,24 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import org.springframework.util.StringUtils;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.Datum;
@@ -57,7 +56,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -65,10 +64,10 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	private final ExpressionService expressionService;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 
-	private UserSecretAccessDao userSecretAccessDao;
-	private Cache<String, Expression> expressionCache;
-	private SolarNodeMetadataReadOnlyDao metadataDao;
-	private Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
+	private @Nullable UserSecretAccessDao userSecretAccessDao;
+	private @Nullable Cache<String, Expression> expressionCache;
+	private @Nullable SolarNodeMetadataReadOnlyDao metadataDao;
+	private @Nullable Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
 
 	private static PathMatcher defaultSourceIdPathMatcher() {
 		var pm = new AntPathMatcher();
@@ -140,8 +139,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 
 	@Override
 	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId, Datum datum,
-			Map<String, ?> parameters, DatumMetadataOperations metadata,
-			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
+			@Nullable Map<String, ?> parameters, @Nullable DatumMetadataOperations metadata,
+			@Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable HttpOperations httpOperations) {
 		Map<String, ?> p = parameters;
 
 		// for node datum, lookup ownership so we have access to the node's time zone
@@ -149,7 +149,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 			SolarNodeOwnership node = nodeOwnershipDao.ownershipForNodeId(datum.getObjectId());
 			if ( node != null ) {
 				Map<String, Object> params = new LinkedHashMap<>(
-						parameters != null ? parameters : Collections.emptyMap());
+						parameters != null ? parameters : Map.of());
 				params.put("node", node);
 				p = params;
 			}
@@ -160,38 +160,39 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 				httpOperations, this::decryptUserSecret);
 	}
 
-	private byte[] decryptUserSecret(DatumExpressionRoot root, String key) {
+	private byte @Nullable [] decryptUserSecret(Long userId, String key) {
 		final var dao = getUserSecretAccessDao();
 		if ( dao == null ) {
 			return null;
 		}
-		var secret = dao.getUserSecret(root.getUserId(), USER_SECRET_TOPIC_ID, key);
+		var secret = dao.getUserSecret(userId, USER_SECRET_TOPIC_ID, key);
 		if ( secret == null ) {
 			return null;
 		}
 		return dao.decryptSecretValue(secret);
 	}
 
-	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
+	private @Nullable DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
 		SolarNodeMetadata meta = (id != null && id.getKind() == ObjectDatumKind.Node
 				&& id.getObjectId() != null && metadataDao != null ? metadataDao.get(id.getObjectId())
 						: null);
 		return (meta != null ? meta.getMetadata() : null);
 	}
 
-	private TariffSchedule tariffSchedule(DatumMetadataOperations meta, ObjectDatumStreamMetadataId id) {
+	private @Nullable TariffSchedule tariffSchedule(@Nullable DatumMetadataOperations meta,
+			@Nullable ObjectDatumStreamMetadataId id) {
 		if ( meta == null || id == null || id.getSourceId() == null ) {
 			return null;
 		}
 		final Cache<ObjectDatumStreamMetadataId, TariffSchedule> cache = getTariffScheduleCache();
 		TariffSchedule result = null;
-		if ( tariffScheduleCache != null ) {
+		if ( cache != null ) {
 			result = cache.get(id);
 		}
 		if ( result == null ) {
 			Object tariffData = meta.metadataAtPath(id.getSourceId());
 			if ( tariffData != null ) {
-				Locale locale = metadataLocale(meta, id.getSourceId());
+				Locale locale = meta.resolveLocale(id.getSourceId());
 				try {
 					result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null,
 							tariffData);
@@ -209,38 +210,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 		return result;
 	}
 
-	private Locale metadataLocale(DatumMetadataOperations meta, String path) {
-		String[] components = StringUtils.delimitedListToStringArray(path, "/");
-		for ( int idx = components.length; idx > 0; idx-- ) {
-			String[] cmp = new String[idx];
-			System.arraycopy(components, 0, cmp, 0, cmp.length);
-			cmp[idx - 1] = cmp[idx - 1] + "-locale";
-			String localePath = StringUtils.arrayToDelimitedString(cmp, "/");
-			String localeValue = meta.metadataAtPath(localePath, String.class);
-			if ( localeValue != null ) {
-				try {
-					return Locale.forLanguageTag(localeValue);
-				} catch ( Exception e ) {
-					// ignore and continue
-				}
-			}
-			cmp[idx - 1] = "locale";
-			localePath = StringUtils.arrayToDelimitedString(cmp, "/");
-			localeValue = meta.metadataAtPath(localePath, String.class);
-			if ( localeValue != null ) {
-				try {
-					return Locale.forLanguageTag(localeValue);
-				} catch ( Exception e ) {
-					// ignore and continue
-				}
-			}
-		}
-		return Locale.getDefault();
-	}
-
 	@Override
-	public <T> T evaluateDatumPropertyExpression(Expression expression, Object root,
-			Map<String, Object> variables, Class<T> resultClass) {
+	public <T> @Nullable T evaluateDatumPropertyExpression(Expression expression, Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass) {
 		return expressionService.evaluateExpression(expression, variables, root,
 				SpelExpressionService.DEFAULT_EVALUATION_CONTEXT, resultClass);
 	}
@@ -257,7 +229,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 		}
 		if ( result == null ) {
 			result = expressionService.parseExpression(property.getValueReference());
-			if ( cacheKey != null ) {
+			if ( cache != null && cacheKey != null ) {
 				cache.put(cacheKey, result);
 			}
 		}
@@ -271,9 +243,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * The keys of the cache are SHA hashes of the expression value.
 	 * </p>
 	 *
-	 * @return the expression cache, or {@literal null}
+	 * @return the expression cache, or {@code null}
 	 */
-	public final Cache<String, Expression> getExpressionCache() {
+	public final @Nullable Cache<String, Expression> getExpressionCache() {
 		return expressionCache;
 	}
 
@@ -283,7 +255,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * @param expressionCache
 	 *        the expression cache to set
 	 */
-	public final void setExpressionCache(Cache<String, Expression> expressionCache) {
+	public final void setExpressionCache(@Nullable Cache<String, Expression> expressionCache) {
 		this.expressionCache = expressionCache;
 	}
 
@@ -292,7 +264,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 *
 	 * @return the metadata DAO
 	 */
-	public final SolarNodeMetadataReadOnlyDao getMetadataDao() {
+	public final @Nullable SolarNodeMetadataReadOnlyDao getMetadataDao() {
 		return metadataDao;
 	}
 
@@ -302,7 +274,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * @param metadataDao
 	 *        the DAO to set
 	 */
-	public final void setMetadataDao(SolarNodeMetadataReadOnlyDao metadataDao) {
+	public final void setMetadataDao(@Nullable SolarNodeMetadataReadOnlyDao metadataDao) {
 		this.metadataDao = metadataDao;
 	}
 
@@ -311,7 +283,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 *
 	 * @return the cache
 	 */
-	public final Cache<ObjectDatumStreamMetadataId, TariffSchedule> getTariffScheduleCache() {
+	public final @Nullable Cache<ObjectDatumStreamMetadataId, TariffSchedule> getTariffScheduleCache() {
 		return tariffScheduleCache;
 	}
 
@@ -322,7 +294,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 *        the cache to set
 	 */
 	public final void setTariffScheduleCache(
-			Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache) {
+			@Nullable Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache) {
 		this.tariffScheduleCache = tariffScheduleCache;
 	}
 
@@ -332,7 +304,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * @return the DAO
 	 * @since 1.3
 	 */
-	public UserSecretAccessDao getUserSecretAccessDao() {
+	public final @Nullable UserSecretAccessDao getUserSecretAccessDao() {
 		return userSecretAccessDao;
 	}
 
@@ -343,7 +315,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 *        the DAO to set
 	 * @since 1.3
 	 */
-	public void setUserSecretAccessDao(UserSecretAccessDao userSecretAccessDao) {
+	public final void setUserSecretAccessDao(@Nullable UserSecretAccessDao userSecretAccessDao) {
 		this.userSecretAccessDao = userSecretAccessDao;
 	}
 

@@ -24,17 +24,18 @@ package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -47,7 +48,7 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
@@ -68,12 +69,14 @@ import net.solarnetwork.ocpp.service.cs.ChargePointManager;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.service.support.BasicIdentifiable;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base OCPP controller support.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public abstract class BaseOcppController extends BasicIdentifiable
 		implements ChargePointManager, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -106,11 +109,11 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	protected final ObjectMapper objectMapper;
 
 	private RegistrationStatus initialRegistrationStatus;
-	private TransactionTemplate transactionTemplate;
-	private ActionPayloadDecoder chargePointActionPayloadDecoder;
-	private ConnectorStatusDatumPublisher datumPublisher;
-	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable TransactionTemplate transactionTemplate;
+	private @Nullable ActionPayloadDecoder chargePointActionPayloadDecoder;
+	private @Nullable ConnectorStatusDatumPublisher datumPublisher;
+	private @Nullable ActionMessageProcessor<JsonNode, Void> instructionHandler;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -130,7 +133,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public BaseOcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
@@ -205,7 +208,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
 		}
 		log.info("Received Charge Point {} status: {}", identity, info);
-		chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
+		chargePointConnectorDao.saveStatusInfo(chargePoint.id(), info);
 		ConnectorStatusDatumPublisher publisher = getDatumPublisher();
 		if ( publisher != null ) {
 			publisher.processStatusNotification(chargePoint, info);
@@ -213,11 +216,11 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	}
 
 	protected static Map<String, String> instructionParameterMap(NodeInstruction instruction) {
-		Map<String, String> params = instruction.getParams();
+		Map<String, String> params = instruction.getInstruction().getParams();
 		return (params != null ? params : new HashMap<>(0));
 	}
 
-	protected final CentralChargePoint chargePointForParameters(UserNode userNode,
+	protected final @Nullable CentralChargePoint chargePointForParameters(UserNode userNode,
 			Map<String, String> parameters) {
 		CentralChargePoint result = null;
 		try {
@@ -239,12 +242,12 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		if ( tt != null ) {
 			return tt.execute(tx);
 		} else {
-			return tx.doInTransaction(null);
+			return tx.doInTransaction(new SimpleTransactionStatus());
 		}
 	}
 
-	protected final <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action, T payload,
-			ActionMessageResultHandler<T, R> handler, ErrorCode noClientError) {
+	protected final <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action,
+			@Nullable T payload, ActionMessageResultHandler<T, R> handler, ErrorCode noClientError) {
 		executor.execute(() -> {
 			ActionMessage<T> msg = new BasicActionMessage<>(identity, UUID.randomUUID().toString(),
 					action, payload);
@@ -261,13 +264,14 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		});
 	}
 
-	protected final void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	protected final void generateUserEvent(Long userId, List<String> tags, @Nullable String message,
+			Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 
@@ -275,9 +279,9 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * Get the initial {@link RegistrationStatus} to use for newly registered
 	 * charge points.
 	 *
-	 * @return the status, never {@literal null}
+	 * @return the status, never {@code null}
 	 */
-	public RegistrationStatus getInitialRegistrationStatus() {
+	public final RegistrationStatus getInitialRegistrationStatus() {
 		return initialRegistrationStatus;
 	}
 
@@ -286,16 +290,12 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * charge points.
 	 *
 	 * @param initialRegistrationStatus
-	 *        the status to set
-	 * @throws IllegalArgumentException
-	 *         if {@code initialRegistrationStatus} is {@literal null}
+	 *        the status to set; if {@code null} then
+	 *        {@link #DEFAULT_INITIAL_REGISTRATION_STATUS} will be used
 	 */
-	public void setInitialRegistrationStatus(RegistrationStatus initialRegistrationStatus) {
-		if ( initialRegistrationStatus == null ) {
-			throw new IllegalArgumentException(
-					"The initialRegistrationStatus parameter must not be null.");
-		}
-		this.initialRegistrationStatus = initialRegistrationStatus;
+	public final void setInitialRegistrationStatus(RegistrationStatus initialRegistrationStatus) {
+		this.initialRegistrationStatus = (initialRegistrationStatus != null ? initialRegistrationStatus
+				: DEFAULT_INITIAL_REGISTRATION_STATUS);
 	}
 
 	/**
@@ -303,7 +303,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the transaction template
 	 */
-	public TransactionTemplate getTransactionTemplate() {
+	public final @Nullable TransactionTemplate getTransactionTemplate() {
 		return transactionTemplate;
 	}
 
@@ -313,7 +313,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param transactionTemplate
 	 *        the transaction template to set
 	 */
-	public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
+	public final void setTransactionTemplate(@Nullable TransactionTemplate transactionTemplate) {
 		this.transactionTemplate = transactionTemplate;
 	}
 
@@ -322,7 +322,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the decoder
 	 */
-	public ActionPayloadDecoder getChargePointActionPayloadDecoder() {
+	public final @Nullable ActionPayloadDecoder getChargePointActionPayloadDecoder() {
 		return chargePointActionPayloadDecoder;
 	}
 
@@ -332,8 +332,8 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param chargePointActionPayloadDecoder
 	 *        the decoder
 	 */
-	public void setChargePointActionPayloadDecoder(
-			ActionPayloadDecoder chargePointActionPayloadDecoder) {
+	public final void setChargePointActionPayloadDecoder(
+			@Nullable ActionPayloadDecoder chargePointActionPayloadDecoder) {
 		this.chargePointActionPayloadDecoder = chargePointActionPayloadDecoder;
 	}
 
@@ -342,7 +342,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the mapper
 	 */
-	public ObjectMapper getObjectMapper() {
+	public final ObjectMapper getObjectMapper() {
 		return objectMapper;
 	}
 
@@ -351,7 +351,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the datum publisher
 	 */
-	public ConnectorStatusDatumPublisher getDatumPublisher() {
+	public final @Nullable ConnectorStatusDatumPublisher getDatumPublisher() {
 		return datumPublisher;
 	}
 
@@ -361,7 +361,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param datumPublisher
 	 *        the datum publisher
 	 */
-	public void setDatumPublisher(ConnectorStatusDatumPublisher datumPublisher) {
+	public final void setDatumPublisher(@Nullable ConnectorStatusDatumPublisher datumPublisher) {
 		this.datumPublisher = datumPublisher;
 	}
 
@@ -370,7 +370,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the action processor
 	 */
-	public ActionMessageProcessor<JsonNode, Void> getInstructionHandler() {
+	public final @Nullable ActionMessageProcessor<JsonNode, Void> getInstructionHandler() {
 		return instructionHandler;
 	}
 
@@ -385,7 +385,8 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param instructionHandler
 	 *        the handler
 	 */
-	public void setInstructionHandler(ActionMessageProcessor<JsonNode, Void> instructionHandler) {
+	public final void setInstructionHandler(
+			@Nullable ActionMessageProcessor<JsonNode, Void> instructionHandler) {
 		this.instructionHandler = instructionHandler;
 	}
 
@@ -394,7 +395,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 *
 	 * @return the service
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -404,7 +405,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 

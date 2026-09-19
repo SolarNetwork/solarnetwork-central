@@ -28,7 +28,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,13 +42,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.inin.biz.TransformConstants;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
 import net.solarnetwork.central.inin.biz.impl.XsltRequestTransformService;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.util.CachedResult;
 import net.solarnetwork.util.ClassUtils;
@@ -77,7 +77,7 @@ public class XsltRequestTransformServiceTests {
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
 		templatesCache = new BasicSharedValueCache<>(primaryCache, sharedCache);
-		service = new XsltRequestTransformService(dbf, tf, JsonUtils.newDatumObjectMapper(),
+		service = new XsltRequestTransformService(dbf, tf, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
 				Duration.ZERO, templatesCache);
 	}
 
@@ -142,10 +142,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -180,10 +181,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -220,10 +222,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -262,10 +265,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -297,8 +301,9 @@ public class XsltRequestTransformServiceTests {
 				.as("Single instruction produced")
 				.hasSize(1)
 				.element(0)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -340,10 +345,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -356,10 +362,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -400,7 +407,7 @@ public class XsltRequestTransformServiceTests {
 				XsltRequestTransformService.SETTING_XSLT_CACHE_DURATION, 600L));
 
 		// WHEN
-		var params = Collections.singletonMap(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, "a");
+		var params = Map.of(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, "a");
 		Iterable<NodeInstruction> results = service.transformInput(xmlInput, TransformConstants.XML_TYPE,
 				conf, params);
 		Iterable<NodeInstruction> results2 = service.transformInput(xmlInput2,
@@ -414,10 +421,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -430,10 +438,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -483,10 +492,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID populated")
 				.returns(123L, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -496,10 +506,11 @@ public class XsltRequestTransformServiceTests {
 		then(results).element(1)
 				.as("Node ID not populated")
 				.returns(124L, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -534,10 +545,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")
@@ -572,10 +584,11 @@ public class XsltRequestTransformServiceTests {
 				.element(0)
 				.as("Node ID not populated")
 				.returns(null, NodeInstruction::getNodeId)
+				.extracting(NodeInstruction::getInstruction)
 				.as("Topic populated")
-				.returns("LatestDatum", NodeInstruction::getTopic)
+				.returns("LatestDatum", Instruction::getTopic)
 				.as("Parameters populated")
-				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.extracting(Instruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
 				.as("One parameter populated")
 				.hasSize(1)
 				.as("Source ID parameter generated")

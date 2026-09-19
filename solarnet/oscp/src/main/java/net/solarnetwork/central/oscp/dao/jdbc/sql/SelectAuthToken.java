@@ -56,7 +56,7 @@ public final class SelectAuthToken implements CallableStatementCreator, SqlProvi
 	 * @param configId
 	 *        the ID of the configuration to get
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthToken(OscpRole type, UserLongCompositePK configId) {
 		super();

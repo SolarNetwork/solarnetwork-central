@@ -70,7 +70,7 @@ public final class UpsertEndpointAuthConfiguration implements PreparedStatementC
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertEndpointAuthConfiguration(Long userId, UUID endpointId,
 			EndpointAuthConfiguration entity) {

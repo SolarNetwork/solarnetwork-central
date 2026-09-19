@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -51,14 +55,24 @@ public class AggregateUpdatedEventInfo {
 	 */
 	public static final String AGGREGATE_UPDATED_TOPIC = "datum/agg/update";
 
-	private Aggregation aggregation;
-	private Instant timeStart;
+	private final Aggregation aggregation;
+	private final Instant timeStart;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param aggregationKey
+	 *        the aggregation key
+	 * @param timeStart
+	 *        the time start
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null} or {@code aggregationKey} is not
+	 *         a valid {@link Aggregation} key
 	 */
-	public AggregateUpdatedEventInfo() {
-		super();
+	@JsonCreator
+	public AggregateUpdatedEventInfo(@JsonProperty("aggregationKey") String aggregationKey,
+			@JsonProperty("timestamp") Instant timeStart) {
+		this(Aggregation.forKey(aggregationKey), timeStart);
 	}
 
 	/**
@@ -68,17 +82,19 @@ public class AggregateUpdatedEventInfo {
 	 *        the aggregation
 	 * @param timeStart
 	 *        the time start
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateUpdatedEventInfo(Aggregation aggregation, Instant timeStart) {
 		super();
-		this.aggregation = aggregation;
-		this.timeStart = timeStart;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
+		this.timeStart = requireNonNullArgument(timeStart, "timeStart");
 	}
 
 	/**
 	 * Get this object as an event property map.
 	 *
-	 * @return the event property map, never {@literal null}
+	 * @return the event property map, never {@code null}
 	 */
 	public Map<String, Object> toEventProperties() {
 		Map<String, Object> m = new HashMap<>(2);
@@ -93,7 +109,7 @@ public class AggregateUpdatedEventInfo {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -114,39 +130,13 @@ public class AggregateUpdatedEventInfo {
 	}
 
 	/**
-	 * Set the aggregation.
-	 *
-	 * @param aggregation
-	 *        the aggregation to set
-	 */
-	public void setAggregation(Aggregation aggregation) {
-		this.aggregation = aggregation;
-	}
-
-	/**
 	 * Get the aggregation key value.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 */
 	public String getAggregationKey() {
 		Aggregation a = getAggregation();
 		return (a != null ? a.getKey() : Aggregation.None.getKey());
-	}
-
-	/**
-	 * Set the aggregation key value.
-	 *
-	 * @param key
-	 *        the aggregation key to set
-	 */
-	public void setAggregationKey(String key) {
-		Aggregation a;
-		try {
-			a = Aggregation.forKey(key);
-		} catch ( IllegalArgumentException e ) {
-			a = Aggregation.None;
-		}
-		setAggregation(a);
 	}
 
 	/**
@@ -160,16 +150,6 @@ public class AggregateUpdatedEventInfo {
 	}
 
 	/**
-	 * Set the aggregate time window starting instant.
-	 *
-	 * @param timeStart
-	 *        the time to set
-	 */
-	public void setTimeStart(Instant timeStart) {
-		this.timeStart = timeStart;
-	}
-
-	/**
 	 * Get the aggregate time window starting instant as milliseconds since the
 	 * epoch.
 	 *
@@ -178,17 +158,6 @@ public class AggregateUpdatedEventInfo {
 	public long getTimestamp() {
 		final Instant ts = getTimeStart();
 		return (ts != null ? ts.toEpochMilli() : 0);
-	}
-
-	/**
-	 * Set the aggregate time window starting instant as milliseconds since the
-	 * epoch.
-	 *
-	 * @param ts
-	 *        the time
-	 */
-	public void setTimestamp(long ts) {
-		setTimeStart(Instant.ofEpochMilli(ts));
 	}
 
 }

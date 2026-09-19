@@ -46,7 +46,7 @@ public interface CentralChargePointConnectorDao extends ChargePointConnectorDao 
 	 *
 	 * @param userId
 	 *        the owner ID
-	 * @return the available connectors; never {@literal null}
+	 * @return the available connectors; never {@code null}
 	 */
 	Collection<CentralChargePointConnector> findAllForOwner(Long userId);
 
@@ -57,7 +57,7 @@ public interface CentralChargePointConnectorDao extends ChargePointConnectorDao 
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching entity; never {@literal null}
+	 * @return the matching entity; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */

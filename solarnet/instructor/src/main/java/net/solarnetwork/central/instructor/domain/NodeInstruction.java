@@ -22,35 +22,55 @@
 
 package net.solarnetwork.central.instructor.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.domain.InstructionStatus;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Instruction for a specific node.
  *
  * @author matt
- * @version 2.4
+ * @version 3.1
  */
 @JsonSerialize(using = NodeInstructionSerializer.class)
-public class NodeInstruction extends Instruction implements EntityMatch {
+@JsonDeserialize(using = NodeInstructionDeserializer.class)
+public class NodeInstruction extends BaseEntity implements EntityMatch {
 
 	@Serial
-	private static final long serialVersionUID = -8910808111207075055L;
+	private static final long serialVersionUID = 4904518821205446583L;
 
-	private Long nodeId;
-	private Instant expirationDate;
+	private @Nullable Long nodeId;
+	private Instruction instruction;
 
 	/**
 	 * Default constructor.
 	 */
 	public NodeInstruction() {
+		this(new Instruction());
+	}
+
+	/**
+	 * Default constructor.
+	 * 
+	 * @param instruction
+	 *        the instruction
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 3.1
+	 */
+	public NodeInstruction(Instruction instruction) {
 		super();
+		this.instruction = requireNonNullArgument(instruction, "instruction");
 	}
 
 	/**
@@ -63,7 +83,8 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * @param nodeId
 	 *        the node ID
 	 */
-	public NodeInstruction(String topic, Instant instructionDate, Long nodeId) {
+	public NodeInstruction(@Nullable String topic, @Nullable Instant instructionDate,
+			@Nullable Long nodeId) {
 		this(topic, instructionDate, nodeId, null);
 	}
 
@@ -78,10 +99,11 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 *        the node ID
 	 * @since 2.4
 	 */
-	public NodeInstruction(String topic, Instant instructionDate, Long nodeId, Instant expirationDate) {
-		super(topic, instructionDate);
+	public NodeInstruction(@Nullable String topic, @Nullable Instant instructionDate,
+			@Nullable Long nodeId, @Nullable Instant expirationDate) {
+		this(new Instruction(topic, instructionDate));
 		setNodeId(nodeId);
-		setExpirationDate(expirationDate);
+		this.instruction.setExpirationDate(expirationDate);
 	}
 
 	/**
@@ -92,8 +114,13 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * @since 1.1
 	 */
 	public NodeInstruction(NodeInstruction other) {
-		super(other);
+		this();
 		other.copyTo(this);
+	}
+
+	@Override
+	public NodeInstruction clone() {
+		return (NodeInstruction) super.clone();
 	}
 
 	/**
@@ -107,6 +134,7 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	public NodeInstruction copyWithNodeId(Long nodeId) {
 		NodeInstruction copy = new NodeInstruction(this);
 		copyTo(copy);
+		copy.setNodeId(nodeId);
 		return copy;
 	}
 
@@ -123,14 +151,14 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 */
 	public void copyTo(NodeInstruction other) {
 		other.setNodeId(nodeId);
-		other.setExpirationDate(expirationDate);
+		other.setInstruction(new Instruction(this.instruction));
 	}
 
-	@Override
-	public NodeInstruction clone() {
-		return (NodeInstruction) super.clone();
-	}
-
+	/**
+	 * Get the status.
+	 * 
+	 * @return the status
+	 */
 	public InstructionStatus toStatus() {
 		return new NodeInstructionStatus();
 	}
@@ -142,16 +170,16 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 		builder.append(getId());
 		builder.append(", nodeId=");
 		builder.append(nodeId);
-		if ( expirationDate != null ) {
+		if ( instruction.getExpirationDate() != null ) {
 			builder.append(", expirationDate=");
-			builder.append(expirationDate);
+			builder.append(instruction.getExpirationDate());
 		}
 		builder.append(", topic=");
-		builder.append(getTopic());
+		builder.append(instruction.getTopic());
 		builder.append(", state=");
-		builder.append(getState());
+		builder.append(instruction.getState());
 		builder.append(", parameters=");
-		builder.append(getParameters());
+		builder.append(instruction.getParameters());
 		builder.append("}");
 		return builder.toString();
 	}
@@ -159,38 +187,38 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	private final class NodeInstructionStatus implements net.solarnetwork.domain.InstructionStatus {
 
 		@Override
-		public Long getInstructionId() {
+		public @Nullable Long getInstructionId() {
 			return getId();
 		}
 
 		@Override
-		public Instant getStatusDate() {
-			return NodeInstruction.this.getStatusDate();
+		public @Nullable Instant getStatusDate() {
+			return instruction.getStatusDate();
 		}
 
 		@Override
-		public Map<String, ?> getResultParameters() {
-			return NodeInstruction.this.getResultParameters();
+		public @Nullable Map<String, ?> getResultParameters() {
+			return instruction.getResultParameters();
 		}
 
 		@Override
-		public InstructionStatus.InstructionState getInstructionState() {
-			return getState();
+		public InstructionState getInstructionState() {
+			return instruction.getState();
 		}
 
 		@Override
-		public InstructionStatus newCopyWithState(InstructionStatus.InstructionState newState,
-				Map<String, ?> resultParameters) {
+		public InstructionStatus newCopyWithState(InstructionState newState,
+				@Nullable Map<String, ?> resultParameters) {
 			var copy = new NodeInstruction(NodeInstruction.this);
-			copy.setState(newState);
-			copy.setStatusDate(Instant.now());
+			copy.instruction.setState(newState);
+			copy.instruction.setStatusDate(Instant.now());
 			if ( resultParameters != null ) {
-				if ( copy.getResultParameters() != null ) {
-					copy.getResultParameters().putAll(resultParameters);
+				if ( copy.instruction.getResultParameters() != null ) {
+					copy.instruction.getResultParameters().putAll(resultParameters);
 				} else {
 					Map<String, Object> p = new HashMap<>(resultParameters.size());
 					p.putAll(resultParameters);
-					copy.setResultParameters(p);
+					copy.instruction.setResultParameters(p);
 				}
 			}
 			return copy.toStatus();
@@ -220,7 +248,7 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 *
 	 * @return the node ID
 	 */
-	public final Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -230,33 +258,29 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public final void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
 	/**
-	 * Get the expiration date.
+	 * Get the instruction.
 	 * 
-	 * @return the expiration date
+	 * @return the instruction
 	 */
-	public Instant getExpirationDate() {
-		return expirationDate;
+	public final Instruction getInstruction() {
+		return instruction;
 	}
 
 	/**
-	 * Set the expiration date.
+	 * Set the instruction.
 	 * 
-	 * <p>
-	 * This date represents the point in time that a "pending" instruction can
-	 * be automatically transitioned to the {@code Declined} state, adding an
-	 * appropriate {@code message} result property.
-	 * </p>
-	 * 
-	 * @param expirationDate
-	 *        the expiration date to set
+	 * @param instruction
+	 *        the instruction to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setExpirationDate(Instant expirationDate) {
-		this.expirationDate = expirationDate;
+	public final void setInstruction(Instruction instruction) {
+		this.instruction = requireNonNullArgument(instruction, "instruction");
 	}
 
 }

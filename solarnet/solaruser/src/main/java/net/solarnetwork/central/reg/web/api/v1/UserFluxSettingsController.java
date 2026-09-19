@@ -38,12 +38,12 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.flux.biz.UserFluxBiz;
-import net.solarnetwork.central.user.flux.dao.BasicFluxConfigurationFilter;
-import net.solarnetwork.central.user.flux.domain.UserFluxAggregatePublishConfiguration;
-import net.solarnetwork.central.user.flux.domain.UserFluxAggregatePublishConfigurationInput;
-import net.solarnetwork.central.user.flux.domain.UserFluxDefaultAggregatePublishConfiguration;
-import net.solarnetwork.central.user.flux.domain.UserFluxDefaultAggregatePublishConfigurationInput;
+import net.solarnetwork.central.user.datum.flux.biz.UserFluxBiz;
+import net.solarnetwork.central.user.datum.flux.dao.BasicFluxConfigurationFilter;
+import net.solarnetwork.central.user.datum.flux.domain.UserFluxAggregatePublishConfiguration;
+import net.solarnetwork.central.user.datum.flux.domain.UserFluxAggregatePublishConfigurationInput;
+import net.solarnetwork.central.user.datum.flux.domain.UserFluxDefaultAggregatePublishConfiguration;
+import net.solarnetwork.central.user.datum.flux.domain.UserFluxDefaultAggregatePublishConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -153,7 +153,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.GET)
 	public Result<UserFluxAggregatePublishConfiguration> viewAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId) {
+			@PathVariable Long configurationId) {
 		var result = userFluxBiz.aggregatePublishConfigurationForUser(getCurrentActorUserId(),
 				configurationId);
 		return success(result);
@@ -170,7 +170,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.PUT)
 	public Result<UserFluxAggregatePublishConfiguration> updateAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId,
+			@PathVariable Long configurationId,
 			@Valid @RequestBody UserFluxAggregatePublishConfigurationInput input) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), configurationId);
 		var result = userFluxBiz.saveAggregatePublishConfiguration(id, input);
@@ -186,7 +186,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.DELETE)
 	public Result<UserFluxAggregatePublishConfiguration> deleteAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId) {
+			@PathVariable Long configurationId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), configurationId);
 		userFluxBiz.deleteAggregatePublishConfiguration(id);
 		return success();

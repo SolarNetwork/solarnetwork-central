@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.cloud.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * General cloud provider access settings.
  *
@@ -30,16 +32,16 @@ package net.solarnetwork.central.cloud.domain;
  */
 public class CloudAccessSettings {
 
-	private String region;
-	private String accessToken;
-	private String accessSecret;
+	private @Nullable String region;
+	private @Nullable String accessToken;
+	private @Nullable String accessSecret;
 
 	/**
 	 * Get the cloud provider region name.
 	 *
 	 * @return the region name
 	 */
-	public String getRegion() {
+	public final @Nullable String getRegion() {
 		return region;
 	}
 
@@ -49,7 +51,7 @@ public class CloudAccessSettings {
 	 * @param region
 	 *        the region name to set
 	 */
-	public void setRegion(String region) {
+	public final void setRegion(@Nullable String region) {
 		this.region = region;
 	}
 
@@ -58,7 +60,7 @@ public class CloudAccessSettings {
 	 *
 	 * @return the token
 	 */
-	public String getAccessToken() {
+	public final @Nullable String getAccessToken() {
 		return accessToken;
 	}
 
@@ -68,7 +70,7 @@ public class CloudAccessSettings {
 	 * @param accessToken
 	 *        the token to set
 	 */
-	public void setAccessToken(String accessToken) {
+	public final void setAccessToken(@Nullable String accessToken) {
 		this.accessToken = accessToken;
 	}
 
@@ -77,7 +79,7 @@ public class CloudAccessSettings {
 	 *
 	 * @return the access secret
 	 */
-	public String getAccessSecret() {
+	public final @Nullable String getAccessSecret() {
 		return accessSecret;
 	}
 
@@ -87,7 +89,7 @@ public class CloudAccessSettings {
 	 * @param accessSecret
 	 *        the secret to set
 	 */
-	public void setAccessSecret(String accessSecret) {
+	public final void setAccessSecret(@Nullable String accessSecret) {
 		this.accessSecret = accessSecret;
 	}
 

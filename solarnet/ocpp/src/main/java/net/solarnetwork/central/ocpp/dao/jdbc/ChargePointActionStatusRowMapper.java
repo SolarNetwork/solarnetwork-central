@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -61,7 +62,7 @@ public class ChargePointActionStatusRowMapper implements RowMapper<ChargePointAc
 		long cpId = rs.getLong(3);
 		int evseId = rs.getInt(4);
 		int connId = rs.getInt(5);
-		String action = rs.getString(6);
+		String action = nonnull(rs.getString(6), "action");
 		String messageId = rs.getString(7);
 		Instant date = rs.getTimestamp(8).toInstant();
 		var status = new ChargePointActionStatus(userId, cpId, evseId, connId, action, created);

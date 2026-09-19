@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_GenericDaoTests.java - 19/11/2020 5:24:58 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,23 +28,22 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listNodeMe
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -64,7 +63,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link GenericDao}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -88,7 +87,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 						new BigDecimal[] { new BigDecimal("1.23"), new BigDecimal("2.34") },
 						new BigDecimal[] { new BigDecimal("3.45") }, new String[] { "On" }, null));
 		DatumPK id = dao.save(datum);
-		assertNotNull(id);
+		then(id).isNotNull();
 		lastDatum = datum;
 	}
 
@@ -121,10 +120,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 	@Test
 	public void store_veryBigValues() {
 		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setNodeId(1L);
-		datum.setSourceId("a");
-		datum.setCreated(Instant.now());
+		GeneralNodeDatum datum = new GeneralNodeDatum(1L, Instant.now(), "a");
 		DatumSamples s = new DatumSamples();
 		datum.setSamples(s);
 		s.putInstantaneousSampleValue("watts", 498475890235787897L);
@@ -191,10 +187,8 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 	public void store_newLocationStream() throws IOException {
 		// GIVEN
 		GeneralNodeDatum nodeDatum = loadJsonDatumResource("test-datum-01.txt", getClass()).get(0);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(nodeDatum.getCreated());
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(nodeDatum.getSourceId());
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID, nodeDatum.getCreated(),
+				nodeDatum.getSourceId());
 		DatumSamples s = new DatumSamples();
 		s.setI(nodeDatum.getSamples().getI());
 		s.setA(nodeDatum.getSamples().getA());
@@ -246,7 +240,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 				new String[] { "wattHours", "wh" },
 				new String[] { "limits", "opState", "opStates", "faults" });
 
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Collections.singleton(meta));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Set.of(meta));
 
 		GeneralNodeDatum datum = loadJsonDatumResource("test-datum-37.txt", getClass()).get(0);
 
@@ -260,15 +254,15 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 		/*-
 		 {"i":{
-		 	"dcPower":			36901, 
-		 	"voltage":			11.5, 
-		 	"dcVoltage":		833.0, 
-		 	"frequency":		60.0, 
+		 	"dcPower":			36901,
+		 	"voltage":			11.5,
+		 	"dcVoltage":		833.0,
+		 	"frequency":		60.0,
 		 	"neutralCurrent":	0.8,
 		 "a":{
-		 	"wh":				36614420, 
+		 	"wh":				36614420,
 		 "s":{
-		 	"opState":			"1", 
+		 	"opState":			"1",
 		 	"opStates":			"1289",
 		 */
 

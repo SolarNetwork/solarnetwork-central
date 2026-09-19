@@ -37,7 +37,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Transition expired instructions to a completed state.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class ExpiredNodeInstructionUpdater extends JobSupport {
 
@@ -72,8 +72,7 @@ public class ExpiredNodeInstructionUpdater extends JobSupport {
 	 */
 	public ExpiredNodeInstructionUpdater(InstantSource clock, NodeInstructionDao dao,
 			InstructionState resultState, Map<String, Object> resultParameters) {
-		super();
-		setGroupId("Instruction");
+		super("Instruction", "ExpiredNodeInstructionUpdater");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.resultState = requireNonNullArgument(resultState, "resultState");
@@ -84,9 +83,9 @@ public class ExpiredNodeInstructionUpdater extends JobSupport {
 	public void run() {
 		Instant date = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 		NodeInstruction criteria = new NodeInstruction();
-		criteria.setExpirationDate(date);
-		criteria.setState(resultState);
-		criteria.setResultParameters(resultParameters);
+		criteria.getInstruction().setExpirationDate(date);
+		criteria.getInstruction().setState(resultState);
+		criteria.getInstruction().setResultParameters(resultParameters);
 		long result = dao.transitionExpiredInstructions(criteria);
 		if ( result > 0 ) {
 			log.info("Transitioned {} node instructions that expired before {} to {}", result, date,

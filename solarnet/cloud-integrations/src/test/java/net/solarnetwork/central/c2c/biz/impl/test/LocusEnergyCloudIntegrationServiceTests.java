@@ -33,16 +33,16 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,15 +51,16 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
@@ -76,7 +78,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link LocusEnergyCloudIntegrationService}
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -99,6 +101,9 @@ public class LocusEnergyCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
+	@Captor
+	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
+
 	@Mock
 	private TextEncryptor encryptor;
 
@@ -108,7 +113,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new LocusEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new LocusEnergyCloudIntegrationService(Set.of(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
@@ -121,7 +126,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -193,7 +198,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 		final String password = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
@@ -203,10 +208,9 @@ public class LocusEnergyCloudIntegrationServiceTests {
 				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
-		@SuppressWarnings("deprecation")
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 			.clientId(randomString())
 			.clientSecret(randomString())
 			.tokenUri(tokenUri)
@@ -221,12 +225,8 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI sitesForPartnerId = LocusEnergyCloudIntegrationService.BASE_URI
-				.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
-						.replace("{partnerId}", partnerId.toString()));
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -243,6 +243,20 @@ public class LocusEnergyCloudIntegrationServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(conf.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list system devices")
+			.returns(LocusEnergyCloudIntegrationService.BASE_URI
+					.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
+							.replace("{partnerId}", partnerId.toString())), from(RequestEntity::getUrl))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)

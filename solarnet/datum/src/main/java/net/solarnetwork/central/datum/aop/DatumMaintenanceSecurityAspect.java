@@ -80,7 +80,7 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 				log.warn("Access DENIED to unspecified nodes");
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
-			for ( Long nodeId : filter.getNodeIds() ) {
+			for ( Long nodeId : nodeIds ) {
 				requireNodeWriteAccess(nodeId);
 			}
 		}

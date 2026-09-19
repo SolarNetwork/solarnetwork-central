@@ -30,18 +30,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.datum.support.SqsDatumCollector;
-import net.solarnetwork.central.datum.support.SqsDatumCollectorSettings;
+import net.solarnetwork.central.common.biz.impl.SqsOverflowQueue;
+import net.solarnetwork.central.datum.support.DatumJsonEntityCodec;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDaoGenericAdapter;
+import net.solarnetwork.central.datum.v2.dao.GenericWriteOnlyDaoDatumAdapter;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
+import net.solarnetwork.central.support.SqsOverflowQueueSettings;
 import net.solarnetwork.util.StatTracker;
 
 /**
- * Configuration for the {@link DatumWriteOnlyDao}, without SQS.
+ * Configuration for the {@link DatumWriteOnlyDao}, using SQS.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Profile("datum-collector-sqs")
 @Configuration(proxyBeanMethods = false)
@@ -51,42 +56,36 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 	private DatumEntityDao datumDao;
 
 	@ConfigurationProperties(prefix = "app.solarin.sqs-collector")
+	@Qualifier(DATUM_COLLECTOR)
 	@Bean
-	public SqsDatumCollectorSettings sqsDatumCollectorSettings() {
-		return new SqsDatumCollectorSettings();
+	public SqsOverflowQueueSettings sqsDatumCollectorSettings() {
+		return new SqsOverflowQueueSettings();
 	}
 
 	@Qualifier(DATUM_COLLECTOR)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public SqsDatumCollector sqsDatumCollector(SqsDatumCollectorSettings settings) {
+	public SqsOverflowQueue<Object, DatumPK> sqsDatumCollector(
+			@Qualifier(DATUM_COLLECTOR) SqsOverflowQueueSettings settings) {
 		StatTracker stats = new StatTracker("SqsDatumCollector", null,
-				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
+				LoggerFactory.getLogger(SqsOverflowQueue.class), settings.getStatFrequency());
 
-		SqsDatumCollector collector = new SqsDatumCollector(settings.newAsyncClient(), settings.getUrl(),
-				DatumJsonUtils.newDatumObjectMapper(),
-				new ArrayBlockingQueue<>(settings.getWorkQueueSize()), datumDao, stats);
-		collector.setReadConcurrency(settings.getReadConcurrency());
-		collector.setWriteConcurrency(settings.getWriteConcurrency());
-		if ( settings.getWorkItemMaxWait() != null ) {
-			collector.setWorkItemMaxWaitMs(settings.getWorkItemMaxWait().toMillis());
-		}
-		collector.setReadMaxMessageCount(settings.getReadMaxMessageCount());
-		if ( settings.getReadMaxWaitTime() != null ) {
-			collector.setReadMaxWaitTimeSecs((int) settings.getReadMaxWaitTime().toSeconds());
-		}
-		if ( settings.getReadSleepMin() != null ) {
-			collector.setReadSleepMinMs(settings.getReadSleepMin().toMillis());
-		}
-		if ( settings.getReadSleepMax() != null ) {
-			collector.setReadSleepMaxMs(settings.getReadSleepMax().toMillis());
-		}
-		if ( settings.getReadSleepThrottleStep() != null ) {
-			collector.setReadSleepThrottleStepMs(settings.getReadSleepThrottleStep().toMillis());
-		}
-		if ( settings.getShutdownWait() != null ) {
-			collector.setShutdownWaitSecs((int) settings.getShutdownWait().toSeconds());
-		}
+		var entityCodec = new DatumJsonEntityCodec(stats, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER);
+
+		var collector = new SqsOverflowQueue<Object, DatumPK>(stats, "DatumQueue-SQS",
+				settings.newAsyncClient(), settings.getUrl(),
+				new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
+				new LinkedHashSetBlockingQueue<>(9), new DatumWriteOnlyDaoGenericAdapter(datumDao),
+				entityCodec);
+		collector.setPingTestName("SQS Datum Collector");
+		settings.configure(collector);
 		return collector;
+	}
+
+	@Qualifier(DATUM_COLLECTOR)
+	@Bean
+	public GenericWriteOnlyDaoDatumAdapter sqsDatumWriteOnlyDao(
+			@Qualifier(DATUM_COLLECTOR) SqsOverflowQueue<Object, DatumPK> queue) {
+		return new GenericWriteOnlyDaoDatumAdapter(queue);
 	}
 
 }

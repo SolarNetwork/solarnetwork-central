@@ -33,12 +33,11 @@ import static org.hamcrest.Matchers.nullValue;
 import java.util.Arrays;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 
 /**
  * Test cases for datum steam database stored procedures.

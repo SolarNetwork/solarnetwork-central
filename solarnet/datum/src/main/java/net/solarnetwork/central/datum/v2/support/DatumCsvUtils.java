@@ -26,7 +26,6 @@ import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,9 +37,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import org.jspecify.annotations.Nullable;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
+import de.siegmar.fastcsv.reader.CsvRecordHandler;
+import de.siegmar.fastcsv.reader.FieldModifiers;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -51,7 +52,6 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
-import net.solarnetwork.util.ByteUtils;
 import net.solarnetwork.util.CloseableIterator;
 import net.solarnetwork.util.DateUtils;
 
@@ -59,7 +59,7 @@ import net.solarnetwork.util.DateUtils;
  * Utilities for Datum CSV processing.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 2.9
  */
 public final class DatumCsvUtils {
@@ -96,44 +96,44 @@ public final class DatumCsvUtils {
 	 *        the kind to treat the results as
 	 * @param zone
 	 *        a time zone to use, if the data does not include one
-	 * @return the list of metadata, never {@literal null}
+	 * @return the list of metadata, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
 	public static List<ObjectDatumStreamMetadata> parseMetadata(Reader in, ObjectDatumKind kind,
 			ZoneId zone) throws IOException {
 		List<ObjectDatumStreamMetadata> result = new ArrayList<>();
-		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
-			r.getHeader(true);
-			List<String> row;
-			while ( (row = r.read()) != null ) {
-				if ( row.size() < 8 ) {
+		try (CsvReader<CsvRecord> r = CsvReader.builder().allowExtraFields(true).allowMissingFields(true)
+				.ofCsvRecord(in)) {
+			r.skipLines(1); // skip header
+			for ( CsvRecord row : r ) {
+				if ( row.getFieldCount() < 8 ) {
 					continue;
 				}
-				final UUID streamId = UUID.fromString(row.get(0));
-				final Long objId = Long.valueOf(row.get(1));
-				final String sourceId = row.get(2);
+				final UUID streamId = UUID.fromString(row.getField(0));
+				final Long objId = Long.valueOf(row.getField(1));
+				final String sourceId = row.getField(2);
 				// we skip created/updated columns 3/4
 
-				String[] iCol = parseArrayValue(row.get(5));
-				String[] aCol = parseArrayValue(row.get(6));
-				String[] sCol = parseArrayValue(row.get(7));
+				String[] iCol = parseArrayValue(row.getField(5));
+				String[] aCol = parseArrayValue(row.getField(6));
+				String[] sCol = parseArrayValue(row.getField(7));
 
 				String jMeta = null;
-				if ( row.size() > 8 ) {
-					jMeta = row.get(8);
+				if ( row.getFieldCount() > 8 ) {
+					jMeta = row.getField(8);
 				}
 
 				ObjectDatumKind k;
-				if ( row.size() > 9 ) {
-					k = ObjectDatumKind.forKey(row.get(9));
+				if ( row.getFieldCount() > 9 ) {
+					k = ObjectDatumKind.forKey(row.getField(9));
 				} else {
 					k = kind;
 				}
 
 				String tz;
-				if ( row.size() > 10 ) {
-					tz = row.get(10);
+				if ( row.getFieldCount() > 10 ) {
+					tz = row.getField(10);
 				} else {
 					tz = zone.getId();
 				}
@@ -146,7 +146,7 @@ public final class DatumCsvUtils {
 		return result;
 	}
 
-	private static String[] parseArrayValue(String value) {
+	private static String @Nullable [] parseArrayValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}
@@ -159,29 +159,35 @@ public final class DatumCsvUtils {
 		return commaDelimitedListToStringArray(value);
 	}
 
-	private static String[][] parse2dArrayValue(String value) {
+	@SuppressWarnings("NullAway")
+	private static String @Nullable [] @Nullable [] parse2dArrayValue(@Nullable String value) {
+		if ( value == null ) {
+			return null;
+		}
 		if ( value.startsWith("{") ) {
 			value = value.substring(1);
 		}
 		if ( value.endsWith("}") ) {
 			value = value.substring(0, value.length() - 1);
 		}
-		String[] components = value.split("}\\s*,\\s*\\{");
-		String[][] result = new String[components.length][];
+		String[] components = value.split("}\\s*,\\s*\\{", 0);
+		var result = new String[components.length][];
 		for ( int i = 0; i < components.length; i++ ) {
 			result[i] = parseArrayValue(components[i]);
 		}
 		return result;
 	}
 
-	private static BigDecimal[][] parase2dDecimalArray(String[][] strings) {
+	@SuppressWarnings("NullAway")
+	private static BigDecimal @Nullable [] @Nullable [] parase2dDecimalArray(
+			String[] @Nullable [] strings) {
 		if ( strings == null ) {
 			return null;
 		}
 		if ( strings.length == 0 ) {
 			return new BigDecimal[0][];
 		}
-		BigDecimal[][] result = new BigDecimal[strings.length][];
+		var result = new BigDecimal[strings.length][];
 		for ( int i = 0; i < strings.length; i++ ) {
 			result[i] = decimalArray(strings[i]);
 		}
@@ -207,33 +213,34 @@ public final class DatumCsvUtils {
 	 *        the input to parse as CSV
 	 * @param aggregation
 	 *        the aggregate type
-	 * @return the list of aggregate datum, never {@literal null}
+	 * @return the list of aggregate datum, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("NullAway")
 	public static List<AggregateDatum> parseAggregateDatum(Reader in, Aggregation aggregation)
 			throws IOException {
 		List<AggregateDatum> result = new ArrayList<>();
-		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
-			r.getHeader(true);
-			List<String> row;
-			while ( (row = r.read()) != null ) {
-				if ( row.size() < 8 ) {
+		try (CsvReader<CsvRecord> r = CsvReader.builder().allowExtraFields(true).allowMissingFields(true)
+				.ofCsvRecord(in)) {
+			r.skipLines(1); // skip header
+			for ( CsvRecord row : r ) {
+				if ( row.getFieldCount() < 8 ) {
 					continue;
 				}
-				final UUID streamId = UUID.fromString(row.get(0));
-				final Instant ts = parseInstant(row.get(1));
+				final UUID streamId = UUID.fromString(row.getField(0));
+				final Instant ts = parseInstant(row.getField(1));
 
-				String[] iCol = parseArrayValue(row.get(2));
-				String[] aCol = parseArrayValue(row.get(3));
-				String[] sCol = parseArrayValue(row.get(4));
-				String[] tCol = parseArrayValue(row.get(5));
+				String[] iCol = parseArrayValue(row.getField(2));
+				String[] aCol = parseArrayValue(row.getField(3));
+				String[] sCol = parseArrayValue(row.getField(4));
+				String[] tCol = parseArrayValue(row.getField(5));
 
 				DatumProperties props = DatumProperties.propertiesOf(decimalArray(iCol),
 						decimalArray(aCol), sCol, tCol);
 
-				String[][] statsCol = parse2dArrayValue(row.get(6));
-				String[][] readingStatsCol = parse2dArrayValue(row.get(7));
+				var statsCol = parse2dArrayValue(row.getField(6));
+				var readingStatsCol = parse2dArrayValue(row.getField(7));
 
 				DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(
 						parase2dDecimalArray(statsCol), parase2dDecimalArray(readingStatsCol));
@@ -257,13 +264,13 @@ public final class DatumCsvUtils {
 	 * @param metaProvider
 	 *        the metadata provider
 	 * @param formatter
-	 *        the formatter; if {@literal null} then a standard ISO 8601
-	 *        timestamp will be assumed
-	 * @return the iterator, never {@literal null}
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
+	 * @return the iterator, never {@code null}
 	 * @since 2.0
 	 */
 	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
-			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
+			ObjectDatumStreamMetadataProvider metaProvider, @Nullable DateTimeFormatter formatter) {
 		try {
 			InputStream is = clazz.getResourceAsStream(resource);
 			if ( is == null ) {
@@ -286,8 +293,8 @@ public final class DatumCsvUtils {
 				};
 			}
 			return new DatumCsvIterator(
-					new CsvListReader(new InputStreamReader(is, ByteUtils.UTF8),
-							CsvPreference.STANDARD_PREFERENCE),
+					CsvReader.builder().allowExtraFields(true).allowMissingFields(true).build(
+							CsvRecordHandler.builder().fieldModifier(FieldModifiers.TRIM).build(), is),
 					metaProvider, formatter != null ? formatter : DateTimeFormatter.ISO_INSTANT);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
@@ -303,6 +310,9 @@ public final class DatumCsvUtils {
 	 *        the CSV resource to load
 	 * @param metaProvider
 	 *        the metadata provider
+	 * @param formatter
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
 	 * @return the list
 	 * @throws RuntimeException
 	 *         if any parsing error occurs

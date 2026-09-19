@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.ocpp.v16.vendor.abb;
 
-import java.io.IOException;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -37,11 +37,12 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.EnergyDatum;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
 import net.solarnetwork.util.NumberUtils;
@@ -50,6 +51,9 @@ import net.solarnetwork.util.StringUtils;
 import ocpp.v16.jakarta.cs.DataTransferRequest;
 import ocpp.v16.jakarta.cs.DataTransferResponse;
 import ocpp.v16.jakarta.cs.DataTransferStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish ABB data transfer {@code MeterTransfer} messages as a datum stream.
@@ -67,35 +71,13 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * example:
  * </p>
  *
- * <pre>
- * {@code {
- *     "type": "MeterTransfer",
- *     "timestamp": "2023-06-16T19:05:46.000Z",
- *     "sampledValue": [
- *         {
- *             "measurand": "Voltage.L1",
- *             "accuracy": "1",
- *             "unit": "V",
- *             "value": 2351
- *         },
- *         {
- *             "measurand": "Current.L1",
- *             "accuracy": "2",
- *            "unit": "A",
- *            "value": 7
- *         },
- *         {
- *             "measurand": "Active.Power.ALL",
- *             "accuracy": "2",
- *             "unit": "W",
- *             "value": 464
- *         }
- *     ]
- * }}
- * </pre>
+ * <pre> {@code { "type": "MeterTransfer", "timestamp":
+ * "2023-06-16T19:05:46.000Z", "sampledValue": [ { "measurand": "Voltage.L1",
+ * "accuracy": "1", "unit": "V", "value": 2351 }, { "measurand": "Current.L1",
+ * "accuracy": "2", "unit": "A", "value": 7 }, { "measurand":
+ * "Active.Power.ALL", "accuracy": "2", "unit": "W", "value": 464 } ] }} </pre>
  *
- * @author matt
- * @version 1.2
+ * @author matt @version 2.0
  */
 public class MeterTransferDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -125,7 +107,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 * @param mapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MeterTransferDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -144,15 +126,17 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			return false;
 		}
 		DataTransferRequest req = (DataTransferRequest) message.getMessage();
-		return (VENDOR_ID.equals(req.getVendorId()) && MESSAGE_ID.equals(req.getMessageId()));
+		return (req != null && VENDOR_ID.equals(req.getVendorId())
+				&& MESSAGE_ID.equals(req.getMessageId()) && message.getClientId() != null);
 	}
 
 	@Override
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
-		DataTransferRequest req = message.getMessage();
-		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
+		final ChargePointIdentity clientId = nonnull(message.getClientId(), "Client ID");
+		final DataTransferRequest req = nonnull(message.getMessage(), "Message");
+		final CentralChargePoint cp = pubSupport.chargePoint(clientId);
+		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.id());
 
 		DataTransferResponse res = new DataTransferResponse();
 
@@ -167,7 +151,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		resultHandler.handleActionMessageResult(message, res, null);
 	}
 
-	private GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
+	private @Nullable GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
 			ChargePointSettings cps) {
 		String data = req.getData();
 		if ( data == null || data.isBlank() ) {
@@ -182,12 +166,12 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		final JsonNode root;
 		try {
 			root = mapper.readTree(data);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Failed to parse DataTransfer data JSON [{}]: {}", data, e);
 			return null;
 		}
 
-		final String msgType = root.path("type").textValue();
+		final String msgType = root.path("type").stringValue();
 		final Instant ts = JsonUtils.parseDateAttribute(root, "timestamp", DateTimeFormatter.ISO_INSTANT,
 				Instant::from);
 		final JsonNode samples = root.path("sampledValue");
@@ -196,7 +180,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		}
 		for ( JsonNode sampleNode : samples ) {
 			MeterTransferMeasurand measurand = MeterTransferMeasurand
-					.forKey(sampleNode.path("measurand").textValue());
+					.forKey(sampleNode.path("measurand").stringValue());
 			if ( measurand == null ) {
 				continue;
 			}
@@ -209,8 +193,8 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			if ( propName == null ) {
 				continue;
 			}
-			Number value = normalizedValue(sampleNode.path("value").asText(),
-					sampleNode.path("accuracy").asText(), sampleNode.path("unit").asText());
+			Number value = normalizedValue(sampleNode.path("value").asString(),
+					sampleNode.path("accuracy").asString(), sampleNode.path("unit").asString());
 			s.putInstantaneousSampleValue(propName, value);
 		}
 
@@ -218,20 +202,19 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		final var d = new GeneralNodeDatum(cp.getNodeId(), ts, pubSupport.sourceId(cps,
+				nonnull(cp.getInfo().getId(), "ChargePoint identity"), null, null));
 		d.setSamples(s);
-		d.setCreated(ts);
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 
-	private static String phased(String propName, MeterTransferMeasurand measurand) {
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
+	private static @Nullable String phased(@Nullable String propName, MeterTransferMeasurand measurand) {
 		if ( propName == null || !measurand.isPhased() ) {
 			return propName;
 		}
 		AcPhase p;
-		switch (measurand.phase()) {
+		switch (nonnull(measurand.phase(), "Phase")) {
 			case "L1":
 				p = AcPhase.PhaseA;
 				break;
@@ -253,7 +236,8 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		return p.withKey(propName);
 	}
 
-	private static Number normalizedValue(String value, String accurracy, String unit) {
+	private static @Nullable Number normalizedValue(@Nullable String value, @Nullable String accurracy,
+			String unit) {
 		BigDecimal n = NumberUtils.bigDecimalForNumber(StringUtils.numberValue(value));
 		if ( n == null ) {
 			return null;
@@ -267,7 +251,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			}
 		}
 		if ( unit.length() > 1 ) {
-			unit = unit.toUpperCase();
+			unit = unit.toUpperCase(Locale.ENGLISH);
 			if ( unit.startsWith("K") ) {
 				n = n.movePointRight(3);
 			}
@@ -281,7 +265,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -301,6 +285,8 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
@@ -312,7 +298,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

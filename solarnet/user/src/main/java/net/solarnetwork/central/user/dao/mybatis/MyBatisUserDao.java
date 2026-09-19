@@ -27,22 +27,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserMatch;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * MyBatis implementation of {@link UserDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMatch, UserFilter, Long>
 		implements UserDao {
+
+	/**
+	 * The query name used for {@link #getUserWithLocation(Long)}.
+	 * 
+	 * @since 2.2
+	 */
+	public static final String QUERY_WITH_LOCATION = "get-User-with-location";
 
 	/** The query name used for {@link #getUserByEmail(String)}. */
 	public static final String QUERY_FOR_EMAIL = "get-User-for-email";
@@ -93,7 +101,12 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	}
 
 	@Override
-	public User getUserByEmail(String email) {
+	public @Nullable User getUserWithLocation(Long id) {
+		return selectFirst(QUERY_WITH_LOCATION, id);
+	}
+
+	@Override
+	public @Nullable User getUserByEmail(String email) {
 		return selectFirst(QUERY_FOR_EMAIL, email == null ? null : email.trim());
 	}
 
@@ -122,7 +135,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	@Override
-	public Map<String, Object> getInternalData(Long userId) {
+	public @Nullable Map<String, Object> getInternalData(Long userId) {
 		User user = selectFirst(QUERY_INTERNAL_DATA, userId);
 		return (user != null ? user.getInternalData() : null);
 	}
@@ -133,7 +146,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	@Override
-	public void storeInternalData(Long userId, Map<String, Object> data) {
+	public void storeInternalData(Long userId, @Nullable Map<String, Object> data) {
 		Map<String, Object> sqlParams = new HashMap<>(3);
 		sqlParams.put("userId", userId);
 		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));

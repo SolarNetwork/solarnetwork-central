@@ -1,42 +1,43 @@
 /* ==================================================================
  * InvoiceTests.java - 24/07/2020 3:30:53 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.domain.test;
 
+import static java.time.Instant.now;
 import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
@@ -50,7 +51,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 
 /**
  * Test cases for the {@link InvoiceImpl} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -66,15 +67,11 @@ public class InvoiceTests {
 	@Test
 	public void properties() {
 		// GIVEN
-		Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
+		SnfInvoice inv = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 		inv.setAddress(addr);
-		inv.setStartDate(LocalDate.of(2020, 1, 1));
-		inv.setEndDate(LocalDate.of(2020, 2, 1));
 
 		SnfInvoiceItem itm1 = SnfInvoiceItem.newItem(inv, InvoiceItemType.Usage, NodeUsage.DATUM_OUT_KEY,
 				new BigDecimal("1234567890"), new BigDecimal("123456.78"));
@@ -115,15 +112,11 @@ public class InvoiceTests {
 	@Test
 	public void invoiceUsageItemsSortOrder() {
 		// GIVEN
-		Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
+		SnfInvoice inv = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 		inv.setAddress(addr);
-		inv.setStartDate(LocalDate.of(2020, 1, 1));
-		inv.setEndDate(LocalDate.of(2020, 2, 1));
 
 		// create set with reverse node ID order, to test sort output
 		Set<SnfInvoiceNodeUsage> nodeUsages = new LinkedHashSet<>(4);

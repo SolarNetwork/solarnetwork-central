@@ -22,8 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
 
@@ -37,9 +38,9 @@ import net.solarnetwork.domain.datum.DatumId;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface AuditUserServiceValue extends Identity<DatumId>, UserIdRelated {
+public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 
 	/**
 	 * Get the user ID this audit value is part of.
@@ -52,8 +53,7 @@ public interface AuditUserServiceValue extends Identity<DatumId>, UserIdRelated 
 	 */
 	@Override
 	default Long getUserId() {
-		DatumId id = getId();
-		return id != null ? id.getObjectId() : null;
+		return nonnull(nonnull(getId(), "id").getObjectId(), "id.objectId");
 	}
 
 	/**
@@ -66,8 +66,7 @@ public interface AuditUserServiceValue extends Identity<DatumId>, UserIdRelated 
 	 * @return the service
 	 */
 	default String getService() {
-		DatumId id = getId();
-		return id != null ? id.getSourceId() : null;
+		return nonnull(nonnull(getId(), "id").getSourceId(), "id.sourceId");
 	}
 
 	/**
@@ -85,8 +84,7 @@ public interface AuditUserServiceValue extends Identity<DatumId>, UserIdRelated 
 	 * @return the timestamp for this datum
 	 */
 	default Instant getTimestamp() {
-		DatumId id = getId();
-		return id != null ? id.getTimestamp() : null;
+		return nonnull(nonnull(getId(), "id").getTimestamp(), "id.timestamp");
 	}
 
 	/**

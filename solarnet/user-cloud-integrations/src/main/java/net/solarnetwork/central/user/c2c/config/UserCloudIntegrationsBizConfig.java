@@ -35,11 +35,14 @@ import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import jakarta.validation.Validator;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
@@ -50,7 +53,7 @@ import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
  * Configuration for user cloud integrations services.
  *
  * @author matt
- * @version 1.3
+ * @version 1.5
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -69,7 +72,13 @@ public class UserCloudIntegrationsBizConfig {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Autowired
+	private CloudControlConfigurationDao controlDao;
+
+	@Autowired
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+
+	@Autowired
+	private CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 
 	@Autowired
 	private UserSettingsEntityDao userSettingsDao;
@@ -91,6 +100,9 @@ public class UserCloudIntegrationsBizConfig {
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
+	@Autowired
+	private Validator validator;
+
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
 		var clientAccessTokenDao = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations,
@@ -104,8 +116,9 @@ public class UserCloudIntegrationsBizConfig {
 				});
 		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(Clock.systemUTC(),
 				userSettingsDao, integrationDao, datumStreamDao, datumStreamSettingsDao,
-				datumStreamMappingDao, datumStreamPropertyDao, datumStreamPollTaskDao,
-				clientAccessTokenDao, textEncryptor, integrationServices);
+				datumStreamMappingDao, datumStreamPropertyDao, controlDao, datumStreamPollTaskDao,
+				datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor, integrationServices);
+		biz.setValidator(validator);
 		return biz;
 	}
 

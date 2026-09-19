@@ -35,12 +35,14 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,9 +52,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -60,8 +62,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
@@ -78,10 +78,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OpenWeatherMapDayCloudDatumStreamService} class.
@@ -110,8 +112,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -129,10 +130,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -144,7 +142,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = JsonUtils.newObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new OpenWeatherMapDayCloudDatumStreamService(userEventAppenderBiz, encryptor,
@@ -167,7 +165,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OpenWeatherMapCloudIntegrationService.API_KEY_SETTING, apiKey
@@ -177,21 +175,19 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
-				.willReturn(Collections.emptyList());
+				.willReturn(List.of());
 
 		// configure datum stream
 		final Long locationId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Location);
 		datumStream.setObjectId(locationId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -202,19 +198,10 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
-				.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
-				.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
-				.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
-				.toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("openweathermap-weather-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
@@ -224,6 +211,24 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 				.truncatedTo(ChronoUnit.DAYS).toInstant();
 
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
+			.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
+			.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
+			.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
+			.toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			;
+
 		and.then(result)
 			.as("Latest datum parsed from HTTP response ")
 			.hasSize(1)

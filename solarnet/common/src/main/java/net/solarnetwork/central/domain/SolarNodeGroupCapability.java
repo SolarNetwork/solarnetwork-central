@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A set of capabilities for a node.
@@ -36,7 +37,7 @@ public class SolarNodeGroupCapability extends SolarCapability implements Cloneab
 	@Serial
 	private static final long serialVersionUID = 5120295683193038735L;
 
-	private Long groupId;
+	private @Nullable Long groupId;
 
 	/**
 	 * Default constructor.
@@ -55,8 +56,8 @@ public class SolarNodeGroupCapability extends SolarCapability implements Cloneab
 	 * @param storageCapacityWattHours
 	 *        the energy storage capacity
 	 */
-	public SolarNodeGroupCapability(Long groupId, Long generationCapacityWatts,
-			Long storageCapacityWattHours) {
+	public SolarNodeGroupCapability(@Nullable Long groupId, @Nullable Long generationCapacityWatts,
+			@Nullable Long storageCapacityWattHours) {
 		setGroupId(groupId);
 		setGenerationCapacityWatts(generationCapacityWatts);
 		setStorageCapacityWattHours(storageCapacityWattHours);
@@ -67,11 +68,11 @@ public class SolarNodeGroupCapability extends SolarCapability implements Cloneab
 		return (SolarNodeGroupCapability) super.clone();
 	}
 
-	public Long getGroupId() {
+	public final @Nullable Long getGroupId() {
 		return groupId;
 	}
 
-	public void setGroupId(Long groupId) {
+	public final void setGroupId(@Nullable Long groupId) {
 		this.groupId = groupId;
 	}
 

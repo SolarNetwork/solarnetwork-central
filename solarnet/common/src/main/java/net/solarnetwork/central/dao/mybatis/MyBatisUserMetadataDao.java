@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.domain.UserMetadataEntity;
@@ -57,7 +58,7 @@ public class MyBatisUserMetadataDao extends
 	}
 
 	@Override
-	public String jsonMetadataAtPath(Long userId, String path) {
+	public @Nullable String jsonMetadataAtPath(Long userId, String path) {
 		Map<String, Object> params = new HashMap<>(1);
 		params.put("userId", requireNonNullArgument(userId, "userId"));
 		params.put("path", requireNonNullArgument(path, "path"));
@@ -66,7 +67,7 @@ public class MyBatisUserMetadataDao extends
 
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findFiltered(UserMetadataFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		return doFindFiltered(filter, sorts, offset, max);
 	}
 

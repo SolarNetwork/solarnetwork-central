@@ -32,7 +32,8 @@ import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededExceptio
 import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletRequestContext;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -223,8 +224,8 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 
 	@Override
 	public void cleanupMultipart(MultipartHttpServletRequest request) {
-		if (!(request instanceof AbstractMultipartHttpServletRequest) ||
-				((AbstractMultipartHttpServletRequest) request).isResolved()) {
+		if (!(request instanceof AbstractMultipartHttpServletRequest r) ||
+				r.isResolved()) {
 			try {
 				cleanupFileItems(request.getMultiFileMap());
 			}

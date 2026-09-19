@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -32,13 +33,13 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserAuthTokenFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserAuthTokenFilter {
 
-	private Boolean active;
-	private String[] identifiers;
-	private String[] tokenTypes;
+	private @Nullable Boolean active;
+	private String @Nullable [] identifiers;
+	private String @Nullable [] tokenTypes;
 
 	/**
 	 * Constructor.
@@ -53,7 +54,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicUserAuthTokenFilter(PaginationCriteria criteria) {
+	public BasicUserAuthTokenFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
@@ -65,7 +66,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 *        the filter ({@code null} allowed)
 	 * @return the new filter instance, never {@code null}
 	 */
-	public static BasicUserAuthTokenFilter filterForIdentifier(UserAuthTokenFilter filter) {
+	public static BasicUserAuthTokenFilter filterForIdentifier(@Nullable UserAuthTokenFilter filter) {
 		var result = new BasicUserAuthTokenFilter();
 		if ( filter != null ) {
 			result.setIdentifier(filter.getIdentifier());
@@ -79,7 +80,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria == null ) {
 			return;
@@ -109,17 +110,16 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserAuthTokenFilter) ) {
+		if ( !(obj instanceof BasicUserAuthTokenFilter other) ) {
 			return false;
 		}
-		BasicUserAuthTokenFilter other = (BasicUserAuthTokenFilter) obj;
 		return Objects.equals(active, other.active) && Arrays.equals(identifiers, other.identifiers)
 				&& Arrays.equals(tokenTypes, other.tokenTypes);
 	}
@@ -146,7 +146,18 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	}
 
 	@Override
-	public Boolean getActive() {
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| active != null
+				|| (identifiers != null && identifiers.length > 0)
+				|| (tokenTypes != null && tokenTypes.length > 0)
+				;
+		// @formatter:on
+	}
+
+	@Override
+	public final @Nullable Boolean getActive() {
 		return active;
 	}
 
@@ -156,12 +167,12 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param active
 	 *        the criteria value to set
 	 */
-	public void setActive(Boolean active) {
+	public final void setActive(@Nullable Boolean active) {
 		this.active = active;
 	}
 
 	@Override
-	public String[] getIdentifiers() {
+	public final String @Nullable [] getIdentifiers() {
 		return identifiers;
 	}
 
@@ -171,7 +182,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param identifiers
 	 *        the identifiers to set
 	 */
-	public void setIdentifiers(String[] identifiers) {
+	public final void setIdentifiers(String @Nullable [] identifiers) {
 		this.identifiers = identifiers;
 	}
 
@@ -181,12 +192,12 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		setIdentifiers(identifier != null ? new String[] { identifier } : null);
 	}
 
 	@Override
-	public String[] getTokenTypes() {
+	public final String @Nullable [] getTokenTypes() {
 		return tokenTypes;
 	}
 
@@ -196,7 +207,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param types
 	 *        the criteria to set
 	 */
-	public void setTokenTypes(String[] types) {
+	public final void setTokenTypes(String @Nullable [] types) {
 		this.tokenTypes = types;
 	}
 
@@ -206,7 +217,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	 * @param type
 	 *        the type to set
 	 */
-	public void setTokenType(String type) {
+	public final void setTokenType(@Nullable String type) {
 		setTokenTypes(type != null ? new String[] { type } : null);
 	}
 

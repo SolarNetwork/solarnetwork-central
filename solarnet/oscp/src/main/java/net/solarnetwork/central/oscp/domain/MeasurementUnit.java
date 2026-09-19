@@ -66,7 +66,7 @@ public enum MeasurementUnit implements CodedValue {
 
 	private final char code;
 
-	private MeasurementUnit(char c) {
+	MeasurementUnit(char c) {
 		this.code = c;
 	}
 

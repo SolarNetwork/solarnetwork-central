@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
@@ -94,12 +93,11 @@ public class AsyncChargePointStatusDaoTests {
 	public void findFiltered() throws IOException {
 		// GIVEN
 		final var filter = new BasicOcppCriteria();
-		final List<SortDescriptor> sorts = Collections.emptyList();
+		final List<SortDescriptor> sorts = List.of();
 		final Long offset = 0L;
 		final Integer max = 1;
 
-		final var daoResults = new BasicFilterResults<ChargePointStatus, UserLongCompositePK>(
-				Collections.emptyList());
+		final var daoResults = new BasicFilterResults<ChargePointStatus, UserLongCompositePK>(List.of());
 		given(delegate.findFiltered(any(), any(), any(), any())).willReturn(daoResults);
 
 		// WHEN
@@ -113,7 +111,7 @@ public class AsyncChargePointStatusDaoTests {
 	public void findFilteredStream() throws IOException {
 		// GIVEN
 		var filter = new BasicOcppCriteria();
-		final List<SortDescriptor> sorts = Collections.emptyList();
+		final List<SortDescriptor> sorts = List.of();
 		final Long offset = 0L;
 		final Integer max = 1;
 

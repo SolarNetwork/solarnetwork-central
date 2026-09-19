@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
@@ -43,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -51,7 +54,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	private static final long serialVersionUID = 6864680090286557577L;
 
 	private final SnfInvoice invoice;
-	private final List<InvoiceItem> items;
+	private final @Nullable List<InvoiceItem> items;
 
 	/**
 	 * Constructor.
@@ -59,7 +62,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 * @param invoice
 	 *        the invoice to wrap
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} is {@literal null}
+	 *         if {@code invoice} is {@code null}
 	 */
 	public InvoiceImpl(SnfInvoice invoice) {
 		this(invoice, null);
@@ -73,21 +76,20 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 * @param items
 	 *        the items to use directly
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} is {@literal null}
+	 *         if {@code invoice} is {@code null}
 	 */
-	public InvoiceImpl(SnfInvoice invoice, List<InvoiceItem> items) {
+	public InvoiceImpl(SnfInvoice invoice, @Nullable List<InvoiceItem> items) {
 		super();
-		if ( invoice == null ) {
-			throw new IllegalArgumentException("The invoice argument must not be null.");
-		}
-		this.invoice = invoice;
+		final SnfInvoice inv = requireNonNullArgument(invoice, "invoice");
+		this.invoice = inv;
 		this.items = items;
-		setId(invoice.getId().getId().toString());
+		setId(requireNonNullArgument(requireNonNullArgument(inv.getId(), "invoice.id").getId(),
+				"invoice.id.id").toString());
 		setCreated(invoice.getCreated());
 	}
 
 	@Override
-	public YearMonth getInvoiceMonth() {
+	public @Nullable YearMonth getInvoiceMonth() {
 		// as long as the start/end date range is two consecutive start-of-month values (day 1) then return the month
 		LocalDate startDate = invoice.getStartDate();
 		LocalDate endDate = invoice.getEndDate();
@@ -100,13 +102,13 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public String getTimeZoneId() {
-		Address addr = invoice.getAddress();
-		return (addr != null ? addr.getTimeZoneId() : null);
+		return nonnull(invoice.getAddress(), "address").getTimeZoneId();
 	}
 
 	@Override
 	public String getInvoiceNumber() {
-		return SnfBillingUtils.invoiceNumForId(invoice.getId().getId());
+		return nonnull(SnfBillingUtils.invoiceNumForId(nonnull(invoice.getId(), "invoice.id").getId()),
+				"invoice.id.id");
 	}
 
 	@Override
@@ -130,18 +132,18 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	}
 
 	@Override
-	public BigDecimal getCreditAmount() {
+	public @Nullable BigDecimal getCreditAmount() {
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
 			items = Collections.emptySet();
 		}
 		BigDecimal sum = items.stream().filter(e -> InvoiceItemType.Credit.equals(e.getItemType()))
 				.map(SnfInvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-		return (!sum.equals(BigDecimal.ZERO) ? sum : null);
+		return (sum.compareTo(BigDecimal.ZERO) != 0 ? sum : null);
 	}
 
 	@Override
-	public BigDecimal getRemainingCreditAmount() {
+	public @Nullable BigDecimal getRemainingCreditAmount() {
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
 			items = Collections.emptySet();
@@ -151,10 +153,10 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 						&& e.getMetadata() != null && e.getMetadata().containsKey(META_AVAILABLE_CREDIT))
 				.map(e -> {
 					Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
-					return (availCreditVal instanceof BigDecimal ? (BigDecimal) availCreditVal
+					return (availCreditVal instanceof BigDecimal d ? d
 							: new BigDecimal(availCreditVal.toString()));
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
-		return (!amount.equals(BigDecimal.ZERO) ? amount : null);
+		return (amount.compareTo(BigDecimal.ZERO) != 0 ? amount : null);
 	}
 
 	@Override
@@ -169,7 +171,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		}
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return items.stream().map(e -> new InvoiceItemImpl(invoice, e)).collect(Collectors.toList());
 	}
@@ -177,11 +179,11 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	@Override
 	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
 		if ( invoice == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Set<SnfInvoiceNodeUsage> usages = invoice.getUsages();
 		if ( usages == null || usages.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return usages.stream().sorted(InvoiceUsageRecordUsageKeyComparator.LONG_USAGE_COMPARATOR)
 				.collect(Collectors.toList());

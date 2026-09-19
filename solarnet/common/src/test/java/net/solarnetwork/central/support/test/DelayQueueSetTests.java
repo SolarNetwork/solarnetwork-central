@@ -99,10 +99,9 @@ public class DelayQueueSetTests {
 			if ( this == obj ) {
 				return true;
 			}
-			if ( !(obj instanceof DelayedInteger) ) {
+			if ( !(obj instanceof DelayedInteger other) ) {
 				return false;
 			}
-			DelayedInteger other = (DelayedInteger) obj;
 			return i == other.i;
 		}
 
@@ -295,7 +294,7 @@ public class DelayQueueSetTests {
 				consumedCountsByValue);
 		
 		then(consumedCountsByValue)
-			.allSatisfy((k, v) -> {
+			.allSatisfy((_, v) -> {
 				then(v)
 					.as("Should have consumed each value no more than maximum allowed by delay over run time")
 					.isLessThanOrEqualTo(expectedMaxCountPerValue)

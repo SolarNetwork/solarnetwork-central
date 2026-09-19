@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbFindAuditDatumDailyMissing.java - 25/11/2020 9:19:46 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,7 +26,8 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
@@ -46,14 +47,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
@@ -62,7 +63,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the "find missing audit datum" database stored procedure.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -111,8 +112,8 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 
 		@Override
 		public MissingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-			UUID streamId = getUuid(rs, 1);
-			Instant ts = rs.getTimestamp(2).toInstant();
+			UUID streamId = uuid(rs, 1);
+			Instant ts = timestampInstant(rs, 2);
 			return new MissingDatum(streamId, ts, rs.getString(3));
 		}
 
@@ -196,15 +197,12 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 	public void findMissing_oneMissingOneNot() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		List<GeneralNodeDatum> datums2 = DatumDbUtils
-				.elementsOf(DatumDbUtils.loadJsonDatumAndAuxiliaryResource("test-datum-01.txt",
-						getClass(), new Consumer<GeneralNodeDatum>() {
-
-							@Override
-							public void accept(GeneralNodeDatum d) {
-								d.setNodeId(2L);
-							}
-						}, null), GeneralNodeDatum.class);
+		List<GeneralNodeDatum> datums2 = DatumDbUtils.elementsOf(
+				DatumDbUtils.loadJsonDatumAndAuxiliaryResource("test-datum-01.txt", getClass(),
+						(Function<GeneralNodeDatum, GeneralNodeDatum>) d -> d
+								.copyWithId(new GeneralNodeDatumPK(2L, d.getCreated(), d.getSourceId())),
+						null),
+				GeneralNodeDatum.class);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
 				concat(datums.stream(), datums2.stream()).collect(toList()), "UTC");
 		UUID streamId_1 = metas.get(new NodeSourcePK(1L, "a")).getStreamId();

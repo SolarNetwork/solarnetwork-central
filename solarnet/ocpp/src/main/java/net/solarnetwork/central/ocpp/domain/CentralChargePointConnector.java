@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
@@ -40,7 +43,7 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
  * </p>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "evseId", "connectorId", "userId", "created", "info" })
@@ -54,21 +57,15 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 */
-	public CentralChargePointConnector() {
-		super();
-		this.userId = null;
-	}
-
-	/**
-	 * Constructor.
 	 *
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	public CentralChargePointConnector(Long userId) {
 		super();
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -78,38 +75,73 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *        the ID
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public CentralChargePointConnector(ChargePointConnectorKey id, Long userId) {
-		super(id);
-		this.userId = userId;
+	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id, Long userId) {
+		this(id, userId, null);
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param id
-	 *        the primary key
+	 *        the ID
+	 * @param userId
+	 *        the owner user ID
+	 * @param created
+	 *        the created date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
+	 * @since 1.4
 	 */
-	public CentralChargePointConnector(ChargePointConnectorKey id) {
-		super(id);
-		this.userId = null;
+	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id, Long userId,
+			@Nullable Instant created) {
+		super(id, created);
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
 	 * Constructor.
+	 *
+	 * <p>
+	 * The {@code userId} will be set to
+	 * {@link UserIdRelated#UNASSIGNED_USER_ID}.
+	 * </p>
+	 *
+	 * @param id
+	 *        the primary key
+	 */
+	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id) {
+		super(id);
+		this.userId = UserIdRelated.UNASSIGNED_USER_ID;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * The {@code userId} will be set to
+	 * {@link UserIdRelated#UNASSIGNED_USER_ID}.
+	 * </p>
 	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
 	 *        the created date
 	 */
-	public CentralChargePointConnector(ChargePointConnectorKey id, Instant created) {
+	public CentralChargePointConnector(@Nullable ChargePointConnectorKey id, @Nullable Instant created) {
 		super(id, created);
-		this.userId = null;
+		this.userId = UserIdRelated.UNASSIGNED_USER_ID;
 	}
 
 	/**
 	 * Constructor.
+	 *
+	 * <p>
+	 * The {@code userId} will be set to
+	 * {@link UserIdRelated#UNASSIGNED_USER_ID}.
+	 * </p>
 	 *
 	 * @param chargePointId
 	 *        the charge point ID
@@ -125,6 +157,11 @@ public class CentralChargePointConnector extends ChargePointConnector
 	/**
 	 * Constructor.
 	 *
+	 * <p>
+	 * The {@code userId} will be set to
+	 * {@link UserIdRelated#UNASSIGNED_USER_ID}.
+	 * </p>
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param evseId
@@ -136,9 +173,9 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @since 1.2
 	 */
 	public CentralChargePointConnector(long chargePointId, int evseId, int connectorId,
-			Instant created) {
+			@Nullable Instant created) {
 		super(new ChargePointConnectorKey(chargePointId, evseId, connectorId), created);
-		this.userId = null;
+		this.userId = UserIdRelated.UNASSIGNED_USER_ID;
 	}
 
 	/**
@@ -157,7 +194,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 			@JsonProperty(value = "chargePointId", required = true) long chargePointId,
 			@JsonProperty(value = "connectorId", required = true) int connectorId,
 			@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		this(chargePointId, 0, connectorId, userId, created);
 	}
 
@@ -182,9 +219,9 @@ public class CentralChargePointConnector extends ChargePointConnector
 			@JsonProperty(value = "evseId", required = false, defaultValue = "0") int evseId,
 			@JsonProperty(value = "connectorId", required = true) int connectorId,
 			@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		super(new ChargePointConnectorKey(chargePointId, evseId, connectorId), created);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -193,15 +230,13 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @param other
 	 *        the other charge point to copy
 	 */
-	public CentralChargePointConnector(ChargePointConnector other) {
+	public CentralChargePointConnector(CentralChargePointConnector other) {
 		super(other);
-		this.userId = (other instanceof CentralChargePointConnector
-				? ((CentralChargePointConnector) other).userId
-				: null);
+		this.userId = other.userId;
 	}
 
 	@Override
-	public boolean isSameAs(ChargePointConnector other) {
+	public boolean isSameAs(@Nullable ChargePointConnector other) {
 		if ( !(other instanceof CentralChargePointConnector) ) {
 			return false;
 		}
@@ -213,7 +248,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *
 	 * @return the charge point ID
 	 */
-	public Long getChargePointId() {
+	public final @Nullable Long getChargePointId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getChargePointId() : null);
 	}
@@ -224,7 +259,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @return the EVSE ID
 	 * @since 1.2
 	 */
-	public Integer getEvseId() {
+	public final @Nullable Integer getEvseId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getEvseId() : null);
 	}
@@ -234,7 +269,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *
 	 * @return the connector ID
 	 */
-	public Integer getConnectorId() {
+	public final @Nullable Integer getConnectorId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getConnectorId() : null);
 	}
@@ -245,7 +280,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.user.dao.UserKeyPairFilter;
@@ -74,12 +75,12 @@ public interface UserSecretBiz {
 	 *        the user ID to get key pairs for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available key pairs, never {@literal null}
+	 * @return the available key pairs, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} is {@code null}
 	 */
 	FilterResults<? extends UserKeyPair, UserStringCompositePK> listKeyPairsForUser(Long userId,
-			UserKeyPairFilter filter);
+			@Nullable UserKeyPairFilter filter);
 
 	/**
 	 * Save a user secret.
@@ -114,7 +115,7 @@ public interface UserSecretBiz {
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} is {@code null}
 	 */
-	void deleteUserSecret(Long userId, String topicId, String key);
+	void deleteUserSecret(Long userId, @Nullable String topicId, @Nullable String key);
 
 	/**
 	 * Get a list of all available secrets for a given user.
@@ -123,11 +124,11 @@ public interface UserSecretBiz {
 	 *        the user ID to get secrets for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available secrets, never {@literal null}
+	 * @return the available secrets, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} is {@code null}
 	 */
 	FilterResults<? extends UserSecret, UserStringStringCompositePK> listSecretsForUser(Long userId,
-			UserSecretFilter filter);
+			@Nullable UserSecretFilter filter);
 
 }

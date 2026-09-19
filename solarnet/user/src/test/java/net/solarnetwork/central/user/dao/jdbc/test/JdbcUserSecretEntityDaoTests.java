@@ -44,7 +44,6 @@ import net.solarnetwork.central.user.dao.BasicUserSecretFilter;
 import net.solarnetwork.central.user.dao.jdbc.JdbcUserSecretEntityDao;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.Identity;
 
 /**
  * Test cases for the {@link JdbcUserSecretEntityDao} class.
@@ -303,8 +302,8 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 
 		// THEN
 		UserSecretEntity[] expected = confs.stream()
-				.filter(e -> randomConf.getUserId().equals(e.getUserId()))
-				.sorted(Identity.sortByIdentity()).toArray(UserSecretEntity[]::new);
+				.filter(e -> randomConf.getUserId().equals(e.getUserId())).sorted()
+				.toArray(UserSecretEntity[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 

@@ -57,7 +57,7 @@ public class BasicCloudIntegrationLocalizedServiceInfo extends BasicConfigurable
 	}
 
 	@Override
-	public Map<String, URI> getWellKnownUrls() {
+	public final Map<String, URI> getWellKnownUrls() {
 		return wellKnownUrls;
 	}
 

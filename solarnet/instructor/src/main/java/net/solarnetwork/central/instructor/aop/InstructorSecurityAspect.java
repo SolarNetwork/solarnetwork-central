@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.instructor.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.Set;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -60,7 +63,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	public InstructorSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
 			NodeInstructionDao nodeInstructionDao) {
 		super(nodeOwnershipDao);
-		this.nodeInstructionDao = nodeInstructionDao;
+		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.get*ForNode(..)) && args(nodeId)")
@@ -146,12 +149,12 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 		if ( filter.hasNodeIdCriteria() ) {
-			for ( Long nodeId : filter.getNodeIds() ) {
+			for ( Long nodeId : nonnull(filter.getNodeIds(), "Node IDs") ) {
 				requireNodeWriteAccess(nodeId);
 			}
 		}
 		if ( filter.hasInstructionIdCriteria() ) {
-			for ( Long instrId : filter.getInstructionIds() ) {
+			for ( Long instrId : nonnull(filter.getInstructionIds(), "Instruction IDs") ) {
 				updateInstructionAccessCheck(instrId);
 			}
 		}
@@ -168,7 +171,8 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 */
 	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction",
 			argNames = "instructionId,instruction")
-	public void viewInstructionAccessCheck(Long instructionId, NodeInstruction instruction) {
+	public void viewInstructionAccessCheck(@Nullable Long instructionId,
+			@Nullable NodeInstruction instruction) {
 		if ( instructionId == null ) {
 			return;
 		}
@@ -190,8 +194,8 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 */
 	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions",
 			argNames = "instructionIds,instructions")
-	public void viewInstructionsAccessCheck(Set<Long> instructionIds,
-			List<NodeInstruction> instructions) {
+	public void viewInstructionsAccessCheck(@Nullable Set<Long> instructionIds,
+			@Nullable List<NodeInstruction> instructions) {
 		if ( instructionIds == null || instructions == null ) {
 			return;
 		}
@@ -208,7 +212,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 *        the ID of the instruction being updated
 	 */
 	@Before(value = "updateInstructionState(instructionId)", argNames = "instructionId")
-	public void updateInstructionAccessCheck(Long instructionId) {
+	public void updateInstructionAccessCheck(@Nullable Long instructionId) {
 		if ( instructionId == null ) {
 			return;
 		}
@@ -231,7 +235,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 *        the IDs of the instructions being updated
 	 */
 	@Before(value = "updateInstructionsState(instructionIds)", argNames = "instructionIds")
-	public void updateInstructionsAccessCheck(Set<Long> instructionIds) {
+	public void updateInstructionsAccessCheck(@Nullable Set<Long> instructionIds) {
 		if ( instructionIds == null ) {
 			return;
 		}
@@ -247,7 +251,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 *        the user ID
 	 */
 	@Before(value = "updateInstructionsForUser(userId)", argNames = "userId")
-	public void updateInstructionsForUserAccessCheck(Long userId) {
+	public void updateInstructionsForUserAccessCheck(@Nullable Long userId) {
 		if ( userId == null ) {
 			return;
 		}

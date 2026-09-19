@@ -24,8 +24,10 @@ package net.solarnetwork.central.c2c.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.dao.ModifiableServicePropertiesDao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterableDao;
@@ -34,25 +36,47 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public interface CloudIntegrationConfigurationDao
 		extends GenericCompositeKey2Dao<CloudIntegrationConfiguration, UserLongCompositePK, Long, Long>,
 		FilterableDao<CloudIntegrationConfiguration, UserLongCompositePK, CloudIntegrationFilter>,
-		UserModifiableEnabledStatusDao<CloudIntegrationFilter> {
+		UserModifiableEnabledStatusDao<CloudIntegrationFilter>,
+		ModifiableServicePropertiesDao<UserLongCompositePK> {
 
 	/**
 	 * Convenient method to find the integration associated with a datum stream.
 	 *
 	 * @param datumStreamId
 	 *        the datum stream ID to find the integration for
-	 * @return the integration, or {@literal null} if not found
+	 * @return the integration, or {@code null} if not found
 	 * @since 1.1
 	 */
-	default CloudIntegrationConfiguration integrationForDatumStream(UserLongCompositePK datumStreamId) {
+	default @Nullable CloudIntegrationConfiguration integrationForDatumStream(
+			UserLongCompositePK datumStreamId) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(datumStreamId, "datumStreamId").getUserId());
 		filter.setDatumStreamId(datumStreamId.getEntityId());
+
+		var results = findFiltered(filter);
+		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);
+	}
+
+	/**
+	 * Convenient method to find the integration associated with a datum stream
+	 * mapping.
+	 *
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID to find the integration for
+	 * @return the integration, or {@code null} if not found
+	 * @since 1.2
+	 */
+	default @Nullable CloudIntegrationConfiguration integrationForDatumStreamMapping(
+			UserLongCompositePK datumStreamMappingId) {
+		var filter = new BasicFilter();
+		filter.setUserId(
+				requireNonNullArgument(datumStreamMappingId, "datumStreamMappingId").getUserId());
+		filter.setDatumStreamMappingId(datumStreamMappingId.getEntityId());
 
 		var results = findFiltered(filter);
 		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);
@@ -70,7 +94,8 @@ public interface CloudIntegrationConfigurationDao
 	 *        if a state value already exists with this value
 	 * @return {@code true} if a matching record was updated
 	 */
-	boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state, String expectedState);
+	boolean saveOAuthAuthorizationState(UserLongCompositePK id, @Nullable String state,
+			@Nullable String expectedState);
 
 	/**
 	 * Save service properties, replacing any existing properties with the same

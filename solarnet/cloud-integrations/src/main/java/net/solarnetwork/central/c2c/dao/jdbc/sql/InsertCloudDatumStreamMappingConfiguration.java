@@ -60,7 +60,7 @@ public final class InsertCloudDatumStreamMappingConfiguration
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCloudDatumStreamMappingConfiguration(Long userId,
 			CloudDatumStreamMappingConfiguration entity) {

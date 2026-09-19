@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.CertificateCriteria;
 import net.solarnetwork.central.common.dao.EnabledCriteria;
@@ -33,15 +34,15 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of DNP3 query filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CertificateFilter, ServerFilter, ServerDataPointFilter {
 
-	private String[] identifiers;
-	private Integer[] indexes;
-	private String[] subjectDns;
-	private Long[] serverIds;
+	private String @Nullable [] identifiers;
+	private Integer @Nullable [] indexes;
+	private String @Nullable [] subjectDns;
+	private Long @Nullable [] serverIds;
 
 	@Override
 	public BasicFilter clone() {
@@ -61,12 +62,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicFilter(PaginationCriteria criteria) {
+	public BasicFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof IdentifierCriteria f ) {
 			setIdentifiers(f.getIdentifiers());
@@ -86,7 +87,19 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public String getIdentifier() {
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (identifiers != null && identifiers.length > 0)
+				|| (indexes != null && indexes.length > 0)
+				|| (serverIds != null && serverIds.length > 0)
+				|| (subjectDns != null && subjectDns.length > 0)
+				;
+		// @formatter:on
+	}
+
+	@Override
+	public final @Nullable String getIdentifier() {
 		return ServerFilter.super.getIdentifier();
 	}
 
@@ -96,7 +109,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		setIdentifiers(identifier != null ? new String[] { identifier } : null);
 	}
 
@@ -106,7 +119,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @return the identifiers
 	 */
 	@Override
-	public String[] getIdentifiers() {
+	public final String @Nullable [] getIdentifiers() {
 		return identifiers;
 	}
 
@@ -116,12 +129,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param identifiers
 	 *        the identifiers to set
 	 */
-	public void setIdentifiers(String[] identifiers) {
+	public final void setIdentifiers(String @Nullable [] identifiers) {
 		this.identifiers = identifiers;
 	}
 
 	@Override
-	public Integer getIndex() {
+	public final @Nullable Integer getIndex() {
 		return ServerFilter.super.getIndex();
 	}
 
@@ -131,7 +144,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param index
 	 *        the index to set
 	 */
-	public void setIndex(Integer index) {
+	public final void setIndex(@Nullable Integer index) {
 		setIndexes(index != null ? new Integer[] { index } : null);
 	}
 
@@ -141,7 +154,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @return the indexes
 	 */
 	@Override
-	public Integer[] getIndexes() {
+	public final Integer @Nullable [] getIndexes() {
 		return indexes;
 	}
 
@@ -151,12 +164,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param indexes
 	 *        the indexes to set
 	 */
-	public void setIndexes(Integer[] indexes) {
+	public final void setIndexes(Integer @Nullable [] indexes) {
 		this.indexes = indexes;
 	}
 
 	@Override
-	public String getSubjectDn() {
+	public final @Nullable String getSubjectDn() {
 		return CertificateFilter.super.getSubjectDn();
 	}
 
@@ -166,7 +179,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param subjectDn
 	 *        the subject DN to set
 	 */
-	public void setSubjectDn(String subjectDn) {
+	public final void setSubjectDn(@Nullable String subjectDn) {
 		setSubjectDns(subjectDn != null ? new String[] { subjectDn } : null);
 	}
 
@@ -176,7 +189,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @return the subject DNs
 	 */
 	@Override
-	public String[] getSubjectDns() {
+	public final String @Nullable [] getSubjectDns() {
 		return subjectDns;
 	}
 
@@ -186,12 +199,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param subjectDns
 	 *        the subject DNs to set
 	 */
-	public void setSubjectDns(String[] subjectDns) {
+	public final void setSubjectDns(String @Nullable [] subjectDns) {
 		this.subjectDns = subjectDns;
 	}
 
 	@Override
-	public Long getServerId() {
+	public final @Nullable Long getServerId() {
 		return ServerFilter.super.getServerId();
 	}
 
@@ -201,7 +214,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param serverId
 	 *        the server ID to set
 	 */
-	public void setServerId(Long serverId) {
+	public final void setServerId(@Nullable Long serverId) {
 		setServerIds(serverId != null ? new Long[] { serverId } : null);
 	}
 
@@ -211,7 +224,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @return the server IDs
 	 */
 	@Override
-	public Long[] getServerIds() {
+	public final Long @Nullable [] getServerIds() {
 		return serverIds;
 	}
 
@@ -221,7 +234,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param serverIds
 	 *        the server IDs to set
 	 */
-	public void setServerIds(Long[] serverIds) {
+	public final void setServerIds(Long @Nullable [] serverIds) {
 		this.serverIds = serverIds;
 	}
 

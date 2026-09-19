@@ -27,7 +27,10 @@ import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.catalina.connector.ClientAbortException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,13 +41,14 @@ import org.slf4j.Logger;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import net.solarnetwork.central.web.WebUtils;
 
 /**
  * Test cases for the {@link WebUtils} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -138,6 +142,52 @@ public class WebUtilsTests {
 		// THEN
 		then(log).should(times(2)).warn(msgCaptor.capture(), any(Object[].class));
 		and.then(count.intValue()).as("Action called 3 times").isEqualTo(3);
+	}
+
+	@Test
+	public void isClientAbortException_clientAbort() {
+		// GIVEN
+		final var e = new ClientAbortException(new IOException("Connection reset by peer"));
+
+		// WHEN
+		boolean result = WebUtils.isClientAbortException(e);
+
+		// THEN
+		and.then(result).as("Client abort detected").isTrue();
+	}
+
+	@Test
+	public void isClientAbortException_wrappedAsyncRequestNotUsable() {
+		// GIVEN
+		final var e = new UncheckedIOException(new AsyncRequestNotUsableException(
+				"ServletOutputStream failed to write", new ClientAbortException()));
+
+		// WHEN
+		boolean result = WebUtils.isClientAbortException(e);
+
+		// THEN
+		and.then(result).as("Client abort detected in cause").isTrue();
+	}
+
+	@Test
+	public void isClientAbortException_otherIOException() {
+		// GIVEN
+		final var e = new UncheckedIOException(new IOException("Connection reset by peer"));
+
+		// WHEN
+		boolean result = WebUtils.isClientAbortException(e);
+
+		// THEN
+		and.then(result).as("Other IO exception not a client abort").isFalse();
+	}
+
+	@Test
+	public void isClientAbortException_null() {
+		// WHEN
+		boolean result = WebUtils.isClientAbortException(null);
+
+		// THEN
+		and.then(result).as("Null not a client abort").isFalse();
 	}
 
 }

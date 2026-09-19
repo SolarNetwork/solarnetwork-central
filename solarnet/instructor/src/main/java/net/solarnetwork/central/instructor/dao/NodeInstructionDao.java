@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
@@ -69,11 +71,11 @@ public interface NodeInstructionDao
 	 * Transition instructions that have expired to a new state.
 	 * 
 	 * <p>
-	 * The {@link NodeInstruction#getExpirationDate()} will be used as the date
+	 * The {@link Instruction#getExpirationDate()} will be used as the date
 	 * before which expired instructions should be transitioned. The
-	 * {@link NodeInstruction#getState()} will be the state the matching
+	 * {@link Instruction#getState()} will be the state the matching
 	 * instructions are transitioned to. The
-	 * {@link NodeInstruction#getResultParameters()} will be persisted as well.
+	 * {@link Instruction#getResultParameters()} will be persisted as well.
 	 * </p>
 	 * 
 	 * @param criteria
@@ -98,7 +100,7 @@ public interface NodeInstructionDao
 	 * @since 1.2
 	 */
 	boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
-			Map<String, ?> resultParameters);
+			@Nullable Map<String, ?> resultParameters);
 
 	/**
 	 * Update an instruction status only if it currently has an expected state.
@@ -123,7 +125,8 @@ public interface NodeInstructionDao
 	 * @since 1.2
 	 */
 	boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
-			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters);
+			InstructionState expectedState, InstructionState state,
+			@Nullable Map<String, ?> resultParameters);
 
 	/**
 	 * Find instructions in a given state that are older than a specific date

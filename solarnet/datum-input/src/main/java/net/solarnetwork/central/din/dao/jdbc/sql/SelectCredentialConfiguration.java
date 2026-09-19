@@ -127,13 +127,13 @@ public final class SelectCredentialConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.credentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

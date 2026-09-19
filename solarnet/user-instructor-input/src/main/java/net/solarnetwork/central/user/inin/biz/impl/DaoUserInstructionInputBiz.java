@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
@@ -87,7 +88,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based implementation of {@link UserInstructionInputBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
@@ -99,8 +100,8 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	private final Collection<RequestTransformService> requestTransformServices;
 	private final Collection<ResponseTransformService> responseTransformServices;
 
-	private Validator validator;
-	private PasswordEncoder passwordEncoder;
+	private @Nullable Validator validator;
+	private @Nullable PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructor.
@@ -120,7 +121,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param responseTransformServices
 	 *        the response transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserInstructionInputBiz(CredentialConfigurationDao credentialDao,
 			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,
@@ -153,7 +154,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public <C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
-			Long userId, InstructionInputFilter filter, Class<C> configurationClass) {
+			Long userId, @Nullable InstructionInputFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
 		BasicFilter f = new BasicFilter(filter);
@@ -247,7 +248,8 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		dao.delete(pk);
 	}
 
-	private static Set<Long> nodeIds(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+	private static @Nullable Set<Long> nodeIds(EndpointConfiguration endpoint,
+			@Nullable Map<String, ?> parameters) {
 		Set<Long> nodeIds = endpoint.getNodeIds();
 		if ( parameters != null && parameters.containsKey(InstructionInputEndpointBiz.PARAM_NODE_IDS) ) {
 			Object val = parameters.get(InstructionInputEndpointBiz.PARAM_NODE_IDS);
@@ -269,11 +271,12 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return nodeIds;
 	}
 
+	@SuppressWarnings("UnnecessaryStringBuilder")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserUuidPK id, MimeType contentType, InputStream in,
 			MimeType outputType, Collection<TransformInstructionResults> instructionResults,
-			Map<String, ?> parameters) throws IOException {
+			@Nullable Map<String, ?> parameters) throws IOException {
 		final EndpointConfiguration endpoint = requireNonNullObject(
 				endpointDao.get(requireNonNullArgument(id, "id")), id);
 
@@ -351,10 +354,11 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 						if ( xformResult != null ) {
 							NodeInstruction copy = instr.clone();
 							if ( xformResult.state() != null ) {
-								copy.setState(xformResult.state());
+								copy.getInstruction().setState(xformResult.state());
 							}
 							if ( xformResult.resultParameters() != null ) {
-								copy.setResultParameters(xformResult.resultParameters());
+								copy.getInstruction()
+										.setResultParameters(xformResult.resultParameters());
 							}
 							nodeInstructions.add(copy);
 						} else {
@@ -382,7 +386,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 				root = root.getCause();
 			}
 			msg = e.getMessage();
-			if ( !msg.equals(root.getMessage()) ) {
+			if ( msg != null && !msg.equals(root.getMessage()) ) {
 				msg += " " + root.getMessage();
 			}
 		}
@@ -390,7 +394,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return new TransformOutput(instructions, output, xsltOutput.toString(), msg);
 	}
 
-	private RequestTransformService requestTransformService(String serviceId) {
+	private @Nullable RequestTransformService requestTransformService(String serviceId) {
 		for ( RequestTransformService service : requestTransformServices ) {
 			if ( serviceId.equals(service.getId()) ) {
 				return service;
@@ -399,7 +403,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return null;
 	}
 
-	private ResponseTransformService responseTransformService(String serviceId) {
+	private @Nullable ResponseTransformService responseTransformService(String serviceId) {
 		for ( ResponseTransformService service : responseTransformServices ) {
 			if ( serviceId.equals(service.getId()) ) {
 				return service;
@@ -408,11 +412,11 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return null;
 	}
 
-	private void validateInput(final Object input) {
+	private void validateInput(final @Nullable Object input) {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -432,15 +436,15 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 			Class<C> clazz) {
 		GenericDao<C, K> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (credentialDao);
+			result = (GenericDao<C, K>) credentialDao;
 		} else if ( RequestTransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (requestTransformDao);
+			result = (GenericDao<C, K>) requestTransformDao;
 		} else if ( ResponseTransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (responseTransformDao);
+			result = (GenericDao<C, K>) responseTransformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointDao);
+			result = (GenericDao<C, K>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointAuthDao);
+			result = (GenericDao<C, K>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -453,11 +457,11 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 			Class<?> clazz) {
 		UserModifiableEnabledStatusDao<F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (credentialDao);
+			result = (UserModifiableEnabledStatusDao<F>) credentialDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointAuthDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -470,15 +474,15 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 			Class<C> clazz) {
 		FilterableDao<C, K, F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (credentialDao);
+			result = (FilterableDao<C, K, F>) credentialDao;
 		} else if ( RequestTransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (requestTransformDao);
+			result = (FilterableDao<C, K, F>) requestTransformDao;
 		} else if ( ResponseTransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (responseTransformDao);
+			result = (FilterableDao<C, K, F>) responseTransformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointDao);
+			result = (FilterableDao<C, K, F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointAuthDao);
+			result = (FilterableDao<C, K, F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -491,7 +495,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -501,7 +505,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -510,7 +514,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 *
 	 * @return the password encoder
 	 */
-	public PasswordEncoder getPasswordEncoder() {
+	public final @Nullable PasswordEncoder getPasswordEncoder() {
 		return passwordEncoder;
 	}
 
@@ -520,7 +524,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param passwordEncoder
 	 *        the encoder to set
 	 */
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	public final void setPasswordEncoder(@Nullable PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
 	}
 

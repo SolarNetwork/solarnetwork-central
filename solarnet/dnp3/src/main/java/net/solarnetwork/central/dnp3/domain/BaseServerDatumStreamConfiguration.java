@@ -22,24 +22,27 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.CodedValue;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base entity for datum stream related configuration.
  *
  * @param <C>
- * 		the configuration type
+ *        the configuration type
  * @param <T>
- * 		the enum type
+ *        the enum type
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseUserModifiableEntity<C, UserLongIntegerCompositePK> {
@@ -49,24 +52,34 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	private Long nodeId;
 	private String sourceId;
-	private String property;
 	private T type;
-	private BigDecimal multiplier;
-	private BigDecimal offset;
-	private Integer scale;
+	private @Nullable String property;
+	private @Nullable BigDecimal multiplier;
+	private @Nullable BigDecimal offset;
+	private @Nullable Integer scale;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param id
-	 * 		the ID
+	 *        the ID
 	 * @param created
-	 * 		the creation date
+	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the sourceId
+	 * @param type
+	 *        the type
 	 * @throws IllegalArgumentException
-	 * 		if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created) {
+	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created,
+			Long nodeId, String sourceId, T type) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
+		this.type = requireNonNullArgument(type, "type");
 	}
 
 	@Override
@@ -85,27 +98,30 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Test if this entity has the same property values as another.
 	 *
 	 * <p>
-	 * The {@code id}, {@code created}, and {@code modified} properties are not compared.
+	 * The {@code id}, {@code created}, and {@code modified} properties are not
+	 * compared.
 	 * </p>
 	 *
 	 * @param other
-	 * 		the entity to compare to
-	 * @return {@literal true} if the properties of this entity are equal to the other's
+	 *        the entity to compare to
+	 * @return {@literal true} if the properties of this entity are equal to the
+	 *         other's
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public boolean isSameAs(C other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable C other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final C o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.nodeId, other.getNodeId())
-				&& Objects.equals(this.sourceId, other.getSourceId())
-				&& Objects.equals(this.property, other.getProperty())
-				&& Objects.equals(this.type, other.getType())
-				&& Objects.equals(this.multiplier, other.getMultiplier())
-				&& Objects.equals(this.offset, other.getOffset())
-				&& Objects.equals(this.scale, other.getScale())
+		return Objects.equals(this.nodeId, o.getNodeId())
+				&& Objects.equals(this.sourceId, o.getSourceId())
+				&& Objects.equals(this.property, o.getProperty())
+				&& Objects.equals(this.type, o.getType())
+				&& ObjectUtils.comparativelyEqual(this.multiplier, o.getMultiplier())
+				&& ObjectUtils.comparativelyEqual(this.offset, o.getOffset())
+				&& Objects.equals(this.scale, o.getScale())
 				;
 		// @formatter:on
 	}
@@ -114,7 +130,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Test if this configuration is valid.
 	 *
 	 * <p>
-	 * This only checks the existence and non-blankness of the fields necessary to configure in DNP3.
+	 * This only checks the existence and non-blankness of the fields necessary
+	 * to configure in DNP3.
 	 * </p>
 	 *
 	 * @return {@literal true} if the configuration is valid
@@ -124,7 +141,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 		final String sourceId = getSourceId();
 		final String property = getProperty();
 		final T type = getType();
-		return (nodeId != null && sourceId != null && property != null && type != null && !sourceId.isBlank() && !property.isBlank());
+		return (nodeId != null && sourceId != null && property != null && type != null
+				&& !sourceId.isBlank() && !property.isBlank());
 	}
 
 	@Override
@@ -193,9 +211,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the server ID
 	 */
-	public Long getServerId() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
+	public final Long getServerId() {
+		return id().getGroupId();
 	}
 
 	/**
@@ -203,9 +220,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the index
 	 */
-	public Integer getIndex() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Integer getIndex() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -213,7 +229,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -221,9 +237,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum node ID.
 	 *
 	 * @param nodeId
-	 * 		the nodeId to set
+	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -232,7 +248,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
+	public final String getSourceId() {
 		return sourceId;
 	}
 
@@ -240,9 +256,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum source ID.
 	 *
 	 * @param sourceId
-	 * 		the sourceId to set
+	 *        the sourceId to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -251,7 +267,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the property
 	 */
-	public String getProperty() {
+	public final @Nullable String getProperty() {
 		return property;
 	}
 
@@ -259,9 +275,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum property name.
 	 *
 	 * @param property
-	 * 		the property to set
+	 *        the property to set
 	 */
-	public void setProperty(String property) {
+	public final void setProperty(@Nullable String property) {
 		this.property = property;
 	}
 
@@ -270,7 +286,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the type
 	 */
-	public T getType() {
+	public final T getType() {
 		return type;
 	}
 
@@ -278,9 +294,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Get the type.
 	 *
 	 * @param type
-	 * 		the type to set
+	 *        the type to set
 	 */
-	public void setType(T type) {
+	public final void setType(T type) {
 		this.type = type;
 	}
 
@@ -289,7 +305,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the multiplier
 	 */
-	public BigDecimal getMultiplier() {
+	public final @Nullable BigDecimal getMultiplier() {
 		return multiplier;
 	}
 
@@ -297,9 +313,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal multiplier.
 	 *
 	 * @param multiplier
-	 * 		the multiplier to set
+	 *        the multiplier to set
 	 */
-	public void setMultiplier(BigDecimal multiplier) {
+	public final void setMultiplier(@Nullable BigDecimal multiplier) {
 		this.multiplier = multiplier;
 	}
 
@@ -308,7 +324,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the offset
 	 */
-	public BigDecimal getOffset() {
+	public final @Nullable BigDecimal getOffset() {
 		return offset;
 	}
 
@@ -316,9 +332,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal offset.
 	 *
 	 * @param offset
-	 * 		the offset to set
+	 *        the offset to set
 	 */
-	public void setOffset(BigDecimal offset) {
+	public final void setOffset(@Nullable BigDecimal offset) {
 		this.offset = offset;
 	}
 
@@ -327,7 +343,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 *
 	 * @return the scale
 	 */
-	public Integer getScale() {
+	public final @Nullable Integer getScale() {
 		return scale;
 	}
 
@@ -335,9 +351,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal scale.
 	 *
 	 * @param scale
-	 * 		the scale to set
+	 *        the scale to set
 	 */
-	public void setScale(Integer scale) {
+	public final void setScale(@Nullable Integer scale) {
 		this.scale = scale;
 	}
 

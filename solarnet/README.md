@@ -19,7 +19,7 @@ Additional application projects are:
 
 # Building
 
-The build is managed by Gradle, and requires a Java Development Kit version 21+ to build (and run).
+The build is managed by Gradle, and requires a Java Development Kit version 25+ to build (and run).
 To build all applications:
 
 ```sh
@@ -32,6 +32,11 @@ To build all applications:
 # Windows
 ./gradlew.bat build
 ```
+
+## ErrorProne
+
+Pass `-P errorProneDisabled=true` to the build command to disable ErrorProne warnings when compiling
+sources, and `-P errorProneEnabledTest=true` to enable warnings when compiling test sources.
 
 # Testing
 

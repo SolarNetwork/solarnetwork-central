@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
@@ -43,8 +44,10 @@ public interface DatumWriteOnlyDao
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 */
+	@Nullable
 	DatumPK store(StreamDatum datum);
 
 	/**
@@ -52,9 +55,11 @@ public interface DatumWriteOnlyDao
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 * @since 1.1
 	 */
+	@Nullable
 	DatumPK store(Datum datum);
 
 }

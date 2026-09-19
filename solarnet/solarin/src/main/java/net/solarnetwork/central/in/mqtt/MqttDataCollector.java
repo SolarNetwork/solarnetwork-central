@@ -35,9 +35,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.transaction.TransactionException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -46,7 +43,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
@@ -59,12 +56,15 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MQTT implementation of upload service.
  *
  * @author matt
- * @version 3.1
+ * @version 4.0
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -126,7 +126,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	 * @param mqttStats
 	 *        the stats
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
 			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {
@@ -168,9 +168,9 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			SecurityUtils.becomeNode(nodeId);
 
 			parseMqttMessage(objectMapper, message, topic, nodeId, true);
-		} catch ( IOException e ) {
+		} catch ( JacksonException | IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-			if ( e instanceof JsonParseException ) {
+			if ( e instanceof JacksonException ) {
 				final byte[] payload = message.getPayload();
 				log.warn("Error parsing MQTT topic {} message [{}]: {}", topic,
 						encodeHexString(payload, 0, payload.length, false), e.getMessage());
@@ -197,7 +197,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 						handleNode(nodeId, root, checkVersion);
 					} else {
 						// V2 stream datum array
-						handleStreamDatumNode(nodeId, root);
+						handleStreamDatumNode(root);
 					}
 					break;
 				} catch ( RepeatableTaskException | TransactionException e ) {
@@ -248,12 +248,12 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 		}
 	}
 
-	private void handleStreamDatumNode(final Long nodeId, final JsonNode node) {
+	private void handleStreamDatumNode(final JsonNode node) {
 		try {
 			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
 			dataCollectorBiz.postStreamDatum(singleton(d));
 			getMqttStats().increment(SolarInCountStat.StreamDatumReceived);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.debug("Unable to parse StreamDatum: {}", e.getMessage());
 		}
 	}
@@ -261,10 +261,9 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	private void handleGeneralDatum(final Long nodeId, final JsonNode node, final boolean checkVersion) {
 		try {
 			final Datum d = objectMapper.treeToValue(node, Datum.class);
-			final GeneralDatum gd = (d instanceof GeneralDatum ? (GeneralDatum) d
-					: new GeneralDatum(
-							new DatumId(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()),
-							new DatumSamples(d.asSampleOperations())));
+			final GeneralDatum gd = (d instanceof GeneralDatum g ? g
+					: new GeneralDatum(DatumId.datumId(d.getKind(), d.getObjectId(), d.getSourceId(),
+							d.getTimestamp()), new DatumSamples(d.asSampleOperations())));
 
 			if ( checkVersion && !gd.asSampleOperations().hasTag(TAG_V2) ) {
 				// work-around for all BigDecimal encodings being backwards
@@ -296,10 +295,10 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
-				if ( ld instanceof GeneralLocationDatum ) {
-					dataCollectorBiz.postGeneralLocationDatum(singleton((GeneralLocationDatum) ld));
-				} else if ( ld instanceof GeneralNodeDatum ) {
-					dataCollectorBiz.postGeneralNodeDatum(singleton((GeneralNodeDatum) ld));
+				if ( ld instanceof GeneralLocationDatum g ) {
+					dataCollectorBiz.postGeneralLocationDatum(singleton(g));
+				} else if ( ld instanceof GeneralNodeDatum g ) {
+					dataCollectorBiz.postGeneralNodeDatum(singleton(g));
 				}
 			}
 			getMqttStats().increment(d.getKind() == ObjectDatumKind.Location
@@ -307,7 +306,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 							: SolarInCountStat.LegacyLocationDatumReceived
 					: checkVersion ? SolarInCountStat.NodeDatumReceived
 							: SolarInCountStat.LegacyNodeDatumReceived);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.debug("Unable to parse GeneralDatum: {}", e.getMessage());
 		}
 	}
@@ -315,24 +314,19 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	private Object convertGeneralDatum(Long nodeId, Datum gd) {
 		DatumSamples s = new DatumSamples(gd.asSampleOperations());
 		if ( gd.getKind() == ObjectDatumKind.Location ) {
-			GeneralLocationDatum gld = new GeneralLocationDatum();
-			gld.setCreated(gd.getTimestamp());
-			gld.setSourceId(gd.getSourceId());
-			gld.setLocationId(gd.getObjectId());
+			GeneralLocationDatum gld = new GeneralLocationDatum(gd.getObjectId(), gd.getTimestamp(),
+					gd.getSourceId());
 			gld.setSamples(s);
 			return gld;
 		}
-		GeneralNodeDatum gnd = new GeneralNodeDatum();
-		gnd.setNodeId(nodeId);
-		gnd.setCreated(gd.getTimestamp());
-		gnd.setSourceId(gd.getSourceId());
+		GeneralNodeDatum gnd = new GeneralNodeDatum(nodeId, gd.getTimestamp(), gd.getSourceId());
 		gnd.setSamples(s);
 		return gnd;
 	}
 
 	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
 		JsonNode child = node.get(fieldName);
-		return (child == null ? placeholder : child.asText());
+		return (child == null ? placeholder : child.asString());
 	}
 
 	/*---------------------

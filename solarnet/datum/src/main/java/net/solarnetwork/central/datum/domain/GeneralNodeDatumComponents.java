@@ -22,8 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.domain.datum.DatumSamples;
 
@@ -32,19 +37,40 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * components rather than inline sample data.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.30
  */
-public class GeneralNodeDatumComponents extends GeneralNodeDatum {
+public class GeneralNodeDatumComponents extends GeneralNodeDatum implements DatumComponents {
 
 	@Serial
 	private static final long serialVersionUID = 5190123902690412934L;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public GeneralNodeDatumComponents() {
-		super();
+	public GeneralNodeDatumComponents(GeneralNodeDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatumComponents(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(nodeId, created, sourceId);
 	}
 
 	/**
@@ -52,27 +78,26 @@ public class GeneralNodeDatumComponents extends GeneralNodeDatum {
 	 *
 	 * @param other
 	 *        the datum to copy
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public GeneralNodeDatumComponents(GeneralNodeDatum other) {
-		super();
-		setCreated(other.getCreated());
+		this(requireNonNullArgument(other, "other").getId());
 		setPosted(other.getPosted());
-		setNodeId(other.getNodeId());
-		setSourceId(other.getSourceId());
 		setSamples(other.getSamples());
 	}
 
 	@JsonUnwrapped
-	public DatumSamples getSampleComponents() {
+	public @Nullable DatumSamples getSampleComponents() {
 		return getSamples();
 	}
 
 	/**
-	 * This implementation returns {@literal null} so the data is not unwrapped
+	 * This implementation returns {@code null} so the data is not unwrapped
 	 * during serialization.
 	 */
 	@Override
-	public Map<String, ?> getSampleData() {
+	public @Nullable Map<String, ?> getSampleData() {
 		return null;
 	}
 

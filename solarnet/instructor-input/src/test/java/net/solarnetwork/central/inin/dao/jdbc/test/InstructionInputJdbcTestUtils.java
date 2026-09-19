@@ -24,7 +24,7 @@ package net.solarnetwork.central.inin.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
-import java.time.Instant;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -70,10 +70,9 @@ public final class InstructionInputJdbcTestUtils {
 	public static CredentialConfiguration newCredentialConfiguration(Long userId, String username,
 			String password) {
 		CredentialConfiguration conf = new CredentialConfiguration(unassignedEntityIdKey(userId),
-				Instant.now());
+				MS_CLOCK.instant(), username);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-		conf.setUsername(username);
 		conf.setPassword(password);
 		return conf;
 	}
@@ -109,10 +108,8 @@ public final class InstructionInputJdbcTestUtils {
 	public static RequestTransformConfiguration newRequestTransformConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		RequestTransformConfiguration conf = new RequestTransformConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		return conf;
 	}
@@ -133,10 +130,8 @@ public final class InstructionInputJdbcTestUtils {
 	public static ResponseTransformConfiguration newResponseTransformConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		ResponseTransformConfiguration conf = new ResponseTransformConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), MS_CLOCK.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		return conf;
 	}
@@ -202,10 +197,9 @@ public final class InstructionInputJdbcTestUtils {
 	public static EndpointConfiguration newEndpointConfiguration(Long userId, UUID endpointId,
 			String name, Long[] nodeIds, Long reqTransformId, Long resTransformId) {
 		EndpointConfiguration conf = new EndpointConfiguration(new UserUuidPK(userId, endpointId),
-				Instant.now());
+				MS_CLOCK.instant(), name);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-		conf.setName(name);
 		conf.setNodeIds(new LinkedHashSet<>(Arrays.asList(nodeIds)));
 		conf.setRequestTransformId(reqTransformId);
 		conf.setResponseTransformId(resTransformId);
@@ -243,7 +237,7 @@ public final class InstructionInputJdbcTestUtils {
 	public static EndpointAuthConfiguration newEndpointAuthConfiguration(Long userId, UUID endpointId,
 			Long credentialId) {
 		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(
-				new UserUuidLongCompositePK(userId, endpointId, credentialId), Instant.now());
+				new UserUuidLongCompositePK(userId, endpointId, credentialId), MS_CLOCK.instant());
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
 		return conf;

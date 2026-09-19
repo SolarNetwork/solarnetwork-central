@@ -44,12 +44,10 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -68,7 +66,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Tests for the database rollup stored procedures.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
@@ -186,7 +184,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatum> results = Collections.emptyList();
+		List<AggregateDatum> results = List.of();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			results = jdbcTemplate.query(
@@ -218,7 +216,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	 */
 	public static void rollup(JdbcOperations jdbcTemplate, UUID streamId, ZonedDateTime aggStart,
 			ZonedDateTime aggEnd, RollupCallback callback) {
-		List<AggregateDatum> results = Collections.emptyList();
+		List<AggregateDatum> results = List.of();
 		results = jdbcTemplate.query("select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
@@ -240,7 +238,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatum> results = Collections.emptyList();
+		List<AggregateDatum> results = List.of();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
@@ -1169,7 +1167,17 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
-				assertThat("No data in range", results, hasSize(0));
+				assertThat("Agg result returned for adjacent earlier hour", results, hasSize(1));
+
+				AggregateDatum result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+
+				assertThat("Pick up accumulation from previous gap:",
+						result.getStatistics().getAccumulating(),
+						arrayContaining(decimalArray("132", "45804", "45936"),
+								decimalArray("132", "41005", "41137")));
 			}
 		});
 	}
@@ -1194,10 +1202,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
-				assertThat("Pick up accumulation in >hour gap:",
-						result.getStatistics().getAccumulating(),
-						arrayContaining(decimalArray("132", "45804", "45936"),
-								decimalArray("132", "41005", "41137")));
+				assertThat("Hour with perfect start:", result.getStatistics().getAccumulating(),
+						arrayContaining(decimalArray("0", "45936", "45936"),
+								decimalArray("0", "41137", "41137")));
 			}
 		});
 	}

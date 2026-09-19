@@ -24,6 +24,8 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -31,22 +33,22 @@ import net.solarnetwork.domain.Identity;
  * Comparable, Serializable primary key.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.34
  */
-public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
-		implements Cloneable, Serializable, Identity<PK> {
+public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
+		implements Cloneable, Serializable, Identity<K> {
 
 	@Serial
 	private static final long serialVersionUID = -2183771061512318513L;
 
-	private PK id = null;
+	private @Nullable K id;
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public BaseObjectIdentity<PK> clone() {
+	public BaseObjectIdentity<K> clone() {
 		try {
-			return (BaseObjectIdentity<PK>) super.clone();
+			return (BaseObjectIdentity<K>) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -65,8 +67,9 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 	 * Test if two BaseObjectIdentity objects have the same {@link #getId()}
 	 * value.
 	 */
+	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -74,29 +77,8 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		BaseObjectIdentity<PK> other = (BaseObjectIdentity<PK>) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
-	/**
-	 * Compare based on the primary key, with {@literal null} values ordered
-	 * before non-{@literal null} values.
-	 */
-	@Override
-	public int compareTo(PK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
+		BaseObjectIdentity<K> other = (BaseObjectIdentity<K>) obj;
+		return Objects.equals(id, other.getId());
 	}
 
 	/**
@@ -105,7 +87,7 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 	 * @return the id
 	 */
 	@Override
-	public PK getId() {
+	public final @Nullable K getId() {
 		return id;
 	}
 
@@ -115,7 +97,7 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 	 * @param id
 	 *        the id to set
 	 */
-	public void setId(PK id) {
+	public final void setId(@Nullable K id) {
 		this.id = id;
 	}
 

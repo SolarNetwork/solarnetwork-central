@@ -24,8 +24,12 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -54,16 +58,37 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	@Serial
 	private static final long serialVersionUID = 9141977325189089319L;
 
-	private DatumSamples samplesFinal;
-	private String sampleJsonFinal;
-	private DatumSamples samplesStart;
-	private String sampleJsonStart;
+	private @Nullable DatumSamples samplesFinal;
+	private @Nullable String sampleJsonFinal;
+	private @Nullable DatumSamples samplesStart;
+	private @Nullable String sampleJsonStart;
 
 	/**
 	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public ReportingGeneralNodeDatumReading() {
-		super();
+	public ReportingGeneralNodeDatumReading(GeneralNodeDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public ReportingGeneralNodeDatumReading(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(nodeId, created, sourceId);
 	}
 
 	/**
@@ -81,7 +106,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	@JsonUnwrapped
 	@JsonAnyGetter
 	@Override
-	public Map<String, ?> getSampleData() {
+	public @Nullable Map<String, ?> getSampleData() {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Map<String, Object> data = (Map) super.getSampleData();
 
@@ -91,6 +116,9 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 				String key = me.getKey();
 				if ( key == null ) {
 					continue;
+				}
+				if ( data == null ) {
+					data = new LinkedHashMap<>(4);
 				}
 				data.put(key + START_PROPERTY_SUFFIX, me.getValue());
 			}
@@ -103,6 +131,9 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 				if ( key == null ) {
 					continue;
 				}
+				if ( data == null ) {
+					data = new LinkedHashMap<>(4);
+				}
 				data.put(key + FINAL_PROPERTY_SUFFIX, me.getValue());
 			}
 		}
@@ -114,14 +145,14 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * Get the final {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJsonFinal() {
+	public final @Nullable String getSampleJsonFinal() {
 		if ( sampleJsonFinal == null ) {
 			sampleJsonFinal = DatumUtils.getJSONString(samplesFinal, "{}");
 		}
@@ -142,14 +173,14 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJsonFinal(String json) {
+	public final void setSampleJsonFinal(@Nullable String json) {
 		sampleJsonFinal = json;
 		samplesFinal = null;
 	}
 
 	@SerializeIgnore
 	@JsonIgnore
-	public DatumSamples getSamplesFinal() {
+	public final @Nullable DatumSamples getSamplesFinal() {
 		if ( samplesFinal == null && sampleJsonFinal != null ) {
 			samplesFinal = DatumUtils.getObjectFromJSON(sampleJsonFinal, DatumSamples.class);
 		}
@@ -168,7 +199,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 *        the samples instance to set
 	 */
 	@JsonSetter("final")
-	public void setSamplesFinal(DatumSamples samples) {
+	public final void setSamplesFinal(@Nullable DatumSamples samples) {
 		samplesFinal = samples;
 		sampleJsonFinal = null;
 	}
@@ -176,12 +207,12 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@Override
 	@SerializeIgnore
 	@JsonIgnore
-	public Map<String, ?> getSampleDataFinal() {
+	public final @Nullable Map<String, ?> getSampleDataFinal() {
 		DatumSamples s = getSamplesFinal();
 		return (s == null ? null : s.getSampleData());
 	}
@@ -190,14 +221,14 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * Get the start {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJsonStart() {
+	public final @Nullable String getSampleJsonStart() {
 		if ( sampleJsonStart == null ) {
 			sampleJsonStart = DatumUtils.getJSONString(samplesStart, "{}");
 		}
@@ -218,14 +249,14 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJsonStart(String json) {
+	public final void setSampleJsonStart(@Nullable String json) {
 		sampleJsonStart = json;
 		samplesStart = null;
 	}
 
 	@SerializeIgnore
 	@JsonIgnore
-	public DatumSamples getSamplesStart() {
+	public final @Nullable DatumSamples getSamplesStart() {
 		if ( samplesStart == null && sampleJsonStart != null ) {
 			samplesStart = DatumUtils.getObjectFromJSON(sampleJsonStart, DatumSamples.class);
 		}
@@ -244,7 +275,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 *        the samples instance to set
 	 */
 	@JsonSetter("start")
-	public void setSamplesStart(DatumSamples samples) {
+	public final void setSamplesStart(@Nullable DatumSamples samples) {
 		samplesStart = samples;
 		sampleJsonStart = null;
 	}
@@ -252,12 +283,12 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public Map<String, ?> getSampleDataStart() {
+	public final @Nullable Map<String, ?> getSampleDataStart() {
 		DatumSamples s = getSamplesStart();
 		return (s == null ? null : s.getSampleData());
 	}

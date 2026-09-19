@@ -31,7 +31,6 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,7 +50,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
@@ -92,7 +91,7 @@ public class UserAlertController extends ControllerSupport {
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
 		// now, only one alert type!
-		return Collections.singletonList(UserAlertType.NodeStaleData);
+		return List.of(UserAlertType.NodeStaleData);
 	}
 
 	@ModelAttribute("alertStatuses")
@@ -137,7 +136,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/sources", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
+	public Result<List<String>> availableSourcesForNode(@PathVariable Long nodeId,
 			@RequestParam(value = "start", required = false) Instant start,
 			@RequestParam(value = "end", required = false) Instant end) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -162,8 +161,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/situations", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
-			Locale locale) {
+	public Result<List<UserAlert>> activeSituationsNode(@PathVariable Long nodeId, Locale locale) {
 		List<UserAlert> results = userAlertBiz.alertSituationsForNode(nodeId);
 		for ( UserAlert alert : results ) {
 			populateUsefulAlertOptions(alert, locale);
@@ -242,10 +240,10 @@ public class UserAlertController extends ControllerSupport {
 					options.put(UserAlertOptions.AGE_THRESHOLD, Math.round(minutes * 60.0));
 				} else if ( UserAlertOptions.EMAIL_TOS.equalsIgnoreCase(me.getKey()) ) {
 					Object val = me.getValue();
-					if ( val instanceof String[] ) {
-						options.put(UserAlertOptions.EMAIL_TOS, Arrays.asList((String[]) val));
-					} else if ( val instanceof List<?> ) {
-						options.put(UserAlertOptions.EMAIL_TOS, val);
+					if ( val instanceof String[] a ) {
+						options.put(UserAlertOptions.EMAIL_TOS, Arrays.asList(a));
+					} else if ( val instanceof List<?> l ) {
+						options.put(UserAlertOptions.EMAIL_TOS, l);
 					} else {
 						Set<String> emails = StringUtils.commaDelimitedStringToSet(val.toString());
 						if ( emails != null ) {
@@ -335,7 +333,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<UserAlert> viewSituation(@PathVariable("alertId") Long alertId, Locale locale) {
+	public Result<UserAlert> viewSituation(@PathVariable Long alertId, Locale locale) {
 		UserAlert alert = userAlertBiz.alertSituation(alertId);
 		populateUsefulAlertOptions(alert, locale);
 		return success(alert);
@@ -354,7 +352,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}/resolve", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAlert> resolveSituation(@PathVariable("alertId") Long alertId,
+	public Result<UserAlert> resolveSituation(@PathVariable Long alertId,
 			@RequestParam("status") UserAlertSituationStatus status, Locale locale) {
 		UserAlert alert = userAlertBiz.updateSituationStatus(alertId, status);
 		populateUsefulAlertOptions(alert, locale);
@@ -370,7 +368,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/{alertId}", method = RequestMethod.DELETE)
 	@ResponseBody
-	public Result<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
+	public Result<Object> deleteAlert(@PathVariable Long alertId) {
 		userAlertBiz.deleteAlert(alertId);
 		return success();
 	}

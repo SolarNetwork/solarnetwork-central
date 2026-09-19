@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -51,6 +54,7 @@ public interface ObjectMappingCriteria {
 	 * @return the mapping of virtual object IDs to the set of real object IDs
 	 *         that should be mapped to them
 	 */
+	@Nullable
 	Map<Long, Set<Long>> getObjectIdMappings();
 
 	/**
@@ -71,10 +75,10 @@ public interface ObjectMappingCriteria {
 	 *
 	 * @param mappings
 	 *        the mappings to decode
-	 * @return the mappings, or {@literal null} if {@code mappings} is empty
+	 * @return the mappings, or {@code null} if {@code mappings} is empty
 	 */
-	static Map<Long, Set<Long>> mappingsFrom(String[] mappings) {
-		Map<Long, Set<Long>> result;
+	static @Nullable Map<Long, Set<Long>> mappingsFrom(String @Nullable [] mappings) {
+		SequencedMap<Long, Set<Long>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -84,7 +88,8 @@ public interface ObjectMappingCriteria {
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
 					try {
-						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+						Set<Long> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(Long.valueOf(map));
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -96,11 +101,13 @@ public interface ObjectMappingCriteria {
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
-					for ( String rId : rIds ) {
-						rNodeIds.add(Long.valueOf(rId));
+					if ( rIds != null ) {
+						Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
+						for ( String rId : rIds ) {
+							rNodeIds.add(Long.valueOf(rId));
+						}
+						result.put(vId, rNodeIds);
 					}
-					result.put(vId, rNodeIds);
 				} catch ( NumberFormatException e ) {
 					// ignore and continue
 				}

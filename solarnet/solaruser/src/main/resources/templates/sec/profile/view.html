@@ -15,8 +15,40 @@
 			<strong data-th-text="#{user.profile.details.title}">User Profile</strong>
 		</div>
 		<div class="col-sm-8">
-			<span data-th-text="${user.name}">User Person</span><br/>
-			<span data-th-text="${user.email}">user@localhost</span><br/>
+			<div class="form-horizontal registration-form">
+				<fieldset data-th-object="${user}">
+					<div class="form-group">
+						<label class="col-sm-2 control-label" for="user-name" data-th-text="#{user.name.label}">Name</label>
+						<div class="col-sm-10">
+							<p id="user-name" class="form-control-static" data-th-text="${user.name}">Person Name</p>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label" for="user-email" data-th-text="#{user.email.label}">Email</label>
+						<div class="col-sm-10">
+							<p id="user-email" class="form-control-static" data-th-text="${user.email}">user@localhost</p>
+						</div>
+					</div>
+					<div class="form-group" data-th-if="${user.country}">
+						<label class="col-sm-2 control-label" for="user-country" data-th-text="#{user.country.label}">Country</label>
+						<div class="col-sm-10">
+							<p id="user-country" class="form-control-static" data-th-text="${user.country}">US</p>
+						</div>
+					</div>
+					<div class="form-group" data-th-if="${user.timeZoneId}">
+						<label class="col-sm-2 control-label" for="user-time-zone" data-th-text="#{user.timeZoneId.label}">Time Zone</label>
+						<div class="col-sm-10">
+							<p id="user-time-zone" class="form-control-static" data-th-text="${user.timeZoneId}">America/Los_Angeles</p>
+						</div>
+					</div>
+					<div class="form-group" data-th-if="${user.lang}">
+						<label class="col-sm-2 control-label" for="user-lang" data-th-text="#{user.lang.label}">Language</label>
+						<div class="col-sm-10">
+							<p id="user-lang" class="form-control-static" data-th-text="${user.lang}">en</p>
+						</div>
+					</div>
+				</fieldset>
+			</div>							
 		</div>
 		<div class="col-sm-2 text-right">
 			<a class="btn btn-primary" href="form.html" data-th-href="@{/u/sec/profile/edit}"

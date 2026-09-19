@@ -1,21 +1,21 @@
 /* ==================================================================
  * Datum.java - 22/10/2020 1:59:49 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -31,7 +32,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
 /**
  * API for an object that exists within a unique stream at a specific point in
  * time and a set of property values.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.8
@@ -39,37 +40,50 @@ import net.solarnetwork.domain.datum.StreamDatum;
 public interface Datum extends Identity<DatumPK>, StreamDatum {
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the key
+	 */
+	@Override
+	@NonNull
+	DatumPK getId();
+
+	/**
 	 * Get the unique ID of the stream this datum is a part of.
-	 * 
+	 *
 	 * <p>
 	 * This is a shortcut for {@code getId().getStreamId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	@Override
-	UUID getStreamId();
+	default UUID getStreamId() {
+		return getId().getStreamId();
+	}
 
 	/**
 	 * Get the associated timestamp of this datum.
-	 * 
+	 *
 	 * <p>
 	 * This value represents the point in time the properties associated with
 	 * this datum were observed, collected, inferred, predicted, etc.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This is a shortcut for {@code getId().getTimestamp()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the timestamp for this datum
 	 */
 	@Override
-	Instant getTimestamp();
+	default Instant getTimestamp() {
+		return getId().getTimestamp();
+	}
 
 	/**
 	 * Get the properties associated with this datum.
-	 * 
+	 *
 	 * @return the properties
 	 */
 	@Override

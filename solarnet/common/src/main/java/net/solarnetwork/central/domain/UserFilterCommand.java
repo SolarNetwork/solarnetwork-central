@@ -24,12 +24,12 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.support.FilterSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for user actions.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.23
  */
 public class UserFilterCommand extends FilterSupport implements UserFilter {
@@ -45,11 +45,11 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	@Serial
 	private static final long serialVersionUID = 915646548230356302L;
 
-	private List<MutableSortDescriptor> sorts;
-	private Long offset = 0L;
-	private Integer max;
-	private String email;
-	private Map<String, Object> internalData;
+	private @Nullable List<MutableSortDescriptor> sorts;
+	private @Nullable Long offset = 0L;
+	private @Nullable Integer max;
+	private @Nullable String email;
+	private @Nullable Map<String, Object> internalData;
 
 	/**
 	 * Convert to a {@link UserMetadataFilter}.
@@ -68,34 +68,34 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 		return f;
 	}
 
-	public List<MutableSortDescriptor> getSorts() {
+	public final @Nullable List<MutableSortDescriptor> getSorts() {
 		return sorts;
 	}
 
-	public void setSorts(List<MutableSortDescriptor> sorts) {
+	public final void setSorts(@Nullable List<MutableSortDescriptor> sorts) {
 		this.sorts = sorts;
 	}
 
-	public List<SortDescriptor> getSortDescriptors() {
+	public final List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}
 
-	public Long getOffset() {
+	public final @Nullable Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Long offset) {
+	public final void setOffset(@Nullable Long offset) {
 		this.offset = offset;
 	}
 
-	public Integer getMax() {
+	public final @Nullable Integer getMax() {
 		return max;
 	}
 
-	public void setMax(Integer max) {
+	public final void setMax(@Nullable Integer max) {
 		this.max = max;
 	}
 
@@ -106,7 +106,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 * @since 1.1
 	 */
 	@Override
-	public String getEmail() {
+	public final @Nullable String getEmail() {
 		return email;
 	}
 
@@ -117,7 +117,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 *        the email to set
 	 * @since 1.1
 	 */
-	public void setEmail(String email) {
+	public final void setEmail(@Nullable String email) {
 		this.email = email;
 	}
 
@@ -128,7 +128,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 * @since 1.1
 	 */
 	@Override
-	public Map<String, Object> getInternalData() {
+	public final @Nullable Map<String, Object> getInternalData() {
 		return internalData;
 	}
 
@@ -139,7 +139,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 *        the internal data criteria to set
 	 * @since 1.1
 	 */
-	public void setInternalData(Map<String, Object> internalData) {
+	public final void setInternalData(@Nullable Map<String, Object> internalData) {
 		this.internalData = internalData;
 	}
 
@@ -149,7 +149,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 * @return the internal data criteria, as JSON
 	 * @since 1.1
 	 */
-	public String getInternalDataJson() {
+	public final @Nullable String getInternalDataJson() {
 		return JsonUtils.getJSONString(this.internalData, null);
 	}
 
@@ -176,7 +176,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	 * @since 1.1
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}

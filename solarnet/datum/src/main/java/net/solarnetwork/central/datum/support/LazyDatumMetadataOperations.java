@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.domain.KeyValuePair;
@@ -48,9 +49,9 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 
 	private final ObjectDatumStreamMetadataId id;
 	private final DatumStreamMetadataDao dao;
-	private final Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cache;
+	private final @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cache;
 
-	private GeneralDatumMetadata meta;
+	private @Nullable GeneralDatumMetadata meta;
 
 	/**
 	 * Constructor.
@@ -67,7 +68,7 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	 *         {@code id} are {@code null}
 	 */
 	public LazyDatumMetadataOperations(ObjectDatumStreamMetadataId id, DatumStreamMetadataDao dao,
-			Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cache) {
+			@Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cache) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		if ( id.getKind() == null || id.getObjectId() == null ) {
@@ -113,12 +114,12 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public Set<String> getInfoKeys() {
+	public @Nullable Set<String> getInfoKeys() {
 		return meta().getInfoKeys();
 	}
 
 	@Override
-	public Object getInfo(String key) {
+	public @Nullable Object getInfo(String key) {
 		return meta().getInfo(key);
 	}
 
@@ -141,7 +142,7 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 		return meta().hasInfo(property, key);
 	}
 
-	public void populate(KeyValuePair[] data) {
+	public void populate(KeyValuePair @Nullable [] data) {
 		meta().populate(data);
 	}
 
@@ -151,24 +152,24 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public boolean differsFrom(DatumMetadataOperations other) {
+	public boolean differsFrom(@Nullable DatumMetadataOperations other) {
 		return meta().differsFrom(other);
 	}
 
 	@Override
-	public Set<String> getTags() {
+	public @Nullable Set<String> getTags() {
 		return meta().getTags();
 	}
 
-	public void setTags(Set<String> tags) {
+	public void setTags(@Nullable Set<String> tags) {
 		meta().setTags(tags);
 	}
 
-	public Set<String> getT() {
+	public @Nullable Set<String> getT() {
 		return meta().getT();
 	}
 
-	public void setT(Set<String> set) {
+	public void setT(@Nullable Set<String> set) {
 		meta().setT(set);
 	}
 
@@ -178,7 +179,7 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public boolean hasMetadataAtPath(String path) {
+	public boolean hasMetadataAtPath(@Nullable String path) {
 		return meta().hasMetadataAtPath(path);
 	}
 
@@ -205,7 +206,7 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public Map<String, ?> getPropertyInfo(String key) {
+	public @Nullable Map<String, ?> getPropertyInfo(String key) {
 		return meta().getPropertyInfo(key);
 	}
 
@@ -214,16 +215,16 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public Number getInfoNumber(String key) {
+	public @Nullable Number getInfoNumber(String key) {
 		return meta().getInfoNumber(key);
 	}
 
-	public void putInfoValue(String key, Object value) {
+	public void putInfoValue(String key, @Nullable Object value) {
 		meta().putInfoValue(key, value);
 	}
 
 	@Override
-	public Short getInfoShort(String key) {
+	public @Nullable Short getInfoShort(String key) {
 		return meta().getInfoShort(key);
 	}
 
@@ -233,7 +234,7 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public Integer getInfoInteger(String key) {
+	public @Nullable Integer getInfoInteger(String key) {
 		return meta().getInfoInteger(key);
 	}
 
@@ -243,128 +244,128 @@ public final class LazyDatumMetadataOperations implements DatumMetadataOperation
 	}
 
 	@Override
-	public Long getInfoLong(String key) {
+	public @Nullable Long getInfoLong(String key) {
 		return meta().getInfoLong(key);
 	}
 
 	@Override
-	public Float getInfoFloat(String key) {
+	public @Nullable Float getInfoFloat(String key) {
 		return meta().getInfoFloat(key);
 	}
 
 	@Override
-	public Map<String, Object> getInfo() {
+	public @Nullable Map<String, Object> getInfo() {
 		return meta().getInfo();
 	}
 
 	@Override
-	public Double getInfoDouble(String key) {
+	public @Nullable Double getInfoDouble(String key) {
 		return meta().getInfoDouble(key);
 	}
 
-	public void setInfo(Map<String, Object> info) {
+	public void setInfo(@Nullable Map<String, Object> info) {
 		meta().setInfo(info);
 	}
 
-	public Map<String, Object> getM() {
+	public @Nullable Map<String, Object> getM() {
 		return meta().getM();
 	}
 
-	public void setM(Map<String, Object> map) {
+	public void setM(@Nullable Map<String, Object> map) {
 		meta().setM(map);
 	}
 
 	@Override
-	public BigDecimal getInfoBigDecimal(String key) {
+	public @Nullable BigDecimal getInfoBigDecimal(String key) {
 		return meta().getInfoBigDecimal(key);
 	}
 
-	public Map<String, Map<String, Object>> getPropertyInfo() {
+	public @Nullable Map<String, Map<String, Object>> getPropertyInfo() {
 		return meta().getPropertyInfo();
 	}
 
 	@Override
-	public BigInteger getInfoBigInteger(String key) {
+	public @Nullable BigInteger getInfoBigInteger(String key) {
 		return meta().getInfoBigInteger(key);
 	}
 
-	public void setInfo(String key, Map<String, Object> info) {
+	public void setInfo(String key, @Nullable Map<String, Object> info) {
 		meta().setInfo(key, info);
 	}
 
-	public void setPropertyInfo(Map<String, Map<String, Object>> propertyInfo) {
+	public void setPropertyInfo(@Nullable Map<String, Map<String, Object>> propertyInfo) {
 		meta().setPropertyInfo(propertyInfo);
 	}
 
 	@Override
-	public String getInfoString(String key) {
+	public @Nullable String getInfoString(String key) {
 		return meta().getInfoString(key);
 	}
 
-	public Map<String, Map<String, Object>> getPm() {
+	public @Nullable Map<String, Map<String, Object>> getPm() {
 		return meta().getPm();
 	}
 
-	public void setPm(Map<String, Map<String, Object>> map) {
+	public void setPm(@Nullable Map<String, Map<String, Object>> map) {
 		meta().setPm(map);
 	}
 
 	@Override
-	public Number getInfoNumber(String property, String key) {
+	public @Nullable Number getInfoNumber(String property, String key) {
 		return meta().getInfoNumber(property, key);
 	}
 
-	public void putInfoValue(String property, String key, Object value) {
+	public void putInfoValue(String property, String key, @Nullable Object value) {
 		meta().putInfoValue(property, key, value);
 	}
 
 	@Override
-	public Short getInfoShort(String property, String key) {
+	public @Nullable Short getInfoShort(String property, String key) {
 		return meta().getInfoShort(property, key);
 	}
 
 	@Override
-	public Object metadataAtPath(String path) {
+	public @Nullable Object metadataAtPath(@Nullable String path) {
 		return meta().metadataAtPath(path);
 	}
 
 	@Override
-	public <T> T metadataAtPath(String path, Class<T> clazz) {
+	public <T> @Nullable T metadataAtPath(@Nullable String path, Class<T> clazz) {
 		return meta().metadataAtPath(path, clazz);
 	}
 
 	@Override
-	public Integer getInfoInteger(String property, String key) {
+	public @Nullable Integer getInfoInteger(String property, String key) {
 		return meta().getInfoInteger(property, key);
 	}
 
 	@Override
-	public Long getInfoLong(String property, String key) {
+	public @Nullable Long getInfoLong(String property, String key) {
 		return meta().getInfoLong(property, key);
 	}
 
 	@Override
-	public Float getInfoFloat(String property, String key) {
+	public @Nullable Float getInfoFloat(String property, String key) {
 		return meta().getInfoFloat(property, key);
 	}
 
 	@Override
-	public Double getInfoDouble(String property, String key) {
+	public @Nullable Double getInfoDouble(String property, String key) {
 		return meta().getInfoDouble(property, key);
 	}
 
 	@Override
-	public BigDecimal getInfoBigDecimal(String property, String key) {
+	public @Nullable BigDecimal getInfoBigDecimal(String property, String key) {
 		return meta().getInfoBigDecimal(property, key);
 	}
 
 	@Override
-	public BigInteger getInfoBigInteger(String property, String key) {
+	public @Nullable BigInteger getInfoBigInteger(String property, String key) {
 		return meta().getInfoBigInteger(property, key);
 	}
 
 	@Override
-	public String getInfoString(String property, String key) {
+	public @Nullable String getInfoString(String property, String key) {
 		return meta().getInfoString(property, key);
 	}
 

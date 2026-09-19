@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -44,7 +45,7 @@ public enum CloudDatumStreamValueType {
 	private final String key;
 	private final boolean expression;
 
-	private CloudDatumStreamValueType(char key, boolean expression) {
+	CloudDatumStreamValueType(char key, boolean expression) {
 		this.key = String.valueOf(key);
 		this.expression = expression;
 	}
@@ -100,12 +101,12 @@ public enum CloudDatumStreamValueType {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum, or {@literal null} if value is {@literal null} or empty
+	 * @return the enum, or {@code null} if value is {@code null} or empty
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static CloudDatumStreamValueType fromValue(String value) {
+	public static @Nullable CloudDatumStreamValueType fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}

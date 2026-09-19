@@ -23,19 +23,25 @@
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Array;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
-import java.util.Collections;
+import java.time.Period;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+import org.postgresql.util.PGInterval;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -47,13 +53,14 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.CodedValue;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Common JDBC utilities.
  *
  * @author matt
- * @version 1.4
+ * @version 2.4
  */
 public final class CommonJdbcUtils {
 
@@ -63,6 +70,21 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array result column value.
+	 * 
+	 * <p>
+	 * For {@link BigDecimal} values specially handling is included for
+	 * non-finite values returned from the database. If an exception is thrown
+	 * by {@link Array#getArray()} and the {@link Array#getBaseType()} is
+	 * {@code NUMERIC} or {@code DECIMAL}, then special processing happens to
+	 * try to extract 1- or 2-dimensional arrays of {@link BigDecimal}, by
+	 * iterating over the {@link Array#getResultSet()}. If an individual
+	 * {@code ResultSet} row value throws an exception when attempting to read
+	 * the value as a {@link BigDecimal}, it will be inspected as a nested array
+	 * value, and processed as a nested array. If the row value is not an array,
+	 * it is inspected as a string value, and if equal to {@code "Infinity"} or
+	 * {@code "-Infinity"} or {@code "NaN"} then {@code null} will be used
+	 * instead, and processing will continue.
+	 * </p>
 	 *
 	 * @param <T>
 	 *        the expected array type
@@ -76,13 +98,91 @@ public final class CommonJdbcUtils {
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
+	public static <T> @Nullable T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);
 		if ( a == null ) {
 			return null;
 		}
-		return (T) a.getArray();
+		try {
+			return (T) a.getArray();
+		} catch ( SQLException e ) {
+			try {
+				int type = a.getBaseType();
+				if ( type == Types.NUMERIC || type == Types.DECIMAL ) {
+					// if failed reading as BigDecimal, assume we have non-finite values and try to re-map those into null
+					List<Object> result = parseBigDecimalArray(a);
+					boolean twoDee = false;
+					for ( Object o : result ) {
+						if ( o != null ) {
+							if ( o.getClass().isArray() ) {
+								twoDee = true;
+							}
+							break;
+						}
+					}
+					return (T) result.toArray(twoDee ? BigDecimal[][]::new : BigDecimal[]::new);
+				}
+			} catch ( SQLException e2 ) {
+				// give up
+			}
+			throw e;
+		}
+	}
+
+	/**
+	 * Get an array result column value.
+	 * 
+	 * @param <T>
+	 *        the expected array type
+	 * @param rs
+	 *        the result set
+	 * @param colNum
+	 *        the column number
+	 * @return the array
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @throws ClassCastException
+	 *         if a casting error occurs
+	 * @see #getArray(ResultSet, int)
+	 * @since 3.2
+	 */
+	@SuppressWarnings({ "NullAway", "TypeParameterUnusedInFormals" })
+	public static <T> T array(ResultSet rs, int colNum) throws SQLException {
+		return getArray(rs, colNum);
+	}
+
+	private static List<Object> parseBigDecimalArray(Array a) throws SQLException {
+		List<Object> result = new ArrayList<>();
+
+		try (ResultSet arrayResultSet = a.getResultSet()) {
+			while ( arrayResultSet.next() ) {
+				int idx = arrayResultSet.getInt(1) - 1;
+				while ( result.size() < idx ) {
+					result.add(null);
+				}
+				try {
+					result.add(arrayResultSet.getBigDecimal(2));
+				} catch ( SQLException e ) {
+					// try as 2d-array
+					try {
+						Array a2 = arrayResultSet.getArray(2);
+						List<Object> nested = parseBigDecimalArray(a2);
+						result.add(nested.toArray(BigDecimal[]::new));
+					} catch ( SQLException e2 ) {
+						// try as a string instead
+						String s = arrayResultSet.getString(2);
+						if ( "Infinity".equals(s) || "-Infinity".equals(s) || "NaN".equals(s) ) {
+							result.add(null);
+						} else {
+							throw e;
+						}
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -92,13 +192,13 @@ public final class CommonJdbcUtils {
 	 *        the expected array type, e.g. {@code Long[].class}
 	 * @param o
 	 *        the {@link Array} instance
-	 * @return the array value, or {@literal null} if {@code o} is
-	 *         {@literal null} or not a {@link Array}
+	 * @return the array value, or {@code null} if {@code o} is {@code null} or
+	 *         not a {@link Array}
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T arrayValue(Object o) {
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
+	public static <T> @Nullable T arrayValue(Object o) {
 		if ( o instanceof Array a ) {
 			try {
 				return (T) a.getArray();
@@ -123,16 +223,136 @@ public final class CommonJdbcUtils {
 	 *        the result set to read from
 	 * @param column
 	 *        the column number to get as a UUID
-	 * @return the UUID, or {@literal null} if the column value is null
+	 * @return the UUID, or {@code null} if the column value is null
 	 * @throws SQLException
 	 *         if an error occurs
 	 * @throws IllegalArgumentException
 	 *         if the column value is non-null but does not conform to the
 	 *         string representation as described in {@link UUID#toString()}
 	 */
-	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
+	public static @Nullable UUID getUuid(ResultSet rs, int column) throws SQLException {
+		return getUuid(rs, column, null);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @return the UUID (presumed null)
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @see #getUuid(ResultSet, int)
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static UUID uuid(ResultSet rs, int column) throws SQLException {
+		return uuid(rs, column, null);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
+	 * <p>
+	 * This method can be more efficient than calling
+	 * {@link ResultSet#getString(int)} if the JDBC driver returns a UUID
+	 * instance natively. Otherwise, this method will call {@code toString()} on
+	 * the column value and parse that as a UUID.
+	 * </p>
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @param defaultValue
+	 *        the default value to use if the UUID column value is {@code null}
+	 * @return the UUID, or {@code defaultValue} if the column value is null
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 */
+	public static @Nullable UUID getUuid(ResultSet rs, int column, @Nullable UUID defaultValue)
+			throws SQLException {
 		Object sid = rs.getObject(column);
-		return (sid instanceof UUID ? (UUID) sid : sid != null ? UUID.fromString(sid.toString()) : null);
+		return (sid instanceof UUID uuid ? uuid
+				: sid != null ? UUID.fromString(sid.toString()) : defaultValue);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @param defaultValue
+	 *        the default value to use if the UUID column value is {@code null}
+	 * @return the UUID, or {@code defaultValue} if the column value is
+	 *         {@code null}
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @see #getUuid(ResultSet, int, UUID)
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static UUID uuid(ResultSet rs, int column, UUID defaultValue) throws SQLException {
+		return getUuid(rs, column, defaultValue);
+	}
+
+	/**
+	 * Get a UUID statement value.
+	 * 
+	 * @param call
+	 *        the call to read from
+	 * @param parameterIndex
+	 *        the statement parameter to get as a UUID, starting from {@code 1}
+	 * @return the UUID, or {@code null}
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @since 2.4
+	 */
+	public static @Nullable UUID getUuid(CallableStatement call, int parameterIndex)
+			throws SQLException {
+		return getUuid(call, parameterIndex, null);
+	}
+
+	/**
+	 * Get a UUID statement value.
+	 * 
+	 * @param call
+	 *        the call to read from
+	 * @param parameterIndex
+	 *        the statement parameter to get as a UUID, starting from {@code 1}
+	 * @param defaultValue
+	 *        the default value to use of the UUID parameter value is
+	 *        {@code null}
+	 * @return the UUID, or {@code defaultValue} if the parameter value is
+	 *         {@code null}
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @since 2.4
+	 */
+	public static @Nullable UUID getUuid(CallableStatement call, int parameterIndex,
+			@Nullable UUID defaultValue) throws SQLException {
+		Object sid = call.getObject(parameterIndex);
+		return (sid instanceof UUID uuid ? uuid
+				: sid != null ? UUID.fromString(sid.toString()) : defaultValue);
 	}
 
 	/**
@@ -145,9 +365,10 @@ public final class CommonJdbcUtils {
 	 *        {@link CountPreparedStatementCreatorProvider} then
 	 *        {@link CountPreparedStatementCreatorProvider#countPreparedStatementCreator()}
 	 *        will be used
-	 * @return the result, or {@literal null} if no result count is available
+	 * @return the result, or {@code null} if no result count is available
 	 */
-	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
+	public static @Nullable Long executeCountQuery(JdbcOperations jdbcTemplate,
+			PreparedStatementCreator creator) {
 		return jdbcTemplate.query(creator, rs -> rs.next() ? rs.getLong(1) : null);
 	}
 
@@ -166,17 +387,16 @@ public final class CommonJdbcUtils {
 	 *        the SQL to execute
 	 * @param mapper
 	 *        the row mapper to use
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
-	public static <M extends Identity<K>, K> FilterResults<M, K> executeFilterQuery(
+	public static <M extends Unique<K>, K extends Comparable<K>> FilterResults<M, K> executeFilterQuery(
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
 			RowMapper<M> mapper) {
 		Long totalCount = null;
-		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider
-				&& !(filter instanceof OptimizedQueryCriteria
-						&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
-			totalCount = executeCountQuery(jdbcTemplate,
-					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
+		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider c
+				&& !(filter instanceof OptimizedQueryCriteria oqc
+						&& oqc.isWithoutTotalResultsCount()) ) {
+			totalCount = executeCountQuery(jdbcTemplate, c.countPreparedStatementCreator());
 		}
 
 		List<M> results = jdbcTemplate.query(sql, mapper);
@@ -209,7 +429,7 @@ public final class CommonJdbcUtils {
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper)
 			throws IOException {
-		executeStreamingQuery(jdbcOps, processor, sql, mapper, null, null, null, Collections.emptyMap());
+		executeStreamingQuery(jdbcOps, processor, sql, mapper, null, null, null, Map.of());
 	}
 
 	/**
@@ -226,24 +446,25 @@ public final class CommonJdbcUtils {
 	 * @param mapper
 	 *        the row mapper
 	 * @param totalResultCount
-	 *        the total result count (or {@literal null})
+	 *        the total result count (or {@code null})
 	 * @param startingOffset
-	 *        the starting offset (or {@literal null})
+	 *        the starting offset (or {@code null})
 	 * @param expectedResultCount
-	 *        the expected result count (or {@literal null})
+	 *        the expected result count (or {@code null})
 	 * @param attributes
-	 *        the attributes (or {@literal null})
+	 *        the attributes (or {@code null})
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 1.2
 	 */
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper,
-			Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException {
+			@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		processor.start(totalResultCount, startingOffset, expectedResultCount, attributes);
 		try {
-			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+			jdbcOps.execute(sql, (PreparedStatement ps) -> {
 				try (ResultSet rs = ps.executeQuery()) {
 					int row = 0;
 					while ( rs.next() ) {
@@ -273,8 +494,10 @@ public final class CommonJdbcUtils {
 	 *        the SQL to execute
 	 * @param keyColumnName
 	 *        the name of the generated key column to extract
-	 * @return the generated key value, or {@literal null} if the key is not
-	 *         returned or is not a {@code Long} instance
+	 * @return the generated key value
+	 * @throws IllegalStateException
+	 *         if the key is not returned returned or is not a {@code Long}
+	 *         instance
 	 * @since 1.1
 	 */
 	public static Long updateWithGeneratedLong(JdbcOperations jdbcTemplate, PreparedStatementCreator sql,
@@ -283,7 +506,9 @@ public final class CommonJdbcUtils {
 		jdbcTemplate.update(sql, keyHolder);
 		Map<String, Object> keys = keyHolder.getKeys();
 		Object id = keys != null ? keys.get(keyColumnName) : null;
-		return (id instanceof Long ? (Long) id : null);
+		return ObjectUtils.nonnull(
+				id instanceof Long n ? n : id instanceof Number n ? n.longValue() : null,
+				"Generated ID");
 	}
 
 	/**
@@ -301,8 +526,8 @@ public final class CommonJdbcUtils {
 	 *         if any SQL error occurs
 	 * @since 1.1
 	 */
-	public static <T extends Enum<T> & CodedValue> Set<T> getCodedValueSet(ResultSet rs, int colNum,
-			Class<T> clazz) throws SQLException {
+	public static <T extends Enum<T> & CodedValue> @Nullable Set<T> getCodedValueSet(ResultSet rs,
+			int colNum, Class<T> clazz) throws SQLException {
 		Number[] codes = getArray(rs, colNum);
 		if ( codes == null ) {
 			return null;
@@ -326,15 +551,97 @@ public final class CommonJdbcUtils {
 	 * @param rs
 	 *        the result set to read from
 	 * @param column
-	 *        the column number to get as a UUID
-	 * @return the instant, or {@literal null} if the column value is null
+	 *        the column number to get as an Instant
+	 * @return the instant, or {@code null} if the column value is null
 	 * @throws SQLException
 	 *         if an error occurs
 	 * @since 1.3
 	 */
-	public static Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
+	public static @Nullable Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
 		Timestamp ts = rs.getTimestamp(column);
 		return (ts != null ? ts.toInstant() : null);
+	}
+
+	/**
+	 * Get a Timestamp column value as an Instant.
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as an Instant
+	 * @return the instant (presumed non-null)
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static Instant timestampInstant(ResultSet rs, int column) throws SQLException {
+		return getTimestampInstant(rs, column);
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a Period
+	 * @return the period, or {@code null} if the column value is null
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.2
+	 */
+	public static @Nullable Period getIntervalPeriod(ResultSet rs, int column) throws SQLException {
+		Object o = rs.getObject(column);
+		try {
+			return getIntervalPeriod(o);
+		} catch ( IllegalArgumentException e ) {
+			throw new IllegalArgumentException(
+					"Unsupported Period type in column %d: %s".formatted(column, o.getClass()));
+		}
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a Period
+	 * @return the period (presumed non-null)
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static Period intervalPeriod(ResultSet rs, int column) throws SQLException {
+		return getIntervalPeriod(rs, column);
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param value
+	 *        the column number to get as a Period
+	 * @return the period, or {@code null} if the column value is null
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @since 2.2
+	 */
+	public static @Nullable Period getIntervalPeriod(Object value) {
+		if ( value == null ) {
+			return null;
+		} else if ( value instanceof PGInterval pg ) {
+			if ( pg.isNull() ) {
+				return null;
+			}
+			return Period.of(pg.getYears(), pg.getMonths(), pg.getDays());
+		}
+		throw new IllegalArgumentException("Unsupported Period type: %s".formatted(value.getClass()));
 	}
 
 }

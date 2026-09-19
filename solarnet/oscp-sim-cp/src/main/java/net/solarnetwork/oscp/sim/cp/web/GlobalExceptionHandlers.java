@@ -78,6 +78,7 @@ public class GlobalExceptionHandlers {
 	 *        the request
 	 * @return the description
 	 */
+	@SuppressWarnings("RedundantControlFlow")
 	public static String requestDescription(WebRequest request) {
 		StringBuilder buf = new StringBuilder(request.getDescription(false));
 		Map<String, String[]> params = request.getParameterMap();
@@ -104,7 +105,6 @@ public class GlobalExceptionHandlers {
 						buf.append(vals[i]);
 					}
 				}
-
 			}
 		}
 		return buf.toString();
@@ -137,7 +137,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ConstraintViolationException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
 		log.debug("ConstraintViolationException in request {}: {}", requestDescription(request),
@@ -156,7 +156,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("MethodArgumentNotValidException in request {}: {}", requestDescription(request),
 				e.toString());

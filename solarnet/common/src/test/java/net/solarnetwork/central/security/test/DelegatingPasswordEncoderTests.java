@@ -22,14 +22,12 @@
 
 package net.solarnetwork.central.security.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import net.solarnetwork.central.security.DelegatingPasswordEncoder;
-import org.junit.Test;
+import static org.assertj.core.api.BDDAssertions.then;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import net.solarnetwork.central.security.DelegatingPasswordEncoder;
 
 /**
  * Test case for the {@link DelegatingPasswordEncoder} class.
@@ -37,8 +35,9 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
  * @author matt
  * @version 1.0
  */
+@SpringJUnitConfig
 @ContextConfiguration
-public class DelegatingPasswordEncoderTests extends AbstractJUnit4SpringContextTests {
+public class DelegatingPasswordEncoderTests {
 
 	private static final String TEST_PASSWORD = "test.password";
 
@@ -48,23 +47,21 @@ public class DelegatingPasswordEncoderTests extends AbstractJUnit4SpringContextT
 	@Test
 	public void encodePassword() {
 		final String encoded = testPasswordEncoder.encode(TEST_PASSWORD);
-		assertNotNull(encoded);
-		assertTrue(encoded.startsWith("$2a$12$"));
-		assertEquals(60, encoded.length());
+		then(encoded).isNotNull().startsWith("$2a$12$").hasSize(60);
 	}
 
 	@Test
 	public void verifyPassword() {
 		final String encoded = testPasswordEncoder.encode(TEST_PASSWORD);
-		assertTrue(testPasswordEncoder.isPasswordEncrypted(encoded));
-		assertTrue(testPasswordEncoder.matches(TEST_PASSWORD, encoded));
+		then(testPasswordEncoder.isPasswordEncrypted(encoded)).isTrue();
+		then(testPasswordEncoder.matches(TEST_PASSWORD, encoded)).isTrue();
 	}
 
 	@Test
 	public void verifyLegacyPassword() {
 		final String legacy = "{SHA}0d7defedd7a13311b2e2add2142956c53a89349b1c6fca20c6325af6f3bfd936";
-		assertTrue(testPasswordEncoder.isPasswordEncrypted(legacy));
-		assertTrue(testPasswordEncoder.matches(TEST_PASSWORD, legacy));
+		then(testPasswordEncoder.isPasswordEncrypted(legacy)).isTrue();
+		then(testPasswordEncoder.matches(TEST_PASSWORD, legacy)).isTrue();
 	}
 
 }

@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -43,13 +44,12 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -57,7 +57,7 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.OcppAppEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.support.DelayedOccasionalProcessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.event.AppEvent;
@@ -69,13 +69,15 @@ import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Manage queued OCPP node instructions asynchronously, when OCPP clients
  * connect.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class CentralOcppNodeInstructionProvider extends
 		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
@@ -154,7 +156,7 @@ public class CentralOcppNodeInstructionProvider extends
 			case OcppAppEvents.EVENT_TOPIC_CHARGE_POINT_DISCONNECTED -> cancelAsyncProcessItem(
 					new DelayedChargePointIdentifier(identity));
 			default -> {
-				break;
+				// nothing
 			}
 		}
 	}
@@ -177,13 +179,13 @@ public class CentralOcppNodeInstructionProvider extends
 			FilterResults<EntityMatch, Long> matches = instructionDao.findFiltered(filter, null, null,
 					null);
 			for ( EntityMatch match : matches ) {
-				Instruction instruction;
-				if ( match instanceof Instruction ) {
-					instruction = (Instruction) match;
+				NodeInstruction instruction;
+				if ( match instanceof NodeInstruction ins ) {
+					instruction = ins;
 				} else {
 					instruction = instructionDao.get(match.getId());
 				}
-				if ( instruction != null && topic.equals(instruction.getTopic()) ) {
+				if ( instruction != null && topic.equals(instruction.getInstruction().getTopic()) ) {
 					processInstruction(instruction, identity, cp);
 				}
 			}
@@ -202,9 +204,9 @@ public class CentralOcppNodeInstructionProvider extends
 		return (params != null ? params : new HashMap<>(0));
 	}
 
-	private void processInstruction(final Instruction instruction, final ChargePointIdentity identity,
-			CentralChargePoint cp) {
-		Map<String, String> params = instructionParameterMap(instruction);
+	private void processInstruction(final NodeInstruction instruction,
+			final ChargePointIdentity identity, CentralChargePoint cp) {
+		Map<String, String> params = instructionParameterMap(instruction.getInstruction());
 		Action action = actionResolver.apply(params.remove(OCPP_ACTION_PARAM));
 		if ( action == null ) {
 			Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
@@ -246,7 +248,7 @@ public class CentralOcppNodeInstructionProvider extends
 		// this instruction is for this charge point... send it now
 		stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsProcessed);
 		OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
-				actionPayloadDecoder, (e, jsonPayload, payload) -> {
+				actionPayloadDecoder, (e, _, payload) -> {
 					if ( e != null ) {
 						Throwable root = e;
 						while ( root.getCause() != null ) {
@@ -271,7 +273,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 					ActionMessage<Object> message = new BasicActionMessage<>(identity,
 							UUID.randomUUID().toString(), action, payload);
-					chargePointBroker.sendMessageToChargePoint(message, (msg, res, err) -> {
+					chargePointBroker.sendMessageToChargePoint(message, (_, res, err) -> {
 						if ( err != null ) {
 							stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsFailed);
 							Throwable root = err;
@@ -311,18 +313,18 @@ public class CentralOcppNodeInstructionProvider extends
 				});
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
 		String dataStr;
 		try {
-			dataStr = (data instanceof String ? (String) data : objectMapper.writeValueAsString(data));
-		} catch ( JsonProcessingException e ) {
+			dataStr = (data instanceof String s ? s : objectMapper.writeValueAsString(data));
+		} catch ( JacksonException e ) {
 			dataStr = null;
 		}
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 
@@ -377,8 +379,8 @@ public class CentralOcppNodeInstructionProvider extends
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
 	 *
-	 * @return the instruction topic to listen to, or {@literal null} to not
-	 *         look for OCPP instructions
+	 * @return the instruction topic to listen to, or {@code null} to not look
+	 *         for OCPP instructions
 	 */
 	public String getInstructionTopic() {
 		return instructionTopic;

@@ -27,15 +27,17 @@ import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.domain.datum.Aggregation.Month;
 import static net.solarnetwork.domain.datum.Aggregation.RunningTotal;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
-import net.solarnetwork.dao.BasicIdentity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
@@ -51,12 +53,12 @@ import net.solarnetwork.domain.datum.DatumId;
  * refers to a <b>user</b> entity.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @JsonPropertyOrder({ "ts", "userId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
-public class AuditUserServiceEntity extends BasicIdentity<DatumId> implements AuditUserServiceValue,
-		Cloneable, Serializable, Differentiable<AuditUserServiceValue> {
+public class AuditUserServiceEntity extends BasicSerializableIdentity<DatumId> implements
+		AuditUserServiceValue, Cloneable, Serializable, Differentiable<AuditUserServiceValue> {
 
 	@Serial
 	private static final long serialVersionUID = 8620718545151038544L;
@@ -146,9 +148,9 @@ public class AuditUserServiceEntity extends BasicIdentity<DatumId> implements Au
 	 * @param count
 	 *        the count
 	 */
-	public AuditUserServiceEntity(DatumId id, Aggregation aggregation, long count) {
+	public AuditUserServiceEntity(DatumId id, @Nullable Aggregation aggregation, long count) {
 		super(id);
-		this.aggregation = (aggregation == null ? Aggregation.None : aggregation);
+		this.aggregation = (aggregation != null ? aggregation : Aggregation.None);
 		this.count = count;
 	}
 
@@ -183,35 +185,36 @@ public class AuditUserServiceEntity extends BasicIdentity<DatumId> implements Au
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(AuditUserServiceValue other) {
+	public boolean isSameAs(@Nullable AuditUserServiceValue other) {
 		if ( other == null ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(getId(), other.getId())
-				&& Objects.equals(aggregation, other.getAggregation())
-				&& Objects.equals(count, other.getCount());
+		return Objects.equals(getId(), o.getId())
+				&& Objects.equals(aggregation, o.getAggregation())
+				&& count == o.getCount();
 		// @formatter:on
 	}
 
 	@Override
-	public boolean differsFrom(AuditUserServiceValue other) {
+	public boolean differsFrom(@Nullable AuditUserServiceValue other) {
 		return !isSameAs(other);
 	}
 
 	@JsonProperty("ts")
 	@Override
-	public Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return AuditUserServiceValue.super.getTimestamp();
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final Aggregation getAggregation() {
 		return aggregation;
 	}
 
 	@Override
-	public long getCount() {
+	public final long getCount() {
 		return count;
 	}
 

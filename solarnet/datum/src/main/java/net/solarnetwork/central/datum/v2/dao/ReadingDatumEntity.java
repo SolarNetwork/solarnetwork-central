@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -47,7 +48,7 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 	@Serial
 	private static final long serialVersionUID = -78598605399387148L;
 
-	private final Instant endTimestamp;
+	private final @Nullable Instant endTimestamp;
 
 	/**
 	 * Constructor.
@@ -62,8 +63,10 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 	 *        the properties
 	 * @param statistics
 	 *        the statistics
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code endTimestamp} is {@code null}
 	 */
-	public ReadingDatumEntity(DatumPK id, Aggregation aggregation, Instant endTimestamp,
+	public ReadingDatumEntity(DatumPK id, Aggregation aggregation, @Nullable Instant endTimestamp,
 			DatumProperties properties, DatumPropertiesStatistics statistics) {
 		super(id, aggregation, properties, statistics);
 		this.endTimestamp = endTimestamp;
@@ -84,9 +87,12 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 	 *        the samples
 	 * @param statistics
 	 *        the statistics
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code endTimestamp} is {@code null}
 	 */
 	public ReadingDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
-			Instant endTimestamp, DatumProperties properties, DatumPropertiesStatistics statistics) {
+			@Nullable Instant endTimestamp, DatumProperties properties,
+			DatumPropertiesStatistics statistics) {
 		super(streamId, timestamp, aggregation, properties, statistics);
 		this.endTimestamp = endTimestamp;
 	}
@@ -155,7 +161,7 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 	}
 
 	@Override
-	public Instant getEndTimestamp() {
+	public final @Nullable Instant getEndTimestamp() {
 		return endTimestamp;
 	}
 

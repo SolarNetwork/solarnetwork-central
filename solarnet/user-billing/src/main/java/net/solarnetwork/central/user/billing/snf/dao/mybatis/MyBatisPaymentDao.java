@@ -24,8 +24,9 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.util.List;
 import java.util.Objects;
-import net.solarnetwork.central.dao.UserUuidPK;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentFilter;
@@ -49,7 +50,7 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 
@@ -72,7 +73,7 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 
 	@Override
 	public FilterResults<Payment, UserUuidPK> findFiltered(PaymentFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		if ( offset != null || max != null || sorts != null ) {
 			filter = filter.clone();
 			filter.setSorts(sorts);

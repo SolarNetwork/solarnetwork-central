@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -41,7 +43,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public final class CloudDatumStreamSettingsEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK>,
-		CloudDatumStreamSettings {
+		CloudDatumStreamSettings, CloudDatumStreamIdRelated {
 
 	@Serial
 	private static final long serialVersionUID = -5768166630955664067L;
@@ -57,7 +59,7 @@ public final class CloudDatumStreamSettingsEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamSettingsEntity(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -68,15 +70,15 @@ public final class CloudDatumStreamSettingsEntity
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param dataSourceId
-	 *        the data source ID
+	 * @param datumStreamId
+	 *        the datum stream ID
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamSettingsEntity(Long userId, Long dataSourceId, Instant created) {
-		this(new UserLongCompositePK(userId, dataSourceId), created);
+	public CloudDatumStreamSettingsEntity(Long userId, Long datumStreamId, Instant created) {
+		this(new UserLongCompositePK(userId, datumStreamId), created);
 	}
 
 	@Override
@@ -86,7 +88,7 @@ public final class CloudDatumStreamSettingsEntity
 
 	@Override
 	public CloudDatumStreamSettingsEntity copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamSettingsEntity(id, getCreated());
+		var copy = new CloudDatumStreamSettingsEntity(id, created());
 		copyTo(copy);
 		return copy;
 	}
@@ -99,14 +101,14 @@ public final class CloudDatumStreamSettingsEntity
 	}
 
 	@Override
-	public boolean isSameAs(CloudDatumStreamSettingsEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CloudDatumStreamSettingsEntity other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return publishToSolarIn == other.publishToSolarIn
-				&& publishToSolarFlux == other.publishToSolarFlux
+		return publishToSolarIn == o.publishToSolarIn
+				&& publishToSolarFlux == o.publishToSolarFlux
 				;
 		// @formatter:on
 	}
@@ -131,13 +133,13 @@ public final class CloudDatumStreamSettingsEntity
 	 *
 	 * @return the cloud datum stream ID
 	 */
-	public Long getDatumStreamId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	@Override
+	public final Long getDatumStreamId() {
+		return id().getEntityId();
 	}
 
 	@Override
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -147,12 +149,12 @@ public final class CloudDatumStreamSettingsEntity
 	 * @param publishToSolarIn
 	 *        {@literal true} if data should be published to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
 	@Override
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -162,7 +164,7 @@ public final class CloudDatumStreamSettingsEntity
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data should be published to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 

@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeMetadataController.java - 14/11/2016 8:48:21 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -55,7 +55,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for read-only node metadata access.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -70,7 +70,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO to use
 	 * @param solarNodeMetadataBiz
@@ -91,7 +91,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 
 	/**
 	 * Find all metadata for any number of node IDs.
-	 * 
+	 *
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
@@ -119,7 +119,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 
 	/**
 	 * Find all metadata for a specific node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to find
 	 * @return the results
@@ -130,7 +130,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
 	public Result<SolarNodeMetadataFilterMatch> getMetadata(final HttpServletRequest req,
-			@PathVariable("nodeId") final Long nodeId) {
+			@PathVariable final Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {

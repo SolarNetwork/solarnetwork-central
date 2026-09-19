@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.common.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey3;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
@@ -44,9 +47,9 @@ import net.solarnetwork.domain.SortDescriptor;
  *        the primary key's third component
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends CompositeKey3<K1, K2, K3>, K1, K2, K3>
+public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Comparable<K> & Serializable & CompositeKey3<K1, K2, K3>, K1, K2, K3>
 		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**
@@ -69,8 +72,8 @@ public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Composit
 	 * optionally sorted in some way.
 	 * 
 	 * <p>
-	 * The {@code sortDescriptors} parameter can be {@literal null}, in which
-	 * case the sort order is not defined and implementation specific.
+	 * The {@code sortDescriptors} parameter can be {@code null}, in which case
+	 * the sort order is not defined and implementation specific.
 	 * </p>
 	 * 
 	 * @param keyComponent1
@@ -81,11 +84,16 @@ public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Composit
 	 *        list of sort descriptors to sort the results by
 	 * @return list of all persisted entities, or empty list if none available
 	 */
-	Collection<T> findAll(K1 keyComponent1, K2 keyComponent2, List<SortDescriptor> sorts);
+	Collection<T> findAll(K1 keyComponent1, K2 keyComponent2, @Nullable List<SortDescriptor> sorts);
 
 	@Override
-	default Collection<T> findAllForKey(K filter, List<SortDescriptor> sorts) {
-		return findAll(filter.keyComponent1(), filter.keyComponent2(), sorts);
+	default Collection<T> findAllForKey(K filter, @Nullable List<SortDescriptor> sorts) {
+		return findAll(
+				requireNonNullArgument(requireNonNullArgument(filter, "filter").keyComponent1(),
+						"filter.keyComponent1"),
+				requireNonNullArgument(requireNonNullArgument(filter, "filter").keyComponent2(),
+						"filter.keyComponent2"),
+				sorts);
 	}
 
 }

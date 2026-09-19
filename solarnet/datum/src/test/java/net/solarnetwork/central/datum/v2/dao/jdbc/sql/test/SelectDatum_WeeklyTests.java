@@ -23,7 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.AdditionalMatchers.aryEq;
@@ -45,8 +46,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -59,8 +58,6 @@ import net.solarnetwork.domain.datum.Aggregation;
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectDatum_WeeklyTests {
-
-	private static final Logger log = LoggerFactory.getLogger(SelectDatum_WeeklyTests.class);
 
 	@Mock
 	private Connection con;
@@ -90,6 +87,18 @@ public class SelectDatum_WeeklyTests {
 		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(sourceIdsArray);
 	}
 
+	private void thenSqlEqualsResource(String sql, String resource) {
+		// @formatter:off
+		then(sql)
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace(getResourceAsString(
+					resource,
+					TestSqlResources.class,
+					SQL_COMMENT))
+			;
+		// @formatter:on
+	}
+
 	@Test
 	public void find_weekly_nodesAndSources_absoluteDates_sql() {
 		// GIVEN
@@ -104,9 +113,7 @@ public class SelectDatum_WeeklyTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-weekly-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-weekly-nodesAndSources-dates.sql");
 	}
 
 	@Test
@@ -129,9 +136,7 @@ public class SelectDatum_WeeklyTests {
 		// THEN
 		verify(con).prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-weekly-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-weekly-nodesAndSources-dates.sql");
 		verify(stmt).setArray(1, nodeIdsArray);
 		verify(stmt).setArray(2, sourceIdsArray);
 		verify(stmt).setTimestamp(3, Timestamp.from(filter.getStartDate()));
@@ -153,9 +158,7 @@ public class SelectDatum_WeeklyTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-woy-nodesAndSources-dates.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-woy-nodesAndSources-dates.sql");
 	}
 
 	@Test
@@ -178,9 +181,7 @@ public class SelectDatum_WeeklyTests {
 		// THEN
 		verify(con).prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-woy-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-woy-nodesAndSources-dates.sql");
 		verify(stmt).setArray(1, nodeIdsArray);
 		verify(stmt).setArray(2, sourceIdsArray);
 		verify(stmt).setTimestamp(3, Timestamp.from(filter.getStartDate()));

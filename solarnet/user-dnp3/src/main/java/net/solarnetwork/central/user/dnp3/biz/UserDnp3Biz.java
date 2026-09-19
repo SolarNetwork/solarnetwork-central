@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
@@ -80,10 +81,10 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching certificates; never {@literal null}
+	 * @return the matching certificates; never {@code null}
 	 */
 	FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
-			Long userId, CertificateFilter filter);
+			Long userId, @Nullable CertificateFilter filter);
 
 	/**
 	 * Update the enabled status of trusted issuer certificates, optionally
@@ -96,7 +97,7 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateTrustedIssuerCertificateEnabledStatus(Long userId, CertificateFilter filter,
+	void updateTrustedIssuerCertificateEnabledStatus(Long userId, @Nullable CertificateFilter filter,
 			boolean enabled);
 
 	/**
@@ -116,7 +117,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to create the configuration for
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 */
 	ServerConfiguration createServer(Long userId, ServerConfigurationInput input);
 
@@ -129,7 +130,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the server to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
 	 *         entity matching {@code userId} and {@code serverId} does not
@@ -147,7 +148,7 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+	void updateServerEnabledStatus(Long userId, @Nullable ServerFilter filter, boolean enabled);
 
 	/**
 	 * Delete an existing server configuration.
@@ -167,10 +168,10 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
-			ServerFilter filter);
+			@Nullable ServerFilter filter);
 
 	/**
 	 * Create or update a server auth configuration.
@@ -183,7 +184,7 @@ public interface UserDnp3Biz {
 	 *        the identifier of the configuration to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -202,7 +203,7 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerAuthEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+	void updateServerAuthEnabledStatus(Long userId, @Nullable ServerFilter filter, boolean enabled);
 
 	/**
 	 * Delete an existing server auth configuration.
@@ -224,10 +225,10 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> serverAuthsForUser(Long userId,
-			ServerFilter filter);
+			@Nullable ServerFilter filter);
 
 	/**
 	 * Create or update a server measurement configuration.
@@ -240,7 +241,7 @@ public interface UserDnp3Biz {
 	 *        the index of the configuration to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -259,7 +260,7 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerMeasurementEnabledStatus(Long userId, ServerDataPointFilter filter,
+	void updateServerMeasurementEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
 			boolean enabled);
 
 	/**
@@ -282,10 +283,10 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
-			Long userId, ServerDataPointFilter filter);
+			Long userId, @Nullable ServerDataPointFilter filter);
 
 	/**
 	 * Create or update a server control configuration.
@@ -298,7 +299,7 @@ public interface UserDnp3Biz {
 	 *        the index of the configuration to update the configuration index
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -317,7 +318,8 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerControlEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled);
+	void updateServerControlEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
+			boolean enabled);
 
 	/**
 	 * Delete a server control configuration.
@@ -339,10 +341,10 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
-			Long userId, ServerDataPointFilter filter);
+			Long userId, @Nullable ServerDataPointFilter filter);
 
 	/**
 	 * Get an example server configuration CSV.
@@ -392,8 +394,7 @@ public interface UserDnp3Biz {
 	 * @param csv
 	 *        the CSV resource to import
 	 * @param locale
-	 *        a locale for messages, or {@literal null} to use the runtime
-	 *        default
+	 *        a locale for messages, or {@code null} to use the runtime default
 	 * @return the generated server configurations
 	 * @throws IOException
 	 *         if an IO error occurs
@@ -415,14 +416,13 @@ public interface UserDnp3Biz {
 	 * @param out
 	 *        the output stream to write to
 	 * @param locale
-	 *        a locale for messages, or {@literal null} to use the runtime
-	 *        default
+	 *        a locale for messages, or {@code null} to use the runtime default
 	 * @throws IOException
 	 *         if an IO error occurs
 	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource,
 	 *      Locale)
 	 */
-	void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter, OutputStream out,
-			Locale locale) throws IOException;
+	void exportServerConfigurationsCsv(Long userId, @Nullable ServerDataPointFilter filter,
+			OutputStream out, Locale locale) throws IOException;
 
 }

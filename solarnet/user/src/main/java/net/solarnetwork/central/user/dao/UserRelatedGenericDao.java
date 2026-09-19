@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.GenericDao;
 
@@ -38,10 +39,10 @@ import net.solarnetwork.dao.GenericDao;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
-		extends GenericDao<T, PK> {
+public interface UserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable>
+		extends GenericDao<T, K> {
 
 	/**
 	 * Get a persisted domain object by its primary key and the owner's user ID.
@@ -50,8 +51,9 @@ public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK exten
 	 *        the primary key to retrieve
 	 * @param userId
 	 *        the ID of the owner
-	 * @return the domain object
+	 * @return the domain object, or {@code null} if not found
 	 */
-	T get(PK id, Long userId);
+	@Nullable
+	T get(K id, Long userId);
 
 }

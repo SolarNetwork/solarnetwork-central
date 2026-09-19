@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.pki.dogtag;
 
 import java.net.URL;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Details on a Dogtag CSR.
@@ -32,31 +33,38 @@ import java.net.URL;
  */
 public class DogtagCertRequestInfo {
 
-	private String requestStatus;
-	private URL requestURL;
-	private URL certURL;
+	private @Nullable String requestStatus;
+	private @Nullable URL requestURL;
+	private @Nullable URL certURL;
 
-	public String getRequestStatus() {
+	/**
+	 * Constructor.
+	 */
+	public DogtagCertRequestInfo() {
+		super();
+	}
+
+	public @Nullable String getRequestStatus() {
 		return requestStatus;
 	}
 
-	public void setRequestStatus(String requestStatus) {
+	public void setRequestStatus(@Nullable String requestStatus) {
 		this.requestStatus = requestStatus;
 	}
 
-	public URL getRequestURL() {
+	public @Nullable URL getRequestURL() {
 		return requestURL;
 	}
 
-	public void setRequestURL(URL requestURL) {
+	public void setRequestURL(@Nullable URL requestURL) {
 		this.requestURL = requestURL;
 	}
 
-	public URL getCertURL() {
+	public @Nullable URL getCertURL() {
 		return certURL;
 	}
 
-	public void setCertURL(URL certURL) {
+	public void setCertURL(@Nullable URL certURL) {
 		this.certURL = certURL;
 	}
 

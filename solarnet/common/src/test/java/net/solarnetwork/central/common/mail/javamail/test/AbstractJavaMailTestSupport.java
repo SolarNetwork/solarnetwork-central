@@ -25,11 +25,12 @@ package net.solarnetwork.central.common.mail.javamail.test;
 import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import net.solarnetwork.central.common.mail.javamail.ManagedJavaMailSender;
 import net.solarnetwork.util.ClassUtils;
 
@@ -44,13 +45,13 @@ public class AbstractJavaMailTestSupport {
 	protected ManagedJavaMailSender sender;
 	protected Properties testProps;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		Properties props = new Properties();
 		try (Reader in = new InputStreamReader(
 				new BufferedInputStream(
 						getClass().getClassLoader().getResourceAsStream("test-mail.properties")),
-				"UTF-8")) {
+				StandardCharsets.UTF_8)) {
 			props.load(in);
 		}
 		sender = new ManagedJavaMailSender();
@@ -61,8 +62,10 @@ public class AbstractJavaMailTestSupport {
 		ClassUtils.setBeanProperties(sender, p);
 
 		testProps = new Properties();
-		try (Reader in = new InputStreamReader(new BufferedInputStream(
-				getClass().getClassLoader().getResourceAsStream("test.properties")), "UTF-8")) {
+		try (Reader in = new InputStreamReader(
+				new BufferedInputStream(
+						getClass().getClassLoader().getResourceAsStream("test.properties")),
+				StandardCharsets.UTF_8)) {
 			testProps.load(in);
 		}
 	}

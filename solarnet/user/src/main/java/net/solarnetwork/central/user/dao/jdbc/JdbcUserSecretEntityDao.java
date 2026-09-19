@@ -24,9 +24,11 @@ package net.solarnetwork.central.user.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
@@ -57,7 +59,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserSecretEntityDao(JdbcOperations jdbcOps) {
 		super();
@@ -77,13 +79,13 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	@Override
 	public UserStringStringCompositePK create(Long userId, String topic, UserSecretEntity entity) {
 		final var sql = new UpsertUserSecretEntity(userId, topic, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserStringStringCompositePK(userId, entity.getTopic(), entity.getKey())
-				: null);
+		jdbcOps.update(sql);
+		return new UserStringStringCompositePK(userId, entity.getTopic(), entity.getKey());
 	}
 
 	@Override
-	public Collection<UserSecretEntity> findAll(Long userId, String topic, List<SortDescriptor> sorts) {
+	public Collection<UserSecretEntity> findAll(Long userId, String topic,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setTopic(requireNonNullArgument(topic, "topic"));
@@ -94,7 +96,8 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 
 	@Override
 	public FilterResults<UserSecretEntity, UserStringStringCompositePK> findFiltered(
-			UserSecretFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			UserSecretFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectUserSecretEntity(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserSecretEntityRowMapper.INSTANCE);
@@ -106,7 +109,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	}
 
 	@Override
-	public UserSecretEntity get(UserStringStringCompositePK id) {
+	public @Nullable UserSecretEntity get(UserStringStringCompositePK id) {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -118,7 +121,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	}
 
 	@Override
-	public Collection<UserSecretEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<UserSecretEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -128,7 +131,8 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	@Override
 	public void delete(UserSecretEntity entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+				nonnull(requireNonNullArgument(entity, "entity").getId(), "id"), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

@@ -40,6 +40,7 @@ CREATE TABLE solaruser.user_user (
 	email				citext NOT NULL,
 	password			CHARACTER VARYING(128) NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
+	lang 				CHARACTER VARYING(3) NOT NULL DEFAULT 'en',
 	loc_id				BIGINT,
 	jdata				jsonb,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
@@ -185,7 +186,7 @@ CREATE TABLE solaruser.user_auth_token (
 );
 
 /**
- * View of active tokens with associated user, token, and policy details.
+ * View of active tokens owned by enabled users, with associated user, token, and policy details.
  */
 CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
 	SELECT t.auth_token AS username,
@@ -197,7 +198,8 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
 		t.jpolicy
 	 FROM solaruser.user_auth_token t
 		 JOIN solaruser.user_user u ON u.id = t.user_id
-	WHERE t.status = 'Active'::solaruser.user_auth_token_status;
+	WHERE t.status = 'Active'::solaruser.user_auth_token_status
+		AND u.enabled = TRUE;
 
 /**
  * View of granted roles for tokens.
@@ -218,7 +220,8 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_role AS
  * View of all valid node IDs, as an array, for a given token.
  *
  * This will filter out any node IDs not present on the token policy `nodeIds` array.
- * Additionally, archived nodes are filtered out.
+ * Additionally, archived nodes are filtered out, and only active tokens owned by
+ * enabled users are included.
  *
  * Typical query is:
  *
@@ -233,7 +236,9 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_node_ids AS
 		array_agg(un.node_id) AS node_ids
 	FROM solaruser.user_auth_token t
 	JOIN solaruser.user_node un ON un.user_id = t.user_id
+	JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE un.archived = FALSE
+		AND u.enabled = TRUE
 		AND t.status = 'Active'::solaruser.user_auth_token_status
 		AND (
 			(t.jpolicy->'nodeIds') IS NULL
@@ -343,7 +348,7 @@ $$;
  * This function will validate the provided signature and parameters matches
  * the token secret associated with `token_id`, by re-computing the signature
  * value using a signing date matching any date between `req_date` and 6 days
- * earlier.
+ * earlier. Only active tokens owned by enabled users can be verified.
  *
  * @param token_id the security token to verify
  * @param req_date the request date
@@ -373,15 +378,17 @@ $$
 		) AS sign_data
 	)
 	SELECT
-		user_id,
-		token_type,
-		jpolicy
+		auth.user_id,
+		auth.token_type,
+		auth.jpolicy
 	FROM solaruser.user_auth_token auth
+	INNER JOIN solaruser.user_user u ON u.id = auth.user_id
 	INNER JOIN sign_dates sd ON TRUE
 	INNER JOIN canon_data cd ON TRUE
 	WHERE auth.auth_token = token_id
 		AND auth.status = 'Active'::solaruser.user_auth_token_status
-		AND COALESCE(to_timestamp((jpolicy->>'notAfter')::double precision / 1000), req_date) >= req_date
+		AND u.enabled = TRUE
+		AND COALESCE(to_timestamp((auth.jpolicy->>'notAfter')::double precision / 1000), req_date) >= req_date
 		AND solaruser.snws2_signature(
 				sign_data,
 				solaruser.snws2_signing_key(sd.sign_date, auth.auth_secret)
@@ -449,9 +456,9 @@ CREATE TABLE solaruser.user_node_cert (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
 	node_id			BIGINT NOT NULL,
-	status			CHAR(1) NOT NULL,
-	request_id		VARCHAR(32) NOT NULL,
-	keystore		bytea,
+	status			CHARACTER(1) NOT NULL,
+	request_id		CHARACTER VARYING(128) NOT NULL,
+	keystore		BYTEA,
 	CONSTRAINT user_node_cert_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_node_cert_user_node_fk FOREIGN KEY (user_id, node_id)
 		REFERENCES solaruser.user_node (user_id, node_id) MATCH SIMPLE
@@ -675,3 +682,39 @@ CREATE TABLE solaruser.user_secret (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/**
+ * View combining user ID with da_datm_meta and da_datm_alias, to ease querying.
+ */
+CREATE OR REPLACE VIEW solaruser.da_datm_meta_aliased AS
+SELECT un.user_id
+	, s.stream_id
+	, s.node_id
+	, s.source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, FALSE AS is_alias
+	, s.created
+	, s.updated
+FROM solardatm.da_datm_meta s
+INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
+UNION ALL
+SELECT un.user_id
+	, a.stream_id
+	, a.alias_node_id AS node_id
+	, a.alias_source_id AS source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, TRUE AS is_alias
+	, a.created
+	, a.modified AS updated
+FROM solardatm.da_datm_alias a
+INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
+INNER JOIN solaruser.user_node un ON un.node_id = a.node_id
+;

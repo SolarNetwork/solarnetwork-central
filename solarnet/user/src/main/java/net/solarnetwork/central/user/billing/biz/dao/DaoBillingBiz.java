@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.biz.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,7 +63,7 @@ public class DaoBillingBiz implements BillingBiz {
 	 * @param billingSystems
 	 *        the billing systems
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoBillingBiz(UserDao userDao, List<BillingSystem> billingSystems) {
 		super();
@@ -82,7 +83,7 @@ public class DaoBillingBiz implements BillingBiz {
 	 */
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public BillingSystem billingSystemForUser(Long userId) {
+	public @Nullable BillingSystem billingSystemForUser(Long userId) {
 		User user = userDao.get(userId);
 		if ( user != null ) {
 			Object systemKey = user.getInternalDataValue(BillingDataConstants.ACCOUNTING_DATA_PROP);
@@ -98,7 +99,7 @@ public class DaoBillingBiz implements BillingBiz {
 	}
 
 	@Override
-	public BillingSystem billingSystemForKey(String key) {
+	public @Nullable BillingSystem billingSystemForKey(String key) {
 		for ( BillingSystem bs : billingSystems ) {
 			if ( bs.supportsAccountingSystemKey(key) ) {
 				return bs;
@@ -110,7 +111,8 @@ public class DaoBillingBiz implements BillingBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		BillingSystem system = billingSystemForUser(filter.getUserId());
 		if ( system == null ) {
 			return new BasicFilterResults<>(null, 0L, 0L, 0);
@@ -120,7 +122,7 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+	public @Nullable Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
@@ -130,7 +132,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
+	public @Nullable Resource renderInvoice(Long userId, String invoiceId, MimeType outputType,
+			Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
@@ -140,7 +143,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale) {
+	public @Nullable Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options,
+			Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
@@ -150,8 +154,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
-			Locale locale) {
+	public @Nullable Resource previewInvoice(Long userId, InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;

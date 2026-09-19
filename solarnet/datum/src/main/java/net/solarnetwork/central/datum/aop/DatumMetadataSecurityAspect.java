@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -44,15 +46,15 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -212,7 +214,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 			for ( NodeSourcePK pk : result ) {
 				inputSourceIds.add(pk.getSourceId());
 			}
-			String[] resultSourceIds = enforcer.verifySourceIds(inputSourceIds.toArray(String[]::new));
+			String[] resultSourceIds = nonnull(
+					enforcer.verifySourceIds(inputSourceIds.toArray(String[]::new)), "Input source IDs");
 			Set<String> allowedSourceIdSet = new HashSet<>(Arrays.asList(resultSourceIds));
 			Set<NodeSourcePK> restricted = new LinkedHashSet<>(resultSourceIds.length);
 			for ( NodeSourcePK oneResult : result ) {
@@ -305,11 +308,11 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		Set<String> capitalized;
 		if ( locationMetadataAdminRoles.size() == 1 ) {
 			capitalized = Collections
-					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase());
+					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase(Locale.ENGLISH));
 		} else {
 			capitalized = new HashSet<>(locationMetadataAdminRoles.size());
 			for ( String role : locationMetadataAdminRoles ) {
-				capitalized.add(role.toUpperCase());
+				capitalized.add(role.toUpperCase(Locale.ENGLISH));
 			}
 		}
 		this.locationMetadataAdminRoles = capitalized;

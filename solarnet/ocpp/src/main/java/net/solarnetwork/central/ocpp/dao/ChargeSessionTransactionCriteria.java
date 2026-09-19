@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for charge session transaction related data.
  * 
@@ -35,19 +37,22 @@ public interface ChargeSessionTransactionCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available transaction ID from the
-	 * {@link #getTransactionIds()} array, or {@literal null} if not available.
+	 * {@link #getTransactionIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first transaction ID, or {@literal null} if not available
+	 * @return the first transaction ID, or {@code null} if not available
 	 */
-	String getTransactionId();
+	default @Nullable String getTransactionId() {
+		final var array = getTransactionIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of transaction IDs.
 	 * 
-	 * @return array of transaction IDs (may be {@literal null})
+	 * @return array of transaction IDs (may be {@code null})
 	 */
-	String[] getTransactionIds();
+	String @Nullable [] getTransactionIds();
 
 	/**
 	 * Test if this filter has any transaction criteria.

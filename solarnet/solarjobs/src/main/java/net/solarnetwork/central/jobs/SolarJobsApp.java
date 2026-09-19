@@ -41,17 +41,18 @@ import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
-import net.solarnetwork.central.user.event.config.SolarNetUserEventConfiguration;
-import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
-import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
-import net.solarnetwork.central.user.flux.config.SolarNetUserFluxConfiguration;
+import net.solarnetwork.central.user.datum.alert.config.SolarNetUserDatumAlertConfiguration;
+import net.solarnetwork.central.user.datum.event.config.SolarNetUserEventConfiguration;
+import net.solarnetwork.central.user.datum.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.datum.export.config.SolarNetUserExportConfiguration;
+import net.solarnetwork.central.user.datum.flux.config.SolarNetUserFluxConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
  * Main entry point for the SolarJobs application.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
@@ -61,6 +62,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumImportConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
+		SolarNetUserDatumAlertConfiguration.class,
 		SolarNetUserEventConfiguration.class,
 		SolarNetUserExpireConfiguration.class,
 		SolarNetUserExportConfiguration.class,
@@ -85,7 +87,7 @@ public class SolarJobsApp {
 	 * @param args
 	 *        command line arguments
 	 */
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		SpringApplication.run(SolarJobsApp.class, args);
 	}
 
@@ -98,7 +100,7 @@ public class SolarJobsApp {
 	 */
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
+		return _ -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
 	}
 
 }

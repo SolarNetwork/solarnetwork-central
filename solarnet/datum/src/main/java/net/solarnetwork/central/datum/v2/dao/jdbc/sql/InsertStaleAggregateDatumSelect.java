@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class InsertStaleAggregateDatumSelect implements PreparedStatementCreator, SqlProvider {
@@ -69,6 +69,7 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 		this.aggregation = aggregation(filter);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AggregationCriteria filter) {
 		Aggregation agg = Aggregation.Hour;
 		if ( filter.getAggregation() != null ) {
@@ -99,8 +100,43 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 	}
 
 	private void sqlSelect(StringBuilder buf) {
+		buf.append("(\n");
 		buf.append("SELECT ");
 		sqlColumns(buf);
+		buf.append("FROM s\n");
+		buf.append("INNER JOIN solardatm.find_datm_");
+		buf.append(switch (aggregation) {
+			case Day -> "days";
+			case Month -> "months";
+			default -> "hours";
+		});
+		buf.append("(s.stream_id, ");
+		if ( filter.hasLocalDateRange() ) {
+			buf.append("? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
+		} else {
+			buf.append("?, ?");
+		}
+		buf.append(") datum ON TRUE\n");
+		buf.append(")\nUNION\n(\nSELECT ");
+		sqlColumns(buf);
+		buf.append("FROM s\n");
+		buf.append("INNER JOIN solardatm.agg_datm_");
+		buf.append(switch (aggregation) {
+			case Day -> "daily";
+			case Month -> "monthly";
+			default -> "hourly";
+		});
+		buf.append(" datum ON datum.stream_id = s.stream_id\n");
+		buf.append("WHERE");
+
+		StringBuilder tmp = new StringBuilder();
+		if ( filter.hasLocalDateRange() ) {
+			DatumSqlUtils.whereLocalDateRange(filter, aggregation, "AT TIME ZONE s.time_zone", tmp);
+		} else {
+			DatumSqlUtils.whereDateRange(filter, aggregation, tmp);
+		}
+		buf.append(tmp.substring(4));
+		buf.append(")\n");
 	}
 
 	private void sqlColumns(StringBuilder buf) {
@@ -109,35 +145,9 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 		buf.append("'").append(aggregation.getKey() + "' AS agg_kind\n");
 	}
 
-	private void sqlFrom(StringBuilder buf) {
-		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.find_datm_");
-		switch (aggregation) {
-			case Day:
-				buf.append("days");
-				break;
-
-			case Month:
-				buf.append("months");
-				break;
-
-			default:
-				buf.append("hours");
-		}
-		buf.append("(s.stream_id, ");
-		if ( filter.hasLocalDateRange() ) {
-			buf.append("? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
-		} else {
-			buf.append("?, ?");
-		}
-		buf.append(") datum ON TRUE\n");
-	}
-
 	private void sqlCore(StringBuilder buf) {
 		sqlCte(buf);
 		sqlSelect(buf);
-		sqlFrom(buf);
-		buf.append("ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING");
 	}
 
 	@Override
@@ -145,13 +155,20 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 		StringBuilder buf = new StringBuilder();
 		sqlInsert(buf);
 		sqlCore(buf);
+		buf.append("ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING");
 		return buf.toString();
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
 		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
+		} else {
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
+		}
+		// and again for date range
+		if ( filter.hasLocalDateRange() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}

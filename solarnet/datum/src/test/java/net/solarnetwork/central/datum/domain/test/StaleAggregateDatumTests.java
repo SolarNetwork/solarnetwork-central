@@ -1,21 +1,21 @@
 /* ==================================================================
  * StaleAggregateDatumTests.java - 11/04/2019 10:24:30 am
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,22 +24,23 @@ package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link StaleAggregateDatum} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -55,18 +56,15 @@ public class StaleAggregateDatumTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private StaleAggregateDatum getTestInstance() {
-		StaleAggregateDatum datum = new StaleAggregateDatum();
+		StaleAggregateDatum datum = new StaleAggregateDatum(TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID,
+				TEST_KIND);
 		datum.setCreated(Instant.now());
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setStartDate(TEST_TIMESTAMP);
-		datum.setSourceId(TEST_SOURCE_ID);
-		datum.setKind(TEST_KIND);
 		return datum;
 	}
 
@@ -76,8 +74,7 @@ public class StaleAggregateDatumTests {
 		String json = objectMapper.writeValueAsString(stale);
 		assertThat("JSON value", json,
 				equalTo("{\"nodeId\":-1,\"sourceId\":\"test.source\",\"startDate\":\""
-						+ TEST_TIMESTAMP_STRING + "\",\"kind\":\"test.kind\",\"created\":\""
-						+ DateUtils.ISO_DATE_TIME_ALT_UTC.format(stale.getCreated()) + "\"}"));
+						+ TEST_TIMESTAMP_STRING + "\",\"kind\":\"test.kind\"}"));
 
 	}
 
@@ -94,7 +91,7 @@ public class StaleAggregateDatumTests {
 		assertThat("Source ID", datum.getSourceId(), equalTo(TEST_SOURCE_ID));
 		assertThat("Start date", datum.getStartDate(), equalTo(TEST_TIMESTAMP));
 		assertThat("Kind", datum.getKind(), equalTo(TEST_KIND));
-		assertThat("Created", datum.getCreated(), equalTo(now));
+		assertThat("Created", datum.getCreated(), nullValue());
 	}
 
 }

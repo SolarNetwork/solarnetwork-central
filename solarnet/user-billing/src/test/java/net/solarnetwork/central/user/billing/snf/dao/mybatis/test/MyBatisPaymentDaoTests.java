@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisPaymentDaoTests.java - 29/07/2020 7:30:11 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,10 +23,11 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static java.lang.String.format;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -39,9 +40,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
-import net.solarnetwork.central.dao.UserUuidPK;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisPaymentDao;
@@ -54,7 +55,7 @@ import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisPaymentDao} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -68,7 +69,7 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 	private Account account;
 	private Payment last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		addressDao = new MyBatisAddressDao();
 		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -87,12 +88,11 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
-		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		entity.setAmount(new BigDecimal("12345.67"));
-		entity.setCurrencyCode(account.getCurrencyCode());
-		entity.setExternalKey(randomUUID().toString());
-		entity.setPaymentType(PaymentType.Payment);
-		entity.setReference(randomUUID().toString());
+		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+				MS_CLOCK.instant(), PaymentType.Payment, new BigDecimal("12345.67"),
+				account.getCurrencyCode());
+		entity.setExternalKey(randomString());
+		entity.setReference(randomString());
 
 		UserUuidPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
@@ -117,12 +117,11 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 		LocalDate date = LocalDate.of(2020, 1, 5);
 		for ( int i = 0; i < 5; i++ ) {
 			Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
-					date.atStartOfDay(address.getTimeZone()).toInstant());
-			entity.setAmount(new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP));
-			entity.setCurrencyCode(account.getCurrencyCode());
-			entity.setExternalKey(randomUUID().toString());
-			entity.setPaymentType(PaymentType.Payment);
-			entity.setReference(randomUUID().toString());
+					date.atStartOfDay(address.getTimeZone()).toInstant(), PaymentType.Payment,
+					new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP),
+					account.getCurrencyCode());
+			entity.setExternalKey(randomString());
+			entity.setReference(randomString());
 			dao.save(entity);
 			entities.add(entity);
 			date = date.plusMonths(1);

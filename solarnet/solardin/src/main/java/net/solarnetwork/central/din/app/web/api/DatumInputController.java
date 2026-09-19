@@ -29,8 +29,10 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -69,7 +71,7 @@ public class DatumInputController {
 	 * @param maxDatumInputLength
 	 *        the maximum datum input length
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumInputController(DatumInputEndpointBiz inputBiz,
 			@Value("${app.din.max-datum-input-length}") long maxDatumInputLength) {
@@ -93,19 +95,18 @@ public class DatumInputController {
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	@RequestMapping(value = "", method = RequestMethod.POST, consumes = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-	public ResponseEntity<Result<Collection<DatumId>>> postDatum(
-			@PathVariable("endpointId") UUID endpointId,
+	@RequestMapping(value = "", method = RequestMethod.POST,
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	public ResponseEntity<Result<Collection<DatumId>>> postDatum(@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
-			InputStream in) throws IOException {
+			@RequestHeader(value = "Content-Encoding", required = false) @Nullable String encoding,
+			WebRequest req, InputStream in) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 
@@ -124,7 +125,7 @@ public class DatumInputController {
 					params);
 			return ResponseEntity.ok(result != null ? success(result) : null);
 		} catch ( IOException e ) {
-			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
 					.body(Result.error("DIN.0100", e.getMessage()));
 		}
 	}

@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.config;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -43,7 +44,6 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
@@ -53,12 +53,13 @@ import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthen
 import net.solarnetwork.central.oscp.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Web security configuration.
  *
  * @author matt
- * @version 1.4
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -101,8 +102,7 @@ public class WebSecurityConfig {
 			service.setAuthoritiesByUsernameQuery(
 					JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
 
-			DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-			provider.setUserDetailsService(service);
+			DaoAuthenticationProvider provider = new DaoAuthenticationProvider(service);
 			provider.setPasswordEncoder(passwordEncoder);
 			return provider;
 		}
@@ -165,6 +165,16 @@ public class WebSecurityConfig {
 			OscpTokenAuthorizationHeaderAuthenticationFilter filter = new OscpTokenAuthorizationHeaderAuthenticationFilter();
 			filter.setAuthenticationManager(authenticationManager());
 			return filter;
+		}
+
+		// the filter is only meant to run in the security filter chain, so stop Spring Boot from
+		// also registering the bean with the servlet container, which would apply it to every request
+		@Bean
+		public FilterRegistrationBean<OscpTokenAuthorizationHeaderAuthenticationFilter> tokenAuthenticationFilterRegistration(
+				OscpTokenAuthorizationHeaderAuthenticationFilter filter) {
+			final var reg = new FilterRegistrationBean<>(filter);
+			reg.setEnabled(false);
+			return reg;
 		}
 
 		@Bean

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -30,11 +31,11 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisChargePointSettingsDao;
@@ -62,7 +63,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	private Long nodeId;
 	private ChargePointSettings last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
 		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -186,13 +187,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 
 		Collection<ChargePointSettings> results = dao.getAll(null);
 		List<ChargePointSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<ChargePointSettings>() {
-
-			@Override
-			public int compare(ChargePointSettings o1, ChargePointSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 
@@ -222,13 +217,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 
 		Collection<ChargePointSettings> results = dao.findAllForOwner(userId);
 		List<ChargePointSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<ChargePointSettings>() {
-
-			@Override
-			public int compare(ChargePointSettings o1, ChargePointSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 
@@ -274,7 +263,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		ChargePointSettings entity = dao.resolveSettings(userId, last.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 
-		ChargePointSettings expected = new ChargePointSettings();
+		ChargePointSettings expected = new ChargePointSettings(userId);
 		expected.setPublishToSolarIn(last.isPublishToSolarIn());
 		expected.setPublishToSolarFlux(last.isPublishToSolarFlux());
 		expected.setSourceIdTemplate(us.getSourceIdTemplate());
@@ -306,10 +295,11 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("User ID", entity.getUserId(), equalTo(userId));
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void findByUserAndId_noMatch() {
 		insert();
-		dao.get(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.get(userId, last.getId() - 1));
 	}
 
 	@Test
@@ -319,10 +309,11 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void deleteByUserAndId_noMatch() {
 		insert();
-		dao.delete(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.delete(userId, last.getId() - 1));
 	}
 
 }

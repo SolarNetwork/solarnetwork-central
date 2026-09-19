@@ -29,6 +29,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.security.SecurityToken;
@@ -82,13 +83,13 @@ public class MyBatisUserAuthTokenDao extends
 
 	@Override
 	public FilterResults<UserAuthToken, String> findFiltered(UserAuthTokenFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		return doFindFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
-	public Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(String tokenId,
+	public @Nullable Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(String tokenId,
 			Instant signingDate) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("id", tokenId);
@@ -108,7 +109,7 @@ public class MyBatisUserAuthTokenDao extends
 	}
 
 	@Override
-	public SecurityToken securityTokenForId(String tokenId) {
+	public @Nullable SecurityToken securityTokenForId(String tokenId) {
 		return selectFirst(getQueryForId(), tokenId);
 	}
 

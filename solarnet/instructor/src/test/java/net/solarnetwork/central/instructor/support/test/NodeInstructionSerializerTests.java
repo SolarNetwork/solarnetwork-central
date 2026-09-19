@@ -34,19 +34,19 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link NodeInstructionSerializer} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class NodeInstructionSerializerTests {
 
@@ -58,11 +58,9 @@ public class NodeInstructionSerializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(NodeInstruction.class, NodeInstructionSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(mod).build();
 	}
 
 	@BeforeEach
@@ -81,9 +79,10 @@ public class NodeInstructionSerializerTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		String json = mapper.writeValueAsString(instr);
 
@@ -96,8 +95,8 @@ public class NodeInstructionSerializerTests {
 				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
 				+ ",\"parameters\":["
-					 +"{\"name\":\"a\",\"value\":\"" + instr.getParameters().get(0).getValue() +"\"}"
-					+",{\"name\":\"b\",\"value\":\"" + instr.getParameters().get(1).getValue() +"\"}"
+					 +"{\"name\":\"a\",\"value\":\"" + instr.getInstruction().getParameters().get(0).getValue() +"\"}"
+					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
 		assertThat("JSON", json, is(equalTo(expectedJson)));
@@ -114,8 +113,8 @@ public class NodeInstructionSerializerTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setResultParametersJson("{\"message\":\"Hello\"}");
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setResultParametersJson("{\"message\":\"Hello\"}");
 		String json = mapper.writeValueAsString(instr);
 
 		// THEN
@@ -126,7 +125,7 @@ public class NodeInstructionSerializerTests {
 				+ ",\"topic\":\"" + topic + "\""
 				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
-				+ ",\"resultParameters\":" +instr.getResultParametersJson()
+				+ ",\"resultParameters\":" +instr.getInstruction().getResultParametersJson()
 				+ "}";
 		// @formatter:on
 		assertThat("JSON", json, is(equalTo(expectedJson)));
@@ -143,10 +142,11 @@ public class NodeInstructionSerializerTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setStatusDate(TEST_DATE);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setStatusDate(TEST_DATE);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		String json = mapper.writeValueAsString(instr);
 
@@ -160,8 +160,8 @@ public class NodeInstructionSerializerTests {
 				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
 				+ ",\"statusDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"parameters\":["
-					 +"{\"name\":\"a\",\"value\":\"" + instr.getParameters().get(0).getValue() +"\"}"
-					+",{\"name\":\"b\",\"value\":\"" + instr.getParameters().get(1).getValue() +"\"}"
+					 +"{\"name\":\"a\",\"value\":\"" + instr.getInstruction().getParameters().get(0).getValue() +"\"}"
+					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
 		assertThat("JSON", json, is(equalTo(expectedJson)));
@@ -178,10 +178,11 @@ public class NodeInstructionSerializerTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setExpirationDate(TEST_DATE);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setExpirationDate(TEST_DATE);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		String json = mapper.writeValueAsString(instr);
 
@@ -195,8 +196,8 @@ public class NodeInstructionSerializerTests {
 				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
 				+ ",\"expirationDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"parameters\":["
-					 +"{\"name\":\"a\",\"value\":\"" + instr.getParameters().get(0).getValue() +"\"}"
-					+",{\"name\":\"b\",\"value\":\"" + instr.getParameters().get(1).getValue() +"\"}"
+					 +"{\"name\":\"a\",\"value\":\"" + instr.getInstruction().getParameters().get(0).getValue() +"\"}"
+					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
 		assertThat("JSON", json, is(equalTo(expectedJson)));
