@@ -382,7 +382,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				items.add(item);
 			}
 			if ( usage.getApiData().compareTo(BigInteger.ZERO) > 0 ) {
-				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, apiDataKey,
+				SnfInvoiceItem item = newItem(invoiceId, Usage, apiDataKey,
 						new BigDecimal(usage.getApiData()), usage.getApiDataCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, API_DATA_KEY));
 				if ( !dryRun ) {

@@ -63,7 +63,7 @@ public class NodeUsageCost implements Serializable {
 	 * Constructor.
 	 */
 	public NodeUsageCost() {
-		this(ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO);
+		this(ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO);
 	}
 
 	/**
@@ -763,11 +763,8 @@ public class NodeUsageCost implements Serializable {
 	 *        the cost to set
 	 * @since 1.7
 	 */
-	public final void setApiDataCost(BigDecimal apiDataCost) {
-		if ( apiDataCost == null ) {
-			apiDataCost = BigDecimal.ZERO;
-		}
-		this.apiDataCost = apiDataCost;
+	public final void setApiDataCost(@Nullable BigDecimal apiDataCost) {
+		this.apiDataCost = (apiDataCost != null ? apiDataCost : ZERO);
 	}
 
 }

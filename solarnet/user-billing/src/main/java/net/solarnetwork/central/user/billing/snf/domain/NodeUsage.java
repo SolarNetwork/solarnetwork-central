@@ -94,7 +94,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger @Nullable [] dnp3DataPointsTiers;
 	private BigInteger @Nullable [] oauthClientCredentialsTiers;
 	private BigInteger @Nullable [] cloudIntegrationsDataTiers;
-	private BigInteger[] apiDataTiers;
+	private BigInteger @Nullable [] apiDataTiers;
 	private NodeUsageCost @Nullable [] costsTiers;
 
 	/**
@@ -1870,7 +1870,7 @@ public class NodeUsage extends BasicLongEntity
 	 * @return the count
 	 * @since 2.8
 	 */
-	public BigInteger getApiData() {
+	public final BigInteger getApiData() {
 		return apiData;
 	}
 
@@ -1882,7 +1882,7 @@ public class NodeUsage extends BasicLongEntity
 	 *        stored
 	 * @since 2.8
 	 */
-	public void setApiData(BigInteger apiData) {
+	public final void setApiData(BigInteger apiData) {
 		if ( apiData == null ) {
 			apiData = BigInteger.ZERO;
 		}
@@ -1895,7 +1895,7 @@ public class NodeUsage extends BasicLongEntity
 	 * @return the cost
 	 * @since 2.8
 	 */
-	public BigDecimal getApiDataCost() {
+	public final BigDecimal getApiDataCost() {
 		return costs.getApiDataCost();
 	}
 
@@ -1906,7 +1906,7 @@ public class NodeUsage extends BasicLongEntity
 	 *        the cost to set
 	 * @since 2.8
 	 */
-	public void setApiDataCost(BigDecimal apiDataCost) {
+	public final void setApiDataCost(BigDecimal apiDataCost) {
 		costs.setApiDataCost(apiDataCost);
 	}
 
@@ -1917,7 +1917,7 @@ public class NodeUsage extends BasicLongEntity
 	 * @since 2.8
 	 */
 	@JsonIgnore
-	public List<NamedCost> getApiDataTiersCostBreakdown() {
+	public final List<NamedCost> getApiDataTiersCostBreakdown() {
 		return tiersCostBreakdown(apiDataTiers, costsTiers, NodeUsageCost::getApiDataCost);
 	}
 
@@ -1927,7 +1927,7 @@ public class NodeUsage extends BasicLongEntity
 	 * @return the counts
 	 * @since 2.8
 	 */
-	public BigInteger[] getApiDataTiers() {
+	public final BigInteger @Nullable [] getApiDataTiers() {
 		return apiDataTiers;
 	}
 
@@ -1938,7 +1938,7 @@ public class NodeUsage extends BasicLongEntity
 	 *        the counts to set
 	 * @since 2.8
 	 */
-	public void setApiDataTiers(BigInteger[] apiDataTiers) {
+	public final void setApiDataTiers(BigInteger @Nullable [] apiDataTiers) {
 		this.apiDataTiers = apiDataTiers;
 	}
 
@@ -1949,7 +1949,7 @@ public class NodeUsage extends BasicLongEntity
 	 *        the counts to set
 	 * @since 2.8
 	 */
-	public void setApiDataTiersNumeric(BigDecimal[] apiDataTiers) {
+	public void setApiDataTiersNumeric(BigDecimal @Nullable [] apiDataTiers) {
 		this.apiDataTiers = decimalsToIntegers(apiDataTiers);
 	}
 
@@ -1959,7 +1959,7 @@ public class NodeUsage extends BasicLongEntity
 	 * @return the cost
 	 * @since 2.8
 	 */
-	public BigDecimal[] getApiDataCostTiers() {
+	public final BigDecimal @Nullable [] getApiDataCostTiers() {
 		return getTierCostValues(costsTiers, NodeUsageCost::getApiDataCost);
 	}
 
@@ -1970,8 +1970,11 @@ public class NodeUsage extends BasicLongEntity
 	 *        the costs to set
 	 * @since 2.8
 	 */
-	public void setApiDataCostTiers(BigDecimal[] apiDataCostTiers) {
+	public final void setApiDataCostTiers(BigDecimal @Nullable [] apiDataCostTiers) {
 		prepCostsTiers(apiDataCostTiers);
+		if ( costsTiers == null ) {
+			return;
+		}
 		for ( int i = 0; i < costsTiers.length; i++ ) {
 			BigDecimal val = (apiDataCostTiers != null && i < apiDataCostTiers.length
 					? apiDataCostTiers[i]
