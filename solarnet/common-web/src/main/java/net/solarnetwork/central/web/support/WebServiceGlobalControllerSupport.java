@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.apache.catalina.connector.ClientAbortException;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -177,8 +178,10 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Result<?> handleTransientDataAccessException(TransientDataAccessException e,
 			WebRequest request, Locale locale) {
-		GLOBAL_WEB_LOG.warn("TransientDataAccessException in request {}; user [{}]: {}",
-				requestDescription(request), userPrincipalName(request), e.toString());
+		final var exMsg = e.toString();
+		final var level = (exMsg.contains("conflict with recovery") ? Level.DEBUG : Level.WARN);
+		GLOBAL_WEB_LOG.atLevel(level).log("TransientDataAccessException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), exMsg);
 		String msg;
 		String msgKey;
 		String code;
@@ -203,7 +206,7 @@ public class WebServiceGlobalControllerSupport implements ResponseBodyAdvice<Obj
 			msgKey = "error.dao.concurrencyFailure";
 			code = "DAO.00205";
 		} else {
-			msg = "Data integrity violation";
+			msg = "Temporary resource capacity constraint";
 			msgKey = "error.dao.transientDataAccess";
 			code = "DAO.00200";
 		}

@@ -473,7 +473,9 @@ public final class WebUtils {
 		if ( !response.isCommitted() ) {
 			throw e;
 		}
-		final var level = isClientAbortException(e) ? Level.DEBUG : Level.ERROR;
+		final var level = isClientAbortException(e) || e instanceof TransientDataAccessException
+				? Level.DEBUG
+				: Level.ERROR;
 		if ( GLOBAL_WEB_LOG.isEnabledForLevel(level) ) {
 			GLOBAL_WEB_LOG.atLevel(level).log(
 					"{} in request {}; user [{}]; response committed so error can not be passed to client: {}",

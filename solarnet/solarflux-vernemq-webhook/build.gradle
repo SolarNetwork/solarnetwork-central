@@ -103,7 +103,7 @@ graalvmNative {
         }
 
 		if (allArgs.isEmpty()) {
-			buildArgs.addAll(['--enable-native-access=ALL-UNNAMED', '-O3', '-R:MaxHeapSize=128m', '-R:MinHeapSize=128m'])
+			buildArgs.addAll(['--enable-native-access=ALL-UNNAMED', '-O3', '-R:MaxHeapSize=160m', '-R:MinHeapSize=160m'])
 		} else {
 	        buildArgs.addAll(allArgs)
 	    }
