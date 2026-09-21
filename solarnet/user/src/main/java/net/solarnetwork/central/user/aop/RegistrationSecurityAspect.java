@@ -29,13 +29,14 @@ import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Security enforcing AOP aspect for {@link RegistrationBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -69,6 +70,17 @@ public class RegistrationSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match updating a user.
+	 *
+	 * @param user
+	 *        the user to update
+	 * @since 1.1
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.biz.RegistrationBiz.updateUser(..)) && args(user)")
+	public void updateUser(User user) {
+	}
+
+	/**
 	 * Enforce an unrestricted policy.
 	 */
 	@Before(value = "createNodeManually()")
@@ -86,6 +98,18 @@ public class RegistrationSecurityAspect extends AuthorizationSupport {
 		if ( nodeId != null ) {
 			requireNodeWriteAccess(nodeId);
 		}
+	}
+
+	/**
+	 * Require write access to the user being updated.
+	 *
+	 * @param user
+	 *        the user to update
+	 * @since 1.1
+	 */
+	@Before(value = "updateUser(user)", argNames = "user")
+	public void updateUserAccessCheck(User user) {
+		requireUserWriteAccess(user != null ? user.getId() : null);
 	}
 
 }
