@@ -57,8 +57,7 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserAlertSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
-			UserAlertDao userAlertDao) {
+	public UserAlertSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao, UserAlertDao userAlertDao) {
 		super(nodeOwnershipDao);
 		this.userAlertDao = requireNonNullArgument(userAlertDao, "userAlertDao");
 	}

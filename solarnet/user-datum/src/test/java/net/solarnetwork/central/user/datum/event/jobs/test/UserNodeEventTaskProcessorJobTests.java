@@ -120,8 +120,7 @@ public class UserNodeEventTaskProcessorJobTests {
 
 	public static CacheManager createCacheManager() {
 		try {
-			File path = Files
-					.createTempDirectory("net.solarnetwork.central.user.datum.event.jobs.test")
+			File path = Files.createTempDirectory("net.solarnetwork.central.user.datum.event.jobs.test")
 					.toFile();
 			path.deleteOnExit();
 			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching

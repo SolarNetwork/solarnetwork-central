@@ -183,8 +183,7 @@ public class RegistrationSecurityAspect extends AuthorizationSupport {
 	 *        the confirmation ID
 	 * @since 1.1
 	 */
-	@Before(value = "cancelNodeAssociation(userNodeConfirmationId)",
-			argNames = "userNodeConfirmationId")
+	@Before(value = "cancelNodeAssociation(userNodeConfirmationId)", argNames = "userNodeConfirmationId")
 	public void cancelNodeAssociationAccessCheck(Long userNodeConfirmationId) {
 		requireUserWriteAccess(requireConfirmation(userNodeConfirmationId).getUserId());
 	}

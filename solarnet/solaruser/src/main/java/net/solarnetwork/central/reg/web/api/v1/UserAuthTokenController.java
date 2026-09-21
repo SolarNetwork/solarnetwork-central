@@ -113,8 +113,7 @@ public class UserAuthTokenController {
 	 */
 	@RequestMapping(value = "/generate/{type}", method = RequestMethod.POST)
 	public Result<GeneratedUserAuthToken> generateToken(Principal principal,
-			@PathVariable SecurityTokenType type,
-			@RequestBody(required = false) SecurityPolicy policy) {
+			@PathVariable SecurityTokenType type, @RequestBody(required = false) SecurityPolicy policy) {
 		final Long actorUserId = getActorUserId(principal);
 		UserAuthToken token = userBiz.generateUserAuthToken(actorUserId, type, policy);
 		return success(new GeneratedUserAuthToken(token));

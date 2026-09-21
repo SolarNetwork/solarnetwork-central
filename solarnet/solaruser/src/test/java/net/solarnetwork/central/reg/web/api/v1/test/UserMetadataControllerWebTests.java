@@ -53,8 +53,7 @@ import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
- * Web API level integration tests for the {@link UserMetadataController}
- * class.
+ * Web API level integration tests for the {@link UserMetadataController} class.
  *
  * @author matt
  * @version 1.0
@@ -126,8 +125,7 @@ public class UserMetadataControllerWebTests extends AbstractJUnit5CentralTransac
 	@Test
 	public void addMetadata() throws Exception {
 		// WHEN
-		performSigned(HttpMethod.POST, META_PATH + userId, REQUEST_META_JSON)
-				.andExpect(status().isOk());
+		performSigned(HttpMethod.POST, META_PATH + userId, REQUEST_META_JSON).andExpect(status().isOk());
 
 		// THEN
 		// @formatter:off
@@ -163,8 +161,7 @@ public class UserMetadataControllerWebTests extends AbstractJUnit5CentralTransac
 		insertUserMetadata(userId, OTHER_USER_META_JSON);
 
 		// WHEN
-		performSigned(HttpMethod.PUT, META_PATH + userId, REQUEST_META_JSON)
-				.andExpect(status().isOk());
+		performSigned(HttpMethod.PUT, META_PATH + userId, REQUEST_META_JSON).andExpect(status().isOk());
 
 		// THEN
 		// @formatter:off

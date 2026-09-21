@@ -97,8 +97,8 @@ public class MyNodesControllerWebTests {
 	}
 
 	private Long nodeOwnerId(Long nodeId) {
-		return jdbcOperations.queryForObject(
-				"SELECT user_id FROM solaruser.user_node WHERE node_id = ?", Long.class, nodeId);
+		return jdbcOperations.queryForObject("SELECT user_id FROM solaruser.user_node WHERE node_id = ?",
+				Long.class, nodeId);
 	}
 
 	private List<Map<String, Object>> nodeTransfers(Long nodeId) {

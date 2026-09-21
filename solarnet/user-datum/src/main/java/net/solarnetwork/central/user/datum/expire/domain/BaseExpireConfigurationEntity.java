@@ -58,6 +58,7 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 
 	/**
 	 * Constructor.
+	 * 
 	 * @param id
 	 *        the primary key
 	 * @param userId

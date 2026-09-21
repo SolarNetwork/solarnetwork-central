@@ -100,8 +100,8 @@ public class NodeDataControllerWebTests {
 	}
 
 	private static ObjectDatumStreamMetadata nodeStream(Long nodeId, String sourceId) {
-		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
-				nodeId, sourceId, new String[] { "watts" }, null, null);
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC", ObjectDatumKind.Node, nodeId,
+				sourceId, new String[] { "watts" }, null, null);
 	}
 
 	@WithMockSecurityUser
