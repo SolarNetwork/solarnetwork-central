@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'java-test-fixtures'
     id 'eclipse'
 	id 'org.springframework.boot' version '4.1.1' apply false
 }
@@ -99,6 +100,12 @@ dependencies {
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	
+	// Test fixtures (shared test support)
+	testFixturesApi project(':solarnet-common-test')
+	testFixturesImplementation 'org.aspectj:aspectjweaver'
+	testFixturesImplementation 'org.springframework:spring-aop'
+	testFixturesImplementation 'org.springframework.security:spring-security-core'
+
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "io.moquette:moquette-broker:${moquetteVersion}"

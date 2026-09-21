@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.test;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import java.time.Clock;
 import java.time.InstantSource;
 import java.time.ZoneOffset;
@@ -34,12 +36,15 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.domain.SecurityPolicy;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public final class CommonDbTestUtils {
 
@@ -220,7 +225,7 @@ public final class CommonDbTestUtils {
 	 * @since 1.2
 	 */
 	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
-			String tokenSecret, Long userId, Enum<?> status, Enum<?> type, String policy) {
+			String tokenSecret, Long userId, Enum<?> status, Enum<?> type, @Nullable String policy) {
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, status.name(), type.name(),
 				policy);
 	}
@@ -246,7 +251,7 @@ public final class CommonDbTestUtils {
 	 *        the policy
 	 */
 	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
-			String tokenSecret, Long userId, String status, String type, String policy) {
+			String tokenSecret, Long userId, String status, String type, @Nullable String policy) {
 		jdbcTemplate.update(
 				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
 						+ " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::jsonb)",
@@ -395,6 +400,173 @@ public final class CommonDbTestUtils {
 	 */
 	public static void setUserEnabled(JdbcOperations jdbcOps, Long userId, boolean enabled) {
 		jdbcOps.update("UPDATE solaruser.user_user SET enabled = ? WHERE id = ?", enabled, userId);
+	}
+
+	/**
+	 * Insert a security token with an optional security policy.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the owner user ID
+	 * @param status
+	 *        the status, i.e.
+	 *        {@code net.solarnetwork.central.security.SecurityTokenStatus.name()}
+	 * @param type
+	 *        the type, i.e.
+	 *        {@code  net.solarnetwork.central.security.SecurityTokenType.name()}
+	 * @param policy
+	 *        the optional policy
+	 * @since 1.5
+	 */
+	public static void insertSecurityTokenWithPolicy(JdbcOperations jdbcOps, String tokenId,
+			String tokenSecret, Long userId, String status, String type,
+			@Nullable SecurityPolicy policy) {
+		insertSecurityToken(jdbcOps, tokenId, tokenSecret, userId, status, type,
+				policy != null ? JsonUtils.getJSONString(policy) : null);
+	}
+
+	/**
+	 * Insert node metadata.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param nodeId
+	 *        the node ID
+	 * @param meta
+	 *        the metadata
+	 * @since 1.5
+	 */
+	public static void insertNodeMetadata(JdbcOperations jdbcOps, Long nodeId,
+			GeneralDatumMetadata meta) {
+		jdbcOps.update("""
+				INSERT INTO solarnet.sn_node_meta (node_id, created, updated, jdata)
+				VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?::jsonb)
+				""", nodeId, requireNonNull(JsonUtils.getJSONString(meta), "meta"));
+	}
+
+	/**
+	 * Insert user metadata.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @param meta
+	 *        the metadata
+	 * @since 1.5
+	 */
+	public static void insertUserMetadata(JdbcOperations jdbcOps, Long userId,
+			GeneralDatumMetadata meta) {
+		jdbcOps.update("""
+				INSERT INTO solaruser.user_meta (user_id, created, updated, jdata)
+				VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?::jsonb)
+				""", userId, requireNonNull(JsonUtils.getJSONString(meta), "meta"));
+	}
+
+	/**
+	 * Insert a node instruction.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param nodeId
+	 *        the node ID
+	 * @param topic
+	 *        the instruction topic
+	 * @param state
+	 *        the delivery state, i.e.
+	 *        {@code net.solarnetwork.domain.InstructionStatus.InstructionState.name()}
+	 * @return the instruction ID
+	 * @since 1.5
+	 */
+	public static Long insertNodeInstruction(JdbcOperations jdbcOps, Long nodeId, String topic,
+			String state) {
+		return requireNonNull(jdbcOps.queryForObject("""
+				INSERT INTO solarnet.sn_node_instruction (node_id, topic, instr_date, deliver_state)
+				VALUES (?, ?, CURRENT_TIMESTAMP, ?::solarnet.instruction_delivery_state)
+				RETURNING id
+				""", Long.class, nodeId, topic, state));
+	}
+
+	/**
+	 * Insert an active node stale data user alert.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the optional node ID
+	 * @return the alert ID
+	 * @since 1.5
+	 */
+	public static Long insertUserAlert(JdbcOperations jdbcOps, Long userId, @Nullable Long nodeId) {
+		return requireNonNull(jdbcOps.queryForObject("""
+				INSERT INTO solaruser.user_alert (user_id, node_id, alert_type, status, alert_opt)
+				VALUES (?, ?, 'NodeStaleData'::solaruser.user_alert_type
+					, 'Active'::solaruser.user_alert_status, '{"age":1800}'::json)
+				RETURNING id
+				""", Long.class, userId, nodeId));
+	}
+
+	/**
+	 * Insert an active user alert situation.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param alertId
+	 *        the alert ID
+	 * @return the situation ID
+	 * @since 1.5
+	 */
+	public static Long insertUserAlertSituation(JdbcOperations jdbcOps, Long alertId) {
+		return requireNonNull(jdbcOps.queryForObject("""
+				INSERT INTO solaruser.user_alert_sit (alert_id, status)
+				VALUES (?, 'Active'::solaruser.user_alert_sit_status)
+				RETURNING id
+				""", Long.class, alertId));
+	}
+
+	/**
+	 * Insert a pending user node confirmation (a node invitation).
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @return the confirmation ID
+	 * @since 1.5
+	 */
+	public static Long insertUserNodeConfirmation(JdbcOperations jdbcOps, Long userId) {
+		return requireNonNull(jdbcOps.queryForObject("""
+				INSERT INTO solaruser.user_node_conf (user_id, conf_key, sec_phrase, country, time_zone)
+				VALUES (?, ?, ?, 'NZ', 'Pacific/Auckland')
+				RETURNING id
+				""", Long.class, userId, randomString(), randomString()));
+	}
+
+	/**
+	 * Insert a user node ownership transfer request.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the ID of the user requesting the transfer
+	 * @param nodeId
+	 *        the node ID
+	 * @param recipient
+	 *        the recipient email
+	 * @since 1.5
+	 */
+	public static void insertUserNodeTransfer(JdbcOperations jdbcOps, Long userId, Long nodeId,
+			String recipient) {
+		jdbcOps.update(
+				"INSERT INTO solaruser.user_node_xfer (user_id, node_id, recipient) VALUES (?, ?, ?)",
+				userId, nodeId, recipient);
 	}
 
 }

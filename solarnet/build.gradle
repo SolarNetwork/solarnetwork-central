@@ -71,6 +71,40 @@ subprojects {
 		]
 		options.errorprone.disable("BadImport", "CheckReturnValue")
 		it.options.errorprone.enabled = (rootProject.hasProperty('errorProneEnabledTest') && rootProject.errorProneEnabledTest.toBoolean());
+		it.options.errorprone {
+			option("NullAway:OnlyNullMarked", "true")
+			option("NullAway:JSpecifyMode", "true")
+		}
+	}
+
+	// Test fixtures are shared test support code: compile them like test sources, and do not
+	// publish them as part of the project artifacts.
+	plugins.withId('java-test-fixtures') {
+		tasks.named('compileTestFixturesJava', JavaCompile) {
+			options.release = 25
+			options.compilerArgs += [
+				"-Xlint:all",
+				"-Xlint:-options",
+				"-Xlint:-path",
+				"-Xlint:-serial",
+				"-Xlint:-static",
+				"-Xlint:-this-escape",
+				"-Xlint:-try",
+				"-parameters"
+			]
+			options.encoding = "UTF-8"
+			if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
+				options.compilerArgs += ["-Werror"]
+			}
+			options.errorprone.disable("BadImport", "CheckReturnValue", "InlineMeSuggester")
+			options.errorprone.enabled = (rootProject.hasProperty('errorProneEnabledTest') && rootProject.errorProneEnabledTest.toBoolean());
+			options.errorprone {
+				option("NullAway:OnlyNullMarked", "true")
+				option("NullAway:JSpecifyMode", "true")
+			}
+		}
+		components.java.withVariantsFromConfiguration(configurations.testFixturesApiElements) { skip() }
+		components.java.withVariantsFromConfiguration(configurations.testFixturesRuntimeElements) { skip() }
 	}
 
 	jar.manifest {

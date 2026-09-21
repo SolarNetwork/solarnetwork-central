@@ -1,0 +1,87 @@
+/* ==================================================================
+ * ToySecurityAspect.java - 22/09/2026 8:39:25 am
+ *
+ * Copyright 2026 SolarNetwork.net Dev Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.test.aop.test;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.security.AuthorizationSupport;
+
+/**
+ * Security aspect for {@link ToyBiz} that secures all methods except
+ * {@link ToyBiz#unguardedThing(Long)} and {@link ToyBiz#publicThing()}.
+ *
+ * @author matt
+ * @version 1.0
+ */
+@Aspect
+public class ToySecurityAspect extends AuthorizationSupport {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO
+	 */
+	public ToySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+		super(nodeOwnershipDao);
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.test.aop.test.ToyBiz.userThing(..)) && args(userId)")
+	public void readUser(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.test.aop.test.ToyBiz.saveUserThing(..)) && args(userId,..)")
+	public void writeUser(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.test.aop.test.ToyBiz.nodeThing(..)) && args(nodeId)")
+	public void readNode(Long nodeId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.test.aop.test.ToyBiz.saveNodeThing(..)) && args(nodeId,..)")
+	public void writeNode(Long nodeId) {
+	}
+
+	@Before(value = "readUser(userId)", argNames = "userId")
+	public void readUserAccessCheck(Long userId) {
+		requireUserReadAccess(userId);
+	}
+
+	@Before(value = "writeUser(userId)", argNames = "userId")
+	public void writeUserAccessCheck(Long userId) {
+		requireUserWriteAccess(userId);
+	}
+
+	@Before(value = "readNode(nodeId)", argNames = "nodeId")
+	public void readNodeAccessCheck(Long nodeId) {
+		requireNodeReadAccess(nodeId);
+	}
+
+	@Before(value = "writeNode(nodeId)", argNames = "nodeId")
+	public void writeNodeAccessCheck(Long nodeId) {
+		requireNodeWriteAccess(nodeId);
+	}
+
+}
