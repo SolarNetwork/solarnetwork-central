@@ -27,7 +27,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.biz.UserSecretBiz;
 
@@ -35,7 +34,7 @@ import net.solarnetwork.central.user.biz.UserSecretBiz;
  * Security enforcing AOP aspect for {@link UserSecretBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -81,16 +80,6 @@ public class UserSecretsSecurityAspect extends AuthorizationSupport {
 	public void saveForUserId(Long userId) {
 	}
 
-	/**
-	 * Match decrypt method given a user ID related entity.
-	 *
-	 * @param entity
-	 *        the user related entity
-	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserSecretBiz.decryptSecretValue(..)) && args(entity)")
-	public void decryptSecret(UserIdRelated entity) {
-	}
-
 	@Before(value = "listForUserId(userId)")
 	public void userIdReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -102,11 +91,6 @@ public class UserSecretsSecurityAspect extends AuthorizationSupport {
 			""")
 	public void userIdWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
-	}
-
-	@Before(value = "decryptSecret(entity)")
-	public void entityReadAccessCheck(UserIdRelated entity) {
-		requireUserReadAccess(entity != null ? entity.getUserId() : null);
 	}
 
 }
