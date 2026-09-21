@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -378,7 +377,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
-		Objects.requireNonNull(c);
+		requireNonNullArgument(c, "c");
 		if ( c == this ) {
 			throw new IllegalArgumentException();
 		}

@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.test;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.InstantSource;
 import java.time.ZoneOffset;
@@ -446,7 +447,7 @@ public final class CommonDbTestUtils {
 		jdbcOps.update("""
 				INSERT INTO solarnet.sn_node_meta (node_id, created, updated, jdata)
 				VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?::jsonb)
-				""", nodeId, requireNonNull(JsonUtils.getJSONString(meta), "meta"));
+				""", nodeId, requireNonNullArgument(JsonUtils.getJSONString(meta), "meta"));
 	}
 
 	/**
@@ -458,6 +459,8 @@ public final class CommonDbTestUtils {
 	 *        the user ID
 	 * @param meta
 	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code meta} is {@code null}
 	 * @since 1.5
 	 */
 	public static void insertUserMetadata(JdbcOperations jdbcOps, Long userId,
@@ -465,7 +468,7 @@ public final class CommonDbTestUtils {
 		jdbcOps.update("""
 				INSERT INTO solaruser.user_meta (user_id, created, updated, jdata)
 				VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?::jsonb)
-				""", userId, requireNonNull(JsonUtils.getJSONString(meta), "meta"));
+				""", userId, requireNonNullArgument(JsonUtils.getJSONString(meta), "meta"));
 	}
 
 	/**
@@ -481,15 +484,17 @@ public final class CommonDbTestUtils {
 	 *        the delivery state, i.e.
 	 *        {@code net.solarnetwork.domain.InstructionStatus.InstructionState.name()}
 	 * @return the instruction ID
+	 * @throws IllegalStateException
+	 *         if the ID is not returned from the query
 	 * @since 1.5
 	 */
 	public static Long insertNodeInstruction(JdbcOperations jdbcOps, Long nodeId, String topic,
 			String state) {
-		return requireNonNull(jdbcOps.queryForObject("""
+		return nonnull(jdbcOps.queryForObject("""
 				INSERT INTO solarnet.sn_node_instruction (node_id, topic, instr_date, deliver_state)
 				VALUES (?, ?, CURRENT_TIMESTAMP, ?::solarnet.instruction_delivery_state)
 				RETURNING id
-				""", Long.class, nodeId, topic, state));
+				""", Long.class, nodeId, topic, state), "Node instruction ID");
 	}
 
 	/**
@@ -502,15 +507,17 @@ public final class CommonDbTestUtils {
 	 * @param nodeId
 	 *        the optional node ID
 	 * @return the alert ID
+	 * @throws IllegalStateException
+	 *         if the ID is not returned from the query
 	 * @since 1.5
 	 */
 	public static Long insertUserAlert(JdbcOperations jdbcOps, Long userId, @Nullable Long nodeId) {
-		return requireNonNull(jdbcOps.queryForObject("""
+		return nonnull(jdbcOps.queryForObject("""
 				INSERT INTO solaruser.user_alert (user_id, node_id, alert_type, status, alert_opt)
 				VALUES (?, ?, 'NodeStaleData'::solaruser.user_alert_type
 					, 'Active'::solaruser.user_alert_status, '{"age":1800}'::json)
 				RETURNING id
-				""", Long.class, userId, nodeId));
+				""", Long.class, userId, nodeId), "Alert ID");
 	}
 
 	/**
@@ -521,14 +528,16 @@ public final class CommonDbTestUtils {
 	 * @param alertId
 	 *        the alert ID
 	 * @return the situation ID
+	 * @throws IllegalStateException
+	 *         if the ID is not returned from the query
 	 * @since 1.5
 	 */
 	public static Long insertUserAlertSituation(JdbcOperations jdbcOps, Long alertId) {
-		return requireNonNull(jdbcOps.queryForObject("""
+		return nonnull(jdbcOps.queryForObject("""
 				INSERT INTO solaruser.user_alert_sit (alert_id, status)
 				VALUES (?, 'Active'::solaruser.user_alert_sit_status)
 				RETURNING id
-				""", Long.class, alertId));
+				""", Long.class, alertId), "Alert situation ID");
 	}
 
 	/**
@@ -539,14 +548,16 @@ public final class CommonDbTestUtils {
 	 * @param userId
 	 *        the user ID
 	 * @return the confirmation ID
+	 * @throws IllegalStateException
+	 *         if the ID is not returned from the query
 	 * @since 1.5
 	 */
 	public static Long insertUserNodeConfirmation(JdbcOperations jdbcOps, Long userId) {
-		return requireNonNull(jdbcOps.queryForObject("""
+		return nonnull(jdbcOps.queryForObject("""
 				INSERT INTO solaruser.user_node_conf (user_id, conf_key, sec_phrase, country, time_zone)
 				VALUES (?, ?, ?, 'NZ', 'Pacific/Auckland')
 				RETURNING id
-				""", Long.class, userId, randomString(), randomString()));
+				""", Long.class, userId, randomString(), randomString()), "Confirmation ID");
 	}
 
 	/**
