@@ -36,7 +36,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security AOP support for {@link UserMetadataBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -54,7 +54,12 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.biz.UserMetadataBiz.addGeneralNode*(..)) && args(userId,..)")
+	@Pointcut("""
+			(execution(* net.solarnetwork.central.biz.UserMetadataBiz.add*(..))
+			|| execution(* net.solarnetwork.central.biz.UserMetadataBiz.store*(..))
+			|| execution(* net.solarnetwork.central.biz.UserMetadataBiz.remove*(..)))
+			&& args(userId,..)
+			""")
 	public void modifyMetadata(Long userId) {
 	}
 
