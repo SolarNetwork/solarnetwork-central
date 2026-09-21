@@ -67,7 +67,7 @@ import net.solarnetwork.util.StringUtils;
  * Controller for user alerts.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/alerts")
@@ -304,10 +304,14 @@ public class UserAlertController extends ControllerSupport {
 			if ( locale != null ) {
 				fmt = fmt.withLocale(locale);
 			}
-			alert.getOptions().put("situationDate",
+			Map<String, Object> options = alert.getOptions();
+			if ( options == null ) {
+				options = new LinkedHashMap<>();
+			}
+			options.put("situationDate",
 					fmt.format(alert.getSituation().getCreated().atOffset(ZoneOffset.UTC)));
 			if ( alert.getSituation().getNotified() != null ) {
-				alert.getOptions().put("situationNotificationDate",
+				options.put("situationNotificationDate",
 						fmt.format(alert.getSituation().getNotified().atOffset(ZoneOffset.UTC)));
 			}
 		}
