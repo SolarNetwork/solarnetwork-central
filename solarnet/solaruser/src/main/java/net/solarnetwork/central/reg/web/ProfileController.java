@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.domain.User;
  * Controller for user profile management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/u/sec/profile")
@@ -65,6 +65,8 @@ public class ProfileController {
 
 	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	public ModelAndView saveProfile(User user) {
+		// only the active user's own profile can be updated
+		user.setId(SecurityUtils.getCurrentUser().getUserId());
 		User u = registrationBiz.updateUser(user);
 		u.setPassword(RegistrationBiz.DO_NOT_CHANGE_VALUE);
 		ModelAndView mv = new ModelAndView("sec/profile/view", "user", u);
