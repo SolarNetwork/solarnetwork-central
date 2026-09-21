@@ -56,6 +56,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.solarnetwork.central.reg.web.UserAlertController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
@@ -68,7 +69,7 @@ import net.solarnetwork.util.StringUtils;
  * Test cases for the {@link UserAlertController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -405,11 +406,18 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 
 		final int nodeCount = 2;
 		final List<UserNode> nodes = new ArrayList<>(nodeCount);
-		for ( int i = 0; i < nodeCount; i++ ) {
-			NewNodeRequest req = new NewNodeRequest(userId, certPassword, TimeZone.getTimeZone(tz),
-					Locale.forLanguageTag("en-" + country));
-			UserNode node = registrationBiz.createNodeManually(req);
-			nodes.add(node);
+
+		// nodes can only be created by their owner
+		SecurityUtils.becomeUser(randomString() + "@localhost", randomString(), userId);
+		try {
+			for ( int i = 0; i < nodeCount; i++ ) {
+				NewNodeRequest req = new NewNodeRequest(userId, certPassword,
+						TimeZone.getTimeZone(tz), Locale.forLanguageTag("en-" + country));
+				UserNode node = registrationBiz.createNodeManually(req);
+				nodes.add(node);
+			}
+		} finally {
+			SecurityUtils.removeAuthentication();
 		}
 
 		final String tokenId = randomString(20);
