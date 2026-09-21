@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.test;
 
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNodeConfirmation;
 import static net.solarnetwork.central.test.CommonTestUtils.randomEmail;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -53,7 +54,7 @@ import net.solarnetwork.central.test.security.WithMockSecurityUser;
  * invitation support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -77,15 +78,7 @@ public class MyNodesController_InvitationWebTests {
 
 		otherUserId = randomLong();
 		insertUser(jdbcOperations, otherUserId, randomEmail(), randomString(), randomString());
-		otherInvitationId = insertInvitation(otherUserId);
-	}
-
-	private Long insertInvitation(Long userId) {
-		return jdbcOperations.queryForObject("""
-				INSERT INTO solaruser.user_node_conf (user_id, conf_key, sec_phrase, country, time_zone)
-				VALUES (?, ?, ?, 'NZ', 'Pacific/Auckland')
-				RETURNING id
-				""", Long.class, userId, randomString(), randomString());
+		otherInvitationId = insertUserNodeConfirmation(jdbcOperations, otherUserId);
 	}
 
 	private List<Long> invitationIds(Long userId) {
@@ -143,7 +136,7 @@ public class MyNodesController_InvitationWebTests {
 	@Test
 	public void viewInvitation() throws Exception {
 		// GIVEN
-		final Long invitationId = insertInvitation(DEFAULT_USER_ID);
+		final Long invitationId = insertUserNodeConfirmation(jdbcOperations, DEFAULT_USER_ID);
 
 		// WHEN
 		// @formatter:off
@@ -172,7 +165,7 @@ public class MyNodesController_InvitationWebTests {
 	@Test
 	public void cancelInvitation() throws Exception {
 		// GIVEN
-		final Long invitationId = insertInvitation(DEFAULT_USER_ID);
+		final Long invitationId = insertUserNodeConfirmation(jdbcOperations, DEFAULT_USER_ID);
 
 		// WHEN
 		// @formatter:off

@@ -28,6 +28,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNodeTransfer;
 import static net.solarnetwork.central.test.CommonTestUtils.randomEmail;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -57,7 +58,7 @@ import net.solarnetwork.central.test.security.WithMockSecurityUser;
  * Web integration tests for the {@link MyNodesController} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -88,12 +89,6 @@ public class MyNodesControllerWebTests {
 		final Long nodeId = insertNode(jdbcOperations, locId);
 		insertUserNode(jdbcOperations, userId, nodeId, true);
 		return nodeId;
-	}
-
-	private void insertNodeTransfer(Long userId, Long nodeId, String recipient) {
-		jdbcOperations.update(
-				"INSERT INTO solaruser.user_node_xfer (user_id, node_id, recipient) VALUES (?, ?, ?)",
-				userId, nodeId, recipient);
 	}
 
 	private Long nodeOwnerId(Long nodeId) {
@@ -200,7 +195,7 @@ public class MyNodesControllerWebTests {
 		createActorUser();
 		final Long ownerId = createUser(randomEmail());
 		final Long nodeId = createUserNode(ownerId);
-		insertNodeTransfer(ownerId, nodeId, DEFAULT_USERNAME);
+		insertUserNodeTransfer(jdbcOperations, ownerId, nodeId, DEFAULT_USERNAME);
 
 		// WHEN
 		// @formatter:off
@@ -235,7 +230,7 @@ public class MyNodesControllerWebTests {
 		final Long nodeId = createUserNode(ownerId);
 
 		// transfer request that claims the actor owns the node
-		insertNodeTransfer(DEFAULT_USER_ID, nodeId, DEFAULT_USERNAME);
+		insertUserNodeTransfer(jdbcOperations, DEFAULT_USER_ID, nodeId, DEFAULT_USERNAME);
 
 		// WHEN
 		// @formatter:off
@@ -266,7 +261,7 @@ public class MyNodesControllerWebTests {
 		final Long nodeId = createUserNode(ownerId);
 		final String recipient = randomEmail();
 		createUser(recipient);
-		insertNodeTransfer(ownerId, nodeId, recipient);
+		insertUserNodeTransfer(jdbcOperations, ownerId, nodeId, recipient);
 
 		// WHEN
 		// @formatter:off
@@ -298,7 +293,7 @@ public class MyNodesControllerWebTests {
 		// GIVEN
 		createActorUser();
 		final Long nodeId = createUserNode(DEFAULT_USER_ID);
-		insertNodeTransfer(DEFAULT_USER_ID, nodeId, randomEmail());
+		insertUserNodeTransfer(jdbcOperations, DEFAULT_USER_ID, nodeId, randomEmail());
 
 		// WHEN
 		// @formatter:off
@@ -327,7 +322,7 @@ public class MyNodesControllerWebTests {
 		final Long ownerId = createUser(randomEmail());
 		final Long nodeId = createUserNode(ownerId);
 		final String recipient = randomEmail();
-		insertNodeTransfer(ownerId, nodeId, recipient);
+		insertUserNodeTransfer(jdbcOperations, ownerId, nodeId, recipient);
 
 		// WHEN
 		// @formatter:off

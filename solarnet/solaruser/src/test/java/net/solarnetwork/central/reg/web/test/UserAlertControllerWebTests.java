@@ -26,6 +26,8 @@ import static java.util.Map.entry;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserAlert;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserAlertSituation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static net.solarnetwork.central.test.CommonTestUtils.randomEmail;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -59,7 +61,7 @@ import net.solarnetwork.central.test.security.WithMockSecurityUser;
  * Web integration tests for the {@link UserAlertController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -91,24 +93,8 @@ public class UserAlertControllerWebTests {
 		insertUser(jdbcOperations, otherUserId, randomEmail(), randomString(), randomString());
 		otherNodeId = insertNode(jdbcOperations, locId);
 		insertUserNode(jdbcOperations, otherUserId, otherNodeId, true);
-		otherAlertId = insertAlert(otherUserId, otherNodeId);
-		insertAlertSituation(otherAlertId);
-	}
-
-	private Long insertAlert(Long userId, Long nodeId) {
-		return jdbcOperations.queryForObject("""
-				INSERT INTO solaruser.user_alert (user_id, node_id, alert_type, status, alert_opt)
-				VALUES (?, ?, 'NodeStaleData'::solaruser.user_alert_type
-					, 'Active'::solaruser.user_alert_status, '{"age":1800}'::json)
-				RETURNING id
-				""", Long.class, userId, nodeId);
-	}
-
-	private void insertAlertSituation(Long alertId) {
-		jdbcOperations.update("""
-				INSERT INTO solaruser.user_alert_sit (alert_id, status)
-				VALUES (?, 'Active'::solaruser.user_alert_sit_status)
-				""", alertId);
+		otherAlertId = insertUserAlert(jdbcOperations, otherUserId, otherNodeId);
+		insertUserAlertSituation(jdbcOperations, otherAlertId);
 	}
 
 	private List<Map<String, Object>> alerts(Long nodeId) {
@@ -140,8 +126,8 @@ public class UserAlertControllerWebTests {
 	@Test
 	public void viewSituation() throws Exception {
 		// GIVEN
-		final Long alertId = insertAlert(DEFAULT_USER_ID, nodeId);
-		insertAlertSituation(alertId);
+		final Long alertId = insertUserAlert(jdbcOperations, DEFAULT_USER_ID, nodeId);
+		insertUserAlertSituation(jdbcOperations, alertId);
 
 		// WHEN
 		// @formatter:off
@@ -170,8 +156,8 @@ public class UserAlertControllerWebTests {
 	@Test
 	public void resolveSituation() throws Exception {
 		// GIVEN
-		final Long alertId = insertAlert(DEFAULT_USER_ID, nodeId);
-		insertAlertSituation(alertId);
+		final Long alertId = insertUserAlert(jdbcOperations, DEFAULT_USER_ID, nodeId);
+		insertUserAlertSituation(jdbcOperations, alertId);
 
 		// WHEN
 		// @formatter:off
@@ -216,8 +202,8 @@ public class UserAlertControllerWebTests {
 	@Test
 	public void deleteAlert() throws Exception {
 		// GIVEN
-		final Long alertId = insertAlert(DEFAULT_USER_ID, nodeId);
-		final Long keepAlertId = insertAlert(DEFAULT_USER_ID, nodeId);
+		final Long alertId = insertUserAlert(jdbcOperations, DEFAULT_USER_ID, nodeId);
+		final Long keepAlertId = insertUserAlert(jdbcOperations, DEFAULT_USER_ID, nodeId);
 
 		// WHEN
 		// @formatter:off
