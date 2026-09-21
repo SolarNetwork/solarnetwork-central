@@ -45,7 +45,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security enforcing AOP aspect for {@link UserBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -143,6 +143,70 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match methods that read data for a user ID.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	@Pointcut("""
+			(execution(* net.solarnetwork.central.user.biz.UserBiz.getUser(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getUserNodes(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.findUserNodeInfos(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getUserNode(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getArchivedUserNodes(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getPendingUserNodeConfirmations(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getUserNodeCertificate(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.getAllUserAuthTokens(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.listUserAuthTokensForUser(..)))
+			&& args(userId,..)
+			""")
+	public void readForUserId(Long userId) {
+	}
+
+	/**
+	 * Match methods that modify data for a user ID.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	@Pointcut("""
+			(execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserNodeArchivedStatus(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.generateUserAuthToken(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.deleteUserAuthToken(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserAuthToken*(..))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.createSnws2AuthorizationBuilder(..)))
+			&& args(userId,..)
+			""")
+	public void writeForUserId(Long userId) {
+	}
+
+	/**
+	 * Require read access to a user.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	@Before(value = "readForUserId(userId)", argNames = "userId")
+	public void userIdReadAccessCheck(Long userId) {
+		requireUserReadAccess(userId);
+	}
+
+	/**
+	 * Require write access to a user.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	@Before(value = "writeForUserId(userId)", argNames = "userId")
+	public void userIdWriteAccessCheck(Long userId) {
+		requireUserWriteAccess(userId);
+	}
+
+	/**
 	 * Enforce node ID policy restrictions when requesting the available user
 	 * nodes.
 	 *
@@ -225,8 +289,8 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Enforce node ID policy restrictions when saving a user node.
-	 * 
+	 * Require write access to a user node being saved.
+	 *
 	 * @param userNode
 	 *        the user node
 	 */
@@ -235,7 +299,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 		if ( userNode == null || userNode.getNode() == null || userNode.getNode().getId() == null ) {
 			return;
 		}
-		requireNodeReadAccess(userNode.getNode().getId());
+		requireNodeWriteAccess(userNode.getNode().getId());
 	}
 
 	/**
