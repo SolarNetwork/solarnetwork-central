@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -103,7 +104,7 @@ public class HtmlInvoiceTests {
 		t.render(Locale.ENGLISH, ST4TemplateRenderer.HTML.get(0), parameters, byos);
 
 		// THEN
-		String output = new String(byos.toByteArray(), ST4TemplateRenderer.UTF8);
+		String output = new String(byos.toByteArray(), StandardCharsets.UTF_8);
 		// @formatter:off
 		String expected = String
 				.format("<html><head><title>Yo! %s</title></head><body><p>Hello, world.</p><table>"
