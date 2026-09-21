@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
  * Security enforcing AOP aspect for {@link BillingBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -68,12 +68,28 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void previewInvoice(Long userId) {
 	}
 
+	/**
+	 * Match getting a preview invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.1
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getPreviewInvoice(..)) && args(userId, ..)")
+	public void getPreviewInvoice(Long userId) {
+	}
+
 	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
 	public void findFilteredInvoices(InvoiceFilter filter) {
 	}
 
-	@Before(value = "forUserAccess(userId) || getInvoice(userId) || renderInvoice(userId) || previewInvoice(userId)",
-			argNames = "userId")
+	@Before(value = """
+			forUserAccess(userId)
+			|| getInvoice(userId)
+			|| renderInvoice(userId)
+			|| previewInvoice(userId)
+			|| getPreviewInvoice(userId)
+			""", argNames = "userId")
 	public void checkForUserAccess(Long userId) {
 		requireUserReadAccess(userId);
 	}
