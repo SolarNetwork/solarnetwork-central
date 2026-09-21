@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @version 1.0
  */
 public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumStreamMetadata {
+
+	@Serial
+	private static final long serialVersionUID = -1330227008281457134L;
 
 	/** The delegate metadata source. */
 	private final ObjectDatumStreamMetadata delegate;
