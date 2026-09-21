@@ -1022,6 +1022,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
+	// note ECJ says rawtypes is not needed, but javac does so it is ignored here
 	@SuppressWarnings({ "unchecked", "rawtypes", "NullAway" })
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> @Nullable C digestSensitiveInformation(
 			@Nullable C entity) {
