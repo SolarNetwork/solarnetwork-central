@@ -39,6 +39,7 @@ import net.solarnetwork.central.test.tenant.TenantOwnershipDao;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.central.test.tenant.TestToken;
+import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
  * Test cases for the {@link TenantOwnershipDao} class, verifying it returns
@@ -166,7 +167,7 @@ public class TenantOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	public void getDatumStreamMetadataIds() {
 		// GIVEN
 		final UUID[] streamIds = tenantList.stream().flatMap(t -> t.streams().stream())
-				.map(TestTenant.NodeStream::streamId).toArray(UUID[]::new);
+				.map(ObjectDatumStreamIdentity::getStreamId).toArray(UUID[]::new);
 
 		// WHEN
 		final var stub = stubDao.getDatumStreamMetadataIds(streamIds);

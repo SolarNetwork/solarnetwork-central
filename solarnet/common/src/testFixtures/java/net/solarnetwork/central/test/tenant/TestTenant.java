@@ -28,6 +28,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.BasicObjectDatumStreamIdentity.streamIdentity;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +47,7 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
@@ -83,20 +85,6 @@ public final class TestTenant {
 	/** The time zone used for all tenant locations and streams. */
 	public static final String TIME_ZONE = "Pacific/Auckland";
 
-	/**
-	 * A node datum stream.
-	 *
-	 * @param streamId
-	 *        the stream ID
-	 * @param nodeId
-	 *        the node ID
-	 * @param sourceId
-	 *        the source ID
-	 */
-	public record NodeStream(UUID streamId, Long nodeId, String sourceId) {
-
-	}
-
 	private final String name;
 	private final Long userId;
 	private final String email;
@@ -107,7 +95,7 @@ public final class TestTenant {
 	private final Long archivedNodeId;
 	private final List<Long> nodeIds;
 	private final List<String> sourceIds;
-	private final List<NodeStream> streams;
+	private final List<ObjectDatumStreamIdentity> streams;
 	private final Map<String, TestToken> tokens;
 	private final TestToken userToken;
 	private final TestToken restrictedUserToken;
@@ -140,10 +128,11 @@ public final class TestTenant {
 		this.sourceIds = List.of("/%s/pwr/1".formatted(name), "/%s/pwr/2".formatted(name),
 				"/%s/met/1".formatted(name));
 
-		final List<NodeStream> streams = new ArrayList<>(nodeIds.size() * sourceIds.size());
+		final List<ObjectDatumStreamIdentity> streams = new ArrayList<>(
+				nodeIds.size() * sourceIds.size());
 		for ( Long nodeId : nodeIds ) {
 			for ( String sourceId : sourceIds ) {
-				streams.add(new NodeStream(UUID.randomUUID(), nodeId, sourceId));
+				streams.add(streamIdentity(UUID.randomUUID(), ObjectDatumKind.Node, nodeId, sourceId));
 			}
 		}
 		this.streams = Collections.unmodifiableList(streams);
@@ -211,8 +200,8 @@ public final class TestTenant {
 	 */
 	public void insertStreams(JdbcOperations jdbcOps) {
 		final List<ObjectDatumStreamMetadata> metas = streams.stream()
-				.map(s -> (ObjectDatumStreamMetadata) new BasicObjectDatumStreamMetadata(s.streamId(),
-						TIME_ZONE, ObjectDatumKind.Node, s.nodeId(), s.sourceId(),
+				.map(s -> (ObjectDatumStreamMetadata) new BasicObjectDatumStreamMetadata(
+						s.getStreamId(), TIME_ZONE, s.getKind(), s.getObjectId(), s.getSourceId(),
 						new String[] { "watts" }, new String[] { "wattHours" }, null))
 				.toList();
 		CommonDbUtils.insertObjectDatumStreamMetadata(null, jdbcOps, metas);
@@ -252,7 +241,7 @@ public final class TestTenant {
 	}
 
 	/**
-	 * Get a stream for a node and source.
+	 * Get the stream for a node and source.
 	 *
 	 * @param nodeId
 	 *        the node ID
@@ -262,9 +251,9 @@ public final class TestTenant {
 	 * @throws IllegalArgumentException
 	 *         if the stream does not exist
 	 */
-	public NodeStream stream(Long nodeId, String sourceId) {
-		for ( NodeStream s : streams ) {
-			if ( s.nodeId().equals(nodeId) && s.sourceId().equals(sourceId) ) {
+	public ObjectDatumStreamIdentity stream(Long nodeId, String sourceId) {
+		for ( ObjectDatumStreamIdentity s : streams ) {
+			if ( s.getObjectId().equals(nodeId) && s.getSourceId().equals(sourceId) ) {
 				return s;
 			}
 		}
@@ -395,9 +384,9 @@ public final class TestTenant {
 	/**
 	 * Get all node streams.
 	 *
-	 * @return the streams
+	 * @return the streams, all of kind {@code Node}
 	 */
-	public List<NodeStream> streams() {
+	public List<ObjectDatumStreamIdentity> streams() {
 		return streams;
 	}
 

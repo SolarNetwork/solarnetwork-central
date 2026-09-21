@@ -40,8 +40,8 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.test.tenant.TestTenant;
-import net.solarnetwork.central.test.tenant.TestTenant.NodeStream;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
  * Insert datum for the streams of a {@link TestTenant}.
@@ -90,10 +90,10 @@ public final class TenantDatumFixtures {
 			ZonedDateTime start, Duration period, int count) {
 		final Instant received = Instant.now();
 		final List<Datum> datums = new ArrayList<>(tenant.streams().size() * count);
-		for ( NodeStream s : tenant.streams() ) {
+		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
 			for ( int i = 0; i < count; i++ ) {
 				final Instant ts = start.plus(period.multipliedBy(i)).toInstant();
-				datums.add(new DatumEntity(s.streamId(), ts, received,
+				datums.add(new DatumEntity(s.getStreamId(), ts, received,
 						propertiesOf(new BigDecimal[] { BigDecimal.valueOf(i) },
 								new BigDecimal[] { BigDecimal.valueOf(i * 10L) }, null, null)));
 			}
@@ -129,7 +129,7 @@ public final class TenantDatumFixtures {
 	public static List<AggregateDatum> insertAggregateDatum(JdbcOperations jdbcOps,
 			TestTenant tenant, Aggregation aggregation, ZonedDateTime start, int count) {
 		final List<AggregateDatum> datums = new ArrayList<>(tenant.streams().size() * count);
-		for ( NodeStream s : tenant.streams() ) {
+		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
 			for ( int i = 0; i < count; i++ ) {
 				final ZonedDateTime date = switch (aggregation) {
 					case Hour -> start.plusHours(i);
@@ -141,7 +141,7 @@ public final class TenantDatumFixtures {
 				final BigDecimal watts = BigDecimal.valueOf(i);
 				final BigDecimal wattHoursStart = BigDecimal.valueOf(i * 10L);
 				// @formatter:off
-				datums.add(new AggregateDatumEntity(s.streamId(), date.toInstant(), aggregation,
+				datums.add(new AggregateDatumEntity(s.getStreamId(), date.toInstant(), aggregation,
 						propertiesOf(
 								new BigDecimal[] { watts },
 								new BigDecimal[] { BigDecimal.TEN },
@@ -173,9 +173,9 @@ public final class TenantDatumFixtures {
 	public static List<AuditDatum> insertDailyAuditDatum(JdbcOperations jdbcOps, TestTenant tenant,
 			ZonedDateTime start, int count) {
 		final List<AuditDatum> datums = new ArrayList<>(tenant.streams().size() * count);
-		for ( NodeStream s : tenant.streams() ) {
+		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
 			for ( int i = 0; i < count; i++ ) {
-				datums.add(AuditDatumEntity.dailyAuditDatum(s.streamId(),
+				datums.add(AuditDatumEntity.dailyAuditDatum(s.getStreamId(),
 						start.plusDays(i).toInstant(), 100L, 24L, 1, 200L, 10L, 0L, 0L));
 			}
 		}

@@ -34,9 +34,8 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.test.tenant.TestTenant.NodeStream;
 import net.solarnetwork.domain.SecurityPolicy;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
  * {@link SolarNodeOwnershipDao} backed by {@link TestTenant} data, for tests
@@ -114,10 +113,10 @@ public class TenantOwnershipDao implements SolarNodeOwnershipDao {
 				streamIds.length);
 		for ( UUID streamId : streamIds ) {
 			for ( TestTenant tenant : tenants ) {
-				for ( NodeStream s : tenant.streams() ) {
-					if ( s.streamId().equals(streamId) ) {
-						result.put(streamId, new ObjectDatumStreamMetadataId(streamId,
-								ObjectDatumKind.Node, s.nodeId(), s.sourceId()));
+				for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
+					if ( s.getStreamId().equals(streamId) ) {
+						result.put(streamId, new ObjectDatumStreamMetadataId(streamId, s.getKind(),
+								s.getObjectId(), s.getSourceId()));
 					}
 				}
 			}

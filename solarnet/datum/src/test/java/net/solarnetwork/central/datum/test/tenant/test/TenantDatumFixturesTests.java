@@ -40,6 +40,7 @@ import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
  * Test cases for the {@link TenantDatumFixtures} class.
@@ -57,7 +58,7 @@ public class TenantDatumFixturesTests extends AbstractJUnit5JdbcDaoTestSupport {
 		tenants = new TestTenants();
 		tenants.insert(jdbcTemplate);
 		tenants.insertStreams(jdbcTemplate);
-		streamIds = tenants.a().streams().stream().map(TestTenant.NodeStream::streamId)
+		streamIds = tenants.a().streams().stream().map(ObjectDatumStreamIdentity::getStreamId)
 				.collect(Collectors.toSet());
 	}
 
