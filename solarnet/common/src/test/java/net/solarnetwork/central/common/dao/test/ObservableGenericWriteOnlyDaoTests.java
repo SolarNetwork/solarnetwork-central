@@ -64,7 +64,6 @@ public class ObservableGenericWriteOnlyDaoTests {
 		dao = new ObservableGenericWriteOnlyDao<>(delegateDao, observer);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public void observe_throwsRemoteServiceException() {
 		// GIVEN
