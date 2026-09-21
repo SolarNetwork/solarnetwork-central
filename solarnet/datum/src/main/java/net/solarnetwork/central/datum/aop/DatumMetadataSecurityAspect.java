@@ -54,7 +54,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security AOP support for {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Aspect
 @Component
@@ -115,7 +115,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	public void removeLocationMetadata(Long locationId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findDatumStreamMetadata(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findDatumStreamMetadata*(..)) && args(filter,..)")
 	public void findDatumStreamMetadata(ObjectStreamCriteria filter) {
 	}
 
