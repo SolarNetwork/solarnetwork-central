@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.test.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -50,14 +51,11 @@ public record SecuredProxy<T>(T proxy, T target, Map<Class<?>, Object> mocks) {
 	 * @param type
 	 *        the mock type
 	 * @return the mock
-	 * @throws IllegalArgumentException
+	 * @throws IllegalStateException
 	 *         if no mock of the given type is available
 	 */
 	public <M> M mock(Class<M> type) {
-		final Object mock = mocks.get(type);
-		if ( mock == null ) {
-			throw new IllegalArgumentException("No mock of type %s available.".formatted(type));
-		}
+		final Object mock = nonnull(mocks.get(type), "Mock of type %s", type);
 		return type.cast(mock);
 	}
 
