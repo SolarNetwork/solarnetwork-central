@@ -63,4 +63,9 @@ public class DaoToyBiz implements ToyBiz {
 		return "public";
 	}
 
+	@Override
+	public String publicThing(String name) {
+		return name;
+	}
+
 }

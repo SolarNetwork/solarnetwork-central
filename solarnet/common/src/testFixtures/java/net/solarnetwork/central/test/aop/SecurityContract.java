@@ -36,7 +36,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,10 +43,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
-import org.mockito.invocation.Invocation;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.tenant.TestActor;
@@ -84,15 +83,41 @@ public final class SecurityContract<T> {
 	private final Class<T> api;
 	private final TestTenants tenants;
 	private final List<SecurityContractCase<T>> cases;
-	private final Map<String, String> exemptions;
+	private final List<Exemption> exemptions;
+
+	/**
+	 * An exemption of API methods from the contract.
+	 *
+	 * @param methodName
+	 *        the exempt method name
+	 * @param method
+	 *        the exempt method, or {@code null} to exempt all methods named
+	 *        {@code methodName}
+	 * @param reason
+	 *        why the method does not need securing
+	 */
+	public record Exemption(String methodName, @Nullable Method method, String reason) {
+
+		/**
+		 * Test if this exemption applies to a method.
+		 *
+		 * @param m
+		 *        the method
+		 * @return {@code true} if the method is exempt
+		 */
+		public boolean matches(Method m) {
+			return (method != null ? sameSignature(method, m) : methodName.equals(m.getName()));
+		}
+
+	}
 
 	private SecurityContract(Class<T> api, TestTenants tenants, List<SecurityContractCase<T>> cases,
-			Map<String, String> exemptions) {
+			List<Exemption> exemptions) {
 		super();
 		this.api = api;
 		this.tenants = tenants;
 		this.cases = Collections.unmodifiableList(cases);
-		this.exemptions = Collections.unmodifiableMap(exemptions);
+		this.exemptions = Collections.unmodifiableList(exemptions);
 	}
 
 	/**
@@ -120,11 +145,11 @@ public final class SecurityContract<T> {
 	}
 
 	/**
-	 * Get the exempt method names, and the reason for each exemption.
+	 * Get the exemptions.
 	 *
 	 * @return the exemptions
 	 */
-	public Map<String, String> exemptions() {
+	public List<Exemption> exemptions() {
 		return exemptions;
 	}
 
@@ -143,16 +168,16 @@ public final class SecurityContract<T> {
 		final List<Method> methods = apiMethods(api);
 		for ( Method m : methods ) {
 			final boolean hasCase = cases.stream().anyMatch(c -> sameSignature(c.method(), m));
-			final boolean exempt = exemptions.containsKey(m.getName());
+			final boolean exempt = exemptions.stream().anyMatch(e -> e.matches(m));
 			if ( !hasCase && !exempt ) {
 				problems.add("No case or exemption for %s".formatted(signature(m)));
 			} else if ( hasCase && exempt ) {
 				problems.add("Both cases and exemption for %s".formatted(signature(m)));
 			}
 		}
-		for ( String name : exemptions.keySet() ) {
-			if ( methods.stream().noneMatch(m -> m.getName().equals(name)) ) {
-				problems.add("Exemption for unknown method %s".formatted(name));
+		for ( Exemption e : exemptions ) {
+			if ( methods.stream().noneMatch(e::matches) ) {
+				problems.add("Exemption for unknown method %s".formatted(e.methodName()));
 			}
 		}
 		return problems;
@@ -253,7 +278,7 @@ public final class SecurityContract<T> {
 			// @formatter:off
 			thenExceptionOfType(AuthorizationException.class)
 				.as("%s is denied %s", actor, c.name())
-				.isThrownBy(() -> c.call().accept(p.proxy()))
+				.isThrownBy(() -> c.call().invoke(p.proxy()))
 				;
 			// @formatter:on
 		} finally {
@@ -270,7 +295,7 @@ public final class SecurityContract<T> {
 		try {
 			actor.become();
 			// @formatter:off
-			thenCode(() -> c.call().accept(p.proxy()))
+			thenCode(() -> c.call().invoke(p.proxy()))
 				.as("%s is allowed %s", actor, c.name())
 				.doesNotThrowAnyException()
 				;
@@ -280,9 +305,8 @@ public final class SecurityContract<T> {
 		}
 		// @formatter:off
 		and.then(Mockito.mockingDetails(p.target()).getInvocations())
-			.map(Invocation::getMethod)
-			.as("%s reaches the target service method for %s", actor, c.name())
-			.anyMatch(m -> sameSignature(m, c.method()))
+			.as("%s reaches the target service for %s", actor, c.name())
+			.isNotEmpty()
 			;
 		// @formatter:on
 	}
@@ -298,7 +322,7 @@ public final class SecurityContract<T> {
 		private final Class<T> api;
 		private final TestTenants tenants;
 		private final List<SecurityContractCase<T>> cases = new ArrayList<>();
-		private final Map<String, String> exemptions = new LinkedHashMap<>();
+		private final List<Exemption> exemptions = new ArrayList<>();
 
 		private Builder(Class<T> api, TestTenants tenants) {
 			super();
@@ -330,7 +354,7 @@ public final class SecurityContract<T> {
 		 *        the invocation
 		 * @return this builder
 		 */
-		public Builder<T> userRead(Consumer<? super T> call) {
+		public Builder<T> userRead(ApiCall<? super T> call) {
 			final TestTenant a = tenants.a();
 			return add(call, a.userActor(), a.tokenActor(), a.restrictedTokenActor(), a.nodeActor());
 		}
@@ -348,7 +372,7 @@ public final class SecurityContract<T> {
 		 *        the invocation
 		 * @return this builder
 		 */
-		public Builder<T> userWrite(Consumer<? super T> call) {
+		public Builder<T> userWrite(ApiCall<? super T> call) {
 			final TestTenant a = tenants.a();
 			return add(call, a.userActor(), a.tokenActor(), a.restrictedTokenActor());
 		}
@@ -368,7 +392,7 @@ public final class SecurityContract<T> {
 		 *        the invocation
 		 * @return this builder
 		 */
-		public Builder<T> nodeRead(Consumer<? super T> call) {
+		public Builder<T> nodeRead(ApiCall<? super T> call) {
 			final TestTenant a = tenants.a();
 			return add(call, a.userActor(), a.tokenActor(), a.dataTokenActor(), a.nodeActor());
 		}
@@ -387,7 +411,7 @@ public final class SecurityContract<T> {
 		 *        the invocation
 		 * @return this builder
 		 */
-		public Builder<T> nodeWrite(Consumer<? super T> call) {
+		public Builder<T> nodeWrite(ApiCall<? super T> call) {
 			final TestTenant a = tenants.a();
 			return add(call, a.userActor(), a.tokenActor(), a.nodeActor());
 		}
@@ -401,7 +425,7 @@ public final class SecurityContract<T> {
 		 *        the allowed actors; all others must be denied
 		 * @return this builder
 		 */
-		public Builder<T> allowing(Consumer<? super T> call, TestActor... allowed) {
+		public Builder<T> allowing(ApiCall<? super T> call, TestActor... allowed) {
 			return add(call, allowed);
 		}
 
@@ -419,8 +443,28 @@ public final class SecurityContract<T> {
 		 * @return this builder
 		 */
 		public Builder<T> exempt(String methodName, String reason) {
-			exemptions.put(requireNonNullArgument(methodName, "methodName"),
-					requireNonNullArgument(reason, "reason"));
+			exemptions.add(new Exemption(requireNonNullArgument(methodName, "methodName"), null,
+					requireNonNullArgument(reason, "reason")));
+			return this;
+		}
+
+		/**
+		 * Exempt one API method from the contract.
+		 *
+		 * <p>
+		 * Use this to exempt one overload of a method.
+		 * </p>
+		 *
+		 * @param call
+		 *        an invocation of the method to exempt
+		 * @param reason
+		 *        why the method does not need securing
+		 * @return this builder
+		 */
+		public Builder<T> exempt(ApiCall<? super T> call, String reason) {
+			final Method method = ApiMethods.invokedMethod(api, call);
+			exemptions.add(
+					new Exemption(method.getName(), method, requireNonNullArgument(reason, "reason")));
 			return this;
 		}
 
@@ -511,10 +555,10 @@ public final class SecurityContract<T> {
 		 */
 		public SecurityContract<T> build() {
 			return new SecurityContract<>(api, tenants, new ArrayList<>(cases),
-					new LinkedHashMap<>(exemptions));
+					new ArrayList<>(exemptions));
 		}
 
-		private Builder<T> add(Consumer<? super T> call, TestActor... allowed) {
+		private Builder<T> add(ApiCall<? super T> call, TestActor... allowed) {
 			final Method method = ApiMethods.invokedMethod(api, call);
 			cases.add(new SecurityContractCase<>(signature(method), method, call, Set.of(allowed), null,
 					false));

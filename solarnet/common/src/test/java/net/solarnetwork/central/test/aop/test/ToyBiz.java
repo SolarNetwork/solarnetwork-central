@@ -84,4 +84,13 @@ public interface ToyBiz {
 	 */
 	String publicThing();
 
+	/**
+	 * Read something public, by name.
+	 *
+	 * @param name
+	 *        the name
+	 * @return the thing
+	 */
+	String publicThing(String name);
+
 }

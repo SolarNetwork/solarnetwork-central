@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -107,7 +106,7 @@ public final class ApiMethods {
 	 *         if {@code call} does not invoke exactly one API method
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public static <T> Method invokedMethod(Class<T> api, Consumer<? super T> call) {
+	public static <T> Method invokedMethod(Class<T> api, ApiCall<? super T> call) {
 		final AtomicReference<@Nullable Method> invoked = new AtomicReference<>();
 		final Object recorder = Proxy.newProxyInstance(api.getClassLoader(), new Class<?>[] { api },
 				(proxy, method, args) -> {
@@ -124,7 +123,14 @@ public final class ApiMethods {
 					}
 					return defaultValue(method.getReturnType());
 				});
-		call.accept(api.cast(recorder));
+		try {
+			call.invoke(api.cast(recorder));
+		} catch ( IllegalArgumentException e ) {
+			throw e;
+		} catch ( Exception e ) {
+			throw new IllegalArgumentException(
+					"Error invoking %s method: %s".formatted(api.getSimpleName(), e), e);
+		}
 		final Method result = invoked.get();
 		if ( result == null ) {
 			throw new IllegalArgumentException(

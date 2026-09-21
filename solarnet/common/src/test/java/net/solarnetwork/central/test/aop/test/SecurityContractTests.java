@@ -171,6 +171,30 @@ public class SecurityContractTests {
 	}
 
 	@Test
+	public void methodExemption() {
+		// GIVEN
+		final TestTenant a = tenants.a();
+		// @formatter:off
+		final SecurityContract<ToyBiz> contract = SecurityContract.forApi(ToyBiz.class, tenants)
+				.userRead(biz -> biz.userThing(a.userId()))
+				.userWrite(biz -> biz.saveUserThing(a.userId(), "foo"))
+				.nodeRead(biz -> biz.nodeThing(a.privateNodeId()))
+				.nodeWrite(biz -> biz.saveNodeThing(a.privateNodeId(), "foo"))
+				.exempt("unguardedThing", "for testing")
+				.exempt(biz -> biz.publicThing(), "no user data")
+				.build();
+		// @formatter:on
+
+		// THEN
+		// @formatter:off
+		then(contract.coverageProblems())
+			.as("Exemption for one overload does not exempt other overloads")
+			.containsExactly("No case or exemption for publicThing(String)")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void unguardedMethod() {
 		// GIVEN
 		final TestTenant a = tenants.a();

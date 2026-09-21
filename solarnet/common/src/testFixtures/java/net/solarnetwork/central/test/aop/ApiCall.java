@@ -1,5 +1,5 @@
 /* ==================================================================
- * UnsecurableToyBiz.java - 22/09/2026 8:39:25 am
+ * ApiCall.java - 22/09/2026 11:02:47 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,49 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.test.aop.test;
+package net.solarnetwork.central.test.aop;
 
 /**
- * A toy service implementation that is not annotated as securable.
+ * An invocation of an API method.
  *
+ * <p>
+ * Unlike {@link java.util.function.Consumer}, an API call can invoke methods
+ * that declare checked exceptions.
+ * </p>
+ *
+ * @param <T>
+ *        the API type
  * @author matt
  * @version 1.0
  */
-public class UnsecurableToyBiz implements ToyBiz {
+@FunctionalInterface
+public interface ApiCall<T> {
 
-	@Override
-	public String userThing(Long userId) {
-		return "user";
-	}
-
-	@Override
-	public void saveUserThing(Long userId, String value) {
-		// nothing
-	}
-
-	@Override
-	public String nodeThing(Long nodeId) {
-		return "node";
-	}
-
-	@Override
-	public void saveNodeThing(Long nodeId, String value) {
-		// nothing
-	}
-
-	@Override
-	public String unguardedThing(Long userId) {
-		return "unguarded";
-	}
-
-	@Override
-	public String publicThing() {
-		return "public";
-	}
-
-	@Override
-	public String publicThing(String name) {
-		return name;
-	}
+	/**
+	 * Invoke an API method.
+	 *
+	 * @param api
+	 *        the API to invoke
+	 * @throws Exception
+	 *         if any error occurs
+	 */
+	void invoke(T api) throws Exception;
 
 }

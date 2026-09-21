@@ -52,7 +52,7 @@ import net.solarnetwork.central.test.tenant.TestActor;
  * @author matt
  * @version 1.0
  */
-public record SecurityContractCase<T>(String name, Method method, Consumer<? super T> call,
+public record SecurityContractCase<T>(String name, Method method, ApiCall<? super T> call,
 		Set<TestActor> allowed, @Nullable Consumer<? super SecuredProxy<T>> setup,
 		boolean targetInvokedOnDeny) {
 
