@@ -37,7 +37,6 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
-import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
@@ -92,9 +91,8 @@ public class TenantDatumFixturesTests extends AbstractJUnit5JdbcDaoTestSupport {
 		final List<AggregateDatum> hours = DatumDbUtils
 				.listAggregateDatum(jdbcTemplate, Aggregation.Hour).stream()
 				.filter(d -> streamIds.contains(d.getStreamId())).toList();
-		final List<AggregateDatum> days = DatumDbUtils
-				.listAggregateDatum(jdbcTemplate, Aggregation.Day).stream()
-				.filter(d -> streamIds.contains(d.getStreamId())).toList();
+		final List<AggregateDatum> days = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day)
+				.stream().filter(d -> streamIds.contains(d.getStreamId())).toList();
 		// @formatter:off
 		then(hours)
 			.as("Hourly datum inserted for every stream")
