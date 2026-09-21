@@ -65,4 +65,48 @@ public class WebConfigTests extends AbstractJUnit5CentralTransactionalTest {
 		// @formatter:on
 	}
 
+	@Test
+	public void cors_api_preflight_httpSignature() throws Exception {
+		// GIVEN
+		// a browser sending an RFC 9421 signed request preflights the signature fields,
+		// none of which are CORS-safelisted
+		// @formatter:off
+
+		// WHEN
+		// THEN
+		mvc.perform(options("/api/v1/pub/datum/list")
+				.header(HttpHeaders.ORIGIN, OTHER_ORIGIN)
+				.header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpMethod.POST.name())
+				.header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS,
+						"signature-input,signature,content-digest,content-type")
+			)
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
+			.andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+					"signature-input, signature, content-digest, content-type"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void cors_api_exposedHeaders() throws Exception {
+		// GIVEN
+		// a rejected signature is explained in X-SN-ErrorMessage, and Accept-Signature
+		// says what an acceptable one must cover, so both have to be readable
+		// @formatter:off
+
+		// WHEN
+		// THEN
+		mvc.perform(options("/api/v1/pub/datum/list")
+				.header(HttpHeaders.ORIGIN, OTHER_ORIGIN)
+				.header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpMethod.GET.name())
+				.header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "signature-input,signature")
+			)
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
+					"Accept-Signature, X-SN-ErrorMessage"))
+			;
+		// @formatter:on
+	}
+
 }

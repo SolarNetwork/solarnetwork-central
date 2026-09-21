@@ -566,6 +566,12 @@ app:
       continue-removing-threshold: 50
     eviction-jitter: "15s"
     table-name: "solarcommon.bucket"
+  web.security:
+    token:
+      http-signatures:
+        # SolarJobs exposes an internal management API only, so RFC 9421 HTTP message
+        # signatures are not accepted here; SolarQuery and SolarUser accept them.
+        enabled: false
   versioned-messages-cache:
       ttl: 600
 

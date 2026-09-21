@@ -96,6 +96,14 @@ app:
     token:
       max-request-body-size: 65535
       max-date-skew: 900000
+      http-signatures:
+        # RFC 9421 HTTP message signatures, accepted alongside the SNWS2 scheme
+        enabled: true
+        tag: "solarnetwork"
+        require-tag: false
+        allow-direct-secret-key: true
+        allow-derived-signing-key: true
+        derived-signing-key-max-days: 7
 
 logging:
   level:

@@ -32,6 +32,9 @@ dependencies {
 	// Security
 	implementation 'org.springframework.security:spring-security-core'
 	implementation 'org.springframework.security:spring-security-oauth2-client'
+
+	// HTTP Structured Field Values (RFC 9651), for RFC 9421 HTTP Message Signatures
+	implementation "org.greenbytes.http:structured-fields:${structuredFieldsVersion}"
 	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"

@@ -48,6 +48,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.converter.HttpMessageConverters.ServerBuilder;
 import org.springframework.http.converter.cbor.JacksonCborHttpMessageConverter;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
@@ -79,8 +80,11 @@ import net.solarnetwork.codec.BindingResultSerializer;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.codec.TimeZonePropertySerializer;
+import net.solarnetwork.security.http.sig.ContentDigest;
+import net.solarnetwork.security.http.sig.HttpSignatureFields;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.DateUtils;
+import net.solarnetwork.web.jakarta.security.WebConstants;
 import net.solarnetwork.web.jakarta.support.JSONView;
 import net.solarnetwork.web.jakarta.support.SimpleCsvHttpMessageConverter;
 import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
@@ -92,7 +96,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  * Web layer configuration.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -282,7 +286,20 @@ public class WebConfig implements WebMvcConfigurer {
 			.allowedOrigins(CorsConfiguration.ALL)
 			.maxAge(TimeUnit.HOURS.toSeconds(24))
 			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")
+			.allowedHeaders(
+					  HttpHeaders.AUTHORIZATION
+					, ContentDigest.CONTENT_DIGEST_HEADER
+					, "Content-MD5"
+					, HttpHeaders.CONTENT_TYPE
+					, "Digest"
+					, HttpSignatureFields.SIGNATURE_HEADER
+					, HttpSignatureFields.SIGNATURE_INPUT_HEADER
+					, WebConstants.HEADER_DATE
+			)
+			.exposedHeaders(
+					  HttpSignatureFields.ACCEPT_SIGNATURE_HEADER
+					, WebConstants.HEADER_ERROR_MESSAGE
+			)
 			;
 		// @formatter:on
 	}

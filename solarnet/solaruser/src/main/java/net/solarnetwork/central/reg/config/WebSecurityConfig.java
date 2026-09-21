@@ -69,6 +69,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
+import net.solarnetwork.web.jakarta.security.HttpSignatureAuthenticationEntryPoint;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 import tools.jackson.databind.ObjectMapper;
 
@@ -76,7 +77,7 @@ import tools.jackson.databind.ObjectMapper;
  * Security configuration.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Configuration
 @EnableWebSecurity
@@ -290,7 +291,8 @@ public class WebSecurityConfig {
 
 		@Bean
 		public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-			SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
+			HttpSignatureAuthenticationEntryPoint ep = new HttpSignatureAuthenticationEntryPoint(
+					securityTokenFilterSettings.getHttpSignatures());
 			ep.setHandlerExceptionResolver(handlerExceptionResolver);
 			return ep;
 		}

@@ -26,13 +26,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import org.springframework.util.unit.DataSize;
+import net.solarnetwork.web.jakarta.security.HttpSignatureSettings;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
 
 /**
  * Configurable settings for security token filters.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityTokenFilterSettings {
 
@@ -65,6 +66,7 @@ public class SecurityTokenFilterSettings {
 	private Pattern compressibleContentTypePattern = SecurityHttpServletRequestWrapper.DEFAULT_COMPRESSIBLE_CONTENT_PATTERN;
 	private DataSize minimumSpoolLength = DEFAULT_MINIMUM_SPOOL_LENGTH;
 	private Path spoolDirectory = DEFAULT_SPOOL_DIRECTORY;
+	private HttpSignatureSettings httpSignatures = new HttpSignatureSettings();
 
 	/**
 	 * Get the maximum date skew.
@@ -192,6 +194,28 @@ public class SecurityTokenFilterSettings {
 	 */
 	public final void setSpoolDirectory(Path spoolDirectory) {
 		this.spoolDirectory = (spoolDirectory != null ? spoolDirectory : DEFAULT_SPOOL_DIRECTORY);
+	}
+
+	/**
+	 * Get the RFC 9421 HTTP Message Signatures settings.
+	 *
+	 * @return the settings, never {@code null}
+	 * @since 1.2
+	 */
+	public final HttpSignatureSettings getHttpSignatures() {
+		return httpSignatures;
+	}
+
+	/**
+	 * Set the RFC 9421 HTTP Message Signatures settings.
+	 *
+	 * @param httpSignatures
+	 *        the settings to set; if {@code null} then a default instance will
+	 *        be set
+	 * @since 1.2
+	 */
+	public final void setHttpSignatures(HttpSignatureSettings httpSignatures) {
+		this.httpSignatures = (httpSignatures != null ? httpSignatures : new HttpSignatureSettings());
 	}
 
 }

@@ -22,11 +22,9 @@
 
 package net.solarnetwork.central.security.web;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.domain.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -67,6 +65,7 @@ import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.web.jakarta.security.AuthenticationData;
 import net.solarnetwork.web.jakarta.security.AuthenticationDataFactory;
 import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.HttpSignatureSettings;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
@@ -91,7 +90,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  *
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -172,11 +171,12 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			if ( req.getContentType() != null
 					&& MediaType.MULTIPART_FORM_DATA
 							.isCompatibleWith(MimeType.valueOf(req.getContentType()))
-					&& isSupportedAuthorizationScheme(req.getHeader(HttpHeaders.AUTHORIZATION)) ) {
+					&& isSupportedAuthenticationScheme(req, settings.getHttpSignatures()) ) {
 				request.getContentSHA256();
 			}
 
-			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
+			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request,
+					settings.getHttpSignatures());
 		} catch ( net.solarnetwork.web.jakarta.security.SecurityException e ) {
 			deny(request, res, new MaxUploadSizeExceededException(
 					(int) settings.getMaxRequestBodySize().toBytes(), e));
@@ -213,12 +213,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			return;
 		}
 
-		final String computedDigest = data
-				.computeSignatureDigest(user.getPassword() != null ? user.getPassword() : "");
-		// compare in constant time to avoid leaking timing information
-		if ( !MessageDigest.isEqual(computedDigest.getBytes(UTF_8),
-				data.getSignatureDigest().getBytes(UTF_8)) ) {
-			log.debug("Computed signature digest does not match received value [{}]",
+		if ( !data.verifySignature(user.getPassword() != null ? user.getPassword() : "") ) {
+			log.debug("Computed signature does not match received value [{}]",
 					data.getSignatureDigest());
 			fail(request, res, new BadCredentialsException("Bad credentials"));
 			return;
@@ -251,23 +247,27 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	}
 
 	/**
-	 * Test if an {@code Authorization} header uses a supported authentication
+	 * Test if a request presents credentials in a supported authentication
 	 * scheme.
 	 *
-	 * @param header
-	 *        the header value, or {@code null}
-	 * @return {@code true} if the header uses a supported scheme
+	 * @param request
+	 *        the request
+	 * @param httpSignatureSettings
+	 *        the RFC 9421 profile settings
+	 * @return {@code true} if the request uses a supported scheme
 	 */
-	private static boolean isSupportedAuthorizationScheme(@Nullable String header) {
-		if ( header == null ) {
-			return false;
-		}
-		for ( AuthenticationScheme scheme : AuthenticationScheme.values() ) {
-			if ( scheme.matchingHeaderData(header) != null ) {
-				return true;
+	private static boolean isSupportedAuthenticationScheme(HttpServletRequest request,
+			HttpSignatureSettings httpSignatureSettings) {
+		final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+		if ( header != null ) {
+			for ( AuthenticationScheme scheme : AuthenticationScheme.values() ) {
+				if ( scheme.matchingHeaderData(header) != null ) {
+					return true;
+				}
 			}
 		}
-		return false;
+		return (httpSignatureSettings.isEnabled()
+				&& AuthenticationDataFactory.isHttpSignatureRequest(request));
 	}
 
 	private boolean isValidApiPath(final HttpServletRequest request,

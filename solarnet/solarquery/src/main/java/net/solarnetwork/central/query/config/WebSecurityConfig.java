@@ -54,6 +54,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
+import net.solarnetwork.web.jakarta.security.HttpSignatureAuthenticationEntryPoint;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 import tools.jackson.databind.ObjectMapper;
 
@@ -61,7 +62,7 @@ import tools.jackson.databind.ObjectMapper;
  * Security configuration.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Configuration
 @EnableWebSecurity
@@ -148,7 +149,7 @@ public class WebSecurityConfig {
 					.authorizeHttpRequests((matchers) -> matchers
 						.requestMatchers(HttpMethod.GET,
 								"/ops/health"
-								).permitAll()		
+								).permitAll()
 						.anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString()))
 
 			;
@@ -187,7 +188,8 @@ public class WebSecurityConfig {
 
 		@Bean
 		public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-			SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
+			HttpSignatureAuthenticationEntryPoint ep = new HttpSignatureAuthenticationEntryPoint(
+					securityTokenFilterSettings.getHttpSignatures());
 			ep.setHandlerExceptionResolver(handlerExceptionResolver);
 			return ep;
 		}
@@ -260,7 +262,7 @@ public class WebSecurityConfig {
 									.requestMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 									.requestMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 									.requestMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-									
+
 									.anyRequest().authenticated())
 					;
 			// @formatter:on

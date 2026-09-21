@@ -391,6 +391,14 @@ app:
       minimum-compress-length: "32KB"
       minimum-spool-length: "65KB"
       spool-directory: "${java.io.tmpdir}/SecurityTokenFilter"
+      http-signatures:
+        # RFC 9421 HTTP message signatures, accepted alongside the SNWS2 scheme
+        enabled: true
+        tag: "solarnetwork"
+        require-tag: false
+        allow-direct-secret-key: true
+        allow-derived-signing-key: true
+        derived-signing-key-max-days: 7
 
 debug: true
 
