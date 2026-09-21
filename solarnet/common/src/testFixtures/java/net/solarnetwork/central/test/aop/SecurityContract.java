@@ -60,17 +60,17 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  *
  * <p>
  * A contract is a table of cases, one or more per API method, plus explicit
- * exemptions for methods that do not need securing. Every case targets the
- * data of {@link TestTenants#a()} and lists the actors of
+ * exemptions for methods that do not need securing. Every case targets the data
+ * of {@link TestTenants#a()} and lists the actors of
  * {@link TestTenants#actors()} that must be allowed; all other actors must be
  * denied with an {@link AuthorizationException}.
  * </p>
  *
  * <p>
  * The {@link #dynamicTests(Supplier)} method verifies the contract against
- * proxies with the security aspects applied, and verifies that every API
- * method has a case or an exemption, so new API methods cannot be added
- * without deciding how they are secured.
+ * proxies with the security aspects applied, and verifies that every API method
+ * has a case or an exemption, so new API methods cannot be added without
+ * deciding how they are secured.
  * </p>
  *
  * @param <T>
@@ -78,6 +78,7 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
 public final class SecurityContract<T> {
 
 	private final Class<T> api;
@@ -195,9 +196,9 @@ public final class SecurityContract<T> {
 	 * depend only on invocation arguments.
 	 *
 	 * <p>
-	 * This is designed to verify application service beans, whose target is
-	 * not a mock, and whose aspects use real DAOs; the tenants must be
-	 * present in the database.
+	 * This is designed to verify application service beans, whose target is not
+	 * a mock, and whose aspects use real DAOs; the tenants must be present in
+	 * the database.
 	 * </p>
 	 *
 	 * @param service
@@ -207,8 +208,7 @@ public final class SecurityContract<T> {
 	 */
 	public Stream<DynamicNode> denyTests(T service) {
 		final List<DynamicNode> nodes = new ArrayList<>(cases.size());
-		final Supplier<SecuredProxy<T>> proxies = () -> new SecuredProxy<>(service, service,
-				Map.of());
+		final Supplier<SecuredProxy<T>> proxies = () -> new SecuredProxy<>(service, service, Map.of());
 		for ( SecurityContractCase<T> c : cases ) {
 			if ( !c.argumentsOnly() ) {
 				continue;
@@ -332,8 +332,7 @@ public final class SecurityContract<T> {
 		 */
 		public Builder<T> userRead(Consumer<? super T> call) {
 			final TestTenant a = tenants.a();
-			return add(call, a.userActor(), a.tokenActor(), a.restrictedTokenActor(),
-					a.nodeActor());
+			return add(call, a.userActor(), a.tokenActor(), a.restrictedTokenActor(), a.nodeActor());
 		}
 
 		/**
@@ -477,8 +476,8 @@ public final class SecurityContract<T> {
 		 * case is invoked.
 		 *
 		 * <p>
-		 * Use this to stub the mocks the aspects use to look up entities.
-		 * Cases with setup are not included in
+		 * Use this to stub the mocks the aspects use to look up entities. Cases
+		 * with setup are not included in
 		 * {@link SecurityContract#denyTests(Object)}.
 		 * </p>
 		 *
@@ -488,8 +487,8 @@ public final class SecurityContract<T> {
 		 */
 		public Builder<T> given(Consumer<? super SecuredProxy<T>> setup) {
 			final SecurityContractCase<T> c = last();
-			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(),
-					c.allowed(), requireNonNullArgument(setup, "setup"), c.targetInvokedOnDeny()));
+			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(), c.allowed(),
+					requireNonNullArgument(setup, "setup"), c.targetInvokedOnDeny()));
 		}
 
 		/**
@@ -501,8 +500,8 @@ public final class SecurityContract<T> {
 		 */
 		public Builder<T> targetInvokedOnDeny() {
 			final SecurityContractCase<T> c = last();
-			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(),
-					c.allowed(), c.setup(), true));
+			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(), c.allowed(),
+					c.setup(), true));
 		}
 
 		/**
@@ -517,8 +516,8 @@ public final class SecurityContract<T> {
 
 		private Builder<T> add(Consumer<? super T> call, TestActor... allowed) {
 			final Method method = ApiMethods.invokedMethod(api, call);
-			cases.add(new SecurityContractCase<>(signature(method), method, call,
-					Set.of(allowed), null, false));
+			cases.add(new SecurityContractCase<>(signature(method), method, call, Set.of(allowed), null,
+					false));
 			return this;
 		}
 
