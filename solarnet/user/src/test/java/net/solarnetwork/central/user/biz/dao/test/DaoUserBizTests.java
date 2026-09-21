@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -92,7 +93,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("static-access")
@@ -583,6 +584,40 @@ public class DaoUserBizTests {
 		// THEN
 		assertThat(xfer, sameInstance(userNodeXfer));
 		assertThat("UserNode now owned by recipient", userNode.getUser(), sameInstance(recipient));
+	}
+
+	@Test
+	public void confirmTransfer_notNodeOwner() {
+		// GIVEN
+		// transfer requested by a user that does not own the node
+		final UserNodeTransfer userNodeXfer = new UserNodeTransfer(TEST_USER_ID_2, TEST_NODE_ID,
+				"recipient@localhost");
+		final UserNodePK userNodePk = new UserNodePK(TEST_USER_ID_2, TEST_NODE_ID);
+		given(userNodeDao.getUserNodeTransfer(userNodePk)).willReturn(userNodeXfer);
+
+		// node owned by a different user
+		final UserNode userNode = new UserNode(testUser, testNode);
+		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Transfer denied because requesting user does not own node")
+			.isThrownBy(() -> userBiz.confirmNodeOwnershipTransfer(TEST_USER_ID_2, TEST_NODE_ID, true))
+			.returns(AuthorizationException.Reason.ACCESS_DENIED, from(AuthorizationException::getReason))
+			;
+
+		// THEN
+		then(userNodeDao).should(never()).deleteUserNodeTransfer(any());
+		then(userNodeDao).should(never()).save(any());
+		then(userAlertDao).shouldHaveNoInteractions();
+		then(userAuthTokenDao).shouldHaveNoInteractions();
+
+		and.then(userNode.getUser())
+			.as("Node ownership unchanged")
+			.isSameAs(testUser)
+			;
+		// @formatter:on
 	}
 
 	@Test
