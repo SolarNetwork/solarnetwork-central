@@ -78,7 +78,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -449,6 +449,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		final UserNodeTransfer xfer = requireNonNullObject(userNodeDao.getUserNodeTransfer(pk), pk);
 		if ( accept ) {
 			UserNode userNode = requireNonNullObject(userNodeDao.get(nodeId), nodeId);
+			if ( !userId.equals(userNode.getUserId()) ) {
+				// the transfer must come from the current node owner
+				log.warn("Access DENIED to transfer {}; node owned by user {}", pk,
+						userNode.getUserId());
+				throw new AuthorizationException(Reason.ACCESS_DENIED, pk);
+			}
 			User recipient = requireNonNullObject(
 					userDao.getUserByEmail(nonnull(xfer.getEmail(), "Transfer email")), xfer.getEmail());
 

@@ -28,12 +28,17 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
+import static net.solarnetwork.central.test.CommonTestUtils.randomEmail;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_USERNAME;
 import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_USER_ID;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
@@ -52,7 +57,7 @@ import net.solarnetwork.central.test.security.WithMockSecurityUser;
  * Web integration tests for the {@link MyNodesController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,6 +72,281 @@ public class MyNodesControllerWebTests {
 
 	@Autowired
 	private MockMvc mvc;
+
+	private void createActorUser() {
+		insertUser(jdbcOperations, DEFAULT_USER_ID, DEFAULT_USERNAME, randomString(), randomString());
+	}
+
+	private Long createUser(String email) {
+		final Long userId = randomLong();
+		insertUser(jdbcOperations, userId, email, randomString(), randomString());
+		return userId;
+	}
+
+	private Long createUserNode(Long userId) {
+		final Long locId = insertLocation(jdbcOperations, "NZ", "Pacific/Auckland");
+		final Long nodeId = insertNode(jdbcOperations, locId);
+		insertUserNode(jdbcOperations, userId, nodeId, true);
+		return nodeId;
+	}
+
+	private void insertNodeTransfer(Long userId, Long nodeId, String recipient) {
+		jdbcOperations.update(
+				"INSERT INTO solaruser.user_node_xfer (user_id, node_id, recipient) VALUES (?, ?, ?)",
+				userId, nodeId, recipient);
+	}
+
+	private Long nodeOwnerId(Long nodeId) {
+		return jdbcOperations.queryForObject(
+				"SELECT user_id FROM solaruser.user_node WHERE node_id = ?", Long.class, nodeId);
+	}
+
+	private List<Map<String, Object>> nodeTransfers(Long nodeId) {
+		return jdbcOperations.queryForList("""
+				SELECT user_id, node_id, recipient::text AS recipient
+				FROM solaruser.user_node_xfer
+				WHERE node_id = ?
+				""", nodeId);
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void requestNodeTransfer() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long nodeId = createUserNode(DEFAULT_USER_ID);
+		final String recipient = randomEmail();
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/requestNodeTransfer")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", DEFAULT_USER_ID.toString())
+				.param("nodeId", nodeId.toString())
+				.param("recipient", recipient)
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			;
+
+		// THEN
+		then(nodeTransfers(nodeId))
+			.as("Transfer request created for own node")
+			.containsExactly(Map.of("user_id", DEFAULT_USER_ID, "node_id", nodeId, "recipient", recipient))
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void requestNodeTransfer_otherUserNode() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/requestNodeTransfer")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", DEFAULT_USER_ID.toString())
+				.param("nodeId", nodeId.toString())
+				.param("recipient", DEFAULT_USERNAME)
+				.with(csrf())
+			)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(nodeTransfers(nodeId))
+			.as("Transfer request not created for node owned by another user")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void requestNodeTransfer_asOtherUser() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/requestNodeTransfer")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", ownerId.toString())
+				.param("nodeId", nodeId.toString())
+				.param("recipient", DEFAULT_USERNAME)
+				.with(csrf())
+			)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(nodeTransfers(nodeId))
+			.as("Transfer request not created on behalf of another user")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void confirmNodeTransfer() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+		insertNodeTransfer(ownerId, nodeId, DEFAULT_USERNAME);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/confirmNodeTransferRequest")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", ownerId.toString())
+				.param("nodeId", nodeId.toString())
+				.param("accept", "true")
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			;
+
+		// THEN
+		then(nodeOwnerId(nodeId))
+			.as("Node transferred to recipient")
+			.isEqualTo(DEFAULT_USER_ID)
+			;
+		then(nodeTransfers(nodeId))
+			.as("Transfer request removed")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void confirmNodeTransfer_forgedRequest() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+
+		// transfer request that claims the actor owns the node
+		insertNodeTransfer(DEFAULT_USER_ID, nodeId, DEFAULT_USERNAME);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/confirmNodeTransferRequest")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", DEFAULT_USER_ID.toString())
+				.param("nodeId", nodeId.toString())
+				.param("accept", "true")
+				.with(csrf())
+			)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(nodeOwnerId(nodeId))
+			.as("Node ownership unchanged")
+			.isEqualTo(ownerId)
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void confirmNodeTransfer_notRecipient() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+		final String recipient = randomEmail();
+		createUser(recipient);
+		insertNodeTransfer(ownerId, nodeId, recipient);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/confirmNodeTransferRequest")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", ownerId.toString())
+				.param("nodeId", nodeId.toString())
+				.param("accept", "true")
+				.with(csrf())
+			)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(nodeOwnerId(nodeId))
+			.as("Node ownership unchanged")
+			.isEqualTo(ownerId)
+			;
+		then(nodeTransfers(nodeId))
+			.as("Transfer request unchanged")
+			.containsExactly(Map.of("user_id", ownerId, "node_id", nodeId, "recipient", recipient))
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void cancelNodeTransfer() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long nodeId = createUserNode(DEFAULT_USER_ID);
+		insertNodeTransfer(DEFAULT_USER_ID, nodeId, randomEmail());
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/cancelNodeTransferRequest")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", DEFAULT_USER_ID.toString())
+				.param("nodeId", nodeId.toString())
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			;
+
+		// THEN
+		then(nodeTransfers(nodeId))
+			.as("Transfer request removed")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void cancelNodeTransfer_otherUserTransfer() throws Exception {
+		// GIVEN
+		createActorUser();
+		final Long ownerId = createUser(randomEmail());
+		final Long nodeId = createUserNode(ownerId);
+		final String recipient = randomEmail();
+		insertNodeTransfer(ownerId, nodeId, recipient);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/my-nodes/cancelNodeTransferRequest")
+				.accept(MediaType.APPLICATION_JSON)
+				.param("userId", ownerId.toString())
+				.param("nodeId", nodeId.toString())
+				.with(csrf())
+			)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(nodeTransfers(nodeId))
+			.as("Transfer request unchanged")
+			.containsExactly(Map.of("user_id", ownerId, "node_id", nodeId, "recipient", recipient))
+			;
+		// @formatter:on
+	}
 
 	@WithMockSecurityUser
 	@Test
