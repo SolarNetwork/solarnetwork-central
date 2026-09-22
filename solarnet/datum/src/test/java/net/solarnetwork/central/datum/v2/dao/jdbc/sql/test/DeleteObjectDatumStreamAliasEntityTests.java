@@ -57,7 +57,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
  * Test cases for the {@link DeleteObjectDatumStreamAliasEntity} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -210,6 +210,26 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 		thenShouldPrepareSql("object-datum-stream-alias-delete-nodes-aliasOnly.sql");
 
 		thenStatementShouldSetAndFreeArray(1, aliasNodeIdsArray);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void delete_user() throws SQLException {
+		// GIVEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(randomLong());
+
+		givenPrepareStatement();
+
+		// WHEN
+		final PreparedStatement result = new DeleteObjectDatumStreamAliasEntity(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		thenShouldPrepareSql("object-datum-stream-alias-delete-user.sql");
+
+		then(stmt).should().setObject(1, filter.getUserId());
 
 		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}

@@ -36,6 +36,8 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -538,6 +540,42 @@ public class QuerySecurityAspectTests {
 
 		// THEN
 		then(result).as("All source IDs returned").isSameAs(availableSourceIds);
+	}
+
+	@Test
+	public void availableSourceIdsFilter_exactPolicySource() throws Throwable {
+		// GIVEN
+		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final SolarNodeOwnershipDao ownershipDao = mock(SolarNodeOwnershipDao.class);
+		given(ownershipDao.ownershipForNodeId(nodeId))
+				.willReturn(privateOwnershipFor(nodeId, userId));
+		final QuerySecurityAspect aspect = new QuerySecurityAspect(ownershipDao);
+
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new LinkedHashSet<>(List.of(nodeId)))
+				.withSourceIds(new LinkedHashSet<>(List.of("/A/B/watts"))).build();
+		setAuthenticatedReadNodeDataToken(userId, policy);
+
+		final ProceedingJoinPoint pjp = mock(ProceedingJoinPoint.class);
+		given(pjp.proceed()).willReturn(new LinkedHashSet<>(List.of(new NodeSourcePK(nodeId, "/A/B/watts"),
+				new NodeSourcePK(nodeId, "/A/C/watts"), new NodeSourcePK(nodeId, "/B/B/watts"))));
+		replayAll();
+
+		// WHEN
+		final DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(nodeId);
+		@SuppressWarnings("unchecked")
+		final Set<NodeSourcePK> result = (Set<NodeSourcePK>) aspect
+				.availableSourcesFilterAccessCheck(pjp, criteria);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Only the policy source returned")
+			.containsExactly(new NodeSourcePK(nodeId, "/A/B/watts"))
+			;
+		// @formatter:on
 	}
 
 	@Test

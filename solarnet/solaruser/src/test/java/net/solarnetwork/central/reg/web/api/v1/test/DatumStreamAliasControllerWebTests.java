@@ -39,6 +39,7 @@ import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -73,7 +74,7 @@ import tools.jackson.databind.ObjectMapper;
  * class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -722,6 +723,59 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 			.returns(alias2.getOriginalSourceId(), from(ObjectDatumStreamAliasEntity::getOriginalSourceId))
 			.returns(alias2.getObjectId(), from(ObjectDatumStreamAliasEntity::getObjectId))
 			.returns(alias2.getSourceId(), from(ObjectDatumStreamAliasEntity::getSourceId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteAliases_asUnrestrictedToken_otherUserAliasesKept() throws Exception {
+		// GIVEN
+		final Instant now = Instant.now();
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final List<Long> nodeIds = createUserNodes(1);
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeIds.getFirst(), randomSourceId());
+
+		final Long userId2 = randomLong();
+		setupTestUser(userId2, userId2 + "@localhost");
+		final List<Long> user2NodeIds = createUserNodes(userId2, 1);
+		final var meta2 = emptyMeta(randomUUID(), TEST_TZ, Node, user2NodeIds.getFirst(),
+				randomSourceId());
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta, meta2));
+
+		final var alias = new ObjectDatumStreamAliasEntity(randomUUID(), now, now, Node,
+				nodeIds.getFirst(), randomSourceId(), meta.getObjectId(), meta.getSourceId());
+		aliasDao.save(alias);
+		final var alias2 = new ObjectDatumStreamAliasEntity(randomUUID(), now, now, Node,
+				user2NodeIds.getFirst(), randomSourceId(), meta2.getObjectId(), meta2.getSourceId());
+		aliasDao.save(alias2);
+
+		// WHEN
+		// @formatter:off
+		final String path = "/api/v1/sec/datum/stream/alias";
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.DELETE.name())
+				.host("localhost")
+				.path(path)
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		mvc.perform(delete(path)
+				.header(HttpHeaders.AUTHORIZATION, auth.build())
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			;
+
+		// THEN
+		then(aliasDao.get(alias.getStreamId()))
+			.as("User's alias deleted")
+			.isNull()
+			;
+		then(aliasDao.get(alias2.getStreamId()))
+			.as("Other user's alias not deleted")
+			.isNotNull()
 			;
 		// @formatter:on
 	}

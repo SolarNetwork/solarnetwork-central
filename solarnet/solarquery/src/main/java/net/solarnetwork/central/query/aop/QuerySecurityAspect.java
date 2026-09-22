@@ -275,7 +275,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		try {
 			String[] resultSourceIds = enforcer
 					.verifySourceIds(allSourceIds.keySet().toArray(String[]::new));
-			if ( resultSourceIds.length != allowedSourceIds.size() ) {
+			if ( resultSourceIds.length != allSourceIds.size() ) {
 				result = new LinkedHashSet<>(resultSourceIds.length);
 				for ( String sourceId : resultSourceIds ) {
 					Set<NodeSourcePK> pks = allSourceIds.get(sourceId);

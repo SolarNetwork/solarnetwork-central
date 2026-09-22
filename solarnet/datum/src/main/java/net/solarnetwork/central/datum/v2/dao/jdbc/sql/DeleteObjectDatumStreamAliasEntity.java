@@ -42,7 +42,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
  * filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCreator, SqlProvider {
 
@@ -162,7 +162,7 @@ public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCrea
 						(matchType == AliasOnly ? "da.alias_source_id" : "da.source_id"), where);
 			}
 		}
-		if ( idx > 0 ) {
+		if ( !where.isEmpty() ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
 	}
