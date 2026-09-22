@@ -18,7 +18,6 @@ ext {
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'net.ltgt.errorprone'
-	apply plugin: 'com.diffplug.spotless'
 
 	group = "net.solarnetwork.central"
 
@@ -223,11 +222,13 @@ subprojects {
 		maxHeapSize = '1500m'
 	}
 	
-	spotless {
-		java {
-			eclipse()
-				.configFile("${project.rootDir}/config/solarnetwork-codeformat.xml")
-			
+    pluginManager.withPlugin('spotless') { 
+		spotless {
+			java {
+				eclipse()
+					.configFile("${project.rootDir}/config/solarnetwork-codeformat.xml")
+				
+			}
 		}
 	}
 }
