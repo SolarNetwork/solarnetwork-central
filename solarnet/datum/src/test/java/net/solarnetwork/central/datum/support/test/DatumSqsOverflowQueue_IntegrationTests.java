@@ -140,7 +140,8 @@ public class DatumSqsOverflowQueue_IntegrationTests extends BaseSqsIntegrationTe
 
 		collector = new SqsOverflowQueue<Object, DatumPK>(stats, "Datum", client, SQS_PROPS.getUrl(),
 				workQueue, completedSqsMessageHandles,
-				new DatumWriteOnlyDaoGenericAdapter(new TestDatumDao(entityCodec::entityId)), entityCodec);
+				new DatumWriteOnlyDaoGenericAdapter(new TestDatumDao(entityCodec::entityId)),
+				entityCodec);
 		collector.setExceptionHandler(this);
 		collector.setReadConcurrency(1);
 		collector.setWriteConcurrency(2);

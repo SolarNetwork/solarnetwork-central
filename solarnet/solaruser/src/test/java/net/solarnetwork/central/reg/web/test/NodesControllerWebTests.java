@@ -411,8 +411,8 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		SecurityUtils.becomeUser(randomString() + "@localhost", randomString(), userId);
 		try {
 			for ( int i = 0; i < nodeCount; i++ ) {
-				NewNodeRequest req = new NewNodeRequest(userId, certPassword,
-						TimeZone.getTimeZone(tz), Locale.forLanguageTag("en-" + country));
+				NewNodeRequest req = new NewNodeRequest(userId, certPassword, TimeZone.getTimeZone(tz),
+						Locale.forLanguageTag("en-" + country));
 				UserNode node = registrationBiz.createNodeManually(req);
 				nodes.add(node);
 			}

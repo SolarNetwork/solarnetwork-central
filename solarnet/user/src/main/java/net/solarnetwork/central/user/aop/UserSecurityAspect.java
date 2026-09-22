@@ -45,7 +45,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security enforcing AOP aspect for {@link UserBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Aspect
 @Component
@@ -124,13 +124,6 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Match getting a specific pending user node confirmation.
-	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserBiz.getPendingUserNodeConfirmation(..))")
-	public void getPendingUserNodeConfirmation() {
-	}
-
-	/**
 	 * Match getting a user node certificate.
 	 * 
 	 * @param userId
@@ -175,8 +168,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			(execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserNodeArchivedStatus(..))
 			|| execution(* net.solarnetwork.central.user.biz.UserBiz.generateUserAuthToken(..))
 			|| execution(* net.solarnetwork.central.user.biz.UserBiz.deleteUserAuthToken(..))
-			|| execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserAuthToken*(..))
-			|| execution(* net.solarnetwork.central.user.biz.UserBiz.createSnws2AuthorizationBuilder(..)))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserAuthToken*(..)))
 			&& args(userId,..)
 			""")
 	public void writeForUserId(Long userId) {
@@ -319,26 +311,6 @@ public class UserSecurityAspect extends AuthorizationSupport {
 		for ( Long nodeId : nodeIds ) {
 			requireNodeWriteAccess(nodeId);
 		}
-	}
-
-	/**
-	 * Enforce node ID policy restrictions when requesting a pending user node
-	 * confirmation.
-	 *
-	 * @param pjp
-	 *        the join point
-	 * @return the allowed result
-	 * @throws Throwable
-	 *         if anything goes wrong
-	 */
-	@Around("getPendingUserNodeConfirmation()")
-	public UserNodeConfirmation getPendingUserNodeConfirmationAccessCheck(ProceedingJoinPoint pjp)
-			throws Throwable {
-		UserNodeConfirmation result = (UserNodeConfirmation) pjp.proceed();
-		if ( result != null && result.getId() != null ) {
-			requireNodeReadAccess(result.getNodeId());
-		}
-		return result;
 	}
 
 	/**

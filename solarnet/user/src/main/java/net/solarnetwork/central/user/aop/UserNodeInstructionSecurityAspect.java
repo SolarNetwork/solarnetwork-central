@@ -27,6 +27,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
@@ -77,8 +78,8 @@ public class UserNodeInstructionSecurityAspect extends AuthorizationSupport {
 	 * @param userKey
 	 *        the user key
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserNodeInstructionBiz.save*(..)) && args(userKey,..)")
-	public void saveEntityForUserKey(UserIdRelated userKey) {
+	@Pointcut("execution(* net.solarnetwork.central.user.biz.UserNodeInstructionBiz.save*(..)) && args(userKey,input,..)")
+	public void saveEntityForUserKey(UserIdRelated userKey, Object input) {
 	}
 
 	/**
@@ -96,9 +97,15 @@ public class UserNodeInstructionSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(userId);
 	}
 
-	@Before(value = "saveEntityForUserKey(userKey)", argNames = "userKey")
-	public void saveEntityAccessCheck(UserIdRelated userKey) {
+	@Before(value = "saveEntityForUserKey(userKey,input)", argNames = "userKey,input")
+	public void saveEntityAccessCheck(UserIdRelated userKey, Object input) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+		if ( input instanceof NodeIdRelated n ) {
+			final Long nodeId = n.getNodeId();
+			if ( nodeId != null ) {
+				requireNodeWriteAccess(nodeId);
+			}
+		}
 	}
 
 	@Before(value = "updateEntityForUserKey(userKey)", argNames = "userKey")

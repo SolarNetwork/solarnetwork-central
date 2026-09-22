@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.biz;
 
-import java.time.Instant;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNode;
@@ -39,13 +38,12 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeInfo;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SecurityPolicy;
-import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * API for registered user tasks.
  *
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public interface UserBiz {
 
@@ -155,16 +153,6 @@ public interface UserBiz {
 	 *         found
 	 */
 	List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId);
-
-	/**
-	 * Get a specific pending confirmation.
-	 *
-	 * @param userNodeConfirmationId
-	 *        the ID of the pending confirmation
-	 * @return the pending confirmation, or {@code null} if not found
-	 */
-	@Nullable
-	UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
 
 	/**
 	 * Get a specific UserNodeCertificate object.
@@ -280,25 +268,4 @@ public interface UserBiz {
 	 */
 	UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info);
 
-	/**
-	 * Create an authorization builder object with a populated signing key for a
-	 * specific token.
-	 *
-	 * <p>
-	 * Use this method to create a new builder with a signing key populated for
-	 * generating signed SNWS2 {@code Authorization} HTTP header values.
-	 * </p>
-	 *
-	 * @param userId
-	 *        the user ID
-	 * @param tokenId
-	 *        the UserAuthToken ID to use
-	 * @param signingDate
-	 *        the date to generate the signing key with
-	 * @return the builder, or {@code null} if the token is not available
-	 * @since 2.0
-	 */
-	@Nullable
-	Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(Long userId, String tokenId,
-			Instant signingDate);
 }

@@ -120,13 +120,11 @@ public class HttpSessionTests {
 		final SessionCookie cookie = loginPageSessionCookie();
 
 		// THEN
-		final List<Map<String, Object>> sessions = jdbcOperations.queryForList(
-				"SELECT primary_id, max_inactive_interval FROM solaruser.http_session "
-						+ "WHERE session_id = ?",
-				cookie.sessionId());
+		final List<Map<String, Object>> sessions = jdbcOperations
+				.queryForList("SELECT primary_id, max_inactive_interval FROM solaruser.http_session "
+						+ "WHERE session_id = ?", cookie.sessionId());
 		then(sessions).as("Session saved to database").hasSize(1);
-		then(sessions.getFirst())
-				.as("Session timeout from the server.servlet.session.timeout setting")
+		then(sessions.getFirst()).as("Session timeout from the server.servlet.session.timeout setting")
 				.containsEntry("max_inactive_interval", (int) sessionTimeout.toSeconds());
 
 		final Integer attributeCount = jdbcOperations.queryForObject(

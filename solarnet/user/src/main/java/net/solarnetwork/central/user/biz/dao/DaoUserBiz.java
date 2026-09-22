@@ -29,7 +29,6 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,13 +71,12 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
-import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -236,13 +234,6 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		User user = userDao.get(userId);
 		return (user != null ? userNodeConfirmationDao.findPendingConfirmationsForUser(user)
 				: emptyList());
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable UserNodeConfirmation getPendingUserNodeConfirmation(
-			final Long userNodeConfirmationId) {
-		return userNodeConfirmationDao.get(userNodeConfirmationId);
 	}
 
 	@Override
@@ -501,21 +492,6 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			cancelNodeOwnershipTransfer(userId, nodeId);
 		}
 		return xfer;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(Long userId,
-			String tokenId, Instant signingDate) {
-		assert userId != null;
-		UserAuthToken token = userAuthTokenDao.get(tokenId);
-		if ( token == null ) {
-			return null;
-		}
-		if ( !userId.equals(token.getUserId()) ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
-		}
-		return userAuthTokenDao.createSnws2AuthorizationBuilder(tokenId, signingDate);
 	}
 
 	/**

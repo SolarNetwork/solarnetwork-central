@@ -33,8 +33,8 @@ import net.solarnetwork.central.domain.UserUuidLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public class EndpointAuthConfigurationInput
-		extends BaseInstructionInputConfigurationInput<EndpointAuthConfiguration, UserUuidLongCompositePK> {
+public class EndpointAuthConfigurationInput extends
+		BaseInstructionInputConfigurationInput<EndpointAuthConfiguration, UserUuidLongCompositePK> {
 
 	/**
 	 * Constructor.

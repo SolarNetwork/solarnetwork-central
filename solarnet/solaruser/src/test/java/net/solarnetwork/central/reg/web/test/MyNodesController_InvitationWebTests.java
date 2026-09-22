@@ -50,8 +50,8 @@ import net.solarnetwork.central.reg.web.MyNodesController;
 import net.solarnetwork.central.test.security.WithMockSecurityUser;
 
 /**
- * Web integration tests for the {@link MyNodesController} class node
- * invitation support.
+ * Web integration tests for the {@link MyNodesController} class node invitation
+ * support.
  *
  * @author matt
  * @version 1.1

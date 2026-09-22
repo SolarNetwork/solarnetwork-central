@@ -34,9 +34,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -58,7 +55,6 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicSecurityPolicy;
-import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
@@ -280,28 +276,6 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		assertThat("Results available", results, is(notNullValue()));
 		assertThat("All results for user 2 returned", results, hasSize(1));
 		assertThat(results.get(0), is(equalTo(authToken3)));
-	}
-
-	private Instant getTestDate() {
-		return LocalDateTime.of(2017, 3, 25, 14, 30, 0).atZone(ZoneOffset.UTC).toInstant();
-	}
-
-	@Test
-	public void createAuthBuilder() {
-		storeNew();
-		Instant date = getTestDate();
-		Snws2AuthorizationBuilder builder = userAuthTokenDao.createSnws2AuthorizationBuilder(TEST_TOKEN,
-				date);
-
-		assertThat("Builder", builder, notNullValue());
-		assertThat("Signing key", builder.signingKeyHex(),
-				equalTo("4ffe547294445f9f4e89f80c4c0801b95d4329a9936389582ae5a6a5758c70fe"));
-
-		builder.host("localhost").path("/api/test");
-
-		final String result = builder.build();
-		assertThat("Authorization header", result, equalTo(
-				"SNWS2 Credential=public.token12345678,SignedHeaders=date;host,Signature=535124f5f333c0aebe42996a429a2a6e4b347dcc2ac2d8cbb8ac6b641fafbab7"));
 	}
 
 	@Test

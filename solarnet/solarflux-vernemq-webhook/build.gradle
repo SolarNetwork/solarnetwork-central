@@ -8,6 +8,7 @@ plugins {
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.diffplug.spotless'
 apply plugin: 'org.graalvm.buildtools.native'
 
 description = 'SolarFlux VerneMQ Webhook'
