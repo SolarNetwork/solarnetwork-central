@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.domain.NodeMetadata;
@@ -55,7 +56,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SecurityPolicyEnforcerTests {
 
@@ -963,4 +964,52 @@ public class SecurityPolicyEnforcerTests {
 				""", filter.getSourceIds(), is(arrayContaining("/a/1", "/b/1", "/b/2")));
 	}
 
+
+	/** A filter whose source IDs cannot be read. */
+	public static final class ThrowingDatumFilter implements GeneralNodeDatumFilter {
+
+		@Override
+		public Long getNodeId() {
+			return null;
+		}
+
+		@Override
+		public Long[] getNodeIds() {
+			return null;
+		}
+
+		@Override
+		public String getSourceId() {
+			throw new IllegalStateException("Source IDs not available.");
+		}
+
+		@Override
+		public String[] getSourceIds() {
+			throw new IllegalStateException("Source IDs not available.");
+		}
+
+		@Override
+		public GeneralDatumMetadata getMetadata() {
+			return null;
+		}
+
+	}
+
+	@Disabled("Errors thrown while verifying a policy are ignored")
+	@Test
+	public void verify_errorReadingDelegate() {
+		// GIVEN
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(Set.of(TEST_SOURCE_ID)).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester",
+				new ThrowingDatumFilter());
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(RuntimeException.class)
+			.as("An error thrown while verifying a policy is not ignored")
+			.isThrownBy(enforcer::verify)
+			;
+		// @formatter:on
+	}
 }

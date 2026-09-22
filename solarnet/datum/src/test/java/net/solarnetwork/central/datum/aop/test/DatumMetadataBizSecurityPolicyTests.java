@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.aop.test;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.test.aop.SecuredProxies.securedProxy;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +41,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
@@ -47,7 +49,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * {@code DatumMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicyTestSupport {
 
@@ -149,4 +151,19 @@ public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicy
 		// @formatter:on
 	}
 
+
+	@Disabled("Policy nodes are not applied to public nodes in datum metadata reads")
+	@Test
+	public void restrictedToken_streamIds_publicNode() {
+		// GIVEN
+		a.restrictedTokenActor().become();
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Public node outside the policy denied")
+			.isThrownBy(() -> biz.findDatumStreamMetadataIds(nodes(a.publicNodeId())))
+			;
+		// @formatter:on
+	}
 }

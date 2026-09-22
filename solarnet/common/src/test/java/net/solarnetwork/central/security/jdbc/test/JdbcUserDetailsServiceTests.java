@@ -31,6 +31,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -55,7 +56,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Test cases for the {@link JdbcUserDetailsService} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -201,4 +202,30 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 		// @formatter:on
 	}
 
+
+	@Disabled("A token whose policy cannot be parsed is treated as unrestricted")
+	@Test
+	public void matchingToken_unparsablePolicy() {
+		// GIVEN
+		final Long userId = 123L;
+		setupTestUser(userId);
+		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
+		service.setAuthoritiesByUsernameQuery(
+				JdbcUserDetailsService.DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL);
+		jdbcTemplate.update("""
+				INSERT INTO solaruser.user_auth_token
+					(auth_token,user_id,auth_secret,status,token_type,jpolicy)
+				VALUES (?,?,?,?::solaruser.user_auth_token_status
+					,?::solaruser.user_auth_token_type,?::json)
+				""", TEST_TOKEN, userId, TEST_TOKEN_PASSWORD, "Active", "User",
+				"{\"nodeIds\":\"not-a-list\"}");
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(RuntimeException.class)
+			.as("A token whose policy cannot be parsed is not treated as unrestricted")
+			.isThrownBy(() -> service.loadUserByUsername(TEST_TOKEN))
+			;
+		// @formatter:on
+	}
 }

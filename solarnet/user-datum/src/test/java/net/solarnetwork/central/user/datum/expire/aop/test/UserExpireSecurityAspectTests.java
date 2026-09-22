@@ -23,12 +23,15 @@
 package net.solarnetwork.central.user.datum.expire.aop.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
 import java.time.Instant;
+import java.util.Set;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -39,15 +42,18 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.datum.expire.aop.UserExpireSecurityAspect;
 import net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfiguration;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 
 /**
  * Test cases for the {@link UserExpireSecurityAspect} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserExpireSecurityAspectTests implements CentralTestConstants {
 
@@ -70,6 +76,11 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, TEST_USER_ID, "Test User", false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(user, "foobar", roles);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	private void becomeNodeRestrictedToken(Long... nodeIds) {
+		SecurityUtils.becomeToken(randomString(), SecurityTokenType.User, TEST_USER_ID,
+				BasicSecurityPolicy.builder().withNodeIds(Set.of(nodeIds)).build());
 	}
 
 	@BeforeEach
@@ -161,6 +172,24 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.datumFilterCheck(filter));
+	}
+
+	@Disabled("Policy nodes are not applied to datum filters without node IDs")
+	@Test
+	public void datumFilterNoNodes_restrictedToken() {
+		// GIVEN
+		becomeNodeRestrictedToken(2L);
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Filter without node IDs denied for a token restricted to nodes")
+			.isThrownBy(() -> aspect.datumFilterCheck(filter))
+			;
+		// @formatter:on
 	}
 
 	@Test
