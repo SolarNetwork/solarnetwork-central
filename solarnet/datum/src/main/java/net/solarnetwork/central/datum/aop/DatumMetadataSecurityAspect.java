@@ -49,12 +49,13 @@ import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.SecurityPolicy;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Aspect
 @Component
@@ -154,12 +155,23 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to reading datum metadata.
 	 *
+	 * <p>
+	 * Read access is required for every node in the filter.
+	 * </p>
+	 *
 	 * @param filter
 	 *        the filter to verify
 	 */
 	@Before(value = "findMetadata(filter)", argNames = "filter")
 	public void readMetadataCheck(GeneralNodeDatumMetadataFilter filter) {
-		requireNodeReadAccess(filter == null ? null : filter.getNodeId());
+		final Long[] nodeIds = (filter != null ? filter.getNodeIds() : null);
+		if ( nodeIds == null || nodeIds.length < 1 ) {
+			log.warn("Access DENIED to unspecified nodes");
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		for ( Long nodeId : nodeIds ) {
+			requireNodeReadAccess(nodeId);
+		}
 	}
 
 	/**
@@ -240,6 +252,12 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to reading datum metadata.
 	 *
+	 * <p>
+	 * Location stream searches do not require any access. Node stream
+	 * searches, including those within a location, require read access to
+	 * every node and user in the filter, and at least one of either.
+	 * </p>
+	 *
 	 * @param filter
 	 *        the filter to verify
 	 * @since 1.3
@@ -250,9 +268,13 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 				&& filter.getLocationId() == null) ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
-		if ( filter.getLocationId() != null ) {
+		if ( filter.effectiveObjectKind() == ObjectDatumKind.Location ) {
 			// location searches do not require any check
 			return;
+		}
+		if ( filter.getUserId() == null && filter.getNodeId() == null ) {
+			log.warn("Access DENIED to node streams without node or user criteria");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 		Long[] ids = filter.getNodeIds();
 		if ( ids != null ) {
