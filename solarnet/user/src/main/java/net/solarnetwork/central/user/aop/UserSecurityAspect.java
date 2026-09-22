@@ -168,8 +168,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			(execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserNodeArchivedStatus(..))
 			|| execution(* net.solarnetwork.central.user.biz.UserBiz.generateUserAuthToken(..))
 			|| execution(* net.solarnetwork.central.user.biz.UserBiz.deleteUserAuthToken(..))
-			|| execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserAuthToken*(..))
-			|| execution(* net.solarnetwork.central.user.biz.UserBiz.createSnws2AuthorizationBuilder(..)))
+			|| execution(* net.solarnetwork.central.user.biz.UserBiz.updateUserAuthToken*(..)))
 			&& args(userId,..)
 			""")
 	public void writeForUserId(Long userId) {

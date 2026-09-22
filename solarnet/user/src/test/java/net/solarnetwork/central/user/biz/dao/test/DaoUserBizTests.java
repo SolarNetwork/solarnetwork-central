@@ -41,8 +41,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -87,13 +85,12 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.LocationPrecision;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("static-access")
@@ -665,26 +662,6 @@ public class DaoUserBizTests {
 		assertThat("UserNode now owned by recipient", userNode.getUser(), sameInstance(recipient));
 		assertThat("Auth token no longer contains transferred node", userAuthToken.getNodeIds(),
 				hasItems(TEST_NODE_ID_2));
-	}
-
-	@Test
-	public void createAuthBuilder() {
-		// GIVEN
-		UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
-				SecurityTokenType.User);
-		given(userAuthTokenDao.get(TEST_AUTH_TOKEN)).willReturn(token);
-
-		Instant signingDate = LocalDateTime.of(2017, 1, 1, 0, 0).toInstant(ZoneOffset.UTC);
-		Snws2AuthorizationBuilder builder = new Snws2AuthorizationBuilder(TEST_AUTH_TOKEN);
-		given(userAuthTokenDao.createSnws2AuthorizationBuilder(TEST_AUTH_TOKEN, signingDate))
-				.willReturn(builder);
-
-		// WHEN
-		Snws2AuthorizationBuilder result = userBiz.createSnws2AuthorizationBuilder(TEST_USER_ID,
-				TEST_AUTH_TOKEN, signingDate);
-
-		// THEN
-		assertThat("Builder", result, sameInstance(builder));
 	}
 
 	@Test
