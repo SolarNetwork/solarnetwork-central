@@ -49,12 +49,15 @@ import net.solarnetwork.central.test.tenant.TestActor;
  * @param targetInvokedOnDeny
  *        {@code true} if the proxy target may be invoked even when access is
  *        denied, for example when the aspect checks the returned value
+ * @param targetDependent
+ *        {@code true} if the outcome depends on the proxy target, for example
+ *        when the aspect calls the target to look up data to check
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public record SecurityContractCase<T>(String name, Method method, ApiCall<? super T> call,
 		Set<TestActor> allowed, @Nullable Consumer<? super SecuredProxy<T>> setup,
-		boolean targetInvokedOnDeny) {
+		boolean targetInvokedOnDeny, boolean targetDependent) {
 
 	/**
 	 * Test if an actor is allowed to make the invocation.
@@ -71,14 +74,15 @@ public record SecurityContractCase<T>(String name, Method method, ApiCall<? supe
 	 * Test if the case depends only on the invocation arguments.
 	 *
 	 * <p>
-	 * Such cases do not rely on stubbed mocks, and so can also verify
-	 * application service beans.
+	 * Such cases do not rely on stubbed mocks or on the behaviour of the proxy
+	 * target, and so can also verify application service beans.
 	 * </p>
 	 *
-	 * @return {@code true} if the case does not have any setup
+	 * @return {@code true} if the case does not have any setup and does not
+	 *         depend on the proxy target
 	 */
 	public boolean argumentsOnly() {
-		return setup == null;
+		return setup == null && !targetDependent;
 	}
 
 }

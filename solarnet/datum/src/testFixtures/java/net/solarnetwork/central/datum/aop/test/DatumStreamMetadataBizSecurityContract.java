@@ -53,7 +53,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class DatumStreamMetadataBizSecurityContract {
 
@@ -83,7 +83,8 @@ public final class DatumStreamMetadataBizSecurityContract {
 						b.privateNodeId(), null))
 					.given(streamExists)
 					.as("to other user node")
-				.allowing(biz -> biz.updateIdAttributes(ObjectDatumKind.Node, streamId, null, "/new"))
+				.allowing(biz -> biz.updateIdAttributes(ObjectDatumKind.Node, UUID.randomUUID(), null,
+						"/new"))
 					.as("unknown stream")
 				.allowing(biz -> biz.updateIdAttributes(ObjectDatumKind.Location, streamId, null,
 						"/new"))

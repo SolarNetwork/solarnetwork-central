@@ -77,7 +77,7 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  * @param <T>
  *        the API type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 public final class SecurityContract<T> {
@@ -488,7 +488,7 @@ public final class SecurityContract<T> {
 			final Set<TestActor> allowed = new LinkedHashSet<>(c.allowed());
 			allowed.addAll(Arrays.asList(actors));
 			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(),
-					Set.copyOf(allowed), c.setup(), c.targetInvokedOnDeny()));
+					Set.copyOf(allowed), c.setup(), c.targetInvokedOnDeny(), c.targetDependent()));
 		}
 
 		/**
@@ -503,7 +503,7 @@ public final class SecurityContract<T> {
 			final Set<TestActor> allowed = new LinkedHashSet<>(c.allowed());
 			allowed.removeAll(Arrays.asList(actors));
 			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(),
-					Set.copyOf(allowed), c.setup(), c.targetInvokedOnDeny()));
+					Set.copyOf(allowed), c.setup(), c.targetInvokedOnDeny(), c.targetDependent()));
 		}
 
 		/**
@@ -520,7 +520,7 @@ public final class SecurityContract<T> {
 		public Builder<T> as(String label) {
 			final SecurityContractCase<T> c = last();
 			return replaceLast(new SecurityContractCase<>(c.name() + " [" + label + "]", c.method(),
-					c.call(), c.allowed(), c.setup(), c.targetInvokedOnDeny()));
+					c.call(), c.allowed(), c.setup(), c.targetInvokedOnDeny(), c.targetDependent()));
 		}
 
 		/**
@@ -540,7 +540,8 @@ public final class SecurityContract<T> {
 		public Builder<T> given(Consumer<? super SecuredProxy<T>> setup) {
 			final SecurityContractCase<T> c = last();
 			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(), c.allowed(),
-					requireNonNullArgument(setup, "setup"), c.targetInvokedOnDeny()));
+					requireNonNullArgument(setup, "setup"), c.targetInvokedOnDeny(),
+					c.targetDependent()));
 		}
 
 		/**
@@ -553,7 +554,26 @@ public final class SecurityContract<T> {
 		public Builder<T> targetInvokedOnDeny() {
 			final SecurityContractCase<T> c = last();
 			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(), c.allowed(),
-					c.setup(), true));
+					c.setup(), true, c.targetDependent()));
+		}
+
+		/**
+		 * Mark the last added case as one whose outcome depends on the proxy
+		 * target, for example when the aspect calls the target to look up data
+		 * to check, and the case relies on what an unstubbed mock returns.
+		 *
+		 * <p>
+		 * Such cases are not included in
+		 * {@link SecurityContract#denyTests(Object)}.
+		 * </p>
+		 *
+		 * @return this builder
+		 * @since 1.1
+		 */
+		public Builder<T> dependsOnTarget() {
+			final SecurityContractCase<T> c = last();
+			return replaceLast(new SecurityContractCase<>(c.name(), c.method(), c.call(), c.allowed(),
+					c.setup(), c.targetInvokedOnDeny(), true));
 		}
 
 		/**
@@ -569,7 +589,7 @@ public final class SecurityContract<T> {
 		private Builder<T> add(ApiCall<? super T> call, TestActor... allowed) {
 			final Method method = ApiMethods.invokedMethod(api, call);
 			cases.add(new SecurityContractCase<>(signature(method), method, call, Set.of(allowed), null,
-					false));
+					false, false));
 			return this;
 		}
 

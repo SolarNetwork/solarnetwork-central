@@ -52,7 +52,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class QueryBizSecurityContract {
 
@@ -106,6 +106,8 @@ public final class QueryBizSecurityContract {
 				.allowing(biz -> biz.findFilteredGeneralNodeDatum(new DatumFilterCommand(), null, null,
 						null))
 					.as("no node")
+					// the restricted token's policy sources are resolved with getAvailableSources()
+					.dependsOnTarget()
 				.nodeRead(biz -> biz.findFilteredAggregateGeneralNodeDatum(
 						nodeFilter(a.privateNodeId()), null, null, null))
 				.nodeRead(biz -> biz.findFilteredStreamDatum(streamFilter(streamId), null, null, null,

@@ -49,7 +49,7 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class SecurityContractTests {
@@ -359,4 +359,79 @@ public class SecurityContractTests {
 		// @formatter:on
 	}
 
+
+	@Test
+	public void denyTests_advisedService() {
+		// GIVEN
+		final SecurityContract<ToyBiz> contract = toyContract()
+				.exempt("unguardedThing", "for testing").build();
+
+		// WHEN
+		final Results results = run(contract.denyTests(toyProxy().proxy()));
+
+		// THEN
+		// @formatter:off
+		then(results.failed())
+			.as("All tests pass")
+			.isEmpty()
+			;
+		then(results.passed())
+			.as("Test for every denied actor of every case")
+			.hasSize(6 + 7 + 6 + 7)
+			.allMatch(name -> name.contains(" / denied: "))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void denyTests_unadvisedService() {
+		// GIVEN
+		final SecurityContract<ToyBiz> contract = toyContract()
+				.exempt("unguardedThing", "for testing").build();
+
+		// WHEN
+		final Results results = run(contract.denyTests(mock(DaoToyBiz.class)));
+
+		// THEN
+		// @formatter:off
+		then(results.passed())
+			.as("Denied actors are allowed by a service without the aspect applied")
+			.isEmpty()
+			;
+		then(results.failed())
+			.as("Every denied actor reported")
+			.hasSize(6 + 7 + 6 + 7)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void denyTests_excludesCasesThatDependOnMocks() {
+		// GIVEN
+		final TestTenant a = tenants.a();
+		// @formatter:off
+		final SecurityContract<ToyBiz> contract = SecurityContract.forApi(ToyBiz.class, tenants)
+				.userRead(biz -> biz.userThing(a.userId()))
+					.given(p -> {})
+				.userWrite(biz -> biz.saveUserThing(a.userId(), "foo"))
+					.dependsOnTarget()
+				.nodeRead(biz -> biz.nodeThing(a.privateNodeId()))
+				.exempt("saveNodeThing", "for testing")
+				.exempt("unguardedThing", "for testing")
+				.exempt("publicThing", "for testing")
+				.build();
+		// @formatter:on
+
+		// WHEN
+		final Results results = run(contract.denyTests(toyProxy().proxy()));
+
+		// THEN
+		// @formatter:off
+		then(results.passed())
+			.as("Only the case without setup that does not depend on the target is verified")
+			.hasSize(6)
+			.allMatch(name -> name.startsWith("nodeThing(Long) / denied: "))
+			;
+		// @formatter:on
+	}
 }
