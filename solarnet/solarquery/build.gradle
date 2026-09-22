@@ -43,6 +43,7 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
 	testImplementation testFixtures(project(':solarnet-common'))
+	testImplementation testFixtures(project(':solarnet-datum'))
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 }
