@@ -27,9 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
@@ -55,7 +53,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Test cases for the {@link InstructorSecurityAspect} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class InstructorSecurityAspectTests {
 
@@ -168,73 +166,6 @@ public class InstructorSecurityAspectTests {
 
 		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
 			service.instructionsForNodesCheck(nodeIds);
-		});
-	}
-
-	@Test
-	public void viewInstructionsByIdPass() {
-		final Long userId = (long) (Math.random() * 1000);
-		setAuthenticatedUserToken(userId, null);
-
-		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
-		long instrIdCounter = (long) (Math.random() * 1000) + 2000;
-
-		Set<Long> instructionIds = new LinkedHashSet<Long>();
-		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
-		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = nodeIdCounter++;
-			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
-			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-
-			Long instrId = instrIdCounter++;
-			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
-			instr.setId(instrId);
-			instructionIds.add(instrId);
-			instructions.add(instr);
-		}
-
-		replayAll();
-
-		service.viewInstructionsAccessCheck(instructionIds, instructions);
-	}
-
-	@Test
-	public void viewInstructionsByIdDeniedNotOwner() {
-		final Long userId = (long) (Math.random() * 1000);
-		setAuthenticatedUserToken(userId, null);
-
-		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
-		long instrIdCounter = (long) (Math.random() * 1000) + 2000;
-
-		Set<Long> instructionIds = new LinkedHashSet<Long>();
-		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
-		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = nodeIdCounter++;
-			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
-			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-
-			Long instrId = instrIdCounter++;
-			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
-			instr.setId(instrId);
-			instructionIds.add(instrId);
-			instructions.add(instr);
-		}
-
-		// add one more instruction that is owned by another user's ndoe
-		Long nodeId = nodeIdCounter++;
-		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
-		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-
-		Long instrId = instrIdCounter++;
-		NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
-		instr.setId(instrId);
-		instructionIds.add(instrId);
-		instructions.add(instr);
-
-		replayAll();
-
-		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
-			service.viewInstructionsAccessCheck(instructionIds, instructions);
 		});
 	}
 
