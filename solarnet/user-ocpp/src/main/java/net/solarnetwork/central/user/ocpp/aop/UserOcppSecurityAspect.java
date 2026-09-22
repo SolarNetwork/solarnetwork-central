@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
  * Security enforcing AOP aspect for {@link UserOcppBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Aspect
 @Component
@@ -61,6 +61,17 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.*ForUser(..)) && args(userId,..)")
 	public void readForUser(Long userId) {
+	}
+
+	/**
+	 * Match methods like {@code incomplete*(userId, ...)}.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.3
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.incomplete*(..)) && args(userId,..)")
+	public void readIncompleteForUser(Long userId) {
 	}
 
 	/**
@@ -107,7 +118,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	public void filterSearch(UserCriteria filter) {
 	}
 
-	@Before(value = "readForUser(userId)", argNames = "userId")
+	@Before(value = "readForUser(userId) || readIncompleteForUser(userId)", argNames = "userId")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
