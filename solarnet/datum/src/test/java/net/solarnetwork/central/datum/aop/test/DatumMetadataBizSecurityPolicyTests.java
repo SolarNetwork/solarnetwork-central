@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.common.dao.jdbc.JdbcLocationRequestDao;
 import net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect;
@@ -49,7 +48,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * {@code DatumMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicyTestSupport {
 
@@ -110,7 +109,6 @@ public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicy
 		// @formatter:on
 	}
 
-	@Disabled("Policy sources are not applied to datum metadata reads")
 	@Test
 	public void restrictedToken_streamIds_policySourcesOnly() {
 		// GIVEN
@@ -128,7 +126,6 @@ public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicy
 		// @formatter:on
 	}
 
-	@Disabled("Policy sources are not applied to datum metadata reads")
 	@Test
 	public void restrictedToken_nodeDatumMetadata_policySourcesOnly() {
 		// GIVEN
@@ -151,8 +148,6 @@ public class DatumMetadataBizSecurityPolicyTests extends BaseDatumSecurityPolicy
 		// @formatter:on
 	}
 
-
-	@Disabled("Policy nodes are not applied to public nodes in datum metadata reads")
 	@Test
 	public void restrictedToken_streamIds_publicNode() {
 		// GIVEN

@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class AuthorizationSupport {
 
@@ -548,7 +548,7 @@ public class AuthorizationSupport {
 					metadataType, writeAccess);
 			@SuppressWarnings({ "rawtypes", "unchecked" })
 			T result = (T) new BasicFilterResults(filteredObjects, filterResults.getTotalResults(),
-					filterResults.getStartingOffset(), filterResults.getReturnedResultCount());
+					filterResults.getStartingOffset(), filteredObjects.size());
 			return result;
 		} else if ( domainObject instanceof List<?> collectionResults ) {
 			@SuppressWarnings("unchecked")
@@ -575,7 +575,12 @@ public class AuthorizationSupport {
 					pathMatcher, metadataType,
 					(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
 					nodeOwnershipDao::getDatumStreamMetadataIds);
-			enforcer.verify();
+			try {
+				enforcer.verify();
+			} catch ( AuthorizationException e ) {
+				// element denied by the policy, so remove it from the results
+				continue;
+			}
 			enforced.add(SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer));
 		}
 		return enforced;

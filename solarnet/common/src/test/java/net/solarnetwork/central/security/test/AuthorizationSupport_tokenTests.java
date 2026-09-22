@@ -29,10 +29,14 @@ import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.BasicSecurityPolicy.builder;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.time.ZoneOffset;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +49,8 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -60,7 +66,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * authorization.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class AuthorizationSupport_tokenTests {
@@ -748,4 +754,36 @@ public class AuthorizationSupport_tokenTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void policyEnforcerCheck_collection_deniedElementsRemoved() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final Long otherNodeId = randomLong();
+		final SecurityPolicy policy = builder().withNodeIds(singleton(nodeId)).build();
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), policy);
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		final BasicCoreCriteria allowed = new BasicCoreCriteria();
+		allowed.setNodeId(nodeId);
+		final BasicCoreCriteria denied = new BasicCoreCriteria();
+		denied.setNodeId(otherNodeId);
+
+		// WHEN
+		final List<?> result = support.policyEnforcerCheck(List.of(allowed, denied));
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Element denied by the policy removed from the results")
+			.hasSize(1)
+			.first()
+			.asInstanceOf(type(NodeCriteria.class))
+			.as("Element allowed by the policy returned")
+			.returns(nodeId, from(NodeCriteria::getNodeId))
+			;
+		// @formatter:on
+	}
 }

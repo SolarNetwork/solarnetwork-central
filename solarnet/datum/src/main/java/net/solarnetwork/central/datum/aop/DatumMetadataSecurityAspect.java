@@ -36,6 +36,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -55,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Security AOP support for {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Aspect
 @Component
@@ -156,14 +157,22 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * Check access to reading datum metadata.
 	 *
 	 * <p>
-	 * Read access is required for every node in the filter.
+	 * Read access is required for every node in the filter, and the filter is
+	 * restricted to the nodes and sources of the active security policy.
 	 * </p>
 	 *
+	 * @param pjp
+	 *        the join point
 	 * @param filter
 	 *        the filter to verify
+	 * @return the results
+	 * @throws Throwable
+	 *         if any error occurs
 	 */
-	@Before(value = "findMetadata(filter)", argNames = "filter")
-	public void readMetadataCheck(GeneralNodeDatumMetadataFilter filter) {
+	@SuppressWarnings("ReferenceEquality")
+	@Around(value = "findMetadata(filter)", argNames = "pjp,filter")
+	public Object readMetadataAccessCheck(ProceedingJoinPoint pjp,
+			GeneralNodeDatumMetadataFilter filter) throws Throwable {
 		final Long[] nodeIds = (filter != null ? filter.getNodeIds() : null);
 		if ( nodeIds == null || nodeIds.length < 1 ) {
 			log.warn("Access DENIED to unspecified nodes");
@@ -172,6 +181,13 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		for ( Long nodeId : nodeIds ) {
 			requireNodeReadAccess(nodeId);
 		}
+		final GeneralNodeDatumMetadataFilter f = policyEnforcerCheck(filter);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		final @Nullable Object[] args = pjp.getArgs();
+		args[0] = f;
+		return pjp.proceed(args);
 	}
 
 	/**
@@ -258,19 +274,26 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * every node and user in the filter, and at least one of either.
 	 * </p>
 	 *
+	 * @param pjp
+	 *        the join point
 	 * @param filter
 	 *        the filter to verify
+	 * @return the results
+	 * @throws Throwable
+	 *         if any error occurs
 	 * @since 1.3
 	 */
-	@Before(value = "findDatumStreamMetadata(filter)", argNames = "filter")
-	public void findDatumStreamMetadataCheck(ObjectStreamCriteria filter) {
+	@SuppressWarnings("ReferenceEquality")
+	@Around(value = "findDatumStreamMetadata(filter)", argNames = "pjp,filter")
+	public Object findDatumStreamMetadataAccessCheck(ProceedingJoinPoint pjp,
+			ObjectStreamCriteria filter) throws Throwable {
 		if ( filter == null || (filter.getUserId() == null && filter.getNodeId() == null
 				&& filter.getLocationId() == null) ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 		if ( filter.effectiveObjectKind() == ObjectDatumKind.Location ) {
 			// location searches do not require any check
-			return;
+			return pjp.proceed();
 		}
 		if ( filter.getUserId() == null && filter.getNodeId() == null ) {
 			log.warn("Access DENIED to node streams without node or user criteria");
@@ -288,6 +311,13 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 				requireUserReadAccess(userId);
 			}
 		}
+		final ObjectStreamCriteria f = policyEnforcerCheck(filter);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		final @Nullable Object[] args = pjp.getArgs();
+		args[0] = f;
+		return pjp.proceed(args);
 	}
 
 	/**

@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.aop.NodeMetadataSecurityAspect;
@@ -57,7 +56,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * the {@code NodeMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupport {
@@ -156,7 +155,6 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoT
 		// @formatter:on
 	}
 
-	@Disabled("Policy node metadata paths are not applied to node metadata")
 	@Test
 	public void nodeMetadataPathsPolicy() {
 		// GIVEN
@@ -182,4 +180,32 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoT
 		// @formatter:on
 	}
 
+	@Test
+	public void nodeMetadataPathsPolicy_noMatchingMetadataRemoved() {
+		// GIVEN
+		jdbcTemplate.update("""
+				UPDATE solarnet.sn_node_meta SET jdata = '{"m":{"b":2}}'::jsonb
+				WHERE node_id = ?""", a.otherPrivateNodeId());
+
+		final TestToken token = a.newToken(SecurityTokenType.ReadNodeData,
+				BasicSecurityPolicy.builder().withNodeMetadataPaths(Set.of("/m/a")).build());
+		token.insert(jdbcTemplate);
+		TestActor.token("A metadata token", token).become();
+
+		// WHEN
+		var results = biz.findSolarNodeMetadata(nodes(a.privateNodeId(), a.otherPrivateNodeId()), null,
+				null, null);
+
+		// THEN
+		// @formatter:off
+		then(nodeIds(results))
+			.as("Node without any metadata allowed by the policy removed from results")
+			.containsExactly(a.privateNodeId())
+			;
+		then(results.getReturnedResultCount())
+			.as("Returned result count matches the restricted results")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
 }

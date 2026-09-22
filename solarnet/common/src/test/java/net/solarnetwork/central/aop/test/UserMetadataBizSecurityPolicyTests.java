@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.aop.UserMetadataSecurityAspect;
@@ -57,7 +56,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * {@code UserMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupport {
@@ -132,7 +131,6 @@ public class UserMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSu
 		// @formatter:on
 	}
 
-	@Disabled("Policy user metadata paths are not applied to user metadata")
 	@Test
 	public void userMetadataPathsPolicy() {
 		// GIVEN
@@ -158,4 +156,31 @@ public class UserMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSu
 		// @formatter:on
 	}
 
+	@Test
+	public void userMetadataPathsPolicy_noMatchingMetadataRemoved() {
+		// GIVEN
+		jdbcTemplate.update("""
+				UPDATE solaruser.user_meta SET jdata = '{"m":{"b":2}}'::jsonb
+				WHERE user_id = ?""", a.userId());
+
+		final TestToken token = a.newToken(SecurityTokenType.ReadNodeData,
+				BasicSecurityPolicy.builder().withUserMetadataPaths(Set.of("/m/a")).build());
+		token.insert(jdbcTemplate);
+		TestActor.token("A metadata token", token).become();
+
+		// WHEN
+		var results = biz.findUserMetadata(users(a.userId()), null, null, null);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("User without any metadata allowed by the policy removed from results")
+			.isEmpty()
+			;
+		then(results.getReturnedResultCount())
+			.as("Returned result count matches the restricted results")
+			.isZero()
+			;
+		// @formatter:on
+	}
 }
