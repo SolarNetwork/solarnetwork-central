@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.aop.test;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import java.util.UUID;
 import org.easymock.EasyMock;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -34,7 +35,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.aop.AuditDatumSecurityAspect;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -46,7 +47,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Test cases for the {@link AuditDatumSecurityAspect} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AuditDatumSecurityAspectTests {
 
@@ -55,6 +56,11 @@ public class AuditDatumSecurityAspectTests {
 	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+	}
+
+	@AfterEach
+	public void teardown() {
+		SecurityContextHolder.clearContext();
 	}
 
 	private AuditDatumSecurityAspect getTestInstance() {
@@ -93,19 +99,19 @@ public class AuditDatumSecurityAspectTests {
 	}
 
 	@Test
-	public void findForFilterCheckNoAuth() {
+	public void findAuditDatumForFilterCheckNoAuth() {
 		// given
 		AuditDatumSecurityAspect aspect = getTestInstance();
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.findForFilterCheck(filter));
+				.isThrownBy(() -> aspect.findAuditDatumForFilterCheck(filter));
 	}
 
 	@Test
-	public void findForFilterCheckDataToken() {
+	public void findAuditDatumForFilterCheckDataToken() {
 		// given
 		AuditDatumSecurityAspect aspect = getTestInstance();
 
@@ -113,14 +119,14 @@ public class AuditDatumSecurityAspectTests {
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 
 		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.findForFilterCheck(filter));
+				.isThrownBy(() -> aspect.findAuditDatumForFilterCheck(filter));
 	}
 
 	@Test
-	public void findForFilterCheckWrongUserId() {
+	public void findAuditDatumForFilterCheckWrongUserId() {
 		// given
 		AuditDatumSecurityAspect aspect = getTestInstance();
 
@@ -129,15 +135,15 @@ public class AuditDatumSecurityAspectTests {
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setUserId(userId + 1L);
 
 		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.findForFilterCheck(filter));
+				.isThrownBy(() -> aspect.findAuditDatumForFilterCheck(filter));
 	}
 
 	@Test
-	public void findForFilterCheckMultipleUserIds() {
+	public void findAuditDatumForFilterCheckMultipleUserIds() {
 		// given
 		AuditDatumSecurityAspect aspect = getTestInstance();
 
@@ -146,15 +152,15 @@ public class AuditDatumSecurityAspectTests {
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setUserIds(new Long[] { userId, userId });
 
 		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.findForFilterCheck(filter));
+				.isThrownBy(() -> aspect.findAuditDatumForFilterCheck(filter));
 	}
 
 	@Test
-	public void findForFilterCheckPass() {
+	public void findAuditDatumForFilterCheckPass() {
 		// given
 		AuditDatumSecurityAspect aspect = getTestInstance();
 
@@ -163,9 +169,9 @@ public class AuditDatumSecurityAspectTests {
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setUserId(userId);
-		aspect.findForFilterCheck(filter);
+		aspect.findAuditDatumForFilterCheck(filter);
 		verifyAll();
 	}
 }

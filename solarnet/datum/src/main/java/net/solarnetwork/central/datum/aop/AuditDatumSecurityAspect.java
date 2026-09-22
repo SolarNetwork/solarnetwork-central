@@ -31,7 +31,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
@@ -45,7 +44,7 @@ import net.solarnetwork.central.security.SecurityUtils;
  * Security AOP support for {@link AuditDatumBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -65,16 +64,18 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.findFiltered*AuditRecordCounts(..)) && args(filter,..)")
-	public void findRecordCounts(GeneralNodeDatumFilter filter) {
-	}
-
 	@Pointcut("execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.find*AuditDatumFiltered(..)) && args(filter,..)")
 	public void findAuditDatum(AuditDatumCriteria filter) {
 	}
 
 	private Long requireCurrentActorHasUserId() {
-		SecurityActor actor = SecurityUtils.getCurrentActor();
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( BasicSecurityException e ) {
+			log.warn("Access DENIED for non-authenticated actor");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
 		if ( actor instanceof SecurityToken token ) {
 			// require a User token
 			SecurityTokenType tokenType = token.getTokenType();
@@ -99,24 +100,6 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 					Arrays.toString(userIds));
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
-	}
-
-	/**
-	 * Check access to reading audit datum.
-	 *
-	 * <p>
-	 * The current actor must have a user ID, and that same user ID must be
-	 * specified as the only user ID in the filter.
-	 * </p>
-	 *
-	 * @param filter
-	 *        the filter verify
-	 */
-	@Before(value = "findRecordCounts(filter)", argNames = "filter")
-	public void findForFilterCheck(GeneralNodeDatumFilter filter) {
-		Long userId = requireCurrentActorHasUserId();
-		Long[] userIds = filter.getUserIds();
-		requireUserId(userId, userIds);
 	}
 
 	/**
