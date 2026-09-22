@@ -31,6 +31,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
 
@@ -41,7 +42,7 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @version 1.0
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
-public class UserNodeInstructionTaskEntityInput {
+public class UserNodeInstructionTaskEntityInput implements NodeIdRelated {
 
 	private boolean enabled;
 
@@ -146,6 +147,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * 
 	 * @return the node ID
 	 */
+	@Override
 	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
