@@ -90,8 +90,8 @@ public final class ControllerDependencies {
 	 * @param type
 	 *        the dependency type
 	 * @param controller
-	 *        the controller class the review applies to, or {@code null} for all
-	 *        controllers
+	 *        the controller class the review applies to, or {@code null} for
+	 *        all controllers
 	 * @param reason
 	 *        why the dependency does not need a security contract
 	 */
@@ -196,8 +196,8 @@ public final class ControllerDependencies {
 	}
 
 	/**
-	 * Get the reviews that do not cover any service dependency of the controller
-	 * beans of an application.
+	 * Get the reviews that do not cover any service dependency of the
+	 * controller beans of an application.
 	 *
 	 * @param context
 	 *        the application context
@@ -213,7 +213,9 @@ public final class ControllerDependencies {
 
 	private static void addServiceTypes(Set<Dependency> result, Class<?> controller, Type type) {
 		switch (type) {
-			case Class<?> c when c.isArray() -> addServiceTypes(result, controller, c.getComponentType());
+			case Class<?> c when c.isArray() -> {
+				addServiceTypes(result, controller, c.getComponentType());
+			}
 			case Class<?> c -> {
 				if ( c.getName().startsWith(SOLARNETWORK_PACKAGE)
 						&& SERVICE_NAME.matcher(c.getSimpleName()).matches() ) {

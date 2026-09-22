@@ -104,10 +104,10 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 
 		final MyBatisUserNodeDao userNodeDao = new MyBatisUserNodeDao();
 		userNodeDao.setSqlSessionFactory(getSqlSessionFactory());
-		final MyBatisUserNodeConfirmationDao userNodeConfirmationDao = new MyBatisUserNodeConfirmationDao();
-		userNodeConfirmationDao.setSqlSessionFactory(getSqlSessionFactory());
-		final MyBatisUserNodeCertificateDao userNodeCertificateDao = new MyBatisUserNodeCertificateDao();
-		userNodeCertificateDao.setSqlSessionFactory(getSqlSessionFactory());
+		final MyBatisUserNodeConfirmationDao confirmationDao = new MyBatisUserNodeConfirmationDao();
+		confirmationDao.setSqlSessionFactory(getSqlSessionFactory());
+		final MyBatisUserNodeCertificateDao certificateDao = new MyBatisUserNodeCertificateDao();
+		certificateDao.setSqlSessionFactory(getSqlSessionFactory());
 		final MyBatisSolarNodeDao solarNodeDao = new MyBatisSolarNodeDao();
 		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());
 		final MyBatisSolarLocationDao solarLocationDao = new MyBatisSolarLocationDao();
@@ -119,9 +119,8 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 
 		final JdbcSolarNodeOwnershipDao ownershipDao = new JdbcSolarNodeOwnershipDao(jdbcTemplate);
 		biz = securedProxy(
-				(UserBiz) new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao,
-						userNodeCertificateDao, solarNodeDao, solarLocationDao, userAuthTokenDao,
-						userAlertDao),
+				(UserBiz) new DaoUserBiz(userDao, userNodeDao, confirmationDao, certificateDao,
+						solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao),
 				new UserSecurityAspect(ownershipDao), new UserAuthTokenSecurityAspect(ownershipDao))
 				.proxy();
 	}
