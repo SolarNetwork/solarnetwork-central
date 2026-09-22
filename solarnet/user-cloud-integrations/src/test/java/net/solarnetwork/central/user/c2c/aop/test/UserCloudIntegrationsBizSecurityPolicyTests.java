@@ -84,7 +84,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
@@ -276,6 +276,21 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 	}
 
 	@Test
+	public void listDatumStreams_restrictedToken_nonPolicyNode_denied() {
+		// GIVEN
+		a.restrictedTokenActor().become();
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Listing the datum streams of a non-policy node denied")
+			.isThrownBy(() -> biz.listConfigurationsForUser(a.userId(), nodes(a.privateNodeId()),
+					CloudDatumStreamConfiguration.class))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void listControls_restrictedToken_policyNodeOnly() {
 		// GIVEN
 		a.restrictedTokenActor().become();
@@ -289,6 +304,21 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		then(ids(results))
 			.as("Only the policy node control returned")
 			.containsExactly(aPolicyControl)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listControls_restrictedToken_nonPolicyNode_denied() {
+		// GIVEN
+		a.restrictedTokenActor().become();
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Listing the controls of a non-policy node denied")
+			.isThrownBy(() -> biz.listConfigurationsForUser(a.userId(), nodes(a.privateNodeId()),
+					CloudControlConfiguration.class))
 			;
 		// @formatter:on
 	}

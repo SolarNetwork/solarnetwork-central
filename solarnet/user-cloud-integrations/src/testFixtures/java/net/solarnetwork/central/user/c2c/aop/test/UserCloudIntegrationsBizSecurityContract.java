@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.ModifiableServicePropertiesDao.MergeMode;
@@ -61,12 +63,13 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * The contract is enforced by {@code UserCloudIntegrationsSecurityAspect}.
  * Datum streams require access to their node, which the aspect looks up for
  * entities related to a datum stream, and integrations and user settings
- * require an unrestricted security policy. The proxy must include a
- * {@link CloudDatumStreamConfigurationDao} mock.
+ * require an unrestricted security policy. Listings are narrowed to the
+ * security policy's nodes, and denied when only other nodes are requested. The
+ * proxy must include a {@link CloudDatumStreamConfigurationDao} mock.
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserCloudIntegrationsBizSecurityContract {
 
@@ -109,6 +112,17 @@ public final class UserCloudIntegrationsBizSecurityContract {
 				.allowing(biz -> biz.deleteSettings(userId), unrestricted)
 				.userRead(biz -> biz.listConfigurationsForUser(userId, null,
 						CloudIntegrationConfiguration.class))
+				.userRead(biz -> biz.listConfigurationsForUser(userId, nodeFilter(a.privateNodeId()),
+						CloudDatumStreamConfiguration.class))
+					.alsoDeny(a.restrictedTokenActor())
+					.as("datum streams of non-policy node")
+				.userRead(biz -> biz.listConfigurationsForUser(userId, nodeFilter(a.privateNodeId()),
+						CloudControlConfiguration.class))
+					.alsoDeny(a.restrictedTokenActor())
+					.as("controls of non-policy node")
+				.userRead(biz -> biz.listConfigurationsForUser(userId,
+						nodeFilter(a.otherPrivateNodeId()), CloudDatumStreamConfiguration.class))
+					.as("datum streams of policy node")
 				.userRead(biz -> biz.configurationForId(integrationId,
 						CloudIntegrationConfiguration.class))
 				.allowing(biz -> biz.configurationForId(datumStreamId,
@@ -171,6 +185,12 @@ public final class UserCloudIntegrationsBizSecurityContract {
 					.given(streamExists)
 				.build();
 		// @formatter:on
+	}
+
+	private static BasicFilter nodeFilter(Long nodeId) {
+		final BasicFilter filter = new BasicFilter();
+		filter.setNodeIds(new Long[] { nodeId });
+		return filter;
 	}
 
 	private static CloudDatumStreamConfiguration datumStream(UserLongCompositePK id, Long nodeId) {
