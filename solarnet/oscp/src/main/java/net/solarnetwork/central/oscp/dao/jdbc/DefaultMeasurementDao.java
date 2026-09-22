@@ -57,7 +57,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * JDBC implementation of {@link MeasurementDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DefaultMeasurementDao implements MeasurementDao {
 
@@ -96,6 +96,9 @@ public class DefaultMeasurementDao implements MeasurementDao {
 		}
 
 		final BasicDatumCriteria filter = new BasicDatumCriteria();
+		// only query nodes owned by the asset's user, in case the asset refers to
+		// another user's node
+		filter.setUserId(asset.getUserId());
 		filter.setNodeId(asset.getNodeId());
 		filter.setSourceId(asset.getSourceId());
 		filter.setStartDate(queryStartDate);

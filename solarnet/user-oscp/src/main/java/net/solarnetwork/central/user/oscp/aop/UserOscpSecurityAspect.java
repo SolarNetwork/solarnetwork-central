@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
  * Security enforcing AOP aspect for {@link UserOscpBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -132,17 +132,41 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 		requireUserWriteAccess(userId);
 	}
 
+	/**
+	 * Require write access to the node of an asset being created.
+	 *
+	 * <p>
+	 * Read access is not enough, because every user can read another user's
+	 * public node, and the asset's measurements are the node's datum.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param input
+	 *        the asset configuration input
+	 */
 	@Before(value = "createAssetConfiguration(userId,input)", argNames = "userId,input")
 	public void createAssetNodeIdCheck(Long userId, AssetConfigurationInput input) {
 		if ( input != null && input.getNodeId() != null ) {
-			requireNodeReadAccess(input.getNodeId());
+			requireNodeWriteAccess(input.getNodeId());
 		}
 	}
 
+	/**
+	 * Require write access to the node of an asset being updated.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param assetId
+	 *        the asset ID
+	 * @param input
+	 *        the asset configuration input
+	 * @see #createAssetNodeIdCheck(Long, AssetConfigurationInput)
+	 */
 	@Before(value = "updateAssetConfiguration(userId,assetId,input)", argNames = "userId,assetId,input")
 	public void updateAssetNodeIdCheck(Long userId, Long assetId, AssetConfigurationInput input) {
 		if ( input != null && input.getNodeId() != null ) {
-			requireNodeReadAccess(input.getNodeId());
+			requireNodeWriteAccess(input.getNodeId());
 		}
 	}
 

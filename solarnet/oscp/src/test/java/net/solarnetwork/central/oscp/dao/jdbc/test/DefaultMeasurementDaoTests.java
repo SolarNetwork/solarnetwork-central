@@ -31,6 +31,7 @@ import static net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet.dataSe
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -82,7 +83,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for the {@link DefaultMeasurementDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class DefaultMeasurementDaoTests {
@@ -523,4 +524,54 @@ public class DefaultMeasurementDaoTests {
 						asset.getEnergy().getDirection(), start))));
 	}
 
+
+	@SuppressWarnings("static-access")
+	@Test
+	public void getMeasurements_assetUserNodesOnly() throws IOException {
+		// GIVEN
+		final Long cgId = randomUUID().getMostSignificantBits();
+
+		final Long userId = randomUUID().getMostSignificantBits();
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, Instant.now(), cgId)
+				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
+
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(15, ChronoUnit.MINUTES);
+
+		ObjectDatumStreamMetadata meta = nodeMeta(asset.getNodeId(), asset.getSourceId(),
+				new String[] { "watts" }, new String[] { "wattHours" }, null);
+		DatumProperties p = propertiesOf(decimalArray("1.23"), decimalArray("3.45"), null, null);
+		DatumPropertiesStatistics s = statisticsOf(
+				new BigDecimal[][] { decimalArray("60", "1.0", "2.0") },
+				new BigDecimal[][] { decimalArray("10", "0", "10") });
+		var reading = new ReadingDatumEntity(meta.getStreamId(), start, Aggregation.None, end, p, s);
+
+		ObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(reading));
+
+		will((Answer<Void>) invocation -> {
+			StreamDatumFilteredResultsProcessor processor = invocation.getArgument(1);
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(reading);
+			return null;
+		}).given(readingDatumDao).findFilteredStream(any(), any(), isNull(), isNull(), isNull());
+
+		// WHEN
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+
+		dao.getMeasurements(asset, criteria);
+
+		// THEN
+		then(readingDatumDao).should(times(2)).findFilteredStream(criteriaCaptor.capture(), any(),
+				isNull(), isNull(), isNull());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getAllValues())
+			.as("Instantaneous and energy queries limited to the nodes of the asset's user")
+			.extracting(DatumCriteria::getUserId)
+			.containsExactly(userId, userId)
+			;
+		// @formatter:on
+	}
 }
