@@ -62,7 +62,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Aspect
 @Component
@@ -312,7 +312,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		try {
 			String[] resultSourceIds = enforcer
 					.verifySourceIds(allSourceIds.keySet().toArray(String[]::new));
-			if ( resultSourceIds.length != allowedSourceIds.size() ) {
+			if ( resultSourceIds.length != allSourceIds.size() ) {
 				result = new LinkedHashSet<>(resultSourceIds.length);
 				for ( String sourceId : resultSourceIds ) {
 					Set<NodeSourcePK> pks = allSourceIds.get(sourceId);

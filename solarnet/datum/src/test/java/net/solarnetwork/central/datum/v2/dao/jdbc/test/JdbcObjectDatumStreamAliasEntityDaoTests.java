@@ -44,9 +44,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +72,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Test cases for the {@link JdbcObjectDatumStreamAliasEntityDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestSupport {
@@ -446,6 +448,35 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 		then(results)
 			.as("Results for single user and original nodes and sources sorted in default order")
 			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteFiltered_forUser() throws Exception {
+		// GIVEN
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = setupRandomAliases();
+		final Long randomUserId = List.copyOf(entitiesByUser.keySet())
+				.get(RNG.nextInt(entitiesByUser.size()));
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(randomUserId);
+		final int result = dao.delete(filter);
+
+		// THEN
+		final Set<String> expected = entitiesByUser.entrySet().stream()
+				.filter(e -> !e.getKey().equals(randomUserId)).flatMap(e -> e.getValue().stream())
+				.map(e -> e.getStreamId().toString()).collect(Collectors.toSet());
+		// @formatter:off
+		then(result)
+			.as("All aliases of the user deleted")
+			.isEqualTo(entitiesByUser.get(randomUserId).size())
+			;
+		then(allObjectDatumStreamAliasData(jdbcTemplate))
+			.as("Aliases of other users not deleted")
+			.map(row -> String.valueOf(row.get("stream_id")))
+			.containsExactlyInAnyOrderElementsOf(expected)
 			;
 		// @formatter:on
 	}
