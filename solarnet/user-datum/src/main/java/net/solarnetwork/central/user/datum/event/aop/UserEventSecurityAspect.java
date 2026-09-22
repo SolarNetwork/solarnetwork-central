@@ -34,7 +34,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security enforcing AOP aspect for user event APIs.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -62,16 +62,12 @@ public class UserEventSecurityAspect extends AuthorizationSupport {
 	public void deleteConfiguration(UserIdRelated config) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.user.datum.event.biz.*Biz.*ForConfiguration(..)) && args(config,..)")
-	public void actionForConfiguration(UserIdRelated config) {
-	}
-
 	@Before(value = "actionForUser(userId)", argNames = "userId")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before(value = "saveConfiguration(config) || deleteConfiguration(config) || actionForConfiguration(config)",
+	@Before(value = "saveConfiguration(config) || deleteConfiguration(config)",
 			argNames = "config")
 	public void saveConfigurationCheck(UserIdRelated config) {
 		final Long userId = config != null ? config.getUserId() : null;
