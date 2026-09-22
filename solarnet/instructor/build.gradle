@@ -43,6 +43,7 @@ dependencies {
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation 'javax.cache:cache-api'
     testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
