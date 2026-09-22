@@ -102,20 +102,25 @@ public interface NodeCriteria {
 	/**
 	 * Get the unique node IDs configured on {@code nodeIds}.
 	 * 
+	 * <p>
+	 * Any {@code null} node ID is omitted, as request parameter binding can
+	 * produce them.
+	 * </p>
+	 * 
 	 * @return the unique node IDs configured, never {@code null}
 	 * @since 1.3
 	 */
 	@SuppressWarnings("MixedMutabilityReturnType")
 	default Set<Long> nodeIdsUnique() {
 		final Long[] nodeIds = getNodeIds();
-		if ( nodeIds == null ) {
+		if ( nodeIds == null || nodeIds.length < 1 ) {
 			return Set.of();
-		} else if ( nodeIds.length == 1 ) {
-			return Set.of(nodeIds[0]);
 		}
 		final var result = new LinkedHashSet<Long>(nodeIds.length);
 		for ( Long nodeId : nodeIds ) {
-			result.add(nodeId);
+			if ( nodeId != null ) {
+				result.add(nodeId);
+			}
 		}
 		return result;
 	}

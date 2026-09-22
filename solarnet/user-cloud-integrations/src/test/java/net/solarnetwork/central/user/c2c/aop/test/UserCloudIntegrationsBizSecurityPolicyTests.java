@@ -83,7 +83,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
@@ -270,6 +270,41 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		then(ids(results))
 			.as("Non-policy node removed from the query")
 			.containsExactly(aPolicyStream)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listDatumStreams_restrictedToken_repeatedPolicyNode_allowed() {
+		// GIVEN
+		a.restrictedTokenActor().become();
+
+		// WHEN
+		var results = biz.listConfigurationsForUser(a.userId(),
+				nodes(a.otherPrivateNodeId(), a.otherPrivateNodeId()),
+				CloudDatumStreamConfiguration.class);
+
+		// THEN
+		// @formatter:off
+		then(ids(results))
+			.as("Repeated node ID does not prevent the policy node datum stream from being returned")
+			.containsExactly(aPolicyStream)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listDatumStreams_restrictedToken_repeatedNonPolicyNode_denied() {
+		// GIVEN
+		a.restrictedTokenActor().become();
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Repeated node ID outside the policy is still denied")
+			.isThrownBy(() -> biz.listConfigurationsForUser(a.userId(),
+					nodes(a.privateNodeId(), a.privateNodeId()),
+					CloudDatumStreamConfiguration.class))
 			;
 		// @formatter:on
 	}

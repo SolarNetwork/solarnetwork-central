@@ -29,6 +29,7 @@ import static java.util.regex.Pattern.quote;
 import static net.solarnetwork.central.user.config.RegistrationBizConfig.EMAIL_THROTTLE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
@@ -39,6 +40,7 @@ import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -64,7 +66,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * Test cases for the {@link ResetPasswordController}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -147,4 +149,25 @@ public class ResetPasswordControllerTests extends AbstractJUnit5CentralTransacti
 		// @formatter:on
 	}
 
+
+	@Test
+	public void generateResetCode_htmlInEmail_escaped() throws Exception {
+		// GIVEN
+		// an unknown account renders the same view, with the submitted address
+		emailThrottleCache.clear();
+		final String email = "<script>alert('xss')</script>@localhost";
+
+		// THEN
+		// @formatter:off
+		mvc.perform(post("/u/resetPassword/generate").with(csrf())
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("email", email)
+				)
+			.andExpect(status().isOk())
+			.andExpect(view().name("resetpass/generated"))
+			.andExpect(content().string(not(containsString("<script>"))))
+			.andExpect(content().string(containsString("&lt;script&gt;")))
+			;
+		// @formatter:on
+	}
 }
