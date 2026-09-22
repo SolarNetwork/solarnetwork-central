@@ -287,12 +287,13 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 				if ( policy != null ) {
 					policyBuilder = policyBuilder.withPolicy(policy);
 				}
-				enforceActorPolicyConstraints(policyBuilder);
+				policyBuilder = enforceActorPolicyConstraints(policyBuilder);
 
+				// only save a policy that has some constraint, where refreshing is allowed by default
 				final SecurityPolicy policyToSave = policyBuilder.build();
 				if ( !(SecurityUtils.policyIsUnrestricted(policyToSave)
 						&& policyToSave.getNotAfter() == null
-						&& Boolean.FALSE.equals(policyToSave.getRefreshAllowed())) ) {
+						&& !Boolean.FALSE.equals(policyToSave.getRefreshAllowed())) ) {
 					authToken.setPolicy(policyToSave);
 				}
 
@@ -413,8 +414,8 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					policyBuilder = policyBuilder.withNotAfter(actorPolicy.getNotAfter());
 				}
 			}
-			if ( !actorPolicy.getRefreshAllowed() ) {
-				policyBuilder = policyBuilder.withRefreshAllowed(actorPolicy.getRefreshAllowed());
+			if ( Boolean.FALSE.equals(actorPolicy.getRefreshAllowed()) ) {
+				policyBuilder = policyBuilder.withRefreshAllowed(false);
 			}
 		}
 		return policyBuilder;
