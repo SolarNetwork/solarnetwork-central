@@ -242,6 +242,65 @@ public class SecurityContractTests {
 	}
 
 	@Test
+	public void deniedAfterTargetInvoked() {
+		// GIVEN
+		final TestTenant a = tenants.a();
+		// @formatter:off
+		final SecurityContract<ToyBiz> contract = SecurityContract.forApi(ToyBiz.class, tenants)
+				.userRead(biz -> biz.userThing(a.userId()))
+				.exempt("saveUserThing", "for testing")
+				.exempt("nodeThing", "for testing")
+				.exempt("saveNodeThing", "for testing")
+				.exempt("unguardedThing", "for testing")
+				.exempt("publicThing", "for testing")
+				.build();
+		// @formatter:on
+
+		// WHEN
+		final Results results = run(
+				contract.dynamicTests(() -> securedProxy((ToyBiz) mock(DaoToyBiz.class),
+						new ToyTargetInvokingSecurityAspect(tenants.ownershipDao()))));
+
+		// THEN
+		// @formatter:off
+		then(results.failed())
+			.as("Denied actors that reach the target method before being denied are reported")
+			.hasSize(6)
+			.allMatch(name -> name.startsWith("userThing(Long) / denied: "))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deniedAfterTargetLookup() {
+		// GIVEN
+		final TestTenant a = tenants.a();
+		// @formatter:off
+		final SecurityContract<ToyBiz> contract = SecurityContract.forApi(ToyBiz.class, tenants)
+				.nodeRead(biz -> biz.nodeThing(a.privateNodeId()))
+				.exempt("userThing", "for testing")
+				.exempt("saveUserThing", "for testing")
+				.exempt("saveNodeThing", "for testing")
+				.exempt("unguardedThing", "for testing")
+				.exempt("publicThing", "for testing")
+				.build();
+		// @formatter:on
+
+		// WHEN
+		final Results results = run(
+				contract.dynamicTests(() -> securedProxy((ToyBiz) mock(DaoToyBiz.class),
+						new ToyTargetInvokingSecurityAspect(tenants.ownershipDao()))));
+
+		// THEN
+		// @formatter:off
+		then(results.failed())
+			.as("Denied actors pass when the aspect invokes other target methods before denying")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void securableTarget() {
 		// GIVEN
 		final TestTenant a = tenants.a();

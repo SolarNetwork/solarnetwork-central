@@ -31,7 +31,6 @@ import static org.assertj.core.api.BDDAssertions.thenCode;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
-import static org.mockito.BDDMockito.then;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -193,8 +192,9 @@ public final class SecurityContract<T> {
 	 * The tests verify coverage, then run every case as every actor of
 	 * {@link TestTenants#actors()}, each against a new proxy from
 	 * {@code proxies}. Denied actors must get a {@link BasicSecurityException}
-	 * without the proxy target being invoked; allowed actors must reach the
-	 * proxy target.
+	 * without the case's method being invoked on the proxy target, although
+	 * aspects may invoke other target methods, for example to look up data to
+	 * check; allowed actors must reach the proxy target.
 	 * </p>
 	 *
 	 * @param proxies
@@ -288,7 +288,12 @@ public final class SecurityContract<T> {
 			SecurityContextHolder.clearContext();
 		}
 		if ( verifyTarget && !c.targetInvokedOnDeny() ) {
-			then(p.target()).shouldHaveNoInteractions();
+			// @formatter:off
+			and.then(Mockito.mockingDetails(p.target()).getInvocations())
+				.as("%s does not reach the target service for %s", actor, c.name())
+				.noneMatch(i -> sameSignature(i.getMethod(), c.method()))
+				;
+			// @formatter:on
 		}
 	}
 
