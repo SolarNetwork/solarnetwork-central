@@ -23,7 +23,6 @@
 package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static java.lang.String.format;
-import static net.solarnetwork.central.common.dao.jdbc.CommonDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.ObjectDatumStreamMetadataId.idForMetadata;
 import static net.solarnetwork.central.security.SecurityTokenStatus.Active;
@@ -31,6 +30,7 @@ import static net.solarnetwork.central.security.SecurityTokenStatus.Disabled;
 import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
+import static net.solarnetwork.central.test.dao.jdbc.CommonDbUtils.insertObjectDatumStreamMetadata;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;

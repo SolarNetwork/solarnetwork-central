@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;

@@ -23,7 +23,6 @@
 package net.solarnetwork.central.reg.web.test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
-import static net.solarnetwork.central.common.dao.jdbc.CommonDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
@@ -32,6 +31,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomEmail;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.test.dao.jdbc.CommonDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_NAME;
 import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_USERNAME;
 import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_USER_ID;

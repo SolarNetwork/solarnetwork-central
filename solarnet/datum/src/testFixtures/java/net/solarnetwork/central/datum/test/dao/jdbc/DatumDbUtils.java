@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.test.dao.jdbc;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
@@ -64,13 +64,24 @@ import org.slf4j.Logger;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumAccumulativeEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumDailyEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumIoEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumMonthlyEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumIdRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleFluxDatumRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -86,6 +97,7 @@ import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.domain.AuditNodeServiceValue;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
+import net.solarnetwork.central.test.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
@@ -103,13 +115,8 @@ import tools.jackson.core.json.JsonFactory;
 /**
  * Utilities for working with datum at the database level.
  *
- * <p>
- * These utilities are primarily designed to support unit testing.
- * </p>
- *
  * @author matt
- * @version 2.8
- * @since 3.8
+ * @version 1.0
  */
 public final class DatumDbUtils {
 

@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
@@ -53,7 +53,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;

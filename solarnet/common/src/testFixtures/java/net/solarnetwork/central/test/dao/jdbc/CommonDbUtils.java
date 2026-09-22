@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc;
+package net.solarnetwork.central.test.dao.jdbc;
 
 import java.sql.Array;
 import java.sql.Connection;
@@ -38,10 +38,6 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 /**
  * Utilities for working with common structures at the database level.
  *
- * <p>
- * These utilities are primarily designed to support unit testing.
- * </p>
- * 
  * @author matt
  * @version 1.0
  */

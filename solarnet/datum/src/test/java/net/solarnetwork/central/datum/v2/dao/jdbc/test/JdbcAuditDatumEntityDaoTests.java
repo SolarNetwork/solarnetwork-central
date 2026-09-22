@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertAuditDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.accumulativeAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.dailyAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
@@ -30,8 +32,6 @@ import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.monthlyAudi
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.accumulativeAuditDatumRollup;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.hourlyAuditDatumRollup;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.monthlyAuditDatumRollup;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;

@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listLocationMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listNodeMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listLocationMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listNodeMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -47,8 +47,8 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;

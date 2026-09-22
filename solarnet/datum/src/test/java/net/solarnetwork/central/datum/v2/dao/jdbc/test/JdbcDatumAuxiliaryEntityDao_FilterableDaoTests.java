@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStreamWithAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertDatumStreamWithAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumAuxiliary;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;

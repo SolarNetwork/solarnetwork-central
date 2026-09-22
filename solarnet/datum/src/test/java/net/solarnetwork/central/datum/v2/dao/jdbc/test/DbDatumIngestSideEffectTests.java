@@ -23,17 +23,17 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.Instant.now;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.ingestDatumAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.ingestDatumStream;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listAuditDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listDatumAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonDatumAuxiliaryResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.moveDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listDatumAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAuxiliaryResource;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.moveDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertStaleAggregateDatum;
 import static org.hamcrest.MatcherAssert.assertThat;

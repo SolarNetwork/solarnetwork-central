@@ -23,9 +23,9 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.stream.Collectors.toMap;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.UUID_STRING_ORDER;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listNodeMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.sortedStreamIds;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.UUID_STRING_ORDER;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listNodeMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.sortedStreamIds;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.populateBasicDatumStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;

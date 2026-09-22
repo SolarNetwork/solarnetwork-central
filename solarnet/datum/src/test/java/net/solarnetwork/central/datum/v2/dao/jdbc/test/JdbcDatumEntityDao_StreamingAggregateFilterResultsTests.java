@@ -23,11 +23,11 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.UUID_STRING_ORDER;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.sortedStreamIds;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.UUID_STRING_ORDER;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertAggregateDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.sortedStreamIds;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;

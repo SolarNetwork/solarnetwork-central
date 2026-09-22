@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;

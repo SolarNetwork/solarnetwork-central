@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.elementsOf;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.test.CommonTestUtils.decimalArrayMatching;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;

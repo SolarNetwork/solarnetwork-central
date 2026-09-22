@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.streamMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.streamMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;

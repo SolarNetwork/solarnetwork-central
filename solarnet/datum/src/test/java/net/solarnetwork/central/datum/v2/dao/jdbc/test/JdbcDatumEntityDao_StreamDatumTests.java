@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listAuditDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listDatum;
+import static net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
