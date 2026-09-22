@@ -9,7 +9,7 @@
 </head>
 <body>
 <main class="container">
-	<div class="intro" data-th-utext="#{user.forgotpassword.generated.intro(${receipt.username})}">
+	<div class="intro" data-th-utext="#{user.forgotpassword.generated.intro(${#strings.escapeXml(receipt.username)})}">
 		An email has been sent with a link to reset your password.
 	</div>
 </main>
