@@ -45,7 +45,7 @@ import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserOscpBizSecurityContract {
 
@@ -98,6 +98,8 @@ public final class UserOscpBizSecurityContract {
 					.as("policy node")
 				.allowing(biz -> biz.createAsset(userId, asset(b.privateNodeId())))
 					.as("other user node")
+				.allowing(biz -> biz.createAsset(userId, asset(b.publicNodeId())))
+					.as("other user public node")
 				.userWrite(biz -> biz.createAsset(userId, new AssetConfigurationInput()))
 					.as("no node")
 				.userWrite(biz -> biz.updateUserSettings(userId, new UserSettingsInput()))
@@ -113,6 +115,8 @@ public final class UserOscpBizSecurityContract {
 						a.userActor(), a.tokenActor())
 				.allowing(biz -> biz.updateAsset(userId, id, asset(b.privateNodeId())))
 					.as("other user node")
+				.allowing(biz -> biz.updateAsset(userId, id, asset(b.publicNodeId())))
+					.as("other user public node")
 				.build();
 		// @formatter:on
 	}
