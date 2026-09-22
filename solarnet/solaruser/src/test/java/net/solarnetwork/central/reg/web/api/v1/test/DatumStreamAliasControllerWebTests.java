@@ -36,8 +36,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,6 +58,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
@@ -69,7 +73,7 @@ import tools.jackson.databind.ObjectMapper;
  * class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -99,14 +103,49 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 	}
 
 	private List<Long> createUserNodes(final Long userId, final int count) {
+		return createUserNodes(userId, count, true);
+	}
+
+	private List<Long> createUserNodes(final Long userId, final int count,
+			final boolean requiresAuth) {
 		List<Long> result = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
 			Long nodeId = randomLong();
 			setupTestNode(nodeId);
-			insertUserNode(jdbcTemplate, userId, nodeId, true);
+			insertUserNode(jdbcTemplate, userId, nodeId, requiresAuth);
 			result.add(nodeId);
 		}
 		return result;
+	}
+
+	private ResultActions saveAlias(final HttpMethod method, final String path, final String tokenId,
+			final String tokenSecret, final ObjectDatumStreamAliasEntityInput input) throws Exception {
+		final String reqJson = objectMapper.writeValueAsString(input);
+		final Instant now = Instant.now();
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(method.name())
+				.host("localhost")
+				.path(path)
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		return mvc.perform(
+				request(method, path)
+				.header(HttpHeaders.AUTHORIZATION, auth.build())
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			);
+		// @formatter:on
+	}
+
+	private int aliasCountForAliasNode(Long nodeId) {
+		return nonnull(jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM solardatm.da_datm_alias WHERE alias_node_id = ?", Integer.class,
+				nodeId), "Count");
 	}
 
 	@Test
@@ -560,6 +599,129 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 			.containsEntry("message", "ACCESS_DENIED")
 			.as("No data provided")
 			.doesNotContainKey("data")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void createAlias_asUnrestrictedToken_originalNodeOwnedByAnotherUser_public()
+			throws Exception {
+		// GIVEN
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final Long aliasNodeId = createUserNodes(1).getFirst();
+
+		final Long userId2 = randomLong();
+		setupTestUser(userId2, userId2 + "@localhost");
+		final Long origNodeId = createUserNodes(userId2, 1, false).getFirst();
+
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, origNodeId, randomSourceId());
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
+
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setOriginalObjectId(meta.getObjectId());
+		input.setOriginalSourceId(meta.getSourceId());
+		input.setObjectId(aliasNodeId);
+		input.setSourceId(randomSourceId());
+
+		// WHEN
+		// @formatter:off
+		saveAlias(HttpMethod.POST, "/api/v1/sec/datum/stream/alias", tokenId, tokenSecret, input)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(aliasCountForAliasNode(aliasNodeId))
+			.as("Alias of another user's public node stream not created")
+			.isZero()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void createAlias_asUnrestrictedToken_aliasNodeOwnedByAnotherUser_public()
+			throws Exception {
+		// GIVEN
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final Long origNodeId = createUserNodes(1).getFirst();
+
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, origNodeId, randomSourceId());
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
+
+		final Long userId2 = randomLong();
+		setupTestUser(userId2, userId2 + "@localhost");
+		final Long aliasNodeId = createUserNodes(userId2, 1, false).getFirst();
+
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setOriginalObjectId(meta.getObjectId());
+		input.setOriginalSourceId(meta.getSourceId());
+		input.setObjectId(aliasNodeId);
+		input.setSourceId(randomSourceId());
+
+		// WHEN
+		// @formatter:off
+		saveAlias(HttpMethod.POST, "/api/v1/sec/datum/stream/alias", tokenId, tokenSecret, input)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(aliasCountForAliasNode(aliasNodeId))
+			.as("Alias on another user's public node not created")
+			.isZero()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateAlias_asUnrestrictedToken_aliasOwnedByAnotherUser() throws Exception {
+		// GIVEN
+		final Instant now = Instant.now();
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+
+		final List<Long> nodeIds = createUserNodes(2);
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeIds.getFirst(),
+				randomSourceId());
+
+		final Long userId2 = randomLong();
+		setupTestUser(userId2, userId2 + "@localhost");
+		final List<Long> user2NodeIds = createUserNodes(userId2, 2);
+		final var meta2 = emptyMeta(randomUUID(), TEST_TZ, Node, user2NodeIds.getFirst(),
+				randomSourceId());
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta, meta2));
+
+		final var alias2 = new ObjectDatumStreamAliasEntity(randomUUID(), now, now, Node,
+				user2NodeIds.getLast(), randomSourceId(), meta2.getObjectId(), meta2.getSourceId());
+		aliasDao.save(alias2);
+
+		// update another user's alias to use this user's streams
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setOriginalObjectId(meta.getObjectId());
+		input.setOriginalSourceId(meta.getSourceId());
+		input.setObjectId(nodeIds.getLast());
+		input.setSourceId(randomSourceId());
+
+		// WHEN
+		// @formatter:off
+		final String path = "/api/v1/sec/datum/stream/alias/" + alias2.getStreamId();
+		saveAlias(HttpMethod.PUT, path, tokenId, tokenSecret, input)
+			.andExpect(status().isForbidden())
+			;
+
+		// THEN
+		then(aliasDao.get(alias2.getStreamId()))
+			.as("Other user alias unchanged")
+			.isNotNull()
+			.returns(alias2.getOriginalObjectId(), from(ObjectDatumStreamAliasEntity::getOriginalObjectId))
+			.returns(alias2.getOriginalSourceId(), from(ObjectDatumStreamAliasEntity::getOriginalSourceId))
+			.returns(alias2.getObjectId(), from(ObjectDatumStreamAliasEntity::getObjectId))
+			.returns(alias2.getSourceId(), from(ObjectDatumStreamAliasEntity::getSourceId))
 			;
 		// @formatter:on
 	}
