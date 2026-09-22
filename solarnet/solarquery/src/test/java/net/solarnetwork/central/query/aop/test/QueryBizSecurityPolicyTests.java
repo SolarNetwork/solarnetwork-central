@@ -391,12 +391,18 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 
 		// WHEN
 		final Set<String> sources = biz.getAvailableSources(nodeFilter(a.otherPrivateNodeId()));
+		final Set<NodeSourcePK> nodeSources = biz
+				.findAvailableSources(nodeFilter(a.otherPrivateNodeId()));
 
 		// THEN
 		// @formatter:off
 		then(sources)
 			.as("Only the policy source available")
 			.containsExactly(a.sourceIds().getFirst())
+			;
+		then(nodeSources)
+			.as("Only the policy node source available")
+			.containsExactly(new NodeSourcePK(a.otherPrivateNodeId(), a.sourceIds().getFirst()))
 			;
 		// @formatter:on
 	}
