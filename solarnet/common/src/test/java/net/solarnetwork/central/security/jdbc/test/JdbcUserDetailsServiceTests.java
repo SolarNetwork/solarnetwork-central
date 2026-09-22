@@ -31,8 +31,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -203,7 +203,6 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 	}
 
 
-	@Disabled("A token whose policy cannot be parsed is treated as unrestricted")
 	@Test
 	public void matchingToken_unparsablePolicy() {
 		// GIVEN
@@ -218,12 +217,12 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 				VALUES (?,?,?,?::solaruser.user_auth_token_status
 					,?::solaruser.user_auth_token_type,?::json)
 				""", TEST_TOKEN, userId, TEST_TOKEN_PASSWORD, "Active", "User",
-				"{\"nodeIds\":\"not-a-list\"}");
+				"\"not an object\"");
 
 		// THEN
 		// @formatter:off
-		thenExceptionOfType(RuntimeException.class)
-			.as("A token whose policy cannot be parsed is not treated as unrestricted")
+		thenExceptionOfType(AuthenticationException.class)
+			.as("A token whose policy cannot be parsed fails authentication")
 			.isThrownBy(() -> service.loadUserByUsername(TEST_TOKEN))
 			;
 		// @formatter:on

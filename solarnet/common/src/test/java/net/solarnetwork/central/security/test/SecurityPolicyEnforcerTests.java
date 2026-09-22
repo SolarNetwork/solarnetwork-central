@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.domain.NodeMetadata;
@@ -995,7 +994,6 @@ public class SecurityPolicyEnforcerTests {
 
 	}
 
-	@Disabled("Errors thrown while verifying a policy are ignored")
 	@Test
 	public void verify_errorReadingDelegate() {
 		// GIVEN
@@ -1006,8 +1004,8 @@ public class SecurityPolicyEnforcerTests {
 
 		// THEN
 		// @formatter:off
-		thenExceptionOfType(RuntimeException.class)
-			.as("An error thrown while verifying a policy is not ignored")
+		thenExceptionOfType(AuthorizationException.class)
+			.as("An error thrown while verifying a policy denies access")
 			.isThrownBy(enforcer::verify)
 			;
 		// @formatter:on

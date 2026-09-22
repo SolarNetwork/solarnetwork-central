@@ -29,6 +29,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -66,7 +67,7 @@ import tools.jackson.databind.ObjectMapper;
  * </ol>
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -148,6 +149,9 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 					} catch ( JacksonException e ) {
 						log.error("Error deserializing [{}] SecurityPolicy from [{}]: {}", username1,
 								policyJson, e.getMessage());
+						// a policy that cannot be parsed is not an unrestricted policy
+						throw new AuthenticationServiceException(
+								"Error deserializing SecurityPolicy for [%s]".formatted(username1), e);
 					}
 				}
 				return new AuthenticatedToken(

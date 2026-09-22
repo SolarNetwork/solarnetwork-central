@@ -24,6 +24,7 @@ package net.solarnetwork.central.security;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
@@ -199,7 +200,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *         {@link #createSecurityPolicyProxy(SecurityPolicyEnforcer)} should
 	 *         be called for example)
 	 * @throws AuthorizationException
-	 *         if any policy fails
+	 *         if any policy fails, or a property cannot be verified
 	 */
 	public boolean verify() {
 		final Object delegate = getDelegate();
@@ -212,8 +213,16 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				invoke(null, m, null);
 			} catch ( AuthorizationException e ) {
 				throw e;
+			} catch ( NoSuchMethodException | IllegalAccessException e ) {
+				// delegate does not provide this property, so nothing to verify
 			} catch ( Throwable e ) {
-				// ignore this
+				// do not treat a property that cannot be verified as verified
+				final Throwable cause = (e instanceof InvocationTargetException ite
+						&& ite.getCause() != null ? ite.getCause() : e);
+				LOG.warn("Access DENIED to {} for {}: error verifying policy: {}", methodName,
+						principal, cause.toString());
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						methodName, cause);
 			}
 		}
 		return !filtered;
