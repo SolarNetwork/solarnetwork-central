@@ -36,7 +36,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -52,8 +52,23 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.datumImportJobStatus*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
+	}
+
+	/**
+	 * Match methods that modify import jobs for a user.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.1
+	 */
+	@Pointcut("""
+			(execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.update*ForUser(..))
+			|| execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.delete*ForUser(..)))
+			&& args(userId,..)
+			""")
+	public void modifyForUser(Long userId) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.submitDatumImportRequest(..)) && args(request,..)")
@@ -67,6 +82,18 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 	@Before(value = "actionForUser(userId)", argNames = "userId")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
+	}
+
+	/**
+	 * Check write access to modify import jobs for a user.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.1
+	 */
+	@Before(value = "modifyForUser(userId)", argNames = "userId")
+	public void modifyForUserCheck(Long userId) {
+		requireUserWriteAccess(userId);
 	}
 
 	@Before(value = "actionForRequest(request)", argNames = "request")
