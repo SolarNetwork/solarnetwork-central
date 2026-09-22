@@ -37,6 +37,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -60,7 +61,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.reg.web.api.v1.UserCloudIntegrationsControlsController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
@@ -74,7 +77,7 @@ import tools.jackson.databind.ObjectMapper;
  * {@link UserCloudIntegrationsControlsController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -89,6 +92,9 @@ public class UserCloudIntegrationsControlsControllerWebTests
 
 	@Autowired
 	private CloudIntegrationConfigurationDao integrationDao;
+
+	@Autowired
+	private CloudControlConfigurationDao controlDao;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -131,6 +137,17 @@ public class UserCloudIntegrationsControlsControllerWebTests
 		conf.setEnabled(true);
 
 		return integrationDao.get(integrationDao.save(conf));
+	}
+
+	private CloudControlConfiguration createControl(Long userId, Long integrationId, Long nodeId) {
+		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
+				clock.instant(), randomString(), randomString(), integrationId, nodeId,
+				randomString());
+		conf.setModified(conf.getCreated());
+		conf.setControlReference(randomString());
+		conf.setEnabled(true);
+
+		return controlDao.get(controlDao.save(conf));
 	}
 
 	@Test
@@ -415,4 +432,118 @@ public class UserCloudIntegrationsControlsControllerWebTests
 		// @formatter:on
 	}
 
+
+	@Test
+	public void listControls_asRestrictedToken_nodeIdsInPolicy() throws Exception {
+		// GIVEN
+		final List<Long> nodeIds = createUserNodes(3);
+
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
+				objectMapper.writeValueAsString(
+						BasicSecurityPolicy.builder().withNodeIds(Set.of(nodeIds.get(0))).build()));
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		final List<CloudControlConfiguration> controls = new ArrayList<>(nodeIds.size());
+		for ( Long nodeId : nodeIds ) {
+			controls.add(createControl(userId, integration.getConfigId(), nodeId));
+		}
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.GET.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/c2c/controls")
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				get("/api/v1/sec/user/c2c/controls")
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data.results")
+			.as("Result is array of entity objects")
+			.isArray()
+			.extracting("configId")
+			.as("Only the policy node control returned")
+			.containsExactly(controls.get(0).getConfigId())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listControls_asRestrictedToken_denied_nodeIdNotInPolicy() throws Exception {
+		// GIVEN
+		final List<Long> nodeIds = createUserNodes(3);
+
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
+				objectMapper.writeValueAsString(
+						BasicSecurityPolicy.builder().withNodeIds(Set.of(nodeIds.get(0))).build()));
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		for ( Long nodeId : nodeIds ) {
+			createControl(userId, integration.getConfigId(), nodeId);
+		}
+
+		final Long reqNodeId = nodeIds.get(1); // not in policy
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.GET.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/c2c/controls")
+				.queryParams(Map.of("nodeId", reqNodeId.toString()))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				get("/api/v1/sec/user/c2c/controls")
+				.param("nodeId", reqNodeId.toString())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isForbidden())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", false)
+			.node("data")
+			.as("No data returned on forbidden response")
+			.isAbsent()
+			;
+		// @formatter:on
+	}
 }

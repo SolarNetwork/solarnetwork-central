@@ -63,7 +63,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security enforcing AOP aspect for {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Aspect
 @Component
@@ -392,6 +392,11 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 				if ( !policyNodeIds.contains(itr.next()) ) {
 					itr.remove();
 				}
+			}
+			if ( restrictedNodeIds.isEmpty() ) {
+				// gave node IDs but none allowed by policy
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						filterNodeIds);
 			}
 			if ( restrictedNodeIds.size() < filterNodeIds.size() ) {
 				replacementFilter = new BasicFilter(filter);

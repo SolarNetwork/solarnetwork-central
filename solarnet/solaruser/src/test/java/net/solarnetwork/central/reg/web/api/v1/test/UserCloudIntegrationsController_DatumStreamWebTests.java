@@ -86,7 +86,7 @@ import tools.jackson.databind.ObjectMapper;
  * {@link UserCloudIntegrationsControlsController} datum stream actions.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -658,6 +658,63 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 			.extracting("configId")
 			.as("All allowed datum streams returned")
 			.containsExactlyInAnyOrderElementsOf(expectedDatumStreamIds)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void list_asRestrictedToken_nodeCriteria_denied_nodeIdsNotInPolicy() throws Exception {
+		// GIVEN
+		final List<Long> nodeIds = createUserNodes(3);
+
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
+				objectMapper.writeValueAsString(
+						BasicSecurityPolicy.builder().withNodeIds(Set.of(nodeIds.get(0))).build()));
+
+		for ( Long nodeId : nodeIds ) {
+			createDatumStream(userId, nodeId);
+		}
+
+		final Long reqNodeId = nodeIds.get(1); // not in policy
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// WHEN
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.GET.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/c2c/datum-streams")
+				.queryParams(Map.of("nodeId", reqNodeId.toString()))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				get("/api/v1/sec/user/c2c/datum-streams")
+				.param("nodeId", reqNodeId.toString())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isForbidden())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", false)
+			.node("data")
+			.as("No data on forbidden response")
+			.isAbsent()
 			;
 		// @formatter:on
 	}
