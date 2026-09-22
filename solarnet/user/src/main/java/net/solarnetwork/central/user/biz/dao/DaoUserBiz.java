@@ -78,7 +78,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -236,13 +236,6 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		User user = userDao.get(userId);
 		return (user != null ? userNodeConfirmationDao.findPendingConfirmationsForUser(user)
 				: emptyList());
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable UserNodeConfirmation getPendingUserNodeConfirmation(
-			final Long userNodeConfirmationId) {
-		return userNodeConfirmationDao.get(userNodeConfirmationId);
 	}
 
 	@Override

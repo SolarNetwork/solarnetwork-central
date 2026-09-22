@@ -45,7 +45,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * API for registered user tasks.
  *
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public interface UserBiz {
 
@@ -155,16 +155,6 @@ public interface UserBiz {
 	 *         found
 	 */
 	List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId);
-
-	/**
-	 * Get a specific pending confirmation.
-	 *
-	 * @param userNodeConfirmationId
-	 *        the ID of the pending confirmation
-	 * @return the pending confirmation, or {@code null} if not found
-	 */
-	@Nullable
-	UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
 
 	/**
 	 * Get a specific UserNodeCertificate object.
