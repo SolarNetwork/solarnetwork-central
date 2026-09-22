@@ -49,6 +49,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.test.tenant.TestActor;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
@@ -62,7 +63,9 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  * exemptions for methods that do not need securing. Every case targets the data
  * of {@link TestTenants#a()} and lists the actors of
  * {@link TestTenants#actors()} that must be allowed; all other actors must be
- * denied with an {@link AuthorizationException}.
+ * denied with a {@link BasicSecurityException}, usually its
+ * {@link AuthorizationException} subclass. Both result in a {@code 403} HTTP
+ * response.
  * </p>
  *
  * <p>
@@ -189,7 +192,7 @@ public final class SecurityContract<T> {
 	 * <p>
 	 * The tests verify coverage, then run every case as every actor of
 	 * {@link TestTenants#actors()}, each against a new proxy from
-	 * {@code proxies}. Denied actors must get an {@link AuthorizationException}
+	 * {@code proxies}. Denied actors must get a {@link BasicSecurityException}
 	 * without the proxy target being invoked; allowed actors must reach the
 	 * proxy target.
 	 * </p>
@@ -276,7 +279,7 @@ public final class SecurityContract<T> {
 		try {
 			actor.become();
 			// @formatter:off
-			thenExceptionOfType(AuthorizationException.class)
+			thenExceptionOfType(BasicSecurityException.class)
 				.as("%s is denied %s", actor, c.name())
 				.isThrownBy(() -> c.call().invoke(p.proxy()))
 				;
