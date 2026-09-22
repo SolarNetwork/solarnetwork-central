@@ -79,7 +79,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -281,15 +281,16 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 
 		var result = (endpoint.isIncludeResponseBody() ? new ArrayList<DatumId>(8) : null);
 		for ( Datum d : datum ) {
-			Object gd = DatumUtils.convertGeneralDatum(d, now);
-			if ( gd instanceof GeneralNodeDatum gnd ) {
-				// use the endpoint's node/source IDs if provided
+			if ( DatumUtils.convertGeneralDatum(d, now) instanceof GeneralNodeDatum converted ) {
+				// use the endpoint's node/source IDs if provided; as the datum ID is
+				// immutable, each override replaces gnd with a copy using the new ID
+				GeneralNodeDatum gnd = converted;
 				if ( endpoint.getNodeId() != null ) {
-					gd = gnd.copyWithId(new GeneralNodeDatumPK(endpoint.getNodeId(), gnd.getCreated(),
+					gnd = gnd.copyWithId(new GeneralNodeDatumPK(endpoint.getNodeId(), gnd.getCreated(),
 							gnd.getSourceId()));
 				} else if ( parameters != null && parameters.get(PARAM_NODE_ID) != null ) {
 					try {
-						gd = gnd.copyWithId(
+						gnd = gnd.copyWithId(
 								new GeneralNodeDatumPK(Long.valueOf(parameters.get(PARAM_NODE_ID)),
 										gnd.getCreated(), gnd.getSourceId()));
 					} catch ( IllegalArgumentException e ) {
@@ -297,10 +298,10 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 					}
 				}
 				if ( endpoint.getSourceId() != null ) {
-					gd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
+					gnd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
 							endpoint.getSourceId()));
 				} else if ( parameters != null && parameters.get(PARAM_SOURCE_ID) != null ) {
-					gd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
+					gnd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
 							parameters.get(PARAM_SOURCE_ID)));
 				}
 
