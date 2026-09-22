@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'java-test-fixtures'
     id 'eclipse'
 	id 'org.springframework.boot' version '4.1.1' apply false
 }
@@ -30,6 +31,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	
+	// Test fixtures (shared test support)
+	testFixturesApi testFixtures(project(':solarnet-common'))
+	testFixturesImplementation project(':solarnet-datum-input')
+
 	// Testing
 	testImplementation project(':solarnet-common-test')
 }
