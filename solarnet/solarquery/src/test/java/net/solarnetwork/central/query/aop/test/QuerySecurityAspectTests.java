@@ -88,7 +88,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class QuerySecurityAspectTests {
 
@@ -419,7 +419,7 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		@SuppressWarnings("unchecked")
-		Set<String> result = (Set<String>) service.reportableSourcesAccessCheck(pjp, nodeId);
+		Set<String> result = (Set<String>) service.reportableSourcesFilterAccessCheck(pjp, criteria);
 		then(result).as("Filtered source IDs").containsExactly("/A/B/watts", "/A/C/watts");
 	}
 

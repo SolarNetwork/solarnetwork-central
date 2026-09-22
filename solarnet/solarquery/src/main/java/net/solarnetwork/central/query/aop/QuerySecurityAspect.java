@@ -62,7 +62,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Aspect
 @Component
@@ -98,20 +98,12 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodesReportableInterval(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
-	public void nodeReportableSources(Long nodeId) {
-	}
-
 	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodesReportableSources(GeneralNodeDatumFilter filter) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodesAvailableSources(GeneralNodeDatumFilter filter) {
-	}
-
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
-	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..) && @target(net.solarnetwork.central.domain.Securable)")
@@ -228,35 +220,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		@SuppressWarnings("unchecked")
 		Set<NodeSourcePK> result = (Set<NodeSourcePK>) pjp.proceed();
 		return verifyNodeSourcePkSet(result);
-	}
-
-	/**
-	 * Enforce node ID and source ID policy restrictions when requesting the
-	 * available sources of a node.
-	 *
-	 * <p>
-	 * First the node ID is verified. Then, for all returned source ID values,
-	 * if the active policy has no source ID restrictions return all values,
-	 * otherwise remove any value not included in the policy.
-	 * </p>
-	 *
-	 * @param pjp
-	 *        The join point.
-	 * @param nodeId
-	 *        The node ID.
-	 * @return The set of String source IDs.
-	 * @throws Throwable
-	 *         if anything goes wrong
-	 */
-	@Around(value = "nodeReportableSources(nodeId)", argNames = "pjp,nodeId")
-	public Object reportableSourcesAccessCheck(ProceedingJoinPoint pjp, Long nodeId) throws Throwable {
-		// verify node ID
-		requireNodeReadAccess(nodeId);
-
-		// verify source IDs in result
-		@SuppressWarnings("unchecked")
-		Set<String> result = (Set<String>) pjp.proceed();
-		return verifySourceIdSet(result);
 	}
 
 	private Set<String> verifySourceIdSet(Set<String> result) {
@@ -437,7 +400,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
-	@Before(value = "nodeMostRecentWeatherConditions(nodeId)", argNames = "nodeId")
 	public void userNodeAccessCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
