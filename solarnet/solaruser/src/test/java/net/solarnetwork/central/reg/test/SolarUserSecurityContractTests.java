@@ -38,8 +38,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import net.solarnetwork.central.aop.test.SolarNodeMetadataBizSecurityContract;
+import net.solarnetwork.central.aop.test.UserEventBizSecurityContract;
 import net.solarnetwork.central.aop.test.UserMetadataBizSecurityContract;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
+import net.solarnetwork.central.biz.UserEventBiz;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.datum.aop.test.AuditDatumBizSecurityContract;
 import net.solarnetwork.central.datum.aop.test.DatumAuxiliaryBizSecurityContract;
@@ -131,6 +133,7 @@ public class SolarUserSecurityContractTests extends AbstractJUnit5CentralTransac
 			.with(BillingBiz.class, BillingBizSecurityContract::contract)
 			.with(SolarNodeMetadataBiz.class, SolarNodeMetadataBizSecurityContract::contract)
 			.with(UserMetadataBiz.class, UserMetadataBizSecurityContract::contract)
+			.with(UserEventBiz.class, UserEventBizSecurityContract::contract)
 			.with(AuditDatumBiz.class, AuditDatumBizSecurityContract::contract)
 			.with(DatumAuxiliaryBiz.class, DatumAuxiliaryBizSecurityContract::contract)
 			.with(DatumMaintenanceBiz.class, DatumMaintenanceBizSecurityContract::contract)

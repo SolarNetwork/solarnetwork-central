@@ -39,7 +39,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import net.solarnetwork.central.biz.AppConfigurationBiz;
-import net.solarnetwork.central.biz.UserEventBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.mail.MailService;
@@ -47,7 +46,6 @@ import net.solarnetwork.central.reg.web.MyNodesController;
 import net.solarnetwork.central.reg.web.ResetPasswordController;
 import net.solarnetwork.central.reg.web.api.v1.NodeInstructionController;
 import net.solarnetwork.central.reg.web.api.v1.NodeMetadataController;
-import net.solarnetwork.central.reg.web.api.v1.UserEventController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.aop.ControllerDependencies.Review;
 
@@ -82,10 +80,7 @@ public class SolarUserControllerDependencyTests extends AbstractJUnit5CentralTra
 					+ " results"),
 			reviewed(SolarNodeOwnershipDao.class, NodeMetadataController.class,
 					"finds the actor's own node IDs for queries without any; SolarNodeMetadataBiz"
-					+ " reads the metadata"),
-			reviewed(UserEventBiz.class, UserEventController.class,
-					"the query user ID is always the actor's; policy node and source restrictions"
-					+ " are not applied to events")
+					+ " reads the metadata")
 			);
 	// @formatter:on
 
