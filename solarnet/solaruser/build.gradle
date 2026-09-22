@@ -89,6 +89,19 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
 	testImplementation project(':solarnet-common-test-support')
+	testImplementation testFixtures(project(':solarnet-common'))
+	testImplementation testFixtures(project(':solarnet-datum'))
+	testImplementation testFixtures(project(':solarnet-datum-import'))
+	testImplementation testFixtures(project(':solarnet-instructor'))
+	testImplementation testFixtures(project(':solarnet-user'))
+	testImplementation testFixtures(project(':solarnet-user-cloud-integrations'))
+	testImplementation testFixtures(project(':solarnet-user-datum'))
+	testImplementation testFixtures(project(':solarnet-user-datum-export'))
+	testImplementation testFixtures(project(':solarnet-user-datum-input'))
+	testImplementation testFixtures(project(':solarnet-user-dnp3'))
+	testImplementation testFixtures(project(':solarnet-user-instructor-input'))
+	testImplementation testFixtures(project(':solarnet-user-ocpp'))
+	testImplementation testFixtures(project(':solarnet-user-oscp'))
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 }
