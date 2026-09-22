@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.datum.imp.aop.test;
 
+import static org.mockito.Mockito.mock;
 import java.util.Set;
 import java.util.UUID;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
+import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestTenant;
@@ -56,6 +58,7 @@ public final class DatumImportBizSecurityContract {
 	 *        the tenants
 	 * @return the contract
 	 */
+	@SuppressWarnings("FutureReturnValueIgnored")
 	public static SecurityContract<DatumImportBiz> contract(TestTenants tenants) {
 		final TestTenant a = tenants.a();
 		final String jobId = UUID.randomUUID().toString();
@@ -65,7 +68,7 @@ public final class DatumImportBizSecurityContract {
 				.exempt("availableInputFormatServices", "global service listing")
 				.userWrite(biz -> biz.submitDatumImportRequest(
 						new BasicDatumImportRequest(new BasicConfiguration("Test", true), a.userId()),
-						null))
+						mock(DatumImportResource.class)))
 				.userWrite(biz -> biz.previewStagedImportRequest(
 						new BasicDatumImportPreviewRequest(a.userId(), jobId, 1)))
 				.userRead(biz -> biz.datumImportJobStatusForUser(a.userId(), jobId))

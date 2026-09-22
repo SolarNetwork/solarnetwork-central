@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.aop.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import java.time.Instant;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -32,6 +33,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.test.aop.SecuredProxy;
 import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestTenant;
@@ -75,15 +77,17 @@ public final class InstructorBizSecurityContract {
 
 		// @formatter:off
 		return SecurityContract.forApi(InstructorBiz.class, tenants)
-				.nodeWrite(biz -> biz.findFilteredNodeInstructions(nodeFilter(a.privateNodeId()), null))
+				.nodeWrite(biz -> biz.findFilteredNodeInstructions(nodeFilter(a.privateNodeId()),
+						processor()))
 				.allowing(biz -> biz.findFilteredNodeInstructions(
-						nodeFilter(a.privateNodeId(), b.privateNodeId()), null))
+						nodeFilter(a.privateNodeId(), b.privateNodeId()), processor()))
 					.as("other user node")
 				.nodeWrite(biz -> biz.findFilteredNodeInstructions(instructionFilter(instructionId),
-						null))
+						processor()))
 					.given(instructionExists)
 					.as("instruction")
-				.allowing(biz -> biz.findFilteredNodeInstructions(new SimpleInstructionFilter(), null))
+				.allowing(biz -> biz.findFilteredNodeInstructions(new SimpleInstructionFilter(),
+						processor()))
 					.as("no node or instruction")
 				.nodeWrite(biz -> biz.queueInstruction(a.privateNodeId(), newInstruction()))
 				.nodeWrite(biz -> biz.queueInstructions(Set.of(a.privateNodeId()), newInstruction()))
@@ -107,6 +111,11 @@ public final class InstructorBizSecurityContract {
 						new SimpleInstructionFilter(), InstructionState.Declined))
 				.build();
 		// @formatter:on
+	}
+
+	@SuppressWarnings("unchecked")
+	private static FilteredResultsProcessor<NodeInstruction> processor() {
+		return mock(FilteredResultsProcessor.class);
 	}
 
 	private static Instruction newInstruction() {
