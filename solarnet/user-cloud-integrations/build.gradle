@@ -38,6 +38,7 @@ dependencies {
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation 'javax.cache:cache-api'
 }
 
 jar.manifest {
