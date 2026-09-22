@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventSecurityAspectTests.java - 11/06/2020 9:54:13 am
+ * UserEventHookSecurityAspectTests.java - 11/06/2020 9:54:13 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -35,21 +35,21 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CentralTestConstants;
-import net.solarnetwork.central.user.datum.event.aop.UserEventSecurityAspect;
+import net.solarnetwork.central.user.datum.event.aop.UserEventHookSecurityAspect;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
 
 /**
- * Test cases for the {@link UserEventSecurityAspect} class.
+ * Test cases for the {@link UserEventHookSecurityAspect} class.
  * 
  * @author matt
  * @version 2.0
  */
-public class UserEventSecurityAspectTests implements CentralTestConstants {
+public class UserEventHookSecurityAspectTests implements CentralTestConstants {
 
 	private static final Long TEST_USER_ID = -11L;
 
 	private SolarNodeOwnershipDao nodeOwnershipDao;
-	private UserEventSecurityAspect aspect;
+	private UserEventHookSecurityAspect aspect;
 
 	private void replayAll() {
 		EasyMock.replay(nodeOwnershipDao);
@@ -70,7 +70,7 @@ public class UserEventSecurityAspectTests implements CentralTestConstants {
 	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
-		aspect = new UserEventSecurityAspect(nodeOwnershipDao);
+		aspect = new UserEventHookSecurityAspect(nodeOwnershipDao);
 	}
 
 	@AfterEach

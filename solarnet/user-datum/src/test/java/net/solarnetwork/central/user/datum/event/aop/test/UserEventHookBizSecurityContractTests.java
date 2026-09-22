@@ -34,13 +34,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.test.aop.SecuredProxy;
 import net.solarnetwork.central.test.tenant.SecurityContextExtension;
 import net.solarnetwork.central.test.tenant.TestTenants;
-import net.solarnetwork.central.user.datum.event.aop.UserEventSecurityAspect;
+import net.solarnetwork.central.user.datum.event.aop.UserEventHookSecurityAspect;
 import net.solarnetwork.central.user.datum.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.datum.event.biz.dao.DaoUserEventHookBiz;
 
 /**
  * Verify the {@link UserEventHookBizSecurityContract} for
- * {@link UserEventHookBiz} with the {@code UserEventSecurityAspect} aspect
+ * {@link UserEventHookBiz} with the {@code UserEventHookSecurityAspect} aspect
  * applied.
  *
  * @author matt
@@ -53,7 +53,7 @@ public class UserEventHookBizSecurityContractTests {
 
 	private SecuredProxy<UserEventHookBiz> proxy() {
 		return securedProxy((UserEventHookBiz) mock(DaoUserEventHookBiz.class),
-				new UserEventSecurityAspect(tenants.ownershipDao()));
+				new UserEventHookSecurityAspect(tenants.ownershipDao()));
 	}
 
 	@TestFactory
@@ -64,8 +64,8 @@ public class UserEventHookBizSecurityContractTests {
 	@Test
 	public void pointcutsMatch() {
 		// @formatter:off
-		then(unmatchedPointcuts(UserEventSecurityAspect.class, DaoUserEventHookBiz.class))
-			.as("Every UserEventSecurityAspect pointcut matches a UserEventHookBiz method")
+		then(unmatchedPointcuts(UserEventHookSecurityAspect.class, DaoUserEventHookBiz.class))
+			.as("Every UserEventHookSecurityAspect pointcut matches a UserEventHookBiz method")
 			.isEmpty()
 			;
 		// @formatter:on

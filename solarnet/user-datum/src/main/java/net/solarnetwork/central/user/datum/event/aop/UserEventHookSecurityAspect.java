@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventSecurityAspect.java - 11/06/2020 9:46:50 am
+ * UserEventHookSecurityAspect.java - 11/06/2020 9:46:50 am
  *
  * Copyright 2020 SolarNetwork.net Dev Team
  *
@@ -34,11 +34,11 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security enforcing AOP aspect for user event APIs.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Aspect
 @Component
-public class UserEventSecurityAspect extends AuthorizationSupport {
+public class UserEventHookSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
@@ -46,7 +46,7 @@ public class UserEventSecurityAspect extends AuthorizationSupport {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 */
-	public UserEventSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+	public UserEventHookSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super(nodeOwnershipDao);
 	}
 

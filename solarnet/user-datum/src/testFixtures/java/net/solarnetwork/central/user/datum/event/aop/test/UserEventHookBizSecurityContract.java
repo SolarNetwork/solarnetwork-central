@@ -34,12 +34,12 @@ import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfigu
  * Security contract for {@link UserEventHookBiz}.
  *
  * <p>
- * The contract is enforced by {@code UserEventSecurityAspect}. Hooks only fire
- * for nodes their user owns, so the node IDs of a hook are not checked.
+ * The contract is enforced by {@code UserEventHookSecurityAspect}. Hooks only
+ * fire for nodes their user owns, so the node IDs of a hook are not checked.
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserEventHookBizSecurityContract {
 
