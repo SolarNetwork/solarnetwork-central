@@ -22,14 +22,11 @@
 
 package net.solarnetwork.central.user.aop.test;
 
-import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.central.user.aop.test.UserContractFixtures.user;
 import static net.solarnetwork.central.user.aop.test.UserContractFixtures.userNode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import java.time.Instant;
 import java.util.List;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -40,7 +37,6 @@ import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.BasicUserNodeFilter;
 import net.solarnetwork.central.user.domain.UserAuthToken;
-import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 
@@ -76,11 +72,6 @@ public final class UserBizSecurityContract {
 		final Long nodeId = a.privateNodeId();
 		final String tokenId = a.userToken().tokenId();
 
-		final Long confirmationId = randomLong();
-		final UserNodeConfirmation confirmation = new UserNodeConfirmation(user(a));
-		confirmation.setId(confirmationId);
-		confirmation.setNodeId(nodeId);
-
 		// @formatter:off
 		return SecurityContract.forApi(UserBiz.class, tenants)
 				.userRead(biz -> biz.getUser(userId))
@@ -93,10 +84,6 @@ public final class UserBizSecurityContract {
 						a.userActor(), a.tokenActor())
 				.userRead(biz -> biz.getArchivedUserNodes(userId))
 				.userRead(biz -> biz.getPendingUserNodeConfirmations(userId))
-				.nodeRead(biz -> biz.getPendingUserNodeConfirmation(confirmationId))
-					.given(p -> given(p.target().getPendingUserNodeConfirmation(confirmationId))
-							.willReturn(confirmation))
-					.targetInvokedOnDeny()
 				.allowing(biz -> biz.getUserNodeCertificate(userId, nodeId),
 						a.userActor(), a.tokenActor(), a.nodeActor())
 				.allowing(biz -> biz.generateUserAuthToken(userId, SecurityTokenType.User,
@@ -117,7 +104,6 @@ public final class UserBizSecurityContract {
 				.allowing(biz -> biz.updateUserAuthTokenInfo(userId, tokenId,
 						new UserAuthToken(tokenId, userId, randomString(), SecurityTokenType.User)),
 						a.userActor(), a.tokenActor())
-				.userWrite(biz -> biz.createSnws2AuthorizationBuilder(userId, tokenId, Instant.now()))
 				.build();
 		// @formatter:on
 	}

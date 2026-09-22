@@ -35,7 +35,9 @@ import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
  * Security contract for {@link UserNodeInstructionBiz}.
  *
  * <p>
- * The contract is enforced by {@code UserNodeInstructionSecurityAspect}.
+ * The contract is enforced by {@code UserNodeInstructionSecurityAspect}. Saving
+ * a task for a node requires write access to the node, so no actor can save a
+ * task for another user's node.
  * </p>
  *
  * @author matt
@@ -56,6 +58,7 @@ public final class UserNodeInstructionBizSecurityContract {
 	 */
 	public static SecurityContract<UserNodeInstructionBiz> contract(TestTenants tenants) {
 		final TestTenant a = tenants.a();
+		final TestTenant b = tenants.b();
 		final UserLongCompositePK taskId = new UserLongCompositePK(a.userId(), randomLong());
 
 		// @formatter:off
@@ -66,11 +69,23 @@ public final class UserNodeInstructionBizSecurityContract {
 				.userWrite(biz -> biz.updateControlInstructionTaskEnabled(taskId, true))
 				.userWrite(biz -> biz.saveControlInstructionTask(taskId,
 						new UserNodeInstructionTaskEntityInput()))
+					.as("no node")
+				.allowing(biz -> biz.saveControlInstructionTask(taskId, taskInput(a.privateNodeId())),
+						a.userActor(), a.tokenActor())
+					.as("own node")
+				.allowing(biz -> biz.saveControlInstructionTask(taskId, taskInput(b.privateNodeId())))
+					.as("other user node")
 				.userWrite(biz -> biz.deleteControlInstructionTask(taskId))
 				.userRead(biz -> biz.simulateControlInstructionTaskForUser(a.userId(),
 						new UserNodeInstructionTaskEntityInput()))
 				.build();
 		// @formatter:on
+	}
+
+	private static UserNodeInstructionTaskEntityInput taskInput(Long nodeId) {
+		final UserNodeInstructionTaskEntityInput input = new UserNodeInstructionTaskEntityInput();
+		input.setNodeId(nodeId);
+		return input;
 	}
 
 }
