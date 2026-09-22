@@ -28,10 +28,16 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * An active security token owned by a test user.
+ *
+ * <p>
+ * The policy is normalized by converting it to JSON and back, so it has the
+ * same form as the policy of an authenticated token.
+ * </p>
  *
  * @param tokenId
  *        the token ID
@@ -48,6 +54,27 @@ import net.solarnetwork.domain.SecurityPolicy;
  */
 public record TestToken(String tokenId, String tokenSecret, Long userId, SecurityTokenType type,
 		@Nullable SecurityPolicy policy) {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the ID of the user that owns the token
+	 * @param type
+	 *        the token type
+	 * @param policy
+	 *        the optional token policy
+	 */
+	public TestToken {
+		if ( policy != null ) {
+			policy = JsonUtils.getObjectFromJSON(JsonUtils.getJSONString(policy, null),
+					SecurityPolicy.class);
+		}
+	}
 
 	/**
 	 * Create a new token with a random ID and secret.
