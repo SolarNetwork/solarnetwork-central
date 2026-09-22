@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -63,7 +64,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security enforcing AOP aspect for {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Aspect
 @Component
@@ -237,6 +238,30 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userId,..)")
 	public void deleteEntityForUserId(Long userId) {
+	}
+
+	/**
+	 * Match update methods given an entity key and entity class.
+	 *
+	 * @param userKey
+	 *        the user key
+	 * @param entityClass
+	 *        the entity class
+	 * @since 1.4
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.update*(..)) && args(userKey,..,entityClass)")
+	public void updateEntityForUserKeyAndClass(UserIdRelated userKey, Class<?> entityClass) {
+	}
+
+	/**
+	 * Match datum stream datum methods given a datum stream key.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream key
+	 * @since 1.4
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.*DatumStreamDatum*(..)) && args(datumStreamId,..)")
+	public void datumStreamDatumForDatumStreamKey(UserLongCompositePK datumStreamId) {
 	}
 
 	/**
@@ -471,8 +496,9 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	@Before(value = """
 			   deleteEntityForUserKeyAndClass(userKey,entityClass)
 			|| mergeForUserKeyAndClass(userKey,entityClass)
+			|| updateEntityForUserKeyAndClass(userKey,entityClass)
 			""", argNames = "userKey,entityClass")
-	public void deleteEntityForUserKeyAndClassAccessCheck(UserIdRelated userKey, Class<?> entityClass) {
+	public void writeEntityForUserKeyAndClassAccessCheck(UserIdRelated userKey, Class<?> entityClass) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 		if ( entityClass == null ) {
 			return;
@@ -496,6 +522,42 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 
 		// also these are global settings so require an unrestricted token
 		requireUnrestrictedSecurityPolicy();
+	}
+
+	/**
+	 * Require read access to the node of the datum stream whose datum are being
+	 * read.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream key
+	 * @since 1.4
+	 */
+	@Before(value = "datumStreamDatumForDatumStreamKey(datumStreamId)", argNames = "datumStreamId")
+	public void datumStreamDatumAccessCheck(UserLongCompositePK datumStreamId) {
+		// requireUserReadAccess already handled by the read and list advice
+		requireDatumStreamReadAccess(datumStreamId);
+	}
+
+	/**
+	 * Require read access to the node of a returned entity.
+	 *
+	 * <p>
+	 * Entities like cloud controls are related to a node without being related
+	 * to a datum stream, so their node can only be verified once loaded.
+	 * </p>
+	 *
+	 * @param userKey
+	 *        the user related identifier
+	 * @param result
+	 *        the returned entity
+	 * @since 1.4
+	 */
+	@AfterReturning(pointcut = "readForUserKey(userKey)", returning = "result",
+			argNames = "userKey,result")
+	public void readForUserKeyResultAccessCheck(UserIdRelated userKey, @Nullable Object result) {
+		if ( result instanceof NodeIdRelated id && id.getNodeId() != null ) {
+			requireNodeReadAccess(id.getNodeId());
+		}
 	}
 
 }

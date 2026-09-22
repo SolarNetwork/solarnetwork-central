@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.DatumId;
@@ -46,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured", "pk" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "integrationId",
@@ -55,7 +56,7 @@ public class CloudControlConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudControlConfiguration, UserLongCompositePK>
 		implements CloudIntegrationsConfigurationEntity<CloudControlConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudControlConfiguration, UserLongCompositePK>,
-		UserIdentifiableSystem, CloudIntegrationIdRelated {
+		UserIdentifiableSystem, NodeIdRelated, CloudIntegrationIdRelated {
 
 	/**
 	 * A system identifier component included in {@link #systemIdentifier()}.

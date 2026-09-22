@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -84,7 +83,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
@@ -354,7 +353,6 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to controls")
 	@Test
 	public void controlForId_restrictedToken_nonPolicyNode_denied() {
 		// GIVEN
@@ -405,7 +403,6 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to updating the enabled status")
 	@Test
 	public void updateDatumStreamEnabled_restrictedToken_nonPolicyNode_denied() {
 		// GIVEN
@@ -426,7 +423,6 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to reading cloud datum stream datum")
 	@Test
 	public void latestDatumStreamDatum_restrictedToken_nonPolicyNode_denied() {
 		// GIVEN
@@ -441,7 +437,6 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to reading cloud datum stream datum")
 	@Test
 	public void listDatumStreamDatum_restrictedToken_nonPolicyNode_denied() {
 		// GIVEN

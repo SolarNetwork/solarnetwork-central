@@ -69,7 +69,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class UserCloudIntegrationsBizSecurityContract {
 
@@ -149,8 +149,9 @@ public final class UserCloudIntegrationsBizSecurityContract {
 				.allowing(biz -> biz.mergeConfigurationServiceProperties(integrationId,
 						MergeMode.Simple, new HashMap<>(), CloudIntegrationConfiguration.class),
 						unrestricted)
-				.userWrite(biz -> biz.updateConfigurationEnabled(integrationId, true,
-						CloudIntegrationConfiguration.class))
+				.allowing(biz -> biz.updateConfigurationEnabled(integrationId, true,
+						CloudIntegrationConfiguration.class),
+						unrestricted)
 				.allowing(biz -> biz.deleteConfiguration(integrationId,
 						CloudIntegrationConfiguration.class),
 						unrestricted)
