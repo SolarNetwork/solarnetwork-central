@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -625,7 +626,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 				final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, country, timeZoneId);
 				for ( int n = 0; n < nodeCount; n++ ) {
 					final Long nodeId = CommonDbTestUtils.insertNode(jdbcTemplate, locId);
-					final String name = randomString(6) + ' ' + randomString(6);
+					final String name = randomSourceId(); // so name sort stable between DB and Java
 					final String desc = randomString(6) + ' ' + randomString(6);
 					final boolean archived = RNG.nextBoolean();
 					CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId, name, desc,
@@ -814,7 +815,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// WHEN
 		final var filter = new BasicUserNodeFilter();
 		filter.setUserId(randomUserId);
-		filter.setOrderBy(List.of("created"));
+		filter.setOrderBy(List.of("created", "node")); // include node for stable sort
 
 		final FilterResults<UserNodeInfo, Long> results = userNodeDao.findFiltered(filter);
 
@@ -823,7 +824,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		final UserNodeInfo[] expected = entities.stream()
 				.filter(e -> randomUserId.equals(e.getUserId()))
 				.map(UserNodeInfo::forUserNode)
-				.sorted(Comparator.comparing(UserNodeInfo::created))
+				.sorted(Comparator.comparing(UserNodeInfo::created).thenComparing(UserNodeInfo::nodeId))
 				.toArray(UserNodeInfo[]::new)
 				;
 
