@@ -34,13 +34,17 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
@@ -180,6 +184,37 @@ public final class TenantDatumFixtures {
 			}
 		}
 		DatumDbUtils.insertAuditDatum(null, jdbcOps, datums);
+		return datums;
+	}
+
+	/**
+	 * Insert reset auxiliary datum for every stream of a tenant.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param tenant
+	 *        the tenant
+	 * @param start
+	 *        the date of the first auxiliary datum
+	 * @param count
+	 *        the number of hourly auxiliary datum to insert per stream
+	 * @return the inserted auxiliary datum
+	 */
+	public static List<DatumAuxiliary> insertDatumAuxiliary(JdbcOperations jdbcOps,
+			TestTenant tenant, ZonedDateTime start, int count) {
+		final Instant updated = Instant.now();
+		final List<DatumAuxiliary> datums = new ArrayList<>(tenant.streams().size() * count);
+		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
+			for ( int i = 0; i < count; i++ ) {
+				final DatumSamples end = new DatumSamples();
+				end.putAccumulatingSampleValue("wattHours", 100);
+				final DatumSamples begin = new DatumSamples();
+				begin.putAccumulatingSampleValue("wattHours", 0);
+				datums.add(new DatumAuxiliaryEntity(s.getStreamId(), start.plusHours(i).toInstant(),
+						DatumAuxiliaryType.Reset, updated, end, begin, null, null));
+			}
+		}
+		DatumDbUtils.insertDatumAuxiliary(null, jdbcOps, datums);
 		return datums;
 	}
 

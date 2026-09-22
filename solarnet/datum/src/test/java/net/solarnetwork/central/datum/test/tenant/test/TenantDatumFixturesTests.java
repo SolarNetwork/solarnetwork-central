@@ -36,6 +36,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -116,6 +117,22 @@ public class TenantDatumFixturesTests extends AbstractJUnit5JdbcDaoTestSupport {
 		// @formatter:off
 		then(audits)
 			.as("Daily audit datum inserted for every stream")
+			.hasSize(streamIds.size() * 2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void insertDatumAuxiliary() {
+		// WHEN
+		TenantDatumFixtures.insertDatumAuxiliary(jdbcTemplate, tenants.a(), DEFAULT_START, 2);
+
+		// THEN
+		final List<DatumAuxiliary> auxiliaries = DatumDbUtils.listDatumAuxiliary(jdbcTemplate)
+				.stream().filter(d -> streamIds.contains(d.getStreamId())).toList();
+		// @formatter:off
+		then(auxiliaries)
+			.as("Auxiliary datum inserted for every stream")
 			.hasSize(streamIds.size() * 2)
 			;
 		// @formatter:on
