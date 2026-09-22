@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.stream.aop;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -31,7 +32,10 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
@@ -42,22 +46,31 @@ import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Security enforcing AOP aspect for {@link UserDatumStreamAliasBiz}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
 public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
+
+	private final ObjectDatumStreamAliasEntityDao aliasDao;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
+	 * @param aliasDao
+	 *        the alias DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.1
 	 */
-	public UserDatumStreamAliasSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+	public UserDatumStreamAliasSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
+			ObjectDatumStreamAliasEntityDao aliasDao) {
 		super(nodeOwnershipDao);
+		this.aliasDao = requireNonNullArgument(aliasDao, "aliasDao");
 	}
 
 	/**
@@ -121,14 +134,36 @@ public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(userId);
 	}
 
+	/**
+	 * Check access to save an alias.
+	 *
+	 * <p>
+	 * Write access is required for the user, for the original and alias nodes
+	 * of the input, and for the original node of any existing alias with the
+	 * given ID, which is the node that determines the owner of the alias.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param id
+	 *        the alias ID
+	 * @param input
+	 *        the alias input
+	 */
 	@Before(value = "saveAliasForUserId(userId, id, input)")
 	public void saveAliasAccessCheck(Long userId, UUID id, ObjectDatumStreamAliasEntityInput input) {
 		requireUserWriteAccess(userId);
+		if ( EntityConstants.isAssigned(id) ) {
+			final ObjectDatumStreamAliasEntity existing = aliasDao.get(id);
+			if ( existing != null ) {
+				requireNodeWriteAccess(existing.getOriginalObjectId());
+			}
+		}
 		if ( input == null ) {
 			return;
 		}
-		requireNodeReadAccess(input.getOriginalObjectId());
-		requireNodeReadAccess(input.getObjectId());
+		requireNodeWriteAccess(input.getOriginalObjectId());
+		requireNodeWriteAccess(input.getObjectId());
 
 		if ( input.getOriginalSourceId() == null && input.getSourceId() == null ) {
 			return;
