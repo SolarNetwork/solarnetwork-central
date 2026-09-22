@@ -34,6 +34,7 @@ import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -72,6 +73,7 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -83,7 +85,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for stream reading filter results in {@link JdbcDatumEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseDatumJdbcTestSupport {
 
@@ -593,4 +595,64 @@ public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseD
 						null, propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null)));
 	}
 
+
+	private Long setupNodeUser(Long nodeId) {
+		setupTestLocation();
+		setupTestNode(nodeId);
+		final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId);
+		return userId;
+	}
+
+	private List<StreamDatum> diffAt(Long userId) {
+		loadStreamWithAuxiliary("test-datum-02.txt");
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.CalculatedAtDifference);
+		filter.setUserId(userId);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setTimeTolerance(Period.ofDays(7));
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
+		return processor.getData();
+	}
+
+	@Test
+	public void diffAt_nodeAndSource_nodeUser() {
+		// GIVEN
+		final Long userId = setupNodeUser(1L);
+
+		// WHEN
+		List<StreamDatum> results = diffAt(userId);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Reading returned for node owned by user")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void diffAt_nodeAndSource_otherUser() {
+		// GIVEN
+		setupNodeUser(1L);
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+
+		// WHEN
+		List<StreamDatum> results = diffAt(otherUserId);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Nothing returned for node not owned by user")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
 }

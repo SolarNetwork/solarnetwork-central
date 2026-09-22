@@ -42,6 +42,7 @@ import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -86,20 +87,23 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class implementation of
  * aggregate queries.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport {
 
@@ -1476,4 +1480,73 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		}
 	}
 
+
+	private List<StreamDatum> find15MinuteStream(Long userId) throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 16; i++ ) {
+			datums.add(new DatumEntity(meta.getStreamId(), start.plusMinutes(i).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 2) }, null, null)));
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setUserId(userId);
+		filter.setNodeId(meta.getObjectId());
+		filter.setSourceId(meta.getSourceId());
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMinutes(15).toInstant());
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		dao.findFilteredStream(filter, processor, null, null, null);
+		return processor.getData();
+	}
+
+	private Long setupNodeUser(Long nodeId) {
+		setupTestLocation();
+		setupTestNode(nodeId);
+		final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId);
+		return userId;
+	}
+
+	@Test
+	public void findStream_15min_nodeUser() throws IOException {
+		// GIVEN
+		final Long userId = setupNodeUser(1L);
+
+		// WHEN
+		List<StreamDatum> results = find15MinuteStream(userId);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Aggregate returned for node owned by user")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findStream_15min_otherUser() throws IOException {
+		// GIVEN
+		setupNodeUser(1L);
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+
+		// WHEN
+		List<StreamDatum> results = find15MinuteStream(otherUserId);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Nothing returned for node not owned by user")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
 }
