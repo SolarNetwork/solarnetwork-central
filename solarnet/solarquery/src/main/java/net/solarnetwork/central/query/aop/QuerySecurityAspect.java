@@ -395,19 +395,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to node data.
-	 *
-	 * @param nodeId
-	 *        the ID of the node to verify
-	 */
-	public void userNodeAccessCheck(Long nodeId) {
-		if ( nodeId == null ) {
-			return;
-		}
-		requireNodeReadAccess(nodeId);
-	}
-
-	/**
 	 * Enforce security policies on a {@link Filter}.
 	 *
 	 * @param <T>
@@ -452,7 +439,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 		if ( validateNodeIds && nodeIds != null ) {
 			for ( Long nodeId : nodeIds ) {
-				userNodeAccessCheck(nodeId);
+				requireNodeReadAccess(nodeId);
 			}
 		}
 
