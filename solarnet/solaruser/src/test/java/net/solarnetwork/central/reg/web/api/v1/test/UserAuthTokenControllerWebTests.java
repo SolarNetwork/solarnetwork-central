@@ -29,6 +29,8 @@ import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -38,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +53,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
+import com.jayway.jsonpath.JsonPath;
 import net.solarnetwork.central.reg.web.api.v1.UserAuthTokenController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -66,7 +70,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -989,7 +993,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 			.andExpect(content().json("""
 					{"success":true, "data": {"results":[
 					]}}
-					""".formatted(actorTokenId),
+					""",
 					JsonCompareMode.LENIENT))
 			;
 		// @formatter:on
@@ -1084,4 +1088,148 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		// @formatter:on
 	}
 
+
+	private static Instant expiry() {
+		return Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1, ChronoUnit.DAYS);
+	}
+
+	private SecurityPolicy policy(String tokenId) {
+		final UserAuthToken token = userAuthTokenDao.get(tokenId);
+		then(token).as("Token %s exists", tokenId).isNotNull();
+		return token.getPolicy();
+	}
+
+	@Test
+	public void createToken_asActorWithExpiry_expiryApplied() throws Exception {
+		// GIVEN
+		final Instant notAfter = expiry();
+		final String tokenId = randomString(20);
+		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
+				getJSONString(BasicSecurityPolicy.builder().withNotAfter(notAfter).build()));
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// @formatter:off
+		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.POST.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/auth-tokens/generate/User")
+				.useSnDate(true).date(now)
+				.saveSigningKey(TEST_TOKEN_SECRET);
+		String authHeader = auth.build();
+
+		final String result = mvc.perform(post("/api/v1/sec/user/auth-tokens/generate/User")
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn().getResponse().getContentAsString()
+			;
+
+		// THEN
+		then(policy(JsonPath.read(result, "$.data.id")))
+			.as("Actor's expiry applied to token requested without a policy")
+			.isNotNull()
+			.returns(notAfter, from(SecurityPolicy::getNotAfter))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void createToken_asActorWithoutRefresh_refreshDenied() throws Exception {
+		// GIVEN
+		final String tokenId = randomString(20);
+		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
+				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+
+		// WHEN
+		final Instant now = Instant.now();
+		final String reqJson = """
+				{"refreshAllowed": true}
+				""";
+
+		// @formatter:off
+		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.POST.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/auth-tokens/generate/User")
+				.useSnDate(true).date(now)
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.saveSigningKey(TEST_TOKEN_SECRET);
+		String authHeader = auth.build();
+
+		final String result = mvc.perform(post("/api/v1/sec/user/auth-tokens/generate/User")
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn().getResponse().getContentAsString()
+			;
+
+		// THEN
+		then(policy(JsonPath.read(result, "$.data.id")))
+			.as("Requested refresh denied by actor's refresh constraint")
+			.isNotNull()
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void replacePolicy_asActorWithExpiry_ownExpiryKept() throws Exception {
+		// GIVEN
+		final Instant notAfter = expiry();
+		final String tokenId = randomString(20);
+		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
+				getJSONString(BasicSecurityPolicy.builder().withNotAfter(notAfter).build()));
+
+		// WHEN
+		final Instant now = Instant.now();
+		final String reqJson = """
+				{}
+				""";
+
+		// @formatter:off
+		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.PUT.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/auth-tokens/policy")
+				.queryParams(Map.of("tokenId", tokenId))
+				.useSnDate(true).date(now)
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.saveSigningKey(TEST_TOKEN_SECRET);
+		String authHeader = auth.build();
+
+		mvc.perform(put("/api/v1/sec/user/auth-tokens/policy")
+				.param("tokenId", tokenId)
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			;
+
+		// THEN
+		then(policy(tokenId))
+			.as("Actor's own expiry kept when replacing its policy with one without an expiry")
+			.isNotNull()
+			.returns(notAfter, from(SecurityPolicy::getNotAfter))
+			;
+		// @formatter:on
+	}
 }

@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
@@ -84,8 +83,15 @@ import net.solarnetwork.domain.SecurityPolicy;
  * node, which every actor can read.
  * </p>
  *
+ * <p>
+ * Managing tokens requires an unrestricted policy, but an unrestricted policy
+ * can still have an expiry date and deny refreshing. {@code DaoUserBiz}
+ * applies those constraints of the actor's policy to every token policy the
+ * actor creates or updates, so they cannot be widened or removed.
+ * </p>
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSupport {
@@ -174,19 +180,46 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		return (json != null ? JsonUtils.getObjectFromJSON(json, SecurityPolicy.class) : null);
 	}
 
+	private static SecurityPolicy emptyPolicy() {
+		return BasicSecurityPolicy.builder().build();
+	}
+
 	private static SecurityPolicy expiringPolicy(Instant notAfter) {
 		return BasicSecurityPolicy.builder().withNotAfter(notAfter).build();
 	}
 
-	private TestToken expiringToken() {
-		final TestToken token = a.newToken(SecurityTokenType.User,
-				expiringPolicy(Instant.now().truncatedTo(MILLIS).plus(1, DAYS)));
+	private static SecurityPolicy refreshPolicy(boolean refreshAllowed) {
+		return BasicSecurityPolicy.builder().withRefreshAllowed(refreshAllowed).build();
+	}
+
+	private SecurityPolicy nodePolicy() {
+		return BasicSecurityPolicy.builder().withNodeIds(Set.of(a.privateNodeId())).build();
+	}
+
+	private static Instant expiry() {
+		return Instant.now().truncatedTo(MILLIS).plus(1, DAYS);
+	}
+
+	private TestToken constrainedToken(SecurityPolicy policy) {
+		final TestToken token = a.newToken(SecurityTokenType.User, policy);
 		token.insert(jdbcTemplate);
 		return token;
 	}
 
+	private TestToken expiringToken() {
+		return constrainedToken(expiringPolicy(expiry()));
+	}
+
+	private TestToken noRefreshToken() {
+		return constrainedToken(refreshPolicy(false));
+	}
+
 	private static Instant notAfter(TestToken token) {
 		return nonnull(nonnull(token.policy(), "Policy").getNotAfter(), "Expiry");
+	}
+
+	private UserAuthToken generate(SecurityTokenType type, SecurityPolicy policy) {
+		return nonnull(biz.generateUserAuthToken(a.userId(), type, policy), "Token");
 	}
 
 	@Test
@@ -593,10 +626,9 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		TestActor.token("expiring token", expiring).become();
 
 		// WHEN
-		final UserAuthToken equal = biz.generateUserAuthToken(a.userId(), SecurityTokenType.User,
-				expiringPolicy(notAfter));
-		final UserAuthToken shorter = biz.generateUserAuthToken(a.userId(),
-				SecurityTokenType.ReadNodeData, expiringPolicy(notAfter.minus(1, HOURS)));
+		final UserAuthToken equal = generate(SecurityTokenType.User, expiringPolicy(notAfter));
+		final UserAuthToken shorter = generate(SecurityTokenType.ReadNodeData,
+				expiringPolicy(notAfter.minus(1, HOURS)));
 
 		// THEN
 		// @formatter:off
@@ -613,46 +645,62 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		// @formatter:on
 	}
 
-	@Disabled("Expiring tokens can create tokens that expire later, or never")
 	@Test
-	public void generateUserAuthToken_expiringToken_noExpiry_denied() {
+	public void generateUserAuthToken_expiringToken_noExpiry_expiryApplied() {
 		// GIVEN
 		final TestToken expiring = expiringToken();
-		final long count = tokenCount(a.userId());
 		TestActor.token("expiring token", expiring).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.User, emptyPolicy());
 
 		// THEN
 		// @formatter:off
-		thenExceptionOfType(AuthorizationException.class)
-			.as("Expiring token cannot create a token that never expires")
-			.isThrownBy(() -> biz.generateUserAuthToken(a.userId(), SecurityTokenType.User,
-					BasicSecurityPolicy.builder().build()))
-			;
-		then(tokenCount(a.userId()))
-			.as("No token created")
-			.isEqualTo(count)
+		then(storedPolicy(result.getId()))
+			.as("Actor's expiry applied to token requested without one")
+			.isNotNull()
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
 			;
 		// @formatter:on
 	}
 
-	@Disabled("Expiring tokens can create tokens that expire later, or never")
 	@Test
-	public void generateUserAuthToken_expiringToken_laterExpiry_denied() {
+	public void generateUserAuthToken_expiringToken_laterExpiry_expiryCapped() {
 		// GIVEN
 		final TestToken expiring = expiringToken();
-		final long count = tokenCount(a.userId());
 		TestActor.token("expiring token", expiring).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.User,
+				expiringPolicy(notAfter(expiring).plus(1, DAYS)));
 
 		// THEN
 		// @formatter:off
-		thenExceptionOfType(AuthorizationException.class)
-			.as("Expiring token cannot create a token that expires later")
-			.isThrownBy(() -> biz.generateUserAuthToken(a.userId(), SecurityTokenType.User,
-					expiringPolicy(notAfter(expiring).plus(1, DAYS))))
+		then(storedPolicy(result.getId()))
+			.as("Requested expiry capped at the actor's expiry")
+			.isNotNull()
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
 			;
-		then(tokenCount(a.userId()))
-			.as("No token created")
-			.isEqualTo(count)
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_expiringToken_restrictedPolicy_expiryApplied() {
+		// GIVEN
+		final TestToken expiring = expiringToken();
+		TestActor.token("expiring token", expiring).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.ReadNodeData, nodePolicy());
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(result.getId()))
+			.as("Requested restrictions kept")
+			.isNotNull()
+			.returns(Set.of(a.privateNodeId()), from(SecurityPolicy::getNodeIds))
+			.as("Actor's expiry applied")
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
 			;
 		// @formatter:on
 	}
@@ -664,8 +712,7 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		TestActor.token("expiring token", expiring).become();
 
 		// WHEN
-		biz.updateUserAuthTokenPolicy(a.userId(), expiring.tokenId(),
-				BasicSecurityPolicy.builder().withNodeIds(Set.of(a.privateNodeId())).build(), false);
+		biz.updateUserAuthTokenPolicy(a.userId(), expiring.tokenId(), nodePolicy(), false);
 
 		// THEN
 		// @formatter:off
@@ -679,26 +726,223 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		// @formatter:on
 	}
 
-	@Disabled("Expiring tokens can remove their own expiry")
 	@Test
-	public void updateUserAuthTokenPolicy_expiringToken_ownExpiryRemoval_denied() {
+	public void updateUserAuthTokenPolicy_expiringToken_ownExpiryRemoval_expiryKept() {
 		// GIVEN
 		final TestToken expiring = expiringToken();
 		TestActor.token("expiring token", expiring).become();
 
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), expiring.tokenId(), emptyPolicy(), true);
+
 		// THEN
 		// @formatter:off
-		thenExceptionOfType(AuthorizationException.class)
-			.as("Expiring token cannot remove its own expiry")
-			.isThrownBy(() -> biz.updateUserAuthTokenPolicy(a.userId(), expiring.tokenId(),
-					BasicSecurityPolicy.builder().build(), true))
-			;
 		then(storedPolicy(expiring.tokenId()))
-			.as("Token expiry kept")
+			.as("Token expiry kept when replacing the policy with one without an expiry")
 			.isNotNull()
 			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void updateUserAuthTokenPolicy_expiringToken_ownLaterExpiry_expiryCapped() {
+		// GIVEN
+		final TestToken expiring = expiringToken();
+		TestActor.token("expiring token", expiring).become();
+
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), expiring.tokenId(),
+				expiringPolicy(notAfter(expiring).plus(1, DAYS)), false);
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(expiring.tokenId()))
+			.as("Token expiry not extended")
+			.isNotNull()
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateUserAuthTokenPolicy_expiringToken_createdTokenExpiryRemoval_expiryKept() {
+		// GIVEN
+		final TestToken expiring = expiringToken();
+		TestActor.token("expiring token", expiring).become();
+		final UserAuthToken created = generate(SecurityTokenType.User,
+				expiringPolicy(notAfter(expiring)));
+
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), created.getId(), emptyPolicy(), true);
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(created.getId()))
+			.as("Expiry of a token created by the actor cannot be removed either")
+			.isNotNull()
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateUserAuthTokenPolicy_expiringToken_otherTokenExpiryApplied() {
+		// GIVEN
+		final TestToken expiring = expiringToken();
+		TestActor.token("expiring token", expiring).become();
+
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), a.dataToken().tokenId(), nodePolicy(), false);
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(a.dataToken().tokenId()))
+			.as("Policy updated")
+			.isNotNull()
+			.returns(Set.of(a.privateNodeId()), from(SecurityPolicy::getNodeIds))
+			.as("Actor's expiry applied to a token that did not expire")
+			.returns(notAfter(expiring), from(SecurityPolicy::getNotAfter))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_noRefreshToken_noPolicy_refreshDenied() {
+		// GIVEN
+		TestActor.token("no refresh token", noRefreshToken()).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.User, emptyPolicy());
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(result.getId()))
+			.as("Actor's refresh constraint applied to token requested without a policy")
+			.isNotNull()
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_noRefreshToken_refreshAllowed_refreshDenied() {
+		// GIVEN
+		TestActor.token("no refresh token", noRefreshToken()).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.User, refreshPolicy(true));
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(result.getId()))
+			.as("Requested refresh denied")
+			.isNotNull()
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_noRefreshToken_restrictedPolicy_refreshDenied() {
+		// GIVEN
+		TestActor.token("no refresh token", noRefreshToken()).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.ReadNodeData, nodePolicy());
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(result.getId()))
+			.as("Requested restrictions kept")
+			.isNotNull()
+			.returns(Set.of(a.privateNodeId()), from(SecurityPolicy::getNodeIds))
+			.as("Actor's refresh constraint applied")
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateUserAuthTokenPolicy_noRefreshToken_ownRefreshAllowed_refreshDenied() {
+		// GIVEN
+		final TestToken noRefresh = noRefreshToken();
+		TestActor.token("no refresh token", noRefresh).become();
+
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), noRefresh.tokenId(), refreshPolicy(true), true);
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(noRefresh.tokenId()))
+			.as("Token refresh still denied")
+			.isNotNull()
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateUserAuthTokenPolicy_noRefreshToken_createdTokenRefreshAllowed_refreshDenied() {
+		// GIVEN
+		TestActor.token("no refresh token", noRefreshToken()).become();
+		final UserAuthToken created = generate(SecurityTokenType.ReadNodeData, nodePolicy());
+
+		// WHEN
+		biz.updateUserAuthTokenPolicy(a.userId(), created.getId(), refreshPolicy(true), false);
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(created.getId()))
+			.as("Refresh of a token created by the actor cannot be allowed either")
+			.isNotNull()
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_expiringNoRefreshToken_bothConstraintsApplied() {
+		// GIVEN
+		final Instant notAfter = expiry();
+		TestActor.token("expiring no refresh token", constrainedToken(BasicSecurityPolicy.builder()
+				.withNotAfter(notAfter).withRefreshAllowed(false).build())).become();
+
+		// WHEN
+		final UserAuthToken result = generate(SecurityTokenType.User, refreshPolicy(true));
+
+		// THEN
+		// @formatter:off
+		then(storedPolicy(result.getId()))
+			.as("Actor's expiry applied")
+			.isNotNull()
+			.returns(notAfter, from(SecurityPolicy::getNotAfter))
+			.as("Actor's refresh constraint applied")
+			.returns(false, from(SecurityPolicy::getRefreshAllowed))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void generateUserAuthToken_unconstrainedActors_noPolicy() {
+		// GIVEN
+		final List<TestActor> actors = List.of(a.userActor(), a.tokenActor(),
+				TestActor.token("refresh token", constrainedToken(refreshPolicy(true))));
+
+		for ( TestActor actor : actors ) {
+			actor.become();
+
+			// WHEN
+			final UserAuthToken result = generate(SecurityTokenType.User, emptyPolicy());
+
+			// THEN
+			// @formatter:off
+			then(tokenColumn("jpolicy", result.getId()))
+				.as("No policy saved for token created by %s", actor)
+				.isNull()
+				;
+			// @formatter:on
+		}
 	}
 
 }
