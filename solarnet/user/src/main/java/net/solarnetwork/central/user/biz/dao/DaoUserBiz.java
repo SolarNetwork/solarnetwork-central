@@ -48,6 +48,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
@@ -288,10 +289,19 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					}
 				}
 
+				// can assume the actor policy is unrestricted here, but need to enforce
+				// any expiration or refresh constraints that are not included in that test
+				BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder();
 				if ( policy != null ) {
-					BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder()
-							.withPolicy(policy);
-					authToken.setPolicy(policyBuilder.build());
+					policyBuilder = policyBuilder.withPolicy(policy);
+				}
+				enforceActorPolicyConstraints(policyBuilder);
+
+				final SecurityPolicy policyToSave = policyBuilder.build();
+				if ( !(SecurityUtils.policyIsUnrestricted(policyToSave)
+						&& policyToSave.getNotAfter() == null
+						&& Boolean.FALSE.equals(policyToSave.getRefreshAllowed())) ) {
+					authToken.setPolicy(policyToSave);
 				}
 
 				userAuthTokenDao.save(authToken);
@@ -385,12 +395,37 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		} else {
 			policyBuilder = policyBuilder.withPolicy(token.getPolicy()).withMergedPolicy(newPolicy);
 		}
+
+		// can assume the actor policy is unrestricted here, but need to enforce
+		// any expiration or refresh constraints that are not included in that test
+		policyBuilder = enforceActorPolicyConstraints(policyBuilder);
+
 		BasicSecurityPolicy newBasicPolicy = policyBuilder.build();
 		if ( !newBasicPolicy.equals(token.getPolicy()) ) {
 			token.setPolicy(newBasicPolicy);
 			userAuthTokenDao.save(token);
 		}
 		return token;
+	}
+
+	private BasicSecurityPolicy.Builder enforceActorPolicyConstraints(
+			BasicSecurityPolicy.Builder policyBuilder) {
+		// we assume the actor's policy is unrestricted here, but that still allows
+		// an expiration date and refresh constraint that must be enforced on the new policy
+		final SecurityPolicy actorPolicy = SecurityUtils.getActiveSecurityPolicy();
+		if ( actorPolicy != null ) {
+			if ( actorPolicy.getNotAfter() != null ) {
+				// expiration on updated token must be no later than actor's policy
+				Instant tokenNotAfter = policyBuilder.build().getNotAfter();
+				if ( tokenNotAfter == null || tokenNotAfter.isAfter(actorPolicy.getNotAfter()) ) {
+					policyBuilder = policyBuilder.withNotAfter(actorPolicy.getNotAfter());
+				}
+			}
+			if ( !actorPolicy.getRefreshAllowed() ) {
+				policyBuilder = policyBuilder.withRefreshAllowed(actorPolicy.getRefreshAllowed());
+			}
+		}
+		return policyBuilder;
 	}
 
 	@Override
