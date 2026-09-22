@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Arrays;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -44,7 +46,7 @@ import net.solarnetwork.central.security.SecurityUtils;
  * Security AOP support for {@link AuditDatumBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -107,17 +109,45 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 	 *
 	 * <p>
 	 * The current actor must have a user ID, and that same user ID must be
-	 * specified as the only user ID in the filter.
+	 * specified as the only user ID in the filter. The filter is then
+	 * restricted to the nodes and sources of the active security policy.
 	 * </p>
+	 *
+	 * @param pjp
+	 *        the join point
+	 * @param filter
+	 *        the filter verify
+	 * @return the results
+	 * @throws Throwable
+	 *         if any error occurs
+	 * @since 2.2
+	 */
+	@SuppressWarnings("ReferenceEquality")
+	@Around(value = "findAuditDatum(filter)", argNames = "pjp,filter")
+	public Object findAuditDatumForFilterAccessCheck(ProceedingJoinPoint pjp,
+			AuditDatumCriteria filter) throws Throwable {
+		final AuditDatumCriteria f = findAuditDatumForFilterCheck(filter);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		final @Nullable Object[] args = pjp.getArgs();
+		args[0] = f;
+		return pjp.proceed(args);
+	}
+
+	/**
+	 * Check access to reading audit datum.
 	 *
 	 * @param filter
 	 *        the filter verify
+	 * @return the filter to use, restricted to the nodes and sources of the
+	 *         active security policy
 	 */
-	@Before(value = "findAuditDatum(filter)", argNames = "filter")
-	public void findAuditDatumForFilterCheck(AuditDatumCriteria filter) {
+	public AuditDatumCriteria findAuditDatumForFilterCheck(AuditDatumCriteria filter) {
 		Long userId = requireCurrentActorHasUserId();
 		Long[] userIds = filter.getUserIds();
 		requireUserId(userId, userIds);
+		return nonnull(policyEnforcerCheck(filter), "Restricted filter");
 	}
 
 }

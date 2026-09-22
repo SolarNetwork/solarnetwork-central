@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.datum.expire.aop.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
 import java.time.Instant;
@@ -31,13 +33,13 @@ import java.util.Set;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthenticatedUser;
@@ -53,7 +55,7 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
  * Test cases for the {@link UserExpireSecurityAspect} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class UserExpireSecurityAspectTests implements CentralTestConstants {
 
@@ -174,19 +176,44 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 				.isThrownBy(() -> aspect.datumFilterCheck(filter));
 	}
 
-	@Disabled("Policy nodes are not applied to datum filters without node IDs")
 	@Test
 	public void datumFilterNoNodes_restrictedToken() {
 		// GIVEN
-		becomeNodeRestrictedToken(2L);
+		final Long nodeId = 2L;
+		becomeNodeRestrictedToken(nodeId);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId))
+				.andReturn(BasicSolarNodeOwnership.ownershipFor(nodeId, TEST_USER_ID));
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(TEST_USER_ID);
 
+		// WHEN
+		GeneralNodeDatumFilter result = aspect.datumFilterCheck(filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Filter restricted to the policy nodes")
+			.returns(new Long[] { nodeId }, from(GeneralNodeDatumFilter::getNodeIds))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumFilterNonPolicyNode_restrictedToken() {
+		// GIVEN
+		becomeNodeRestrictedToken(2L);
+		expect(nodeOwnershipDao.ownershipForNodeId(3L))
+				.andReturn(BasicSolarNodeOwnership.ownershipFor(3L, TEST_USER_ID));
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		filter.setNodeId(3L);
+
 		// THEN
 		// @formatter:off
 		thenExceptionOfType(AuthorizationException.class)
-			.as("Filter without node IDs denied for a token restricted to nodes")
+			.as("Filter for a node outside the policy denied")
 			.isThrownBy(() -> aspect.datumFilterCheck(filter))
 			;
 		// @formatter:on
@@ -197,7 +224,7 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 		becomeUser("ROLE_USER");
 		final Long nodeId = 2L;
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId))
-				.andReturn(BasicSolarNodeOwnership.ownershipFor(nodeId, TEST_USER_ID));
+				.andReturn(BasicSolarNodeOwnership.ownershipFor(nodeId, TEST_USER_ID)).times(2);
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(TEST_USER_ID);

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -62,7 +61,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * the {@code UserExpireSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class UserDatumDeleteBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
@@ -154,7 +153,6 @@ public class UserDatumDeleteBizSecurityPolicyTests extends AbstractJUnit5JdbcDao
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to deleting datum by ID")
 	@Test
 	public void deleteDatum_restrictedToken_nonPolicyNode_denied() {
 		// GIVEN

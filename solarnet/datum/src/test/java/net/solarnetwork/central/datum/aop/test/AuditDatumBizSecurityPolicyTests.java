@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.aop.AuditDatumSecurityAspect;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
@@ -50,7 +49,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * {@code AuditDatumSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AuditDatumBizSecurityPolicyTests extends BaseDatumSecurityPolicyTestSupport {
 
@@ -103,7 +102,6 @@ public class AuditDatumBizSecurityPolicyTests extends BaseDatumSecurityPolicyTes
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes and sources are not applied to audit datum")
 	@Test
 	public void restrictedToken_policyNodeSourcesOnly() {
 		// GIVEN

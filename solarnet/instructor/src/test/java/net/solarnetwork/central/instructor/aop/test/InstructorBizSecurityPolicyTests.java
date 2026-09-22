@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
@@ -63,7 +62,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(SecurityContextExtension.class)
 public class InstructorBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupport {
@@ -336,7 +335,6 @@ public class InstructorBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupp
 		// @formatter:on
 	}
 
-	@Disabled("Policy nodes are not applied to updating instructions state for a user")
 	@Test
 	public void updateInstructionsStateForUser_restrictedToken_policyNodeOnly() {
 		// GIVEN

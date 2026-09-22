@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserDatumDeleteBizSecurityContract {
 
@@ -63,9 +63,8 @@ public final class UserDatumDeleteBizSecurityContract {
 		final TestTenant a = tenants.a();
 		final TestTenant b = tenants.b();
 		final String jobId = UUID.randomUUID().toString();
-		final ObjectDatumId datumId = ObjectDatumId.datumId(ObjectDatumKind.Node,
-				a.stream(a.privateNodeId(), a.sourceIds().getFirst()).getStreamId(), a.privateNodeId(),
-				a.sourceIds().getFirst(), Instant.now(), null);
+		final ObjectDatumId datumId = datumId(a, a.privateNodeId());
+		final ObjectDatumId policyDatumId = datumId(a, a.otherPrivateNodeId());
 
 		// @formatter:off
 		return SecurityContract.forApi(UserDatumDeleteBiz.class, tenants)
@@ -86,9 +85,19 @@ public final class UserDatumDeleteBizSecurityContract {
 					.as("no node")
 				.userRead(biz -> biz.datumDeleteJobForUser(a.userId(), jobId))
 				.userRead(biz -> biz.datumDeleteJobsForUser(a.userId(), null))
-				.userWrite(biz -> biz.deleteDatum(a.userId(), Set.of(datumId)))
+				.allowing(biz -> biz.deleteDatum(a.userId(), Set.of(datumId)),
+						a.userActor(), a.tokenActor())
+				.allowing(biz -> biz.deleteDatum(a.userId(), Set.of(policyDatumId)),
+						a.userActor(), a.tokenActor(), a.restrictedTokenActor())
+					.as("policy node")
 				.build();
 		// @formatter:on
+	}
+
+	private static ObjectDatumId datumId(TestTenant tenant, Long nodeId) {
+		final String sourceId = tenant.sourceIds().getFirst();
+		return ObjectDatumId.datumId(ObjectDatumKind.Node,
+				tenant.stream(nodeId, sourceId).getStreamId(), nodeId, sourceId, Instant.now(), null);
 	}
 
 	private static DatumFilterCommand filter(Long userId, Long... nodeIds) {

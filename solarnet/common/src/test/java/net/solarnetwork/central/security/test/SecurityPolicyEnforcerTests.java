@@ -55,7 +55,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class SecurityPolicyEnforcerTests {
 
@@ -75,6 +75,26 @@ public class SecurityPolicyEnforcerTests {
 		String[] getSourceIds();
 
 		GeneralDatumMetadata getMetadata();
+
+		/**
+		 * A property derived from the node IDs, like the object IDs of a datum
+		 * criteria.
+		 *
+		 * @return the node IDs
+		 */
+		default Long[] getObjectIds() {
+			return getNodeIds();
+		}
+
+		/**
+		 * A test derived from the node IDs.
+		 *
+		 * @return {@literal true} if any node ID available
+		 */
+		default boolean hasNodeCriteria() {
+			Long[] ids = getNodeIds();
+			return (ids != null && ids.length > 0);
+		}
 	}
 
 	public static interface AggregateGeneralNodeDatumFilter extends GeneralNodeDatumFilter {
@@ -1007,6 +1027,51 @@ public class SecurityPolicyEnforcerTests {
 		thenExceptionOfType(AuthorizationException.class)
 			.as("An error thrown while verifying a policy denies access")
 			.isThrownBy(enforcer::verify)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void defaultMethod_restrictedToPolicyNodeIds() {
+		// GIVEN
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Set.of(TEST_NODE_ID)).build();
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2 });
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
+
+		// WHEN
+		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		// THEN
+		// @formatter:off
+		then(filter.getObjectIds())
+			.as("Property derived from the node IDs is restricted to the policy node IDs")
+			.containsExactly(TEST_NODE_ID)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void defaultMethod_filledInFromPolicyNodeIds() {
+		// GIVEN
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Set.of(TEST_NODE_ID)).build();
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
+
+		// WHEN
+		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		// THEN
+		// @formatter:off
+		then(filter.getObjectIds())
+			.as("Property derived from the node IDs is filled in from the policy node IDs")
+			.containsExactly(TEST_NODE_ID)
+			;
+		then(filter.hasNodeCriteria())
+			.as("Test derived from the node IDs sees the policy node IDs")
+			.isTrue()
 			;
 		// @formatter:on
 	}

@@ -25,7 +25,9 @@ package net.solarnetwork.central.instructor.aop;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Set;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -43,7 +45,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security aspect for {@link InstructorBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Aspect
 @Component
@@ -87,6 +89,10 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.update*ForUser(..)) && args(userId,..)")
 	public void updateInstructionsForUser(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.update*ForUser(..)) && args(userId,filter,..)")
+	public void updateInstructionsForUserFilter(Long userId, InstructionFilter filter) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.findFilteredNodeInstructions(..)) && args(filter,..)")
@@ -222,6 +228,34 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 			return;
 		}
 		requireUserWriteAccess(userId);
+	}
+
+	/**
+	 * Restrict the instructions updated in a user's account to the nodes of the
+	 * active security policy.
+	 *
+	 * @param pjp
+	 *        the join point
+	 * @param userId
+	 *        the user ID
+	 * @param filter
+	 *        the filter of instructions to update
+	 * @return the updated instruction IDs
+	 * @throws Throwable
+	 *         if any error occurs
+	 * @since 2.4
+	 */
+	@SuppressWarnings("ReferenceEquality")
+	@Around(value = "updateInstructionsForUserFilter(userId, filter)", argNames = "pjp,userId,filter")
+	public Object updateInstructionsForUserFilterAccessCheck(ProceedingJoinPoint pjp,
+			@Nullable Long userId, InstructionFilter filter) throws Throwable {
+		final InstructionFilter f = policyEnforcerCheck(filter, true);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		final @Nullable Object[] args = pjp.getArgs();
+		args[1] = f;
+		return pjp.proceed(args);
 	}
 
 }

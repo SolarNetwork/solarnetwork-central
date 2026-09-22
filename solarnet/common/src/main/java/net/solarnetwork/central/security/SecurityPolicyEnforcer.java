@@ -54,7 +54,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
@@ -232,6 +232,11 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	public @Nullable Object invoke(@Nullable Object proxy, Method method, Object @Nullable [] args)
 			throws Throwable {
 		final String methodName = method.getName();
+		if ( proxy != null && method.isDefault() && !isOverriddenByDelegate(method) ) {
+			// invoke default methods on the proxy, so the properties they derive
+			// from, such as the object IDs of a datum criteria, are verified
+			return InvocationHandler.invokeDefault(proxy, method, args);
+		}
 		final Object delegateResult = method.invoke(delegate, args);
 		if ( "getNodeIds".equals(methodName) || "getNodeId".equals(methodName) ) {
 			Long[] nodeIds;
@@ -277,6 +282,26 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			return verifyMetadata(meta, true);
 		}
 		return delegateResult;
+	}
+
+	/**
+	 * Test if a default interface method is overridden by the delegate.
+	 *
+	 * @param method
+	 *        the method being invoked
+	 * @return {@code true} if the delegate class provides its own
+	 *         implementation of {@code method}
+	 */
+	private boolean isOverriddenByDelegate(Method method) {
+		final Object d = delegate;
+		if ( d == null ) {
+			return false;
+		}
+		try {
+			return !d.getClass().getMethod(method.getName(), method.getParameterTypes()).isDefault();
+		} catch ( NoSuchMethodException e ) {
+			return false;
+		}
 	}
 
 	/**
