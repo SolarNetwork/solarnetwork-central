@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Search criteria for node related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
 public interface NodeCriteria {
@@ -95,6 +97,27 @@ public interface NodeCriteria {
 	@SuppressWarnings("NullAway")
 	default Long[] nodeIds() {
 		return getNodeIds();
+	}
+
+	/**
+	 * Get the unique node IDs configured on {@code nodeIds}.
+	 * 
+	 * @return the unique node IDs configured, never {@code null}
+	 * @since 1.3
+	 */
+	@SuppressWarnings("MixedMutabilityReturnType")
+	default Set<Long> nodeIdsUnique() {
+		final Long[] nodeIds = getNodeIds();
+		if ( nodeIds == null ) {
+			return Set.of();
+		} else if ( nodeIds.length == 1 ) {
+			return Set.of(nodeIds[0]);
+		}
+		final var result = new LinkedHashSet<Long>(nodeIds.length);
+		for ( Long nodeId : nodeIds ) {
+			result.add(nodeId);
+		}
+		return result;
 	}
 
 }

@@ -402,8 +402,8 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		}
 
 		final Set<Long> policyNodeIds = policy.getNodeIds();
-		final Set<Long> filterNodeIds = Set.of(
-				filter instanceof NodeCriteria c && c.hasNodeCriteria() ? c.getNodeIds() : new Long[0]);
+		final Set<Long> filterNodeIds = (filter instanceof NodeCriteria c ? c.nodeIdsUnique()
+				: Set.of());
 
 		// create this if we need to modify the filter by populating node IDs
 		BasicFilter replacementFilter = null;
