@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -81,7 +82,7 @@ public class CachingUserMetadataDaoTests {
 		final Long userId = randomLong();
 		final String metadataPath = randomString();
 
-		final UserStringCompositePK key = new UserStringCompositePK(userId, metadataPath);
+		final UserStringCompositePK key = new UserStringCompositePK(userId, md5Hex(metadataPath));
 		given(metadataCache.get(key)).willReturn(null);
 
 		final String metadata = randomString();
@@ -104,7 +105,7 @@ public class CachingUserMetadataDaoTests {
 		final Long userId = randomLong();
 		final String metadataPath = randomString();
 
-		final UserStringCompositePK key = new UserStringCompositePK(userId, metadataPath);
+		final UserStringCompositePK key = new UserStringCompositePK(userId, md5Hex(metadataPath));
 		final String metadata = randomString();
 		given(metadataCache.get(key)).willReturn(metadata);
 

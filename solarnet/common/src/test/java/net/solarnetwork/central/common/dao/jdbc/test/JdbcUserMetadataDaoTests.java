@@ -312,7 +312,7 @@ public class JdbcUserMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	}
 
 	@Test
-	public void tokenCriteria_omitsNodesNotOwnedByTokenUser() {
+	public void tokenCriteria_omitsUsersNotOwnedByTokenUser() {
 		// GIVEN another user's node, with metadata the policy would otherwise allow
 		final Long otherUserId = randomLong();
 		setupTestUser(otherUserId);
@@ -321,7 +321,7 @@ public class JdbcUserMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		final String tokenId = tokenWithPaths("/**/building/**");
 
 		var filter = new BasicUserMetadataFilter();
-		filter.setUserId(userId);
+		filter.setUserId(otherUserId);
 		filter.setTokenId(tokenId);
 
 		// WHEN

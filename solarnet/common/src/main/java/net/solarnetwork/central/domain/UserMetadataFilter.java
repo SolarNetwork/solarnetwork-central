@@ -32,6 +32,11 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Filter API for user metadata.
  *
  * <p>
+ * The {@link SearchFilterCriteria} is applied to the metadata JSON of each
+ * user, using the metadata path syntax, for example {@code (/m/foo=bar)}.
+ * </p>
+ *
+ * <p>
  * When token criteria are provided, the metadata of each result is restricted
  * to the {@code userMetadataPaths} of that token's security policy, and results
  * whose metadata is restricted to nothing are omitted.

@@ -86,8 +86,7 @@ public class SelectUserMetadataPath implements PreparedStatementCreator, SqlProv
 
 		buf.append("FROM solaruser.user_meta um\n");
 		if ( filter.hasTokenCriteria() ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.user_id = um.user_id\n");
-			buf.append("INNER JOIN solaruser.user_auth_token_login t ON t.user_id = un.user_id\n");
+			buf.append("INNER JOIN solaruser.user_auth_token_login t ON t.user_id = um.user_id\n");
 		}
 	}
 
@@ -117,8 +116,7 @@ public class SelectUserMetadataPath implements PreparedStatementCreator, SqlProv
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
+		prepareCore(con, stmt, 0);
 		return stmt;
 	}
 

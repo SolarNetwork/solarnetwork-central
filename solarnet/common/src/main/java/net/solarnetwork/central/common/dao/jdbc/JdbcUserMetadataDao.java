@@ -84,7 +84,7 @@ public class JdbcUserMetadataDao implements UserMetadataDao {
 	@Override
 	public @Nullable UserMetadataEntity get(Long id) {
 		var filter = new BasicUserMetadataFilter();
-		filter.setNodeId(id);
+		filter.setUserId(id);
 		var sql = new SelectUserMetadataEntity(filter);
 		List<UserMetadataEntity> list = jdbcOps.query(sql, UserMetadataEntityRowMapper.INSTANCE);
 		return (!list.isEmpty() ? list.getFirst() : null);

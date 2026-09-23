@@ -29,8 +29,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * 
  * <p>
  * The {@link SearchFilterCriteria} is applied to the metadata JSON of each
- * node, using the node metadata path syntax, for example
- * {@code (/m/foo=bar)}.
+ * node, using the metadata path syntax, for example {@code (/m/foo=bar)}.
  * </p>
  *
  * <p>

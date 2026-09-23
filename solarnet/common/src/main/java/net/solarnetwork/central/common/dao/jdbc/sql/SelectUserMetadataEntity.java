@@ -98,8 +98,8 @@ public class SelectUserMetadataEntity
 	}
 
 	/**
-	 * SQL expression for the node metadata restricted to the token policy's
-	 * node metadata paths.
+	 * SQL expression for the user metadata restricted to the token policy's
+	 * user metadata paths.
 	 */
 	public static final String SQL_PRUNED_JDATA = "solarcommon.jsonb_prune_ant_paths(um.jdata, t.jpolicy -> 'userMetadataPaths')";
 
