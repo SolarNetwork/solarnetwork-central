@@ -22,30 +22,28 @@
 
 package net.solarnetwork.central.query.config;
 
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.jdbc.JdbcUserMetadataDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 
 /**
  * Query DAO configutation;
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class QueryDaoConfig {
 
 	@Autowired
-	private SqlSessionTemplate sqlSessionTemplate;
+	private JdbcOperations jdbcOperations;
 
 	@Bean
 	public UserMetadataDao userMetadataDao() {
-		MyBatisUserMetadataDao dao = new MyBatisUserMetadataDao();
-		dao.setSqlSessionTemplate(sqlSessionTemplate);
-		return dao;
+		return new JdbcUserMetadataDao(jdbcOperations);
 	}
 
 }

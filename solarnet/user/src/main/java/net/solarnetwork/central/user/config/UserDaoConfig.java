@@ -27,8 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.jdbc.JdbcUserMetadataDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
  * Configuration for user DAO implementations.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDaoConfig {
@@ -90,9 +90,7 @@ public class UserDaoConfig {
 
 	@Bean
 	public UserMetadataDao userMetadataDao() {
-		MyBatisUserMetadataDao dao = new MyBatisUserMetadataDao();
-		dao.setSqlSessionTemplate(sqlSessionTemplate);
-		return dao;
+		return new JdbcUserMetadataDao(jdbcOperations);
 	}
 
 	@Bean
