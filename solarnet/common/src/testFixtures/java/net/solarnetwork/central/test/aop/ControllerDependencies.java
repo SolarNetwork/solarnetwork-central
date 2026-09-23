@@ -54,12 +54,20 @@ import org.springframework.util.ClassUtils;
  * does not need one.
  * </p>
  *
+ * <p>
+ * Dependencies of the shared SolarNetwork libraries count as well, as no
+ * security aspect applies to those. Only the controllers of this project are
+ * inspected.
+ * </p>
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class ControllerDependencies {
 
-	private static final String SOLARNETWORK_PACKAGE = "net.solarnetwork.central.";
+	private static final String CONTROLLER_PACKAGE = "net.solarnetwork.central.";
+
+	private static final String SERVICE_PACKAGE = "net.solarnetwork.";
 
 	private static final Pattern SERVICE_NAME = Pattern.compile(".*(Biz|Dao|Service)");
 
@@ -158,7 +166,7 @@ public final class ControllerDependencies {
 						.thenComparing(d -> d.type().getName()));
 		for ( Object bean : context.getBeansWithAnnotation(Controller.class).values() ) {
 			final Class<?> controller = ClassUtils.getUserClass(AopUtils.getTargetClass(bean));
-			if ( !controller.getName().startsWith(SOLARNETWORK_PACKAGE) ) {
+			if ( !controller.getName().startsWith(CONTROLLER_PACKAGE) ) {
 				continue;
 			}
 			for ( Class<?> c = controller; c != null && c != Object.class; c = c.getSuperclass() ) {
@@ -217,7 +225,7 @@ public final class ControllerDependencies {
 				addServiceTypes(result, controller, c.getComponentType());
 			}
 			case Class<?> c -> {
-				if ( c.getName().startsWith(SOLARNETWORK_PACKAGE)
+				if ( c.getName().startsWith(SERVICE_PACKAGE)
 						&& SERVICE_NAME.matcher(c.getSimpleName()).matches() ) {
 					result.add(new Dependency(controller, c));
 				}

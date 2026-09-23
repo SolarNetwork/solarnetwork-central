@@ -46,8 +46,10 @@ import net.solarnetwork.central.reg.web.MyNodesController;
 import net.solarnetwork.central.reg.web.ResetPasswordController;
 import net.solarnetwork.central.reg.web.api.v1.NodeInstructionController;
 import net.solarnetwork.central.reg.web.api.v1.NodeMetadataController;
+import net.solarnetwork.central.reg.web.api.v1.NodesController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.aop.ControllerDependencies.Review;
+import net.solarnetwork.service.CertificateService;
 
 /**
  * Verify every service dependency of the SolarUser controllers has a security
@@ -59,7 +61,7 @@ import net.solarnetwork.central.test.aop.ControllerDependencies.Review;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @ActiveProfiles({ CLOUD_INTEGRATIONS, DATUM_INPUT, DNP3, INSTRUCTION_INPUT, OCPP_V16, OSCP_V20,
@@ -80,7 +82,10 @@ public class SolarUserControllerDependencyTests extends AbstractJUnit5CentralTra
 					+ " results"),
 			reviewed(SolarNodeOwnershipDao.class, NodeMetadataController.class,
 					"finds the actor's own node IDs for queries without any; SolarNodeMetadataBiz"
-					+ " reads the metadata")
+					+ " reads the metadata"),
+			reviewed(CertificateService.class, NodesController.class,
+					"encodes a certificate chain already read through UserBiz, which requires node"
+					+ " read access; the service holds no data of its own")
 			);
 	// @formatter:on
 
