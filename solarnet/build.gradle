@@ -81,6 +81,10 @@ subprojects {
 	// Test fixtures are shared test support code: compile them like test sources, and do not
 	// publish them as part of the project artifacts.
 	plugins.withId('java-test-fixtures') {
+		// test sources inherit the main implementation dependencies, but test fixtures do not,
+		// leaving them compiled against main classes whose annotations they cannot resolve
+		configurations.testFixturesImplementation.extendsFrom configurations.implementation
+
 		tasks.named('compileTestFixturesJava', JavaCompile) {
 			options.release = 25
 			options.compilerArgs += [

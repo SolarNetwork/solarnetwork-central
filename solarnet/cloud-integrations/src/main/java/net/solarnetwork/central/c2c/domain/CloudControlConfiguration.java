@@ -288,6 +288,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the node ID
 	 */
+	@Override
 	public final Long getNodeId() {
 		return nodeId;
 	}
