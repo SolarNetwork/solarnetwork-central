@@ -29,13 +29,13 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -78,7 +78,7 @@ public class JdbcSolarNodeMetadataDao_SecurityTokenTests extends AbstractJUnit5J
 	}
 
 	private String tokenWithPaths(String... paths) {
-		final String tokenId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+		final String tokenId = CommonTestUtils.randomString(20);
 		insertSecurityTokenWithPolicy(jdbcTemplate, tokenId, randomString(), userId, "Active",
 				"ReadNodeData",
 				BasicSecurityPolicy.builder().withNodeMetadataPaths(Set.of(paths)).build());
