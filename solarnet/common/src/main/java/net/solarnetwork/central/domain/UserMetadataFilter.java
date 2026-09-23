@@ -22,17 +22,25 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.central.common.dao.SecurityTokenCriteria;
 import net.solarnetwork.central.common.dao.TagCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Filter API for user metadata.
- * 
+ *
+ * <p>
+ * When token criteria are provided, the metadata of each result is restricted
+ * to the {@code userMetadataPaths} of that token's security policy, and results
+ * whose metadata is restricted to nothing are omitted.
+ * </p>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.0
  */
-public interface UserMetadataFilter extends PaginationCriteria, UserCriteria, TagCriteria {
+public interface UserMetadataFilter
+		extends PaginationCriteria, UserCriteria, TagCriteria, SecurityTokenCriteria {
 
 }

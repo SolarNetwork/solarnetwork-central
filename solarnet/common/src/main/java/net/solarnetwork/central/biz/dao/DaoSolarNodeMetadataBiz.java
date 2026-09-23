@@ -33,6 +33,7 @@ import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -41,7 +42,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link SolarNodeMetadataBiz}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
@@ -110,9 +111,9 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
-			@Nullable Long offset, @Nullable Integer max) {
+	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		return solarNodeMetadataDao.findFiltered(daoCriteria(criteria), sortDescriptors, offset, max);
 	}
 
@@ -134,6 +135,9 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 		var result = new BasicCoreCriteria();
 		result.setNodeIds(criteria.getNodeIds());
 		result.setSearchFilter(criteria.getMetadataFilter());
+		// when the actor is a token, restrict the metadata of the results to that
+		// token policy's node metadata paths; a null token ID leaves the criteria alone
+		result.setTokenId(SecurityUtils.currentTokenId());
 		return result;
 	}
 

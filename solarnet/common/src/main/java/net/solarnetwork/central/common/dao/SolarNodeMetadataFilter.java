@@ -32,11 +32,18 @@ import net.solarnetwork.dao.PaginationCriteria;
  * node, using the node metadata path syntax, for example
  * {@code (/m/foo=bar)}.
  * </p>
- * 
+ *
+ * <p>
+ * When token criteria are provided, results are limited to the nodes owned by
+ * that token's user, the metadata of each result is restricted to the
+ * {@code nodeMetadataPaths} of that token's security policy, and results whose
+ * metadata is restricted to nothing are omitted.
+ * </p>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface SolarNodeMetadataFilter
-		extends NodeCriteria, SearchFilterCriteria, PaginationCriteria {
+		extends NodeCriteria, SearchFilterCriteria, PaginationCriteria, SecurityTokenCriteria {
 
 }

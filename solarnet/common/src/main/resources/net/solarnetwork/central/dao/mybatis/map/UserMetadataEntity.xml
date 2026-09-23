@@ -29,6 +29,34 @@
 		umeta.jdata AS node_meta_jdata
 	</sql>
 	
+	<!-- 
+		Same as fragment-UserMetadataEntity-full-result, but restricting the metadata to the
+		userMetadataPaths of the filter token's security policy when one is provided. Requires
+		fragment-findall-UserMetadataEntity-from to provide the "t" token alias.
+	-->
+	<sql id="fragment-UserMetadataEntity-filtered-result">
+		umeta.user_id AS node_meta_user_id,
+		umeta.created AS node_meta_created,
+		umeta.updated AS node_meta_updated,
+		<choose>
+			<when test="filter.tokenIds != null and filter.tokenIds.length > 0">
+				solarcommon.jsonb_prune_ant_paths(umeta.jdata, t.jpolicy -> 'userMetadataPaths') AS node_meta_jdata
+			</when>
+			<otherwise>umeta.jdata AS node_meta_jdata</otherwise>
+		</choose>
+	</sql>
+	
+	<!-- 
+		NOTE the user_auth_token_login view is used because SolarQuery has no privileges on the
+		solaruser.user_auth_token table; never select its password column here.
+	-->
+	<sql id="fragment-findall-UserMetadataEntity-from">
+		solaruser.user_meta umeta
+		<if test="filter.tokenIds != null and filter.tokenIds.length > 0">
+		INNER JOIN solaruser.user_auth_token_login t ON t.user_id = umeta.user_id
+		</if>
+	</sql>
+	
 	<resultMap id="UserMetadataEntityFullResult" type="net.solarnetwork.central.domain.UserMetadataEntity">
 		<constructor>
 			<idArg column="node_meta_user_id" javaType="java.lang.Long"/>
@@ -56,15 +84,19 @@
 			<if test="filter.userIds != null and filter.userIds.length > 0">
 				AND umeta.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
+			<if test="filter.tokenIds != null and filter.tokenIds.length > 0">
+				AND t.username = ANY(#{filter.tokenIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+				AND solarcommon.jsonb_prune_ant_paths(umeta.jdata, t.jpolicy -> 'userMetadataPaths') IS NOT NULL
+			</if>
 		</where>
 	</sql>
 
 
 	<select id="findall-UserMetadataEntity-UserMetadataEntity" resultMap="UserMetadataEntityFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
-			<include refid="fragment-UserMetadataEntity-full-result"/>
+			<include refid="fragment-UserMetadataEntity-filtered-result"/>
 		FROM
-			solaruser.user_meta umeta
+			<include refid="fragment-findall-UserMetadataEntity-from"/>
 		<include refid="fragment-findall-UserMetadataEntity-where"/>
 		ORDER BY
 		<choose>
@@ -88,7 +120,7 @@
 	<select id="findall-UserMetadataEntity-UserMetadataEntity-count" resultType="long">
 		SELECT count(umeta.created)
 		FROM
-			solaruser.user_meta umeta
+			<include refid="fragment-findall-UserMetadataEntity-from"/>
 		<include refid="fragment-findall-UserMetadataEntity-where"/>
 	</select>
 	

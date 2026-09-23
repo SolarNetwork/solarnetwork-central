@@ -58,7 +58,7 @@ import net.solarnetwork.util.SearchFilter;
  * </ol>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class SelectSolarNodeMetadata
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -98,6 +98,12 @@ public final class SelectSolarNodeMetadata
 		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
+	/**
+	 * SQL expression for the node metadata restricted to the token policy's
+	 * node metadata paths.
+	 */
+	private static final String SQL_PRUNED_JDATA = "solarcommon.jsonb_prune_ant_paths(nm.jdata, t.jpolicy -> 'nodeMetadataPaths')";
+
 	private final SolarNodeMetadataFilter filter;
 	private final @Nullable SearchFilter searchFilter;
 
@@ -116,10 +122,18 @@ public final class SelectSolarNodeMetadata
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		buf.append("""
-				SELECT nm.node_id, nm.created, nm.updated, nm.jdata
-				FROM solarnet.sn_node_meta nm
-				""");
+		buf.append("SELECT nm.node_id, nm.created, nm.updated");
+		if ( filter.hasTokenCriteria() ) {
+			// restrict the metadata to the token policy's node metadata paths
+			buf.append(", ").append(SQL_PRUNED_JDATA).append(" AS jdata\n");
+			buf.append("FROM solarnet.sn_node_meta nm\n");
+			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = nm.node_id\n");
+			// NOTE the user_auth_token_login view is used because SolarQuery has no
+			// privileges on the solaruser.user_auth_token table
+			buf.append("INNER JOIN solaruser.user_auth_token_login t ON t.user_id = un.user_id\n");
+		} else {
+			buf.append(", nm.jdata\nFROM solarnet.sn_node_meta nm\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -129,6 +143,11 @@ public final class SelectSolarNodeMetadata
 		if ( searchFilter != null ) {
 			where.append("\tAND jsonb_path_exists(nm.jdata, ?::jsonpath)\n");
 			idx += 1;
+		}
+		if ( filter.hasTokenCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getTokenIds(), "t.username", where);
+			// omit results whose metadata is restricted to nothing
+			where.append("\tAND ").append(SQL_PRUNED_JDATA).append(" IS NOT NULL\n");
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -175,6 +194,7 @@ public final class SelectSolarNodeMetadata
 		if ( searchFilter != null ) {
 			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
 		}
+		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTokenIds());
 		return p;
 	}
 

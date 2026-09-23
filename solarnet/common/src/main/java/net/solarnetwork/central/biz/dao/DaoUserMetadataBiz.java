@@ -28,9 +28,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.UserMetadataBiz;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -39,7 +41,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link UserMetadataBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoUserMetadataBiz implements UserMetadataBiz {
 
@@ -105,7 +107,27 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	public FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
 			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
 			@Nullable Integer max) {
-		return userMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+		return userMetadataDao.findFiltered(criteriaForActor(criteria), sortDescriptors, offset, max);
+	}
+
+	/**
+	 * Add the active security token to the criteria, if available, so the DAO
+	 * restricts the metadata of the results to that token policy's user
+	 * metadata paths.
+	 *
+	 * @param criteria
+	 *        the criteria to restrict
+	 * @return the criteria to pass to the DAO
+	 * @since 2.3
+	 */
+	private static UserMetadataFilter criteriaForActor(UserMetadataFilter criteria) {
+		final String tokenId = SecurityUtils.currentTokenId();
+		if ( tokenId == null ) {
+			return criteria;
+		}
+		var result = new BasicUserMetadataFilter(criteria);
+		result.setTokenId(tokenId);
+		return result;
 	}
 
 }
