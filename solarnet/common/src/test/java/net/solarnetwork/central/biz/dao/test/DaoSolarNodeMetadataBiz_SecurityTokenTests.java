@@ -54,6 +54,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoSolarNodeMetadataBiz_SecurityTokenTests {
 

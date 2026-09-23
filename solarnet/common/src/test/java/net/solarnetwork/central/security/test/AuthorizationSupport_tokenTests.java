@@ -68,6 +68,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class AuthorizationSupport_tokenTests {
 

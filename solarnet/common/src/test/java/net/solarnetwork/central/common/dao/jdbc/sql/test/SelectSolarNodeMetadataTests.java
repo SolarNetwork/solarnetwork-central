@@ -57,6 +57,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeMetadata;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class SelectSolarNodeMetadataTests {
 
