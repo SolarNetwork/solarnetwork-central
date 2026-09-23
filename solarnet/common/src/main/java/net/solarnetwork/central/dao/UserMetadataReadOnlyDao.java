@@ -31,7 +31,7 @@ import net.solarnetwork.dao.FilterableDao;
  * Read-only DAO API for {@link UserMetadataEntity} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface UserMetadataReadOnlyDao
 		extends FilterableDao<UserMetadataEntity, Long, UserMetadataFilter> {
@@ -53,14 +53,14 @@ public interface UserMetadataReadOnlyDao
 	 * The {@code path} is a URL-like path, such as {@code /pm/some/thing}.
 	 * </p>
 	 *
-	 * @param userId
-	 *        the user ID to extract metadata for
+	 * @param filter
+	 *        the search filter; must provide a {@code userId} at a minimum
 	 * @param path
 	 *        the path to extract
-	 * @return the metadata object
+	 * @return the metadata JSON
 	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
 	 */
 	@Nullable
-	String jsonMetadataAtPath(Long userId, String path);
+	String jsonMetadataAtPath(UserMetadataFilter filter, String path);
 
 }

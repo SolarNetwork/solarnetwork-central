@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * MyBatis implementation of {@link UserMetadataDao}.
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  * @since 1.8
  */
 public class MyBatisUserMetadataDao extends
@@ -58,7 +58,9 @@ public class MyBatisUserMetadataDao extends
 	}
 
 	@Override
-	public @Nullable String jsonMetadataAtPath(Long userId, String path) {
+	public @Nullable String jsonMetadataAtPath(UserMetadataFilter filter, String path) {
+		final Long userId = requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(),
+				"filter.userId");
 		Map<String, Object> params = new HashMap<>(1);
 		params.put("userId", requireNonNullArgument(userId, "userId"));
 		params.put("path", requireNonNullArgument(path, "path"));

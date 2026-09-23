@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.central.common.dao.SearchFilterCriteria;
 import net.solarnetwork.central.common.dao.SecurityTokenCriteria;
 import net.solarnetwork.central.common.dao.TagCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
@@ -37,10 +38,10 @@ import net.solarnetwork.dao.PaginationCriteria;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.0
  */
-public interface UserMetadataFilter
-		extends PaginationCriteria, UserCriteria, TagCriteria, SecurityTokenCriteria {
+public interface UserMetadataFilter extends PaginationCriteria, UserCriteria, SearchFilterCriteria,
+		TagCriteria, SecurityTokenCriteria {
 
 }

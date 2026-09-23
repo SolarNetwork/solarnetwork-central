@@ -1,7 +1,7 @@
 /* ==================================================================
- * SelectSolarNodeMetadata.java - 12/11/2024 8:36:55 pm
+ * SelectUserMetadataEntity.java - 24 Sept 2026 6:37:43 am
  * 
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -35,38 +35,38 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.SolarNodeMetadataFilter;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.central.domain.UserMetadata;
+import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.support.SearchFilterUtils;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.SearchFilter;
 
 /**
- * Select for {@link SolarNodeMetadata} instances.
+ * Select for {@link UserMetadata} instances.
  * 
  * <p>
  * The result columns in the SQL are:
  * </p>
  * 
  * <ol>
- * <li>node_id (BIGINT)</li>
+ * <li>user_id (BIGINT)</li>
  * <li>created (TIMESTAMP)</li>
  * <li>modified (TIMESTAMP)</li>
  * <li>jdata (TEXT)</li>
  * </ol>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.0
  */
-public final class SelectSolarNodeMetadata
+public class SelectUserMetadataEntity
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** Sort by the metadata creation date. */
 	public static final String SORT_BY_CREATED = "created";
 
-	/** Sort by the node ID. */
-	public static final String SORT_BY_NODE = "node";
+	/** Sort by the user ID. */
+	public static final String SORT_BY_USER = "user";
 
 	/** Sort by the metadata modification date. */
 	public static final String SORT_BY_UPDATED = "updated";
@@ -79,9 +79,9 @@ public final class SelectSolarNodeMetadata
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li>created -&gt; nm.created</li>
-	 * <li>node -&gt; nm.node_id</li>
-	 * <li>updated -&gt; nm.updated</li>
+	 * <li>created -&gt; um.created</li>
+	 * <li>user -&gt; um.user_id</li>
+	 * <li>updated -&gt; um.updated</li>
 	 * </ol>
 	 * 
 	 * @since 1.2
@@ -91,9 +91,9 @@ public final class SelectSolarNodeMetadata
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put(SORT_BY_CREATED, "nm.created");
-		map.put(SORT_BY_NODE, "nm.node_id");
-		map.put(SORT_BY_UPDATED, "nm.updated");
+		map.put(SORT_BY_CREATED, "um.created");
+		map.put(SORT_BY_USER, "um.user_id");
+		map.put(SORT_BY_UPDATED, "um.updated");
 		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -101,9 +101,9 @@ public final class SelectSolarNodeMetadata
 	 * SQL expression for the node metadata restricted to the token policy's
 	 * node metadata paths.
 	 */
-	private static final String SQL_PRUNED_JDATA = "solarcommon.jsonb_prune_ant_paths(nm.jdata, t.jpolicy -> 'nodeMetadataPaths')";
+	public static final String SQL_PRUNED_JDATA = "solarcommon.jsonb_prune_ant_paths(um.jdata, t.jpolicy -> 'userMetadataPaths')";
 
-	private final SolarNodeMetadataFilter filter;
+	private final net.solarnetwork.central.domain.UserMetadataFilter filter;
 	private final @Nullable SearchFilter searchFilter;
 
 	/**
@@ -114,35 +114,33 @@ public final class SelectSolarNodeMetadata
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SelectSolarNodeMetadata(SolarNodeMetadataFilter filter) {
-		super();
+	public SelectUserMetadataEntity(UserMetadataFilter filter) {
 		this.filter = ObjectUtils.requireNonNullArgument(filter, "filter");
 		this.searchFilter = filter.toSearchFilter();
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		buf.append("SELECT nm.node_id, nm.created, nm.updated, ");
+		buf.append("SELECT um.user_id, um.created, um.updated, ");
 		if ( filter.hasTokenCriteria() ) {
 			// restrict the metadata to the token policy's node metadata paths
 			buf.append(SQL_PRUNED_JDATA).append(" AS jdata\n");
 		} else {
-			buf.append("nm.jdata\n");
+			buf.append("um.jdata\n");
 		}
-		buf.append("FROM solarnet.sn_node_meta nm\n");
+		buf.append("FROM solaruser.user_meta um\n");
 		if ( filter.hasTokenCriteria() ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = nm.node_id\n");
 			// NOTE the user_auth_token_login view is used because SolarQuery has no
 			// privileges on the solaruser.user_auth_token table
-			buf.append("INNER JOIN solaruser.user_auth_token_login t ON t.user_id = un.user_id\n");
+			buf.append("INNER JOIN solaruser.user_auth_token_login t ON t.user_id = um.user_id\n");
 		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
 		final var where = new StringBuilder();
 		int idx = 0;
-		idx += whereOptimizedArrayContains(filter.getNodeIds(), "nm.node_id", where);
+		idx += whereOptimizedArrayContains(filter.getUserIds(), "um.user_id", where);
 		if ( searchFilter != null ) {
-			where.append("\tAND jsonb_path_exists(nm.jdata, ?::jsonpath)\n");
+			where.append("\tAND jsonb_path_exists(um.jdata, ?::jsonpath)\n");
 			idx += 1;
 		}
 		if ( filter.hasTokenCriteria() ) {
@@ -156,7 +154,7 @@ public final class SelectSolarNodeMetadata
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		if ( filter.hasNodeCriteria() && filter.nodeIds().length == 1 ) {
+		if ( filter.hasUserCriteria() && filter.userIds().length == 1 ) {
 			// at most one result, skip order
 			return;
 		}
@@ -166,7 +164,7 @@ public final class SelectSolarNodeMetadata
 			idx = orderBySorts(filter.sorts(), SORT_KEY_MAPPING, order);
 		}
 		if ( order.isEmpty() ) {
-			order.append(", nm.node_id");
+			order.append(", um.user_id");
 		}
 		buf.append("\nORDER BY ").append(order.substring(idx));
 	}
@@ -191,7 +189,7 @@ public final class SelectSolarNodeMetadata
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
+		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		if ( searchFilter != null ) {
 			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
 		}

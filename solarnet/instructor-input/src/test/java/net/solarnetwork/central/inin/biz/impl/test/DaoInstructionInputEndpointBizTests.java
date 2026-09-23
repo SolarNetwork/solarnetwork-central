@@ -28,6 +28,7 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.assertArg;
@@ -64,6 +65,7 @@ import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.biz.RequestTransformService;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
@@ -131,6 +133,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 	@Captor
 	private ArgumentCaptor<Iterable<NodeInstruction>> instructionsCaptor;
+
+	@Captor
+	private ArgumentCaptor<UserMetadataFilter> userMetadataFilterCaptor;
 
 	private String requestXformServiceId;
 	private String responseXformServiceId;
@@ -272,7 +277,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final String userMetaJson = """
 				{"meta":"data"}
 				""";
-		given(userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath()))
+		given(userMetadataDao.jsonMetadataAtPath(any(), eq(endpoint.getUserMetadataPath())))
 				.willReturn(userMetaJson);
 
 		// transform input
@@ -302,6 +307,16 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		// THEN
 		// @formatter:off
+		then(userMetadataDao).should()
+			.jsonMetadataAtPath(userMetadataFilterCaptor.capture(), eq(endpoint.getUserMetadataPath()))
+			;
+		and.then(userMetadataFilterCaptor.getValue())
+			.as("User ID used to find metadata")
+			.returns(userId, from(UserMetadataFilter::getUserId))
+			.as("No token ID available")
+			.returns(null, from(UserMetadataFilter::getTokenId))
+			;
+
 		then(requestXformService).should().transformInput(eq(in),  eq(type), eq(transform), paramsCaptor.capture());
 		and.then(paramsCaptor.getValue())
 			.asInstanceOf(map(String.class, Object.class))
@@ -495,7 +510,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final String userMetaJson = """
 				{"meta":"data"}
 				""";
-		given(userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath()))
+		given(userMetadataDao.jsonMetadataAtPath(any(), eq(endpoint.getUserMetadataPath())))
 				.willReturn(userMetaJson);
 
 		// load transform configuration
@@ -525,6 +540,16 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		// THEN
 		// @formatter:off
+		then(userMetadataDao).should()
+			.jsonMetadataAtPath(userMetadataFilterCaptor.capture(), eq(endpoint.getUserMetadataPath()))
+			;
+		and.then(userMetadataFilterCaptor.getValue())
+			.as("User ID used to find metadata")
+			.returns(userId, from(UserMetadataFilter::getUserId))
+			.as("No token ID available")
+			.returns(null, from(UserMetadataFilter::getTokenId))
+			;
+
 		final String response = "Hello, world.";
 		then(responseXformService).should()
 			.transformOutput(

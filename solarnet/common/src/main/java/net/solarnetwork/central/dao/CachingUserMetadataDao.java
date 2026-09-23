@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
@@ -32,13 +33,12 @@ import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Caching implementation of {@link UserMetadataDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity, Long, UserMetadataDao>
 		implements UserMetadataDao {
@@ -60,8 +60,7 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 	public CachingUserMetadataDao(UserMetadataDao delegate, Cache<Long, UserMetadataEntity> cache,
 			Executor executor, Cache<UserStringCompositePK, String> metadataPathCache) {
 		super(delegate, cache, executor);
-		this.metadataPathCache = ObjectUtils.requireNonNullArgument(metadataPathCache,
-				"metadataPathCache");
+		this.metadataPathCache = requireNonNullArgument(metadataPathCache, "metadataPathCache");
 	}
 
 	@Override
@@ -71,11 +70,13 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 	}
 
 	@Override
-	public @Nullable String jsonMetadataAtPath(Long userId, String path) {
+	public @Nullable String jsonMetadataAtPath(UserMetadataFilter filter, String path) {
+		final Long userId = requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(),
+				"filter.userId");
 		final UserStringCompositePK key = new UserStringCompositePK(userId, path);
 		String result = metadataPathCache.get(key);
 		if ( result == null ) {
-			result = delegate.jsonMetadataAtPath(userId, path);
+			result = delegate.jsonMetadataAtPath(filter, path);
 			if ( result != null ) {
 				metadataPathCache.put(key, result);
 			}

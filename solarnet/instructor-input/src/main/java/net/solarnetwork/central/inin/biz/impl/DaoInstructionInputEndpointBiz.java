@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -70,6 +71,7 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
@@ -78,7 +80,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO implementation of {@link InstructionInputEndpointBiz}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoInstructionInputEndpointBiz
 		implements InstructionInputEndpointBiz, CentralInstructionInputUserEvents {
@@ -237,7 +239,10 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
-			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());
+			var filter = new BasicUserMetadataFilter();
+			filter.setUserId(userId);
+			filter.setTokenId(SecurityUtils.currentTokenId());
+			String meta = userMetadataDao.jsonMetadataAtPath(filter, endpoint.getUserMetadataPath());
 			if ( meta != null ) {
 				params.put(TransformConstants.PARAM_USER_METADATA_JSON, meta);
 			}
@@ -419,7 +424,10 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
-			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());
+			var filter = new BasicUserMetadataFilter();
+			filter.setUserId(userId);
+			filter.setTokenId(SecurityUtils.currentTokenId());
+			String meta = userMetadataDao.jsonMetadataAtPath(filter, endpoint.getUserMetadataPath());
 			if ( meta != null ) {
 				params.put(TransformConstants.PARAM_USER_METADATA_JSON, meta);
 			}

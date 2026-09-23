@@ -24,18 +24,25 @@ package net.solarnetwork.central.dao.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.util.concurrent.Executors;
 import javax.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.CachingUserMetadataDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
+import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 
 /**
@@ -44,6 +51,7 @@ import net.solarnetwork.central.domain.UserStringCompositePK;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class CachingUserMetadataDaoTests {
 
@@ -55,6 +63,9 @@ public class CachingUserMetadataDaoTests {
 
 	@Mock
 	private UserMetadataDao delegate;
+
+	@Captor
+	public ArgumentCaptor<UserMetadataFilter> filterCaptor;
 
 	private CachingUserMetadataDao dao;
 
@@ -74,13 +85,17 @@ public class CachingUserMetadataDaoTests {
 		given(metadataCache.get(key)).willReturn(null);
 
 		final String metadata = randomString();
-		given(delegate.jsonMetadataAtPath(userId, metadataPath)).willReturn(metadata);
+		given(delegate.jsonMetadataAtPath(any(), eq(metadataPath))).willReturn(metadata);
 
 		// WHEN
-		String result = dao.jsonMetadataAtPath(userId, metadataPath);
+		final BasicUserMetadataFilter filter = new BasicUserMetadataFilter();
+		filter.setUserId(userId);
+		String result = dao.jsonMetadataAtPath(filter, metadataPath);
 
 		// THEN
-		then(result).as("Result from delegate").isSameAs(metadata);
+		then(delegate).should().jsonMetadataAtPath(filterCaptor.capture(), eq(metadataPath));
+		and.then(filterCaptor.getValue()).as("Filter passed to delegate").isSameAs(filter);
+		and.then(result).as("Result from delegate").isSameAs(metadata);
 	}
 
 	@Test
@@ -94,10 +109,13 @@ public class CachingUserMetadataDaoTests {
 		given(metadataCache.get(key)).willReturn(metadata);
 
 		// WHEN
-		String result = dao.jsonMetadataAtPath(userId, metadataPath);
+		final BasicUserMetadataFilter filter = new BasicUserMetadataFilter();
+		filter.setUserId(userId);
+		String result = dao.jsonMetadataAtPath(filter, metadataPath);
 
 		// THEN
-		then(result).as("Result from cache").isSameAs(metadata);
+		then(delegate).shouldHaveNoInteractions();
+		and.then(result).as("Result from cache").isSameAs(metadata);
 	}
 
 }

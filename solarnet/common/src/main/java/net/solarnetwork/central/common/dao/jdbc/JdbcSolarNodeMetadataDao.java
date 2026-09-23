@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataFilter;
-import net.solarnetwork.central.common.dao.jdbc.sql.DeleteSolarNodeMetadata;
+import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForId;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeMetadata;
 import net.solarnetwork.central.common.dao.jdbc.sql.StoreSolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
@@ -89,10 +89,14 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 		throw new UnsupportedOperationException();
 	}
 
+	private static final String TABLE_NAME = "solarnet.sn_node_meta";
+	private static final String PRIMARY_KEY_COLUMN_NAME = "node_id";
+
 	@Override
 	public void delete(SolarNodeMetadata entity) {
-		jdbcOps.update(new DeleteSolarNodeMetadata(
-				requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id")));
+		var sql = new DeleteForId(requireNonNullArgument(entity, "entity").getNodeId(), TABLE_NAME,
+				PRIMARY_KEY_COLUMN_NAME);
+		jdbcOps.update(sql);
 	}
 
 	@Override
