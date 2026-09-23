@@ -94,8 +94,10 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 
 	@Override
 	public void delete(SolarNodeMetadata entity) {
-		var sql = new DeleteForId(requireNonNullArgument(entity, "entity").getNodeId(), TABLE_NAME,
-				PRIMARY_KEY_COLUMN_NAME);
+		var sql = new DeleteForId(
+				requireNonNullArgument(requireNonNullArgument(entity, "entity").getNodeId(),
+						"entity.nodeId"),
+				TABLE_NAME, PRIMARY_KEY_COLUMN_NAME);
 		jdbcOps.update(sql);
 	}
 

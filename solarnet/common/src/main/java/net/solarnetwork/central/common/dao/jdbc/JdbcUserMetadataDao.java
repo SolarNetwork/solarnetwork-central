@@ -51,7 +51,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class JdbcUserMetadataDao implements UserMetadataDao {
 
-	private static final RowMapper<String> PATH_ROW_MAPPER = SingleColumnRowMapper
+	private static final RowMapper<@Nullable String> PATH_ROW_MAPPER = SingleColumnRowMapper
 			.newInstance(String.class);
 
 	private final JdbcOperations jdbcOps;
@@ -130,7 +130,7 @@ public class JdbcUserMetadataDao implements UserMetadataDao {
 	@Override
 	public @Nullable String jsonMetadataAtPath(UserMetadataFilter filter, String path) {
 		final var sql = new SelectUserMetadataPath(filter, path);
-		final List<String> results = jdbcOps.query(sql, PATH_ROW_MAPPER);
+		final List<@Nullable String> results = jdbcOps.query(sql, PATH_ROW_MAPPER);
 		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 

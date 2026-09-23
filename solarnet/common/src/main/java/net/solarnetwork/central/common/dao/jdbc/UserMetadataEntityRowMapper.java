@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -59,8 +60,8 @@ public class UserMetadataEntityRowMapper implements RowMapper<UserMetadataEntity
 
 	@Override
 	public UserMetadataEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		final Long id = rs.getObject(1, Long.class);
-		final Instant created = getTimestampInstant(rs, 2);
+		final Long id = nonnull(rs.getObject(1, Long.class), "ID");
+		final Instant created = nonnull(getTimestampInstant(rs, 2), "Created");
 
 		final var result = new UserMetadataEntity(id, created);
 		result.setUpdated(getTimestampInstant(rs, 3));
