@@ -23,7 +23,6 @@
 			<list>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
-				<value>net.solarnetwork.central.domain.UserMetadataEntity</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
 				<value>net.solarnetwork.central.user.domain.UserMatch</value>
 				<value>net.solarnetwork.central.user.domain.UserAlert</value>
@@ -46,7 +45,6 @@
 			<list>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/UserMetadataEntity.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAlert.xml</value>

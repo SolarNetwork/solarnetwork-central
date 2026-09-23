@@ -38,11 +38,11 @@ import net.solarnetwork.central.aop.UserMetadataSecurityAspect;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoUserMetadataBiz;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
+import net.solarnetwork.central.common.dao.jdbc.JdbcUserMetadataDao;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
-import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
-import net.solarnetwork.central.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.tenant.SecurityContextExtension;
 import net.solarnetwork.central.test.tenant.TestActor;
 import net.solarnetwork.central.test.tenant.TestTenant;
@@ -56,10 +56,10 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * {@code UserMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(SecurityContextExtension.class)
-public class UserMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupport {
+public class UserMetadataBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private TestTenants tenants;
 	private TestTenant a;
@@ -73,8 +73,7 @@ public class UserMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSu
 		for ( TestTenant t : List.of(a, tenants.b()) ) {
 			insertUserMetadata(jdbcTemplate, t.userId(), metadata());
 		}
-		final MyBatisUserMetadataDao dao = new MyBatisUserMetadataDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		final var dao = new JdbcUserMetadataDao(jdbcTemplate);
 		biz = securedProxy((UserMetadataBiz) new DaoUserMetadataBiz(dao),
 				new UserMetadataSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate))).proxy();
 	}
