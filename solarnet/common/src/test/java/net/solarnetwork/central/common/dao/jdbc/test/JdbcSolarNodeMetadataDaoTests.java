@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertNodeMetadata;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.math.BigDecimal;
@@ -29,10 +31,13 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,13 +47,14 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link JdbcSolarNodeMetadataDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcSolarNodeMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -217,5 +223,179 @@ public class JdbcSolarNodeMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 			;
 		// formatter:on
 	}
-	
+
+	/**
+	 * Create metadata for a set of new nodes, one node per given info value.
+	 * 
+	 * @param infoValues
+	 *        the {@code foo} info value to give each node's metadata
+	 * @return the node IDs created, in the order of {@code infoValues}
+	 */
+	private List<Long> setupNodeMetadata(String... infoValues) {
+		List<Long> nodeIds = new ArrayList<>(infoValues.length);
+		for ( String infoValue : infoValues ) {
+			Long nodeId = randomLong();
+			setupTestNode(nodeId);
+			GeneralDatumMetadata meta = new GeneralDatumMetadata();
+			meta.putInfoValue("foo", infoValue);
+			insertNodeMetadata(jdbcTemplate, nodeId, meta);
+			nodeIds.add(nodeId);
+		}
+		return nodeIds;
+	}
+
+	private static List<Long> nodeIds(FilterResults<SolarNodeMetadata, Long> results) {
+		return StreamSupport.stream(results.spliterator(), false).map(SolarNodeMetadata::getNodeId)
+				.toList();
+	}
+
+	@Test
+	public void findFiltered_sortByNodeDescending() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a", "b", "c");
+		final List<Long> expected = nodeIds.stream().sorted(Comparator.reverseOrder()).toList();
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+		filter.setSorts(List.of(new SimpleSortDescriptor("node", true)));
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(nodeIds(results))
+			.as("Results sorted by node ID descending")
+			.containsExactlyElementsOf(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_sortArgumentOverridesFilter() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a", "b", "c");
+		final List<Long> expected = nodeIds.stream().sorted(Comparator.reverseOrder()).toList();
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter,
+				List.of(new SimpleSortDescriptor("node", true)), null, null);
+
+		// THEN
+		// @formatter:off
+		then(nodeIds(results))
+			.as("Results sorted by the given sort descriptors")
+			.containsExactlyElementsOf(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_searchFilter() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a", "b", "c");
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+		filter.setSearchFilter("(/m/foo=b)");
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(nodeIds(results))
+			.as("Only the node whose metadata matches the search filter returned")
+			.containsExactly(nodeIds.get(1))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_searchFilter_singleNode() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a");
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeId(nodeIds.getFirst());
+		filter.setSearchFilter("(/m/foo=nope)");
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Search filter applied even for a single node criteria")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_paginated() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a", "b", "c");
+		final List<Long> expected = nodeIds.stream().sorted().toList();
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+		filter.setOffset(1L);
+		filter.setMax(1);
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(nodeIds(results))
+			.as("Only the requested page of results returned")
+			.containsExactly(expected.get(1))
+			;
+		then(results.getTotalResults())
+			.as("Total available result count returned")
+			.isEqualTo(3L)
+			;
+		then(results.getStartingOffset())
+			.as("Requested offset returned")
+			.isEqualTo(1L)
+			;
+		then(results.getReturnedResultCount())
+			.as("Returned result count is the page size")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_unpaginated_totalResultsIsRowCount() {
+		// GIVEN
+		final List<Long> nodeIds = setupNodeMetadata("a", "b", "c");
+
+		BasicCoreCriteria filter = new BasicCoreCriteria();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+
+		// WHEN
+		FilterResults<SolarNodeMetadata, Long> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("All results returned")
+			.hasSize(3)
+			;
+		then(results.getTotalResults())
+			.as("Total result count is the returned row count")
+			.isEqualTo(3L)
+			;
+		then(results.getStartingOffset())
+			.as("Starting offset defaults to zero")
+			.isEqualTo(0L)
+			;
+		// @formatter:on
+	}
+
 }

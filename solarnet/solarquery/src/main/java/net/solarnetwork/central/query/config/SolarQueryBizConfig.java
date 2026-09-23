@@ -29,7 +29,7 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoUserMetadataBiz;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
 
 /**

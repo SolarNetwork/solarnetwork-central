@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.PreparedStatement;
@@ -36,7 +37,6 @@ import net.solarnetwork.central.common.dao.jdbc.sql.DeleteSolarNodeMetadata;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeMetadata;
 import net.solarnetwork.central.common.dao.jdbc.sql.StoreSolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
-import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link SolarNodeMetadata} DAO.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 
@@ -98,9 +98,23 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
 			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
-		var sql = new SelectSolarNodeMetadata(filter);
-		List<SolarNodeMetadata> list = jdbcOps.query(sql, SolarNodeMetadataRowMapper.INSTANCE);
-		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());
+		SolarNodeMetadataFilter f = requireNonNullArgument(filter, "filter");
+		if ( sorts != null || offset != null || max != null ) {
+			// explicit sort/pagination arguments override those of the given filter
+			var criteria = new BasicCoreCriteria(filter);
+			if ( sorts != null ) {
+				criteria.setSorts(sorts);
+			}
+			if ( offset != null ) {
+				criteria.setOffset(offset);
+			}
+			if ( max != null ) {
+				criteria.setMax(max);
+			}
+			f = criteria;
+		}
+		var sql = new SelectSolarNodeMetadata(f);
+		return executeFilterQuery(jdbcOps, f, sql, SolarNodeMetadataRowMapper.INSTANCE);
 	}
 
 }

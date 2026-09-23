@@ -24,8 +24,6 @@
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.domain.SolarNodeMatch</value>
-				<value>net.solarnetwork.central.domain.SolarNodeMetadata</value>
-				<value>net.solarnetwork.central.domain.SolarNodeMetadataMatch</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -39,7 +37,6 @@
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNodeMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/UserMetadataEntity.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/VersionedMessage.xml</value>
 				

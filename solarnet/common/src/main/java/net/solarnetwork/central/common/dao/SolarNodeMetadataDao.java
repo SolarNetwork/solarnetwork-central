@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.dao.GenericDao;
 
@@ -29,9 +30,26 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link SolarNodeMetadata} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SolarNodeMetadataDao
 		extends SolarNodeMetadataReadOnlyDao, GenericDao<SolarNodeMetadata, Long> {
+
+	/**
+	 * Get the metadata for a specific node ID.
+	 * 
+	 * <p>
+	 * This method is declared here to resolve the otherwise ambiguous
+	 * {@code get(Long)} inherited from both extended APIs.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID of the node to get the metadata for
+	 * @return the metadata, or {@code null} if none available
+	 * @since 1.1
+	 */
+	@Override
+	@Nullable
+	SolarNodeMetadata get(Long id);
 
 }

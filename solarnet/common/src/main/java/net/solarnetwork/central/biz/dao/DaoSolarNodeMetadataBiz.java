@@ -29,10 +29,10 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -41,7 +41,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link SolarNodeMetadataBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
@@ -110,10 +110,31 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(
 			SolarNodeMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
 			@Nullable Long offset, @Nullable Integer max) {
-		return solarNodeMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+		return solarNodeMetadataDao.findFiltered(daoCriteria(criteria), sortDescriptors, offset, max);
+	}
+
+	/**
+	 * Translate a legacy filter into the criteria supported by the DAO.
+	 *
+	 * <p>
+	 * The legacy {@code metadataFilter} becomes the DAO search filter, which
+	 * uses the same node metadata path syntax. Sort and pagination criteria are
+	 * passed to the DAO as arguments, so are not translated here.
+	 * </p>
+	 *
+	 * @param criteria
+	 *        the criteria to translate
+	 * @return the DAO criteria, never {@code null}
+	 */
+	private static BasicCoreCriteria daoCriteria(SolarNodeMetadataFilter criteria) {
+		requireNonNullArgument(criteria, "criteria");
+		var result = new BasicCoreCriteria();
+		result.setNodeIds(criteria.getNodeIds());
+		result.setSearchFilter(criteria.getMetadataFilter());
+		return result;
 	}
 
 }

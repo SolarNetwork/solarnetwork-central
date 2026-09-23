@@ -27,9 +27,16 @@ import net.solarnetwork.dao.PaginationCriteria;
 /**
  * Filter criteria for node metadata.
  * 
+ * <p>
+ * The {@link SearchFilterCriteria} is applied to the metadata JSON of each
+ * node, using the node metadata path syntax, for example
+ * {@code (/m/foo=bar)}.
+ * </p>
+ * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface SolarNodeMetadataFilter extends NodeCriteria, PaginationCriteria {
+public interface SolarNodeMetadataFilter
+		extends NodeCriteria, SearchFilterCriteria, PaginationCriteria {
 
 }

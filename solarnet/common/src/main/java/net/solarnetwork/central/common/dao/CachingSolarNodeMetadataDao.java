@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Caching implementation of {@link SolarNodeMetadataDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CachingSolarNodeMetadataDao
 		extends CachingGenericDao<SolarNodeMetadata, Long, SolarNodeMetadataDao>
@@ -64,8 +64,9 @@ public class CachingSolarNodeMetadataDao
 	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
 			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
-		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1 ) {
-			// use cache when looking for single node ID
+		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1
+				&& !filter.hasSearchFilterCriteria() ) {
+			// use cache when looking for single node ID, without any metadata search filter
 			SolarNodeMetadata meta = get(nonnull(filter.getNodeId(), "nodeId"));
 			return new BasicFilterResults<>(meta != null ? singletonList(meta) : emptyList());
 		}

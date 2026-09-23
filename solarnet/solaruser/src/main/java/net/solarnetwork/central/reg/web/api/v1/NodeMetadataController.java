@@ -24,7 +24,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
@@ -48,7 +47,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Controller for node metadata.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.18
  */
 @GlobalExceptionRestController
@@ -91,15 +90,13 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Result<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
-			DatumFilterCommand criteria) {
+	public Result<FilterResults<SolarNodeMetadata, Long>> findMetadata(DatumFilterCommand criteria) {
 		if ( criteria.getNodeId() == null ) {
 			// default to all nodes for actor
 			criteria.setNodeIds(SecurityUtils.authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
 		}
-		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
-				.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
-						criteria.getMax());
+		FilterResults<SolarNodeMetadata, Long> results = solarNodeMetadataBiz.findSolarNodeMetadata(
+				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		return success(results);
 	}
 
@@ -112,20 +109,12 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable Long nodeId) {
+	public Result<SolarNodeMetadata> getMetadata(@PathVariable Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
-		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
+		FilterResults<SolarNodeMetadata, Long> results = solarNodeMetadataBiz
 				.findSolarNodeMetadata(criteria, null, null, null);
-		SolarNodeMetadataFilterMatch result = null;
-		if ( results != null ) {
-			try {
-				result = results.iterator().next();
-			} catch ( NoSuchElementException e ) {
-				// ignore
-			}
-		}
-		return success(result);
+		return success(results != null ? results.firstResult() : null);
 	}
 
 	/**

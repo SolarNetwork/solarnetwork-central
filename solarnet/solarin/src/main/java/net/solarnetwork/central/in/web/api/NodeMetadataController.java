@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -47,7 +47,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Controller for node metadata actions.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.21
  */
 @Controller("v1NodeMetadataController")
@@ -76,14 +76,14 @@ public class NodeMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> findMetadata(DatumFilterCommand criteria) {
+	public Result<SolarNodeMetadata> findMetadata(DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return findMetadata(nodeId, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> findMetadata(@PathVariable("nodeId") Long requestNodeId,
+	public Result<SolarNodeMetadata> findMetadata(@PathVariable("nodeId") Long requestNodeId,
 			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
@@ -91,14 +91,9 @@ public class NodeMetadataController {
 		}
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
-		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dataCollectorBiz
-				.findSolarNodeMetadata(filter, null, null, null);
-		SolarNodeMetadataFilterMatch result = null;
-		for ( SolarNodeMetadataFilterMatch m : results ) {
-			result = m;
-			break;
-		}
-		return success(result);
+		FilterResults<SolarNodeMetadata, Long> results = dataCollectorBiz.findSolarNodeMetadata(filter,
+				null, null, null);
+		return success(results.firstResult());
 	}
 
 	@ResponseBody

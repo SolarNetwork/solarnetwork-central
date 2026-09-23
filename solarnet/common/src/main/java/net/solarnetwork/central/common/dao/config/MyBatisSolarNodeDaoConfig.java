@@ -28,16 +28,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 
 /**
  * SolarNode DAO configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class MyBatisSolarNodeDaoConfig {
@@ -55,13 +53,6 @@ public class MyBatisSolarNodeDaoConfig {
 	@Bean
 	public SolarLocationDao solarLocationDao() {
 		MyBatisSolarLocationDao dao = new MyBatisSolarLocationDao();
-		dao.setSqlSessionTemplate(sqlSessionTemplate);
-		return dao;
-	}
-
-	@Bean
-	public SolarNodeMetadataDao solarNodeMetadataDao() {
-		MyBatisSolarNodeMetadataDao dao = new MyBatisSolarNodeMetadataDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}

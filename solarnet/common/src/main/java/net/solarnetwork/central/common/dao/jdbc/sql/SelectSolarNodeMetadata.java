@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.orderBySorts;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
@@ -29,11 +30,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataFilter;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.central.support.SearchFilterUtils;
 import net.solarnetwork.util.ObjectUtils;
+import net.solarnetwork.util.SearchFilter;
 
 /**
  * Select for {@link SolarNodeMetadata} instances.
@@ -50,11 +58,48 @@ import net.solarnetwork.util.ObjectUtils;
  * </ol>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public final class SelectSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
+public final class SelectSolarNodeMetadata
+		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
+
+	/** Sort by the metadata creation date. */
+	public static final String SORT_BY_CREATED = "created";
+
+	/** Sort by the node ID. */
+	public static final String SORT_BY_NODE = "node";
+
+	/** Sort by the metadata modification date. */
+	public static final String SORT_BY_UPDATED = "updated";
+
+	/**
+	 * The mapping of sort keys to SQL column names.
+	 * 
+	 * <p>
+	 * This map contains the following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>created -&gt; nm.created</li>
+	 * <li>node -&gt; nm.node_id</li>
+	 * <li>updated -&gt; nm.updated</li>
+	 * </ol>
+	 * 
+	 * @since 1.2
+	 * @see CommonSqlUtils#orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> SORT_KEY_MAPPING;
+
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.put(SORT_BY_CREATED, "nm.created");
+		map.put(SORT_BY_NODE, "nm.node_id");
+		map.put(SORT_BY_UPDATED, "nm.updated");
+		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
 
 	private final SolarNodeMetadataFilter filter;
+	private final @Nullable SearchFilter searchFilter;
 
 	/**
 	 * Constructor.
@@ -67,6 +112,7 @@ public final class SelectSolarNodeMetadata implements PreparedStatementCreator, 
 	public SelectSolarNodeMetadata(SolarNodeMetadataFilter filter) {
 		super();
 		this.filter = ObjectUtils.requireNonNullArgument(filter, "filter");
+		this.searchFilter = filter.toSearchFilter();
 	}
 
 	private void sqlCore(StringBuilder buf) {
@@ -80,17 +126,29 @@ public final class SelectSolarNodeMetadata implements PreparedStatementCreator, 
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		idx += whereOptimizedArrayContains(filter.getNodeIds(), "nm.node_id", where);
+		if ( searchFilter != null ) {
+			where.append("\tAND jsonb_path_exists(nm.jdata, ?::jsonpath)\n");
+			idx += 1;
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1 ) {
-			// at most one result, skip order
-			return;
+		StringBuilder order = new StringBuilder();
+		int idx = 2;
+		if ( filter.hasSorts() ) {
+			idx = orderBySorts(filter.sorts(), SORT_KEY_MAPPING, order);
 		}
-		buf.append("\nORDER BY nm.node_id");
+		if ( order.isEmpty() ) {
+			if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1 ) {
+				// at most one result, skip order
+				return;
+			}
+			order.append(", nm.node_id");
+		}
+		buf.append("\nORDER BY ").append(order.substring(idx));
 	}
 
 	@Override
@@ -107,8 +165,41 @@ public final class SelectSolarNodeMetadata implements PreparedStatementCreator, 
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		prepareOptimizedArrayParameter(con, stmt, 0, filter.getNodeIds());
+		int p = prepareCore(con, stmt, 0);
+		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
 		return stmt;
+	}
+
+	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
+		if ( searchFilter != null ) {
+			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
+		}
+		return p;
+	}
+
+	@Override
+	public PreparedStatementCreator countPreparedStatementCreator() {
+		return new CountPreparedStatementCreator();
+	}
+
+	private final class CountPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+
+		@Override
+		public String getSql() {
+			StringBuilder buf = new StringBuilder();
+			sqlCore(buf);
+			sqlWhere(buf);
+			return CommonSqlUtils.wrappedCountQuery(buf.toString());
+		}
+
+		@Override
+		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+			PreparedStatement stmt = con.prepareStatement(getSql());
+			prepareCore(con, stmt, 0);
+			return stmt;
+		}
+
 	}
 
 }

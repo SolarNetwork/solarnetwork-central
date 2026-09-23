@@ -22,25 +22,29 @@
 
 package net.solarnetwork.central.biz.dao.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import java.util.List;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link DaoSolarNodeMetadataBiz} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class DaoSolarNodeMetadataBizTests {
 
@@ -108,14 +112,32 @@ public class DaoSolarNodeMetadataBizTests {
 
 	@Test
 	public void findSolarNodeMetadata() {
+		// GIVEN
 		FilterSupport criteria = new FilterSupport();
 		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setMetadataFilter("(/m/foo=bar)");
 
-		EasyMock.expect(solarNodeMetadataDao.findFiltered(criteria, null, null, null)).andReturn(null);
+		Capture<SolarNodeMetadataFilter> filterCap = new Capture<>();
 
+		EasyMock.expect(
+				solarNodeMetadataDao.findFiltered(EasyMock.capture(filterCap), EasyMock.isNull(),
+						EasyMock.isNull(), EasyMock.isNull()))
+				.andReturn(new BasicFilterResults<>(List.of()));
+
+		// WHEN
 		replayAll();
 		biz.findSolarNodeMetadata(criteria, null, null, null);
 		verifyAll();
+
+		// THEN
+		// @formatter:off
+		then(filterCap.getValue())
+			.as("Node criteria passed to DAO")
+			.returns(new Long[] { TEST_NODE_ID }, from(SolarNodeMetadataFilter::getNodeIds))
+			.as("Legacy metadata filter passed to DAO as search filter")
+			.returns("(/m/foo=bar)", from(SolarNodeMetadataFilter::getSearchFilter))
+			;
+		// @formatter:on
 	}
 
 	@Test

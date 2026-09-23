@@ -37,12 +37,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.aop.NodeMetadataSecurityAspect;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
-import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
-import net.solarnetwork.central.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
+import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeMetadataDao;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.tenant.SecurityContextExtension;
 import net.solarnetwork.central.test.tenant.TestActor;
 import net.solarnetwork.central.test.tenant.TestTenant;
@@ -56,10 +56,10 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * the {@code NodeMetadataSecurityAspect} aspect applied, using the database.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @ExtendWith(SecurityContextExtension.class)
-public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupport {
+public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private TestTenants tenants;
 	private TestTenant a;
@@ -77,8 +77,7 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoT
 				insertNodeMetadata(jdbcTemplate, nodeId, metadata());
 			}
 		}
-		final MyBatisSolarNodeMetadataDao dao = new MyBatisSolarNodeMetadataDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		final var dao = new JdbcSolarNodeMetadataDao(jdbcTemplate);
 		biz = securedProxy((SolarNodeMetadataBiz) new DaoSolarNodeMetadataBiz(dao),
 				new NodeMetadataSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate))).proxy();
 	}
@@ -96,9 +95,9 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractMyBatisDaoT
 		return filter;
 	}
 
-	private static Set<Long> nodeIds(Iterable<SolarNodeMetadataFilterMatch> results) {
-		return StreamSupport.stream(results.spliterator(), false)
-				.map(SolarNodeMetadataFilterMatch::getId).collect(toSet());
+	private static Set<Long> nodeIds(Iterable<SolarNodeMetadata> results) {
+		return StreamSupport.stream(results.spliterator(), false).map(SolarNodeMetadata::getId)
+				.collect(toSet());
 	}
 
 	@Test

@@ -39,9 +39,9 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
@@ -68,9 +68,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		dao = new MyBatisSolarNodeDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 
-		MyBatisSolarNodeMetadataDao metaDao = new MyBatisSolarNodeMetadataDao();
-		metaDao.setSqlSessionFactory(getSqlSessionFactory());
-		this.metadataDao = metaDao;
+		this.metadataDao = new JdbcSolarNodeMetadataDao(jdbcTemplate);
 	}
 
 	@Test

@@ -57,7 +57,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.reg.web.api.v1.NodeMetadataController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;

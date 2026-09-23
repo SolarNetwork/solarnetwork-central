@@ -33,7 +33,7 @@ import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;

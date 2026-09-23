@@ -35,8 +35,8 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -50,7 +50,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  *
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 public interface DataCollectorBiz {
 
@@ -153,9 +153,8 @@ public interface DataCollectorBiz {
 	 * @return the results, never {@code null}
 	 * @since 1.5
 	 */
-	FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Long offset, final Integer max);
+	FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max);
 
 	/**
 	 * Search for datum metadata.

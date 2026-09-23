@@ -25,7 +25,6 @@ package net.solarnetwork.central.query.web.api;
 import static net.solarnetwork.central.security.SecurityUtils.authorizedNodeIdsForCurrentActor;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -45,7 +44,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.query.domain.NodeMetadataSearchFilter;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -57,7 +56,7 @@ import net.solarnetwork.domain.Result;
  * Controller for read-only node metadata access.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
@@ -103,16 +102,15 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 					style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Result<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
-			final HttpServletRequest req, final DatumFilterCommand criteria) {
+	public Result<FilterResults<SolarNodeMetadata, Long>> findMetadata(final HttpServletRequest req,
+			final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			if ( criteria.getNodeId() == null ) {
 				// default to all nodes for actor
 				criteria.setNodeIds(authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
 			}
-			FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
-					.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
-							criteria.getMax());
+			FilterResults<SolarNodeMetadata, Long> results = solarNodeMetadataBiz.findSolarNodeMetadata(
+					criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
@@ -129,22 +127,14 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 					The node ID to view."""))
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> getMetadata(final HttpServletRequest req,
+	public Result<SolarNodeMetadata> getMetadata(final HttpServletRequest req,
 			@PathVariable final Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
+			FilterResults<SolarNodeMetadata, Long> results = solarNodeMetadataBiz
 					.findSolarNodeMetadata(criteria, null, null, null);
-			SolarNodeMetadataFilterMatch result = null;
-			if ( results != null ) {
-				try {
-					result = results.iterator().next();
-				} catch ( NoSuchElementException e ) {
-					// ignore
-				}
-			}
-			return success(result);
+			return success(results != null ? results.firstResult() : null);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 

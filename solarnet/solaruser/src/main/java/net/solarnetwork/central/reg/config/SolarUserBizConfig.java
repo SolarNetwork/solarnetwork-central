@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
-import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 
 /**
  * Business service configuration for SolarUser.

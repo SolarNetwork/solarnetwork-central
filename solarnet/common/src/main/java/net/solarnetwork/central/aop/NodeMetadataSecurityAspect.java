@@ -38,7 +38,6 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
@@ -52,7 +51,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Security AOP support for {@link SolarNodeMetadataBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Aspect
 @Component
@@ -116,8 +115,8 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 	 */
 	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findNodeMetadata(filter)")
-	public FilterResults<SolarNodeMetadataFilterMatch, Long> findNodeMetadataAccessCheck(
-			ProceedingJoinPoint pjp, SolarNodeMetadataFilter filter) throws Throwable {
+	public FilterResults<SolarNodeMetadata, Long> findNodeMetadataAccessCheck(ProceedingJoinPoint pjp,
+			SolarNodeMetadataFilter filter) throws Throwable {
 		if ( filter == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
@@ -134,7 +133,7 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 		}
 
 		@SuppressWarnings("unchecked")
-		var result = (FilterResults<SolarNodeMetadataFilterMatch, Long>) pjp.proceed(args);
+		var result = (FilterResults<SolarNodeMetadata, Long>) pjp.proceed(args);
 		return restrictMetadataPaths(result);
 	}
 
@@ -151,8 +150,8 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 	 *        the results to restrict
 	 * @return the restricted results
 	 */
-	private FilterResults<SolarNodeMetadataFilterMatch, Long> restrictMetadataPaths(
-			FilterResults<SolarNodeMetadataFilterMatch, Long> results) {
+	private FilterResults<SolarNodeMetadata, Long> restrictMetadataPaths(
+			FilterResults<SolarNodeMetadata, Long> results) {
 		final SecurityPolicy policy = getActiveSecurityPolicy();
 		final Set<String> paths = (policy != null ? policy.getNodeMetadataPaths() : null);
 		if ( paths == null || paths.isEmpty() ) {
@@ -162,18 +161,11 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
 		final var enforcer = new SecurityPolicyEnforcer(policy, principal, null, getPathMatcher(),
 				SecurityPolicyMetadataType.Node);
-		final List<SolarNodeMetadataFilterMatch> restricted = new ArrayList<>(
-				results.getReturnedResultCount());
-		for ( SolarNodeMetadataFilterMatch match : results ) {
-			if ( !(match instanceof SolarNodeMetadata meta) ) {
-				// cannot restrict the metadata of this result, so remove it
-				log.warn("Access DENIED to node {} metadata for {}: cannot restrict {} to policy paths",
-						match.getId(), principal, match.getClass().getName());
-				continue;
-			}
+		final List<SolarNodeMetadata> restricted = new ArrayList<>(results.getReturnedResultCount());
+		for ( SolarNodeMetadata meta : results ) {
 			try {
 				meta.setMeta(enforcer.verifyMetadata(meta.getMeta()));
-				restricted.add(match);
+				restricted.add(meta);
 			} catch ( AuthorizationException e ) {
 				// no metadata allowed by the policy, so remove the result
 			}

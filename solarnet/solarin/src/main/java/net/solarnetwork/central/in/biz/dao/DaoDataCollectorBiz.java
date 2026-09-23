@@ -56,8 +56,8 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -87,7 +87,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  *
  * @author matt
- * @version 4.4
+ * @version 4.5
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -374,7 +374,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	}
 
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(
 			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
 			final Long offset, final Integer max) {
 		return solarNodeMetadataBiz.findSolarNodeMetadata(

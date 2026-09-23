@@ -36,8 +36,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.domain.NodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
-import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.central.domain.SolarNodeMetadataMatch;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
@@ -676,11 +674,11 @@ public class SecurityPolicyEnforcerTests {
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("2", "two");
 
-		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		SolarNodeMetadata src = new SolarNodeMetadata();
 		src.setMeta(meta);
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
-		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		NodeMetadata match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 
 		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> match.getMetadata());
 	}
@@ -698,11 +696,11 @@ public class SecurityPolicyEnforcerTests {
 
 		GeneralDatumMetadata expected = new GeneralDatumMetadata(null, meta.getPropertyInfo());
 
-		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		SolarNodeMetadata src = new SolarNodeMetadata();
 		src.setMeta(meta);
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
-		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		NodeMetadata match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 		GeneralDatumMetadata result = match.getMetadata();
 		then(result).as("Restricted metadata").isEqualTo(expected);
 	}
@@ -724,12 +722,12 @@ public class SecurityPolicyEnforcerTests {
 		meta.putInfoValue("foo", "bar", "bam");
 		meta.putInfoValue("meter", "yes");
 
-		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		SolarNodeMetadata src = new SolarNodeMetadata();
 		src.setNodeId(1L);
 		src.setMeta(meta);
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
-		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		NodeMetadata match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(match);
