@@ -35,7 +35,7 @@ import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
  * procedure.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbAntPatternToRegexpTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -138,6 +138,7 @@ public class DbAntPatternToRegexpTests extends AbstractJUnit5JdbcDaoTestSupport 
 		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
 				(PreparedStatementCallback<Void>) ps -> {
 					final var pat = "src/**";
+					then(testMatch(ps, "src", pat)).isTrue();
 					then(testMatch(ps, "src/file.js", pat)).isTrue();
 					then(testMatch(ps, "src/subdir/file.js", pat)).isTrue();
 					then(testMatch(ps, "src/subdir/nested/file.js", pat)).isTrue();
@@ -182,6 +183,166 @@ public class DbAntPatternToRegexpTests extends AbstractJUnit5JdbcDaoTestSupport 
 					then(testMatch(ps, "src/dir/test1.js", pat)).isTrue();
 					then(testMatch(ps, "src/test1.js", pat)).isFalse();
 					then(testMatch(ps, "src/dir/subdir/test1.js", pat)).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test that a trailing {@literal **} matches zero trailing segments, as
+	 * {@code AntPathMatcher} does.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void doubleAsteriskEndMatchesBareSegment() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					then(testMatch(ps, "/power", "/power/**")).isTrue();
+					then(testMatch(ps, "/power/meter", "/power/**")).isTrue();
+					then(testMatch(ps, "/powerx", "/power/**")).isFalse();
+
+					then(testMatch(ps, "/m/building", "/**/building/**")).isTrue();
+					then(testMatch(ps, "/pm/building/floors", "/**/building/**")).isTrue();
+					then(testMatch(ps, "/pm/buildingx/floors", "/**/building/**")).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test that {@literal **} only spans segments when it forms a complete
+	 * segment, and otherwise behaves like {@literal *}.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void doubleAsteriskWithinSegment() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					then(testMatch(ps, "/a/yb", "/a/**b")).isTrue();
+					then(testMatch(ps, "/a/x/yb", "/a/**b")).isFalse();
+
+					then(testMatch(ps, "/a/bx", "/a/b**")).isTrue();
+					then(testMatch(ps, "/a/b/x", "/a/b**")).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test that adjacent {@literal **} segments are equivalent to a single one.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void adjacentDoubleAsteriskSegments() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					final var pat = "/a/**/**/c";
+					then(testMatch(ps, "/a/c", pat)).isTrue();
+					then(testMatch(ps, "/a/b/c", pat)).isTrue();
+					then(testMatch(ps, "/a/b/x/c", pat)).isTrue();
+					then(testMatch(ps, "/a/b/x", pat)).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test that a pattern only matches a path that agrees on the leading
+	 * separator.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void leadingSeparatorMustAgree() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					then(testMatch(ps, "a/b/c", "**/c")).isTrue();
+					then(testMatch(ps, "/a/b/c", "**/c")).isFalse();
+
+					then(testMatch(ps, "/a/b/c", "/**/c")).isTrue();
+					then(testMatch(ps, "a/b/c", "/**/c")).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test the source ID examples documented on the SolarNetwork "Wildcard
+	 * patterns" wiki page.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void documentedSourceIdExamples() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					// /power/** matches /power, /power/meter, and /power/meter/1
+					then(testMatch(ps, "/power", "/power/**")).isTrue();
+					then(testMatch(ps, "/power/meter", "/power/**")).isTrue();
+					then(testMatch(ps, "/power/meter/1", "/power/**")).isTrue();
+					then(testMatch(ps, "/switch/1", "/power/**")).isFalse();
+
+					// /power/* matches /power/meter
+					then(testMatch(ps, "/power/meter", "/power/*")).isTrue();
+					then(testMatch(ps, "/power", "/power/*")).isFalse();
+					then(testMatch(ps, "/power/meter/1", "/power/*")).isFalse();
+
+					// /**/1 matches /power/meter/1 and /switch/1
+					then(testMatch(ps, "/power/meter/1", "/**/1")).isTrue();
+					then(testMatch(ps, "/switch/1", "/**/1")).isTrue();
+					then(testMatch(ps, "/switch/3/a", "/**/1")).isFalse();
+
+					// /basement/**/lights matches only the basement lights
+					then(testMatch(ps, "/basement/bedroom/lights", "/basement/**/lights")).isTrue();
+					then(testMatch(ps, "/basement/tvroom/lights", "/basement/**/lights")).isTrue();
+					then(testMatch(ps, "/ground/dining/lights", "/basement/**/lights")).isFalse();
+					then(testMatch(ps, "/basement/bedroom/heater", "/basement/**/lights")).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test the metadata path examples documented on the SolarNetwork "Wildcard
+	 * patterns" wiki page.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void documentedMetadataPathExamples() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					// /m/* matches /m/building and /m/room
+					then(testMatch(ps, "/m/building", "/m/*")).isTrue();
+					then(testMatch(ps, "/m/room", "/m/*")).isTrue();
+					then(testMatch(ps, "/pm/building/floors", "/m/*")).isFalse();
+
+					// /** matches everything
+					then(testMatch(ps, "/m/building", "/**")).isTrue();
+					then(testMatch(ps, "/pm/hours/holiday/M-F", "/**")).isTrue();
+
+					// /pm/hours/* matches only the direct children of hours
+					then(testMatch(ps, "/pm/hours/M-F", "/pm/hours/*")).isTrue();
+					then(testMatch(ps, "/pm/hours/Sa-Su", "/pm/hours/*")).isTrue();
+					then(testMatch(ps, "/pm/hours/holiday/M-F", "/pm/hours/*")).isFalse();
+
+					// /**/building/** matches /m/building and both /pm/building children
+					then(testMatch(ps, "/m/building", "/**/building/**")).isTrue();
+					then(testMatch(ps, "/pm/building/floors", "/**/building/**")).isTrue();
+					then(testMatch(ps, "/pm/building/employees", "/**/building/**")).isTrue();
+					then(testMatch(ps, "/m/room", "/**/building/**")).isFalse();
+					return null;
+				});
+	}
+
+	/**
+	 * Test that the internal segment marker cannot be injected via a pattern.
+	 *
+	 * @since 1.1
+	 */
+	@Test
+	public void segmentMarkerNotInjectable() {
+		jdbcTemplate.execute("SELECT ?::text ~ solarcommon.ant_pattern_to_regexp(?)",
+				(PreparedStatementCallback<Void>) ps -> {
+					then(testMatch(ps, "/a/anything/b", "/a/\001/b")).isFalse();
+					then(testMatch(ps, "/a//b", "/a/\001/b")).isTrue();
 					return null;
 				});
 	}
