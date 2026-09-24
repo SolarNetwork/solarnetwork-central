@@ -84,7 +84,7 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 		}
 		if ( result == null ) {
 			result = delegate.jsonMetadataAtPath(filter, path);
-			if ( result != null ) {
+			if ( key != null && result != null ) {
 				metadataPathCache.put(key, result);
 			}
 		}
