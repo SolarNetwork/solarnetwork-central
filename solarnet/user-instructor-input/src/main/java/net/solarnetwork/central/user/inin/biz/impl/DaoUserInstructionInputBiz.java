@@ -88,7 +88,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based implementation of {@link UserInstructionInputBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
@@ -328,7 +328,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 			params.put(TransformConstants.PARAM_USER_ID, id.getUserId());
 			params.put(TransformConstants.PARAM_ENDPOINT_ID, endpoint.getEndpointId());
 			params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getRequestTransformId());
-			params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, reqXformPk.ident());
+			params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, reqXform.ident());
 			params.put(TransformConstants.PARAM_DEBUG_OUTPUT, xsltOutput);
 			params.put(TransformConstants.PARAM_PREVIEW, true);
 			instructions = reqXformService.transformInput(in, contentType, reqXform, params);
@@ -369,9 +369,9 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 				}
 
 				params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getResponseTransformId());
-				params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, resXformPk.ident());
+				params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, resXform.ident());
 				ByteArrayOutputStream byos = new ByteArrayOutputStream();
-				resXformService.transformOutput(instructions, outputType, resXform, parameters, byos);
+				resXformService.transformOutput(instructions, outputType, resXform, params, byos);
 
 				if ( TransformConstants.JSON_TYPE.isCompatibleWith(outputType)
 						|| "text".equals(outputType.getType()) ) {
