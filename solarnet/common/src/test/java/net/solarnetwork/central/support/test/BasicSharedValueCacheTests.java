@@ -23,9 +23,11 @@
 package net.solarnetwork.central.support.test;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +38,7 @@ import net.solarnetwork.util.CachedResult;
  * Test cases for the {@link BasicSharedValueCache}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicSharedValueCacheTests {
 
@@ -169,6 +171,328 @@ public class BasicSharedValueCacheTests {
 		then(got2)
 			.as("Cached shared value returned for key 2")
 			.isSameAs(val)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Replace the primary cache entry for a key with an expired entry holding
+	 * the same value, so expiration can be tested without waiting.
+	 */
+	private void expirePrimaryEntry(Integer key) {
+		CachedResult<UUID> entry = primaryCache.get(key);
+		primaryCache.put(key, new CachedResult<>(entry.getResult(),
+				System.currentTimeMillis() - 120_000L, 60L, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void get_expired() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+		cache.put(1, "a", (_) -> val, 60L);
+
+		// WHEN
+		expirePrimaryEntry(1);
+		UUID got = cache.get(1);
+
+		// THEN
+		// @formatter:off
+		then(got)
+			.as("Expired entry returns null")
+			.isNull()
+			;
+
+		then(primaryCache)
+			.as("Expired entry is not removed by get(); only prune() evicts")
+			.containsOnlyKeys(1)
+			;
+
+		then(sharedCache)
+			.as("Shared value is not removed by get(); only prune() evicts")
+			.containsOnlyKeys("a")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void put_sameKey_newShareKey() {
+		// GIVEN
+		UUID val1 = UUID.randomUUID();
+		UUID val2 = UUID.randomUUID();
+
+		// WHEN
+		cache.put(1, "a", (_) -> val1, 60L);
+		UUID result = cache.put(1, "b", (_) -> val2, 60L);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("New shared value returned")
+			.isSameAs(val2)
+			;
+
+		then(cache.get(1))
+			.as("Primary key now resolves to the new shared value")
+			.isSameAs(val2)
+			;
+
+		then(sharedCache)
+			.as("Replaced shared value is retained until prune()")
+			.containsOnlyKeys("a", "b")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void put_providerThrows() {
+		// GIVEN
+		RuntimeException failure = new IllegalStateException("boom");
+
+		// WHEN
+		// @formatter:off
+		thenThrownBy(() -> cache.put(1, "a", (_) -> {
+					throw failure;
+				}, 60L))
+			.as("Provider exception is propagated")
+			.isSameAs(failure)
+			;
+
+		// THEN
+		then(primaryCache)
+			.as("No primary entry cached when provider fails")
+			.isEmpty()
+			;
+
+		then(sharedCache)
+			.as("No shared value cached when provider fails")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void put_zeroTtl() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+
+		// WHEN
+		UUID result = cache.put(1, "a", (_) -> val, 0L);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Value returned even with a zero TTL")
+			.isSameAs(val)
+			;
+
+		then(cache.get(1))
+			.as("Zero TTL entry is immediately expired")
+			.isNull()
+			;
+
+		then(sharedCache)
+			.as("Shared value cached despite the zero TTL, until prune()")
+			.containsOnlyKeys("a")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void put_providerReturnsNull() {
+		// WHEN
+		// @formatter:off
+		thenThrownBy(() -> cache.put(1, "a", (_) -> null, 60L))
+			.as("Null provider result rejected, to uphold the non-null put() contract")
+			.isInstanceOf(IllegalStateException.class)
+			;
+
+		// THEN
+		then(primaryCache)
+			.as("No primary entry cached when provider returns null")
+			.isEmpty()
+			;
+
+		then(sharedCache)
+			.as("No shared value cached when provider returns null")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void put_ttlTooLarge() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+
+		// WHEN
+		UUID result = cache.put(1, "a", (_) -> val, Long.MAX_VALUE);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Value returned")
+			.isSameAs(val)
+			;
+
+		then(cache.get(1))
+			.as("Oversized TTL clamped, so the entry is valid rather than overflowed")
+			.isSameAs(val)
+			;
+
+		then(primaryCache)
+			.as("Primary cache has entry")
+			.hasEntrySatisfying(1, entry -> {
+				then(entry)
+					.as("Expiration clamped to MAX_TTL_SECONDS")
+					.returns(entry.getCreated()
+							+ TimeUnit.SECONDS.toMillis(BasicSharedValueCache.MAX_TTL_SECONDS),
+							CachedResult::getExpires)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_empty() {
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(primaryCache)
+			.as("Primary cache still empty")
+			.isEmpty()
+			;
+
+		then(sharedCache)
+			.as("Shared cache still empty")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_nothingExpired() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+		cache.put(1, "a", (_) -> val, 60L);
+		cache.put(2, "a", (_) -> val, 120L);
+
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(primaryCache)
+			.as("Valid primary entries retained")
+			.containsOnlyKeys(1, 2)
+			;
+
+		then(sharedCache)
+			.as("Shared value in use retained")
+			.containsEntry("a", val)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_expired() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+		cache.put(1, "a", (_) -> val, 60L);
+		expirePrimaryEntry(1);
+
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(primaryCache)
+			.as("Expired primary entry removed")
+			.isEmpty()
+			;
+
+		then(sharedCache)
+			.as("Shared value no longer in use removed")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_expired_sharedValueStillInUse() {
+		// GIVEN
+		UUID val = UUID.randomUUID();
+		Function<String, UUID> provider = (_) -> val;
+		cache.put(1, "a", provider, 60L);
+		cache.put(2, "a", provider, 120L);
+		expirePrimaryEntry(1);
+
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(primaryCache)
+			.as("Expired primary entry removed, valid entry retained")
+			.containsOnlyKeys(2)
+			;
+
+		then(sharedCache)
+			.as("Shared value still referenced by key 2 retained")
+			.containsEntry("a", val)
+			;
+
+		then(cache.get(2))
+			.as("Retained key still resolves to the shared value")
+			.isSameAs(val)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_replacedShareKey() {
+		// GIVEN
+		UUID val1 = UUID.randomUUID();
+		UUID val2 = UUID.randomUUID();
+		cache.put(1, "a", (_) -> val1, 60L);
+		cache.put(1, "b", (_) -> val2, 60L);
+
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(primaryCache)
+			.as("Valid primary entry retained")
+			.containsOnlyKeys(1)
+			;
+
+		then(sharedCache)
+			.as("Only the shared value still referenced is retained")
+			.containsOnlyKeys("b")
+			.containsEntry("b", val2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void prune_unreferencedSharedValue() {
+		// GIVEN
+		UUID orphan = UUID.randomUUID();
+		sharedCache.put("orphan", orphan);
+		UUID val = UUID.randomUUID();
+		cache.put(1, "a", (_) -> val, 60L);
+
+		// WHEN
+		cache.prune();
+
+		// THEN
+		// @formatter:off
+		then(sharedCache)
+			.as("Shared value never referenced by a primary entry removed")
+			.containsOnlyKeys("a")
 			;
 		// @formatter:on
 	}

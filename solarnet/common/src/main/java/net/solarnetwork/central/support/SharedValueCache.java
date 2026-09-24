@@ -36,6 +36,12 @@ import org.jspecify.annotations.Nullable;
  * different expiration times using a primary key.
  * </p>
  *
+ * <p>
+ * Implementations must be thread-safe: a single instance is expected to be
+ * shared by many application threads, along with a background thread that
+ * invokes {@link #prune()} periodically.
+ * </p>
+ *
  * @author matt
  * @version 1.0
  */
@@ -54,6 +60,12 @@ public interface SharedValueCache<K, V, S> {
 	/**
 	 * Add a value to the cache.
 	 *
+	 * <p>
+	 * The {@code valueProvider} is invoked only if no value is cached for
+	 * {@code shareKey} already, and must not return {@code null}. All primary
+	 * keys sharing a given {@code shareKey} resolve to the same value instance.
+	 * </p>
+	 *
 	 * @param key
 	 *        the cache key
 	 * @param shareKey
@@ -69,6 +81,12 @@ public interface SharedValueCache<K, V, S> {
 
 	/**
 	 * Prune shared values no longer in use.
+	 *
+	 * <p>
+	 * Expired primary cache entries are evicted, along with any shared value no
+	 * longer referenced by a remaining entry. This is the only eviction
+	 * mechanism: {@link #get(Object)} does not remove expired entries.
+	 * </p>
 	 */
 	void prune();
 }
