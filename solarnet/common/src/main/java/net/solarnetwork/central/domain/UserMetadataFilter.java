@@ -37,9 +37,10 @@ import net.solarnetwork.dao.PaginationCriteria;
  * </p>
  *
  * <p>
- * When token criteria are provided, the metadata of each result is restricted
- * to the {@code userMetadataPaths} of that token's security policy, and results
- * whose metadata is restricted to nothing are omitted.
+ * A single token criteria is supported. When provided, the metadata of each
+ * result is restricted to the {@code userMetadataPaths} of that token's
+ * security policy, and results whose metadata is restricted to nothing are
+ * omitted.
  * </p>
  *
  * @author matt

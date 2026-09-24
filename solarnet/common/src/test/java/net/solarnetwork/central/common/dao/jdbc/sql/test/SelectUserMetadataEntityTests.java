@@ -26,10 +26,9 @@ import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
 import static org.assertj.core.api.BDDAssertions.and;
-import static org.assertj.core.api.HamcrestCondition.matching;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -92,8 +91,8 @@ public class SelectUserMetadataEntityTests {
 		// @formatter:off
 		and.then(sql)
 			.as("Metadata is not restricted without token criteria")
-			.is(matching(equalToTextResource("select-user-meta-users.sql", TestSqlResources.class,
-					SQL_COMMENT)))
+			.isEqualToIgnoringWhitespace(getResourceAsString(
+					"select-user-meta-users.sql", TestSqlResources.class, SQL_COMMENT))
 			;
 		// @formatter:on
 	}
@@ -113,8 +112,8 @@ public class SelectUserMetadataEntityTests {
 		// @formatter:off
 		and.then(sql)
 			.as("Metadata is restricted to the token policy's user metadata paths")
-			.is(matching(equalToTextResource("select-user-meta-users-token.sql",
-					TestSqlResources.class, SQL_COMMENT)))
+			.isEqualToIgnoringWhitespace(getResourceAsString(
+					"select-user-meta-users-token.sql", TestSqlResources.class, SQL_COMMENT))
 			;
 		// @formatter:on
 	}
@@ -133,8 +132,8 @@ public class SelectUserMetadataEntityTests {
 		// @formatter:off
 		and.then(sql)
 			.as("Metadata is restricted to the token policy's user metadata paths")
-			.is(matching(equalToTextResource("select-user-meta-token.sql", TestSqlResources.class,
-					SQL_COMMENT)))
+			.isEqualToIgnoringWhitespace(getResourceAsString(
+					"select-user-meta-token.sql", TestSqlResources.class, SQL_COMMENT))
 			;
 		// @formatter:on
 	}
@@ -195,16 +194,15 @@ public class SelectUserMetadataEntityTests {
 	public void usersAndToken_prep() throws SQLException {
 		// GIVEN
 		final Long[] userIds = new Long[] { 1L, 2L };
-		final String[] tokenIds = new String[] { randomString(), randomString() };
+		final String tokenId = randomString();
 
 		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
 				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 		given(con.createArrayOf(eq("bigint"), aryEq(userIds))).willReturn(userIdsArray);
-		given(con.createArrayOf(eq("text"), aryEq(tokenIds))).willReturn(tokenIdsArray);
 
 		var filter = new BasicUserMetadataFilter();
 		filter.setUserIds(userIds);
-		filter.setTokenIds(tokenIds);
+		filter.setTokenId(tokenId);
 
 		// WHEN
 		PreparedStatement result = new SelectUserMetadataEntity(filter).createPreparedStatement(con);
@@ -214,15 +212,14 @@ public class SelectUserMetadataEntityTests {
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
 				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
 		then(stmt).should().setArray(1, userIdsArray);
-		then(stmt).should().setArray(2, tokenIdsArray);
+		then(stmt).should().setString(2, tokenId);
 		then(userIdsArray).should().free();
-		then(tokenIdsArray).should().free();
 
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		and.then(sqlCaptor.getValue())
 			.as("Generated SQL")
-			.is(matching(equalToTextResource("select-user-meta-users-token.sql",
-					TestSqlResources.class, SQL_COMMENT)))
+			.isEqualToIgnoringWhitespace(getResourceAsString(
+					"select-user-meta-users-token.sql", TestSqlResources.class, SQL_COMMENT))
 			;
 		and.then(result)
 			.as("Connection statement returned")

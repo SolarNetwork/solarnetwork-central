@@ -95,9 +95,10 @@ public class SelectUserMetadataPath implements PreparedStatementCreator, SqlProv
 		int idx = 0;
 		idx += whereOptimizedArrayContains(filter.getUserIds(), "um.user_id", where);
 		if ( filter.hasTokenCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getTokenIds(), "t.username", where);
+			where.append("\tAND t.username = ?\n");
 			// omit results whose metadata is restricted to nothing
 			where.append("\tAND ").append(SQL_PRUNED_JDATA).append(" IS NOT NULL\n");
+			idx++;
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -123,7 +124,9 @@ public class SelectUserMetadataPath implements PreparedStatementCreator, SqlProv
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		stmt.setString(++p, path);
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
-		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTokenIds());
+		if ( filter.hasTokenCriteria() ) {
+			stmt.setString(++p, filter.tokenId());
+		}
 		return p;
 	}
 

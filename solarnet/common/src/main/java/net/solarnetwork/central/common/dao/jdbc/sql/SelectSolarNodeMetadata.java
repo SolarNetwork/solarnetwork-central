@@ -146,9 +146,10 @@ public final class SelectSolarNodeMetadata
 			idx += 1;
 		}
 		if ( filter.hasTokenCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getTokenIds(), "t.username", where);
+			where.append("\tAND t.username = ?\n");
 			// omit results whose metadata is restricted to nothing
 			where.append("\tAND ").append(SQL_PRUNED_JDATA).append(" IS NOT NULL\n");
+			idx++;
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -195,7 +196,9 @@ public final class SelectSolarNodeMetadata
 		if ( searchFilter != null ) {
 			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
 		}
-		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTokenIds());
+		if ( filter.hasTokenCriteria() ) {
+			stmt.setString(++p, filter.tokenId());
+		}
 		return p;
 	}
 
