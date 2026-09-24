@@ -190,9 +190,17 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	/**
 	 * Get the token ID.
 	 *
+	 * <p>
+	 * This property is only used when saving a task, to pass the token on to
+	 * {@code solaruser.store_export_task()}. It is not populated when loading a
+	 * task: the saved token is available from the associated
+	 * {@link #getTask()} entity.
+	 * </p>
+	 *
 	 * @return the token ID
 	 * @since 1.3
 	 */
+	@JsonIgnore
 	public final @Nullable String getTokenId() {
 		return tokenId;
 	}

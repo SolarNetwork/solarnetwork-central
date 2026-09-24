@@ -10,7 +10,8 @@
 	task_id			uuid NOT NULL,
 
 	The token ID is not stored here: it is passed to solaruser.store_export_task()
-	which copies it to solarnet.sn_datum_export_task.auth_token.
+	which copies it to solarnet.sn_datum_export_task.auth_token, and is read back from the
+	associated task, via the DatumExportTaskInfo association below.
  -->
  
 	<parameterMap id="pmap-UserDatumExportTaskInfo" type="net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo">
@@ -54,7 +55,6 @@
 			<arg column="user_export_task_conf_id" javaType="java.lang.Long"/>
 		</constructor>
 		<result property="taskId" column="user_export_task_task_id"/>		
-		<result property="tokenId" column="datum_export_task_auth_token"/>
 		<association property="task" notNullColumn="datum_export_task_id"
 			resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult"/>
 	</resultMap>

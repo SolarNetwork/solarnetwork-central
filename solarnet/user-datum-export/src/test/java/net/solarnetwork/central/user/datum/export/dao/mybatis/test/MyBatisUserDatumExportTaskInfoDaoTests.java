@@ -181,8 +181,8 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		then(info)
 			.as("Found by PK")
 			.isNotNull()
-			.as("Token provided from datum export task")
-			.returns(this.info.getTokenId(), from(UserDatumExportTaskInfo::getTokenId))
+			.as("Token not populated on load: it is read from the associated task")
+			.returns(null, from(UserDatumExportTaskInfo::getTokenId))
 			;
 
 		and.then(info.getTask())
