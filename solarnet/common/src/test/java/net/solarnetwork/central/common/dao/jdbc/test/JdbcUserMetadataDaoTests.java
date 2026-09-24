@@ -305,15 +305,92 @@ public class JdbcUserMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		filter.setTokenId(tokenId);
 
 		// WHEN
-		var results = dao.findFiltered(filter, null, null, null);
+		// request pagination so the count query runs too
+		var results = dao.findFiltered(filter, null, 0L, 10);
 
 		// THEN
-		then(results).as("Result omitted because its metadata is restricted to nothing").isEmpty();
+		// @formatter:off
+		then(results)
+			.as("Result omitted because its metadata is restricted to nothing")
+			.isEmpty()
+			;
+		then(results.getTotalResults())
+			.as("Count query excludes the result the same way, so the total agrees")
+			.isEqualTo(0L)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void tokenCriteria_omitsUsersNotOwnedByTokenUser() {
-		// GIVEN another user's node, with metadata the policy would otherwise allow
+		// GIVEN metadata for this token's user AND for another user, both of which the
+		// token policy would otherwise allow
+		final Long otherUserId = randomLong();
+		setupTestUser(otherUserId);
+		insertUserMetadata(jdbcTemplate, userId, metadata());
+		insertUserMetadata(jdbcTemplate, otherUserId, metadata());
+
+		final String tokenId = tokenWithPaths("/**/building/**");
+
+		var ownFilter = new BasicUserMetadataFilter();
+		ownFilter.setUserId(userId);
+		ownFilter.setTokenId(tokenId);
+
+		var otherFilter = new BasicUserMetadataFilter();
+		otherFilter.setUserId(otherUserId);
+		otherFilter.setTokenId(tokenId);
+
+		// WHEN
+		var ownResults = dao.findFiltered(ownFilter, null, null, null);
+		var otherResults = dao.findFiltered(otherFilter, null, null, null);
+
+		// THEN
+		// @formatter:off
+		then(ownResults)
+			.as("The token sees its own user's metadata, so the other result is not empty by accident")
+			.hasSize(1)
+			;
+		then(otherResults)
+			.as("Metadata owned by another user is not visible to the token")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * The token user here owns no nodes, which is the case a spurious
+	 * {@code user_node} join in the path query silently returns nothing for.
+	 */
+	@Test
+	public void jsonMetadataAtPath_tokenCriteria_restrictsToPolicyPaths() {
+		// GIVEN
+		insertUserMetadata(jdbcTemplate, userId, metadata());
+		final String tokenId = tokenWithPaths("/**/building/**");
+
+		var filter = new BasicUserMetadataFilter();
+		filter.setUserId(userId);
+		filter.setTokenId(tokenId);
+
+		// WHEN
+		String allowed = dao.jsonMetadataAtPath(filter, "/m/building");
+		String denied = dao.jsonMetadataAtPath(filter, "/m/room");
+
+		// THEN
+		// @formatter:off
+		then(allowed)
+			.as("Path allowed by the token policy is returned")
+			.isEqualTo("\"Warehouse\"")
+			;
+		then(denied)
+			.as("Path restricted by the token policy is not returned")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonMetadataAtPath_tokenCriteria_omitsUsersNotOwnedByTokenUser() {
+		// GIVEN
 		final Long otherUserId = randomLong();
 		setupTestUser(otherUserId);
 		insertUserMetadata(jdbcTemplate, otherUserId, metadata());
@@ -325,10 +402,25 @@ public class JdbcUserMetadataDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		filter.setTokenId(tokenId);
 
 		// WHEN
-		var results = dao.findFiltered(filter, null, null, null);
+		String result = dao.jsonMetadataAtPath(filter, "/m/building");
 
 		// THEN
-		then(results).as("Node owned by another user is not visible to the token").isEmpty();
+		then(result).as("Metadata owned by another user is not visible to the token").isNull();
+	}
+
+	@Test
+	public void jsonMetadataAtPath_noTokenCriteria_notRestricted() {
+		// GIVEN
+		insertUserMetadata(jdbcTemplate, userId, metadata());
+
+		var filter = new BasicUserMetadataFilter();
+		filter.setUserId(userId);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(filter, "/m/room");
+
+		// THEN
+		then(result).as("All paths readable without token criteria").isEqualTo("\"Office\"");
 	}
 
 	@Test
