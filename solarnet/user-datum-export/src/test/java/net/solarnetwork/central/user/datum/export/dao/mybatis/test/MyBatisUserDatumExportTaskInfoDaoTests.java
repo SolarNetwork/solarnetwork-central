@@ -25,6 +25,9 @@ package net.solarnetwork.central.user.datum.export.dao.mybatis.test;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -59,8 +62,9 @@ import net.solarnetwork.central.user.domain.User;
  * Test cases for the {@link MyBatisUserDatumExportTaskInfoDao} class.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
+@SuppressWarnings("static-access")
 public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private MyBatisUserDatumExportConfigurationDao confDao;
@@ -114,9 +118,86 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
+		// @formatter:off
+		then(datumExportTaskRows())
+			.as("Datum export task row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("User ID copied to datum export task")
+			.containsEntry("user_id", this.user.getId())
+			.as("No token available to copy, as from a cookie authenticated session")
+			.containsEntry("auth_token", null)
+			;
+		// @formatter:on
+
 		// stash results for other tests to use
 		info.setId(id);
 		this.info = info;
+	}
+
+	@Test
+	public void storeNew_withToken() {
+		// GIVEN
+		Instant date = LocalDateTime.of(2017, 4, 18, 9, 0, 0).toInstant(ZoneOffset.UTC);
+		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date),
+				MS_CLOCK.instant(), this.userDatumExportConfig.getConfigId());
+		info.setConfig(this.userDatumExportConfig);
+		info.setTokenId(randomString());
+
+		// WHEN
+		UserDatumExportTaskPK id = dao.save(info);
+
+		// THEN
+		then(id).as("Primary key assigned").isEqualTo(info.getId());
+
+		// @formatter:off
+		and.then(datumExportTaskRows())
+			.as("Datum export task row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("User ID copied to datum export task")
+			.containsEntry("user_id", this.user.getId())
+			.as("Token copied to datum export task")
+			.containsEntry("auth_token", info.getTokenId())
+			;
+		// @formatter:on
+
+		// stash results for other tests to use
+		info.setId(id);
+		this.info = info;
+	}
+
+	@Test
+	public void getByPrimaryKey_withToken() {
+		// GIVEN
+		storeNew_withToken();
+
+		// WHEN
+		UserDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
+
+		// THEN
+		// @formatter:off
+		then(info)
+			.as("Found by PK")
+			.isNotNull()
+			.as("Token provided from datum export task")
+			.returns(this.info.getTokenId(), from(UserDatumExportTaskInfo::getTokenId))
+			;
+
+		and.then(info.getTask())
+			.as("Datum export task provided")
+			.isNotNull()
+			.as("User ID provided without joining back to the user tables")
+			.returns(this.user.getId(), from(DatumExportTaskInfo::getUserId))
+			.as("Token provided without joining back to the user tables")
+			.returns(this.info.getTokenId(), from(DatumExportTaskInfo::getTokenId))
+			;
+		// @formatter:on
+	}
+
+	private List<Map<String, Object>> datumExportTaskRows() {
+		return jdbcTemplate.queryForList("select * from solarnet.sn_datum_export_task");
 	}
 
 	@Test

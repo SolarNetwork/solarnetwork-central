@@ -41,7 +41,7 @@ import tools.jackson.databind.annotation.JsonDeserialize;
  * Entity for user-specific datum export tasks.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTaskPK>
 		implements UserRelatedEntity<UserDatumExportTaskPK> {
@@ -53,6 +53,7 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	private @Nullable UUID taskId;
 	private @Nullable Configuration config;
 	private @Nullable String configJson;
+	private @Nullable String tokenId;
 	private @Nullable DatumExportTaskInfo task;
 
 	/**
@@ -184,6 +185,27 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 
 	public final Instant getExportDate() {
 		return id().getDate();
+	}
+
+	/**
+	 * Get the token ID.
+	 *
+	 * @return the token ID
+	 * @since 1.3
+	 */
+	public final @Nullable String getTokenId() {
+		return tokenId;
+	}
+
+	/**
+	 * Set the token ID.
+	 *
+	 * @param tokenId
+	 *        the token ID to set
+	 * @since 1.3
+	 */
+	public final void setTokenId(@Nullable String tokenId) {
+		this.tokenId = tokenId;
 	}
 
 }

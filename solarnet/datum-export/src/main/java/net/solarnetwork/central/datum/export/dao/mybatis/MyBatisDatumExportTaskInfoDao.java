@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
  * MyBatis implementation of {@link DatumExportTaskInfoDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumExportTaskInfo, UUID>
 		implements DatumExportTaskInfoDao {
@@ -64,12 +64,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 
 	@Override
 	public @Nullable DatumExportTaskInfo claimQueuedTask() {
-		DatumExportTaskInfo info = selectFirst(queryForClaimQueuedTask, null);
-		if ( info != null ) {
-			// re-fetch
-			info = get(info.id());
-		}
-		return info;
+		return selectFirst(queryForClaimQueuedTask, null);
 	}
 
 	@Override

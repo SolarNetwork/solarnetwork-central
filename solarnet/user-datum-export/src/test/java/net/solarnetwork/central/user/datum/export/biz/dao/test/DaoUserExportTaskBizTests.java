@@ -67,7 +67,7 @@ import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskPK;
  * Test cases for the {@link UserExportBiz} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoUserExportTaskBizTests {
 
@@ -136,6 +136,8 @@ public class DaoUserExportTaskBizTests {
 			.returns(ScheduleType.Hourly, from(UserDatumExportTaskInfo::getScheduleType))
 			.as("Task export date as provided")
 			.returns(exportDate.toInstant(), from(UserDatumExportTaskInfo::getExportDate))
+			.as("No token copied, as configuration has none")
+			.returns(null, from(UserDatumExportTaskInfo::getTokenId))
 			.extracting(UserDatumExportTaskInfo::getConfig)
 			.as("Configuration available")
 			.isNotNull()
@@ -151,6 +153,42 @@ public class DaoUserExportTaskBizTests {
 			.returns(new Long[] { TEST_NODE_ID }, from(AggregateGeneralNodeDatumFilter::getNodeIds))
 			.as("User ID populated in datum criteria")
 			.returns(new Long[] { TEST_USER_ID }, from(AggregateGeneralNodeDatumFilter::getUserIds))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void submitTask_withConfigToken() {
+		// given
+		UserDatumExportConfiguration config = createConfiguration();
+		final String tokenId = randomString();
+		config.setTokenId(tokenId);
+		ZonedDateTime now = ZonedDateTime.now(config.zone());
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
+
+		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
+
+		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
+		expect(taskDao.save(capture(taskCaptor))).andReturn(
+				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate.toInstant()));
+
+		// when
+		replayAll();
+		UserDatumExportTaskInfo task = biz.submitDatumExportConfiguration(config,
+				exportDate.toInstant());
+
+		// then
+		// @formatter:off
+		then(taskCaptor.getValue())
+			.as("Task saved with token copied from configuration")
+			.returns(tokenId, from(UserDatumExportTaskInfo::getTokenId))
+			;
+
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task token copied from configuration")
+			.returns(tokenId, from(UserDatumExportTaskInfo::getTokenId))
 			;
 		// @formatter:on
 	}

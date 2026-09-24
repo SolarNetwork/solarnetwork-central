@@ -8,6 +8,9 @@
 	schedule		CHARACTER(1) NOT NULL,
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	task_id			uuid NOT NULL,
+
+	The token ID is not stored here: it is passed to solaruser.store_export_task()
+	which copies it to solarnet.sn_datum_export_task.auth_token.
  -->
  
 	<parameterMap id="pmap-UserDatumExportTaskInfo" type="net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo">
@@ -16,14 +19,15 @@
 		<parameter property="exportDate" jdbcType="TIMESTAMP" mode="IN"/>
 		<parameter property="userDatumExportConfigurationId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="configJson" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="tokenId" jdbcType="VARCHAR" mode="IN"/>
 	</parameterMap>
 
  	<insert id="insert-UserDatumExportTaskInfo" parameterMap="pmap-UserDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_export_task(?, ?, ?, ?, ?)}
+ 		{call solaruser.store_export_task(?, ?, ?, ?, ?, ?)}
 	</insert>
 
 	<update id="update-UserDatumExportTaskInfo" parameterMap="pmap-UserDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_export_task(?, ?, ?, ?, ?)}
+ 		{call solaruser.store_export_task(?, ?, ?, ?, ?, ?)}
 	</update>
 
 	<delete id="delete-UserDatumExportTaskInfo" parameterType="net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo">
@@ -50,6 +54,7 @@
 			<arg column="user_export_task_conf_id" javaType="java.lang.Long"/>
 		</constructor>
 		<result property="taskId" column="user_export_task_task_id"/>		
+		<result property="tokenId" column="datum_export_task_auth_token"/>
 		<association property="task" notNullColumn="datum_export_task_id"
 			resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult"/>
 	</resultMap>

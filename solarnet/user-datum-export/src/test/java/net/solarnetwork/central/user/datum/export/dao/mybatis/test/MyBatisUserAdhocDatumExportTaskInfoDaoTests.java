@@ -26,6 +26,8 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -61,9 +63,10 @@ import net.solarnetwork.central.user.domain.User;
  * Test cases for the {@link MyBatisUserAdhocDatumExportTaskInfoDao} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.1
  */
+@SuppressWarnings("static-access")
 public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private MyBatisUserDatumExportConfigurationDao confDao;
@@ -115,6 +118,18 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
+		// @formatter:off
+		then(this.jdbcTemplate.queryForList("select * from solarnet.sn_datum_export_task"))
+			.as("Datum export task row created")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("User ID copied to datum export task")
+			.containsEntry("user_id", this.user.getId())
+			.as("No token available to copy, as from a cookie authenticated session")
+			.containsEntry("auth_token", null)
+			;
+		// @formatter:on
+
 		// stash results for other tests to use
 		info.setId(id);
 		this.info = info;
@@ -154,6 +169,10 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 				.element(0, map(String.class, Object.class))
 				.as("ID same as in user export task_id")
 				.containsEntry("id", userTaskRows.get(0).get("task_id"))
+				.as("User ID copied to datum export task")
+				.containsEntry("user_id", this.user.getId())
+				.as("Token copied to datum export task")
+				.containsEntry("auth_token", info.getTokenId())
 				;
 
 		// stash results for other tests to use
@@ -198,6 +217,15 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
 			.as("Token saved")
 			.returns(this.info.getTokenId(), UserAdhocDatumExportTaskInfo::getTokenId)
+			;
+
+		and.then(info.getTask())
+			.as("Datum export task provided")
+			.isNotNull()
+			.as("User ID provided without joining back to the user tables")
+			.returns(this.user.getId(), from(DatumExportTaskInfo::getUserId))
+			.as("Token provided without joining back to the user tables")
+			.returns(this.info.getTokenId(), from(DatumExportTaskInfo::getTokenId))
 			;
 
 		// stash results for other tests to use

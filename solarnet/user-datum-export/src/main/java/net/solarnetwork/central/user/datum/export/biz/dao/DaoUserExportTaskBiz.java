@@ -55,7 +55,7 @@ import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskPK;
  * DAO implementation of {@link UserExportTaskBiz}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
@@ -222,6 +222,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				Instant.now(), config.getConfigId());
 		task.setCreated(Instant.now());
 		task.setConfig(taskConfig);
+		task.setTokenId(config.getTokenId()); // copy token from config, if available
 		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);
 		return task;
