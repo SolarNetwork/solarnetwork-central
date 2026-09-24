@@ -2,42 +2,56 @@
  * TABLE solarnet.sn_datum_export_task
  *
  * Holds records for datum export tasks, where `status` represents the execution status
- * of the task and `config` holds a complete export configuration document.
+ * of the task and `config` holds a complete export configuration document. The `user_id`
+ * and `auth_token` columns hold the user and authorization token the task was created
+ * for, copied from the user configuration at task creation time.
  */
 CREATE TABLE solarnet.sn_datum_export_task (
 	id				uuid NOT NULL,
+	user_id			BIGINT NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	status			CHARACTER(1) NOT NULL,
 	config			jsonb NOT NULL,
+	auth_token 		TEXT,
 	success 		BOOLEAN,
 	message			TEXT,
 	completed 		TIMESTAMP WITH TIME ZONE,
-	CONSTRAINT datum_export_task_pkey PRIMARY KEY (id)
+	CONSTRAINT datum_export_task_pkey PRIMARY KEY (id),
+	CONSTRAINT datum_export_task_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+/* Add index on user_id to support the ON DELETE CASCADE. */
+CREATE INDEX sn_datum_export_task_user_idx ON solarnet.sn_datum_export_task (user_id);
+
 /**************************************************************************************************
- * FUNCTION solarnet.add_datum_export_task(uuid, timestamp with time zone, text)
+ * FUNCTION solarnet.add_datum_export_task(uuid, bigint, timestamp with time zone, text, text)
  *
  * Insert a new datum export task record.
  *
  * @param uid the UUID of the task
+ * @param usr the ID of the user that owns the task
  * @param ex_date the export date of the task
  * @param cfg the complete export configuration document, as JSON
+ * @param token the ID of the authorization token to restrict the export to, if any
  * @return the status value of the inserted record
  */
 CREATE OR REPLACE FUNCTION solarnet.add_datum_export_task(
 	uid uuid,
+	usr BIGINT,
 	ex_date TIMESTAMP WITH TIME ZONE,
-	cfg text
+	cfg text,
+	token text DEFAULT NULL
   ) RETURNS CHARACTER(1) LANGUAGE plpgsql VOLATILE AS
 $BODY$
 BEGIN
 	INSERT INTO solarnet.sn_datum_export_task
-		(id, created, export_date, config, status)
+		(id, user_id, created, export_date, config, status, auth_token)
 	VALUES
-		(uid, CURRENT_TIMESTAMP, ex_date, cfg::jsonb, 'q');
+		(uid, usr, CURRENT_TIMESTAMP, ex_date, cfg::jsonb, 'q', token);
 	RETURN 'q';
 END;
 $BODY$;

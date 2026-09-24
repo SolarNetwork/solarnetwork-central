@@ -25,10 +25,10 @@
 \i postgres-init-datm-query-agg.sql
 \i postgres-init-datm-query-diff.sql
 
-\i postgres-init-datum-export.sql
 \i postgres-init-user-schema.sql
 \i postgres-init-users.sql
 \i postgres-init-user-alerts.sql
+\i postgres-init-datum-export.sql
 \i postgres-init-user-datum-export.sql
 \i postgres-init-user-datum-expire.sql
 \i postgres-init-user-datum-flux.sql

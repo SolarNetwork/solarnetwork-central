@@ -123,7 +123,8 @@ CREATE OR REPLACE FUNCTION solaruser.store_export_task(
 	sched CHARACTER(1),
 	ex_date TIMESTAMP WITH TIME ZONE,
 	cfg_id BIGINT,
-	cfg text
+	cfg text,
+	token text DEFAULT NULL
   ) RETURNS uuid LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
@@ -139,7 +140,7 @@ BEGIN
 
 	IF NOT FOUND THEN
 		t_id := gen_random_uuid();
-		PERFORM solarnet.add_datum_export_task(t_id, ex_date, cfg);
+		PERFORM solarnet.add_datum_export_task(t_id, usr, ex_date, cfg, token);
 		INSERT INTO solaruser.user_export_task
 			(user_id, schedule, export_date, task_id, conf_id)
 		VALUES
@@ -187,7 +188,7 @@ DECLARE
 	t_id uuid;
 BEGIN
 	t_id := gen_random_uuid();
-	PERFORM solarnet.add_datum_export_task(t_id, CURRENT_TIMESTAMP, cfg);
+	PERFORM solarnet.add_datum_export_task(t_id, usr, CURRENT_TIMESTAMP, cfg, token);
 	INSERT INTO solaruser.user_adhoc_export_task
 		(user_id, schedule, task_id, auth_token)
 	VALUES
