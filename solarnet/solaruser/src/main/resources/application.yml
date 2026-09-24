@@ -170,6 +170,13 @@ app:
       xslt-templates-cache-prune:
         maximum-wait-ms: 240000
         schedule: 3600000
+    inin:
+      xslt-req-templates-cache-prune:
+        maximum-wait-ms: 240000
+        schedule: 3600000
+      xslt-res-templates-cache-prune:
+        maximum-wait-ms: 240000
+        schedule: 3600000
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false

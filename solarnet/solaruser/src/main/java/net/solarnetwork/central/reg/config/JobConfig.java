@@ -23,6 +23,8 @@
 package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.din.config.DatumInputTransformServiceConfig.XSLT_TEMPLATES_QUALIFIER;
+import static net.solarnetwork.central.inin.config.InstructionInputTransformServiceConfig.REQ_XSLT_TEMPLATES_QUALIFIER;
+import static net.solarnetwork.central.inin.config.InstructionInputTransformServiceConfig.RES_XSLT_TEMPLATES_QUALIFIER;
 import javax.xml.transform.Templates;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.common.job.SharedValueCacheCleaner;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
+import net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.support.SharedValueCache;
 
@@ -37,7 +40,7 @@ import net.solarnetwork.central.support.SharedValueCache;
  * SolarUser jobs.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class JobConfig {
@@ -55,6 +58,38 @@ public class JobConfig {
 			@Qualifier(XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
 		return new SharedValueCacheCleaner(cache, "XSLT-Templates",
 				SolarNetDatumInputConfiguration.DATUM_INPUT);
+	}
+
+	/**
+	 * A job to prune expired cached instruction request XSLT templates.
+	 *
+	 * @param cache
+	 *        the cache to clean
+	 * @return the job
+	 * @since 1.1
+	 */
+	@ConfigurationProperties(prefix = "app.job.inin.xslt-req-templates-cache-prune")
+	@Bean
+	public ManagedJob instructionRequestXsltTemplatesCacheCleanerJob(
+			@Qualifier(REQ_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
+		return new SharedValueCacheCleaner(cache, "Instruction-Request-XSLT-Templates",
+				SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT);
+	}
+
+	/**
+	 * A job to prune expired cached instruction response XSLT templates.
+	 *
+	 * @param cache
+	 *        the cache to clean
+	 * @return the job
+	 * @since 1.1
+	 */
+	@ConfigurationProperties(prefix = "app.job.inin.xslt-res-templates-cache-prune")
+	@Bean
+	public ManagedJob instructionResponseXsltTemplatesCacheCleanerJob(
+			@Qualifier(RES_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
+		return new SharedValueCacheCleaner(cache, "Instruction-Response-XSLT-Templates",
+				SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT);
 	}
 
 }
