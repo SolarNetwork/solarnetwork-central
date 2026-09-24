@@ -73,7 +73,9 @@ $$;
  * FUNCTION solarnet.purge_completed_datum_export_tasks(timestamp with time zone)
  *
  * Delete sn_datum_export_task rows that have reached the 'c' status, and whose
- * completed date is older than the given date.
+ * completed date is older than the given date. Additionally, tasks that have been
+ * left in the 'p' or 'e' status for more than 10 days are reset to the 'c' status
+ * with an error message, so they do not linger forever.
  *
  * @param older_date The maximum date to delete tasks for.
  * @return The number of rows deleted.
@@ -87,6 +89,16 @@ BEGIN
 	DELETE FROM solarnet.sn_datum_export_task
 	WHERE completed < older_date AND status = 'c';
 	GET DIAGNOSTICS num_rows = ROW_COUNT;
+
+	-- reset very old abandonded tasks to Completed with error
+	UPDATE solarnet.sn_datum_export_task
+	SET completed = CURRENT_TIMESTAMP
+		, success = FALSE
+		, status = 'c'
+		, message = 'Abandoned'
+	WHERE created < (CURRENT_TIMESTAMP - INTERVAL 'P10D')
+	AND status IN ('p', 'e');
+
 	RETURN num_rows;
 END;
 $BODY$;
