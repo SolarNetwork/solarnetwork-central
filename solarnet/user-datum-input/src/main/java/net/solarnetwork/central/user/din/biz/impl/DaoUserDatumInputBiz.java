@@ -78,7 +78,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO based implementation of {@link UserDatumInputBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
@@ -285,7 +285,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			params.put(TransformService.PARAM_ENDPOINT_ID,
 					(endpointId != null ? endpointId : UserUuidPK.UNASSIGNED_UUID_ID).toString());
 			params.put(TransformService.PARAM_TRANSFORM_ID, id.getEntityId());
-			params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+			params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 			params.put(TransformService.PARAM_XSLT_OUTPUT, xsltOutput);
 			params.put(TransformService.PARAM_PREVIEW, true);
 			datum = xformService.transform(in, contentType, xform, params);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.din.biz.impl.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -29,10 +30,15 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.util.MimeType;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.din.biz.TransformService;
@@ -64,6 +71,7 @@ import net.solarnetwork.central.user.din.domain.CredentialConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointAuthConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
+import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
@@ -75,7 +83,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Test cases for the {@link DaoUserDatumInputBiz} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -116,6 +124,10 @@ public class DaoUserDatumInputBizTests {
 
 	@Captor
 	private ArgumentCaptor<BasicFilter> filterCaptor;
+
+	@SuppressWarnings("rawtypes")
+	@Captor
+	private ArgumentCaptor<Map> transformParametersCaptor;
 
 	private DaoUserDatumInputBiz biz;
 
@@ -592,6 +604,50 @@ public class DaoUserDatumInputBizTests {
 		and.then(endpointAuthCaptor.getValue())
 			.as("EndpointAuth ID as provided")
 			.returns(pk, from(Entity::getId))
+			;
+		// @formatter:on
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void previewTransform_cacheKeyIncludesModificationDate() throws Exception {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long transformId = randomLong();
+		final UserLongCompositePK xformPk = new UserLongCompositePK(userId, transformId);
+		final String serviceId = randomString();
+
+		final TransformConfiguration xform = new TransformConfiguration(xformPk, now(), randomString(),
+				serviceId);
+		xform.setModified(now().truncatedTo(ChronoUnit.SECONDS));
+
+		given(transformDao.get(xformPk)).willReturn(xform);
+		given(transformService.getId()).willReturn(serviceId);
+		given(transformService.supportsInput(any(), any())).willReturn(true);
+		given(transformService.transform(any(), any(), any(), any())).willReturn(List.of());
+
+		final MimeType contentType = MimeType.valueOf("application/json");
+		final InputStream in = new ByteArrayInputStream("{}".getBytes(UTF_8));
+
+		// WHEN
+		TransformOutput result = biz.previewTransform(xformPk, null, contentType, in, null);
+
+		// THEN
+		// @formatter:off
+		then(transformService).should().transform(any(), eq(contentType), eq(xform),
+				transformParametersCaptor.capture());
+
+		and.then(result)
+			.as("Result provided")
+			.isNotNull()
+			;
+
+		and.then(transformParametersCaptor.getValue())
+			.as("Cache key is the entity ident, which includes the modification date, so that "
+					+ "editing the XSLT does not serve a stale cached stylesheet")
+			.containsEntry(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xform.ident())
+			.as("Entity ident differs from the primary key ident")
+			.doesNotContainEntry(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident())
 			;
 		// @formatter:on
 	}
