@@ -71,18 +71,18 @@ app:
     max-input-length: 8196
     xslt:
       templates-cache:
-        ttl: 15
+        ttl: 86400
   job.din:
     xslt-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: "0 0 1 * * *"
+      schedule: 3600
   job.inin:
     xslt-req-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: "0 0 1 * * *"
+      schedule: 3600
     xslt-res-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: "0 0 1 * * *"
+      schedule: 3600
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
