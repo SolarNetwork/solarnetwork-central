@@ -30,10 +30,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.cache.Cache;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,11 +45,8 @@ import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataFilter;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
-import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.BasicSecurityPolicy;
 
 /**
  * Test cases for the {@link CachingSolarNodeMetadataDao} class.
@@ -80,16 +75,7 @@ public class CachingSolarNodeMetadataDaoTests {
 				Executors.newVirtualThreadPerTaskExecutor());
 	}
 
-	@AfterEach
-	public void teardown() {
-		SecurityUtils.removeAuthentication();
-	}
 
-	private void becomeTokenWithMetadataPaths(String... paths) {
-		SecurityUtils.becomeToken(randomString(20), SecurityTokenType.ReadNodeData, randomLong(),
-				paths.length < 1 ? null
-						: BasicSecurityPolicy.builder().withNodeMetadataPaths(Set.of(paths)).build());
-	}
 
 	@Test
 	public void get_cacheMiss() {
@@ -205,38 +191,14 @@ public class CachingSolarNodeMetadataDaoTests {
 	}
 
 	/**
-	 * The delegate restricts the metadata of its results to the policy paths, so
-	 * a policy-bearing actor must not read from, or populate, the shared cache.
+	 * The delegate restricts the metadata of its results to the token policy's
+	 * paths, so a token-bearing query must not read from, or populate, the
+	 * shared cache.
 	 */
 	@Test
-	public void get_policyMetadataPaths_bypassesCache() {
+	public void findForNodeId_tokenCriteria_bypassesCache() {
 		// GIVEN
 		final Long nodeId = randomLong();
-		becomeTokenWithMetadataPaths("/**/building/**");
-
-		final var metadata = new SolarNodeMetadata(nodeId);
-		SolarNodeMetadataReadOnlyDao rod = delegate; // work-around for javac "reference to get is ambiguous"
-		given(rod.get(nodeId)).willReturn(metadata);
-
-		// WHEN
-		SolarNodeMetadata result = dao.get(nodeId);
-
-		// THEN
-		// @formatter:off
-		then(entityCache).shouldHaveNoInteractions();
-
-		and.then(result)
-			.as("Result from delegate, never the cache")
-			.isSameAs(metadata)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void findForNodeId_policyMetadataPaths_bypassesCache() {
-		// GIVEN
-		final Long nodeId = randomLong();
-		becomeTokenWithMetadataPaths("/**/building/**");
 
 		final var metadata = new SolarNodeMetadata(nodeId);
 		final FilterResults<SolarNodeMetadata, Long> daoResults = new BasicFilterResults<>(
@@ -245,6 +207,7 @@ public class CachingSolarNodeMetadataDaoTests {
 
 		final var filter = new BasicCoreCriteria();
 		filter.setNodeId(nodeId);
+		filter.setTokenId(randomString(20));
 
 		// WHEN
 		FilterResults<SolarNodeMetadata, Long> result = dao.findFiltered(filter, null, null, null);
@@ -266,14 +229,13 @@ public class CachingSolarNodeMetadataDaoTests {
 	}
 
 	/**
-	 * A token with no {@code nodeMetadataPaths} constraint gets unrestricted
-	 * metadata, so the cache is still safe to use.
+	 * Without token criteria the delegate returns unrestricted metadata, so the
+	 * cache is safe to use.
 	 */
 	@Test
-	public void findForNodeId_tokenWithoutMetadataPaths_usesCache() {
+	public void findForNodeId_noTokenCriteria_usesCache() {
 		// GIVEN
 		final Long nodeId = randomLong();
-		becomeTokenWithMetadataPaths();
 
 		final var metadata = new SolarNodeMetadata(nodeId);
 		given(entityCache.get(nodeId)).willReturn(metadata);

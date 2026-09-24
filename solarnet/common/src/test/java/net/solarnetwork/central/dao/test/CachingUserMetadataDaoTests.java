@@ -32,10 +32,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.cache.Cache;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +47,6 @@ import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.domain.BasicSecurityPolicy;
 
 /**
  * Test cases for the {@link CachingUserMetadataDao}.
@@ -86,28 +81,19 @@ public class CachingUserMetadataDaoTests {
 				Executors.newVirtualThreadPerTaskExecutor(), metadataCache);
 	}
 
-	@AfterEach
-	public void teardown() {
-		SecurityUtils.removeAuthentication();
-	}
 
-	private void becomeTokenWithMetadataPaths(Long userId, String... paths) {
-		SecurityUtils.becomeToken(randomString(20), SecurityTokenType.ReadNodeData, userId,
-				paths.length < 1 ? null
-						: BasicSecurityPolicy.builder().withUserMetadataPaths(Set.of(paths)).build());
-	}
 
 	/**
-	 * The metadata returned by the delegate is restricted to the policy paths,
-	 * so the cache key must vary with those paths or one token would serve
+	 * The metadata returned by the delegate is restricted to the token policy's
+	 * paths, so the cache key must vary with the token or one token would serve
 	 * another token's view.
 	 */
 	@Test
-	public void metadata_cacheKey_includesPolicyPaths() {
+	public void metadata_cacheKey_includesTokenId() {
 		// GIVEN
 		final Long userId = randomLong();
 		final String metadataPath = randomString();
-		becomeTokenWithMetadataPaths(userId, "/pm/b", "/m/a");
+		final String tokenId = randomString(20);
 
 		final String metadata = randomString();
 		given(delegate.jsonMetadataAtPath(any(), eq(metadataPath))).willReturn(metadata);
@@ -115,12 +101,13 @@ public class CachingUserMetadataDaoTests {
 		// WHEN
 		final BasicUserMetadataFilter filter = new BasicUserMetadataFilter();
 		filter.setUserId(userId);
+		filter.setTokenId(tokenId);
 		String result = dao.jsonMetadataAtPath(filter, metadataPath);
 
 		// THEN
-		// the digest is over the path plus the policy paths, sorted
+		// the digest is over the path plus the filter token ID
 		final UserStringCompositePK expectedKey = new UserStringCompositePK(userId,
-				md5Hex((metadataPath + "/m/a" + "/pm/b").getBytes(UTF_8)));
+				md5Hex((metadataPath + tokenId).getBytes(UTF_8)));
 
 		// @formatter:off
 		then(metadataCache).should().get(expectedKey);
@@ -134,7 +121,7 @@ public class CachingUserMetadataDaoTests {
 	}
 
 	@Test
-	public void metadata_cacheKey_differsByPolicy() {
+	public void metadata_cacheKey_differsByToken() {
 		// GIVEN
 		final Long userId = randomLong();
 		final String metadataPath = randomString();
@@ -145,10 +132,10 @@ public class CachingUserMetadataDaoTests {
 		filter.setUserId(userId);
 
 		// WHEN
-		becomeTokenWithMetadataPaths(userId, "/m/a");
+		filter.setTokenId(randomString(20));
 		dao.jsonMetadataAtPath(filter, metadataPath);
 
-		becomeTokenWithMetadataPaths(userId, "/m/b");
+		filter.setTokenId(randomString(20));
 		dao.jsonMetadataAtPath(filter, metadataPath);
 
 		// THEN
@@ -156,7 +143,7 @@ public class CachingUserMetadataDaoTests {
 		then(metadataCache).should(times(2)).get(keyCaptor.capture());
 
 		and.then(keyCaptor.getAllValues())
-			.as("A different policy produces a different cache key, so one token"
+			.as("A different token produces a different cache key, so one token"
 					+ " cannot serve another token's restricted view")
 			.doesNotHaveDuplicates()
 			;
@@ -164,7 +151,7 @@ public class CachingUserMetadataDaoTests {
 	}
 
 	@Test
-	public void metadata_cacheKey_sameForEquivalentPolicy() {
+	public void metadata_cacheKey_differsWithAndWithoutToken() {
 		// GIVEN
 		final Long userId = randomLong();
 		final String metadataPath = randomString();
@@ -174,11 +161,10 @@ public class CachingUserMetadataDaoTests {
 		final BasicUserMetadataFilter filter = new BasicUserMetadataFilter();
 		filter.setUserId(userId);
 
-		// WHEN two tokens have the same paths, given in a different order
-		becomeTokenWithMetadataPaths(userId, "/m/a", "/pm/b");
+		// WHEN
 		dao.jsonMetadataAtPath(filter, metadataPath);
 
-		becomeTokenWithMetadataPaths(userId, "/pm/b", "/m/a");
+		filter.setTokenId(randomString(20));
 		dao.jsonMetadataAtPath(filter, metadataPath);
 
 		// THEN
@@ -186,7 +172,34 @@ public class CachingUserMetadataDaoTests {
 		then(metadataCache).should(times(2)).get(keyCaptor.capture());
 
 		and.then(keyCaptor.getAllValues())
-			.as("Equivalent policies share a cache key, regardless of path order")
+			.as("The unrestricted view is cached apart from any token's restricted view")
+			.doesNotHaveDuplicates()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void metadata_cacheKey_sameForSameToken() {
+		// GIVEN
+		final Long userId = randomLong();
+		final String metadataPath = randomString();
+		final String metadata = randomString();
+		given(delegate.jsonMetadataAtPath(any(), eq(metadataPath))).willReturn(metadata);
+
+		final BasicUserMetadataFilter filter = new BasicUserMetadataFilter();
+		filter.setUserId(userId);
+		filter.setTokenId(randomString(20));
+
+		// WHEN
+		dao.jsonMetadataAtPath(filter, metadataPath);
+		dao.jsonMetadataAtPath(filter, metadataPath);
+
+		// THEN
+		// @formatter:off
+		then(metadataCache).should(times(2)).get(keyCaptor.capture());
+
+		and.then(keyCaptor.getAllValues())
+			.as("The same token reuses one cache key")
 			.containsExactly(keyCaptor.getAllValues().getFirst(), keyCaptor.getAllValues().getFirst())
 			;
 		// @formatter:on

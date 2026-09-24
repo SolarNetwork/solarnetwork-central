@@ -31,12 +31,10 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.HamcrestCondition.matching;
-import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -68,9 +66,6 @@ public class SelectUserMetadataPathTests {
 
 	@Mock
 	private PreparedStatement stmt;
-
-	@Mock
-	private Array tokenIdsArray;
 
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
@@ -116,8 +111,12 @@ public class SelectUserMetadataPathTests {
 		// @formatter:on
 	}
 
+	/**
+	 * Only a single token criteria is supported, so extra token IDs are ignored
+	 * rather than widening the query.
+	 */
 	@Test
-	public void userAndTokens_sql() {
+	public void userAndTokens_sql_onlyFirstTokenUsed() {
 		// GIVEN
 		var filter = new BasicUserMetadataFilter();
 		filter.setUserId(randomLong());
@@ -130,8 +129,8 @@ public class SelectUserMetadataPathTests {
 		log.debug("Generated SQL:\n{}", sql);
 		// @formatter:off
 		and.then(sql)
-			.as("The path is extracted from the metadata restricted to the token policy's paths")
-			.is(matching(equalToTextResource("select-user-meta-path-tokens.sql", TestSqlResources.class,
+			.as("Only one token ID is matched, the same as for a single token criteria")
+			.is(matching(equalToTextResource("select-user-meta-path-token.sql", TestSqlResources.class,
 					SQL_COMMENT)))
 			;
 		// @formatter:on
@@ -187,7 +186,7 @@ public class SelectUserMetadataPathTests {
 	}
 
 	@Test
-	public void userAndTokens_prep() throws SQLException {
+	public void userAndTokens_prep_onlyFirstTokenBound() throws SQLException {
 		// GIVEN
 		final Long userId = randomLong();
 		final String path = "/m/foo";
@@ -195,7 +194,6 @@ public class SelectUserMetadataPathTests {
 
 		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
 				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
-		given(con.createArrayOf(eq("text"), aryEq(tokenIds))).willReturn(tokenIdsArray);
 
 		var filter = new BasicUserMetadataFilter();
 		filter.setUserId(userId);
@@ -211,14 +209,13 @@ public class SelectUserMetadataPathTests {
 				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
 		then(stmt).should().setString(1, path);
 		then(stmt).should().setObject(2, userId);
-		then(stmt).should().setArray(3, tokenIdsArray);
-		then(tokenIdsArray).should().free();
+		then(stmt).should().setString(3, tokenIds[0]);
 		then(stmt).shouldHaveNoMoreInteractions();
 
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		and.then(sqlCaptor.getValue())
 			.as("Generated SQL")
-			.is(matching(equalToTextResource("select-user-meta-path-tokens.sql",
+			.is(matching(equalToTextResource("select-user-meta-path-token.sql",
 					TestSqlResources.class, SQL_COMMENT)))
 			;
 		and.then(result)
