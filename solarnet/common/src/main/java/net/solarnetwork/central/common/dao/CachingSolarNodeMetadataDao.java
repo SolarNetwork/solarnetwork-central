@@ -30,10 +30,8 @@ import java.util.concurrent.Executor;
 import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -64,16 +62,6 @@ public class CachingSolarNodeMetadataDao
 	}
 
 	@Override
-	public @Nullable SolarNodeMetadata get(Long id) {
-		final var filter = new BasicCoreCriteria();
-		filter.setNodeId(id);
-		if ( canCache(filter) ) {
-			return super.get(id);
-		}
-		return delegate.get(id);
-	}
-
-	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
 			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		if ( canCache(filter) ) {
@@ -88,8 +76,7 @@ public class CachingSolarNodeMetadataDao
 	 * 
 	 * <p>
 	 * Will return {@code true} when looking for single node ID, without any
-	 * metadata search filter, and the current actor has no
-	 * {@code nodeMetadataPaths} security policy constraint.
+	 * metadata search filter, and without any token criteria.
 	 * </p>
 	 * 
 	 * 
@@ -98,16 +85,8 @@ public class CachingSolarNodeMetadataDao
 	 * @return {@code true} if the cache can be used
 	 */
 	private static boolean canCache(SolarNodeMetadataFilter filter) {
-		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1
-				&& !filter.hasSearchFilterCriteria() ) {
-			SecurityPolicy policy = SecurityUtils.getActiveSecurityPolicy();
-			if ( policy != null && policy.getNodeMetadataPaths() != null
-					&& !policy.getNodeMetadataPaths().isEmpty() ) {
-				return false;
-			}
-			return true;
-		}
-		return false;
+		return (filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1
+				&& !filter.hasSearchFilterCriteria() && !filter.hasTokenCriteria());
 	}
 
 }

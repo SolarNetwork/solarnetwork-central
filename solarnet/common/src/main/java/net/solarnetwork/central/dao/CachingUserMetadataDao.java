@@ -24,7 +24,6 @@ package net.solarnetwork.central.dao;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -35,9 +34,7 @@ import net.solarnetwork.central.common.dao.CachingGenericDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -100,15 +97,13 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 	 * 
 	 * <p>
 	 * Will return the cache key to use when looking for single user ID, without
-	 * any metadata search filter. If the current actor has a
-	 * {@code userMetadataPaths} constraint in their security policy, those
-	 * paths are included in the returned key.
+	 * any metadata search filter.
 	 * </p>
 	 * 
 	 * <p>
 	 * The returned key is a hex-encoded MD5 digest of the given path
-	 * concatenated with a sorted list of any {@code userMetadataPaths} security
-	 * policy constraints. All strings are treated as {@code UTF-8}.
+	 * concatenated with the filter token ID (if available). All strings are
+	 * treated as {@code UTF-8}.
 	 * </p>
 	 * 
 	 * 
@@ -124,13 +119,8 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 		if ( !filter.hasSearchFilterCriteria() ) {
 			var digest = DigestUtils.getMd5Digest();
 			digest.update(path.getBytes(UTF_8));
-			SecurityPolicy policy = SecurityUtils.getActiveSecurityPolicy();
-			if ( policy != null && policy.getUserMetadataPaths() != null ) {
-				String[] policyPaths = policy.getUserMetadataPaths().toArray(String[]::new);
-				Arrays.sort(policyPaths);
-				for ( String policyPath : policyPaths ) {
-					digest.update(policyPath.getBytes(UTF_8));
-				}
+			if ( filter.hasTokenCriteria() ) {
+				digest.update(filter.tokenId().getBytes(UTF_8));
 			}
 			return new UserStringCompositePK(userId, HexFormat.of().formatHex(digest.digest()));
 		}
