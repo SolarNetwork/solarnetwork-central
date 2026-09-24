@@ -76,14 +76,6 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 	}
 
 	@Override
-	public @Nullable UserMetadataEntity get(Long id) {
-		if ( canCache() ) {
-			return super.get(id);
-		}
-		return delegate.get(id);
-	}
-
-	@Override
 	public @Nullable String jsonMetadataAtPath(UserMetadataFilter filter, String path) {
 		final Long userId = requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(),
 				"filter.userId");
@@ -101,26 +93,6 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 		}
 
 		return result;
-	}
-
-	/**
-	 * Test if we can use the cache for a given user ID.
-	 * 
-	 * <p>
-	 * Will return {@code true} when the current actor has no
-	 * {@code userMetadataPaths} security policy constraint.
-	 * </p>
-	 * 
-	 * 
-	 * @return {@code true} if the cache can be used
-	 */
-	private static boolean canCache() {
-		SecurityPolicy policy = SecurityUtils.getActiveSecurityPolicy();
-		if ( policy != null && policy.getUserMetadataPaths() != null
-				&& !policy.getUserMetadataPaths().isEmpty() ) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
