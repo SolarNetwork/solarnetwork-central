@@ -38,9 +38,29 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface BillingBiz {
+
+	/**
+	 * Get a list of all available {@link BillingSystem} implementations.
+	 *
+	 * @return the billing systems, never {@code null}
+	 * @since 1.4
+	 */
+	Iterable<BillingSystem> availableBillingSystems();
+
+	/**
+	 * Get the {@link BillingSystem} to use by default.
+	 * 
+	 * @return the default billing system, or {@code null} if no default is
+	 *         available
+	 * @since 1.4
+	 */
+	default @Nullable BillingSystem defaultBillingSystem() {
+		var systems = availableBillingSystems();
+		return (systems != null ? systems.iterator().next() : null);
+	}
 
 	/**
 	 * Get the billing system configured for a given user.

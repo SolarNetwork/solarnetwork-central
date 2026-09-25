@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -69,6 +69,11 @@ public class DaoBillingBiz implements BillingBiz {
 		super();
 		this.userDao = requireNonNullArgument(userDao, "userDao");
 		this.billingSystems = requireNonNullArgument(billingSystems, "billingSystems");
+	}
+
+	@Override
+	public Iterable<BillingSystem> availableBillingSystems() {
+		return billingSystems;
 	}
 
 	/**
