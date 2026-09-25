@@ -69,10 +69,12 @@ public class BillingSystemController {
 	}
 
 	/**
-	 * Get billing system info for the current user.
+	 * Get billing system info for a given system key.
 	 *
+	 * @param key
+	 *        the billing system key to look up
 	 * @param locale
-	 *        the Locale of the request
+	 *        the desired locale
 	 * @return the billing system info
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo", params = "key")
@@ -85,11 +87,13 @@ public class BillingSystemController {
 	}
 
 	/**
-	 * Get billing system info for the current user.
+	 * Get billing system tiers for a given system key.
 	 *
+	 * @param key
+	 *        the billing system key to look up
 	 * @param locale
 	 *        the Locale of the request
-	 * @return the billing system info
+	 * @return the billing cost tiers
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/costs")
 	public Result<List<? extends NamedCostTiers>> billingSystemTiers(@RequestParam("key") String key,
