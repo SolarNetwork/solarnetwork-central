@@ -229,7 +229,6 @@ public class Address extends BasicLongEntity
 	 */
 	public final void setName(String name) {
 		this.name = requireNonNullArgument(name, "name");
-		;
 	}
 
 	/**
@@ -273,7 +272,6 @@ public class Address extends BasicLongEntity
 	 */
 	public final void setCountry(String country) {
 		this.country = requireNonNullArgument(country, "country");
-		;
 	}
 
 	/**
