@@ -46,6 +46,7 @@ import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguratio
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
+import net.solarnetwork.central.user.account.aop.SolarNetUserAccountAopConfiguration;
 import net.solarnetwork.central.user.aop.SolarNetUserAopConfiguration;
 import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfiguration;
 import net.solarnetwork.central.user.c2c.aop.SolarNetUserCloudIntegrationsAopConfiguration;
@@ -92,6 +93,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetInstructionInputConfiguration.class,
 		SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
+		SolarNetUserAccountAopConfiguration.class,
 		SolarNetUserAopConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,

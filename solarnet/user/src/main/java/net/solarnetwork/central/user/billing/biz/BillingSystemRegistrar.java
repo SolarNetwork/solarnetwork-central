@@ -26,6 +26,7 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.domain.User;
 
 /**
  * API for account registration management for a billing system.
@@ -67,5 +68,20 @@ public interface BillingSystemRegistrar {
 	 */
 	SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException;
+
+	/**
+	 * Get an account for a user.
+	 *
+	 * @param user
+	 *        the user to get the account for
+	 * @return the account entity
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         account for {@code user} does not exist
+	 */
+	SnAccount<?, ?, ?> getAccountForUser(User user)
+			throws IllegalArgumentException, AuthorizationException;
 
 }

@@ -47,11 +47,31 @@ public interface UserAccountBiz {
 	 *         if any argument is {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
-	 *         {@code userId} does not exist
+	 *         {@code userId} does not exist, or
+	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
+	 *         if an account already exists for the given user
 	 * @throws ValidationException
 	 *         if the input is not valid
 	 */
 	SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException;
+
+	/**
+	 * Get an account.
+	 * 
+	 * @param userId
+	 *        the user ID to get the account for
+	 * @return the account entity
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @throws AuthorizationException
+	 *         with , or
+	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
+	 *         if the user has not registered for an account or
+	 *         {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         account does not exist for the given user
+	 */
+	SnAccount<?, ?, ?> getAccountForUser(Long userId)
+			throws IllegalArgumentException, AuthorizationException;
 
 }

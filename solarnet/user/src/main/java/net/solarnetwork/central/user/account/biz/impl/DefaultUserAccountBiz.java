@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.account.biz.impl;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.central.user.billing.domain.BillingDataConstants.ACCOUNTING_DATA_PROP;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -31,6 +32,7 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccount;
@@ -82,6 +84,23 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 		final BillingSystemRegistrar registrar = registrarForKey(input.getSystemKey());
 
 		return registrar.createAccount(user.id(), input);
+	}
+
+	@Override
+	public SnAccount<?, ?, ?> getAccountForUser(Long userId)
+			throws IllegalArgumentException, AuthorizationException {
+		final User user = requireNonNullObject(userDao.get(requireNonNullArgument(userId, "userId")),
+				userId);
+		final Object systemKey = user.getInternalDataValue(ACCOUNTING_DATA_PROP);
+		if ( systemKey == null ) {
+			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, userId);
+		}
+		for ( BillingSystemRegistrar r : registrars ) {
+			if ( r.supportsAccountingSystemKey(systemKey.toString()) ) {
+				return r.getAccountForUser(user);
+			}
+		}
+		throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 	}
 
 	private BillingSystemRegistrar registrarForKey(@Nullable String key) {
