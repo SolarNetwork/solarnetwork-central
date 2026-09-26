@@ -61,6 +61,8 @@ import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.aop.AppSecurityContracts;
 import net.solarnetwork.central.test.tenant.SecurityContextExtension;
 import net.solarnetwork.central.test.tenant.TestTenants;
+import net.solarnetwork.central.user.account.aop.test.UserAccountBizSecurityContract;
+import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.aop.test.NodeOwnershipBizSecurityContract;
 import net.solarnetwork.central.user.aop.test.RegistrationBizSecurityContract;
 import net.solarnetwork.central.user.aop.test.UserAlertBizSecurityContract;
@@ -101,8 +103,8 @@ import net.solarnetwork.central.user.oscp.aop.test.UserOscpBizSecurityContract;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
 
 /**
- * Verify the SolarUser application applies its security aspects to the
- * services its controllers use.
+ * Verify the SolarUser application applies its security aspects to the services
+ * its controllers use.
  *
  * <p>
  * The denied actors of each security contract are verified against the service
@@ -130,6 +132,7 @@ public class SolarUserSecurityContractTests extends AbstractJUnit5CentralTransac
 			.with(UserAlertBiz.class, UserAlertBizSecurityContract::contract)
 			.with(UserNodeInstructionBiz.class, UserNodeInstructionBizSecurityContract::contract)
 			.with(UserSecretBiz.class, UserSecretBizSecurityContract::contract)
+			.with(UserAccountBiz.class, UserAccountBizSecurityContract::contract)
 			.with(BillingBiz.class, BillingBizSecurityContract::contract)
 			.with(SolarNodeMetadataBiz.class, SolarNodeMetadataBizSecurityContract::contract)
 			.with(UserMetadataBiz.class, UserMetadataBizSecurityContract::contract)
