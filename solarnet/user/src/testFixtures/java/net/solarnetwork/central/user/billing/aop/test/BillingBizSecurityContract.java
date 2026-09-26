@@ -64,7 +64,9 @@ public final class BillingBizSecurityContract {
 		// @formatter:off
 		return SecurityContract.forApi(BillingBiz.class, tenants)
 				.userRead(biz -> biz.billingSystemForUser(a.userId()))
+				.exempt("availableBillingSystems", "global billing systems listing")
 				.exempt("billingSystemForKey", "global billing system lookup")
+				.exempt("defaultBillingSystem", "global default billing system lookup")
 				.userRead(biz -> biz.getInvoice(a.userId(), invoiceId, Locale.ENGLISH))
 				.userRead(biz -> biz.findFilteredInvoices(filter, null, null, null))
 				.userRead(biz -> biz.renderInvoice(a.userId(), invoiceId, MimeTypeUtils.TEXT_HTML,
