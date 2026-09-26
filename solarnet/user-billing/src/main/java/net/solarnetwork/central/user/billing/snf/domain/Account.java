@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
@@ -205,9 +204,11 @@ public class Account extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the address
 	 */
+	@SuppressWarnings("NullAway")
 	@Override
 	public Address getAddress() {
-		return nonnull(address, "address");
+		// NullAway ignored for DAO layer to be able to populate
+		return address;
 	}
 
 	/**
