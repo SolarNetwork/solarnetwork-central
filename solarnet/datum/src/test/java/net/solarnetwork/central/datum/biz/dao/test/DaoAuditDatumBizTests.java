@@ -56,7 +56,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link DaoAuditDatumBiz} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.3
  */
 public class DaoAuditDatumBizTests {
@@ -97,15 +97,23 @@ public class DaoAuditDatumBizTests {
 
 		// WHEN
 		replayAll();
+
+		// use calendar-based date arithmetic, so the day length is correct on days
+		// where a daylight saving time transition occurs
+		ZonedDateTime startDate = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime endDate = startDate.plusDays(1);
+		LocalDateTime localStartDate = startDate.toLocalDateTime();
+		LocalDateTime localEndDate = endDate.toLocalDateTime();
+
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
 		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.All });
-		filter.setStartDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.DAYS));
-		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS));
-		filter.setLocalEndDate(filter.getLocalStartDate().plusDays(1));
+		filter.setStartDate(startDate.toInstant());
+		filter.setEndDate(endDate.toInstant());
+		filter.setLocalStartDate(localStartDate);
+		filter.setLocalEndDate(localEndDate);
 
 		FilterResults<AuditDatumRollup, DatumPK> rollups = biz.findAuditDatumFiltered(filter);
 		FilterResults<AuditDatumRecordCounts, ObjectRecordId> results = DatumUtils
@@ -123,13 +131,11 @@ public class DaoAuditDatumBizTests {
 		assertThat("Filter rollups retained", criteria.getDatumRollupTypes(),
 				arrayContaining(filter.getDatumRollupTypes()));
 		assertThat("Filter start date converted", criteria.getStartDate(),
-				equalTo(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toInstant()));
-		assertThat("Filter end date converted", criteria.getEndDate(),
-				equalTo(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1).toInstant()));
+				equalTo(startDate.toInstant()));
+		assertThat("Filter end date converted", criteria.getEndDate(), equalTo(endDate.toInstant()));
 		assertThat("Filter local start date converted", criteria.getLocalStartDate(),
-				equalTo(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)));
-		assertThat("Filter local end date converted", criteria.getLocalEndDate(),
-				equalTo(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1)));
+				equalTo(localStartDate));
+		assertThat("Filter local end date converted", criteria.getLocalEndDate(), equalTo(localEndDate));
 
 		assertThat("Result total count", results.getTotalResults(),
 				equalTo(filterResults.getTotalResults()));
@@ -140,7 +146,7 @@ public class DaoAuditDatumBizTests {
 
 		int i = 0;
 		for ( AuditDatumRecordCounts c : results ) {
-			AuditDatumRollup r = counts.get(i);
+			AuditDatumRollup r = counts.get(i++);
 			assertThat("Rollup node retrained", c.getNodeId(), equalTo(r.getNodeId()));
 			assertThat("Rollup source retrained", c.getSourceId(), equalTo(r.getSourceId()));
 			assertThat("Rollup timestamp converted", c.getCreated(), equalTo(r.getTimestamp()));
