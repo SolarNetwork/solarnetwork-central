@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -151,7 +152,7 @@ public class SnfInvoiceTests {
 
 		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated(),
 				inv1.getStartDate(), inv1.getEndDate(), inv1.getCurrencyCode());
-		inv2.setAddress(addr.copyWithId(randomLong()));
+		inv2.setAddress(addr.copyWithId(new UserLongCompositePK(addr.getUserId(), randomLong())));
 
 		// THEN
 		assertThat("Entities do not have sameness", inv1.isSameAs(inv2), equalTo(false));

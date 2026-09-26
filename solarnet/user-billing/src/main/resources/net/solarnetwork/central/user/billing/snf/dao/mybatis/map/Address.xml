@@ -3,12 +3,12 @@
 <mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address">
 
 	<insert id="insert-Address" parameterType="net.solarnetwork.central.user.billing.snf.domain.Address">
-		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+		<selectKey keyProperty="configId" resultType="long" order="BEFORE"> 
               SELECT nextval('solarbill.bill_seq') AS id 
 		</selectKey>
 		INSERT INTO solarbill.bill_address (
 			id
-			<if test="created != null">,created</if>
+			<if test="created != null">, created</if>
 			, user_id
 			, disp_name
 			, email
@@ -20,8 +20,8 @@
 			, postal_code
 			, address
 		) VALUES (
-			#{id}
-			<if test="created != null">,#{created}</if>
+			#{addressId}
+			<if test="created != null">, #{created}</if>
 			, #{userId}
 			, #{name}
 			, #{email}
@@ -67,13 +67,13 @@
 		<result property="street" column="bill_address_address" jdbcType="ARRAY" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 	</resultMap>
 	
-	<select id="get-Address-for-id" parameterType="long" resultMap="Address-FullResult">
+	<select id="get-Address-for-id" parameterType="net.solarnetwork.central.domain.UserLongCompositePK" resultMap="Address-FullResult">
 		SELECT
 			<include refid="fragment-Address-full-result"/>
 		FROM
 			solarbill.bill_address addr
-		WHERE
-			addr.id = #{id}
+		WHERE user_id = #{userId}
+			AND id = #{entityId}
 	</select>
 	
 	<update id="update-Address" parameterType="net.solarnetwork.central.user.billing.snf.domain.Address">
@@ -87,12 +87,13 @@
 			, locality =  #{locality}
 			, postal_code = #{postalCode}
 			, address = #{street,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
-		WHERE id = #{id}
+		WHERE id = #{addressId}
 	</update>
 
-	<delete id="delete-Address" parameterType="long">
+	<delete id="delete-Address" parameterType="net.solarnetwork.central.domain.UserLongCompositePK">
 		DELETE FROM solarbill.bill_address
-		WHERE id = #{id}
+		WHERE user_id = #{userId}
+			AND id = #{entityId}
 	</delete>
 
 </mapper>

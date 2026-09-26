@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.jobs;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTask.newTask;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
@@ -35,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
@@ -42,7 +44,6 @@ import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Service to generate invoices for SNF accounts.
@@ -88,7 +89,7 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	public boolean handleTask(final AccountTask task) {
 		assert task.getTaskType() == AccountTaskType.GenerateInvoice;
 		final Long accountId = task.getAccountId();
-		final Account account = accountDao.get(new UserLongPK(null, accountId));
+		final Account account = accountDao.get(new UserLongCompositePK(UNASSIGNED_LONG_ID, accountId));
 		if ( account == null ) {
 			log.error(
 					"Unable to generate invoices for task {} because billing account {} not available.",

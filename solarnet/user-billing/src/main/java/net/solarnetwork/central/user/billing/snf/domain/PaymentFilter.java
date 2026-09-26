@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.LocalDate;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.SimplePagination;
@@ -75,7 +74,7 @@ public class PaymentFilter extends SimplePagination {
 	 */
 	public static PaymentFilter forAccount(Account account) {
 		PaymentFilter f = new PaymentFilter();
-		f.setAccountId(nonnull(account.getId(), "Account ID").getId());
+		f.setAccountId(account.getAccountId());
 		f.setUserId(account.getUserId());
 		return f;
 	}

@@ -29,18 +29,18 @@ import java.util.HashMap;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * MyBatis implementation of {@link AccountDao}.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongPK>
+public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongCompositePK>
 		implements AccountDao {
 
 	/** Query name enumeration. */
@@ -84,7 +84,16 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	 * Constructor.
 	 */
 	public MyBatisAccountDao() {
-		super(Account.class, UserLongPK.class);
+		super(Account.class, UserLongCompositePK.class);
+	}
+
+	@Override
+	protected UserLongCompositePK handleInsert(Account entity) {
+		UserLongCompositePK id = super.handleInsert(entity);
+		if ( !id.entityIdIsAssigned() && entity.getConfigId() != null ) {
+			id = new UserLongCompositePK(id.getUserId(), entity.getConfigId());
+		}
+		return id;
 	}
 
 	@Override

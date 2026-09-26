@@ -55,6 +55,7 @@ import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
@@ -86,8 +87,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void findLatestInvoice_none() {
 		// GIVEN
-		UserLongPK pk = new UserLongPK(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits());
+		var pk = new UserLongCompositePK(randomLong(), randomLong());
 		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
 		expect(invoiceDao.findFiltered(capture(filterCaptor),
 				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
@@ -100,16 +100,15 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("InvoiceImpl not found.", invoice, nullValue());
 		SnfInvoiceFilter filter = filterCaptor.getValue();
-		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
+		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getEntityId()));
 	}
 
 	@Test
 	public void findLatestInvoice_found() {
 		// GIVEN
-		UserLongPK pk = new UserLongPK(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits());
+		var pk = new UserLongCompositePK(randomLong(), randomLong());
 		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
-		SnfInvoice inv = new SnfInvoice(pk.getId(), randomLong(), Instant.now(), LocalDate.now(),
+		SnfInvoice inv = new SnfInvoice(pk.getEntityId(), randomLong(), Instant.now(), LocalDate.now(),
 				LocalDate.now(), "NZD");
 		expect(invoiceDao.findFiltered(capture(filterCaptor),
 				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
@@ -122,7 +121,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("InvoiceImpl returned from DAO.", invoice, sameInstance(inv));
 		SnfInvoiceFilter filter = filterCaptor.getValue();
-		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
+		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getEntityId()));
 	}
 
 	@Test
@@ -398,10 +397,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		final BigDecimal expectedTotal = usage.getTotalCost().add(expectedTax);
 
-		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(),
+		expect(accountDao.claimAccountBalanceCredit(account.getAccountId(),
 				usage.getTotalCost().add(expectedTax))).andReturn(expectedTotal);
-		final AccountBalance remainingBalance = new AccountBalance(account.getId(), Instant.now(),
-				BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("22.33"));
+		final AccountBalance remainingBalance = new AccountBalance(account.getAccountId(),
+				account.getUserId(), Instant.now(), BigDecimal.ZERO, BigDecimal.ZERO,
+				new BigDecimal("22.33"));
 		expect(accountDao.getBalanceForUser(account.getUserId())).andReturn(remainingBalance);
 
 		// WHEN
@@ -496,10 +496,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		final BigDecimal partialCredit = new BigDecimal("5.67");
 
-		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(),
+		expect(accountDao.claimAccountBalanceCredit(account.getAccountId(),
 				usage.getTotalCost().add(expectedTax))).andReturn(partialCredit);
-		final AccountBalance remainingBalance = new AccountBalance(account.getId(), Instant.now(),
-				BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("0.00"));
+		final AccountBalance remainingBalance = new AccountBalance(account.getAccountId(),
+				account.getUserId(), Instant.now(), BigDecimal.ZERO, BigDecimal.ZERO,
+				new BigDecimal("0.00"));
 		expect(accountDao.getBalanceForUser(account.getUserId())).andReturn(remainingBalance);
 
 		// WHEN

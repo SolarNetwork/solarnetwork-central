@@ -144,7 +144,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		AccountTask task = taskCaptor.getValue();
 		assertThat("Task created", task, notNullValue());
 		assertThat("Task type", task.getTaskType(), equalTo(AccountTaskType.GenerateInvoice));
-		assertThat("Task account", task.getAccountId(), equalTo(account.getId().getId()));
+		assertThat("Task account", task.getAccountId(), equalTo(account.getAccountId()));
 		assertThat("Task date", task.getCreated(),
 				equalTo(endDate.atStartOfDay(account.getTimeZone()).minusMonths(1).toInstant()));
 		assertThat("Task data not set", task.getTaskData(), nullValue());
@@ -186,7 +186,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		AccountTask task = taskCaptor.getValue();
 		assertThat("Task created", task, notNullValue());
 		assertThat("Task type", task.getTaskType(), equalTo(AccountTaskType.GenerateInvoice));
-		assertThat("Task account", task.getAccountId(), equalTo(account.getId().getId()));
+		assertThat("Task account", task.getAccountId(), equalTo(account.getAccountId()));
 		assertThat("Task date", task.getCreated(),
 				equalTo(endDate.atStartOfDay(account.getTimeZone()).minusMonths(1).toInstant()));
 		assertThat("Task data not set", task.getTaskData(), nullValue());
@@ -210,7 +210,7 @@ public class InvoiceGenerationTaskCreatorTests {
 
 		// get latest invoice for account, which is a few months behind
 		SnfInvoice lastInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(),
+				account.getUserId(), account.getAccountId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 9, 1),
 				LocalDate.of(2019, 10, 1), "NZD");
 		lastInvoice.setAddress(account.getAddress());
@@ -239,7 +239,7 @@ public class InvoiceGenerationTaskCreatorTests {
 			assertThat(format("Task %d type", i), task.getTaskType(),
 					equalTo(AccountTaskType.GenerateInvoice));
 			assertThat(format("Task %d account", i), task.getAccountId(),
-					equalTo(account.getId().getId()));
+					equalTo(account.getAccountId()));
 			assertThat(format("Task %d date", i), task.getCreated(), equalTo(
 					endDate.atStartOfDay(account.getTimeZone()).minusMonths((2 - i) + 1).toInstant()));
 			assertThat(format("Task %d data not set", i), task.getTaskData(), nullValue());

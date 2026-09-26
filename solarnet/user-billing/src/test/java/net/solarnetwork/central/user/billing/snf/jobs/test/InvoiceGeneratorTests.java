@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
@@ -42,6 +43,7 @@ import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
@@ -51,7 +53,6 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link InvoiceGenerator} class.
@@ -105,11 +106,12 @@ public class InvoiceGeneratorTests {
 		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
-		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
+		expect(accountDao.get(new UserLongCompositePK(UNASSIGNED_LONG_ID, account.getAccountId())))
+				.andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now(), LocalDate.now(),
+				account.getUserId(), account.getAccountId(), Instant.now(), LocalDate.now(),
 				LocalDate.now(), "NZD");
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
@@ -122,7 +124,7 @@ public class InvoiceGeneratorTests {
 		replayAll();
 		boolean result = generator
 				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
-						AccountTaskType.GenerateInvoice, account.getId().getId()));
+						AccountTaskType.GenerateInvoice, account.getAccountId()));
 
 		// THEN
 		assertThat("Task handled", result, equalTo(true));
@@ -130,11 +132,11 @@ public class InvoiceGeneratorTests {
 		assertThat("Deliver task created", deliverTask, notNullValue());
 		assertThat("Deliver task ID assigned", deliverTask.getId(), notNullValue());
 		assertThat("Deliver task account same as generated invoice", deliverTask.getAccountId(),
-				equalTo(account.getId().getId()));
+				equalTo(account.getAccountId()));
 		assertThat("Deliver task type is deliver", deliverTask.getTaskType(),
 				equalTo(AccountTaskType.DeliverInvoice));
 		assertThat("Deliver task ", deliverTask.getTaskData(),
-				allOf(hasEntry("id", generatedInvoice.getId().getId()),
+				allOf(hasEntry("id", generatedInvoice.getInvoiceId()),
 						hasEntry("userId", account.getUserId())));
 	}
 
@@ -146,11 +148,12 @@ public class InvoiceGeneratorTests {
 		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_US",
 				createAddress("US", "America/Los_Angeles"));
-		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
+		expect(accountDao.get(new UserLongCompositePK(UNASSIGNED_LONG_ID, account.getAccountId())))
+				.andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now(), LocalDate.now(),
+				account.getUserId(), account.getAccountId(), Instant.now(), LocalDate.now(),
 				LocalDate.now(), "NZD");
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
@@ -163,7 +166,7 @@ public class InvoiceGeneratorTests {
 		replayAll();
 		boolean result = generator
 				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
-						AccountTaskType.GenerateInvoice, account.getId().getId()));
+						AccountTaskType.GenerateInvoice, account.getAccountId()));
 
 		// THEN
 		assertThat("Task handled", result, equalTo(true));
@@ -171,11 +174,11 @@ public class InvoiceGeneratorTests {
 		assertThat("Deliver task created", deliverTask, notNullValue());
 		assertThat("Deliver task ID assigned", deliverTask.getId(), notNullValue());
 		assertThat("Deliver task account same as generated invoice", deliverTask.getAccountId(),
-				equalTo(account.getId().getId()));
+				equalTo(account.getAccountId()));
 		assertThat("Deliver task type is deliver", deliverTask.getTaskType(),
 				equalTo(AccountTaskType.DeliverInvoice));
 		assertThat("Deliver task ", deliverTask.getTaskData(),
-				allOf(hasEntry("id", generatedInvoice.getId().getId()),
+				allOf(hasEntry("id", generatedInvoice.getInvoiceId()),
 						hasEntry("userId", account.getUserId())));
 	}
 

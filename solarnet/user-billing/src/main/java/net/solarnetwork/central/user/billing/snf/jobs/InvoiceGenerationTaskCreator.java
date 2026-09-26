@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.domain.UserFilterCommand;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
@@ -46,7 +47,6 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -144,7 +144,7 @@ public class InvoiceGenerationTaskCreator {
 			return;
 		}
 
-		final UserLongPK accountPk = account.getId();
+		final var accountPk = account.getId();
 
 		// grab current account time zone
 		final ZoneId accountTimeZone = account.getTimeZone();
@@ -180,7 +180,7 @@ public class InvoiceGenerationTaskCreator {
 		return invoicingSystem.accountForUser(nonnull(user.getId(), "User ID"));
 	}
 
-	private ZonedDateTime invoicedThroughDate(UserLongPK accountPk,
+	private ZonedDateTime invoicedThroughDate(UserLongCompositePK accountPk,
 			ZonedDateTime initialInvoiceStartDate) {
 		SnfInvoice invoice = invoicingSystem.findLatestInvoiceForAccount(accountPk);
 		if ( invoice == null ) {

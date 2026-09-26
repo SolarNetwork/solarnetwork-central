@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -32,12 +34,12 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link MyBatisAccountDao} class.
@@ -66,13 +68,28 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
+		// GIVEN
 		Account entity = createTestAccount(address);
-		UserLongPK pk = dao.save(entity);
+
+		// WHEN
+		var pk = dao.save(entity);
 		getSqlSessionTemplate().flushStatements();
+
+		// THEN
+		// @formatter:off
+		then(pk)
+			.as("PK created")
+			.isNotNull()
+			.as("User ID preserved")
+			.returns(TEST_USER_ID, from(UserLongCompositePK::getUserId))
+			.as("Entity ID is assigned")
+			.returns(true, from(UserLongCompositePK::allKeyComponentsAreAssigned))
+			;
+		// @formatter:on
+
 		assertThat("PK created", pk, notNullValue());
 		assertThat("PK userId preserved", pk.getUserId(), equalTo(entity.getUserId()));
-		last = entity;
-		last.getId().setId(pk.getId());
+		last = entity.copyWithId(pk);
 	}
 
 	@Test
@@ -130,7 +147,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		Account obj = dao.get(last.getId());
 		obj.setCurrencyCode("USD");
 		obj.setLocale("en_US");
-		UserLongPK pk = dao.save(obj);
+		var pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
 		Account entity = dao.get(pk);
@@ -174,7 +191,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		final BigDecimal charge = new BigDecimal("12345.67");
 		final BigDecimal payment = new BigDecimal("234789.01");
 		final BigDecimal credit = new BigDecimal("65432.10");
-		insertAccountBalance(last.getId().getId(), charge, payment, credit);
+		insertAccountBalance(last.getAccountId(), charge, payment, credit);
 		AccountBalance balance = dao.getBalanceForUser(last.getUserId());
 		assertThat("Balance available", balance, notNullValue());
 		assertThat("Balance charge total", balance.getChargeTotal().compareTo(charge), equalTo(0));
@@ -188,7 +205,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		Account account = dao.get(dao.save(createTestAccount(address)));
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.ZERO);
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(), BigDecimal.ZERO);
 
 		// THEN
 		assertThat("Able to claim 0 when no claim available", claimed, equalTo(BigDecimal.ZERO));
@@ -200,7 +217,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		Account account = dao.get(dao.save(createTestAccount(address)));
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.TEN);
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(), BigDecimal.TEN);
 
 		// THEN
 		assertThat("Able to claim 0 when no claim available", claimed, equalTo(BigDecimal.ZERO));
@@ -210,10 +227,10 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void claimCredit_fullExplicit() {
 		// GIVEN
 		Account account = dao.get(dao.save(createTestAccount(address)));
-		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+		insertAccountBalance(account.getAccountId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.TEN);
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(), BigDecimal.TEN);
 
 		// THEN
 		assertThat("Able to claim requested amount when equal to available credit",
@@ -224,10 +241,10 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void claimCredit_fullImplicit() {
 		// GIVEN
 		Account account = dao.get(dao.save(createTestAccount(address)));
-		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+		insertAccountBalance(account.getAccountId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), null);
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(), null);
 
 		// THEN
 		assertThat("Able to claim entire amount when max implied", claimed.compareTo(BigDecimal.TEN),
@@ -238,10 +255,10 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void claimCredit_partial() {
 		// GIVEN
 		Account account = dao.get(dao.save(createTestAccount(address)));
-		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+		insertAccountBalance(account.getAccountId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.ONE);
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(), BigDecimal.ONE);
 
 		// THEN
 		assertThat("Able to claim requested amount when less than available credit",
@@ -252,11 +269,11 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void claimCredit_fullImplicitTwice() {
 		// GIVEN
 		Account account = dao.get(dao.save(createTestAccount(address)));
-		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+		insertAccountBalance(account.getAccountId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
 
 		// WHEN
-		BigDecimal claimed1 = dao.claimAccountBalanceCredit(account.getId().getId(), null);
-		BigDecimal claimed2 = dao.claimAccountBalanceCredit(account.getId().getId(), null);
+		BigDecimal claimed1 = dao.claimAccountBalanceCredit(account.getAccountId(), null);
+		BigDecimal claimed2 = dao.claimAccountBalanceCredit(account.getAccountId(), null);
 
 		// THEN
 		assertThat("Able to claim full amount", claimed1.compareTo(BigDecimal.TEN), equalTo(0));
@@ -268,10 +285,10 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void claimCredit_negative() {
 		// GIVEN
 		Account account = dao.get(dao.save(createTestAccount(address)));
-		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+		insertAccountBalance(account.getAccountId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
 
 		// WHEN
-		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(),
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getAccountId(),
 				new BigDecimal("-1.11"));
 
 		// THEN

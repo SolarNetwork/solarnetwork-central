@@ -3,7 +3,7 @@
 <mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account">
 
 	<insert id="insert-Account" parameterType="net.solarnetwork.central.user.billing.snf.domain.Account">
-		<selectKey keyProperty="id.id" resultType="long" order="BEFORE"> 
+		<selectKey keyProperty="configId" resultType="long" order="BEFORE"> 
               SELECT nextval('solarbill.bill_seq') AS id 
 		</selectKey>
 		INSERT INTO solarbill.bill_account (
@@ -14,10 +14,10 @@
 			, currency
 			, locale
 		) VALUES (
-			#{id.id}
+			#{accountId}
 			<if test="created != null">,#{created}</if>
-			, #{id.userId}
-			, #{address.id}
+			, #{userId}
+			, #{address.addressId}
 			, #{currencyCode}
 			, #{locale}
 		)
@@ -43,7 +43,7 @@
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 	</resultMap>
 	
-	<select id="get-Account-for-id" parameterType="long" resultMap="Account-FullResult">
+	<select id="get-Account-for-id" parameterType="net.solarnetwork.central.domain.UserLongCompositePK" resultMap="Account-FullResult">
 		SELECT
 			<include refid="fragment-Account-full-result"/>,
 			<include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
@@ -51,8 +51,8 @@
 			solarbill.bill_account acct
 		INNER JOIN
 			solarbill.bill_address addr ON addr.id = acct.addr_id
-		WHERE
-			acct.id = #{id}
+		WHERE acct.user_id = #{userId}
+			AND acct.id = #{entityId}
 	</select>
 	
 	<select id="get-Account-for-user" parameterType="long" resultMap="Account-FullResult">
@@ -89,12 +89,14 @@
 		UPDATE solarbill.bill_account
 		SET currency = #{currencyCode}
 			, locale = #{locale}
-		WHERE id = #{id.id}
+		WHERE user_id = #{userId}
+			AND id = #{accountId}
 	</update>
 
-	<delete id="delete-Account" parameterType="long">
+	<delete id="delete-Account" parameterType="net.solarnetwork.central.domain.UserLongCompositePK">
 		DELETE FROM solarbill.bill_account
-		WHERE id = #{id}
+		WHERE user_id = #{userId}
+			AND id = #{entityId}
 	</delete>
 	
 	<!-- 

@@ -85,7 +85,7 @@ public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 	private AccountTask createTestAccountTask(Account account) {
 		AccountTask t = new AccountTask(UUID.randomUUID(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), AccountTaskType.GenerateInvoice,
-				account.getId().getId(), Map.of("foo", "bar"));
+				account.getAccountId(), Map.of("foo", "bar"));
 		return t;
 	}
 

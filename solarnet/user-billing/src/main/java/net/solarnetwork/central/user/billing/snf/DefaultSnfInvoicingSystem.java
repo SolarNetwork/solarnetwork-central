@@ -78,6 +78,7 @@ import org.springframework.util.MimeType;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
@@ -113,7 +114,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.9
+ * @version 2.0
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -205,9 +206,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public @Nullable SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
+	public @Nullable SnfInvoice findLatestInvoiceForAccount(UserLongCompositePK accountId) {
 		SnfInvoiceFilter filter = SnfInvoiceFilter
-				.forAccount(requireNonNullArgument(accountId.getId(), "accountId.id"));
+				.forAccount(requireNonNullArgument(accountId.getEntityId(), "accountId.entityId"));
 		filter.setIgnoreCreditOnly(true);
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);

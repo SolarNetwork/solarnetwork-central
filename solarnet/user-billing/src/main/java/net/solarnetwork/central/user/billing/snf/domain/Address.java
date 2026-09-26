@@ -22,33 +22,32 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static java.util.Objects.requireNonNullElse;
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.dao.BasicLongEntity;
-import net.solarnetwork.domain.CopyingIdentity;
-import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.central.account.domain.SnAddress;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.dao.BasicEntity;
 
 /**
  * An address for billing.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
-public class Address extends BasicLongEntity
-		implements UserRelatedEntity<Long>, Differentiable<Address>, CopyingIdentity<Address, Long> {
+public class Address extends BasicEntity<UserLongCompositePK>
+		implements SnAddress<Address, UserLongCompositePK> {
 
 	@Serial
-	private static final long serialVersionUID = -8287306387880683563L;
+	private static final long serialVersionUID = -357053992225144913L;
 
-	private Long userId;
 	private String name;
 	private String email;
 	private String country;
@@ -58,6 +57,9 @@ public class Address extends BasicLongEntity
 	private @Nullable String locality;
 	private @Nullable String postalCode;
 	private String @Nullable [] street;
+
+	// used by DAO insert to return assigned key
+	private transient @Nullable Long configId;
 
 	/**
 	 * Constructor.
@@ -102,12 +104,54 @@ public class Address extends BasicLongEntity
 	 */
 	public Address(@Nullable Long id, @Nullable Instant created, Long userId, String name, String email,
 			String country, String timeZoneId) {
-		super(id, created);
-		this.userId = requireNonNullArgument(userId, "userId");
+		this(new UserLongCompositePK(userId, requireNonNullElse(id, UNASSIGNED_LONG_ID)), created, name,
+				email, country, timeZoneId);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @param created
+	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param email
+	 *        the email
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code id} and {@code created} is
+	 *         {@code null}
+	 * @since 2.0
+	 */
+	public Address(UserLongCompositePK id, @Nullable Instant created, String name, String email,
+			String country, String timeZoneId) {
+		super(requireNonNullArgument(id, "id"), created);
 		this.name = requireNonNullArgument(name, "name");
 		this.email = requireNonNullArgument(email, "email");
 		this.country = requireNonNullArgument(country, "country");
 		this.timeZoneId = requireNonNullArgument(timeZoneId, "timeZoneId");
+	}
+
+	@Override
+	public final boolean hasId() {
+		return id().entityIdIsAssigned() || configId != null;
+	}
+
+	/**
+	 * Get the address ID.
+	 *
+	 * @return the address ID
+	 */
+	@JsonIgnore
+	public Long getAddressId() {
+		var pk = id();
+		return (pk.entityIdIsAssigned() ? pk.getEntityId()
+				: configId != null ? configId : pk.getEntityId());
 	}
 
 	@Override
@@ -116,9 +160,9 @@ public class Address extends BasicLongEntity
 	}
 
 	@Override
-	public Address copyWithId(@Nullable Long id) {
-		Address copy = new Address(requireNonNullArgument(id, "id"), getCreated(), userId, name, email,
-				country, timeZoneId);
+	public Address copyWithId(@Nullable UserLongCompositePK id) {
+		var copy = new Address(requireNonNullArgument(id, "id"), created(), name, email, country,
+				timeZoneId);
 		copyTo(copy);
 		return copy;
 	}
@@ -133,42 +177,6 @@ public class Address extends BasicLongEntity
 		other.locality = locality;
 		other.postalCode = postalCode;
 		other.street = (street != null ? Arrays.copyOf(street, street.length) : null);
-	}
-
-	/**
-	 * Test if the properties of another entity are the same as in this
-	 * instance.
-	 *
-	 * <p>
-	 * The {@code id}, {@code userId}, and {@code created} properties are not
-	 * compared by this method.
-	 * </p>
-	 *
-	 * @param other
-	 *        the other entity to compare to
-	 * @return {@literal true} if the properties of this instance are equal to
-	 *         the other
-	 */
-	public boolean isSameAs(@Nullable Address other) {
-		if ( other == null ) {
-			return false;
-		}
-		// @formatter:off
-		return Objects.equals(country, other.country)
-				&& Objects.equals(email, other.email)
-				&& Objects.equals(locality, other.locality)
-				&& Objects.equals(name, other.name)
-				&& Objects.equals(postalCode, other.postalCode)
-				&& Objects.equals(region, other.region)
-				&& Objects.equals(stateOrProvince, other.stateOrProvince)
-				&& Arrays.equals(street, other.street)
-				&& Objects.equals(timeZoneId, other.timeZoneId);
-		// @formatter:on
-	}
-
-	@Override
-	public boolean differsFrom(@Nullable Address other) {
-		return !isSameAs(other);
 	}
 
 	@Override
@@ -193,21 +201,24 @@ public class Address extends BasicLongEntity
 		return builder.toString();
 	}
 
-	@Override
-	public final Long getUserId() {
-		return userId;
+	/**
+	 * Get the temporary entity ID.
+	 *
+	 * @return the configId
+	 */
+	@JsonIgnore
+	public final @Nullable Long getConfigId() {
+		return configId;
 	}
 
 	/**
-	 * Set the associated user ID.
+	 * Set the temporary entity ID.
 	 *
-	 * @param userId
-	 *        the user ID to set
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 * @param configId
+	 *        the configId to set
 	 */
-	public final void setUserId(Long userId) {
-		this.userId = requireNonNullArgument(userId, "userId");
+	public final void setConfigId(@Nullable Long configId) {
+		this.configId = configId;
 	}
 
 	/**
@@ -215,6 +226,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the name
 	 */
+	@Override
 	public final String getName() {
 		return name;
 	}
@@ -236,6 +248,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the email
 	 */
+	@Override
 	public final String getEmail() {
 		return email;
 	}
@@ -258,6 +271,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the country
 	 */
+	@Override
 	public final String getCountry() {
 		return country;
 	}
@@ -279,6 +293,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the timeZoneId
 	 */
+	@Override
 	public final String getTimeZoneId() {
 		return timeZoneId;
 	}
@@ -319,6 +334,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the region
 	 */
+	@Override
 	public final @Nullable String getRegion() {
 		return region;
 	}
@@ -338,6 +354,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the stateOrProvince
 	 */
+	@Override
 	public final @Nullable String getStateOrProvince() {
 		return stateOrProvince;
 	}
@@ -357,6 +374,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the locality
 	 */
+	@Override
 	public final @Nullable String getLocality() {
 		return locality;
 	}
@@ -376,6 +394,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the postalCode
 	 */
+	@Override
 	public final @Nullable String getPostalCode() {
 		return postalCode;
 	}
@@ -395,6 +414,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the street
 	 */
+	@Override
 	public final String @Nullable [] getStreet() {
 		return street;
 	}

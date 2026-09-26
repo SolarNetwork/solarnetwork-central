@@ -94,7 +94,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	private SnfInvoice createTestInvoice(Account account, Address address, LocalDate startDate) {
-		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
+		SnfInvoice entity = new SnfInvoice(account.getAccountId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), startDate, startDate.plusMonths(1),
 				account.getCurrencyCode());
 		entity.setAddress(address);
@@ -131,7 +131,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
 		payment.setExternalKey(randomString());
 		payment.setReference(randomString());
@@ -160,7 +160,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		final BigDecimal dollarShortAmount = invoice.getTotalAmount().add(new BigDecimal("-1.00"));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, dollarShortAmount, account.getCurrencyCode());
 		payment.setExternalKey(randomString());
 		payment.setReference(randomString());
@@ -174,7 +174,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// add 2nd payment, $1 to fully pay invoice
-		Payment payment2 = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment2 = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, new BigDecimal("1.00"), account.getCurrencyCode());
 		payment2.setExternalKey(randomString());
 		payment2.setReference(randomString());
@@ -194,7 +194,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
 		payment.setExternalKey(randomString());
 		payment.setReference(randomString());
@@ -222,7 +222,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
 		payment.setExternalKey(randomString());
 		payment.setReference(randomString());
@@ -249,7 +249,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment with extra dollar
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), now(),
 				PaymentType.Payment, invoice.getTotalAmount().add(BigDecimal.ONE),
 				account.getCurrencyCode());
 		payment.setExternalKey(randomString());

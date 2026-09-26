@@ -22,29 +22,26 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Locale;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.account.domain.SnAccount;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.domain.Differentiable;
 
 /**
  * Billing account entity.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public class Account extends BasicEntity<UserLongPK>
-		implements UserRelatedEntity<UserLongPK>, Differentiable<Account> {
+public class Account extends BasicEntity<UserLongCompositePK>
+		implements SnAccount<Account, UserLongCompositePK, Address> {
 
 	@Serial
 	private static final long serialVersionUID = 717659020214827158L;
@@ -52,6 +49,9 @@ public class Account extends BasicEntity<UserLongPK>
 	private String currencyCode;
 	private String locale;
 	private @Nullable Address address;
+
+	// used by DAO insert to return assigned key
+	private transient @Nullable Long configId;
 
 	/**
 	 * Constructor.
@@ -67,7 +67,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 * @throws IllegalArgumentException
 	 *         if {@code currencyCode} or {@code locale} is {@code null}
 	 */
-	public Account(UserLongPK id, Instant created, String currencyCode, String locale) {
+	public Account(UserLongCompositePK id, Instant created, String currencyCode, String locale) {
 		super(id, created);
 		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 		this.locale = requireNonNullArgument(locale, "locale");
@@ -86,73 +86,46 @@ public class Account extends BasicEntity<UserLongPK>
 	 *         if {@code currencyCode} or {@code locale} is {@code null}
 	 */
 	public Account(Long id, Long userId, Instant created, String currencyCode, String locale) {
-		this(new UserLongPK(userId, id), created, currencyCode, locale);
+		this(new UserLongCompositePK(userId, id), created, currencyCode, locale);
 	}
 
 	@Override
-	public boolean hasId() {
-		UserLongPK id = getId();
-		return (id != null && id.getId() != null && id.userIdIsAssigned());
-	}
-
-	@Override
-	public Long getUserId() {
-		return nonnull(getId(), "id").getUserId();
-	}
-
-	/**
-	 * Set the user ID.
-	 *
-	 * @param userId
-	 *        the user ID
-	 */
-	public void setUserId(Long userId) {
-		final UserLongPK id = getId();
-		if ( id != null ) {
-			id.setUserId(userId);
-		}
+	public final boolean hasId() {
+		return id().entityIdIsAssigned() || configId != null;
 	}
 
 	/**
 	 * Get the account ID.
 	 *
 	 * @return the account ID
-	 * @throws IllegalStateException
-	 *         if the account ID is not available
 	 */
 	@JsonIgnore
 	public Long getAccountId() {
-		return nonnull(nonnull(getId(), "Account PK").getId(), "Account ID");
-	}
-
-	/**
-	 * Test if the properties of another entity are the same as in this
-	 * instance.
-	 *
-	 * <p>
-	 * The {@code id} and {@code created} properties are not compared by this
-	 * method.
-	 * </p>
-	 *
-	 * @param other
-	 *        the other entity to compare to
-	 * @return {@literal true} if the properties of this instance are equal to
-	 *         the other
-	 */
-	public boolean isSameAs(@Nullable Account other) {
-		if ( other == null ) {
-			return false;
-		}
-		// @formatter:off
-		return Objects.equals(address, other.address)
-				&& Objects.equals(currencyCode, other.currencyCode)
-				&& Objects.equals(locale, other.locale);
-		// @formatter:on
+		var pk = id();
+		return (pk.entityIdIsAssigned() ? pk.getEntityId()
+				: configId != null ? configId : pk.getEntityId());
 	}
 
 	@Override
-	public boolean differsFrom(@Nullable Account other) {
-		return !isSameAs(other);
+	public Account clone() {
+		return (Account) super.clone();
+	}
+
+	@Override
+	public Account copyWithId(@Nullable UserLongCompositePK id) {
+		var copy = new Account(requireNonNullArgument(id, "id"), created(), currencyCode, locale);
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(@Nullable Account other) {
+		if ( other == null ) {
+			return;
+		}
+		other.address = (address != null ? address.clone() : null);
+		other.currencyCode = currencyCode;
+		other.locale = locale;
 	}
 
 	@Override
@@ -202,10 +175,31 @@ public class Account extends BasicEntity<UserLongPK>
 	}
 
 	/**
+	 * Get the temporary entity ID.
+	 *
+	 * @return the configId
+	 */
+	@JsonIgnore
+	public final @Nullable Long getConfigId() {
+		return configId;
+	}
+
+	/**
+	 * Set the temporary entity ID.
+	 *
+	 * @param configId
+	 *        the configId to set
+	 */
+	public final void setConfigId(@Nullable Long configId) {
+		this.configId = configId;
+	}
+
+	/**
 	 * Get the address.
 	 *
 	 * @return the address
 	 */
+	@Override
 	public @Nullable Address getAddress() {
 		return address;
 	}
@@ -225,6 +219,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 *
 	 * @return the currencyCode
 	 */
+	@Override
 	public String getCurrencyCode() {
 		return currencyCode;
 	}
@@ -246,6 +241,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 *
 	 * @return the locale, as a BCP 47 language tag
 	 */
+	@Override
 	public String getLocale() {
 		return locale;
 	}
@@ -268,6 +264,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 * @return the locale as represented by the {@link #getLocale()} language
 	 *         tag, or {@link Locale#US} if not available
 	 */
+	@Override
 	public Locale locale() {
 		String s = getLocale();
 		if ( s == null || s.isEmpty() ) {

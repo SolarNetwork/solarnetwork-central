@@ -25,18 +25,18 @@ package net.solarnetwork.central.user.billing.snf.dao;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link Account} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface AccountDao extends GenericDao<Account, UserLongPK> {
+public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
 
 	/**
 	 * Get an account for a given user ID.

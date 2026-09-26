@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '4.1.1' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.diffplug.spotless'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: User Account'
+
+base {
+	archivesName = 'solarnet-user-account'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-account')
+	implementation project(':solarnet-user')
+
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Testing
+	testImplementation project(':solarnet-common-test')
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}

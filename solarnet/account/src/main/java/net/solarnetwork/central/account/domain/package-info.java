@@ -1,7 +1,7 @@
 /* ==================================================================
- * AddressDao.java - 20/07/2020 4:18:24 PM
+ * package-info.java - 26 Sept 2026 10:54:48 am
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,18 +20,9 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.snf.dao;
-
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.billing.snf.domain.Address;
-import net.solarnetwork.dao.GenericDao;
-
 /**
- * DAO API for {@link Address} entities.
- *
- * @author matt
- * @version 2.0
+ * Account domain.
  */
-public interface AddressDao extends GenericDao<Address, UserLongCompositePK> {
 
-}
+@org.jspecify.annotations.NullMarked
+package net.solarnetwork.central.account.domain;

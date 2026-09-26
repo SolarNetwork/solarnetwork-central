@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
@@ -103,7 +104,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void insert() {
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
-		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
+		SnfInvoice entity = new SnfInvoice(account.getAccountId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
 				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
@@ -161,7 +162,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			LocalDate start, int count) {
 		List<SnfInvoice> result = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
-			SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
+			SnfInvoice invoice = new SnfInvoice(account.getAccountId(), account.getUserId(),
 					Instant.ofEpochMilli(System.currentTimeMillis()), start.plusMonths(i),
 					start.plusMonths(i + 1), currencyCode);
 			invoice.setAddress(address);
@@ -185,7 +186,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private SnfInvoice createInvoiceWithCreditUse(Account account, Address address, String currencyCode,
 			LocalDate date, BigDecimal fixed, BigDecimal credit) {
-		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
+		SnfInvoice invoice = new SnfInvoice(account.getAccountId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
 				currencyCode);
 		invoice.setAddress(address);
@@ -203,7 +204,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private SnfInvoice createInvoiceWithCreditGrant(Account account, Address address,
 			String currencyCode, LocalDate date, BigDecimal credit) {
-		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
+		SnfInvoice invoice = new SnfInvoice(account.getAccountId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
 				currencyCode);
 		invoice.setAddress(address);
@@ -220,8 +221,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
@@ -251,8 +252,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		final List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
@@ -288,8 +289,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
@@ -319,8 +320,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		final List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
@@ -356,8 +357,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		final List<SnfInvoice> expectedInvoices = Stream
 				.concat(singleton(last).stream(), others.stream())
@@ -385,7 +386,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void findLatestAccount_latestInZero() {
 		// GIVEN
 		insert();
-		Account account = accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId()));
+		Account account = accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
 		List<SnfInvoice> others = createMonthlyInvoices(account, last.getAddress(), "NZD",
 				last.getStartDate().plusMonths(1), 3);
 		BigDecimal lastFixed = new BigDecimal("4.56");
@@ -420,7 +421,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void findLatestAccount_ignoreLatestCreditOnly() {
 		// GIVEN
 		insert();
-		Account account = accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId()));
+		Account account = accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
 		List<SnfInvoice> others = createMonthlyInvoices(account, last.getAddress(), "NZD",
 				last.getStartDate().plusMonths(1), 3);
 		BigDecimal creditAdd = new BigDecimal("-4.56");
@@ -502,7 +503,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				invoice.getCurrencyCode());
 
 		// associate payment with invoice
-		insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
+		insertInvoicePayment(last.getAccountId(), paymentId, invoice.getInvoiceId(), paymentAmount);
 
 		debugRows("solarbill.bill_invoice_item", "inv_id,id");
 		debugRows("solarbill.bill_invoice_payment", "inv_id");
@@ -527,8 +528,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		final List<SnfInvoice> expectedInvoices = Stream
 				.concat(singleton(dao.get(last.getId())).stream(), others.stream())
@@ -546,7 +547,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 					invoice.getCurrencyCode());
 
 			// associate payment with invoice
-			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
+			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getInvoiceId(), paymentAmount);
 			paymentIds.add(paymentId);
 		}
 
@@ -573,8 +574,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		final SnfInvoice oldest = insertWithItems();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		// make full payments on all just oldest and next-to-oldest
 		final int expectedCount = 2;
@@ -594,7 +595,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 					invoice.getCurrencyCode());
 
 			// associate payment with invoice
-			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
+			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getInvoiceId(), paymentAmount);
 			paymentIds.add(paymentId);
 		}
 
@@ -628,8 +629,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		final SnfInvoice oldest = insertWithItems();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		// make full payment on oldest, partial payment on 2nd to oldest
 		final int expectedCount = 3;
@@ -649,7 +650,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 					invoice.getCurrencyCode());
 
 			// associate payment with invoice
-			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
+			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getInvoiceId(), paymentAmount);
 			paymentIds.add(paymentId);
 		}
 
@@ -683,8 +684,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		final SnfInvoice oldest = insertWithItems();
 		List<SnfInvoice> others = createMonthlyInvoices(
-				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
-				"NZD", last.getStartDate().plusMonths(1), 3);
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
 
 		// make full payments on oldest and partial payment on 2nd to oldest, so 3 unpaid
 		final int expectedCount = 3;
@@ -699,11 +700,11 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				"NZD");
 
 		// associate full payment with first invoice
-		insertInvoicePayment(oldest.getAccountId(), paymentId, oldest.getId().getId(),
+		insertInvoicePayment(oldest.getAccountId(), paymentId, oldest.getInvoiceId(),
 				new BigDecimal("7.02"));
 
 		// associate partial payment with 2nd invoice
-		insertInvoicePayment(oldest.getAccountId(), paymentId, others.get(0).getId().getId(),
+		insertInvoicePayment(oldest.getAccountId(), paymentId, others.get(0).getInvoiceId(),
 				new BigDecimal("7.00"));
 
 		debugRows("solarbill.bill_invoice_item", "inv_id,id");

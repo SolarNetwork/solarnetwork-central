@@ -97,7 +97,7 @@ public class HtmlToPdfInvoiceTests {
 		final Account account = createAccount(randomLong(), "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
 		final SnfInvoice snfInvoice = new SnfInvoice(randomLong(), account.getUserId(),
-				account.getId().getId(), Instant.now(), LocalDate.now(), LocalDate.now(), "NZD");
+				account.getAccountId(), Instant.now(), LocalDate.now(), LocalDate.now(), "NZD");
 		final SnfInvoiceItem item1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Usage,
 				NodeUsage.DATUM_PROPS_IN_KEY, new BigDecimal("123456789"), new BigDecimal("12345.67"));
 		final SnfInvoiceItem tax1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Tax, "GST",

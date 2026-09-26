@@ -541,7 +541,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 
 		// THEN
 		final List<CloudDatumStreamConfiguration> expectedConfs = randomSourceIdConfs.values().stream()
-				.sorted().toList();
+				.sorted().distinct().toList();
 		then(results).as("Results for given mapped source IDs returned")
 				.containsExactlyElementsOf(expectedConfs);
 	}

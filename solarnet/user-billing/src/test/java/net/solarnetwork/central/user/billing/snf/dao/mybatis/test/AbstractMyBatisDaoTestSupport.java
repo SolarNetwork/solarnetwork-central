@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -134,7 +135,6 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5Centra
 		s.setLocality("Wellington");
 		s.setPostalCode("1001");
 		s.setStreet(new String[] { "Level 1", "123 Main Street" });
-		s.setUserId(TEST_USER_ID);
 		return s;
 	}
 
@@ -146,7 +146,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5Centra
 	 * @return the account
 	 */
 	protected Account createTestAccount(Address address) {
-		Account account = new Account(null, TEST_USER_ID,
+		Account account = new Account(unassignedEntityIdKey(TEST_USER_ID),
 				Instant.ofEpochMilli(System.currentTimeMillis()), "NZD", "en_NZ");
 		account.setAddress(address);
 		return account;

@@ -23,11 +23,14 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 
@@ -52,10 +55,24 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
+		// GIVEN
 		Address entity = createTestAddress();
-		Long pk = dao.save(entity);
-		assertThat("PK preserved", pk, equalTo(entity.getId()));
-		last = entity;
+
+		// WHEN
+		var pk = dao.save(entity);
+
+		// THEN
+		// @formatter:off
+		then(pk)
+			.as("PK created")
+			.isNotNull()
+			.as("User ID preserved")
+			.returns(TEST_USER_ID, from(UserLongCompositePK::getUserId))
+			.as("Entity ID is assigned")
+			.returns(true, from(UserLongCompositePK::allKeyComponentsAreAssigned))
+			;
+		// @formatter:on
+		last = entity.copyWithId(pk);
 	}
 
 	@Test
@@ -88,7 +105,7 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 		obj.setStateOrProvince("CA");
 		obj.setLocality("SF");
 		obj.setPostalCode("94114");
-		Long pk = dao.save(obj);
+		var pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
 		Address entity = dao.get(pk);
@@ -105,7 +122,7 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 	@Test
 	public void delete_noMatch() {
 		insert();
-		Address someAddr = last.copyWithId(randomLong());
+		Address someAddr = last.copyWithId(new UserLongCompositePK(TEST_USER_ID, randomLong()));
 		dao.delete(someAddr);
 
 		Address entity = dao.get(last.getId());

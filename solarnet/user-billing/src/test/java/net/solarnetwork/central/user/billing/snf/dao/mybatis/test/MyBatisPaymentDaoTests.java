@@ -88,7 +88,7 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
-		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getAccountId(),
 				MS_CLOCK.instant(), PaymentType.Payment, new BigDecimal("12345.67"),
 				account.getCurrencyCode());
 		entity.setExternalKey(randomString());
@@ -116,7 +116,7 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 		List<Payment> entities = new ArrayList<>(5);
 		LocalDate date = LocalDate.of(2020, 1, 5);
 		for ( int i = 0; i < 5; i++ ) {
-			Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+			Payment entity = new Payment(randomUUID(), account.getUserId(), account.getAccountId(),
 					date.atStartOfDay(address.getTimeZone()).toInstant(), PaymentType.Payment,
 					new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP),
 					account.getCurrencyCode());

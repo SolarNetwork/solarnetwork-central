@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -37,7 +38,7 @@ import net.solarnetwork.central.user.domain.UserLongPK;
  * API for generating invoices for the {@link SnfBillingSystem}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public interface SnfInvoicingSystem {
 
@@ -82,7 +83,7 @@ public interface SnfInvoicingSystem {
 	 * @return the latest available invoice, or {@code null} if none available
 	 */
 	@Nullable
-	SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId);
+	SnfInvoice findLatestInvoiceForAccount(UserLongCompositePK accountId);
 
 	/**
 	 * Generate a new invoice.

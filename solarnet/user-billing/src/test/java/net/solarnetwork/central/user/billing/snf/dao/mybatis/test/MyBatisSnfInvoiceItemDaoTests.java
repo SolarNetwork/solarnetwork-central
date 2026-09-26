@@ -78,7 +78,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 	private SnfInvoice createTestInvoice() {
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
-		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
+		SnfInvoice entity = new SnfInvoice(account.getAccountId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
 				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
