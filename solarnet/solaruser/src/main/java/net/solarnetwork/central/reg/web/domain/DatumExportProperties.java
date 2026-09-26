@@ -34,6 +34,7 @@ import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfigur
  * @version 1.1
  * @since 1.26
  */
+@SuppressWarnings("NullAway.Init")
 @JsonIgnoreProperties({ "dataConfiguration", "destinationConfiguration", "outputConfiguration" })
 public final class DatumExportProperties {
 
@@ -61,21 +62,22 @@ public final class DatumExportProperties {
 	 * @param other
 	 *        the configuration to copy the properties from
 	 */
+	@SuppressWarnings("NullAway")
 	public DatumExportProperties(UserDatumExportConfiguration other) {
 		super();
-		setCreated(other.getCreated());
-		setId(other.getConfigId());
-		setUserId(other.getUserId());
+		this.created = other.getCreated();
+		this.id = other.getConfigId();
+		this.userId = other.getUserId();
 
-		setHourDelayOffset(other.getHourDelayOffset());
-		setName(other.getName());
-		setSchedule(other.getSchedule());
-		setMinimumExportDate(other.getMinimumExportDate());
-		setTimeZoneId(other.getTimeZoneId());
+		this.hourDelayOffset = other.getHourDelayOffset();
+		this.name = other.getName();
+		this.schedule = other.getSchedule();
+		this.minimumExportDate = other.getMinimumExportDate();
+		this.timeZoneId = other.getTimeZoneId();
 
-		setDataConfigurationId(other.getUserDataConfigurationId());
-		setDestinationConfigurationId(other.getUserDestinationConfigurationId());
-		setOutputConfigurationId(other.getUserOutputConfigurationId());
+		this.dataConfigurationId = other.getUserDataConfigurationId();
+		this.destinationConfigurationId = other.getUserDestinationConfigurationId();
+		this.outputConfigurationId = other.getUserOutputConfigurationId();
 	}
 
 	/**

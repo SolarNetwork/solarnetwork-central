@@ -46,6 +46,7 @@ public final class UserDestinationConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public UserDestinationConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		UserDestinationConfiguration entity = new UserDestinationConfiguration(id, date, getName(),

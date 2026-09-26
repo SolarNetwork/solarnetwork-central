@@ -49,6 +49,7 @@ public final class UserDataConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public UserDataConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		UserDataConfiguration entity = new UserDataConfiguration(id, date, getName(),
@@ -57,6 +58,7 @@ public final class UserDataConfigurationInput extends
 		return entity;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(UserDataConfiguration conf) {
 		super.populateConfiguration(conf);

@@ -50,6 +50,7 @@ public final class UserOutputConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public UserOutputConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		UserOutputConfiguration entity = new UserOutputConfiguration(id, date, getName(),
@@ -58,6 +59,7 @@ public final class UserOutputConfigurationInput extends
 		return entity;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(UserOutputConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -69,7 +71,7 @@ public final class UserOutputConfigurationInput extends
 	 *
 	 * @return the ID
 	 */
-	public final Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -79,7 +81,7 @@ public final class UserOutputConfigurationInput extends
 	 * @param id
 	 *        the ID to set
 	 */
-	public final void setId(Long id) {
+	public final void setId(@Nullable Long id) {
 		this.id = id;
 	}
 

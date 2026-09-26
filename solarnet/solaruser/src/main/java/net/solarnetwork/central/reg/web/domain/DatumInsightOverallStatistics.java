@@ -35,36 +35,20 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
  * DTO for datum insight overall statistics.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.30
  */
 public class DatumInsightOverallStatistics {
 
-	private List<AuditDatumRecordCounts> counts = List.of();
-	private Integer nodeCount;
-	private Integer sourceCount;
-	private Integer activeSourceCount;
-	private Integer activeNodeCount;
-	private List<AuditDatumRecordCounts> accumulative = List.of();
-
-	/**
-	 * Default constructor.
-	 */
-	public DatumInsightOverallStatistics() {
-		super();
-	}
+	private final List<AuditDatumRecordCounts> counts;
+	private final Integer nodeCount;
+	private final Integer sourceCount;
+	private final Integer activeSourceCount;
+	private final Integer activeNodeCount;
+	private final List<AuditDatumRecordCounts> accumulative;
 
 	/**
 	 * Construct from a list of counts.
-	 *
-	 * <p>
-	 * The {@link #populateStatsFromCounts(Iterable)} method will be invoked
-	 * with the provided {@code counts} value, and {@link #setCounts(List)} will
-	 * be invoked with a new list created from {@code counts}. Similarly
-	 * {@link #setAccumulative(List)} will be invoked with a new list created
-	 * from {@code accumulative} and
-	 * {@link #populateStatsFromAccumulativeCounts(Iterable)} will be invoked.
-	 * </p>
 	 *
 	 * @param counts
 	 *        the counts
@@ -75,10 +59,27 @@ public class DatumInsightOverallStatistics {
 	public DatumInsightOverallStatistics(Iterable<AuditDatumRollup> counts,
 			Iterable<AuditDatumRollup> accumulative) {
 		super();
-		setCounts(convert(counts));
-		populateStatsFromCounts(this.counts);
-		setAccumulative(convert(accumulative));
-		populateStatsFromAccumulativeCounts(this.accumulative);
+
+		final Set<Long> nodeIds = new HashSet<>(32);
+		final Set<String> sourceIds = new HashSet<>(32);
+
+		this.counts = convert(counts);
+		for ( AuditDatumRecordCounts record : this.counts ) {
+			nodeIds.add(record.getNodeId());
+			sourceIds.add(record.getNodeId() + ":" + record.getSourceId());
+		}
+		this.activeNodeCount = nodeIds.size();
+		this.activeSourceCount = sourceIds.size();
+
+		nodeIds.clear();
+		sourceIds.clear();
+		this.accumulative = convert(accumulative);
+		for ( AuditDatumRecordCounts record : this.accumulative ) {
+			nodeIds.add(record.getNodeId());
+			sourceIds.add(record.getNodeId() + ":" + record.getSourceId());
+		}
+		this.nodeCount = nodeIds.size();
+		this.sourceCount = sourceIds.size();
 	}
 
 	private static List<AuditDatumRecordCounts> convert(Iterable<AuditDatumRollup> rollups) {
@@ -95,50 +96,6 @@ public class DatumInsightOverallStatistics {
 			c.setDatumQueryCount(e.getDatumQueryCount());
 			return c;
 		}).collect(Collectors.toList());
-	}
-
-	/**
-	 * Extract statistics from a list of counts and set them on this object.
-	 *
-	 * <p>
-	 * This will set the {@code activeNodeCount} and {@code activeSourceCount}
-	 * properties.
-	 * </p>
-	 *
-	 * @param counts
-	 *        the counts to extract statistics from
-	 */
-	public void populateStatsFromCounts(Iterable<AuditDatumRecordCounts> counts) {
-		Set<Long> nodeIds = new HashSet<>(32);
-		Set<String> sourceIds = new HashSet<>(32);
-		for ( AuditDatumRecordCounts record : counts ) {
-			nodeIds.add(record.getNodeId());
-			sourceIds.add(record.getNodeId() + ":" + record.getSourceId());
-		}
-		setActiveNodeCount(nodeIds.size());
-		setActiveSourceCount(sourceIds.size());
-	}
-
-	/**
-	 * Extract statistics from a list of accumulative counts and set them on
-	 * this object.
-	 *
-	 * <p>
-	 * This will set the {@code nodeCount} and {@code sourceCount} properties.
-	 * </p>
-	 *
-	 * @param counts
-	 *        the counts to extract statistics from
-	 */
-	public void populateStatsFromAccumulativeCounts(Iterable<AuditDatumRecordCounts> counts) {
-		Set<Long> nodeIds = new HashSet<>(32);
-		Set<String> sourceIds = new HashSet<>(32);
-		for ( AuditDatumRecordCounts record : counts ) {
-			nodeIds.add(record.getNodeId());
-			sourceIds.add(record.getNodeId() + ":" + record.getSourceId());
-		}
-		setNodeCount(nodeIds.size());
-		setSourceCount(sourceIds.size());
 	}
 
 	public Long getAccumulativeTotalDatumCount() {
@@ -170,10 +127,6 @@ public class DatumInsightOverallStatistics {
 		return nodeCount;
 	}
 
-	public void setNodeCount(Integer nodeCount) {
-		this.nodeCount = nodeCount;
-	}
-
 	public Integer getActiveNodeCount() {
 		return activeNodeCount;
 	}
@@ -182,42 +135,16 @@ public class DatumInsightOverallStatistics {
 		return sourceCount;
 	}
 
-	public void setSourceCount(Integer sourceCount) {
-		this.sourceCount = sourceCount;
-	}
-
-	public void setActiveNodeCount(Integer activeNodeCount) {
-		this.activeNodeCount = activeNodeCount;
-	}
-
 	public Integer getActiveSourceCount() {
 		return activeSourceCount;
-	}
-
-	public void setActiveSourceCount(Integer activeSourceCount) {
-		this.activeSourceCount = activeSourceCount;
 	}
 
 	public List<AuditDatumRecordCounts> getCounts() {
 		return counts;
 	}
 
-	public void setCounts(List<AuditDatumRecordCounts> counts) {
-		if ( counts == null ) {
-			counts = List.of();
-		}
-		this.counts = counts;
-	}
-
 	public List<AuditDatumRecordCounts> getAccumulative() {
 		return accumulative;
-	}
-
-	public void setAccumulative(List<AuditDatumRecordCounts> accumulative) {
-		if ( accumulative == null ) {
-			accumulative = List.of();
-		}
-		this.accumulative = accumulative;
 	}
 
 }

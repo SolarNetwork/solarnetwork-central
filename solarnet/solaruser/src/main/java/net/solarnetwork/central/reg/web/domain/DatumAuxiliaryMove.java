@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 
@@ -34,22 +35,22 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
  */
 public class DatumAuxiliaryMove {
 
-	private GeneralNodeDatumAuxiliaryPK from;
-	private GeneralNodeDatumAuxiliary to;
+	private @Nullable GeneralNodeDatumAuxiliaryPK from;
+	private @Nullable GeneralNodeDatumAuxiliary to;
 
-	public GeneralNodeDatumAuxiliaryPK getFrom() {
+	public @Nullable GeneralNodeDatumAuxiliaryPK getFrom() {
 		return from;
 	}
 
-	public void setFrom(GeneralNodeDatumAuxiliaryPK from) {
+	public void setFrom(@Nullable GeneralNodeDatumAuxiliaryPK from) {
 		this.from = from;
 	}
 
-	public GeneralNodeDatumAuxiliary getTo() {
+	public @Nullable GeneralNodeDatumAuxiliary getTo() {
 		return to;
 	}
 
-	public void setTo(GeneralNodeDatumAuxiliary to) {
+	public void setTo(@Nullable GeneralNodeDatumAuxiliary to) {
 		this.to = to;
 	}
 

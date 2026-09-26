@@ -49,6 +49,7 @@ public class LocationRequestInfoValidator implements SmartValidator {
 		return LocationRequestInfo.class.isAssignableFrom(clazz);
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public void validate(Object target, Errors errors) {
 		validate(target, errors, (Object[]) null);

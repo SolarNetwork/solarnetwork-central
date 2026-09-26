@@ -64,6 +64,7 @@ public final class UserDatumExportConfigurationInput
 		this.minimumExportDate = now().truncatedTo(HOURS);
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public UserDatumExportConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		UserDatumExportConfiguration entity = new UserDatumExportConfiguration(id, date, getName(),
@@ -72,6 +73,7 @@ public final class UserDatumExportConfigurationInput
 		return entity;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(UserDatumExportConfiguration conf) {
 		super.populateConfiguration(conf);
