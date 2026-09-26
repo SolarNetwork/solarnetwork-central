@@ -36,6 +36,7 @@ import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
 import tools.jackson.dataformat.cbor.CBORMapper;
+import tools.jackson.datatype.javax.money.JavaxMoneyModule;
 
 /**
  * JSON configuration.
@@ -75,7 +76,15 @@ public class JsonConfig {
 	@Primary
 	@Bean
 	public JsonMapper jsonMapper() {
-		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER.rebuild().addModule(SOLARAPP_MODULE).build();
+		// @formatter:off
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER
+				.rebuild()
+				.addModules(
+						  new JavaxMoneyModule()
+						, SOLARAPP_MODULE
+				)
+				.build();
+		// @formatter:on
 	}
 
 	/**
@@ -86,9 +95,16 @@ public class JsonConfig {
 	@Bean
 	@Qualifier(CBOR_MAPPER)
 	public CBORMapper cborObjectMapper() {
+		// @formatter:off
 		return CborUtils.CBOR_OBJECT_MAPPER.rebuild()
-				.addModules(JsonUtils.DATUM_MODULE, DatumJsonUtils.DATUM_MODULE, SOLARAPP_MODULE)
+				.addModules(
+						  new JavaxMoneyModule()
+						, JsonUtils.DATUM_MODULE
+						, DatumJsonUtils.DATUM_MODULE
+						, SOLARAPP_MODULE
+				)
 				.build();
+		// @formatter:on
 	}
 
 	/**

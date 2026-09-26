@@ -1,5 +1,5 @@
 /* ==================================================================
- * SnAccount.java - 26 Sept 2026 10:54:18 am
+ * SnAddress.java - 26 Sept 2026 11:09:55 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,13 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.account.domain;
+package net.solarnetwork.central.user.account.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serializable;
 import java.time.DateTimeException;
 import java.time.ZoneId;
-import java.util.Locale;
+import java.util.Arrays;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
@@ -35,35 +35,80 @@ import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
- * API for an account in SolarNetwork.
+ * API for an account address in SolarNetwork.
  *
  * @author matt
  * @version 1.0
  */
-public interface SnAccount<T extends SnAccount<T, K, A> & CopyingIdentity<T, K>, K extends UserRelatedCompositeKey<K>, A extends SnAddress<?, ?>>
+public interface SnAddress<T extends SnAddress<T, K> & CopyingIdentity<T, K>, K extends UserRelatedCompositeKey<K>>
 		extends UserIdRelated, CopyingIdentity<T, K>, Differentiable<T>, Serializable, Cloneable {
 
 	/**
-	 * Get the address.
+	 * Get the display name.
 	 *
-	 * @return the address
+	 * @return the name
+	 */
+	String getName();
+
+	/**
+	 * Get the email.
+	 *
+	 * @return the email
+	 */
+	String getEmail();
+
+	/**
+	 * Get the country.
+	 *
+	 * @return the country
+	 */
+	String getCountry();
+
+	/**
+	 * Get the time zone ID.
+	 *
+	 * @return the timeZoneId
+	 */
+	String getTimeZoneId();
+
+	/**
+	 * Get the region.
+	 *
+	 * @return the region
 	 */
 	@Nullable
-	A getAddress();
+	String getRegion();
 
 	/**
-	 * Get the currency code.
+	 * Set the state/province.
 	 *
-	 * @return the currencyCode
+	 * @return the stateOrProvince
 	 */
-	String getCurrencyCode();
+	@Nullable
+	String getStateOrProvince();
 
 	/**
-	 * Get the locale.
+	 * Get the locality (city).
 	 *
-	 * @return the locale, as a BCP 47 language tag
+	 * @return the locality
 	 */
-	String getLocale();
+	@Nullable
+	String getLocality();
+
+	/**
+	 * Get the postal code.
+	 *
+	 * @return the postalCode
+	 */
+	@Nullable
+	String getPostalCode();
+
+	/**
+	 * Get the street list.
+	 *
+	 * @return the street
+	 */
+	String @Nullable [] getStreet();
 
 	@Override
 	default boolean hasId() {
@@ -77,15 +122,15 @@ public interface SnAccount<T extends SnAccount<T, K, A> & CopyingIdentity<T, K>,
 	}
 
 	/**
-	 * Get the invoice time zone.
+	 * Get the address time zone.
 	 *
 	 * @return the time zone, or the system default if not otherwise available
 	 */
-	default ZoneId timeZone() {
-		final var addr = getAddress();
-		if ( addr != null && addr.getTimeZoneId() != null ) {
+	default @Nullable ZoneId timeZone() {
+		String tz = getTimeZoneId();
+		if ( tz != null ) {
 			try {
-				return ZoneId.of(addr.getTimeZoneId());
+				return ZoneId.of(tz);
 			} catch ( DateTimeException e ) {
 				// ignore
 			}
@@ -94,27 +139,12 @@ public interface SnAccount<T extends SnAccount<T, K, A> & CopyingIdentity<T, K>,
 	}
 
 	/**
-	 * Get the locale.
-	 *
-	 * @return the locale as represented by the {@link #getLocale()} language
-	 *         tag, or {@link Locale#US} if not available
-	 */
-	default Locale locale() {
-		String s = getLocale();
-		if ( s == null || s.isEmpty() ) {
-			return Locale.US;
-		}
-		Locale l = Locale.forLanguageTag(s);
-		return (l != null ? l : Locale.US);
-	}
-
-	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
 	 *
 	 * <p>
-	 * The {@code id} and {@code created} properties are not compared by this
-	 * method.
+	 * The {@code id}, {@code userId}, and {@code created} properties are not
+	 * compared by this method.
 	 * </p>
 	 *
 	 * @param other
@@ -127,9 +157,15 @@ public interface SnAccount<T extends SnAccount<T, K, A> & CopyingIdentity<T, K>,
 			return false;
 		}
 		// @formatter:off
-		return Objects.equals(getAddress(), other.getAddress())
-				&& Objects.equals(getCurrencyCode(), other.getCurrencyCode())
-				&& Objects.equals(getLocale(), other.getLocale());
+		return Objects.equals(getCountry(), other.getCountry())
+				&& Objects.equals(getEmail(), other.getEmail())
+				&& Objects.equals(getLocality(), other.getLocality())
+				&& Objects.equals(getName(), other.getName())
+				&& Objects.equals(getPostalCode(), other.getPostalCode())
+				&& Objects.equals(getRegion(), other.getRegion())
+				&& Objects.equals(getStateOrProvince(), other.getStateOrProvince())
+				&& Arrays.equals(getStreet(), other.getStreet())
+				&& Objects.equals(getTimeZoneId(), other.getTimeZoneId());
 		// @formatter:on
 	}
 

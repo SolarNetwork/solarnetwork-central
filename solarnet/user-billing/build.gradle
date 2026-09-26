@@ -23,7 +23,6 @@ base {
 }
 
 dependencies {
-	implementation project(':solarnet-account')
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-user')

@@ -25,4 +25,4 @@
  */
 
 @org.jspecify.annotations.NullMarked
-package net.solarnetwork.central.account.domain;
+package net.solarnetwork.central.user.account.domain;

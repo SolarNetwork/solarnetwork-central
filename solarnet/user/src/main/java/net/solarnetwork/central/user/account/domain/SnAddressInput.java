@@ -1,0 +1,238 @@
+/* ==================================================================
+ * SnAddressInput.java - 26 Sept 2026 3:07:19 pm
+ *
+ * Copyright 2026 SolarNetwork.net Dev Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.account.domain;
+
+import org.jspecify.annotations.Nullable;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import net.solarnetwork.central.domain.validation.ValidTimeZoneId;
+
+/**
+ * DTO for address configuration.
+ *
+ * @author matt
+ * @version 1.0
+ */
+@SuppressWarnings("MultipleNullnessAnnotations")
+public class SnAddressInput {
+
+	@NotBlank
+	private @Nullable String name;
+
+	@NotNull
+	@Email
+	private @Nullable String email;
+
+	// TODO @ValidCountryCode
+	private @Nullable String country;
+
+	@NotNull
+	@ValidTimeZoneId
+	private @Nullable String timeZoneId;
+
+	private @Nullable String region;
+	private @Nullable String stateOrProvince;
+	private @Nullable String locality;
+	private @Nullable String postalCode;
+	private String @Nullable [] street;
+
+	/**
+	 * Constructor.
+	 */
+	public SnAddressInput() {
+		super();
+	}
+
+	/**
+	 * Get the account name.
+	 * 
+	 * @return the name
+	 */
+	public final @Nullable String getName() {
+		return name;
+	}
+
+	/**
+	 * Set the account name.
+	 * 
+	 * @param name
+	 *        the name to set
+	 */
+	public final void setName(@Nullable String name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get the account email.
+	 * 
+	 * @return the email
+	 */
+	public final @Nullable String getEmail() {
+		return email;
+	}
+
+	/**
+	 * Set the account email.
+	 * 
+	 * @param email
+	 *        the email to set
+	 */
+	public final void setEmail(@Nullable String email) {
+		this.email = email;
+	}
+
+	/**
+	 * Get the account country code.
+	 * 
+	 * @return the country
+	 */
+	public final @Nullable String getCountry() {
+		return country;
+	}
+
+	/**
+	 * Set the account country code.
+	 * 
+	 * @param country
+	 *        the country to set
+	 */
+	public final void setCountry(@Nullable String country) {
+		this.country = country;
+	}
+
+	/**
+	 * Get the time zone ID.
+	 * 
+	 * @return the timeZoneId
+	 */
+	public final @Nullable String getTimeZoneId() {
+		return timeZoneId;
+	}
+
+	/**
+	 * Set the time zone ID.
+	 * 
+	 * @param timeZoneId
+	 *        the timeZoneId to set
+	 */
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
+		this.timeZoneId = timeZoneId;
+	}
+
+	/**
+	 * Get the region.
+	 * 
+	 * @return the region
+	 */
+	public final @Nullable String getRegion() {
+		return region;
+	}
+
+	/**
+	 * Set the region.
+	 * 
+	 * @param region
+	 *        the region to set
+	 */
+	public final void setRegion(@Nullable String region) {
+		this.region = region;
+	}
+
+	/**
+	 * Get the state or province.
+	 * 
+	 * @return the state or province
+	 */
+	public final @Nullable String getStateOrProvince() {
+		return stateOrProvince;
+	}
+
+	/**
+	 * Set the state or province.
+	 * 
+	 * @param stateOrProvince
+	 *        the state or province to set
+	 */
+	public final void setStateOrProvince(@Nullable String stateOrProvince) {
+		this.stateOrProvince = stateOrProvince;
+	}
+
+	/**
+	 * Get the locality.
+	 * 
+	 * @return the locality
+	 */
+	public final @Nullable String getLocality() {
+		return locality;
+	}
+
+	/**
+	 * Set the locatlity.
+	 * 
+	 * @param locality
+	 *        the locality to set
+	 */
+	public final void setLocality(@Nullable String locality) {
+		this.locality = locality;
+	}
+
+	/**
+	 * Get the postal code.
+	 * 
+	 * @return the postal code
+	 */
+	public final @Nullable String getPostalCode() {
+		return postalCode;
+	}
+
+	/**
+	 * Set the postal code.
+	 * 
+	 * @param postalCode
+	 *        the postal code to set
+	 */
+	public final void setPostalCode(@Nullable String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	/**
+	 * Set the street.
+	 * 
+	 * @return the street
+	 */
+	public final String @Nullable [] getStreet() {
+		return street;
+	}
+
+	/**
+	 * Get the street.
+	 * 
+	 * @param street
+	 *        the street to set
+	 */
+	public final void setStreet(String @Nullable [] street) {
+		this.street = street;
+	}
+
+}

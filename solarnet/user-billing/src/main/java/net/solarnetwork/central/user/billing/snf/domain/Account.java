@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
@@ -30,8 +31,8 @@ import java.time.ZoneId;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.account.domain.SnAccount;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.dao.BasicEntity;
 
 /**
@@ -48,7 +49,10 @@ public class Account extends BasicEntity<UserLongCompositePK>
 
 	private String currencyCode;
 	private String locale;
-	private @Nullable Address address;
+
+	// account reference populated after construction in DAO layer
+	@SuppressWarnings("NullAway.Init")
+	private Address address;
 
 	// used by DAO insert to return assigned key
 	private transient @Nullable Long configId;
@@ -123,7 +127,9 @@ public class Account extends BasicEntity<UserLongCompositePK>
 		if ( other == null ) {
 			return;
 		}
-		other.address = (address != null ? address.clone() : null);
+		if ( address != null ) {
+			other.address = address.clone();
+		}
 		other.currencyCode = currencyCode;
 		other.locale = locale;
 	}
@@ -200,8 +206,8 @@ public class Account extends BasicEntity<UserLongCompositePK>
 	 * @return the address
 	 */
 	@Override
-	public @Nullable Address getAddress() {
-		return address;
+	public Address getAddress() {
+		return nonnull(address, "address");
 	}
 
 	/**
@@ -210,7 +216,7 @@ public class Account extends BasicEntity<UserLongCompositePK>
 	 * @param address
 	 *        the address to set
 	 */
-	public void setAddress(@Nullable Address address) {
+	public void setAddress(Address address) {
 		this.address = address;
 	}
 

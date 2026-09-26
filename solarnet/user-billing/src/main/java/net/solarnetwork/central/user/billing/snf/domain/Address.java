@@ -32,8 +32,8 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.account.domain.SnAddress;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.user.account.domain.SnAddress;
 import net.solarnetwork.dao.BasicEntity;
 
 /**
