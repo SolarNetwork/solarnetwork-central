@@ -30,9 +30,8 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import org.easymock.Capture;
@@ -56,7 +55,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link DaoAuditDatumBiz} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.3
  */
 public class DaoAuditDatumBizTests {
@@ -102,10 +101,17 @@ public class DaoAuditDatumBizTests {
 		filter.setSourceId("a");
 		filter.setUserId(2L);
 		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.All });
-		filter.setStartDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toInstant());
-		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.DAYS));
-		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS));
-		filter.setLocalEndDate(filter.getLocalStartDate().plusDays(1));
+
+		// a fixed day in a fixed zone, so the dates do not depend on the current date or on the
+		// JVM default zone; 2029-04-01 is a 25-hour day in this zone, where an absolute 24 hours
+		// and a calendar day are not the same thing
+		final ZonedDateTime dayStart = ZonedDateTime.of(2029, 4, 1, 0, 0, 0, 0,
+				ZoneId.of("Pacific/Auckland"));
+		final ZonedDateTime nextDayStart = dayStart.plusDays(1);
+		filter.setStartDate(dayStart.toInstant());
+		filter.setEndDate(nextDayStart.toInstant());
+		filter.setLocalStartDate(dayStart.toLocalDateTime());
+		filter.setLocalEndDate(nextDayStart.toLocalDateTime());
 
 		FilterResults<AuditDatumRollup, DatumPK> rollups = biz.findAuditDatumFiltered(filter);
 		FilterResults<AuditDatumRecordCounts, ObjectRecordId> results = DatumUtils
@@ -122,14 +128,13 @@ public class DaoAuditDatumBizTests {
 				arrayContaining(filter.getUserIds()));
 		assertThat("Filter rollups retained", criteria.getDatumRollupTypes(),
 				arrayContaining(filter.getDatumRollupTypes()));
-		assertThat("Filter start date converted", criteria.getStartDate(),
-				equalTo(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toInstant()));
-		assertThat("Filter end date converted", criteria.getEndDate(),
-				equalTo(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1).toInstant()));
-		assertThat("Filter local start date converted", criteria.getLocalStartDate(),
-				equalTo(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)));
-		assertThat("Filter local end date converted", criteria.getLocalEndDate(),
-				equalTo(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1)));
+		assertThat("Filter start date retained", criteria.getStartDate(),
+				equalTo(filter.getStartDate()));
+		assertThat("Filter end date retained", criteria.getEndDate(), equalTo(filter.getEndDate()));
+		assertThat("Filter local start date retained", criteria.getLocalStartDate(),
+				equalTo(filter.getLocalStartDate()));
+		assertThat("Filter local end date retained", criteria.getLocalEndDate(),
+				equalTo(filter.getLocalEndDate()));
 
 		assertThat("Result total count", results.getTotalResults(),
 				equalTo(filterResults.getTotalResults()));
