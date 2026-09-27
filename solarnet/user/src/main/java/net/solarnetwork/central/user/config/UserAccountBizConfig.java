@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import jakarta.validation.Validator;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.biz.impl.DefaultUserAccountBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
@@ -48,10 +49,15 @@ public class UserAccountBizConfig {
 	@Autowired(required = false)
 	private @Nullable List<BillingSystemRegistrar> billingSystemRegistrars;
 
+	@Autowired
+	private Validator validator;
+
 	@Bean
 	public UserAccountBiz userAccountBiz() {
-		return new DefaultUserAccountBiz(
+		var biz = new DefaultUserAccountBiz(
 				billingSystemRegistrars != null ? billingSystemRegistrars : List.of(), userDao);
+		biz.setValidator(validator);
+		return biz;
 	}
 
 }

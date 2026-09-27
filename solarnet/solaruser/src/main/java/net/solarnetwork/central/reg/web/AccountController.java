@@ -86,7 +86,7 @@ public class AccountController {
 	/**
 	 * Render the account main page.
 	 *
-	 * @return
+	 * @return the main page reference
 	 */
 	@RequestMapping(value = "/u/sec/account", method = RequestMethod.GET)
 	public String home() {

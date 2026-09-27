@@ -63,7 +63,7 @@ public class SnAddressInput implements Serializable {
 	private @Nullable String stateOrProvince;
 	private @Nullable String locality;
 	private @Nullable String postalCode;
-	private String @Nullable [] street;
+	private @Nullable String @Nullable [] street;
 
 	/**
 	 * Constructor.
@@ -229,7 +229,7 @@ public class SnAddressInput implements Serializable {
 	 * 
 	 * @return the street
 	 */
-	public final String @Nullable [] getStreet() {
+	public final @Nullable String @Nullable [] getStreet() {
 		return street;
 	}
 
@@ -239,7 +239,7 @@ public class SnAddressInput implements Serializable {
 	 * @param street
 	 *        the street to set
 	 */
-	public final void setStreet(String @Nullable [] street) {
+	public final void setStreet(@Nullable String @Nullable [] street) {
 		this.street = street;
 	}
 
@@ -282,7 +282,8 @@ public class SnAddressInput implements Serializable {
 	 */
 	public final void setStreet2(@Nullable String street) {
 		if ( this.street == null || this.street.length < 2 ) {
-			var tmp = new String[2];
+			@Nullable
+			String[] tmp = new String[2];
 			if ( this.street != null && this.street.length > 0 ) {
 				tmp[0] = this.street[0];
 			}

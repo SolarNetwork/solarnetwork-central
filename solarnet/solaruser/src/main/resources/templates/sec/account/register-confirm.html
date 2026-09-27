@@ -94,6 +94,17 @@
 			</div>
 		</div>
 	</fieldset>
+	<fieldset>
+		<legend data-th-text="#{account.features.title}">Features</legend>
+		<div class="form-group">		
+			<label class="col-sm-2 control-label" for="account-features"></label>
+			<div class="col-sm-6" id="account-features">
+				<p data-th-each="feature : *{requestedEntitlements}"
+					data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}"
+					class="form-control-static">Feature</p>
+			</div>
+		</div>
+	</fieldset>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
 			<button type="submit" class="btn btn-primary" data-th-text="#{account.register.submit.label}">Submit</button>

@@ -26,12 +26,16 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import jakarta.validation.Valid;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
@@ -105,8 +109,8 @@ public class AccountRegistrationController {
 
 		final var acct = new SnAccountInput();
 		form.setAccount(acct);
-		Locale locale = Locale
-				.forLanguageTag("%s-%s".formatted(user.lang(), user.getCountry().toUpperCase()));
+		Locale locale = Locale.forLanguageTag(
+				"%s-%s".formatted(user.lang(), user.getCountry().toUpperCase(Locale.ROOT)));
 		acct.setLocale(locale.toLanguageTag());
 
 		return form;
@@ -115,7 +119,7 @@ public class AccountRegistrationController {
 	/**
 	 * Render the account registration page.
 	 *
-	 * @return
+	 * @return the account registration page reference
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public String register() {
@@ -123,9 +127,13 @@ public class AccountRegistrationController {
 	}
 
 	/**
-	 * Render the account main page.
+	 * Submit the account registration form for confirmation (review).
 	 *
-	 * @return
+	 * @param input
+	 *        the form to confirm
+	 * @param errors
+	 *        validation errors
+	 * @return the account registration confirmation page reference
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public String submit(
@@ -138,14 +146,33 @@ public class AccountRegistrationController {
 	}
 
 	/**
-	 * Render the account main page.
+	 * Submit the account registration (after review).
 	 *
-	 * @return
+	 * @param input
+	 *        the form to save
+	 * @param errors
+	 *        validation errors
+	 * @return the destination page reference
 	 */
 	@RequestMapping(value = "/confirm", method = RequestMethod.POST)
 	public String confirm(
-			@Valid @ModelAttribute(AccountRegistrationController.ACCOUNT_INPUT) SnAccountCreationInput input) {
-		return "sec/account/register-confirm";
+			@Valid @ModelAttribute(AccountRegistrationController.ACCOUNT_INPUT) SnAccountCreationInput input,
+			BindingResult errors, SessionStatus sessionStatus) {
+		if ( errors.hasErrors() ) {
+			return "sec/account/register";
+		}
+		try {
+			biz().createAccount(SecurityUtils.getCurrentActorUserId(), input);
+		} catch ( ValidationException e ) {
+			errors.addAllErrors(e.getErrors());
+		} catch ( Exception e ) {
+			errors.addError(new ObjectError(ACCOUNT_INPUT, e.getMessage()));
+		}
+		if ( errors.hasErrors() ) {
+			return "sec/account/register";
+		}
+		sessionStatus.setComplete();
+		return "redirect:sec/account";
 	}
 
 }

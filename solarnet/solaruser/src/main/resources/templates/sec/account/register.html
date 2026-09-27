@@ -16,6 +16,9 @@
 </p>
 
 <form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/register}">
+	<div class="alert alert-danger" role="alert" data-th-if="${#fields.hasGlobalErrors()}">
+	  <p data-th-each="err : ${#fields.globalErrors()}" data-th-text="${err}">...</p>
+	</div>	
 	<fieldset>
 		<legend data-th-text="#{account.address.title}">Address</legend>
 		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.name')}? has-error">
@@ -110,6 +113,19 @@
 				<input type="text" data-th-field="*{account.locale}" id="account-locale" maxlength="128" required class="form-control">
 				<span class="help-block" data-th-utext="#{account.locale.caption}">Something like <code>en-US</code>.</span>
 				<span class="text-warning" data-th-if="${#fields.hasErrors('account.locale')}" data-th-errors="*{account.locale}"></span>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend data-th-text="#{account.features.title}">Features</legend>
+		<p data-th-text="#{account.features.intro}">Enable the features you would like to use.</p>
+		<div class="form-group" data-th-each="feature : ${T(net.solarnetwork.central.user.account.domain.SnFeatureEntitlement).values()}">		
+			<label class="col-sm-2 control-label" for="account-feature" data-th-for="${'account-feature-' + feature}" data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}">Feature</label>
+			<div class="col-sm-6 checkbox">
+				<label>
+					<input type="checkbox" data-th-id="${'account-feature-' + feature}" data-th-field="*{requestedEntitlements}" data-th-value="${feature}">
+					<span data-th-remove="tag" data-th-utext="#{${'account.feature.entitlement.' + feature + '.desc'}}"></span>
+				</label>
 			</div>
 		</div>
 	</fieldset>
