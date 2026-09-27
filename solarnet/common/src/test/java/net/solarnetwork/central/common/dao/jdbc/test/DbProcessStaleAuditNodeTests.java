@@ -52,7 +52,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * Test cases for the {@link solardatm.process_one_aud_stale_node} procedure.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbProcessStaleAuditNodeTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -79,20 +79,24 @@ public class DbProcessStaleAuditNodeTests extends AbstractJUnit5JdbcDaoTestSuppo
 		setupTestNode();
 
 		// insert a couple of audit rows on different hours on different days; will populate 2 stale Day rows
-		final Instant ts = ZonedDateTime.now(ZoneId.of(TEST_TZ))
-				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant();
+		// NOTE the days are derived using calendar arithmetic in the node's time zone, so
+		// they remain whole local days when a daylight saving time transition occurs
+		final ZonedDateTime day1 = ZonedDateTime.now(ZoneId.of(TEST_TZ))
+				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+		final ZonedDateTime day2 = day1.plusDays(1);
+		final Instant ts = day1.toInstant();
+		final Instant ts2 = day2.toInstant();
 		final String service = "test";
 
 		// day 1
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service, ts, 1);
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.HOURS), 2);
+				day1.plusHours(1).toInstant(), 2);
 
 		// day 2
+		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service, ts2, 3);
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.DAYS), 3);
-		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS), 4);
+				day2.plusHours(1).toInstant(), 4);
 
 		CommonDbTestUtils.debugStaleAuditNodeServiceTable(log, jdbcTemplate, "stale node services");
 
@@ -112,9 +116,8 @@ public class DbProcessStaleAuditNodeTests extends AbstractJUnit5JdbcDaoTestSuppo
 		CommonDbTestUtils.assertAuditNodeServiceValue("Day 1 counts summed (1 + 2)", days.get(0),
 				new AuditNodeServiceEntity(DatumId.nodeId(TEST_NODE_ID, service, ts), Aggregation.Day,
 						3));
-		CommonDbTestUtils.assertAuditNodeServiceValue("Day 1 counts summed (3 + 4)", days.get(1),
-				new AuditNodeServiceEntity(
-						DatumId.nodeId(TEST_NODE_ID, service, ts.plus(1, ChronoUnit.DAYS)),
+		CommonDbTestUtils.assertAuditNodeServiceValue("Day 2 counts summed (3 + 4)", days.get(1),
+				new AuditNodeServiceEntity(DatumId.nodeId(TEST_NODE_ID, service, ts2),
 						Aggregation.Day, 7));
 
 		// verify stale month record created
@@ -132,20 +135,24 @@ public class DbProcessStaleAuditNodeTests extends AbstractJUnit5JdbcDaoTestSuppo
 		setupTestNode();
 
 		// insert a couple of audit rows on different hours on different days; will populate 2 stale Day rows
-		final Instant ts = ZonedDateTime.now(ZoneId.of(TEST_TZ))
-				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant();
+		// NOTE the days are derived using calendar arithmetic in the node's time zone, so
+		// they remain whole local days when a daylight saving time transition occurs
+		final ZonedDateTime day1 = ZonedDateTime.now(ZoneId.of(TEST_TZ))
+				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+		final ZonedDateTime day2 = day1.plusDays(1);
+		final Instant ts = day1.toInstant();
+		final Instant ts2 = day2.toInstant();
 		final String service = "test";
 
 		// day 1
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service, ts, 1);
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.HOURS), 2);
+				day1.plusHours(1).toInstant(), 2);
 
 		// day 2
+		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service, ts2, 3);
 		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.DAYS), 3);
-		CommonDbTestUtils.auditNodeService(jdbcTemplate, TEST_NODE_ID, service,
-				ts.plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS), 4);
+				day2.plusHours(1).toInstant(), 4);
 
 		CommonDbTestUtils.debugStaleAuditNodeServiceTable(log, jdbcTemplate, "stale node services");
 
