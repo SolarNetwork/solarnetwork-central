@@ -137,6 +137,7 @@ subprojects {
 		fastCsvVersion = '4.1.0'
 		jsonSchemaValidatorVersion = '3.0.0'
 		jsoupVersion = '1.18.3'
+		monetaVersion = '1.4.2'
 		moquetteVersion = '0.15'
 		myBatisStarterVersion = '4.0.0'
 		okhttp3Mockwebserver = '4.12.0'

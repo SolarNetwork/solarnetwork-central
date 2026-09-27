@@ -91,4 +91,24 @@ public interface BillingSystemRegistrar {
 	SnAccount<?, ?, ?> getAccountForUser(User user)
 			throws IllegalArgumentException, AuthorizationException;
 
+	/**
+	 * Update an account.
+	 *
+	 * @param userId
+	 *        the user ID to update the account for
+	 * @param input
+	 *        the account input
+	 * @return the account entity
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist or no account exists for the given
+	 *         user
+	 * @throws ValidationException
+	 *         if the input is not valid
+	 */
+	SnAccount<?, ?, ?> updateAccount(Long userId, SnAccountCreationInput input)
+			throws IllegalArgumentException, AuthorizationException, ValidationException;
+
 }

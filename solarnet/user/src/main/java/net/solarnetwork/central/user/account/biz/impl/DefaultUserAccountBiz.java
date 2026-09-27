@@ -26,6 +26,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.central.user.billing.domain.BillingDataConstants.ACCOUNTING_DATA_PROP;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,8 +41,8 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
-import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.account.domain.SnAccountInfo;
 import net.solarnetwork.central.user.account.domain.SnFeatureEntitlement;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -80,7 +81,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
+	public SnAccountInfo createAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException {
 		final User user = requireNonNullObject(userDao.get(requireNonNullArgument(userId, "userId")),
 				userId);
@@ -94,38 +95,48 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 
 		// assign user to this billing system
 		user.putInternalDataValue(ACCOUNTING_DATA_PROP, registrar.getAccountingSystemKey());
-		userDao.storeInternalData(user.getId(), user.getInternalData());
+		userDao.storeInternalData(user.id(), user.getInternalData());
 
 		// assign requested entitlements
 		Set<String> roles = setupRoles(userDao.getUserRoles(user), input.getRequestedEntitlements());
 		userDao.storeUserRoles(user, roles);
 
-		return account;
+		return new SnAccountInfo(registrar.getAccountingSystemKey(), account,
+				input.getRequestedEntitlements() != null && !input.getRequestedEntitlements().isEmpty()
+						? EnumSet.copyOf(input.getRequestedEntitlements())
+						: Set.of());
 	}
 
-	private Set<String> setupRoles(Set<String> existingRoles, Set<SnFeatureEntitlement> entitlements) {
-		var result = new LinkedHashSet<String>(existingRoles);
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public SnAccountInfo updateAccount(Long userId, SnAccountCreationInput input)
+			throws IllegalArgumentException, AuthorizationException, ValidationException {
+		final User user = requireNonNullObject(userDao.get(requireNonNullArgument(userId, "userId")),
+				userId);
 
-		// remove any entitlement roles not specified
-		for ( SnFeatureEntitlement entitlement : EnumSet.complementOf(EnumSet.copyOf(entitlements)) ) {
-			result.remove(entitlement.getRoleName());
+		// for now ignore any key on the input (disallow changing registrars)
+		final Object accountKey = requireNonNullObject(user.getInternalDataValue(ACCOUNTING_DATA_PROP),
+				"Account");
+
+		final SnAccountCreationInput req = requireNonNullArgument(input, "input");
+		validateInput(req);
+
+		final BillingSystemRegistrar registrar = registrarForKey(accountKey.toString());
+
+		var account = registrar.updateAccount(user.id(), input);
+
+		// assign requested entitlements
+		Set<String> existingRoles = userDao.getUserRoles(user);
+		Set<String> roles = setupRoles(existingRoles, input.getRequestedEntitlements());
+		if ( !existingRoles.equals(roles) ) {
+			userDao.storeUserRoles(user, roles);
 		}
 
-		// always assign billing
-		result.add("ROLE_BILLING");
-
-		// add requested entitlements
-		if ( entitlements != null ) {
-			for ( SnFeatureEntitlement entitlement : entitlements ) {
-				result.add(entitlement.getRoleName());
-			}
-		}
-
-		return result;
+		return new SnAccountInfo(registrar.getAccountingSystemKey(), account, userEntitlements(user));
 	}
 
 	@Override
-	public SnAccount<?, ?, ?> getAccountForUser(Long userId)
+	public SnAccountInfo getAccountForUser(Long userId)
 			throws IllegalArgumentException, AuthorizationException {
 		final User user = requireNonNullObject(userDao.get(requireNonNullArgument(userId, "userId")),
 				userId);
@@ -135,10 +146,49 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 		}
 		for ( BillingSystemRegistrar r : registrars ) {
 			if ( r.supportsAccountingSystemKey(systemKey.toString()) ) {
-				return r.getAccountForUser(user);
+				var acct = r.getAccountForUser(user);
+				return new SnAccountInfo(systemKey.toString(), acct, userEntitlements(user));
 			}
 		}
 		throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+	}
+
+	private Set<String> setupRoles(Set<String> existingRoles,
+			@Nullable Set<SnFeatureEntitlement> entitlements) {
+		var result = new LinkedHashSet<String>(existingRoles);
+
+		// remove any entitlement roles not specified
+		for ( SnFeatureEntitlement entitlement : entitlements == null || entitlements.isEmpty()
+				? EnumSet.allOf(SnFeatureEntitlement.class)
+				: EnumSet.complementOf(EnumSet.copyOf(entitlements)) ) {
+			result.remove(entitlement.getRoleName());
+		}
+
+		// always assign billing
+		result.add("ROLE_BILLING");
+
+		// add requested entitlements
+		if ( entitlements != null && !entitlements.isEmpty() ) {
+			for ( SnFeatureEntitlement entitlement : entitlements ) {
+				result.add(entitlement.getRoleName());
+			}
+		}
+
+		return result;
+	}
+
+	private Set<SnFeatureEntitlement> userEntitlements(final User user) {
+		Set<String> roles = userDao.getUserRoles(user);
+		Set<SnFeatureEntitlement> entitlements = new HashSet<>(roles.size());
+		for ( String role : roles ) {
+			for ( SnFeatureEntitlement entitlement : SnFeatureEntitlement.values() ) {
+				if ( role.equals(entitlement.getRoleName()) ) {
+					entitlements.add(entitlement);
+					break;
+				}
+			}
+		}
+		return (!entitlements.isEmpty() ? EnumSet.copyOf(entitlements) : Set.of());
 	}
 
 	private BillingSystemRegistrar registrarForKey(@Nullable String key) {

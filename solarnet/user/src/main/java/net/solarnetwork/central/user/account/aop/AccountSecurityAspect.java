@@ -51,7 +51,11 @@ public class AccountSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.create*(..)) && args(userId, ..)")
-	public void forUserWriteAccess(Long userId) {
+	public void createForUser(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.update*(..)) && args(userId, ..)")
+	public void updateForUser(Long userId) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.*ForUser(..)) && args(userId, ..)")
@@ -66,7 +70,8 @@ public class AccountSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before(value = """
-			forUserWriteAccess(userId)
+			   createForUser(userId)
+			|| updateForUser(userId)
 			""", argNames = "userId")
 	public void checkForUserWriteAccess(Long userId) {
 		requireUserWriteAccess(userId);

@@ -60,6 +60,7 @@ dependencies {
 	// Utilities
 	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:${snCommonTmplSt4}"
+	implementation "org.javamoney:moneta:${monetaVersion}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 	implementation 'org.slf4j:slf4j-api'
 	

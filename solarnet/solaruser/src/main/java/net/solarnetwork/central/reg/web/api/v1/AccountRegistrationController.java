@@ -1,5 +1,5 @@
 /* ==================================================================
- * AccountController.java - 27 Sept 2026 7:54:26 am
+ * AccountRegistrationController.java - 28 Sept 2026 7:56:54 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.jspecify.annotations.Nullable;
@@ -32,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
 import net.solarnetwork.central.user.account.domain.SnAccountInfo;
@@ -39,15 +39,15 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 
 /**
- * Web service API for billing account management.
+ * Web service API for billing account registration.
  *
  * @author matt
  * @version 1.0
  */
-@RestController("v1AccountController")
-@RequestMapping(value = { "/u/sec/account", "/api/v1/sec/user/account" })
+@RestController("v1AccountRegistrationController")
+@RequestMapping(value = "/api/v1/sec/user/account/register")
 @GlobalExceptionRestController
-public class AccountController {
+public class AccountRegistrationController {
 
 	private final @Nullable UserAccountBiz userAccountBiz;
 
@@ -57,7 +57,8 @@ public class AccountController {
 	 * @param userAccountBiz
 	 *        the user account biz
 	 */
-	public AccountController(@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
+	public AccountRegistrationController(
+			@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
 		super();
 		this.userAccountBiz = requireNonNullArgument(userAccountBiz, "userAccountBiz");
 	}
@@ -77,27 +78,16 @@ public class AccountController {
 	}
 
 	/**
-	 * Update account details.
+	 * Submit the account registration.
 	 *
 	 * @param input
-	 *        the input
-	 * @return the result
+	 *        the form to save
+	 * @return the new account
 	 */
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST)
-	public Result<SnAccountInfo> updateAccount(@Valid @RequestBody SnAccountCreationInput input) {
-		final UserAccountBiz biz = biz();
-		return success(biz.updateAccount(getCurrentActorUserId(), input));
-	}
-
-	/**
-	 * Get the active user's account.
-	 *
-	 * @return the account
-	 */
-	@RequestMapping(value = "/view", method = RequestMethod.GET)
-	public Result<SnAccountInfo> viewAccount() {
-		final UserAccountBiz biz = biz();
-		return success(biz.getAccountForUser(getCurrentActorUserId()));
+	@RequestMapping(value = "", method = RequestMethod.POST)
+	public Result<SnAccountInfo> register(@Valid @RequestBody SnAccountCreationInput input) {
+		var account = biz().createAccount(SecurityUtils.getCurrentActorUserId(), input);
+		return success(account);
 	}
 
 }

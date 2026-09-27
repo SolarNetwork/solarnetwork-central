@@ -15,7 +15,7 @@
 	<p class="intro" data-th-utext="#{account.unregistered.intro}">
 		Register now for amazing benefits and access to features that will blow your mind.
 	</p>
-	<p data-th-utext="#{account.features.intro}">
+	<p data-th-utext="#{account.unregistered.features.intro}">
 		Check out these amazing features, guaranteed to knock your socks off, each and every one.
 	</p>
 	<table class="table table-condensed">
@@ -42,7 +42,16 @@
 </section>
 
 <section data-th-if="${account}" data-th-remove="tag">
-
+	<h2>
+		<span data-th-text="#{account.title}">Account</span>
+		<a href="#" class="btn btn-primary pull-right"
+			data-th-href="@{/u/sec/account/edit}"
+			data-th-text="#{edit.label}">Edit</a>
+	</h2>
+	<p class="intro" data-th-utext="#{account.registered.intro}">
+		Check out all your amazing account details.
+	</p>
+	<div data-th-replace="~{sec/account/account-view :: content}">Account content here.</div>
 </section>
 
 </div>

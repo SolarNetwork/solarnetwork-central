@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.account.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import javax.money.CurrencyUnit;
+import javax.money.Monetary;
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.domain.validation.ValidLanguageTag;
@@ -53,6 +54,22 @@ public class SnAccountInput implements Serializable {
 	 */
 	public SnAccountInput() {
 		super();
+	}
+
+	/**
+	 * Create an input instance from an account entity.
+	 * 
+	 * @param acct
+	 *        the account to create an input for
+	 * @return the input
+	 */
+	public static SnAccountInput forAccount(@Nullable SnAccount<?, ?, ?> acct) {
+		final var result = new SnAccountInput();
+		if ( acct != null ) {
+			result.setCurrency(Monetary.getCurrency(acct.getCurrencyCode()));
+			result.setLocale(acct.getLocale());
+		}
+		return result;
 	}
 
 	/**

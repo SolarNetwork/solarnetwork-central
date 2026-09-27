@@ -24,8 +24,8 @@ package net.solarnetwork.central.user.account.biz;
 
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.account.domain.SnAccountInfo;
 
 /**
  * Service API for SolarUser account management.
@@ -42,7 +42,7 @@ public interface UserAccountBiz {
 	 *        the user ID to create the account for
 	 * @param input
 	 *        the account input
-	 * @return the account entity
+	 * @return the newly created account information
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 * @throws AuthorizationException
@@ -53,7 +53,7 @@ public interface UserAccountBiz {
 	 * @throws ValidationException
 	 *         if the input is not valid
 	 */
-	SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
+	SnAccountInfo createAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException;
 
 	/**
@@ -61,7 +61,7 @@ public interface UserAccountBiz {
 	 * 
 	 * @param userId
 	 *        the user ID to get the account for
-	 * @return the account entity
+	 * @return the account information
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 * @throws AuthorizationException
@@ -71,7 +71,26 @@ public interface UserAccountBiz {
 	 *         {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
 	 *         account does not exist for the given user
 	 */
-	SnAccount<?, ?, ?> getAccountForUser(Long userId)
-			throws IllegalArgumentException, AuthorizationException;
+	SnAccountInfo getAccountForUser(Long userId) throws IllegalArgumentException, AuthorizationException;
+
+	/**
+	 * Update an account.
+	 *
+	 * @param userId
+	 *        the user ID to update the account for
+	 * @param input
+	 *        the account input
+	 * @return the updated account information
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist or no account exists for the given
+	 *         user
+	 * @throws ValidationException
+	 *         if the input is not valid
+	 */
+	SnAccountInfo updateAccount(Long userId, SnAccountCreationInput input)
+			throws IllegalArgumentException, AuthorizationException, ValidationException;
 
 }

@@ -23,7 +23,6 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -39,10 +38,9 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.account.domain.SnAccountInfo;
 import net.solarnetwork.central.user.account.domain.SnAccountInput;
 import net.solarnetwork.central.user.account.domain.SnAddressInput;
-import net.solarnetwork.central.user.biz.UserBiz;
-import net.solarnetwork.central.user.domain.User;
 
 /**
  * Controller for the account registration pages.
@@ -50,29 +48,24 @@ import net.solarnetwork.central.user.domain.User;
  * @author matt
  * @version 1.0
  */
-@SessionAttributes({ AccountRegistrationController.ACCOUNT_INPUT })
-@RequestMapping(value = "/u/sec/account/register")
+@SessionAttributes({ AccountEditController.ACCOUNT_INPUT })
+@RequestMapping(value = "/u/sec/account/edit")
 @GlobalServiceController
-public class AccountRegistrationController {
+public class AccountEditController {
 
 	/** The model key to use for the account input object. */
 	public static final String ACCOUNT_INPUT = "accountInput";
 
-	private final UserBiz userBiz;
 	private final @Nullable UserAccountBiz userAccountBiz;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param userBiz
-	 *        the user biz
 	 * @param userAccountBiz
 	 *        the user account biz
 	 */
-	public AccountRegistrationController(UserBiz userBiz,
-			@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
+	public AccountEditController(@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
 		super();
-		this.userBiz = requireNonNullArgument(userBiz, "userBiz");
 		this.userAccountBiz = requireNonNullArgument(userAccountBiz, "userAccountBiz");
 	}
 
@@ -99,54 +92,51 @@ public class AccountRegistrationController {
 	public SnAccountCreationInput accountInput() {
 		final var form = new SnAccountCreationInput();
 
-		// populate some default values based on the active user
-		final User user = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
-		final var addr = new SnAddressInput();
-		form.setAddress(addr);
-		addr.setEmail(user.getEmail());
-		addr.setCountry(user.getCountry());
-		addr.setTimeZoneId(user.timeZone().getId());
+		final SnAccountInfo info = userAccountBiz
+				.getAccountForUser(SecurityUtils.getCurrentActorUserId());
 
-		final var acct = new SnAccountInput();
+		final var addr = SnAddressInput.forAddress(info.account().getAddress());
+		form.setAddress(addr);
+
+		final var acct = SnAccountInput.forAccount(info.account());
 		form.setAccount(acct);
-		Locale locale = Locale.forLanguageTag(
-				"%s-%s".formatted(user.lang(), user.getCountry().toUpperCase(Locale.ROOT)));
-		acct.setLocale(locale.toLanguageTag());
+
+		form.setRequestedEntitlements(info.entitlements());
 
 		return form;
 	}
 
 	/**
-	 * Render the account registration page.
+	 * Render the account edit page.
 	 *
-	 * @return the account registration page reference
+	 * @return the account edit page reference
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
-	public String register() {
-		return "sec/account/register";
+	public String edit() {
+		return "sec/account/edit";
 	}
 
 	/**
-	 * Submit the account registration form for confirmation (review).
+	 * Submit the account edit form for confirmation (review).
 	 *
 	 * @param input
 	 *        the form to confirm
 	 * @param errors
 	 *        validation errors
-	 * @return the account registration confirmation page reference
+	 * @return the account edit confirmation page reference
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public String submit(
-			@Valid @ModelAttribute(AccountRegistrationController.ACCOUNT_INPUT) SnAccountCreationInput input,
+			@Valid @ModelAttribute(AccountEditController.ACCOUNT_INPUT) SnAccountCreationInput input,
 			Errors errors) {
 		if ( errors.hasErrors() ) {
-			return "sec/account/register";
+			return "sec/account/edit";
 		}
-		return "sec/account/register-confirm";
+		return "sec/account/edit-confirm";
 	}
 
 	/**
-	 * Submit the account registration (after review).
+	 * Submit the account update (after review).
 	 *
 	 * @param input
 	 *        the form to save
@@ -158,23 +148,23 @@ public class AccountRegistrationController {
 	 */
 	@RequestMapping(value = "/confirm", method = RequestMethod.POST)
 	public String confirm(
-			@Valid @ModelAttribute(AccountRegistrationController.ACCOUNT_INPUT) SnAccountCreationInput input,
+			@Valid @ModelAttribute(AccountEditController.ACCOUNT_INPUT) SnAccountCreationInput input,
 			BindingResult errors, SessionStatus sessionStatus) {
 		if ( errors.hasErrors() ) {
-			return "sec/account/register";
+			return "sec/account/edit";
 		}
 		try {
-			biz().createAccount(SecurityUtils.getCurrentActorUserId(), input);
+			biz().updateAccount(SecurityUtils.getCurrentActorUserId(), input);
 		} catch ( ValidationException e ) {
 			errors.addAllErrors(e.getErrors());
 		} catch ( Exception e ) {
 			errors.addError(new ObjectError(ACCOUNT_INPUT, e.getMessage()));
 		}
 		if ( errors.hasErrors() ) {
-			return "sec/account/register";
+			return "sec/account/edit";
 		}
 		sessionStatus.setComplete();
-		return "sec/account/register-complete";
+		return "redirect:/u/sec/account";
 	}
 
 }

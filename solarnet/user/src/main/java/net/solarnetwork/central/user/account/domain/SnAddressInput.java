@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.account.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -70,6 +73,29 @@ public class SnAddressInput implements Serializable {
 	 */
 	public SnAddressInput() {
 		super();
+	}
+
+	/**
+	 * Create an input instance from an address entity.
+	 * 
+	 * @param addr
+	 *        the address to create an input for
+	 * @return the input
+	 */
+	public static SnAddressInput forAddress(@Nullable SnAddress<?, ?> addr) {
+		final var result = new SnAddressInput();
+		if ( addr != null ) {
+			result.setName(addr.getName());
+			result.setEmail(addr.getEmail());
+			result.setCountry(addr.getCountry());
+			result.setTimeZoneId(addr.getTimeZoneId());
+			result.setRegion(addr.getRegion());
+			result.setStateOrProvince(addr.getStateOrProvince());
+			result.setLocality(addr.getLocality());
+			result.setPostalCode(addr.getPostalCode());
+			result.setStreet(addr.getStreet());
+		}
+		return result;
 	}
 
 	/**
@@ -222,6 +248,26 @@ public class SnAddressInput implements Serializable {
 	 */
 	public final void setPostalCode(@Nullable String postalCode) {
 		this.postalCode = nonEmptyString(postalCode);
+	}
+
+	/**
+	 * Get a non-null street array.
+	 * 
+	 * @return the street array with all blanks removed
+	 * @throws IllegalArgumentException
+	 *         if no non-blank element is available
+	 */
+	public final String[] street() {
+		final var streets = this.street;
+		final List<String> streetsList = new ArrayList<>(streets != null ? streets.length : 0);
+		if ( streets != null ) {
+			for ( String s : streets ) {
+				if ( s != null && !s.isBlank() ) {
+					streetsList.add(s);
+				}
+			}
+		}
+		return requireNonEmptyArgument(streetsList.toArray(String[]::new), "street");
 	}
 
 	/**

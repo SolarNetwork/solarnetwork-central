@@ -155,6 +155,39 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
+	public void update_changeAddress() {
+		// GIVEN
+		insert();
+
+		final Account obj = dao.get(last.getId());
+
+		final Address address = addressDao.get(addressDao.save(createTestAddress()));
+
+		obj.setCurrencyCode("USD");
+		obj.setLocale("en_US");
+		obj.setAddress(address);
+
+		// WHEN
+		final var pk = dao.save(obj);
+
+		// THEN
+		// @formatter:off
+		then(pk)
+			.as("Primary key unchanged")
+			.isEqualTo(obj.getId())
+			;
+
+		final Account entity = dao.get(pk);
+		then(entity)
+			.as("Entity details updated to what was provided")
+			.returns(true, from(e -> e.isSameAs(obj)))
+			.as("Address updated to new address")
+			.returns(address.getAddressId(), from(e -> e.getAddress().getAddressId()))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void delete() {
 		insert();
 		dao.delete(last);

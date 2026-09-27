@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -147,25 +148,60 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 			throws IllegalArgumentException, AuthorizationException, ValidationException {
 
 		// save address
-		var addr = createAddress(userId, input.getAddress());
+		var addr = createAddress(userId, requireNonNullArgument(input.getAddress(), "input.address"));
 		var addrId = addressDao.save(addr);
 		addr = addr.copyWithId(addrId);
 
 		// save account
-		return accountDao.get(accountDao.save(createAccount(userId, input.getAccount(), addr)));
+		return nonnull(accountDao.get(accountDao.save(createAccount(userId,
+				requireNonNullArgument(input.getAccount(), "input.account"), addr))), "Entity");
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public SnAccount<?, ?, ?> getAccountForUser(User user)
 			throws IllegalArgumentException, AuthorizationException {
-		return accountDao.getForUser(user.getId());
+		return requireNonNullObject(accountDao.getForUser(requireNonNullArgument(user, "user").id()),
+				user.getId());
+	}
+
+	@Override
+	public SnAccount<?, ?, ?> updateAccount(Long userId, SnAccountCreationInput input)
+			throws IllegalArgumentException, AuthorizationException, ValidationException {
+		Account acct = requireNonNullObject(
+				accountDao.getForUser(requireNonNullArgument(userId, "userId")), userId);
+		Address addr = acct.getAddress();
+
+		// save new address if the input differs from existing
+		final Address updateAddr = createAddress(userId,
+				requireNonNullArgument(input.getAddress(), "input.address"));
+		if ( updateAddr.differsFrom(addr) ) {
+			var addrId = addressDao.save(updateAddr);
+			addr = updateAddr.copyWithId(addrId);
+		}
+
+		// update account if the input differs from existing
+		final Account updateAcct = createAccount(userId,
+				requireNonNullArgument(input.getAccount(), "input.account"), addr);
+		if ( updateAcct.differsFrom(acct) ) {
+			acct = updateAcct.copyWithId(acct.getId());
+			accountDao.save(acct);
+		}
+
+		return acct;
 	}
 
 	private Address createAddress(Long userId, SnAddressInput input) {
-		final var addr = new Address(UserLongCompositePK.unassignedEntityIdKey(userId), clock.instant(),
-				input.getName(), input.getEmail(), input.getCountry(), input.getTimeZoneId());
-		addr.setStreet(input.getStreet());
+		final var addr = new Address(
+		// @formatter:off
+				UserLongCompositePK.unassignedEntityIdKey(userId), clock.instant(),
+				requireNonNullArgument(input.getName(), "input.name"),
+				requireNonNullArgument(input.getEmail(), "input.email"),
+				requireNonNullArgument(input.getCountry(), "input.country"),
+				requireNonNullArgument(input.getTimeZoneId(), "input.timeZoneId")
+				// @formatter:on
+		);
+		addr.setStreet(input.street());
 		addr.setLocality(input.getLocality());
 		addr.setRegion(input.getRegion());
 		addr.setStateOrProvince(input.getStateOrProvince());
@@ -173,9 +209,10 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		return addr;
 	}
 
-	private Account createAccount(Long userId, @Nullable SnAccountInput input, Address address) {
+	private Account createAccount(Long userId, SnAccountInput input, Address address) {
 		final var acct = new Account(UserLongCompositePK.unassignedEntityIdKey(userId), clock.instant(),
-				nonnull(input.getCurrency(), "Currency").getCurrencyCode(), input.getLocale());
+				requireNonNullArgument(input.getCurrency(), "input.currency").getCurrencyCode(),
+				requireNonNullArgument(input.getLocale(), "input.locale"));
 		acct.setAddress(address);
 		return acct;
 	}
@@ -265,6 +302,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		}
 
 		return result;
+
 	}
 
 	@Override

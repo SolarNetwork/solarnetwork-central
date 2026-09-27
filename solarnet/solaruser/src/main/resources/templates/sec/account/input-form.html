@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Edit Form</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container">
+
+<div class="form-horizontal" data-th-fragment="content" data-th-object="${accountInput}" data-th-remove="tag">
+	<div class="alert alert-danger" role="alert" data-th-if="${#fields.hasGlobalErrors()}">
+	  <p data-th-each="err : ${#fields.globalErrors()}" data-th-text="${err}">...</p>
+	</div>	
+	<fieldset>
+		<legend data-th-text="#{account.address.title}">Address</legend>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.name')}? has-error">
+			<label class="col-sm-2 control-label" for="address-name" data-th-text="#{account.address.name.label}">Name</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.name}" id="address-name" maxlength="128" required class="form-control">
+				<span class="help-block" data-th-utext="#{account.address.name.caption}">Who to address the invoices to.</span>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.name')}" data-th-errors="*{address.name}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.email')}? has-error">
+			<label class="col-sm-2 control-label" for="address-email" data-th-text="#{account.address.email.label}">Email</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.email}" id="address-email" maxlength="128" required class="form-control">
+				<span class="help-block" data-th-utext="#{account.address.email.caption}">Any old email will do.</span>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.email')}" data-th-errors="*{address.email}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.street')}? has-error">
+			<label class="col-sm-2 control-label" for="address-street1" data-th-text="#{account.address.street.label}">Address</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.street1}" id="address-street1" maxlength="128" required data-th-placeholder="#{account.address.street1.placeholder}" class="form-control">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-street2"></label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.street2}" id="address-street2" maxlength="128" data-th-placeholder="#{account.address.street2.placeholder}" class="form-control">
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.street')}" data-th-errors="*{address.street}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.locality')}? has-error">
+			<label class="col-sm-2 control-label" for="address-locality" data-th-text="#{account.address.locality.label}">City</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.locality}" id="address-locality" maxlength="128" required class="form-control">
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.locality')}" data-th-errors="*{address.locality}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.stateOrProvince')}? has-error">
+			<label class="col-sm-2 control-label" for="address-stateOrProvince" data-th-text="#{account.address.stateOrProvince.label}">State</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.stateOrProvince}" id="address-stateOrProvince" maxlength="128" required class="form-control">
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.stateOrProvince')}" data-th-errors="*{address.stateOrProvince}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.region')}? has-error">
+			<label class="col-sm-2 control-label" for="address-region" data-th-text="#{account.address.region.label}">Region</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.region}" id="address-region" maxlength="128" class="form-control">
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.region')}" data-th-errors="*{address.region}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.postalCode')}? has-error">
+			<label class="col-sm-2 control-label" for="address-postalCode" data-th-text="#{account.address.postalCode.label}">Postal Code</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.postalCode}" id="address-postalCode" maxlength="128" required class="form-control">
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.postalCode')}" data-th-errors="*{address.postalCode}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.country')}? has-error">
+			<label class="col-sm-2 control-label" for="address-country" data-th-text="#{account.address.country.label}">Country</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.country}" id="address-country" maxlength="2" required class="form-control">
+				<span class="help-block" data-th-utext="#{account.address.country.caption}">A country code like <code>NZ</code>.</span>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.country')}" data-th-errors="*{address.country}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('address.timeZoneId')}? has-error">
+			<label class="col-sm-2 control-label" for="address-timeZoneId" data-th-text="#{account.address.timeZoneId.label}">Time Zone</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{address.timeZoneId}" id="address-timeZoneId" maxlength="64" class="form-control">
+				<span class="help-block" data-th-utext="#{account.address.timeZoneId.caption}">A time zone like <code>Pacific/Auckland</code>.</span>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('address.timeZoneId')}" data-th-errors="*{address.timeZoneId}"></span>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend data-th-text="#{account.locale.title}">Locale</legend>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('account.currency')}? has-error">
+			<label class="col-sm-2 control-label" for="account-currency" data-th-text="#{account.currency.label}">Currency</label>
+			<div class="col-sm-6">
+				<select data-th-field="*{account.currency}" class="form-control" id="account-currency">
+					<option data-th-each="currency : ${T(net.solarnetwork.central.user.account.domain.SupportedCurrency).values()}"
+						data-th-value="${currency.currencyCode}" data-th-text="${currency}">USD</option>
+				</select>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('account.currency')}" data-th-errors="*{account.currency}"></span>
+			</div>
+		</div>
+		<div class="form-group" data-th-classappend="${#fields.hasErrors('account.locale')}? has-error">
+			<label class="col-sm-2 control-label" for="account-locale" data-th-text="#{account.locale.label}">Language</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{account.locale}" id="account-locale" maxlength="128" required class="form-control">
+				<span class="help-block" data-th-utext="#{account.locale.caption}">Something like <code>en-US</code>.</span>
+				<span class="text-warning" data-th-if="${#fields.hasErrors('account.locale')}" data-th-errors="*{account.locale}"></span>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend data-th-text="#{account.features.title}">Features</legend>
+		<p data-th-text="#{account.features.intro}">Enable the features you would like to use.</p>
+		<div class="form-group" data-th-each="feature : ${T(net.solarnetwork.central.user.account.domain.SnFeatureEntitlement).values()}">		
+			<label class="col-sm-2 control-label" for="account-feature" data-th-for="${'account-feature-' + feature}" data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}">Feature</label>
+			<div class="col-sm-6 checkbox">
+				<label>
+					<input type="checkbox" data-th-id="${'account-feature-' + feature}" data-th-field="*{requestedEntitlements}" data-th-value="${feature}">
+					<span data-th-remove="tag" data-th-utext="#{${'account.feature.entitlement.' + feature + '.desc'}}"></span>
+				</label>
+			</div>
+		</div>
+	</fieldset>
+</div>
+
+</div>
+</body>
+</html>

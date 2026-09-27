@@ -103,8 +103,11 @@
 						</li>
 					</ul>
 				</li>
-				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')" data-th-if="ocppBiz">
+				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')">
 					<a data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
+				</li>
+				<li data-th-classappend="${navloc == 'account'}?active" sec:authorize="hasRole('ROLE_USER') && !hasRole('ROLE_BILLING')">
+					<a data-th-href="@{/u/sec/account}" data-th-text="#{link.subscribe}">Subscribe</a>
 				</li>
 	 		</ul>
 

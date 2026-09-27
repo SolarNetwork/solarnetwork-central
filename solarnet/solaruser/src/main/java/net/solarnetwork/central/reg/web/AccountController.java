@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
-import net.solarnetwork.central.user.account.domain.SnAccount;
+import net.solarnetwork.central.user.account.domain.SnAccountInfo;
 
 /**
  * Controller for the account pages.
@@ -75,7 +75,7 @@ public class AccountController {
 	 *         available
 	 */
 	@ModelAttribute(binding = false, name = "account")
-	public @Nullable SnAccount<?, ?, ?> account() {
+	public @Nullable SnAccountInfo account() {
 		try {
 			return biz().getAccountForUser(SecurityUtils.getCurrentActorUserId());
 		} catch ( Exception e ) {

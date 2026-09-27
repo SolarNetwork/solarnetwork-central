@@ -87,7 +87,8 @@
 	
 	<update id="update-Account" parameterType="net.solarnetwork.central.user.billing.snf.domain.Account">
 		UPDATE solarbill.bill_account
-		SET currency = #{currencyCode}
+		SET addr_id = #{address.addressId}
+			, currency = #{currencyCode}
 			, locale = #{locale}
 		WHERE user_id = #{userId}
 			AND id = #{accountId}

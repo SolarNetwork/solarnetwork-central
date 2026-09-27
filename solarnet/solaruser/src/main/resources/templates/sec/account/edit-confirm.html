@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'account')}">
 <head>
-    <title data-th-text="#{account.regsiter.confirm.title}">Account Register Review</title>
+    <title data-th-text="#{account.edit.confirm.title}">Account Edit Review</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
@@ -11,17 +11,16 @@
 <div class="container" data-th-fragment="content">
 <a id="top"></a>
 
-<p class="intro" data-th-utext="#{account.register.confirm.intro}">
+<p class="intro" data-th-utext="#{account.edit.confirm.intro}">
 	How's all that look?
 </p>
 
-<form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/register/confirm}">
+<form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/edit/confirm}">
 	<div data-th-replace="~{sec/account/input-review :: content}">Account form review content here.</div>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
-			<p class="alert alert-warning" role="alert" data-th-utext="#{account.register.confirm.terms}">Are you sure?</p>
-			<button type="submit" class="btn btn-primary" data-th-text="#{account.register.submit.label}">Submit</button>
-			<a href="." class="btn btn-default" data-th-href="@{/u/sec/account/register}" data-th-text="#{edit.label}">Edit</a>
+			<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+			<a href="." class="btn btn-default" data-th-href="@{/u/sec/account/edit}" data-th-text="#{edit.label}">Edit</a>
 		</div>
 	</div>
 </form>
