@@ -27,6 +27,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.UsageTier.tier;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -39,11 +40,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
@@ -62,6 +65,9 @@ public class SnfBillingSystemTests {
 	private SnfInvoicingSystem invoicingSystem;
 
 	@Mock
+	private AddressDao addressDao;
+
+	@Mock
 	private AccountDao accountDao;
 
 	@Mock
@@ -70,11 +76,15 @@ public class SnfBillingSystemTests {
 	@Mock
 	private NodeUsageDao usageDao;
 
+	private MutableClock clock;
 	private SnfBillingSystem system;
 
 	@BeforeEach
 	public void setup() {
-		system = new SnfBillingSystem(invoicingSystem, accountDao, invoiceDao, usageDao);
+		clock = MutableClock.of(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC);
+		;
+		system = new SnfBillingSystem(clock, invoicingSystem, addressDao, accountDao, invoiceDao,
+				usageDao);
 	}
 
 	@Test

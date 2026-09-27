@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.config;
 
 import static net.solarnetwork.central.common.dao.config.VersionedMessageDaoConfig.VERSIONED_MESSAGES_CACHE;
+import java.time.Clock;
 import java.util.List;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
@@ -57,6 +59,9 @@ public class SnfBillingSystemConfig {
 	@Autowired
 	@Qualifier(VERSIONED_MESSAGES_CACHE)
 	private Cache<String, VersionedMessageDao.VersionedMessages> versionedMessagesCache;
+
+	@Autowired
+	private AddressDao addressDao;
 
 	@Autowired
 	private AccountDao accountDao;
@@ -91,8 +96,8 @@ public class SnfBillingSystemConfig {
 
 	@Bean
 	public BillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem) {
-		SnfBillingSystem system = new SnfBillingSystem(snfInvoicingSystem, accountDao, invoiceDao,
-				usageDao);
+		SnfBillingSystem system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao,
+				accountDao, invoiceDao, usageDao);
 		return system;
 	}
 

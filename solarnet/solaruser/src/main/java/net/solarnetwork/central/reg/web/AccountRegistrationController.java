@@ -172,7 +172,7 @@ public class AccountRegistrationController {
 			return "sec/account/register";
 		}
 		sessionStatus.setComplete();
-		return "redirect:sec/account";
+		return "redirect:/u/sec/account";
 	}
 
 }

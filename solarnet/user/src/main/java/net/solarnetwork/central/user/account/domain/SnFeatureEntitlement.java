@@ -37,31 +37,47 @@ package net.solarnetwork.central.user.account.domain;
 public enum SnFeatureEntitlement {
 
 	/** Access to Cloud Integrations. */
-	CLOUD_INTEGRATIONS,
+	CLOUD_INTEGRATIONS("ROLE_CLOUD_INTEGRATIONS"),
 
 	/** Access to SolarDIN dynamic datum input. */
-	DATUM_INPUT_ENDPOINTS,
+	DATUM_INPUT_ENDPOINTS("ROLE_DATUM_INPUT"),
 
 	/** Access to SolarDNP3. */
-	DNP3,
+	DNP3("ROLE_DNP3"),
 
 	/*- Access to event hooks. */
-	// TODO: these might be removed EVENT_HOOKS,
+	// TODO: these might be removed EVENT_HOOKS("ROLE_EVENT"),
 
 	/** Access to datum export. */
-	DATUM_EXPORT,
+	DATUM_EXPORT("ROLE_EXPORT"),
 
 	/** Access to datum import. */
-	DATUM_IMPORT,
+	DATUM_IMPORT("ROLE_IMPORT"),
 
 	/** Access to SolarDIN dynamic instruction input. */
-	INSTRUCTION_INPUT_ENDPOINTS,
+	INSTRUCTION_INPUT_ENDPOINTS("ROLE_INSTRUCTION_INPUT"),
 
 	/** Access to SolarOCPP. */
-	OCPP,
+	OCPP("ROLE_OCPP"),
 
 	/** Access to SolarOSCP. */
-	OSCP,
+	OSCP("ROLE_OSCP"),
 
 	;
+
+	private final String roleName;
+
+	private SnFeatureEntitlement(String roleName) {
+		this.roleName = roleName;
+	}
+
+	/**
+	 * Get the role name associated with this entitlement.
+	 * 
+	 * @return the role name
+	 */
+	public final String getRoleName() {
+		return roleName;
+	}
+
 }

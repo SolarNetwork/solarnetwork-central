@@ -42,6 +42,13 @@ import net.solarnetwork.central.user.domain.User;
 public interface BillingSystemRegistrar {
 
 	/**
+	 * Get a unique system key for the accounting functions of this system.
+	 * 
+	 * @return a unique key
+	 */
+	String getAccountingSystemKey();
+
+	/**
 	 * Test if an accounting key is supported by this registrar.
 	 * 
 	 * @param key

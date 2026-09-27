@@ -24,9 +24,11 @@ package net.solarnetwork.central.user.billing.snf;
 
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils.invoiceForSnfInvoice;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.InstantSource;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -42,9 +44,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.user.account.domain.SnAccount;
+import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.account.domain.SnAccountInput;
+import net.solarnetwork.central.user.account.domain.SnAddressInput;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
@@ -52,15 +61,18 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -70,16 +82,18 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
-public class SnfBillingSystem implements BillingSystem {
+public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
 	public static final String ANY_CURRENCY_CODE = "*";
 
+	private final InstantSource clock;
 	private final AccountDao accountDao;
+	private final AddressDao addressDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoicingSystem invoicingSystem;
 	private final NodeUsageDao nodeUsageDao;
@@ -89,8 +103,12 @@ public class SnfBillingSystem implements BillingSystem {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock
 	 * @param invoicingSystem
 	 *        the invoicing system
+	 * @param addressDao
+	 *        the address DAO
 	 * @param accountDao
 	 *        the account DAO
 	 * @param invoiceDao
@@ -99,11 +117,15 @@ public class SnfBillingSystem implements BillingSystem {
 	 *        the node usage DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
+	 * @since 2.3
 	 */
-	public SnfBillingSystem(SnfInvoicingSystem invoicingSystem, AccountDao accountDao,
-			SnfInvoiceDao invoiceDao, NodeUsageDao nodeUsageDao) {
+	public SnfBillingSystem(InstantSource clock, SnfInvoicingSystem invoicingSystem,
+			AddressDao addressDao, AccountDao accountDao, SnfInvoiceDao invoiceDao,
+			NodeUsageDao nodeUsageDao) {
 		super();
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
+		this.addressDao = requireNonNullArgument(addressDao, "addressDao");
 		this.accountDao = requireNonNullArgument(accountDao, "accountDao");
 		this.invoiceDao = requireNonNullArgument(invoiceDao, "invoiceDao");
 		this.nodeUsageDao = requireNonNullArgument(nodeUsageDao, "nodeUsageDao");
@@ -117,6 +139,45 @@ public class SnfBillingSystem implements BillingSystem {
 	@Override
 	public boolean supportsAccountingSystemKey(String key) {
 		return ACCOUNTING_SYSTEM_KEY.equals(key);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
+			throws IllegalArgumentException, AuthorizationException, ValidationException {
+
+		// save address
+		var addr = createAddress(userId, input.getAddress());
+		var addrId = addressDao.save(addr);
+		addr = addr.copyWithId(addrId);
+
+		// save account
+		return accountDao.get(accountDao.save(createAccount(userId, input.getAccount(), addr)));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public SnAccount<?, ?, ?> getAccountForUser(User user)
+			throws IllegalArgumentException, AuthorizationException {
+		return accountDao.getForUser(user.getId());
+	}
+
+	private Address createAddress(Long userId, SnAddressInput input) {
+		final var addr = new Address(UserLongCompositePK.unassignedEntityIdKey(userId), clock.instant(),
+				input.getName(), input.getEmail(), input.getCountry(), input.getTimeZoneId());
+		addr.setStreet(input.getStreet());
+		addr.setLocality(input.getLocality());
+		addr.setRegion(input.getRegion());
+		addr.setStateOrProvince(input.getStateOrProvince());
+		addr.setPostalCode(input.getPostalCode());
+		return addr;
+	}
+
+	private Account createAccount(Long userId, @Nullable SnAccountInput input, Address address) {
+		final var acct = new Account(UserLongCompositePK.unassignedEntityIdKey(userId), clock.instant(),
+				nonnull(input.getCurrency(), "Currency").getCurrencyCode(), input.getLocale());
+		acct.setAddress(address);
+		return acct;
 	}
 
 	@Override

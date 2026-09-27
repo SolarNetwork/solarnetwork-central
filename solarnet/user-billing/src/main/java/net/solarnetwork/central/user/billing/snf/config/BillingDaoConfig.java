@@ -27,12 +27,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao;
@@ -43,7 +45,7 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisTaxCodeDao;
  * User billing DAO configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class BillingDaoConfig {
@@ -52,43 +54,50 @@ public class BillingDaoConfig {
 	private SqlSessionTemplate sqlSessionTemplate;
 
 	@Bean
+	public AddressDao addressDao() {
+		var dao = new MyBatisAddressDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
+	@Bean
 	public AccountDao accountDao() {
-		MyBatisAccountDao dao = new MyBatisAccountDao();
+		var dao = new MyBatisAccountDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}
 
 	@Bean
 	public SnfInvoiceDao snfInvoiceDao() {
-		MyBatisSnfInvoiceDao dao = new MyBatisSnfInvoiceDao();
+		var dao = new MyBatisSnfInvoiceDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}
 
 	@Bean
 	public SnfInvoiceItemDao snfInvoiceItemDao() {
-		MyBatisSnfInvoiceItemDao dao = new MyBatisSnfInvoiceItemDao();
+		var dao = new MyBatisSnfInvoiceItemDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}
 
 	@Bean
 	public SnfInvoiceNodeUsageDao invoiceNodeUsageDao() {
-		MyBatisSnfInvoiceNodeUsageDao dao = new MyBatisSnfInvoiceNodeUsageDao();
+		var dao = new MyBatisSnfInvoiceNodeUsageDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}
 
 	@Bean
 	public NodeUsageDao nodeUsageDao() {
-		MyBatisNodeUsageDao dao = new MyBatisNodeUsageDao();
+		var dao = new MyBatisNodeUsageDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}
 
 	@Bean
 	public TaxCodeDao taxCodeDao() {
-		MyBatisTaxCodeDao dao = new MyBatisTaxCodeDao();
+		var dao = new MyBatisTaxCodeDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}

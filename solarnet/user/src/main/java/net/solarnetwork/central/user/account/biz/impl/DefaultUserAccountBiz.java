@@ -25,8 +25,13 @@ package net.solarnetwork.central.user.account.biz.impl;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.user.billing.domain.BillingDataConstants.ACCOUNTING_DATA_PROP;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -37,6 +42,7 @@ import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
+import net.solarnetwork.central.user.account.domain.SnFeatureEntitlement;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -72,6 +78,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 		this.userDao = requireNonNullArgument(userDao, "userDao");
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public SnAccount<?, ?, ?> createAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException {
@@ -83,7 +90,38 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 
 		final BillingSystemRegistrar registrar = registrarForKey(input.getSystemKey());
 
-		return registrar.createAccount(user.id(), input);
+		var account = registrar.createAccount(user.id(), input);
+
+		// assign user to this billing system
+		user.putInternalDataValue(ACCOUNTING_DATA_PROP, registrar.getAccountingSystemKey());
+		userDao.storeInternalData(user.getId(), user.getInternalData());
+
+		// assign requested entitlements
+		Set<String> roles = setupRoles(userDao.getUserRoles(user), input.getRequestedEntitlements());
+		userDao.storeUserRoles(user, roles);
+
+		return account;
+	}
+
+	private Set<String> setupRoles(Set<String> existingRoles, Set<SnFeatureEntitlement> entitlements) {
+		var result = new LinkedHashSet<String>(existingRoles);
+
+		// remove any entitlement roles not specified
+		for ( SnFeatureEntitlement entitlement : EnumSet.complementOf(EnumSet.copyOf(entitlements)) ) {
+			result.remove(entitlement.getRoleName());
+		}
+
+		// always assign billing
+		result.add("ROLE_BILLING");
+
+		// add requested entitlements
+		if ( entitlements != null ) {
+			for ( SnFeatureEntitlement entitlement : entitlements ) {
+				result.add(entitlement.getRoleName());
+			}
+		}
+
+		return result;
 	}
 
 	@Override

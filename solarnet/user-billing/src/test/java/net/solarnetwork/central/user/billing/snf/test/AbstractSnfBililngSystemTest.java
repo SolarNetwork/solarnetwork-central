@@ -22,18 +22,22 @@
 
 package net.solarnetwork.central.user.billing.snf.test;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
@@ -48,6 +52,8 @@ import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
  */
 public class AbstractSnfBililngSystemTest {
 
+	protected MutableClock clock;
+	protected AddressDao addressDao;
 	protected AccountDao accountDao;
 	protected SnfInvoiceDao invoiceDao;
 	protected SnfInvoiceItemDao invoiceItemDao;
@@ -65,6 +71,8 @@ public class AbstractSnfBililngSystemTest {
 
 	@BeforeEach
 	public void setup() {
+		clock = MutableClock.of(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC);
+		addressDao = EasyMock.createMock(AddressDao.class);
 		accountDao = EasyMock.createMock(AccountDao.class);
 		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
 		invoiceItemDao = EasyMock.createMock(SnfInvoiceItemDao.class);
@@ -78,23 +86,24 @@ public class AbstractSnfBililngSystemTest {
 		invoicingSystem = new DefaultSnfInvoicingSystem(accountDao, invoiceDao, invoiceItemDao,
 				invoiceNodeUsageDao, usageDao, taxCodeDao, messageDao);
 
-		system = new SnfBillingSystem(invoicingSystem, accountDao, invoiceDao, usageDao);
+		system = new SnfBillingSystem(clock, invoicingSystem, addressDao, accountDao, invoiceDao,
+				usageDao);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
-		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
-				.toLocalDate();
+		startDate = clock.instant().atZone(ZoneId.systemDefault()).truncatedTo(ChronoUnit.DAYS)
+				.withDayOfMonth(1).minusMonths(1).toLocalDate();
 		endDate = startDate.plusMonths(1);
 	}
 
 	protected void replayAll() {
-		EasyMock.replay(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao, usageDao,
-				taxCodeDao, messageDao);
+		EasyMock.replay(addressDao, accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao,
+				usageDao, taxCodeDao, messageDao);
 	}
 
 	@AfterEach
 	public void teardown() {
-		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao, usageDao,
-				taxCodeDao, messageDao);
+		EasyMock.verify(addressDao, accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao,
+				usageDao, taxCodeDao, messageDao);
 	}
 
 }
