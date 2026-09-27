@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import net.solarnetwork.central.domain.validation.ValidCountryCode;
 import net.solarnetwork.central.domain.validation.ValidTimeZoneId;
 
 /**
@@ -50,7 +51,8 @@ public class SnAddressInput implements Serializable {
 	@Email
 	private @Nullable String email;
 
-	// TODO @ValidCountryCode
+	@NotNull
+	@ValidCountryCode
 	private @Nullable String country;
 
 	@NotNull

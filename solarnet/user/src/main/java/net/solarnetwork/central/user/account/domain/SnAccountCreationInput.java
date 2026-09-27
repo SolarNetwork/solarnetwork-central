@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -42,9 +43,11 @@ public class SnAccountCreationInput implements Serializable {
 
 	private @Nullable String systemKey;
 
+	@Valid
 	@NotNull
 	private @Nullable SnAccountInput account;
 
+	@Valid
 	@NotNull
 	private @Nullable SnAddressInput address;
 
