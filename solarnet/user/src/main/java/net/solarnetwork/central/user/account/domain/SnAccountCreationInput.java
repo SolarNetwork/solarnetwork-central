@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.account.domain;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -33,7 +35,10 @@ import jakarta.validation.constraints.NotNull;
  * @version 1.0
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
-public class SnAccountCreationInput {
+public class SnAccountCreationInput implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -8617384371765834188L;
 
 	private @Nullable String systemKey;
 

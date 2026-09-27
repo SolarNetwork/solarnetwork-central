@@ -45,8 +45,8 @@ public enum SnFeatureEntitlement {
 	/** Access to SolarDNP3. */
 	DNP3,
 
-	/** Access to event hooks. */
-	EVENT_HOOKS,
+	/*- Access to event hooks. */
+	// TODO: these might be removed EVENT_HOOKS,
 
 	/** Access to datum export. */
 	DATUM_EXPORT,

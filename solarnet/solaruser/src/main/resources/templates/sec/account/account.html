@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'account')}">
+<head>
+    <title data-th-text="#{account.title}">Account</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<section data-th-unless="${account}" data-th-remove="tag">
+	<p class="intro" data-th-utext="#{account.unregistered.intro}">
+		Register now for amazing benefits and access to features that will blow your mind.
+	</p>
+	<p data-th-utext="#{account.features.intro}">
+		Check out these amazing features, guaranteed to knock your socks off, each and every one.
+	</p>
+	<table class="table table-condensed">
+		<thead>
+			<tr>
+				<th data-th-text="#{account.feature.name.label}">Feature</th>
+				<th data-th-text="#{account.feature.description.label}">Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-th-each="feature : ${T(net.solarnetwork.central.user.account.domain.SnFeatureEntitlement).values()}">
+				<th data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}">Feature 1</th>
+				<td data-th-utext="#{${'account.feature.entitlement.' + feature + '.desc'}}">See how awesome this feature is.</td>
+			</tr>
+		</tbody>
+	</table>
+	<p>
+		<a class="btn btn-primary"
+			data-th-href="@{/u/sec/account/register}"
+			data-th-text="#{account.unregistered.signup.action}"
+			href="./register"
+			>Let's Go!</a>
+	</p>
+</section>
+
+<section data-th-if="${account}" data-th-remove="tag">
+
+</section>
+
+</div>
+</body>
+</html>

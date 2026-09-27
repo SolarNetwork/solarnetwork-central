@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.account.domain;
 
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
+import java.io.Serial;
+import java.io.Serializable;
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -35,7 +38,10 @@ import net.solarnetwork.central.domain.validation.ValidTimeZoneId;
  * @version 1.0
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
-public class SnAddressInput {
+public class SnAddressInput implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -3131191080869369863L;
 
 	@NotBlank
 	private @Nullable String name;
@@ -80,7 +86,7 @@ public class SnAddressInput {
 	 *        the name to set
 	 */
 	public final void setName(@Nullable String name) {
-		this.name = name;
+		this.name = nonEmptyString(name);
 	}
 
 	/**
@@ -99,7 +105,7 @@ public class SnAddressInput {
 	 *        the email to set
 	 */
 	public final void setEmail(@Nullable String email) {
-		this.email = email;
+		this.email = nonEmptyString(email);
 	}
 
 	/**
@@ -118,7 +124,7 @@ public class SnAddressInput {
 	 *        the country to set
 	 */
 	public final void setCountry(@Nullable String country) {
-		this.country = country;
+		this.country = nonEmptyString(country);
 	}
 
 	/**
@@ -137,7 +143,7 @@ public class SnAddressInput {
 	 *        the timeZoneId to set
 	 */
 	public final void setTimeZoneId(@Nullable String timeZoneId) {
-		this.timeZoneId = timeZoneId;
+		this.timeZoneId = nonEmptyString(timeZoneId);
 	}
 
 	/**
@@ -156,7 +162,7 @@ public class SnAddressInput {
 	 *        the region to set
 	 */
 	public final void setRegion(@Nullable String region) {
-		this.region = region;
+		this.region = nonEmptyString(region);
 	}
 
 	/**
@@ -175,7 +181,7 @@ public class SnAddressInput {
 	 *        the state or province to set
 	 */
 	public final void setStateOrProvince(@Nullable String stateOrProvince) {
-		this.stateOrProvince = stateOrProvince;
+		this.stateOrProvince = nonEmptyString(stateOrProvince);
 	}
 
 	/**
@@ -194,7 +200,7 @@ public class SnAddressInput {
 	 *        the locality to set
 	 */
 	public final void setLocality(@Nullable String locality) {
-		this.locality = locality;
+		this.locality = nonEmptyString(locality);
 	}
 
 	/**
@@ -213,7 +219,7 @@ public class SnAddressInput {
 	 *        the postal code to set
 	 */
 	public final void setPostalCode(@Nullable String postalCode) {
-		this.postalCode = postalCode;
+		this.postalCode = nonEmptyString(postalCode);
 	}
 
 	/**
@@ -233,6 +239,54 @@ public class SnAddressInput {
 	 */
 	public final void setStreet(String @Nullable [] street) {
 		this.street = street;
+	}
+
+	/**
+	 * Set the street first element.
+	 * 
+	 * @return the street
+	 */
+	public final @Nullable String getStreet1() {
+		return (street != null && street.length > 0 ? street[0] : null);
+	}
+
+	/**
+	 * Get the street first element.
+	 * 
+	 * @param street
+	 *        the street to set
+	 */
+	public final void setStreet1(@Nullable String street) {
+		if ( this.street == null || this.street.length < 1 ) {
+			this.street = new String[2];
+		}
+		this.street[0] = nonEmptyString(street);
+	}
+
+	/**
+	 * Set the street second element.
+	 * 
+	 * @return the street
+	 */
+	public final @Nullable String getStreet2() {
+		return (street != null && street.length > 1 ? street[1] : null);
+	}
+
+	/**
+	 * Get the street second element.
+	 * 
+	 * @param street
+	 *        the street to set
+	 */
+	public final void setStreet2(@Nullable String street) {
+		if ( this.street == null || this.street.length < 2 ) {
+			var tmp = new String[2];
+			if ( this.street != null && this.street.length > 0 ) {
+				tmp[0] = this.street[0];
+			}
+			this.street = tmp;
+		}
+		this.street[1] = nonEmptyString(street);
 	}
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * AccountController.java - 27 Sept 2026 7:54:26 am
+ * AccountController.java - 27 Sept 2026 11:49:25 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,33 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api.v1;
+package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
-import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-import jakarta.validation.Valid;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccount;
-import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
-import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.domain.Result;
 
 /**
- * Web service API for billing account management.
+ * Controller for the account pages.
  *
  * @author matt
  * @version 1.0
  */
-@RestController("v1AccountController")
-@RequestMapping(value = { "/u/sec/account", "/api/v1/sec/user/account" })
-@GlobalExceptionRestController
+@GlobalServiceController
 public class AccountController {
 
 	private final @Nullable UserAccountBiz userAccountBiz;
@@ -77,27 +69,28 @@ public class AccountController {
 	}
 
 	/**
-	 * Create a new account.
+	 * Provide the active user's Account entity, if available.
 	 *
-	 * @param input
-	 *        the input
-	 * @return the result
+	 * @return the account entity for the active user, or {@code null} if none
+	 *         available
 	 */
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST)
-	public Result<SnAccount<?, ?, ?>> createAccount(@Valid @RequestBody SnAccountCreationInput input) {
-		final UserAccountBiz biz = biz();
-		return success(biz.createAccount(getCurrentActorUserId(), input));
+	@ModelAttribute(binding = false, name = "account")
+	public @Nullable SnAccount<?, ?, ?> account() {
+		try {
+			return biz().getAccountForUser(SecurityUtils.getCurrentActorUserId());
+		} catch ( Exception e ) {
+			return null;
+		}
 	}
 
 	/**
-	 * Get the active user's account.
+	 * Render the account main page.
 	 *
-	 * @return the account
+	 * @return
 	 */
-	@RequestMapping(value = "/view", method = RequestMethod.GET)
-	public Result<SnAccount<?, ?, ?>> viewAccount() {
-		final UserAccountBiz biz = biz();
-		return success(biz.getAccountForUser(getCurrentActorUserId()));
+	@RequestMapping(value = "/u/sec/account", method = RequestMethod.GET)
+	public String home() {
+		return "sec/account/account";
 	}
 
 }

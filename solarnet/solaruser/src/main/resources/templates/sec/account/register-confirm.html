@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'account')}">
+<head>
+    <title data-th-text="#{account.regsiter.title}">Account Register</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{account.register.confirm.intro}">
+	How's all that look?
+</p>
+
+<form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/register/confirm}">
+	<fieldset>
+		<legend data-th-text="#{account.address.title}">Address</legend>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-name" data-th-text="#{account.address.name.label}">Name</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.name}" id="address-name" class="form-control-static">John Smith</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-email" data-th-text="#{account.address.email.label}">Email</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.email}" id="address-email" class="form-control-static">foo@bar</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-street1" data-th-text="#{account.address.street.label}">Address</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.street1}" id="address-street1" class="form-control-static">123 Main St</p>
+			</div>
+		</div>
+		<div class="form-group" data-th-if="*{address.street2}">
+			<label class="col-sm-2 control-label" for="address-street2"></label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.street2}" id="address-street2"class="form-control-static"></p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-locality" data-th-text="#{account.address.locality.label}">City</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.locality}" id="address-locality" class="form-control-static">Anytown</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-stateOrProvince" data-th-text="#{account.address.stateOrProvince.label}">State</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.stateOrProvince}" id="address-stateOrProvince" class="form-control-static">Anyplace</p>
+			</div>
+		</div>
+		<div class="form-group" data-th-if="*{address.region}">
+			<label class="col-sm-2 control-label" for="address-region" data-th-text="#{account.address.region.label}">Region</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.region}" id="address-region" class="form-control-static">Anywhere</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-postalCode" data-th-text="#{account.address.postalCode.label}">Postal Code</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.postalCode}" id="address-postalCode" class="form-control-static">12345</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-country" data-th-text="#{account.address.country.label}">Country</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.country}" id="address-country" class="form-control-static">US</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="address-timeZoneId" data-th-text="#{account.address.timeZoneId.label}">Time Zone</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{address.timeZoneId}" id="address-timeZoneId" class="form-control-static">America/New_York</p>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend data-th-text="#{account.locale.title}">Locale</legend>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="account-currency" data-th-text="#{account.currency.label}">Currency</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{account.currency}" class="form-control-static" id="account-currency">USD</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="account-locale" data-th-text="#{account.locale.label}">Language</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{account.locale}" id="account-locale" class="form-control-static">en-US</p>
+			</div>
+		</div>
+	</fieldset>
+	<div class="form-group">
+		<div class="col-sm-offset-2 col-sm-10">
+			<button type="submit" class="btn btn-primary" data-th-text="#{account.register.submit.label}">Submit</button>
+			<a href="." class="btn btn-default" data-th-href="@{/u/sec/account/register}" data-th-text="#{edit.label}">Edit</a>
+		</div>
+	</div>
+</form>
+
+</div>
+</body>
+</html>

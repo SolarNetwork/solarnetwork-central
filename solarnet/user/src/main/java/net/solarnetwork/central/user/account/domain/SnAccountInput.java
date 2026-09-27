@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.account.domain;
 
+import java.io.Serial;
+import java.io.Serializable;
 import javax.money.CurrencyUnit;
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -34,7 +36,10 @@ import net.solarnetwork.central.domain.validation.ValidLanguageTag;
  * @version 1.0
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
-public class SnAccountInput {
+public class SnAccountInput implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -6337069674618723091L;
 
 	@NotNull
 	private @Nullable CurrencyUnit currency;
