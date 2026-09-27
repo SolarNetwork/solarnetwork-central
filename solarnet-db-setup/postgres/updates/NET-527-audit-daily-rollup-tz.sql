@@ -1,3 +1,25 @@
+/* ============================================================================
+ * NET-527: compute daily audit rollup windows in the entity time zone.
+ *
+ * The daily rollup windows were computed as `stale.ts_start + interval '1 day'`. For a
+ * `timestamptz` Postgres evaluates that in the *session* time zone, not the stream, node, or
+ * user time zone that `stale.ts_start` is a local midnight in, so the window was 24 hours long
+ * whenever the session zone had no daylight saving transition on that day. On a transition day
+ * in the entity zone that meant the final local hour of a 25-hour day was left out of the
+ * rollup, and the first local hour of the day following a 23-hour day was counted in both days.
+ *
+ * The "time zone changed" cleanup windows either side of the day had the same problem, and
+ * there it could delete a legitimate adjacent daily row: 24 hours before a local midnight that
+ * follows a 23-hour day reaches back past the previous local midnight.
+ *
+ * These now use the same local-zone form the monthly branches already used, so each window
+ * spans one day in the entity time zone whatever the session time zone is.
+ *
+ * The function signatures are unchanged, so `CREATE OR REPLACE` keeps their existing owner and
+ * ACLs and no companion production DDL is needed.
+ * ============================================================================
+ */
+
 /**
  * Compute a single stale audit datum rollup and store the results in the
  * `solardatm.aud_datm_daily`, `solardatm.aud_datm_monthly`, and/or `aud_acc_datm_daily` tables.
@@ -157,251 +179,6 @@ $$;
 
 
 /**
- * Call the `solardatm.find_audit_datum_daily_missing(date)` function and insert the results
- * into the `solardatm.aud_stale_datm` table with an `aud_kind = 'M'` so a record of the found
- * node sources gets generated.
- *
- * The `aud_kind = M` value is used because the processor that handles that record also populates
- * the `solardatm.aud_acc_datum_daily` table.
- *
- * @param ts the date to look for; defaults to the current date
- * @return the number of rows inserted
- */
-CREATE OR REPLACE FUNCTION solardatm.populate_audit_datm_daily_missing(ts DATE DEFAULT CURRENT_DATE)
-	RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	ins_count bigint := 0;
-BEGIN
-	INSERT INTO solardatm.aud_stale_datm (ts_start, stream_id, aud_kind)
-	SELECT date_trunc('month', m.ts_start AT TIME ZONE m.time_zone) AT TIME ZONE m.time_zone
-		, m.stream_id
-		, 'M' AS aud_kind
-	FROM solardatm.find_audit_datm_daily_missing(ts) m
-	ON CONFLICT DO NOTHING;
-
-	GET DIAGNOSTICS ins_count = ROW_COUNT;
-	RETURN ins_count;
-END;
-$$;
-
-
-/**
- * Update the `solardatm.aud_datm_io` table by adding count values.
- *
- * @param sid 		the stream ID
- * @param ts_recv 	the datum receive date; this will be truncated to the hour
- * @param dcount	the datum count to add
- * @param pcount	the datum property count to add
- * @param is_insert `TRUE` if the datum was inserted, `FALSE` for updated
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_datum_count(
-	sid					UUID,
-	ts_recv 			TIMESTAMP WITH TIME ZONE,
-	dcount				INTEGER,
-	pcount				INTEGER,
-	is_insert			BOOL DEFAULT TRUE
-	) RETURNS VOID LANGUAGE SQL VOLATILE AS
-$$
-	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, datum_count, prop_count, prop_u_count)
-	VALUES (sid, date_trunc('hour', ts_recv), dcount, pcount
-		, CASE is_insert WHEN TRUE THEN 0 ELSE pcount END)
-	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET datum_count = aud_datm_io.datum_count + EXCLUDED.datum_count,
-		prop_count = aud_datm_io.prop_count + EXCLUDED.prop_count,
-		prop_u_count = aud_datm_io.prop_u_count + EXCLUDED.prop_u_count
-$$;
-
-
-/**
- * Increment the `solardatm.aud_datm_io` table `datum_q_count` for a stream.
- *
- * @param sid 				the stream ID to update audit datum for
- * @param ts				ts the query date
- * @param dcount			the datum count to insert, or add to an existing record
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_datum_q_count(
-		node	BIGINT,
-		source	TEXT,
-		ts 		TIMESTAMP WITH TIME ZONE,
-		dcount 	INTEGER
-	) RETURNS void LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	sid 	UUID;
-	tz		TEXT;
-BEGIN
-	-- with constraints and da_datm_meta_node_source_checker trigger we assume
-	-- the following query can only ever return 1 row (i.e. a node/source combo
-	-- is globally unique across da_datm_meta and da_datm_alias)
-	SELECT m.orig_stream_id, COALESCE(l.time_zone, 'UTC')
-	FROM solardatm.da_datm_meta_aliased m
-	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
-	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-	WHERE m.node_id = node AND m.source_id = source
-	INTO sid, tz;
-
-	IF FOUND THEN
-		INSERT INTO solardatm.aud_datm_io(stream_id, ts_start, datum_q_count)
-		VALUES (sid, date_trunc('hour', ts), dcount)
-		ON CONFLICT (stream_id, ts_start) DO UPDATE
-		SET datum_q_count = aud_datm_io.datum_q_count + EXCLUDED.datum_q_count;
-
-		INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
-		VALUES (sid, date_trunc('day', ts AT TIME ZONE tz) AT TIME ZONE tz, 'd')
-		ON CONFLICT DO NOTHING;
-	END IF;
-END
-$$;
-
-
-/**
- * Update the `solardatm.aud_datm_io` table by adding MQTT publish byte counts.
- *
- * @param service 	the MQTT service name; currently ignored and "solarflux" is assumed
- * @param node 		the node ID
- * @param src		the source ID
- * @param ts_recv	the timestamp; will be truncated to 'hour' level
- * @param bcount	the byte count to add
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_mqtt_publish_byte_count(
-	service			TEXT,
-	node 			BIGINT,
-	src				TEXT,
-	ts_recv 		TIMESTAMP WITH TIME ZONE,
-	bcount			INTEGER
-	) RETURNS VOID LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	sid 	UUID;
-	tz		TEXT;
-BEGIN
-	SELECT m.stream_id, COALESCE(l.time_zone, 'UTC')
-	FROM solardatm.da_datm_meta m
-	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
-	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-	WHERE m.node_id = node AND m.source_id = ANY(ARRAY[src, TRIM(leading '/' FROM src)])
-	LIMIT 1
-	INTO sid, tz;
-
-	IF FOUND THEN
-		INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, flux_byte_count)
-		VALUES (sid, date_trunc('hour', ts_recv), bcount)
-		ON CONFLICT (stream_id, ts_start) DO UPDATE
-		SET flux_byte_count = aud_datm_io.flux_byte_count + EXCLUDED.flux_byte_count;
-
-		INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
-		VALUES (sid, date_trunc('day', ts_recv AT TIME ZONE tz) AT TIME ZONE tz, 'd')
-		ON CONFLICT DO NOTHING;
-	END IF;
-END
-$$;
-
-/*
-	================================================================================================
-	Node service audit support functions
-	================================================================================================
-*/
-
-/**
- * Update the `solardatm.aud_node_io` table by adding instruction counts.
- *
- * @param srvc 		the srvc name
- * @param node 		the node ID
- * @param ts_recv	the timestamp; will be truncated to 'hour' level
- * @param icount	the count to add
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_node_count(
-	node 			BIGINT,
-	srvc			CHARACTER(4),
-	ts_recv 		TIMESTAMP WITH TIME ZONE,
-	icount			INTEGER
-	) RETURNS VOID LANGUAGE PLPGSQL VOLATILE AS
-$$
-DECLARE
-	tz						TEXT;
-BEGIN
-	-- get node time zone
-	SELECT COALESCE(solarnet.get_node_timezone(node), 'UTC') INTO tz;
-
-	INSERT INTO solardatm.aud_node_io (node_id, service, ts_start, cnt)
-	VALUES (node, srvc, date_trunc('hour', ts_recv), icount)
-	ON CONFLICT (node_id, service, ts_start) DO UPDATE
-	SET cnt = aud_node_io.cnt + EXCLUDED.cnt;
-
-	INSERT INTO solardatm.aud_stale_node (node_id, service, ts_start, aud_kind)
-	VALUES (node, srvc, date_trunc('day', ts_recv AT TIME ZONE tz) AT TIME ZONE tz, 'd')
-	ON CONFLICT DO NOTHING;
-END
-$$;
-
-/**
- * Calculate node daily audit values for a specific node service over a time range.
- *
- * @param node the 	node ID
- * @param srvc the 	audit service name
- * @param start_ts 	the starting time (inclusive)
- * @param end_ts 	the ending time (exclusive)
- */
-CREATE OR REPLACE FUNCTION solardatm.calc_audit_node_daily(
-		node 		BIGINT,
-		srvc		CHARACTER(4),
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		node_id		BIGINT,
-		service		CHARACTER(4),
-		ts_start 	TIMESTAMP WITH TIME ZONE,
-		cnt			BIGINT
-	) LANGUAGE SQL STABLE ROWS 1 AS
-$$
-	SELECT
-		node,
-		srvc,
-		start_ts,
-		SUM(aud.cnt) AS cnt
-	FROM solardatm.aud_node_io aud
-	WHERE aud.node_id = node
-		AND aud.service = srvc
-		AND aud.ts_start >= start_ts
-		AND aud.ts_start < end_ts
-	GROUP BY aud.node_id, aud.service
-$$;
-
-/**
- * Calculate node monthly audit values for a specific node service over a time range.
- *
- * @param node the 	node ID
- * @param srvc the 	audit service name
- * @param start_ts 	the starting time (inclusive)
- * @param end_ts 	the ending time (exclusive)
- */
-CREATE OR REPLACE FUNCTION solardatm.calc_audit_node_monthly(
-		node 		BIGINT,
-		srvc		CHARACTER(4),
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		node_id		BIGINT,
-		service		CHARACTER(4),
-		ts_start 	TIMESTAMP WITH TIME ZONE,
-		cnt			BIGINT
-	) LANGUAGE SQL STABLE ROWS 1 AS
-$$
-	SELECT
-		node,
-		srvc,
-		start_ts,
-		SUM(aud.cnt)::BIGINT AS cnt
-	FROM solardatm.aud_node_daily aud
-	WHERE aud.node_id = node
-		AND aud.service = srvc
-		AND aud.ts_start >= start_ts
-		AND aud.ts_start < end_ts
-	GROUP BY aud.node_id, aud.service
-$$;
-
-/**
  * Compute a single stale audit node rollup and store the results in the
  * `solardatm.aud_node_daily` or `solardatm.aud_node_monthly` tables.
  *
@@ -501,107 +278,6 @@ $$;
 
 
 /**
- * Update the `solardatm.aud_user_io` table by adding counts.
- *
- * @param usr 		the user ID
- * @param srvc 		the srvc name
- * @param ts_recv	the timestamp; will be truncated to 'hour' level
- * @param icount	the count to add
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_user_count(
-	usr 			BIGINT,
-	srvc			CHARACTER(4),
-	ts_recv 		TIMESTAMP WITH TIME ZONE,
-	icount			INTEGER
-	) RETURNS VOID LANGUAGE PLPGSQL VOLATILE AS
-$$
-DECLARE
-	tz				TEXT;
-BEGIN
-	-- get user time zone
-	SELECT COALESCE(solaruser.get_user_timezone(usr), 'UTC') INTO tz;
-
-	INSERT INTO solardatm.aud_user_io (user_id, service, ts_start, cnt)
-	VALUES (usr, srvc, date_trunc('hour', ts_recv), icount)
-	ON CONFLICT (user_id, service, ts_start) DO UPDATE
-	SET cnt = aud_user_io.cnt + EXCLUDED.cnt;
-
-	INSERT INTO solardatm.aud_stale_user (user_id, service, ts_start, aud_kind)
-	VALUES (usr, srvc, date_trunc('day', ts_recv AT TIME ZONE tz) AT TIME ZONE tz, 'd')
-	ON CONFLICT DO NOTHING;
-END
-$$;
-
-
-/**
- * Calculate user daily audit values for a specific user service over a time range.
- *
- * @param usr the 	user ID
- * @param srvc the 	audit service name
- * @param start_ts 	the starting time (inclusive)
- * @param end_ts 	the ending time (exclusive)
- */
-CREATE OR REPLACE FUNCTION solardatm.calc_audit_user_daily(
-		usr 		BIGINT,
-		srvc		CHARACTER(4),
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		user_id		BIGINT,
-		service		CHARACTER(4),
-		ts_start 	TIMESTAMP WITH TIME ZONE,
-		cnt			BIGINT
-	) LANGUAGE SQL STABLE ROWS 1 AS
-$$
-	SELECT
-		usr,
-		srvc,
-		start_ts,
-		SUM(aud.cnt) AS cnt
-	FROM solardatm.aud_user_io aud
-	WHERE aud.user_id = usr
-		AND aud.service = srvc
-		AND aud.ts_start >= start_ts
-		AND aud.ts_start < end_ts
-	GROUP BY aud.user_id, aud.service
-$$;
-
-
-/**
- * Calculate user monthly audit values for a specific user service over a time range.
- *
- * @param usr the 	user ID
- * @param srvc the 	audit service name
- * @param start_ts 	the starting time (inclusive)
- * @param end_ts 	the ending time (exclusive)
- */
-CREATE OR REPLACE FUNCTION solardatm.calc_audit_user_monthly(
-		usr 		BIGINT,
-		srvc		CHARACTER(4),
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		user_id		BIGINT,
-		service		CHARACTER(4),
-		ts_start 	TIMESTAMP WITH TIME ZONE,
-		cnt			BIGINT
-	) LANGUAGE SQL STABLE ROWS 1 AS
-$$
-	SELECT
-		usr,
-		srvc,
-		start_ts,
-		SUM(aud.cnt)::BIGINT AS cnt
-	FROM solardatm.aud_user_daily aud
-	WHERE aud.user_id = usr
-		AND aud.service = srvc
-		AND aud.ts_start >= start_ts
-		AND aud.ts_start < end_ts
-	GROUP BY aud.user_id, aud.service
-$$;
-
-
-/**
  * Compute a single stale audit user rollup and store the results in the
  * `solardatm.aud_user_daily` or `solardatm.aud_user_monthly` tables.
  *
@@ -696,33 +372,5 @@ BEGIN
 		result_cnt := 1;
 	END IF;
 	RETURN result_cnt;
-END
-$$;
-
-
-/**
- * Update MQTT byte counts in either the `solardatm.aud_datm_io` table or the
- * `solardatm.aud_user_io` table, by adding MQTT byte counts.
- *
- * @param service 	the MQTT service name
- * @param obj_id 	the node ID (if src is not NULL) or user ID (if src is NULL)
- * @param src		the source ID, or NULL for user data
- * @param ts_recv	the timestamp; will be truncated to 'hour' level
- * @param bcount	the byte count to add
- */
-CREATE OR REPLACE FUNCTION solardatm.audit_increment_mqtt_byte_count(
-	service			TEXT,
-	obj_id 			BIGINT,
-	src				TEXT,
-	ts_recv 		TIMESTAMP WITH TIME ZONE,
-	bcount			INTEGER
-	) RETURNS VOID LANGUAGE plpgsql VOLATILE AS
-$$
-BEGIN
-	IF src IS NULL THEN
-		PERFORM solardatm.audit_increment_user_count(obj_id, service, ts_recv, bcount);
-	ELSE
-		PERFORM solardatm.audit_increment_mqtt_publish_byte_count(service, obj_id, src, ts_recv, bcount);
-	END IF;
 END
 $$;
