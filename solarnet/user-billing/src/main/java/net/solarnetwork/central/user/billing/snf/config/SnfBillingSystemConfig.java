@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import net.solarnetwork.central.dao.VersionedMessageDao;
-import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
@@ -95,10 +94,9 @@ public class SnfBillingSystemConfig {
 	private int deliveryTimeoutSecs = 60;
 
 	@Bean
-	public BillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem) {
-		SnfBillingSystem system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao,
-				accountDao, invoiceDao, usageDao);
-		return system;
+	public SnfBillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem) {
+		return new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao, accountDao,
+				invoiceDao, usageDao);
 	}
 
 	@Bean
