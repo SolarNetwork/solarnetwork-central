@@ -31,6 +31,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
+import net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfiguration;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
 import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskJob;
@@ -47,7 +48,7 @@ import net.solarnetwork.central.user.dao.UserDao;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile("snf-billing")
+@Profile(SolarNetUserBillingConfiguration.SNF_BILLING)
 public class SnfBillingJobsConfig {
 
 	@Autowired

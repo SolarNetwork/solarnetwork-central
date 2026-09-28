@@ -26,9 +26,12 @@ package net.solarnetwork.central.user.billing.snf.config;
  * Marker interface for user billing configuration package.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SolarNetUserBillingConfiguration {
+
+	/** A qualifier for SNF billing support. */
+	String SNF_BILLING = "snf-billing";
 
 	/** A qualifier for user invoice billing. */
 	String USER_BILLING_INVOICE = "user-billing-invoice";

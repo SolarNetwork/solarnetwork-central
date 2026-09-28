@@ -34,7 +34,7 @@ import net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfi
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile("snf-billing")
+@Profile(SolarNetUserBillingConfiguration.SNF_BILLING)
 @ComponentScan(basePackageClasses = SolarNetUserBillingConfiguration.class)
 public class SnfBillingConfig {
 
