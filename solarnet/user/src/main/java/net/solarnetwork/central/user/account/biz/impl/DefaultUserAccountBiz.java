@@ -87,8 +87,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 				userId);
 
 		// verify an account doesn't already exist
-		final SnAccountInfo existing = getAccountForUser(user.id());
-		if ( existing != null ) {
+		if ( user.getInternalDataValue(ACCOUNTING_DATA_PROP) != null ) {
 			throw new AuthorizationException(Reason.REGISTRATION_ALREADY_CONFIRMED, userId);
 		}
 
