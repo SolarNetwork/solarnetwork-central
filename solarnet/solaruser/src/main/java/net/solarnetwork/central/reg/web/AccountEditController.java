@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -66,7 +65,7 @@ public class AccountEditController {
 	 */
 	public AccountEditController(@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
 		super();
-		this.userAccountBiz = requireNonNullArgument(userAccountBiz, "userAccountBiz");
+		this.userAccountBiz = userAccountBiz;
 	}
 
 	/**

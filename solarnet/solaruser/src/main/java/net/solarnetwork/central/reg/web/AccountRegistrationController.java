@@ -73,7 +73,7 @@ public class AccountRegistrationController {
 			@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
 		super();
 		this.userBiz = requireNonNullArgument(userBiz, "userBiz");
-		this.userAccountBiz = requireNonNullArgument(userAccountBiz, "userAccountBiz");
+		this.userAccountBiz = userAccountBiz;
 	}
 
 	/**

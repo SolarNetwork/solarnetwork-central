@@ -23,7 +23,6 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.success;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +59,7 @@ public class AccountRegistrationController {
 	public AccountRegistrationController(
 			@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
 		super();
-		this.userAccountBiz = requireNonNullArgument(userAccountBiz, "userAccountBiz");
+		this.userAccountBiz = userAccountBiz;
 	}
 
 	/**
