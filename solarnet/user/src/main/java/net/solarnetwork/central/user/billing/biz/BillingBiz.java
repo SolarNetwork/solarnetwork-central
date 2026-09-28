@@ -59,7 +59,11 @@ public interface BillingBiz {
 	 */
 	default @Nullable BillingSystem defaultBillingSystem() {
 		var systems = availableBillingSystems();
-		return (systems != null ? systems.iterator().next() : null);
+		if ( systems == null ) {
+			return null;
+		}
+		var itr = systems.iterator();
+		return (itr.hasNext() ? itr.next() : null);
 	}
 
 	/**
