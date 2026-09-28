@@ -165,6 +165,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 				user.getId());
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public SnAccount<?, ?, ?> updateAccount(Long userId, SnAccountCreationInput input)
 			throws IllegalArgumentException, AuthorizationException, ValidationException {
