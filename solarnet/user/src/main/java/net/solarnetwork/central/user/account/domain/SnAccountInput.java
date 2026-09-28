@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.account.domain;
 
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.io.Serializable;
 import javax.money.CurrencyUnit;
@@ -107,7 +108,7 @@ public class SnAccountInput implements Serializable {
 	 *        the locale to set, as a BCP 47 language tag
 	 */
 	public final void setLocale(@Nullable String locale) {
-		this.locale = locale;
+		this.locale = nonEmptyString(locale);
 	}
 
 }
