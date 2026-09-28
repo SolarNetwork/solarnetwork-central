@@ -86,6 +86,12 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 		final User user = requireNonNullObject(userDao.get(requireNonNullArgument(userId, "userId")),
 				userId);
 
+		// verify an account doesn't already exist
+		final SnAccountInfo existing = getAccountForUser(user.id());
+		if ( existing != null ) {
+			throw new AuthorizationException(Reason.REGISTRATION_ALREADY_CONFIRMED, userId);
+		}
+
 		final SnAccountCreationInput req = requireNonNullArgument(input, "input");
 		validateInput(req);
 
