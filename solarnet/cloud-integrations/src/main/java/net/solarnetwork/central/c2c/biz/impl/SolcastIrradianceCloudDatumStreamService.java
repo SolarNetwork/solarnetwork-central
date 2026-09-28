@@ -84,7 +84,7 @@ import tools.jackson.databind.JsonNode;
  * irradiance API.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -244,10 +244,19 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			BasicQueryFilter nextQueryFilter = null;
 
+			final Instant now = clock.instant();
+
 			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution, UTC);
 			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution, UTC);
 			if ( endDate.isBefore(filterEndDate) ) {
 				endDate = CloudIntegrationsUtils.nextTickStart(resolution, endDate, UTC);
+			}
+			if ( endDate.isAfter(now) ) {
+				// the resolution period holding the current date has not completed, so the API can
+				// not have any data for it yet; reporting it as used would advance a poll past a
+				// period that was never returned, so end at the last complete period instead
+				Instant currPeriodStart = CloudIntegrationsUtils.truncateDate(now, resolution, UTC);
+				endDate = (currPeriodStart.isAfter(startDate) ? currPeriodStart : startDate);
 			}
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
@@ -265,8 +274,6 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
-
-			final Instant now = clock.instant();
 
 			// use the live API if requested or if query start near current date
 			final boolean useLiveApi = filter.hasParameter(QUERY_PARAM_USE_LIVE_DATA)
@@ -413,6 +420,17 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	/**
 	 * Resolve the number of hours to query.
+	 *
+	 * <p>
+	 * The result is the number of whole minutes between {@code from} and
+	 * {@code to}, rounded up to the next hour and capped at
+	 * {@link #MAX_LIVE_API_OFFSET_HOURS}. The "live" API rejects a value less
+	 * than {@code 1} with a {@code 400} response, so {@code from} must be at
+	 * least a minute before {@code to}. A request is only made once the query
+	 * end date has passed {@code from}, and that end date never extends beyond
+	 * the resolution period holding the current date, so {@code from} is always
+	 * at least one resolution period before {@code to}.
+	 * </p>
 	 *
 	 * @param from
 	 *        the start date

@@ -84,6 +84,8 @@ import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -98,7 +100,7 @@ import tools.jackson.databind.ObjectMapper;
  * Test cases for the {@link SolcastIrradianceCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -951,6 +953,237 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 						Datum::asSampleOperations)
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+
+	/**
+	 * Configure a datum stream, and all its supporting configuration, for a
+	 * 30-minute resolution Solcast irradiance stream.
+	 *
+	 * @param apiKey
+	 *        the API key to configure on the integration
+	 * @param lat
+	 *        the latitude to configure
+	 * @param lon
+	 *        the longitude to configure
+	 * @return the datum stream
+	 */
+	private CloudDatumStreamConfiguration setupHalfHourDatumStream(String apiKey, BigDecimal lat,
+			BigDecimal lon) {
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				SolcastCloudIntegrationService.API_KEY_SETTING, apiKey
+		));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "irradiance", Reference,
+				componentValueRef(GHI));
+		c1p1.setEnabled(true);
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "temp", Reference,
+				componentValueRef(Temp));
+		c1p2.setEnabled(true);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2));
+
+		// configure datum stream
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				BaseSolcastCloudDatumStreamService.LATITUDE_SETTING, lat.toPlainString(),
+				BaseSolcastCloudDatumStreamService.LONGITUDE_SETTING, lon.toPlainString(),
+				BaseSolcastCloudDatumStreamService.RESOLUTION_SETTING, "1800"
+		));
+		// @formatter:on
+		return datumStream;
+	}
+
+	/**
+	 * Validate that when a poll resumes from a start date on the resolution
+	 * boundary holding the current date, no request is made at all.
+	 *
+	 * <p>
+	 * No complete resolution period has passed since the start date, so the
+	 * live API could only be asked for less than an hour of data, which it
+	 * rejects with a {@code 400} response.
+	 * </p>
+	 */
+	@Test
+	public void datum_liveApi_startDateWithinMinuteOfCurrentTime_noRequest() {
+		// GIVEN
+		final CloudDatumStreamConfiguration datumStream = setupHalfHourDatumStream(randomString(),
+				new BigDecimal(randomLong()), new BigDecimal(randomLong()));
+
+		// the previous poll rounded its end date up to this resolution boundary
+		final Instant startDate = Instant.parse("2024-10-29T20:00:00Z");
+
+		// this poll executes just 3s after that boundary
+		clock.setInstant(startDate.plusSeconds(3));
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(clock.instant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Result returned")
+			.isNotNull()
+			.as("No datum returned, because the API was not asked for any")
+			.isEmpty()
+			;
+
+		and.then(result.getUsedQueryFilter())
+			.as("Used query filter provided")
+			.isNotNull()
+			.as("Used start date is the requested start date, truncated to the resolution")
+			.returns(startDate, from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("Used end date clamped back to the start date, so polling does not advance "
+					+ "past a period the API cannot have returned")
+			.returns(startDate, from(CloudDatumStreamQueryFilter::getEndDate))
+			;
+
+		and.then(result.getNextQueryFilter())
+			.as("No next query filter, as the requested range is within the maximum duration")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Validate that when the requested start date is in the future, so no
+	 * complete resolution period can exist in the requested range, no request
+	 * is made at all.
+	 */
+	@Test
+	public void datum_liveApi_startDateAfterCurrentTime_noRequest() {
+		// GIVEN
+		final CloudDatumStreamConfiguration datumStream = setupHalfHourDatumStream(randomString(),
+				new BigDecimal(randomLong()), new BigDecimal(randomLong()));
+
+		clock.setInstant(Instant.parse("2024-10-29T20:00:00Z"));
+
+		final Instant startDate = clock.instant().plus(1, ChronoUnit.HOURS);
+		final Instant endDate = startDate.plus(1, ChronoUnit.HOURS);
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Result returned")
+			.isNotNull()
+			.as("No datum returned, because the API was not asked for any")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+
+	/**
+	 * Validate that when the requested end date falls part way through a
+	 * resolution period, the used end date is clamped back to the last complete
+	 * period instead of being rounded up past the current time.
+	 *
+	 * <p>
+	 * This is what a poll looks like when it executes a few seconds after a
+	 * resolution boundary. Rounding up would report an end date in the future,
+	 * which the poll service saves as the next start date, so the period that
+	 * the API had not published yet would never be requested again.
+	 * </p>
+	 *
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	@Test
+	public void datum_nearCurrentTime_endDateClampedToLastCompletePeriod() throws IOException {
+		// GIVEN
+		final String apiKey = randomString();
+		final BigDecimal lat = new BigDecimal(randomLong());
+		final BigDecimal lon = new BigDecimal(randomLong());
+		final CloudDatumStreamConfiguration datumStream = setupHalfHourDatumStream(apiKey, lat, lon);
+
+		// the poll executes 3s after the 20:00 resolution boundary
+		final Instant lastCompletePeriodEnd = Instant.parse("2024-10-29T20:00:00Z");
+		clock.setInstant(lastCompletePeriodEnd.plusSeconds(3));
+
+		final Instant startDate = lastCompletePeriodEnd.minus(1, ChronoUnit.HOURS);
+
+		final JsonNode dataJson = objectMapper
+				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
+		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(clock.instant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(null, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("Live API requested for the whole hour up to the current date")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			;
+
+		and.then(result.getUsedQueryFilter())
+			.as("Used query filter provided")
+			.isNotNull()
+			.as("Used start date is the requested start date")
+			.returns(startDate, from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("Used end date is the last complete resolution period, not the next boundary "
+					+ "at 20:30 which the API cannot have published yet")
+			.returns(lastCompletePeriodEnd, from(CloudDatumStreamQueryFilter::getEndDate))
+			;
+
+		and.then(result)
+			.as("Datum parsed for every complete period in the used date range")
+			.hasSize(2)
+			.extracting(Datum::getTimestamp)
+			.containsExactly(startDate, startDate.plus(30, ChronoUnit.MINUTES))
 			;
 		// @formatter:on
 	}

@@ -20,9 +20,11 @@ package net.solarnetwork.central.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.AbstractQueue;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.SequencedSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +38,43 @@ import org.jspecify.annotations.Nullable;
  * iteration order and constant time addition, removal and contains operations.
  *
  * <p>
+ * Because the queue is backed by a set, elements are <b>de-duplicated</b>:
+ * adding an element already queued leaves the queue unchanged, and does not
+ * move the queued element towards the tail. The add methods still report
+ * success in that case, so {@link #offer(Object)} and
+ * {@link #offer(Object, long, TimeUnit)} return {@code true} and
+ * {@link #put(Object)} returns normally without the queue having grown. One
+ * exception applies: when the queue is full {@code offer()} returns
+ * {@code false} without inspecting the element, even if that element is
+ * already queued.
+ * </p>
+ *
+ * <p>
+ * All mutating and inspecting operations are guarded by a single lock, so
+ * this class is thread safe. The {@link #iterator()} returned is <i>weakly
+ * consistent</i>: it iterates a snapshot of the elements taken when the
+ * iterator was created, never throws
+ * {@link java.util.ConcurrentModificationException}, and does not reflect
+ * changes made after the snapshot was taken. Its {@link Iterator#remove()}
+ * removes the last returned element from this queue, if still present. The
+ * inherited methods that iterate, such as {@link #toArray()} and
+ * {@link #toString()}, inherit those semantics.
+ * </p>
+ *
+ * <p>
+ * When a delegate set is provided, this queue assumes exclusive ownership
+ * of it: modifying the delegate directly will corrupt the queue size
+ * accounting.
+ * </p>
+ *
+ * <p>
  * Adapted from the Apache Marmotta project and
  * {@code java.util.LinkedBlockingQueue}.
  * </p>
  *
  * @author Sebastian Schaffert
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements BlockingQueue<E> {
 
@@ -67,25 +99,93 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	 * Constructor.
 	 *
 	 * @param capacity
-	 *        the queue capacity
+	 *        the queue capacity; a capacity of {@literal 0} creates a queue
+	 *        that can never accept an element, so {@code offer()} always
+	 *        returns {@code false} and {@code put()} blocks forever
+	 * @throws IllegalArgumentException
+	 *         if {@code capacity} is less than {@literal 0}
 	 */
 	public LinkedHashSetBlockingQueue(int capacity) {
-		this(new LinkedHashSet<>(capacity), capacity);
+		this(new LinkedHashSet<>(requireValidCapacity(capacity)), capacity);
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param delegate
-	 *        the delegate
+	 *        the delegate; this queue assumes exclusive ownership of this set
 	 * @param capacity
-	 *        the queue capacity
+	 *        the queue capacity; a capacity of {@literal 0} creates a queue
+	 *        that can never accept an element, so {@code offer()} always
+	 *        returns {@code false} and {@code put()} blocks forever
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 *         if any argument is {@code null}, or {@code capacity} is less than
+	 *         {@literal 0}
 	 */
 	public LinkedHashSetBlockingQueue(SequencedSet<E> delegate, int capacity) {
 		this.delegate = requireNonNullArgument(delegate, "delegate");
-		this.capacity = capacity;
+		this.capacity = requireValidCapacity(capacity);
+	}
+
+	private static int requireValidCapacity(int capacity) {
+		if ( capacity < 0 ) {
+			throw new IllegalArgumentException("The capacity argument must not be negative.");
+		}
+		return capacity;
+	}
+
+	/**
+	 * Signal the threads waiting on a queue whose size has just changed.
+	 *
+	 * <p>
+	 * Must be called while holding {@link #lock}, passing the resulting size.
+	 * Signalling whenever an element or a slot <i>is available</i>, rather than
+	 * only on the empty to non-empty and full to non-full transitions, is what
+	 * keeps a hand-off from being lost when an add turns out to be a duplicate
+	 * and so consumes no capacity, and it passes the signal on to the next
+	 * waiter while more remains. Only lock holders change the size, so the
+	 * caller's value is current.
+	 * </p>
+	 *
+	 * @param size
+	 *        the queue size after the change
+	 */
+	private void signalAvailable(int size) {
+		if ( size > 0 ) {
+			notEmpty.signal();
+		}
+		if ( size < capacity ) {
+			notFull.signal();
+		}
+	}
+
+	/**
+	 * Add an element and signal any waiting threads.
+	 *
+	 * <p>
+	 * Must be called while holding {@link #lock}, with the queue not full.
+	 * </p>
+	 *
+	 * @param e
+	 *        the element to add
+	 */
+	private void addAndSignal(E e) {
+		signalAvailable(delegate.add(e) ? count.incrementAndGet() : count.get());
+	}
+
+	/**
+	 * Remove the head element and signal any waiting threads.
+	 *
+	 * <p>
+	 * Must be called while holding {@link #lock}, with the queue not empty.
+	 * </p>
+	 *
+	 * @return the removed element
+	 */
+	private E removeFirstAndSignal() {
+		final E x = delegate.removeFirst();
+		signalAvailable(count.decrementAndGet());
+		return x;
 	}
 
 	@Override
@@ -94,27 +194,20 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			throw new NullPointerException();
 		}
 		final AtomicInteger count = this.count;
-		if ( count.get() == capacity ) {
+		if ( count.get() >= capacity ) {
 			return false;
 		}
-		int c = -1;
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			if ( count.get() < capacity ) {
-				final boolean wasAdded = delegate.add(e);
-				c = wasAdded ? count.getAndIncrement() : count.get();
-				if ( c + 1 < capacity ) {
-					notFull.signal();
-				}
+			if ( count.get() >= capacity ) {
+				return false;
 			}
-			if ( c == 0 ) {
-				notEmpty.signal();
-			}
+			addAndSignal(e);
 		} finally {
 			lock.unlock();
 		}
-		return c >= 0;
+		return true;
 	}
 
 	@Override
@@ -122,23 +215,14 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		if ( e == null ) {
 			throw new NullPointerException();
 		}
-
-		final int c;
 		final AtomicInteger count = this.count;
 		final ReentrantLock lock = this.lock;
 		lock.lockInterruptibly();
 		try {
-			while ( count.get() == capacity ) {
+			while ( count.get() >= capacity ) {
 				notFull.await();
 			}
-			final boolean wasAdded = delegate.add(e);
-			c = wasAdded ? count.getAndIncrement() : count.get();
-			if ( c + 1 < capacity ) {
-				notFull.signal();
-			}
-			if ( c == 0 ) {
-				notEmpty.signal();
-			}
+			addAndSignal(e);
 		} finally {
 			lock.unlock();
 		}
@@ -150,25 +234,17 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			throw new NullPointerException();
 		}
 		long nanos = unit.toNanos(timeout);
-		final int c;
 		final AtomicInteger count = this.count;
 		final ReentrantLock lock = this.lock;
 		lock.lockInterruptibly();
 		try {
-			while ( count.get() == capacity ) {
+			while ( count.get() >= capacity ) {
 				if ( nanos <= 0 ) {
 					return false;
 				}
 				nanos = notFull.awaitNanos(nanos);
 			}
-			final boolean wasAdded = delegate.add(e);
-			c = wasAdded ? count.getAndIncrement() : count.get();
-			if ( c + 1 < capacity ) {
-				notFull.signal();
-			}
-			if ( c == 0 ) {
-				notEmpty.signal();
-			}
+			addAndSignal(e);
 		} finally {
 			lock.unlock();
 		}
@@ -177,8 +253,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	@Override
 	public E take() throws InterruptedException {
-		E x;
-		final int c;
+		final E x;
 		final AtomicInteger count = this.count;
 		final ReentrantLock lock = this.lock;
 		lock.lockInterruptibly();
@@ -186,14 +261,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			while ( count.get() == 0 ) {
 				notEmpty.await();
 			}
-			x = delegate.removeFirst();
-			c = count.getAndDecrement();
-			if ( c > 1 ) {
-				notEmpty.signal();
-			}
-			if ( c == capacity ) {
-				notFull.signal();
-			}
+			x = removeFirstAndSignal();
 		} finally {
 			lock.unlock();
 		}
@@ -202,8 +270,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	@Override
 	public @Nullable E poll(long timeout, TimeUnit unit) throws InterruptedException {
-		E x;
-		final int c;
+		final E x;
 		long nanos = unit.toNanos(timeout);
 		final AtomicInteger count = this.count;
 		final ReentrantLock lock = this.lock;
@@ -215,14 +282,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 				}
 				nanos = notEmpty.awaitNanos(nanos);
 			}
-			x = delegate.removeFirst();
-			c = count.getAndDecrement();
-			if ( c > 1 ) {
-				notEmpty.signal();
-			}
-			if ( c == capacity ) {
-				notFull.signal();
-			}
+			x = removeFirstAndSignal();
 		} finally {
 			lock.unlock();
 		}
@@ -248,24 +308,30 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		if ( c == this ) {
 			throw new IllegalArgumentException();
 		}
+		if ( maxElements <= 0 ) {
+			return 0;
+		}
 		final AtomicInteger count = this.count;
 		final ReentrantLock lock = this.lock;
-		boolean signalNotFull = false;
 		lock.lock();
 		try {
-			int n = Math.min(maxElements, count.get());
-			Iterator<E> it = delegate.iterator();
-			for ( int i = 0; i < n && it.hasNext(); i++ ) {
-				E x = it.next();
-				c.add(x);
-				it.remove();
-				signalNotFull = true;
+			final int n = Math.min(maxElements, count.get());
+			int i = 0;
+			try {
+				final Iterator<E> it = delegate.iterator();
+				while ( i < n && it.hasNext() ) {
+					c.add(it.next());
+					it.remove();
+					i++;
+				}
+			} finally {
+				// restore the count, even if c.add() threw
+				if ( i > 0 ) {
+					count.getAndAdd(-i);
+					notFull.signalAll();
+				}
 			}
-			count.getAndAdd(-n);
-			if ( signalNotFull ) {
-				notFull.signal();
-			}
-			return n;
+			return i;
 		} finally {
 			lock.unlock();
 		}
@@ -278,21 +344,13 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			return null;
 		}
 		final E x;
-		final int c;
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
 			if ( count.get() == 0 ) {
 				return null;
 			}
-			x = delegate.removeFirst();
-			c = count.getAndDecrement();
-			if ( c > 1 ) {
-				notEmpty.signal();
-			}
-			if ( c == capacity ) {
-				notFull.signal();
-			}
+			x = removeFirstAndSignal();
 		} finally {
 			lock.unlock();
 		}
@@ -308,12 +366,21 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			Iterator<E> it = delegate.iterator();
-			if ( it.hasNext() ) {
-				return it.next();
-			} else {
-				return null;
-			}
+			return delegate.isEmpty() ? null : delegate.getFirst();
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public boolean contains(@Nullable Object o) {
+		if ( o == null ) {
+			return false;
+		}
+		final ReentrantLock lock = this.lock;
+		lock.lock();
+		try {
+			return delegate.contains(o);
 		} finally {
 			lock.unlock();
 		}
@@ -321,41 +388,39 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	@Override
 	public Iterator<E> iterator() {
+		final List<E> snapshot;
 		final ReentrantLock lock = this.lock;
-		final Iterator<E> it = delegate.iterator();
+		lock.lock();
+		try {
+			snapshot = new ArrayList<>(delegate);
+		} finally {
+			lock.unlock();
+		}
 		return new Iterator<>() {
+
+			private final Iterator<E> it = snapshot.iterator();
+			private @Nullable E lastReturned;
 
 			@Override
 			public boolean hasNext() {
-				lock.lock();
-				try {
-					return it.hasNext();
-				} finally {
-					lock.unlock();
-				}
+				return it.hasNext();
 			}
 
 			@Override
 			public E next() {
-				lock.lock();
-				try {
-					return it.next();
-				} finally {
-					lock.unlock();
-				}
+				final E next = it.next();
+				lastReturned = next;
+				return next;
 			}
 
 			@Override
 			public void remove() {
-				lock.lock();
-				try {
-					it.remove();
-
-					// remove counter
-					count.getAndDecrement();
-				} finally {
-					lock.unlock();
+				final E last = lastReturned;
+				if ( last == null ) {
+					throw new IllegalStateException();
 				}
+				lastReturned = null;
+				LinkedHashSetBlockingQueue.this.remove(last);
 			}
 		};
 	}
@@ -375,7 +440,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		lock.lock();
 		try {
 			if ( delegate.remove(o) ) {
-				if ( count.getAndDecrement() == capacity ) {
+				if ( count.decrementAndGet() < capacity ) {
 					notFull.signal();
 				}
 				return true;
@@ -395,6 +460,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 		try {
 			delegate.clear();
 			count.set(0);
+			notFull.signalAll();
 		} finally {
 			lock.unlock();
 		}
