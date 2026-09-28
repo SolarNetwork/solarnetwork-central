@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserAccountBizSecurityContract {
 
@@ -59,6 +59,7 @@ public class UserAccountBizSecurityContract {
 		return SecurityContract.forApi(UserAccountBiz.class, tenants)
 				.userRead(biz -> biz.getAccountForUser(a.userId()))
 				.userWrite(biz -> biz.createAccount(a.userId(), creationInput))
+				.userWrite(biz -> biz.updateAccount(a.userId(), creationInput))
 				.build();
 		// @formatter:on
 	}
