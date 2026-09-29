@@ -43,7 +43,7 @@ import net.solarnetwork.dao.BasicEntity;
  * @version 2.0
  */
 @JsonIgnoreProperties({ "id", "configId" })
-@JsonPropertyOrder({ "userId", "accountId", "created", "currencyCode", "locale" })
+@JsonPropertyOrder({ "userId", "accountId", "created", "currencyCode", "locale", "address" })
 public class Account extends BasicEntity<UserLongCompositePK>
 		implements SnAccount<Account, UserLongCompositePK, Address> {
 
