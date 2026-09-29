@@ -29,12 +29,26 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.timeout;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +64,7 @@ import net.solarnetwork.central.common.biz.impl.SqsOverflowQueue;
 import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.support.EntityCodec;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.central.support.UserEventBasicDeserializer;
 import net.solarnetwork.central.support.UserEventBasicSerializer;
@@ -59,10 +74,13 @@ import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
@@ -75,7 +93,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Test cases for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -232,6 +250,19 @@ public class SqsOverflowQueueTests {
 			.as("Result provided")
 			.isEqualTo(entity.getId())
 			;
+
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsIgnored))
+			.as("Ignored persistence failure counted as ignored")
+			.isEqualTo(1)
+			;
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsFailed))
+			.as("Ignored persistence failure not counted as a failure")
+			.isEqualTo(0)
+			;
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsStored))
+			.as("Ignored persistence failure not counted as stored")
+			.isEqualTo(0)
+			;
 		// @formatter:on
 	}
 
@@ -372,6 +403,578 @@ public class SqsOverflowQueueTests {
 			.isEqualTo(1)
 			;
 		// @formatter:on
+	}
+
+
+	/**
+	 * Verify that an exception that is <b>not</b> assignable to any of the
+	 * configured ignored exceptions is treated as a persistence failure, and the
+	 * entity overflows to SQS.
+	 */
+	@Test
+	public void exceptionOnStore_notIgnored() throws IOException {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setIgnoredDaoExceptions(Set.of(IllegalStateException.class));
+	
+		SendMessageResponse sendToSqsResponse = SendMessageResponse.builder().messageId(randomString())
+				.build();
+		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(sendToSqsResponse));
+	
+		// note this is NOT assignable to the configured IllegalStateException
+		Throwable t = new IllegalArgumentException("boom!");
+		given(delegateDao.persist(any())).willThrow(t);
+	
+		// WHEN
+		collector.serviceDidStartup();
+	
+		UserEvent entity = newEvent();
+	
+		UserUuidPK result = collector.persist(entity);
+	
+		collector.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		then(exceptionHandler).should().uncaughtException(any(), throwableCaptor.capture());
+		and.then(throwableCaptor.getValue())
+			.as("Non-ignored exception passed to handler")
+			.isSameAs(t)
+			;
+	
+		then(sqsClient).should().sendMessage(sendMessageRequestCaptor.capture());
+		and.then(sendMessageRequestCaptor.getValue())
+			.as("Entity overflowed to SQS because the exception was not ignored")
+			.isNotNull()
+			.as("SQS message is JSON serialization of entity")
+			.returns(JSON_MAPPER.writeValueAsString(entity), from(SendMessageRequest::messageBody))
+			;
+	
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsFailed))
+			.as("Non-ignored persistence failure counted as a failure")
+			.isEqualTo(1)
+			;
+	
+		and.then(result)
+			.as("Result provided from SQS overflow")
+			.isEqualTo(entity.getId())
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that a SQS message that cannot be deserialized does not stop the
+	 * reader thread from processing subsequent messages.
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void readFromSqs_malformedMessage() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(1); // enable read thread
+		collector.setReadSleepMinMs(20);
+		collector.setReadSleepThrottleStepMs(20);
+	
+		// the same malformed message, redelivered: SQS reports a rising receive count
+		// until the queue redrive policy moves it to the dead-letter queue
+		final String badMessageId = randomString();
+		final Message badMessage = Message.builder().messageId(badMessageId)
+				.receiptHandle(randomString()).body("{not valid json")
+				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1"))
+				.build();
+		final Message badMessageRedelivered = Message.builder().messageId(badMessageId)
+				.receiptHandle(randomString()).body("{not valid json")
+				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "2"))
+				.build();
+	
+		final UserEvent entity = newEvent();
+		final Message goodMessage = Message.builder().messageId(randomString())
+				.receiptHandle(randomString()).body(JSON_MAPPER.writeValueAsString(entity)).build();
+	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(badMessage).build()))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(badMessageRedelivered).build()))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(goodMessage).build()))
+				.willReturn(CompletableFuture
+						.completedFuture(ReceiveMessageResponse.builder().build()));
+	
+		// these are only exercised once the reader survives the malformed message
+		lenient().when(delegateDao.persist(any())).thenReturn(entity.getId());
+		lenient().when(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
+				.thenReturn(CompletableFuture.completedFuture(
+						DeleteMessageBatchResponse.builder().build()));
+		lenient().when(sqsClient.changeMessageVisibilityBatch(any(Consumer.class)))
+				.thenReturn(CompletableFuture.completedFuture(
+						ChangeMessageVisibilityBatchResponse.builder().build()));
+	
+		// WHEN
+		collector.serviceDidStartup();
+	
+		// THEN
+		// @formatter:off
+		then(sqsClient).should(timeout(3_000).atLeast(3))
+			.receiveMessage(any(ReceiveMessageRequest.class))
+			;
+	
+		then(delegateDao).should(timeout(3_000)).persist(entityCaptor.capture());
+		and.then(entityCaptor.getValue())
+			.usingRecursiveComparison()
+			.as("Message following the malformed one still parsed and persisted")
+			.isEqualTo(entity)
+			;
+
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsDiscarded))
+			.as("Malformed message counted once, not once per redelivery")
+			.isEqualTo(1)
+			;
+
+		then(sqsClient).should(never())
+			.changeMessageVisibilityBatch(any(Consumer.class))
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * The outcome of {@link #runDeleteBatchPartialFailure(boolean)}.
+	 *
+	 * @param failedHandle
+	 *        the receipt handle of the message whose delete failed
+	 * @param requests
+	 *        the delete batch requests issued, in order
+	 */
+	private record DeleteBatchScenario(String failedHandle,
+			List<DeleteMessageBatchRequest> requests) {
+	
+	}
+	
+	/**
+	 * Process two SQS messages, failing the delete of the first as part of a
+	 * batch delete request.
+	 *
+	 * @param senderFault
+	 *        the {@code senderFault} value to report on the failed entry
+	 * @return the scenario outcome
+	 */
+	private DeleteBatchScenario runDeleteBatchPartialFailure(boolean senderFault) throws Exception {
+		// a handle queue with capacity 1, so a flushed batch holds a handle other
+		// than the one whose offer triggered the flush
+		final BlockingQueue<String> handles = new LinkedHashSetBlockingQueue<>(1);
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				workQueue, handles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(1);
+		queue.setWriteConcurrency(1);
+		queue.setShutdownWaitSecs(3600);
+	
+		final String handleA = "handle-A-" + randomString();
+		final String handleB = "handle-B-" + randomString();
+	
+		final UserEvent entityA = newEvent();
+		final UserEvent entityB = newEvent();
+	
+		final Message msgA = Message.builder().messageId(randomString()).receiptHandle(handleA)
+				.body(JSON_MAPPER.writeValueAsString(entityA)).build();
+		final Message msgB = Message.builder().messageId(randomString()).receiptHandle(handleB)
+				.body(JSON_MAPPER.writeValueAsString(entityB)).build();
+	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
+				.willReturn(CompletableFuture
+						.completedFuture(ReceiveMessageResponse.builder().build()));
+	
+		// persist slowly, so the reader registers both completion callbacks before
+		// the writer completes the first work item, keeping the delete order stable
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			Thread.sleep(100);
+			return ((UserEvent) inv.getArgument(0)).getId();
+		});
+	
+		final List<DeleteMessageBatchRequest> deleteRequests = Collections
+				.synchronizedList(new ArrayList<>(2));
+		given(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).willAnswer(inv -> {
+			final DeleteMessageBatchRequest req = inv.getArgument(0);
+			deleteRequests.add(req);
+			if ( deleteRequests.size() > 1 ) {
+				return CompletableFuture
+						.completedFuture(DeleteMessageBatchResponse.builder().build());
+			}
+			// fail just the entry for handle A
+			var failed = req.entries().stream().filter(e -> handleA.equals(e.receiptHandle()))
+					.map(e -> BatchResultErrorEntry.builder().id(e.id()).senderFault(senderFault)
+							.code(senderFault ? "ReceiptHandleIsInvalid" : "InternalError")
+							.message("simulated failure").build())
+					.toList();
+			var successful = req.entries().stream().filter(e -> !handleA.equals(e.receiptHandle()))
+					.map(e -> DeleteMessageBatchResultEntry.builder().id(e.id()).build()).toList();
+			return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
+					.failed(failed).successful(successful).build());
+		});
+	
+		queue.serviceDidStartup();
+	
+		then(delegateDao).should(timeout(5_000).times(2)).persist(any());
+		Thread.sleep(200); // let the delete batching settle
+	
+		queue.shutdownAndWait(); // forces a flush of anything still pending
+	
+		return new DeleteBatchScenario(handleA, deleteRequests);
+	}
+	
+	/**
+	 * Verify that when a message fails to delete from SQS as part of a batch
+	 * request, the receipt handle of the message that actually failed is the one
+	 * retried.
+	 */
+	@Test
+	public void deleteFromSqs_partialFailure_retriesFailedHandle() throws Exception {
+		// GIVEN / WHEN
+		final DeleteBatchScenario scenario = runDeleteBatchPartialFailure(false);
+	
+		// THEN
+		// @formatter:off
+		and.then(scenario.requests())
+			.as("Initial batch request, then a flush of the retried handle")
+			.hasSize(2)
+			;
+		and.then(scenario.requests().get(1).entries())
+			.as("Flushed batch holds the single retried handle")
+			.hasSize(1)
+			.as("The retried handle is the one that failed to delete, not the one that"
+						+ " triggered the batch")
+			.allMatch(e -> scenario.failedHandle().equals(e.receiptHandle()))
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that a delete failure reported as a sender fault, which can never
+	 * succeed on retry, is not retried.
+	 */
+	@Test
+	public void deleteFromSqs_partialFailure_senderFaultNotRetried() throws Exception {
+		// GIVEN / WHEN
+		final DeleteBatchScenario scenario = runDeleteBatchPartialFailure(true);
+	
+		// THEN
+		// @formatter:off
+		and.then(scenario.requests())
+			.as("A sender fault cannot succeed on retry, so no handle is re-queued and"
+						+ " nothing remains to flush at shutdown")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify that {@link SqsOverflowQueue#shutdownAndWait()} returns promptly
+	 * when the shutdown wait is configured as zero, rather than joining forever.
+	 */
+	@Test
+	public void shutdownAndWait_zeroWaitReturnsPromptly() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setShutdownWaitSecs(0); // i.e. "do not wait"
+	
+		final CountDownLatch persisting = new CountDownLatch(1);
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			persisting.countDown();
+			// ignore interrupts, to simulate a write that cannot be cancelled
+			final long end = System.currentTimeMillis() + 2_000L;
+			for ( long now = System.currentTimeMillis(); now < end; now = System
+					.currentTimeMillis() ) {
+				try {
+					Thread.sleep(end - now);
+				} catch ( InterruptedException e ) {
+					// ignore
+				}
+			}
+			return ((UserEvent) inv.getArgument(0)).getId();
+		});
+	
+		collector.serviceDidStartup();
+		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+	
+		and.then(persisting.await(3, TimeUnit.SECONDS))
+				.as("Writer thread is busy persisting")
+				.isTrue();
+	
+		// WHEN
+		final ExecutorService executor = Executors.newSingleThreadExecutor();
+		try {
+			final Future<?> shutdown = executor.submit(collector::shutdownAndWait);
+	
+			// THEN
+			// @formatter:off
+			and.thenCode(() -> shutdown.get(500, TimeUnit.MILLISECONDS))
+				.as("shutdownAndWait() returns promptly with a zero shutdown wait")
+				.doesNotThrowAnyException()
+				;
+			// @formatter:on
+		} finally {
+			executor.shutdownNow();
+		}
+	}
+	
+	/**
+	 * Verify that the shutdown wait is a total budget shared by all threads,
+	 * rather than applied to each thread in turn.
+	 */
+	@Test
+	public void shutdownAndWait_waitIsTotalNotPerThread() throws Exception {
+		// GIVEN
+		final int writerCount = 4;
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setWriteConcurrency(writerCount);
+		collector.setShutdownWaitSecs(1);
+	
+		final CountDownLatch persisting = new CountDownLatch(writerCount);
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			persisting.countDown();
+			// ignore interrupts, so every writer outlives the shutdown wait
+			final long end = System.currentTimeMillis() + 6_000L;
+			for ( long now = System.currentTimeMillis(); now < end; now = System
+					.currentTimeMillis() ) {
+				try {
+					Thread.sleep(end - now);
+				} catch ( InterruptedException e ) {
+					// ignore
+				}
+			}
+			return ((UserEvent) inv.getArgument(0)).getId();
+		});
+	
+		collector.serviceDidStartup();
+		for ( int i = 0; i < writerCount; i++ ) {
+			workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+		}
+	
+		and.then(persisting.await(5, TimeUnit.SECONDS))
+				.as("All writer threads are busy persisting")
+				.isTrue();
+	
+		// WHEN
+		final long start = System.nanoTime();
+		collector.shutdownAndWait();
+		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+	
+		// THEN
+		// @formatter:off
+		and.then(durationMs)
+			.as("Waited about the 1s budget in total, not 1s for each of the %d threads"
+						.formatted(writerCount))
+			.isLessThan(2_500L)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify that work items still queued at shutdown are not silently dropped:
+	 * their futures must be completed, one way or another.
+	 */
+	@Test
+	public void shutdown_pendingWorkItemsCompleted() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+	
+		// only exercised if shutdown drains remaining work to SQS
+		lenient().when(sqsClient.sendMessage(any(SendMessageRequest.class)))
+				.thenReturn(CompletableFuture.completedFuture(
+						SendMessageResponse.builder().messageId(randomString()).build()));
+	
+		final CountDownLatch persisting = new CountDownLatch(1);
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			persisting.countDown();
+			Thread.sleep(300);
+			return ((UserEvent) inv.getArgument(0)).getId();
+		});
+	
+		collector.serviceDidStartup();
+	
+		// occupy the single writer thread
+		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+		and.then(persisting.await(3, TimeUnit.SECONDS))
+				.as("Writer thread is busy persisting")
+				.isTrue();
+	
+		// queue more work behind it
+		final List<CompletableFuture<UserUuidPK>> pending = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			var f = new CompletableFuture<UserUuidPK>();
+			pending.add(f);
+			workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), f));
+		}
+	
+		// WHEN
+		collector.serviceDidShutdown();
+	
+		Thread.sleep(500); // allow any shutdown draining to finish
+	
+		// THEN
+		// @formatter:off
+		and.then(pending)
+			.as("Every work item pending at shutdown had its future completed, rather"
+						+ " than being silently dropped")
+			.allMatch(CompletableFuture::isDone)
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that an ignored exception thrown by the "last ditch" direct DAO
+	 * write, after failing to send the entity to SQS, is counted as ignored.
+	 */
+	@Test
+	public void sendToSqsFails_exceptionOnStore_ignored() throws Exception {
+		// GIVEN
+		// a work queue that never accepts, so persist() goes straight to SQS
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
+				0);
+	
+		// a codec that cannot serialize, so the SQS send fails before any request
+		final EntityCodec<UserEvent, UserUuidPK, String> brokenCodec = new EntityCodec<>() {
+	
+			@Override
+			public String serialize(UserEvent entity) {
+				throw new IllegalStateException("cannot serialize");
+			}
+	
+			@Override
+			public UserEvent deserialize(String json) {
+				throw new UnsupportedOperationException();
+			}
+	
+			@Override
+			public UserUuidPK entityId(UserEvent entity) {
+				return entity.getId();
+			}
+	
+		};
+	
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				fullQueue, completedSqsMessageHandles, delegateDao, brokenCodec);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(0); // disable read thread
+		queue.setWriteConcurrency(1);
+		queue.setShutdownWaitSecs(3600);
+		queue.setIgnoredDaoExceptions(Set.of(IllegalArgumentException.class));
+	
+		given(delegateDao.persist(any())).willThrow(new IllegalArgumentException("boom!"));
+	
+		// WHEN
+		queue.serviceDidStartup();
+	
+		final UserEvent entity = newEvent();
+		final UserUuidPK result = queue.persist(entity);
+	
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		then(exceptionHandler).shouldHaveNoInteractions();
+		then(sqsClient).shouldHaveNoInteractions();
+	
+		and.then(result)
+			.as("Result provided after the ignored persistence failure")
+			.isEqualTo(entity.getId())
+			;
+	
+		and.then(stats.get(SqsOverflowQueue.BasicCount.SqsQueueFail))
+			.as("SQS send failure counted")
+			.isEqualTo(1)
+			;
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsIgnored))
+			.as("Ignored persistence failure on the last-ditch DAO write counted")
+			.isEqualTo(1)
+			;
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsDiscarded))
+			.as("Ignored persistence failure not counted as discarded")
+			.isEqualTo(0)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify that work items the writer threads cannot drain within the shutdown
+	 * wait are overflowed to SQS, rather than dropped.
+	 */
+	@Test
+	public void shutdown_undrainedWorkItemsOverflowToSqs() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setWriteConcurrency(1);
+		collector.setShutdownWaitSecs(0); // no time for the writer to drain
+	
+		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						SendMessageResponse.builder().messageId(randomString()).build()));
+	
+		final CountDownLatch persisting = new CountDownLatch(1);
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			persisting.countDown();
+			// ignore interrupts, so the writer cannot pick up any more work
+			final long end = System.currentTimeMillis() + 3_000L;
+			for ( long now = System.currentTimeMillis(); now < end; now = System
+					.currentTimeMillis() ) {
+				try {
+					Thread.sleep(end - now);
+				} catch ( InterruptedException e ) {
+					// ignore
+				}
+			}
+			return ((UserEvent) inv.getArgument(0)).getId();
+		});
+	
+		collector.serviceDidStartup();
+	
+		// occupy the only writer thread
+		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+		and.then(persisting.await(3, TimeUnit.SECONDS))
+				.as("Writer thread is busy persisting")
+				.isTrue();
+	
+		// queue work the writer will never get to
+		final List<UserEvent> stranded = new ArrayList<>(3);
+		final List<CompletableFuture<UserUuidPK>> pending = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			var entity = newEvent();
+			var f = new CompletableFuture<UserUuidPK>();
+			stranded.add(entity);
+			pending.add(f);
+			workQueue.put(new SqsOverflowQueue.WorkItem<>(entity, f));
+		}
+	
+		// WHEN
+		collector.serviceDidShutdown();
+	
+		// THEN
+		// @formatter:off
+		then(sqsClient).should(times(3)).sendMessage(sendMessageRequestCaptor.capture());
+		and.then(sendMessageRequestCaptor.getAllValues())
+			.as("Every stranded entity was overflowed to SQS")
+			.map(SendMessageRequest::messageBody)
+			.containsExactlyInAnyOrderElementsOf(
+						stranded.stream().map(JSON_MAPPER::writeValueAsString).toList())
+			;
+	
+		and.then(pending)
+			.as("Every stranded work item had its future completed")
+			.allMatch(CompletableFuture::isDone)
+			;
+	
+		and.then(stats.get(SqsOverflowQueue.BasicCount.SqsQueueAdds))
+			.as("Overflowed entities counted as SQS additions")
+			.isEqualTo(3)
+			;
+		// @formatter:on
+	}
+
+	private UserEvent newEvent() {
+		return new UserEvent(randomLong(), UUID_GENERATOR.generate(),
+				new String[] { randomString() }, null, null);
 	}
 
 }
