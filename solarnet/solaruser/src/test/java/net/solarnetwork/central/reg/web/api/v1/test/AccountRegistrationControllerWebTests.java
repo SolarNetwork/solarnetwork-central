@@ -154,8 +154,8 @@ public class AccountRegistrationControllerWebTests extends AbstractJUnit5Central
 						}
 					}}
 					""", JsonCompareMode.LENIENT))
-			.andExpect(jsonPath("$.data.account.id.entityId").isNumber())
-			.andExpect(jsonPath("$.data.account.address.id.entityId").isNumber())
+			.andExpect(jsonPath("$.data.account.accountId").isNumber())
+			.andExpect(jsonPath("$.data.account.address.addressId").isNumber())
 			;
 		// @formatter:on
 

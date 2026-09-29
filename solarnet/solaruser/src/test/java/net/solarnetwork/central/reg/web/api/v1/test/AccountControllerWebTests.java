@@ -76,7 +76,7 @@ public class AccountControllerWebTests extends AbstractJUnit5CentralTransactiona
 	private static final String UPDATE_URL = "/api/v1/sec/user/account";
 
 	/** The JSON path of the account's address ID. */
-	private static final String ADDRESS_ID_PATH = "$.data.account.address.id.entityId";
+	private static final String ADDRESS_ID_PATH = "$.data.account.address.addressId";
 
 	@Autowired
 	private MockMvc mvc;
@@ -204,7 +204,7 @@ public class AccountControllerWebTests extends AbstractJUnit5CentralTransactiona
 						}
 					}}
 					""", JsonCompareMode.LENIENT))
-			.andExpect(jsonPath("$.data.account.id.entityId").isNumber())
+			.andExpect(jsonPath("$.data.account.accountId").isNumber())
 			;
 		// @formatter:on
 	}
