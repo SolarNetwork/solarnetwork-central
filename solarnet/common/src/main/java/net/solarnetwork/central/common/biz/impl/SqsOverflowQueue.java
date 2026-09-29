@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.common.biz.impl;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
@@ -651,10 +650,10 @@ public class SqsOverflowQueue<T, K>
 
 			log.debug("Deleting {} messages from SQS queue.", handleIds.size());
 
-			Map<String, String> batchIdToReceiptHandlers = new HashMap<>(10);
+			Map<String, String> batchIdToReceiptHandles = new HashMap<>(10);
 			List<DeleteMessageBatchRequestEntry> entries = handleIds.stream().map(s -> {
 				String id = UUID.randomUUID().toString();
-				batchIdToReceiptHandlers.put(id, receiptHandle);
+				batchIdToReceiptHandles.put(id, s);
 				return DeleteMessageBatchRequestEntry.builder().id(id).receiptHandle(s).build();
 			}).toList();
 
@@ -666,12 +665,24 @@ public class SqsOverflowQueue<T, K>
 					if ( resp != null ) {
 						if ( resp.hasFailed() ) {
 							resp.failed().forEach(entry -> {
-								String handleId = nonnull(batchIdToReceiptHandlers.get(entry.id()),
-										"Batch handleId");
-								log.warn(
-										"Failed to delete message from SQS queue (will retry): {}; receiptHandle: {}",
-										entry.message(), handleId);
-								sqsDeleteMessage(handleId);
+								final String handle = batchIdToReceiptHandles.get(entry.id());
+								if ( handle == null ) {
+									log.warn(
+											"Unknown entry [{}] in SQS queue [{}] delete response, cannot retry: {} {}",
+											entry.id(), sqsQueueUrl, entry.code(), entry.message());
+								} else if ( Boolean.TRUE.equals(entry.senderFault()) ) {
+									// a sender fault cannot succeed on retry, for example an
+									// expired receipt handle; the message will be redelivered
+									// and reprocessed instead
+									log.warn(
+											"Failed to delete message from SQS queue [{}], will not retry: {} {}",
+											sqsQueueUrl, entry.code(), entry.message());
+								} else {
+									log.warn(
+											"Failed to delete message from SQS queue [{}], will retry: {} {}",
+											sqsQueueUrl, entry.code(), entry.message());
+									sqsDeleteMessage(handle);
+								}
 							});
 						}
 						if ( resp.hasSuccessful() ) {
