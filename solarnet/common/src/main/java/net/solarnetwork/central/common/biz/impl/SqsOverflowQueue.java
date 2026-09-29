@@ -380,35 +380,65 @@ public class SqsOverflowQueue<T, K>
 
 	/**
 	 * Shutdown and wait for all threads to finish.
+	 *
+	 * <p>
+	 * Waits up to {@code shutdownWaitSecs} seconds in <b>total</b> for all
+	 * threads to finish, then abandons any still running. A
+	 * {@code shutdownWaitSecs} of {@literal 0} means do not wait at all.
+	 * </p>
 	 */
 	public synchronized void shutdownAndWait() {
 		doShutdown();
+		final long expire = System.nanoTime() + TimeUnit.SECONDS.toNanos(shutdownWaitSecs);
+		int abandoned = 0;
 		if ( readerThreads != null ) {
-			for ( QueueReaderThread t : readerThreads ) {
-				try {
-					t.join(TimeUnit.SECONDS.toMillis(shutdownWaitSecs));
-				} catch ( InterruptedException e ) {
-					// ignore
-				}
-				if ( t.isAlive() ) {
-					t.interrupt();
-				}
-			}
+			abandoned += joinAll(readerThreads, expire);
 			readerThreads = null;
 		}
 		if ( writerThreads != null ) {
-			for ( DaoWriterThread t : writerThreads ) {
-				try {
-					t.join(TimeUnit.SECONDS.toMillis(shutdownWaitSecs));
-				} catch ( InterruptedException e ) {
-					// ignore
-				}
-				if ( t.isAlive() ) {
-					t.interrupt();
-				}
-			}
+			abandoned += joinAll(writerThreads, expire);
 			writerThreads = null;
 		}
+		if ( abandoned > 0 ) {
+			log.warn("Abandoned {} thread(s) still running after waiting {}s for SQS queue [{}].",
+					abandoned, shutdownWaitSecs, sqsQueueUrl);
+		}
+	}
+
+	/**
+	 * Wait for threads to finish, up to a deadline shared by all of them.
+	 *
+	 * <p>
+	 * Any thread still alive at the deadline is interrupted again and left to
+	 * finish on its own.
+	 * </p>
+	 *
+	 * @param threads
+	 *        the threads to wait for
+	 * @param expire
+	 *        the deadline, as a {@link System#nanoTime()} value
+	 * @return the number of threads still alive at the deadline
+	 */
+	private static int joinAll(List<? extends Thread> threads, long expire) {
+		int alive = 0;
+		for ( Thread t : threads ) {
+			final long remainingMs = TimeUnit.NANOSECONDS.toMillis(expire - System.nanoTime());
+			if ( remainingMs > 0 ) {
+				try {
+					// note join(0) would wait forever, so only called with a positive value
+					t.join(remainingMs);
+				} catch ( InterruptedException e ) {
+					// restore the flag; subsequent join() calls then return immediately,
+					// so the remaining threads are abandoned rather than waited on
+					Thread.currentThread().interrupt();
+				}
+			}
+			if ( t.isAlive() ) {
+				alive++;
+				t.interrupt();
+			}
+		}
+		return alive;
 	}
 
 	@Override
@@ -1054,8 +1084,8 @@ public class SqsOverflowQueue<T, K>
 	 * shutdown.
 	 *
 	 * @param shutdownWaitSecs
-	 *        the wait secs; anything less than {@literal 0} will be treated as
-	 *        {@literal 0}
+	 *        the wait secs, or {@literal 0} to not wait at all; anything less
+	 *        than {@literal 0} will be treated as {@literal 0}
 	 */
 	public final void setShutdownWaitSecs(int shutdownWaitSecs) {
 		if ( shutdownWaitSecs < 0 ) {
