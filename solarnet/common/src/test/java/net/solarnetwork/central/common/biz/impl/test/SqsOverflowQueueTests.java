@@ -73,6 +73,7 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchResponse;
@@ -968,6 +969,147 @@ public class SqsOverflowQueueTests {
 		and.then(stats.get(SqsOverflowQueue.BasicCount.SqsQueueAdds))
 			.as("Overflowed entities counted as SQS additions")
 			.isEqualTo(3)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify that a failure sending to SQS is counted, and falls back to a
+	 * direct DAO write on the calling thread.
+	 */
+	@Test
+	public void sendToSqsAsyncFailure_fallsBackToDao() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setWriteConcurrency(1);
+	
+		// work queue never accepts, so persist() goes straight to SQS
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
+				0);
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				fullQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(0);
+		queue.setWriteConcurrency(1);
+		queue.setShutdownWaitSecs(3600);
+	
+		// the SQS send fails asynchronously
+		given(sqsClient.sendMessage(any(SendMessageRequest.class))).willReturn(
+				CompletableFuture.failedFuture(SdkClientException.create("no route to host")));
+	
+		final UserEvent entity = newEvent();
+		given(delegateDao.persist(any())).willReturn(entity.getId());
+	
+		// WHEN
+		queue.serviceDidStartup();
+		final UserUuidPK result = queue.persist(entity);
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Entity persisted directly after the SQS send failed")
+			.isEqualTo(entity.getId())
+			;
+	
+		then(delegateDao).should().persist(entityCaptor.capture());
+		and.then(entityCaptor.getValue())
+			.as("The entity was handed to the delegate DAO")
+			.isSameAs(entity)
+			;
+	
+		and.then(stats.get(SqsOverflowQueue.BasicCount.SqsQueueFail))
+			.as("Asynchronous SQS send failure counted")
+			.isEqualTo(1)
+			;
+		and.then(stats.get(SqsOverflowQueue.BasicCount.ObjectsStored))
+			.as("Entity counted as stored by the fallback")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that a SQS send that never completes does not block the caller
+	 * indefinitely.
+	 */
+	@Test
+	public void sendToSqsNeverCompletes_boundedBySqsSendMaxWait() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+	
+		// work queue never accepts, so persist() goes straight to SQS
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
+				0);
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				fullQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(0);
+		queue.setWriteConcurrency(1);
+		queue.setShutdownWaitSecs(3600);
+		queue.setSqsSendMaxWaitMs(300);
+	
+		// a send that never completes, like a hung connection
+		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
+				.willReturn(new CompletableFuture<>());
+	
+		final UserEvent entity = newEvent();
+		given(delegateDao.persist(any())).willReturn(entity.getId());
+	
+		// WHEN
+		queue.serviceDidStartup();
+		final long start = System.nanoTime();
+		final UserUuidPK result = queue.persist(entity);
+		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(durationMs)
+			.as("Caller released after the SQS send wait, rather than blocking forever")
+			.isLessThan(3_000L)
+			;
+		and.then(result)
+			.as("Entity persisted directly once the SQS send timed out")
+			.isEqualTo(entity.getId())
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that an entity a writer thread persists within the work item wait
+	 * is never sent to SQS.
+	 */
+	@Test
+	public void store_completedWithinWaitNotSentToSqs() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setWorkItemMaxWaitMs(2_000);
+	
+		final UserEvent entity = newEvent();
+	
+		given(delegateDao.persist(any())).willAnswer(inv -> {
+			Thread.sleep(50);
+			return entity.getId();
+		});
+	
+		// WHEN
+		collector.serviceDidStartup();
+		final UserUuidPK result = collector.persist(entity);
+		collector.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result provided by the writer thread")
+			.isEqualTo(entity.getId())
+			;
+	
+		then(sqsClient).should(never()).sendMessage(any(SendMessageRequest.class));
+	
+		and.then(stats.get(SqsOverflowQueue.BasicCount.SqsQueueAdds))
+			.as("Entity persisted directly, so never paid for SQS")
+			.isEqualTo(0)
 			;
 		// @formatter:on
 	}

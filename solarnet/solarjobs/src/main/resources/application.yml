@@ -521,6 +521,7 @@ app:
       secret-key: "SECRET_KEY_HERE"
       work-queue-size: 100
       work-item-max-wait: "5s"
+      sqs-send-max-wait: "2s"
       read-concurrency: 1
       write-concurrency: 2
       read-max-message-count: 10

@@ -47,6 +47,8 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	private int statFrequency = DEFAULT_STAT_FREQUENCY;
 	private int workQueueSize = DEFUALT_WORK_QUEUE_SIZE;
 	private Duration workItemMaxWait = Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
+	private Duration sqsSendMaxWait = Duration
+			.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS);
 	private int readConcurrency = SqsOverflowQueue.DEFAULT_READ_CONCURRENCY;
 	private int writeConcurrency = SqsOverflowQueue.DEFAULT_WRITE_CONCURRENCY;
 	private int readMaxMessageCount = SqsOverflowQueue.DEFAULT_READ_MAX_MESSAGE_COUNT;
@@ -92,6 +94,9 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 		}
 		if ( workItemMaxWait != null ) {
 			queue.setWorkItemMaxWaitMs(workItemMaxWait.toMillis());
+		}
+		if ( sqsSendMaxWait != null ) {
+			queue.setSqsSendMaxWaitMs(sqsSendMaxWait.toMillis());
 		}
 		queue.setReadMaxMessageCount(readMaxMessageCount);
 		if ( readMaxWaitTime != null ) {
@@ -240,6 +245,32 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	public final void setWorkItemMaxWait(Duration workItemMaxWait) {
 		this.workItemMaxWait = (workItemMaxWait != null ? workItemMaxWait
 				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS));
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @return the maximum time
+	 * @since 1.2
+	 */
+	public final Duration getSqsSendMaxWait() {
+		return sqsSendMaxWait;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @param sqsSendMaxWait
+	 *        the maximum time to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_SQS_SEND_MAX_WAIT_MS} milliseconds
+	 *        will be used
+	 * @since 1.2
+	 */
+	public final void setSqsSendMaxWait(Duration sqsSendMaxWait) {
+		this.sqsSendMaxWait = (sqsSendMaxWait != null ? sqsSendMaxWait
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS));
 	}
 
 	/**

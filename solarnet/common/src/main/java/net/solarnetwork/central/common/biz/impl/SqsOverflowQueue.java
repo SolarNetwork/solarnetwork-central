@@ -115,6 +115,13 @@ public class SqsOverflowQueue<T, K>
 	/** The {@code workItemMaxWaitMs} property default value. */
 	public static final long DEFAULT_WORK_ITEM_MAX_WAIT_MS = 5000L;
 
+	/**
+	 * The {@code sqsSendMaxWaitMs} property default value.
+	 *
+	 * @since 1.2
+	 */
+	public static final long DEFAULT_SQS_SEND_MAX_WAIT_MS = 2_000L;
+
 	/** The {@code readConcurrency} property default value. */
 	public static final int DEFAULT_READ_CONCURRENCY = 1;
 
@@ -196,6 +203,7 @@ public class SqsOverflowQueue<T, K>
 	private final BlockingQueue<String> completedSqsMessageHandles;
 
 	private long workItemMaxWaitMs = DEFAULT_WORK_ITEM_MAX_WAIT_MS;
+	private long sqsSendMaxWaitMs = DEFAULT_SQS_SEND_MAX_WAIT_MS;
 	private int readConcurrency = DEFAULT_READ_CONCURRENCY;
 	private int writeConcurrency = DEFAULT_WRITE_CONCURRENCY;
 	private int readMaxMessageCount = DEFAULT_READ_MAX_MESSAGE_COUNT;
@@ -384,15 +392,21 @@ public class SqsOverflowQueue<T, K>
 	 * Stop accepting work and stop reading from SQS.
 	 *
 	 * <p>
-	 * Writer threads are deliberately <b>not</b> interrupted here: they drain
-	 * whatever is already in the work queue and exit once it is empty, so
-	 * entities that can still be persisted directly are not pushed to SQS.
+	 * The writer threads are interrupted only to wake them from a queue poll so
+	 * they re-check their loop condition: that condition keeps them draining
+	 * whatever is already in the work queue, so entities that can still be
+	 * persisted directly are not pushed to SQS.
 	 * </p>
 	 */
 	private void doShutdown() {
 		writeEnabled = false;
 		if ( readerThreads != null ) {
 			for ( QueueReaderThread t : readerThreads ) {
+				t.interrupt();
+			}
+		}
+		if ( writerThreads != null ) {
+			for ( DaoWriterThread t : writerThreads ) {
 				t.interrupt();
 			}
 		}
@@ -635,8 +649,15 @@ public class SqsOverflowQueue<T, K>
 				// wait to complete within timeout, then send to SQS
 				try {
 					return f.get(workItemMaxWaitMs, TimeUnit.MILLISECONDS);
+				} catch ( InterruptedException e ) {
+					Thread.currentThread().interrupt();
+					var _ = f.cancel(false);
+					throw persistException(e);
 				} catch ( Exception e ) {
-					f.cancel(false);
+					if ( !f.cancel(false) && !f.isCompletedExceptionally() ) {
+						// a writer completed it while timing out, so no need to pay for SQS
+						return f.getNow(null);
+					}
 					f = sendToSqs(entity, new CompletableFuture<K>());
 				}
 			}
@@ -644,14 +665,62 @@ public class SqsOverflowQueue<T, K>
 			var _ = sendToSqs(entity, f);
 		}
 		try {
-			return f.get();
+			return (sqsSendMaxWaitMs > 0 ? f.get(sqsSendMaxWaitMs, TimeUnit.MILLISECONDS) : f.get());
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
+			throw persistException(e);
 		} catch ( Exception e ) {
-			Throwable cause = e.getCause();
-			if ( cause instanceof RuntimeException re ) {
-				throw re;
-			}
-			throw new RuntimeException(cause);
+			return persistAfterSqsFailure(entity, e);
 		}
+	}
+
+	/**
+	 * Last ditch attempt to persist an entity directly, after it could not be
+	 * handed off to the SQS queue.
+	 *
+	 * <p>
+	 * Runs on the calling thread, rather than on the SQS client thread that
+	 * reports the failure, so that a slow delegate DAO cannot block the client's
+	 * I/O threads.
+	 * </p>
+	 *
+	 * @param entity
+	 *        the entity to persist
+	 * @param sqsException
+	 *        the failure that prevented the entity reaching SQS
+	 * @return the entity ID
+	 * @throws RuntimeException
+	 *         if the entity cannot be persisted either
+	 */
+	private @Nullable K persistAfterSqsFailure(T entity, Exception sqsException) {
+		try {
+			return persistEntityInternal(entity);
+		} catch ( Exception e ) {
+			if ( isIgnoredPersistException(entity, e) ) {
+				stats.increment(BasicCount.ObjectsIgnored);
+				return entityId(entity);
+			}
+			// give up
+			stats.increment(BasicCount.ObjectsDiscarded);
+			log.warn("Failed to persist [{}] after failing to send to SQS queue [{}]: {}", entity,
+					sqsQueueUrl, e.toString(), e);
+			throw persistException(sqsException);
+		}
+	}
+
+	/**
+	 * Unwrap an exception from waiting on a work item into one to throw.
+	 *
+	 * @param e
+	 *        the exception
+	 * @return the exception to throw, never {@code null}
+	 */
+	private static RuntimeException persistException(Exception e) {
+		final Throwable cause = (e.getCause() != null ? e.getCause() : e);
+		if ( cause instanceof RuntimeException re ) {
+			return re;
+		}
+		return new RuntimeException(cause);
 	}
 
 	private CompletableFuture<K> sendToSqs(T entity, CompletableFuture<K> f) {
@@ -665,49 +734,42 @@ public class SqsOverflowQueue<T, K>
 					stats.increment(BasicCount.SqsQueueAdds);
 					f.complete(entityCodec.entityId(entity));
 				} else {
-					if ( ex.getCause() instanceof AwsServiceException e ) {
-						log.warn("AWS error: {}; HTTP code {}; AWS code {}; request ID {}",
-								e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
-								e.requestId());
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, e.toString()),
-								e));
-					} else if ( ex.getCause() instanceof SdkClientException e ) {
-						log.warn("Error communicating with AWS: {}", e.getMessage());
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, e.toString()),
-								e));
-					} else {
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, ex.toString()),
-								ex));
-					}
+					sqsSendFailed(entity, f, ex);
 				}
 				return resp;
 			});
 		} catch ( Exception e ) {
-			stats.increment(BasicCount.SqsQueueFail);
-			// last ditch: write directly to DAO
-			try {
-				var id = persistEntityInternal(entity);
-				f.complete(id);
-			} catch ( Exception e2 ) {
-				if ( isIgnoredPersistException(entity, e2) ) {
-					stats.increment(BasicCount.ObjectsIgnored);
-					f.complete(entityId(entity));
-				} else {
-					// give up
-					stats.increment(BasicCount.ObjectsDiscarded);
-					log.warn("Failed to persist [{}] after failing to send to SQS queue: {}", entity, e2,
-							e2);
-					f.completeExceptionally(e);
-				}
-			}
+			sqsSendFailed(entity, f, e);
 		}
 		return f;
+	}
+
+	/**
+	 * Complete a work item future exceptionally after the entity could not be
+	 * sent to the SQS queue.
+	 *
+	 * @param entity
+	 *        the entity that could not be sent
+	 * @param f
+	 *        the future to complete
+	 * @param ex
+	 *        the failure
+	 */
+	private void sqsSendFailed(T entity, CompletableFuture<K> f, Throwable ex) {
+		stats.increment(BasicCount.SqsQueueFail);
+		final Throwable cause = (ex.getCause() != null ? ex.getCause() : ex);
+		if ( cause instanceof AwsServiceException e ) {
+			log.warn(
+					"AWS error adding entity to SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
+					sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
+					e.requestId());
+		} else if ( cause instanceof SdkClientException e ) {
+			log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl, e.getMessage());
+		} else {
+			log.warn("Error adding entity to SQS queue [{}]: {}", sqsQueueUrl, cause.toString());
+		}
+		f.completeExceptionally(new RemoteServiceException("Error adding entity [%s] to SQS queue [%s]: %s"
+				.formatted(entity, sqsQueueUrl, cause.toString()), cause));
 	}
 
 	private @Nullable K persistEntityInternal(T entity) {
@@ -1185,6 +1247,36 @@ public class SqsOverflowQueue<T, K>
 	 */
 	public final void setWorkItemMaxWaitMs(long workItemMaxWaitMs) {
 		this.workItemMaxWaitMs = workItemMaxWaitMs;
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @return the maximum time, in milliseconds; defaults to
+	 *         {@link #DEFAULT_SQS_SEND_MAX_WAIT_MS}
+	 * @since 1.2
+	 */
+	public final long getSqsSendMaxWaitMs() {
+		return sqsSendMaxWaitMs;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * <p>
+	 * Together with {@code workItemMaxWaitMs} this bounds the total time
+	 * {@link #persist(Object)} can take. Anything less than {@literal 1} means
+	 * wait indefinitely.
+	 * </p>
+	 *
+	 * @param sqsSendMaxWaitMs
+	 *        the maximum time to set, in milliseconds
+	 * @since 1.2
+	 */
+	public final void setSqsSendMaxWaitMs(long sqsSendMaxWaitMs) {
+		this.sqsSendMaxWaitMs = sqsSendMaxWaitMs;
 	}
 
 	/**
