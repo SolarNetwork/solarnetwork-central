@@ -167,6 +167,19 @@ public class SqsOverflowQueue<T, K>
 	 */
 	public static final long DEFAULT_PING_TEST_TIMEOUT_MS = 2_000L;
 
+	/**
+	 * The {@code shutdownWaitSecs} property default value.
+	 *
+	 * @since 1.2
+	 */
+	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
+
+	/**
+	 * The work queue poll timeout, so writer threads notice a shutdown while
+	 * draining.
+	 */
+	private static final long WRITER_QUEUE_POLL_MS = 1_000L;
+
 	private static final Logger log = LoggerFactory.getLogger(SqsOverflowQueue.class);
 
 	private static final AtomicInteger READER_COUNTER = new AtomicInteger(0);
@@ -190,7 +203,7 @@ public class SqsOverflowQueue<T, K>
 	private long readSleepMinMs = DEFAULT_READ_SLEEP_MIN_MS;
 	private long readSleepMaxMs = DEFAULT_READ_SLEEP_MAX_MS;
 	private long readSleepThrottleStepMs = DEFAULT_READ_SLEEP_THROTTLE_STEP_MS;
-	private int shutdownWaitSecs;
+	private int shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
 	private @Nullable UncaughtExceptionHandler exceptionHandler;
 	private String pingTestName = DEFAULT_PING_TEST_NAME;
 	private long pingTestTimeoutMs = DEFAULT_PING_TEST_TIMEOUT_MS;
@@ -355,14 +368,27 @@ public class SqsOverflowQueue<T, K>
 
 	/**
 	 * Call when no longer needed.
+	 *
+	 * <p>
+	 * Delegates to {@link #shutdownAndWait()}, so work already accepted is
+	 * given {@code shutdownWaitSecs} seconds to be persisted and anything left
+	 * over is overflowed to SQS.
+	 * </p>
 	 */
 	@Override
 	public synchronized void serviceDidShutdown() {
-		doShutdown();
-		readerThreads = null;
-		writerThreads = null;
+		shutdownAndWait();
 	}
 
+	/**
+	 * Stop accepting work and stop reading from SQS.
+	 *
+	 * <p>
+	 * Writer threads are deliberately <b>not</b> interrupted here: they drain
+	 * whatever is already in the work queue and exit once it is empty, so
+	 * entities that can still be persisted directly are not pushed to SQS.
+	 * </p>
+	 */
 	private void doShutdown() {
 		writeEnabled = false;
 		if ( readerThreads != null ) {
@@ -370,12 +396,6 @@ public class SqsOverflowQueue<T, K>
 				t.interrupt();
 			}
 		}
-		if ( writerThreads != null ) {
-			for ( DaoWriterThread t : writerThreads ) {
-				t.interrupt();
-			}
-		}
-		flushSqsHandledMessages();
 	}
 
 	/**
@@ -402,6 +422,55 @@ public class SqsOverflowQueue<T, K>
 		if ( abandoned > 0 ) {
 			log.warn("Abandoned {} thread(s) still running after waiting {}s for SQS queue [{}].",
 					abandoned, shutdownWaitSecs, sqsQueueUrl);
+		}
+		flushSqsHandledMessages();
+		drainWorkQueue(expire);
+	}
+
+	/**
+	 * Overflow any work items left in the work queue to SQS.
+	 *
+	 * <p>
+	 * Called once the writer threads have stopped, so that nothing accepted by
+	 * {@link #persist(Object)} is dropped, and no caller is left waiting on a
+	 * future that will never complete.
+	 * </p>
+	 *
+	 * @param expire
+	 *        the shutdown deadline, as a {@link System#nanoTime()} value
+	 */
+	private void drainWorkQueue(long expire) {
+		final List<WorkItem<T, K>> remaining = new ArrayList<>(queue.size());
+		queue.drainTo(remaining);
+		if ( remaining.isEmpty() ) {
+			return;
+		}
+		log.info("Overflowing {} work item(s) to SQS queue [{}] at shutdown.", remaining.size(),
+				sqsQueueUrl);
+		final List<CompletableFuture<K>> pending = new ArrayList<>(remaining.size());
+		for ( WorkItem<T, K> item : remaining ) {
+			stats.increment(BasicCount.WorkQueueRemovals, true);
+			if ( item.future.isDone() ) {
+				stats.increment(BasicCount.WorkQueueCancels, true);
+				continue;
+			}
+			pending.add(sendToSqs(item.entity, item.future));
+		}
+		if ( pending.isEmpty() ) {
+			return;
+		}
+		// wait for the sends to land, so nothing is lost if the process exits as
+		// soon as shutdown returns
+		final long remainingMs = Math.max(WRITER_QUEUE_POLL_MS,
+				TimeUnit.NANOSECONDS.toMillis(expire - System.nanoTime()));
+		try {
+			CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).get(remainingMs,
+					TimeUnit.MILLISECONDS);
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
+		} catch ( Exception e ) {
+			log.warn("Error overflowing {} work item(s) to SQS queue [{}] at shutdown: {}",
+					pending.size(), sqsQueueUrl, e.toString());
 		}
 	}
 
@@ -915,11 +984,16 @@ public class SqsOverflowQueue<T, K>
 
 		@Override
 		public void run() {
-			while ( writeEnabled ) {
+			// keep going while shutting down, until the work queue is drained, so
+			// queued entities are persisted directly rather than pushed to SQS
+			while ( writeEnabled || !queue.isEmpty() ) {
 				final WorkItem<T, K> item;
 				try {
-					item = queue.take();
+					item = queue.poll(WRITER_QUEUE_POLL_MS, TimeUnit.MILLISECONDS);
 				} catch ( InterruptedException e ) {
+					continue;
+				}
+				if ( item == null ) {
 					continue;
 				}
 				stats.increment(BasicCount.WorkQueueRemovals, true);

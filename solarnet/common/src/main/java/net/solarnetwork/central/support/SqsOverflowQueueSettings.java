@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
  * Settings for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SqsOverflowQueueSettings extends SqsProperties {
 
@@ -58,7 +58,8 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 			.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 	private Duration pingTestTimeout = Duration.ofMillis(SqsOverflowQueue.DEFAULT_PING_TEST_TIMEOUT_MS);
 
-	private Duration shutdownWait = Duration.ZERO;
+	private Duration shutdownWait = Duration
+			.ofSeconds(SqsOverflowQueue.DEFAULT_SHUTDOWN_WAIT_SECS);
 
 	/**
 	 * Create an asynchronous client from the settings of this instance.
