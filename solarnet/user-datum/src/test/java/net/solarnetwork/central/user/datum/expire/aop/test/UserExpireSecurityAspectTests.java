@@ -57,6 +57,7 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
  * @author matt
  * @version 2.2
  */
+@SuppressWarnings("static-access")
 public class UserExpireSecurityAspectTests implements CentralTestConstants {
 
 	private static final Long TEST_USER_ID = -11L;

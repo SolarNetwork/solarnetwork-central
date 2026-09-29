@@ -140,7 +140,7 @@ public class DefaultUserAccountBizTests {
 
 		// no system key on the input, so the first registrar is the default
 		given(registrar1.getAccountingSystemKey()).willReturn(systemKey1);
-		given(registrar1.createAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar1.createAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
 		given(userDao.getUserRoles(user)).willReturn(Set.of());
 
@@ -192,7 +192,7 @@ public class DefaultUserAccountBizTests {
 		given(registrar1.supportsAccountingSystemKey(systemKey2)).willReturn(false);
 		given(registrar2.supportsAccountingSystemKey(systemKey2)).willReturn(true);
 		given(registrar2.getAccountingSystemKey()).willReturn(systemKey2);
-		given(registrar2.createAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar2.createAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
 		given(userDao.getUserRoles(user)).willReturn(Set.of());
 
@@ -323,7 +323,7 @@ public class DefaultUserAccountBizTests {
 		input.setRequestedEntitlements(Set.of(OCPP, DATUM_EXPORT));
 
 		given(registrar1.getAccountingSystemKey()).willReturn(systemKey1);
-		given(registrar1.createAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar1.createAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
 		// the user already has an unrelated role, plus an entitlement role not requested now
 		given(userDao.getUserRoles(user)).willReturn(Set.of("ROLE_USER", OSCP.getRoleName()));
@@ -390,10 +390,10 @@ public class DefaultUserAccountBizTests {
 
 		given(registrar1.supportsAccountingSystemKey(systemKey2)).willReturn(false);
 		given(registrar2.supportsAccountingSystemKey(systemKey2)).willReturn(true);
-		given(registrar2.getAccountForUser(same(user))).willAnswer(invocation -> account);
+		given(registrar2.getAccountForUser(same(user))).willAnswer(_ -> account);
 
-		given(userDao.getUserRoles(user)).willReturn(Set.of("ROLE_USER", ROLE_BILLING,
-				DATUM_EXPORT.getRoleName()));
+		given(userDao.getUserRoles(user))
+				.willReturn(Set.of("ROLE_USER", ROLE_BILLING, DATUM_EXPORT.getRoleName()));
 
 		// WHEN
 		SnAccountInfo result = service.getAccountForUser(userId);
@@ -463,7 +463,7 @@ public class DefaultUserAccountBizTests {
 		given(registrar1.supportsAccountingSystemKey(systemKey2)).willReturn(false);
 		given(registrar2.supportsAccountingSystemKey(systemKey2)).willReturn(true);
 		given(registrar2.getAccountingSystemKey()).willReturn(systemKey2);
-		given(registrar2.updateAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar2.updateAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
 		given(userDao.getUserRoles(user)).willReturn(Set.of(ROLE_BILLING));
 
@@ -504,7 +504,7 @@ public class DefaultUserAccountBizTests {
 
 		given(registrar1.supportsAccountingSystemKey(systemKey1)).willReturn(true);
 		given(registrar1.getAccountingSystemKey()).willReturn(systemKey1);
-		given(registrar1.updateAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar1.updateAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
 		given(userDao.getUserRoles(user)).willReturn(Set.of(ROLE_BILLING));
 
@@ -534,10 +534,9 @@ public class DefaultUserAccountBizTests {
 
 		given(registrar1.supportsAccountingSystemKey(systemKey1)).willReturn(true);
 		given(registrar1.getAccountingSystemKey()).willReturn(systemKey1);
-		given(registrar1.updateAccount(eq(userId), same(input))).willAnswer(invocation -> account);
+		given(registrar1.updateAccount(eq(userId), same(input))).willAnswer(_ -> account);
 
-		given(userDao.getUserRoles(user))
-				.willReturn(Set.of(ROLE_BILLING, DATUM_EXPORT.getRoleName()));
+		given(userDao.getUserRoles(user)).willReturn(Set.of(ROLE_BILLING, DATUM_EXPORT.getRoleName()));
 
 		// WHEN
 		SnAccountInfo result = service.updateAccount(userId, input);

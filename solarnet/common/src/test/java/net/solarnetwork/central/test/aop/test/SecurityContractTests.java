@@ -114,8 +114,8 @@ public class SecurityContractTests {
 	@Test
 	public void satisfied() {
 		// GIVEN
-		final SecurityContract<ToyBiz> contract = toyContract()
-				.exempt("unguardedThing", "for testing").build();
+		final SecurityContract<ToyBiz> contract = toyContract().exempt("unguardedThing", "for testing")
+				.build();
 
 		// WHEN
 		final Results results = run(contract.dynamicTests(this::toyProxy));
@@ -157,9 +157,8 @@ public class SecurityContractTests {
 	@Test
 	public void unknownExemption() {
 		// GIVEN
-		final SecurityContract<ToyBiz> contract = toyContract()
-				.exempt("unguardedThing", "for testing").exempt("noSuchThing", "for testing")
-				.build();
+		final SecurityContract<ToyBiz> contract = toyContract().exempt("unguardedThing", "for testing")
+				.exempt("noSuchThing", "for testing").build();
 
 		// THEN
 		// @formatter:off
@@ -359,12 +358,11 @@ public class SecurityContractTests {
 		// @formatter:on
 	}
 
-
 	@Test
 	public void denyTests_advisedService() {
 		// GIVEN
-		final SecurityContract<ToyBiz> contract = toyContract()
-				.exempt("unguardedThing", "for testing").build();
+		final SecurityContract<ToyBiz> contract = toyContract().exempt("unguardedThing", "for testing")
+				.build();
 
 		// WHEN
 		final Results results = run(contract.denyTests(toyProxy().proxy()));
@@ -386,8 +384,8 @@ public class SecurityContractTests {
 	@Test
 	public void denyTests_unadvisedService() {
 		// GIVEN
-		final SecurityContract<ToyBiz> contract = toyContract()
-				.exempt("unguardedThing", "for testing").build();
+		final SecurityContract<ToyBiz> contract = toyContract().exempt("unguardedThing", "for testing")
+				.build();
 
 		// WHEN
 		final Results results = run(contract.denyTests(mock(DaoToyBiz.class)));
@@ -412,7 +410,7 @@ public class SecurityContractTests {
 		// @formatter:off
 		final SecurityContract<ToyBiz> contract = SecurityContract.forApi(ToyBiz.class, tenants)
 				.userRead(biz -> biz.userThing(a.userId()))
-					.given(p -> {})
+					.given(_ -> {})
 				.userWrite(biz -> biz.saveUserThing(a.userId(), "foo"))
 					.dependsOnTarget()
 				.nodeRead(biz -> biz.nodeThing(a.privateNodeId()))
