@@ -107,7 +107,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * @param <K>
  *        the message entity key type
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SqsOverflowQueue<T, K>
 		implements GenericWriteOnlyDao<T, K>, PingTest, ServiceLifecycleObserver {
@@ -211,6 +211,14 @@ public class SqsOverflowQueue<T, K>
 
 		/** An overall count of objects that failed to be persisted. */
 		ObjectsFailed,
+
+		/**
+		 * An overall count of objects whose persistence failure was ignored, per
+		 * the configured {@code ignoredDaoExceptions}.
+		 *
+		 * @since 1.2
+		 */
+		ObjectsIgnored,
 
 		/** An overall count of objects that failed to be processed at all. */
 		ObjectsDiscarded,
@@ -588,9 +596,9 @@ public class SqsOverflowQueue<T, K>
 				var id = persistEntityInternal(entity);
 				f.complete(id);
 			} catch ( Exception e2 ) {
-				final K ignoredId = ignorePersistExceptionAndComplete(entity, e2);
-				if ( ignoredId != null ) {
-					f.complete(ignoredId);
+				if ( isIgnoredPersistException(entity, e2) ) {
+					stats.increment(BasicCount.ObjectsIgnored);
+					f.complete(entityId(entity));
 				} else {
 					// give up
 					stats.increment(BasicCount.ObjectsDiscarded);
@@ -841,9 +849,9 @@ public class SqsOverflowQueue<T, K>
 					var id = persistEntityInternal(item.entity);
 					item.future.complete(id);
 				} catch ( Throwable t ) {
-					final K ignoredId = ignorePersistExceptionAndComplete(item.entity, t);
-					if ( ignoredId != null ) {
-						item.future.complete(ignoredId);
+					if ( isIgnoredPersistException(item.entity, t) ) {
+						stats.increment(BasicCount.ObjectsIgnored);
+						item.future.complete(entityId(item.entity));
 					} else {
 						stats.increment(BasicCount.ObjectsFailed);
 						log.warn("Error storing entity {}: {}", item.entity, t.getMessage(), t);
@@ -868,30 +876,47 @@ public class SqsOverflowQueue<T, K>
 
 	/**
 	 * Test if an exception that occurred during persistence should be ignored.
-	 * 
+	 *
+	 * <p>
+	 * An exception is ignored only if it is an instance of one of the
+	 * configured {@link #getIgnoredDaoExceptions()}, in which case the entity is
+	 * treated as if it had been persisted successfully.
+	 * </p>
+	 *
 	 * @param entity
 	 *        the entity being persisted
 	 * @param t
 	 *        the exception
-	 * @return the entity ID to complete the future successfully with, or
-	 *         {@code null} to complete the future exceptionally
+	 * @return {@literal true} if {@code t} should be ignored
 	 */
-	private @Nullable K ignorePersistExceptionAndComplete(T entity, Throwable t) {
+	private boolean isIgnoredPersistException(T entity, Throwable t) {
 		final Set<Class<? extends Throwable>> ignored = getIgnoredDaoExceptions();
-		K id = null;
-		if ( ignored != null ) {
-			for ( Class<? extends Throwable> ignore : ignored ) {
-				if ( ignore.isAssignableFrom(t.getClass()) ) {
-					log.debug("Ignoring exception storing entity {}: {}", entity, t.getMessage(), t);
-				}
-			}
-			if ( entity instanceof Unique<?> ) {
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				Unique<K> unq = (Unique) entity;
-				id = unq.id();
+		if ( ignored == null ) {
+			return false;
+		}
+		for ( Class<? extends Throwable> ignore : ignored ) {
+			if ( ignore.isInstance(t) ) {
+				log.debug("Ignoring exception storing entity {}: {}", entity, t.getMessage(), t);
+				return true;
 			}
 		}
-		return id;
+		return false;
+	}
+
+	/**
+	 * Get the ID of an entity, if the entity provides one.
+	 *
+	 * @param entity
+	 *        the entity to get the ID for
+	 * @return the entity ID, or {@code null} if the entity does not provide one
+	 */
+	private @Nullable K entityId(T entity) {
+		if ( entity instanceof Unique<?> ) {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Unique<K> unq = (Unique) entity;
+			return unq.id();
+		}
+		return null;
 	}
 
 	/**
