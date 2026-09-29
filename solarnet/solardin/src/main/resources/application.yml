@@ -75,14 +75,14 @@ app:
   job.din:
     xslt-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: 3600
+      schedule: "0 0/15 * * * *"
   job.inin:
     xslt-req-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: 3600
+      schedule: "0 0/15 * * * *"
     xslt-res-templates-cache-prune:
       maximum-wait-ms: 240000
-      schedule: 3600
+      schedule: "0 0/15 * * * *"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
