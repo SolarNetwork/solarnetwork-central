@@ -58,6 +58,7 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
@@ -695,6 +696,27 @@ public class SqsOverflowQueue<T, K>
 	}
 
 	/**
+	 * Get the approximate number of times a message has been received.
+	 *
+	 * @param msg
+	 *        the message
+	 * @return the approximate receive count, or {@literal 1} if not available
+	 */
+	private static long approximateReceiveCount(Message msg) {
+		final String count = msg.attributes()
+				.get(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT);
+		if ( count != null ) {
+			try {
+				return Long.parseLong(count);
+			} catch ( NumberFormatException e ) {
+				log.debug("Unparsable {} attribute on SQS message [{}]: {}",
+						MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, msg.messageId(), count);
+			}
+		}
+		return 1;
+	}
+
+	/**
 	 * Thread for long-polling the SQS queue for messages to persist.
 	 */
 	private final class QueueReaderThread extends Thread {
@@ -713,6 +735,7 @@ public class SqsOverflowQueue<T, K>
 						.queueUrl(sqsQueueUrl)
 						.maxNumberOfMessages(readMaxMessageCount)
 						.waitTimeSeconds(readMaxWaitTimeSecs)
+						.messageSystemAttributeNames(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT)
 						.build();
 				// @formatter:on
 				try {
@@ -724,7 +747,26 @@ public class SqsOverflowQueue<T, K>
 						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
 						try {
 							for ( Message msg : msgs ) {
-								T o = entityCodec.deserialize(msg.body());
+								final T o;
+								try {
+									o = entityCodec.deserialize(msg.body());
+								} catch ( Exception e ) {
+									// this message can never be processed; leave it alone so the
+									// queue visibility timeout paces the redelivery, and the queue
+									// redrive policy moves it to the dead-letter queue. It will be
+									// seen once per redelivery, so only count and log it in full
+									// the first time.
+									if ( approximateReceiveCount(msg) < 2 ) {
+										stats.increment(BasicCount.ObjectsDiscarded);
+										log.warn(
+												"Discarding unparsable message [{}] from SQS queue [{}]: {}; body: {}",
+												msg.messageId(), sqsQueueUrl, e.toString(), msg.body());
+									} else {
+										log.debug("Discarding unparsable message [{}] from SQS queue [{}]: {}",
+												msg.messageId(), sqsQueueUrl, e.toString());
+									}
+									continue;
+								}
 								CompletableFuture<K> f = new CompletableFuture<>();
 								if ( o != null && queue.offer(new WorkItem<T, K>(o, f)) ) {
 									stats.increment(BasicCount.WorkQueueAdds);
@@ -762,7 +804,7 @@ public class SqsOverflowQueue<T, K>
 									return changeVizResp;
 								});
 							}
-							int rejected = msgs.size() - accepted;
+							int rejected = rejectedReceiptHandles.size();
 							double rejectedRatio = (rejected > 0
 									? ((double) rejected / (double) msgs.size())
 									: 0.0);
