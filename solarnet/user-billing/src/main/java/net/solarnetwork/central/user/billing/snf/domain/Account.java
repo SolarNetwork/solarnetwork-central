@@ -30,6 +30,8 @@ import java.time.ZoneId;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.dao.BasicEntity;
@@ -40,6 +42,8 @@ import net.solarnetwork.dao.BasicEntity;
  * @author matt
  * @version 2.0
  */
+@JsonIgnoreProperties({ "id", "configId" })
+@JsonPropertyOrder({ "userId", "accountId", "created", "currencyCode", "locale" })
 public class Account extends BasicEntity<UserLongCompositePK>
 		implements SnAccount<Account, UserLongCompositePK, Address> {
 
@@ -102,7 +106,6 @@ public class Account extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the account ID
 	 */
-	@JsonIgnore
 	public Long getAccountId() {
 		var pk = id();
 		return (pk.entityIdIsAssigned() ? pk.getEntityId()

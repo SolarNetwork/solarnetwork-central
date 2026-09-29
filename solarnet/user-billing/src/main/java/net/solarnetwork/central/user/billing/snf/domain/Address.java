@@ -32,6 +32,8 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.account.domain.SnAddress;
 import net.solarnetwork.dao.BasicEntity;
@@ -42,6 +44,9 @@ import net.solarnetwork.dao.BasicEntity;
  * @author matt
  * @version 2.0
  */
+@JsonIgnoreProperties({ "id", "configId" })
+@JsonPropertyOrder({ "userId", "addressId", "created", "name", "email", "street", "locality",
+		"stateOrProvince", "region", "country", "postalCode", "timeZoneId" })
 public class Address extends BasicEntity<UserLongCompositePK>
 		implements SnAddress<Address, UserLongCompositePK> {
 
@@ -147,7 +152,6 @@ public class Address extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the address ID
 	 */
-	@JsonIgnore
 	public Long getAddressId() {
 		var pk = id();
 		return (pk.entityIdIsAssigned() ? pk.getEntityId()
