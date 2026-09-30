@@ -1302,6 +1302,85 @@ public class SqsOverflowQueueTests {
 	}
 
 	/**
+	 * Verify that an entity submitted after shutdown still reaches SQS, promptly,
+	 * rather than waiting out the work item timeout on a queue no writer thread
+	 * is draining.
+	 */
+	@Test
+	public void persistAfterShutdown_goesStraightToSqs() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(0); // disable read thread
+		collector.setWorkItemMaxWaitMs(5_000);
+	
+		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						SendMessageResponse.builder().messageId(randomString()).build()));
+	
+		collector.serviceDidStartup();
+		collector.shutdownAndWait();
+	
+		final UserEvent entity = newEvent();
+	
+		// WHEN
+		final long start = System.nanoTime();
+		final UserUuidPK result = collector.persist(entity);
+		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+	
+		// THEN
+		// @formatter:off
+		and.then(durationMs)
+			.as("Sent to SQS at once, rather than waiting out the 5s work item timeout")
+			.isLessThan(2_000L)
+			;
+	
+		then(sqsClient).should().sendMessage(sendMessageRequestCaptor.capture());
+		and.then(sendMessageRequestCaptor.getValue())
+			.as("Entity sent to SQS after shutdown")
+			.returns(JSON_MAPPER.writeValueAsString(entity), from(SendMessageRequest::messageBody))
+			;
+	
+		and.then(result)
+			.as("Result provided")
+			.isEqualTo(entity.getId())
+			;
+	
+		then(delegateDao).shouldHaveNoInteractions();
+	
+		and.then(workQueue)
+			.as("Nothing left stranded in the work queue")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that an unexpected error reading from SQS does not stop the reader
+	 * thread.
+	 */
+	@Test
+	public void readFromSqs_survivesUnexpectedError() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(1); // enable read thread
+		collector.setReadSleepMinMs(20);
+		collector.setReadSleepThrottleStepMs(20);
+		collector.setReadSleepMaxMs(100);
+	
+		// neither an AWS nor an interrupt failure, i.e. a bug rather than a fault
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).willReturn(
+				CompletableFuture.failedFuture(new IllegalStateException("unexpected")));
+	
+		// WHEN
+		collector.serviceDidStartup();
+	
+		// THEN
+		// @formatter:off
+		then(sqsClient).should(timeout(3_000).atLeast(3))
+			.receiveMessage(any(ReceiveMessageRequest.class))
+			;
+		// @formatter:on
+	}
+
+	/**
 	 * Block the calling thread, ignoring interrupts, for longer than any test
 	 * needs, so a writer thread that takes a work item never releases its slot.
 	 */

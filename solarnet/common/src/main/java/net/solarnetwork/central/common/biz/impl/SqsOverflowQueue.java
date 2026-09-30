@@ -645,11 +645,21 @@ public class SqsOverflowQueue<T, K>
 		sqsDeleteMessage(receiptHandle, false);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An entity is never rejected or discarded here: if the work queue cannot
+	 * take it, or this service is not running and so has no writer threads to
+	 * drain the work queue, the entity is sent to the SQS queue instead, falling
+	 * back to a direct DAO write if that fails.
+	 * </p>
+	 */
 	@Override
 	public @Nullable K persist(T entity) {
 		stats.increment(BasicCount.ObjectsReceived);
 		CompletableFuture<K> f = new CompletableFuture<>();
-		if ( queue.offer(new WorkItem<T, K>(entity, f)) ) {
+		if ( writeEnabled && queue.offer(new WorkItem<T, K>(entity, f)) ) {
 			stats.increment(BasicCount.WorkQueueAdds);
 			if ( workItemMaxWaitMs > 0 ) {
 				// wait to complete within timeout, then send to SQS
@@ -668,6 +678,7 @@ public class SqsOverflowQueue<T, K>
 				}
 			}
 		} else {
+			// the work queue is full, or has no writer threads draining it
 			var _ = sendToSqs(entity, f);
 		}
 		try {
@@ -989,9 +1000,10 @@ public class SqsOverflowQueue<T, K>
 						log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
 								e.getMessage());
 					} else if ( !(t instanceof InterruptedException) ) {
-						log.error("Fatal error in entity collector SQS queue [{}]: {}", sqsQueueUrl,
+						// keep reading: an unexpected error here is a bug, and exiting would
+						// leave the SQS queue undrained until the application restarts
+						log.error("Unexpected error reading from SQS queue [{}]: {}", sqsQueueUrl,
 								t.toString(), t);
-						return;
 					}
 					adjustThrottle(1.0);
 				}
