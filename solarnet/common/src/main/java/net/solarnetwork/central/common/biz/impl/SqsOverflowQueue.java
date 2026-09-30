@@ -190,6 +190,9 @@ public class SqsOverflowQueue<T, K>
 	/** The maximum number of messages SQS allows in one receive request. */
 	private static final int SQS_MAX_RECEIVE_MESSAGE_COUNT = 10;
 
+	/** The maximum number of messages SQS allows in one delete request. */
+	private static final int SQS_MAX_DELETE_BATCH_SIZE = 10;
+
 	/** The minimum pause before re-checking a full work queue. */
 	private static final long WORK_QUEUE_FULL_PAUSE_MS = 100L;
 
@@ -321,9 +324,10 @@ public class SqsOverflowQueue<T, K>
 	 * @param queue
 	 *        the temporary queue to use
 	 * @param completedSqsMessageHandles
-	 *        a blocking queue to buffer message handles for deletion; the queue
-	 *        size should be no more than the maximum allowed in a single SQS
-	 *        delete request (10)
+	 *        a blocking queue to buffer message handles for deletion; its
+	 *        capacity is how many handles accumulate before a delete request is
+	 *        sent, and a capacity above the SQS per-request maximum of 10 gains
+	 *        nothing, as each request can delete at most that many
 	 * @param dao
 	 *        the delegate DAO
 	 * @param entityCodec
@@ -815,73 +819,95 @@ public class SqsOverflowQueue<T, K>
 		final boolean rejected = (receiptHandle != null
 				? !completedSqsMessageHandles.offer(receiptHandle)
 				: false);
-		if ( rejected || force ) {
-			List<String> handleIds = new ArrayList<>(10);
-			completedSqsMessageHandles.drainTo(handleIds, 9);
-			if ( rejected && receiptHandle != null ) {
-				handleIds.add(receiptHandle);
+		if ( rejected ) {
+			// the pending queue would not take the handle, so send a batch including it
+			sendDeleteBatch(receiptHandle);
+		} else if ( force ) {
+			// emptying the queue can take more than one batch; bound the loop so that a
+			// delete failure re-queueing its handle cannot spin here
+			int batches = (completedSqsMessageHandles.size() / SQS_MAX_DELETE_BATCH_SIZE) + 1;
+			while ( batches-- > 0 && sendDeleteBatch(null) ) {
+				// send another batch
 			}
-
-			if ( handleIds.isEmpty() ) {
-				return;
-			}
-
-			log.debug("Deleting {} messages from SQS queue.", handleIds.size());
-
-			Map<String, String> batchIdToReceiptHandles = new HashMap<>(10);
-			List<DeleteMessageBatchRequestEntry> entries = handleIds.stream().map(s -> {
-				String id = UUID.randomUUID().toString();
-				batchIdToReceiptHandles.put(id, s);
-				return DeleteMessageBatchRequestEntry.builder().id(id).receiptHandle(s).build();
-			}).toList();
-
-			DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
-					.queueUrl(sqsQueueUrl).entries(entries).build();
-
-			var _ = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
-				if ( ex == null ) {
-					if ( resp != null ) {
-						if ( resp.hasFailed() ) {
-							resp.failed().forEach(entry -> {
-								final String handle = batchIdToReceiptHandles.get(entry.id());
-								if ( handle == null ) {
-									log.warn(
-											"Unknown entry [{}] in SQS queue [{}] delete response, cannot retry: {} {}",
-											entry.id(), sqsQueueUrl, entry.code(), entry.message());
-								} else if ( Boolean.TRUE.equals(entry.senderFault()) ) {
-									// a sender fault cannot succeed on retry, for example an
-									// expired receipt handle; the message will be redelivered
-									// and reprocessed instead
-									log.warn(
-											"Failed to delete message from SQS queue [{}], will not retry: {} {}",
-											sqsQueueUrl, entry.code(), entry.message());
-								} else {
-									log.warn(
-											"Failed to delete message from SQS queue [{}], will retry: {} {}",
-											sqsQueueUrl, entry.code(), entry.message());
-									sqsDeleteMessage(handle);
-								}
-							});
-						}
-						if ( resp.hasSuccessful() ) {
-							stats.increment(BasicCount.SqsQueueRemovals, resp.successful().size());
-						}
-					}
-				} else if ( ex.getCause() instanceof AwsServiceException e ) {
-					log.warn(
-							"AWS error deleting entities from SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
-							sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
-							e.requestId());
-				} else if ( ex.getCause() instanceof SdkClientException e ) {
-					log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
-							e.getMessage());
-				} else {
-					log.warn("Error deleting entities from from SQS queue [{}]: {}", sqsQueueUrl,
-							ex.toString());
-				}
-				return resp;
-			});
 		}
+	}
+
+	/**
+	 * Send one batch of completed message handles to be deleted from SQS.
+	 *
+	 * @param extraHandle
+	 *        a handle to include that is not in the pending queue, or
+	 *        {@code null} to send pending handles only
+	 * @return {@literal true} if a request was sent
+	 */
+	private boolean sendDeleteBatch(final @Nullable String extraHandle) {
+		final List<String> handleIds = new ArrayList<>(SQS_MAX_DELETE_BATCH_SIZE);
+		completedSqsMessageHandles.drainTo(handleIds,
+				SQS_MAX_DELETE_BATCH_SIZE - (extraHandle != null ? 1 : 0));
+		if ( extraHandle != null ) {
+			handleIds.add(extraHandle);
+		}
+
+		if ( handleIds.isEmpty() ) {
+			return false;
+		}
+
+		log.debug("Deleting {} messages from SQS queue.", handleIds.size());
+
+		Map<String, String> batchIdToReceiptHandles = new HashMap<>(SQS_MAX_DELETE_BATCH_SIZE);
+		List<DeleteMessageBatchRequestEntry> entries = handleIds.stream().map(s -> {
+			String id = UUID.randomUUID().toString();
+			batchIdToReceiptHandles.put(id, s);
+			return DeleteMessageBatchRequestEntry.builder().id(id).receiptHandle(s).build();
+		}).toList();
+
+		DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
+				.queueUrl(sqsQueueUrl).entries(entries).build();
+
+		var _ = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
+			if ( ex == null ) {
+				if ( resp != null ) {
+					if ( resp.hasFailed() ) {
+						resp.failed().forEach(entry -> {
+							final String handle = batchIdToReceiptHandles.get(entry.id());
+							if ( handle == null ) {
+								log.warn(
+										"Unknown entry [{}] in SQS queue [{}] delete response, cannot retry: {} {}",
+										entry.id(), sqsQueueUrl, entry.code(), entry.message());
+							} else if ( Boolean.TRUE.equals(entry.senderFault()) ) {
+								// a sender fault cannot succeed on retry, for example an
+								// expired receipt handle; the message will be redelivered
+								// and reprocessed instead
+								log.warn(
+										"Failed to delete message from SQS queue [{}], will not retry: {} {}",
+										sqsQueueUrl, entry.code(), entry.message());
+							} else {
+								log.warn(
+										"Failed to delete message from SQS queue [{}], will retry: {} {}",
+										sqsQueueUrl, entry.code(), entry.message());
+								sqsDeleteMessage(handle);
+							}
+						});
+					}
+					if ( resp.hasSuccessful() ) {
+						stats.increment(BasicCount.SqsQueueRemovals, resp.successful().size());
+					}
+				}
+			} else if ( ex.getCause() instanceof AwsServiceException e ) {
+				log.warn(
+						"AWS error deleting entities from SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
+						sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
+						e.requestId());
+			} else if ( ex.getCause() instanceof SdkClientException e ) {
+				log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
+						e.getMessage());
+			} else {
+				log.warn("Error deleting entities from from SQS queue [{}]: {}", sqsQueueUrl,
+						ex.toString());
+			}
+			return resp;
+		});
+		return true;
 	}
 
 	/**

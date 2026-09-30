@@ -79,6 +79,7 @@ import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequest;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -670,6 +671,82 @@ public class SqsOverflowQueueTests {
 			.as("A sender fault cannot succeed on retry, so no handle is re-queued and"
 						+ " nothing remains to flush at shutdown")
 			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify that a forced flush empties the pending handle queue however many
+	 * delete requests that takes, and that no request exceeds the SQS maximum.
+	 */
+	@Test
+	public void deleteFromSqs_forcedFlushEmptiesQueueLargerThanOneBatch() throws Exception {
+		// GIVEN
+		// a handle queue that can hold more than one delete request's worth
+		final int messageCount = 12;
+		final BlockingQueue<String> handles = new LinkedHashSetBlockingQueue<>(20);
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> workItems = new ArrayBlockingQueue<>(
+				messageCount * 2);
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				workItems, handles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(1);
+		queue.setWriteConcurrency(1);
+		queue.setReadMaxMessageCount(messageCount);
+		queue.setShutdownWaitSecs(3600);
+	
+		final List<String> receiptHandles = new ArrayList<>(messageCount);
+		final List<Message> msgs = new ArrayList<>(messageCount);
+		for ( int i = 0; i < messageCount; i++ ) {
+			String handle = "handle-%d-%s".formatted(i, randomString());
+			receiptHandles.add(handle);
+			msgs.add(Message.builder().messageId(randomString()).receiptHandle(handle)
+					.body(JSON_MAPPER.writeValueAsString(newEvent())).build());
+		}
+	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(msgs).build()))
+				.willReturn(CompletableFuture
+						.completedFuture(ReceiveMessageResponse.builder().build()));
+	
+		given(delegateDao.persist(any()))
+				.willAnswer(inv -> ((UserEvent) inv.getArgument(0)).getId());
+	
+		final List<DeleteMessageBatchRequest> deleteRequests = Collections
+				.synchronizedList(new ArrayList<>(4));
+		given(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).willAnswer(inv -> {
+			deleteRequests.add(inv.getArgument(0));
+			return CompletableFuture
+					.completedFuture(DeleteMessageBatchResponse.builder().build());
+		});
+	
+		// WHEN
+		queue.serviceDidStartup();
+		then(delegateDao).should(timeout(5_000).times(messageCount)).persist(any());
+		Thread.sleep(200); // let the handles accumulate
+	
+		queue.shutdownAndWait(); // forces a flush of everything pending
+	
+		// THEN
+		// @formatter:off
+		and.then(deleteRequests)
+			.as("More than one delete request was needed for %d handles".formatted(messageCount))
+			.hasSizeGreaterThan(1)
+			.allSatisfy(r -> and.then(r.entries())
+					.as("No request exceeds the SQS per-request maximum of 10")
+					.hasSizeLessThanOrEqualTo(10))
+			;
+	
+		and.then(deleteRequests.stream().flatMap(r -> r.entries().stream())
+					.map(DeleteMessageBatchRequestEntry::receiptHandle).toList())
+			.as("Every handled message was deleted from SQS, with none left pending")
+			.containsExactlyInAnyOrderElementsOf(receiptHandles)
+			;
+	
+		and.then(handles)
+			.as("Nothing left in the pending handle queue")
+			.isEmpty()
 			;
 		// @formatter:on
 	}
