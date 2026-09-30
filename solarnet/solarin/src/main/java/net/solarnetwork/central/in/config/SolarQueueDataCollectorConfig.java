@@ -25,6 +25,7 @@ package net.solarnetwork.central.in.config;
 import static net.solarnetwork.central.in.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
 import java.time.Duration;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -54,6 +57,12 @@ public class SolarQueueDataCollectorConfig {
 
 	@Autowired
 	private DataCollectorBiz dataCollectorBiz;
+
+	@Autowired
+	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Autowired(required = false)
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	@Value("${app.solarqueue.data-collector.thread-count:20}")
 	private int dataCollectorThreadCount = 20;
@@ -102,6 +111,8 @@ public class SolarQueueDataCollectorConfig {
 		MqttDataCollector collector = new MqttDataCollector(cborMapper, dataCollectorBiz,
 				nodeInstructionDao, mqttStats);
 		collector.setExecutor(mqttDataCollectorExecutor);
+		collector.setNodeOwnershipDao(nodeOwnershipDao);
+		collector.setUserEventAppenderBiz(userEventAppenderBiz);
 		return collector;
 	}
 
