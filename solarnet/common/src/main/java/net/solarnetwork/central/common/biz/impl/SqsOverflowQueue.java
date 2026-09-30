@@ -187,6 +187,12 @@ public class SqsOverflowQueue<T, K>
 	 */
 	private static final long WRITER_QUEUE_POLL_MS = 1_000L;
 
+	/** The maximum number of messages SQS allows in one receive request. */
+	private static final int SQS_MAX_RECEIVE_MESSAGE_COUNT = 10;
+
+	/** The minimum pause before re-checking a full work queue. */
+	private static final long WORK_QUEUE_FULL_PAUSE_MS = 100L;
+
 	private static final Logger log = LoggerFactory.getLogger(SqsOverflowQueue.class);
 
 	private static final AtomicInteger READER_COUNTER = new AtomicInteger(0);
@@ -902,98 +908,68 @@ public class SqsOverflowQueue<T, K>
 		@Override
 		public void run() {
 			while ( writeEnabled ) {
+				final int capacity = queue.remainingCapacity();
+				if ( capacity < 1 ) {
+					// the work queue cannot accept anything, so do not pay to receive
+					// messages that would only have to be returned to the queue
+					log.debug("Work queue full, not reading from SQS queue [{}].", sqsQueueUrl);
+					adjustThrottle(1.0);
+					pause(Math.max(sleep, WORK_QUEUE_FULL_PAUSE_MS));
+					continue;
+				}
+				// never request more than the work queue can take, nor more than SQS allows
+				final int maxMessages = Math.min(Math.min(readMaxMessageCount, capacity),
+						SQS_MAX_RECEIVE_MESSAGE_COUNT);
 				// @formatter:off
 				ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
-						.queueUrl(sqsQueueUrl)
-						.maxNumberOfMessages(readMaxMessageCount)
-						.waitTimeSeconds(readMaxWaitTimeSecs)
-						.messageSystemAttributeNames(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT)
-						.build();
+							.queueUrl(sqsQueueUrl)
+							.maxNumberOfMessages(maxMessages)
+							.waitTimeSeconds(readMaxWaitTimeSecs)
+							.messageSystemAttributeNames(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT)
+							.build();
 				// @formatter:on
 				try {
 					ReceiveMessageResponse resp = sqsClient.receiveMessage(receiveMessageRequest).get();
-					if ( resp.hasMessages() ) {
-						List<Message> msgs = resp.messages();
+					final List<Message> msgs = (resp.hasMessages() ? resp.messages() : List.of());
+					final List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
+					if ( !msgs.isEmpty() ) {
 						stats.increment(BasicCount.SqsQueueReceived, msgs.size());
-						int accepted = 0;
-						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
-						try {
-							for ( Message msg : msgs ) {
-								final T o;
-								try {
-									o = entityCodec.deserialize(msg.body());
-								} catch ( Exception e ) {
-									// this message can never be processed; leave it alone so the
-									// queue visibility timeout paces the redelivery, and the queue
-									// redrive policy moves it to the dead-letter queue. It will be
-									// seen once per redelivery, so only count and log it in full
-									// the first time.
-									if ( approximateReceiveCount(msg) < 2 ) {
-										stats.increment(BasicCount.ObjectsDiscarded);
-										log.warn(
-												"Discarding unparsable message [{}] from SQS queue [{}]: {}; body: {}",
-												msg.messageId(), sqsQueueUrl, e.toString(), msg.body());
-									} else {
-										log.debug("Discarding unparsable message [{}] from SQS queue [{}]: {}",
-												msg.messageId(), sqsQueueUrl, e.toString());
-									}
-									continue;
-								}
-								CompletableFuture<K> f = new CompletableFuture<>();
-								if ( o != null && queue.offer(new WorkItem<T, K>(o, f)) ) {
-									stats.increment(BasicCount.WorkQueueAdds);
-									var _ = f.thenAccept(_ -> {
-										sqsDeleteMessage(msg.receiptHandle());
-									});
-									accepted++;
+						for ( Message msg : msgs ) {
+							final T o;
+							try {
+								o = entityCodec.deserialize(msg.body());
+							} catch ( Exception e ) {
+								// this message can never be processed; leave it alone so the
+								// queue visibility timeout paces the redelivery, and the queue
+								// redrive policy moves it to the dead-letter queue. It will be
+								// seen once per redelivery, so only count and log it in full
+								// the first time.
+								if ( approximateReceiveCount(msg) < 2 ) {
+									stats.increment(BasicCount.ObjectsDiscarded);
+									log.warn(
+											"Discarding unparsable message [{}] from SQS queue [{}]: {}; body: {}",
+											msg.messageId(), sqsQueueUrl, e.toString(), msg.body());
 								} else {
-									// adjust visibility to 0 to allow reprocessing
-									rejectedReceiptHandles.add(msg.receiptHandle());
+									log.debug("Discarding unparsable message [{}] from SQS queue [{}]: {}",
+											msg.messageId(), sqsQueueUrl, e.toString());
 								}
+								continue;
 							}
-						} finally {
-							if ( !rejectedReceiptHandles.isEmpty() ) {
-								var _ = sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
-									List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
-											.stream().map(id -> {
-												return ChangeMessageVisibilityBatchRequestEntry.builder()
-														.id(UUID.randomUUID().toString())
-														.receiptHandle(id).visibilityTimeout(0).build();
-											}).toList();
-									changeVizReq.queueUrl(sqsQueueUrl).entries(entries);
-								}).handle((changeVizResp, changeVizEx) -> {
-									if ( changeVizEx == null ) {
-										log.debug(
-												"Un-hid {} messages received from SQS queue but rejected by work queue.",
-												rejectedReceiptHandles.size());
-									} else {
-										Throwable t = changeVizEx.getCause();
-										log.warn(
-												"Failed to un-hide {} messages received from SQS queue but rejected by work queue: {}",
-												rejectedReceiptHandles.size(),
-												(t != null ? t.toString() : changeVizEx.toString()));
-									}
-									return changeVizResp;
+							CompletableFuture<K> f = new CompletableFuture<>();
+							if ( o != null && queue.offer(new WorkItem<T, K>(o, f)) ) {
+								stats.increment(BasicCount.WorkQueueAdds);
+								var _ = f.thenAccept(_ -> {
+									sqsDeleteMessage(msg.receiptHandle());
 								});
-							}
-							int rejected = rejectedReceiptHandles.size();
-							double rejectedRatio = (rejected > 0
-									? ((double) rejected / (double) msgs.size())
-									: 0.0);
-							if ( rejected > 0 && sleep < readSleepMaxMs ) {
-								sleep = Math.min(
-										sleep + (long) (readSleepThrottleStepMs * rejectedRatio),
-										readSleepMaxMs);
-								log.info(
-										"Increased read throttle from SQS queue to {}ms after {} work queue rejections.",
-										sleep, rejected);
-							} else if ( rejected < 1 && sleep > readSleepMinMs ) {
-								sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
-								log.info(
-										"Decreased read throttle from SQS queue to {}ms after all {} work queue items accepted.",
-										sleep, accepted);
+							} else {
+								rejectedReceiptHandles.add(msg.receiptHandle());
 							}
 						}
+					}
+					adjustThrottle(msgs.isEmpty() ? 0.0
+							: (double) rejectedReceiptHandles.size() / (double) msgs.size());
+					if ( !rejectedReceiptHandles.isEmpty() ) {
+						returnToQueue(rejectedReceiptHandles);
 					}
 				} catch ( Exception ex ) {
 					final Throwable t = (ex.getCause() != null ? ex.getCause() : ex);
@@ -1017,21 +993,80 @@ public class SqsOverflowQueue<T, K>
 								t.toString(), t);
 						return;
 					}
-					if ( sleep < readSleepMaxMs ) {
-						sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
-						log.info("Increased read throttle from SQS queue to {}ms after exception: {}",
-								sleep, t.getMessage());
-					}
+					adjustThrottle(1.0);
 				}
-				if ( writeEnabled && sleep > 0 ) {
-					try {
-						Thread.sleep(sleep);
-					} catch ( InterruptedException e ) {
-						// continue
-					}
-				}
+				pause(sleep);
 			}
 			log.info("Reader thread exiting for SQS queue [{}]", sqsQueueUrl);
+		}
+	
+		/**
+		 * Adjust the read throttle.
+		 *
+		 * @param rejectedRatio
+		 *        the proportion of received messages the work queue would not
+		 *        accept, or {@literal 0} to relax the throttle
+		 */
+		private void adjustThrottle(double rejectedRatio) {
+			if ( rejectedRatio > 0.0 ) {
+				if ( sleep < readSleepMaxMs ) {
+					sleep = Math.min(
+							sleep + (long) Math.max(1.0, readSleepThrottleStepMs * rejectedRatio),
+							readSleepMaxMs);
+					log.info("Increased read throttle from SQS queue [{}] to {}ms.", sqsQueueUrl, sleep);
+				}
+			} else if ( sleep > readSleepMinMs ) {
+				sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
+				log.info("Decreased read throttle from SQS queue [{}] to {}ms.", sqsQueueUrl, sleep);
+			}
+		}
+	
+		/**
+		 * Pause before the next SQS receive request.
+		 *
+		 * @param ms
+		 *        the time to pause, in milliseconds
+		 */
+		private void pause(long ms) {
+			if ( writeEnabled && ms > 0 ) {
+				try {
+					Thread.sleep(ms);
+				} catch ( InterruptedException e ) {
+					// continue
+				}
+			}
+		}
+	
+		/**
+		 * Make messages the work queue could not accept visible again, after a
+		 * backoff.
+		 *
+		 * @param receiptHandles
+		 *        the receipt handles of the messages to return
+		 */
+		private void returnToQueue(List<String> receiptHandles) {
+			// back off rather than un-hiding immediately: a zero visibility timeout
+			// makes the message available again at once, costing a receive request per
+			// retry for as long as the work queue stays full
+			final int backoffSecs = (int) Math.max(1L, TimeUnit.MILLISECONDS.toSeconds(sleep));
+			var _ = sqsClient.changeMessageVisibilityBatch(req -> {
+				List<ChangeMessageVisibilityBatchRequestEntry> entries = receiptHandles.stream()
+							.map(handle -> ChangeMessageVisibilityBatchRequestEntry.builder()
+									.id(UUID.randomUUID().toString()).receiptHandle(handle)
+									.visibilityTimeout(backoffSecs).build())
+							.toList();
+				req.queueUrl(sqsQueueUrl).entries(entries);
+			}).handle((resp, ex) -> {
+				if ( ex == null ) {
+					log.debug("Returned {} message(s) to SQS queue [{}] for retry in {}s.",
+							receiptHandles.size(), sqsQueueUrl, backoffSecs);
+				} else {
+					final Throwable t = (ex.getCause() != null ? ex.getCause() : ex);
+					log.warn("Failed to return {} message(s) to SQS queue [{}] for retry: {}",
+							receiptHandles.size(), sqsQueueUrl, t.toString());
+				}
+				return resp;
+			});
 		}
 	}
 

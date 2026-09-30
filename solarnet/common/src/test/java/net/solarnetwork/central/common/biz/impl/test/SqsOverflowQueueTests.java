@@ -76,6 +76,7 @@ import net.solarnetwork.util.UuidGenerator;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.BatchResultErrorEntry;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequest;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
@@ -130,6 +131,9 @@ public class SqsOverflowQueueTests {
 
 	@Captor
 	private ArgumentCaptor<SendMessageRequest> sendMessageRequestCaptor;
+
+	@Captor
+	private ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestCaptor;
 
 	@Captor
 	private ArgumentCaptor<Throwable> throwableCaptor;
@@ -1112,6 +1116,204 @@ public class SqsOverflowQueueTests {
 			.isEqualTo(0)
 			;
 		// @formatter:on
+	}
+
+	/**
+	 * Verify that the reader does not request more messages than the work queue
+	 * can accept.
+	 */
+	@Test
+	public void readFromSqs_requestsNoMoreThanWorkQueueCapacity() throws Exception {
+		// GIVEN
+		// a work queue holding 2 items with room for 2; the single writer takes one
+		// and wedges on it, leaving exactly 1 free slot for the reader
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> smallQueue = new ArrayBlockingQueue<>(
+				2);
+		smallQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+		smallQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+	
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				smallQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(1);
+		queue.setWriteConcurrency(1);
+		queue.setReadMaxMessageCount(10);
+		queue.setReadSleepMinMs(50);
+		queue.setShutdownWaitSecs(0);
+	
+		given(delegateDao.persist(any())).willAnswer(_ -> {
+			wedgeForever();
+			return null;
+		});
+	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).willReturn(
+				CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+	
+		// WHEN
+		queue.serviceDidStartup();
+		then(sqsClient).should(timeout(3_000).atLeastOnce())
+				.receiveMessage(receiveMessageRequestCaptor.capture());
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(receiveMessageRequestCaptor.getAllValues())
+			.as("Requested only the 1 free work queue slot, not the configured 10")
+			.allMatch(r -> r.maxNumberOfMessages() == 1)
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that the reader stops issuing receive requests while the work queue
+	 * is full.
+	 */
+	@Test
+	public void readFromSqs_doesNotReadWhileWorkQueueFull() throws Exception {
+		// GIVEN
+		// a zero-capacity work queue, so no writer can ever free a slot
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
+				0);
+	
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				fullQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(1);
+		queue.setWriteConcurrency(1);
+		queue.setShutdownWaitSecs(3600);
+	
+		// WHEN
+		queue.serviceDidStartup();
+		Thread.sleep(500);
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		then(sqsClient).should(never()).receiveMessage(any(ReceiveMessageRequest.class));
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify that the read throttle relaxes again while the SQS queue is empty,
+	 * rather than staying where a transient error left it.
+	 */
+	@Test
+	public void readFromSqs_throttleRelaxesWhileQueueEmpty() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(1); // enable read thread
+		collector.setReadSleepMinMs(10);
+		collector.setReadSleepMaxMs(5_000);
+		collector.setReadSleepThrottleStepMs(1_000);
+	
+		// one transient error, which raises the throttle, then an empty queue
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture
+						.failedFuture(SdkClientException.create("connection reset")))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().build()));
+	
+		// WHEN
+		collector.serviceDidStartup();
+	
+		// the throttle has to decay back to readSleepMinMs for the reader to poll
+		// this often; stuck at the 1s the error raised it to, it would manage about 4
+		then(sqsClient).should(timeout(4_000).atLeast(20))
+				.receiveMessage(any(ReceiveMessageRequest.class));
+	
+		collector.shutdownAndWait();
+	}
+	
+	/**
+	 * Verify that messages the work queue rejects are returned to SQS with a
+	 * backoff, rather than made visible again immediately.
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void readFromSqs_rejectedMessagesReturnedWithBackoff() throws Exception {
+		// GIVEN
+		// a work queue with one slot, occupied by an item the single writer takes
+		// and wedges on, so the slot frees once and then stays taken
+		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> smallQueue = new ArrayBlockingQueue<>(
+				1);
+		smallQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
+		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
+				smallQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
+		queue.setExceptionHandler(exceptionHandler);
+		queue.setReadConcurrency(1);
+		queue.setWriteConcurrency(1);
+		queue.setReadSleepMinMs(1_000);
+		queue.setReadSleepThrottleStepMs(1_000);
+		queue.setShutdownWaitSecs(0);
+	
+		given(delegateDao.persist(any())).willAnswer(_ -> {
+			wedgeForever();
+			return null;
+		});
+	
+		final String rejectedHandle = "handle-rejected-" + randomString();
+		final Message msgA = Message.builder().messageId(randomString())
+				.receiptHandle(randomString()).body(JSON_MAPPER.writeValueAsString(newEvent())).build();
+		final Message msgB = Message.builder().messageId(randomString())
+				.receiptHandle(rejectedHandle).body(JSON_MAPPER.writeValueAsString(newEvent())).build();
+	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
+				.willReturn(CompletableFuture.completedFuture(
+						ReceiveMessageResponse.builder().build()));
+	
+		final List<ChangeMessageVisibilityBatchRequest> vizRequests = Collections
+				.synchronizedList(new ArrayList<>(1));
+		given(sqsClient.changeMessageVisibilityBatch(any(Consumer.class))).willAnswer(inv -> {
+			Consumer<ChangeMessageVisibilityBatchRequest.Builder> c = inv.getArgument(0);
+			var b = ChangeMessageVisibilityBatchRequest.builder();
+			c.accept(b);
+			vizRequests.add(b.build());
+			return CompletableFuture.completedFuture(
+					ChangeMessageVisibilityBatchResponse.builder().build());
+		});
+	
+		// WHEN
+		queue.serviceDidStartup();
+		then(sqsClient).should(timeout(3_000)).changeMessageVisibilityBatch(any(Consumer.class));
+		queue.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(vizRequests)
+			.as("One visibility request for the rejected message")
+			.hasSize(1)
+			;
+		and.then(vizRequests.get(0).entries())
+			.as("Only the message the work queue rejected was returned")
+			.hasSize(1)
+			.allSatisfy(e -> {
+				and.then(e.receiptHandle())
+					.as("The rejected message handle")
+					.isEqualTo(rejectedHandle)
+					;
+				and.then(e.visibilityTimeout())
+					.as("Returned with a backoff, not made visible immediately")
+					.isGreaterThan(0)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Block the calling thread, ignoring interrupts, for longer than any test
+	 * needs, so a writer thread that takes a work item never releases its slot.
+	 */
+	private static void wedgeForever() {
+		final long end = System.currentTimeMillis() + 10_000L;
+		for ( long now = System.currentTimeMillis(); now < end; now = System.currentTimeMillis() ) {
+			try {
+				Thread.sleep(end - now);
+			} catch ( InterruptedException e ) {
+				// ignore
+			}
+		}
 	}
 
 	private UserEvent newEvent() {
