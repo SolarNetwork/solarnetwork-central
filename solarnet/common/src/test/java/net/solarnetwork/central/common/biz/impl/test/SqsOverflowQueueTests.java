@@ -35,6 +35,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.timeout;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +55,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,11 +67,13 @@ import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.EntityCodec;
+import net.solarnetwork.central.support.SqsOverflowQueueSettings;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.central.support.UserEventBasicDeserializer;
 import net.solarnetwork.central.support.UserEventBasicSerializer;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
@@ -81,6 +85,8 @@ import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRes
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
@@ -1453,6 +1459,158 @@ public class SqsOverflowQueueTests {
 		// @formatter:off
 		then(sqsClient).should(timeout(3_000).atLeast(3))
 			.receiveMessage(any(ReceiveMessageRequest.class))
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Verify the ping test reports a service that is not running as unhealthy,
+	 * rather than reporting success without checking any threads.
+	 */
+	@Test
+	public void pingTest_notRunning() throws Exception {
+		// GIVEN
+		given(sqsClient.getQueueAttributes(ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any()))
+				.willReturn(CompletableFuture.completedFuture(
+						GetQueueAttributesResponse.builder().build()));
+	
+		// WHEN
+		// never started, so no writer or reader threads exist
+		PingTest.Result result = collector.performPingTest();
+	
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Ping fails when the service is not running")
+			.returns(false, from(PingTest.Result::isSuccess))
+			.as("Reason given")
+			.returns("Service not running.", from(PingTest.Result::getMessage))
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify the ping test succeeds while the service is running.
+	 */
+	@Test
+	public void pingTest_running() throws Exception {
+		// GIVEN
+		collector.setReadConcurrency(1);
+		collector.setWriteConcurrency(2);
+		given(sqsClient.getQueueAttributes(ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any()))
+				.willReturn(CompletableFuture.completedFuture(
+						GetQueueAttributesResponse.builder().build()));
+		lenient().when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(
+				CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+	
+		// WHEN
+		collector.serviceDidStartup();
+		PingTest.Result result = collector.performPingTest();
+		collector.shutdownAndWait();
+	
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Ping succeeds while all threads are running")
+			.returns(true, from(PingTest.Result::isSuccess))
+			;
+		and.then(result.getMessage())
+			.as("Thread counts reported")
+			.contains("2 writers", "1 readers")
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify the SQS receive properties are clamped to the ranges SQS allows.
+	 */
+	@Test
+	public void sqsReceivePropertiesClampedToValidRange() {
+		// WHEN
+		collector.setReadMaxMessageCount(50);
+		collector.setReadMaxWaitTimeSecs(300);
+	
+		// THEN
+		// @formatter:off
+		and.then(collector.getReadMaxMessageCount())
+			.as("Message count clamped to the SQS maximum")
+			.isEqualTo(10)
+			;
+		and.then(collector.getReadMaxWaitTimeSecs())
+			.as("Wait time clamped to the SQS maximum")
+			.isEqualTo(20)
+			;
+	
+		collector.setReadMaxMessageCount(0);
+		collector.setReadMaxWaitTimeSecs(-5);
+	
+		and.then(collector.getReadMaxMessageCount())
+			.as("Message count clamped to at least one message")
+			.isEqualTo(1)
+			;
+		and.then(collector.getReadMaxWaitTimeSecs())
+			.as("Wait time clamped to zero, i.e. no long polling")
+			.isEqualTo(0)
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify a sub-second configured read wait does not truncate to zero, which
+	 * would turn off long polling and busy-poll the SQS queue.
+	 */
+	@Test
+	public void settings_subSecondReadWaitDoesNotDisableLongPolling() {
+		// GIVEN
+		var settings = new SqsOverflowQueueSettings();
+		settings.setReadMaxWaitTime(Duration.ofMillis(500));
+		settings.setShutdownWait(Duration.ofMillis(500));
+	
+		// WHEN
+		settings.configure(collector);
+	
+		// THEN
+		// @formatter:off
+		and.then(collector.getReadMaxWaitTimeSecs())
+			.as("A 500ms read wait rounds up to 1s rather than truncating to no long polling")
+			.isEqualTo(1)
+			;
+		and.then(collector.getShutdownWaitSecs())
+			.as("A 500ms shutdown wait rounds up to 1s rather than truncating to no wait")
+			.isEqualTo(1)
+			;
+	
+		settings.setReadMaxWaitTime(Duration.ZERO);
+		settings.configure(collector);
+		and.then(collector.getReadMaxWaitTimeSecs())
+			.as("An explicit zero still means no long polling")
+			.isEqualTo(0)
+			;
+		// @formatter:on
+	}
+	
+	/**
+	 * Verify the convenience constructor derives its configuration from the
+	 * service identity.
+	 */
+	@Test
+	public void convenienceConstructor_usesIdentity() {
+		// GIVEN
+		final String identity = "MyQueue-" + randomString();
+
+		// WHEN
+		var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(identity, sqsClient, sqsUrl, workQueue,
+				delegateDao, ENTITY_CODEC);
+
+		// THEN
+		// @formatter:off
+		and.then(queue.getPingTestId())
+			.as("Ping test ID is the given identity")
+			.isEqualTo(identity)
+			;
+		and.then(queue.getSqsSendMaxWaitMs())
+			.as("Configured with the property defaults")
+			.isEqualTo(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS)
 			;
 		// @formatter:on
 	}

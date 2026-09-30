@@ -100,7 +100,11 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 		}
 		queue.setReadMaxMessageCount(readMaxMessageCount);
 		if ( readMaxWaitTime != null ) {
-			queue.setReadMaxWaitTimeSecs((int) readMaxWaitTime.toSeconds());
+			// round a positive sub-second wait up to 1s rather than truncating it to 0,
+			// which would turn off long polling and busy-poll the queue instead
+			queue.setReadMaxWaitTimeSecs((int) (readMaxWaitTime.isZero() || readMaxWaitTime.isNegative()
+					? 0
+					: Math.max(1L, readMaxWaitTime.toSeconds())));
 		}
 		if ( readSleepMin != null ) {
 			queue.setReadSleepMinMs(readSleepMin.toMillis());
@@ -112,7 +116,9 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 			queue.setReadSleepThrottleStepMs(readSleepThrottleStep.toMillis());
 		}
 		if ( shutdownWait != null ) {
-			queue.setShutdownWaitSecs((int) shutdownWait.toSeconds());
+			// as above: a positive sub-second wait means wait a little, not do not wait
+			queue.setShutdownWaitSecs((int) (shutdownWait.isZero() || shutdownWait.isNegative() ? 0
+					: Math.max(1L, shutdownWait.toSeconds())));
 		}
 	}
 

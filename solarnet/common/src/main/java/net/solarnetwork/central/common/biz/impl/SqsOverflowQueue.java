@@ -193,6 +193,9 @@ public class SqsOverflowQueue<T, K>
 	/** The maximum number of messages SQS allows in one delete request. */
 	private static final int SQS_MAX_DELETE_BATCH_SIZE = 10;
 
+	/** The maximum receive wait time SQS allows, in seconds. */
+	private static final int SQS_MAX_RECEIVE_WAIT_TIME_SECS = 20;
+
 	/** The minimum pause before re-checking a full work queue. */
 	private static final long WORK_QUEUE_FULL_PAUSE_MS = 100L;
 
@@ -306,8 +309,10 @@ public class SqsOverflowQueue<T, K>
 	public SqsOverflowQueue(String identity, SqsAsyncClient sqsClient, String sqsQueueUrl,
 			BlockingQueue<WorkItem<T, K>> queue, GenericWriteOnlyDao<T, K> dao,
 			EntityCodec<T, K, String> entityCodec) {
-		this(new StatTracker("SqsDatumCollector", null, log, 200), identity, sqsClient, sqsQueueUrl,
-				queue, new LinkedHashSetBlockingQueue<>(9), dao, entityCodec);
+		this(new StatTracker(requireNonNullArgument(identity, "identity"), null, log, 200), identity,
+				sqsClient, sqsQueueUrl, queue,
+				// one short of a full delete batch, so a handle the queue rejects completes it
+				new LinkedHashSetBlockingQueue<>(SQS_MAX_DELETE_BATCH_SIZE - 1), dao, entityCodec);
 	}
 
 	/**
@@ -596,35 +601,31 @@ public class SqsOverflowQueue<T, K>
 		}
 		final List<DaoWriterThread> writers = this.writerThreads;
 		final List<QueueReaderThread> readers = this.readerThreads;
+		if ( !writeEnabled || writers == null || readers == null ) {
+			// nothing is draining the work queue, so this service is not usable
+			return new PingTestResult(false, "Service not running.", statMap);
+		}
 		int writersAlive = 0;
 		int readersAlive = 0;
-		if ( writeEnabled ) {
-			if ( writers != null ) {
-				for ( DaoWriterThread t : writers ) {
-					if ( t.isAlive() ) {
-						writersAlive++;
-					}
-				}
+		for ( DaoWriterThread t : writers ) {
+			if ( t.isAlive() ) {
+				writersAlive++;
 			}
-			if ( readers != null ) {
-				for ( QueueReaderThread t : readers ) {
-					if ( t.isAlive() ) {
-						readersAlive++;
-					}
-				}
+		}
+		for ( QueueReaderThread t : readers ) {
+			if ( t.isAlive() ) {
+				readersAlive++;
 			}
-			if ( (writers != null && writersAlive < writers.size())
-					|| (readers != null && readersAlive < readers.size()) ) {
-				return new PingTestResult(false,
-						String.format("Not all threads running: %d/%d writers, %d/%d readers.",
-								writersAlive, (writers != null ? writers.size() : 0), readersAlive,
-								(readers != null ? readers.size() : 0)),
-						statMap);
-			}
+		}
+		if ( writersAlive < writers.size() || readersAlive < readers.size() ) {
+			return new PingTestResult(false,
+					String.format("Not all threads running: %d/%d writers, %d/%d readers.", writersAlive,
+							writers.size(), readersAlive, readers.size()),
+					statMap);
 		}
 		return new PingTestResult(true,
 				String.format("Processed %d entities using %d writers, %d readers.", recvCount,
-						writers != null ? writers.size() : 0, readers != null ? readers.size() : 0),
+						writers.size(), readers.size()),
 				statMap);
 	}
 
@@ -954,9 +955,8 @@ public class SqsOverflowQueue<T, K>
 					pause(Math.max(sleep, WORK_QUEUE_FULL_PAUSE_MS));
 					continue;
 				}
-				// never request more than the work queue can take, nor more than SQS allows
-				final int maxMessages = Math.min(Math.min(readMaxMessageCount, capacity),
-						SQS_MAX_RECEIVE_MESSAGE_COUNT);
+				// never request more than the work queue can take
+				final int maxMessages = Math.min(readMaxMessageCount, capacity);
 				// @formatter:off
 				ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
 							.queueUrl(sqsQueueUrl)
@@ -1365,11 +1365,12 @@ public class SqsOverflowQueue<T, K>
 	 * Set the maximum number of SQS messages to read per request.
 	 *
 	 * @param readMaxMessageCount
-	 *        the count to set; see AWS documentation for valid range (e.g.
-	 *        1-10)
+	 *        the count to set, clamped to the range SQS allows, {@literal 1} to
+	 *        {@literal 10}
 	 */
 	public final void setReadMaxMessageCount(int readMaxMessageCount) {
-		this.readMaxMessageCount = readMaxMessageCount;
+		this.readMaxMessageCount = Math.clamp(readMaxMessageCount, 1,
+				SQS_MAX_RECEIVE_MESSAGE_COUNT);
 	}
 
 	/**
@@ -1385,11 +1386,12 @@ public class SqsOverflowQueue<T, K>
 	 * Set the maximum SQS receive wait time, in seconds.
 	 *
 	 * @param readMaxWaitTimeSecs
-	 *        the seconds to set; see AWS documentation for valid range (e.g.
-	 *        1-20)
+	 *        the seconds to set, clamped to the range SQS allows, {@literal 0} to
+	 *        {@literal 20}; {@literal 0} turns off long polling
 	 */
 	public final void setReadMaxWaitTimeSecs(int readMaxWaitTimeSecs) {
-		this.readMaxWaitTimeSecs = readMaxWaitTimeSecs;
+		this.readMaxWaitTimeSecs = Math.clamp(readMaxWaitTimeSecs, 0,
+				SQS_MAX_RECEIVE_WAIT_TIME_SECS);
 	}
 
 	/**
