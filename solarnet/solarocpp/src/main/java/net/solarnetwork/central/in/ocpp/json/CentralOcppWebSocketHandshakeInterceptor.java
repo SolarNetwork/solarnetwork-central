@@ -22,15 +22,22 @@
 
 package net.solarnetwork.central.in.ocpp.json;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.web.socket.WebSocketHandler;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserIdRelated;
@@ -48,8 +55,21 @@ import net.solarnetwork.util.ObjectUtils;
 /**
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  *
+ * <p>
+ * An optional handshake semaphore can be configured to limit how many
+ * handshakes are processed at once. Handshakes verify charger credentials
+ * with a CPU-expensive password encoder, so when many chargers connect at
+ * once, processing them all concurrently can starve the CPU until every
+ * handshake takes longer than the chargers will wait. With a semaphore, a
+ * handshake that cannot acquire a permit within the configured
+ * {@code handshakeAcquireTimeout} is rejected with a
+ * {@link HttpStatus#SERVICE_UNAVAILABLE} status, so the charger retries later.
+ * The semaphore can be shared between interceptors, to apply one limit to all
+ * of them.
+ * </p>
+ *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -66,6 +86,8 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	private final Pattern pathCredentialsRegex;
 	private final Pattern pathHidRegex;
 	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable Semaphore handshakeSemaphore;
+	private Duration handshakeAcquireTimeout = Duration.ZERO;
 
 	/**
 	 * Constructor.
@@ -132,6 +154,39 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 			setClientCredentialsExtractor(this::extractPathCredentials);
 		}
 		this.pathHidRegex = pathHidRegex;
+	}
+
+	@Override
+	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+			WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+		final Semaphore semaphore = this.handshakeSemaphore;
+		if ( semaphore == null ) {
+			return super.beforeHandshake(request, response, wsHandler, attributes);
+		}
+		if ( !acquireHandshakePermit(semaphore) ) {
+			log.info("OCPP handshake request rejected for [{}]: too many concurrent handshakes.",
+					request.getURI().getPath());
+			response.setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
+			return false;
+		}
+		try {
+			return super.beforeHandshake(request, response, wsHandler, attributes);
+		} finally {
+			semaphore.release();
+		}
+	}
+
+	private boolean acquireHandshakePermit(Semaphore semaphore) {
+		final Duration timeout = handshakeAcquireTimeout;
+		if ( !timeout.isPositive() ) {
+			return semaphore.tryAcquire();
+		}
+		try {
+			return semaphore.tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
+			return false;
+		}
 	}
 
 	private ChargePointAuthorizationDetails extractPathCredentials(final ServerHttpRequest request,
@@ -210,6 +265,65 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	 */
 	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
+	}
+
+	/**
+	 * Get the handshake semaphore.
+	 *
+	 * @return the semaphore, or {@code null} if handshake concurrency is not
+	 *         limited
+	 * @since 1.7
+	 */
+	public final @Nullable Semaphore getHandshakeSemaphore() {
+		return handshakeSemaphore;
+	}
+
+	/**
+	 * Set the handshake semaphore.
+	 *
+	 * <p>
+	 * Each handshake must acquire a permit from this semaphore, and holds it
+	 * while the handshake request is processed. The same semaphore can be
+	 * shared between interceptors.
+	 * </p>
+	 *
+	 * @param handshakeSemaphore
+	 *        the semaphore to set, or {@code null} to not limit handshake
+	 *        concurrency
+	 * @since 1.7
+	 */
+	public final void setHandshakeSemaphore(@Nullable Semaphore handshakeSemaphore) {
+		this.handshakeSemaphore = handshakeSemaphore;
+	}
+
+	/**
+	 * Get the maximum time to wait for a handshake semaphore permit.
+	 *
+	 * @return the timeout; defaults to zero
+	 * @since 1.7
+	 */
+	public final Duration getHandshakeAcquireTimeout() {
+		return handshakeAcquireTimeout;
+	}
+
+	/**
+	 * Set the maximum time to wait for a handshake semaphore permit.
+	 *
+	 * <p>
+	 * The waiting request holds its web server thread, so this should be kept
+	 * short. A zero or negative value rejects the handshake immediately if no
+	 * permit is available.
+	 * </p>
+	 *
+	 * @param handshakeAcquireTimeout
+	 *        the timeout to set
+	 * @throws IllegalArgumentException
+	 *         if {@code handshakeAcquireTimeout} is {@code null}
+	 * @since 1.7
+	 */
+	public final void setHandshakeAcquireTimeout(Duration handshakeAcquireTimeout) {
+		this.handshakeAcquireTimeout = ObjectUtils.requireNonNullArgument(handshakeAcquireTimeout,
+				"handshakeAcquireTimeout");
 	}
 
 }

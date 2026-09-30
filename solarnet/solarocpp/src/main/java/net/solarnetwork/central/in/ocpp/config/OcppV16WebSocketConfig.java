@@ -22,13 +22,17 @@
 
 package net.solarnetwork.central.in.ocpp.config;
 
+import static net.solarnetwork.central.in.ocpp.config.OcppHandshakeConfig.OCPP_HANDSHAKE;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -74,7 +78,7 @@ import tools.jackson.databind.ObjectMapper;
  * OCPP v1.6 web socket configuration.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @EnableWebSocket
@@ -95,6 +99,13 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	@Qualifier(OCPP_HANDSHAKE)
+	private Semaphore handshakeSemaphore;
+
+	@Value("${app.ocpp.handshake.acquire-timeout:2s}")
+	private Duration handshakeAcquireTimeout = Duration.ofSeconds(2);
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
@@ -226,6 +237,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				ocppSystemUserDao, passwordEncoder, userSettingsDao);
 		basicAuthInterceptor.setClientIdUriPattern(BASIC_CLIENT_ID_REGEX);
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
+		basicAuthInterceptor.setHandshakeSemaphore(handshakeSemaphore);
+		basicAuthInterceptor.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
 		// support path credentials /v16u/username/password/identifier
@@ -236,6 +249,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				ocppSystemUserDao, passwordEncoder, userSettingsDao, PATH_CREDS_REGEX);
 		pathAuthInterceptor.setClientIdUriPattern(PATH_CLIENT_ID_REGEX);
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
+		pathAuthInterceptor.setHandshakeSemaphore(handshakeSemaphore);
+		pathAuthInterceptor.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
 
 		// support HID /v16h/hid/identifier
@@ -246,6 +261,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				ocppSystemUserDao, passwordEncoder, userSettingsDao, null, HID_BASIC_HID_REGEX);
 		basicAuthInterceptorHid.setClientIdUriPattern(HID_BASIC_CLIENT_ID_REGEX);
 		basicAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
+		basicAuthInterceptorHid.setHandshakeSemaphore(handshakeSemaphore);
+		basicAuthInterceptorHid.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
 		basicAuthRegHid.addInterceptors(basicAuthInterceptorHid);
 
 		// support HID + path credentials /v16hu/hid/username/password/identifier
@@ -257,6 +274,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				HID_PATH_HID_REGEX);
 		pathAuthInterceptorHid.setClientIdUriPattern(HID_PATH_CLIENT_ID_REGEX);
 		pathAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
+		pathAuthInterceptorHid.setHandshakeSemaphore(handshakeSemaphore);
+		pathAuthInterceptorHid.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
 		pathAuthRegHid.addInterceptors(pathAuthInterceptorHid);
 	}
 

@@ -44,6 +44,9 @@ app:
   ocpp.auth-service:
     wildcard-id-tag-prefixes:
       - "vid:"
+  ocpp.handshake:
+    max-concurrent: 2
+    acquire-timeout: "2s"
   ocpp.v16:
     cs:
       boot-notification:
