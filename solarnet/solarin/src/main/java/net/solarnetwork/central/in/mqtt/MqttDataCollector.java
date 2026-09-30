@@ -29,11 +29,17 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.TransactionException;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -64,7 +70,7 @@ import tools.jackson.databind.ObjectMapper;
  * MQTT implementation of upload service.
  *
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -113,6 +119,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	private final DataCollectorBiz dataCollectorBiz;
 	private final NodeInstructionDao nodeInstructionDao;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
+	private @Nullable Executor executor;
 
 	/**
 	 * Constructor.
@@ -151,8 +158,43 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * When an {@code executor} is configured the message is handled on that
+	 * executor, so the connection's I/O thread is not held for the duration of
+	 * the datum persistence. The returned stage decides the MQTT
+	 * acknowledgement, so a message the executor cannot accept is reported as
+	 * not handled and the broker will redeliver it.
+	 * </p>
+	 *
+	 * @since 4.1
+	 */
+	@Override
+	public CompletionStage<?> onMqttMessageAsync(MqttMessage message) {
+		final Executor e = getExecutor();
+		if ( e == null ) {
+			return MqttMessageHandler.super.onMqttMessageAsync(message);
+		}
+		try {
+			return CompletableFuture.runAsync(() -> handleMessage(message), e);
+		} catch ( RejectedExecutionException ex ) {
+			// at capacity: do not acknowledge, so the broker redelivers the message
+			getMqttStats().increment(SolarInCountStat.MessagesRejected);
+			log.warn("Rejected message on MQTT topic {}: no capacity to handle it; "
+					+ "it will not be acknowledged, so the broker should redeliver it.",
+					message.getTopic());
+			return CompletableFuture.failedFuture(ex);
+		}
+	}
+
 	@Override
 	public void onMqttMessage(MqttMessage message) {
+		handleMessage(message);
+	}
+
+	private void handleMessage(MqttMessage message) {
 		final String topic = message.getTopic();
 		try {
 			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
@@ -169,20 +211,22 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 			parseMqttMessage(objectMapper, message, topic, nodeId, true);
 		} catch ( JacksonException | IOException e ) {
-			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-			if ( e instanceof JacksonException ) {
-				final byte[] payload = message.getPayload();
-				log.warn("Error parsing MQTT topic {} message [{}]: {}", topic,
-						encodeHexString(payload, 0, payload.length, false), e.getMessage());
-			}
-			throw new RepeatableTaskException("Communication error handling message on MQTT topic "
-					+ topic + ": " + e.getMessage(), e);
+			// the payload cannot be parsed, so a redelivery could never succeed: discard
+			// it rather than leave it unacknowledged to be redelivered indefinitely
+			getMqttStats().increment(SolarInCountStat.MessagesDiscarded);
+			final byte[] payload = message.getPayload();
+			log.warn("Discarding unparsable MQTT topic {} message [{}]: {}", topic,
+					encodeHexString(payload, 0, payload.length, false), e.getMessage());
 		} catch ( net.solarnetwork.central.security.AuthorizationException e ) {
 			log.warn("Authorization exception on MQTT topic [{}]: {}", topic, e.getMessage());
 		} catch ( RuntimeException e ) {
 			log.error("Error handling MQTT message on topic {}", topic, e);
 			throw new RepeatableTaskException(
 					"Error handling MQTT message on topic " + topic + ": " + e.getMessage(), e);
+		} finally {
+			// the security context is thread bound, so it must not outlive this message
+			// on a pooled thread
+			SecurityContextHolder.clearContext();
 		}
 	}
 
@@ -347,6 +391,37 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
+	}
+
+	/**
+	 * Get the executor to handle messages on.
+	 *
+	 * @return the executor, or {@code null} to handle messages on the calling
+	 *         thread
+	 * @since 4.1
+	 */
+	public final @Nullable Executor getExecutor() {
+		return executor;
+	}
+
+	/**
+	 * Set the executor to handle messages on.
+	 *
+	 * <p>
+	 * Configuring an executor takes message handling off the MQTT connection's
+	 * I/O thread. It should be bounded, and reject work when full, so that
+	 * messages beyond its capacity go unacknowledged and are redelivered rather
+	 * than accumulating in memory. Messages may then be handled concurrently and
+	 * out of order.
+	 * </p>
+	 *
+	 * @param executor
+	 *        the executor to set, or {@code null} to handle messages on the
+	 *        calling thread
+	 * @since 4.1
+	 */
+	public final void setExecutor(@Nullable Executor executor) {
+		this.executor = executor;
 	}
 
 }

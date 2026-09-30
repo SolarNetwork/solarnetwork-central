@@ -107,6 +107,8 @@ app:
         write-timeout-seconds: -1
     data-collector:
       node-datum-topic-template: "node/%s/datum"
+      thread-count: 20
+      shutdown-wait: "30s"
       subscribe-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
