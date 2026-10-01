@@ -40,6 +40,7 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -209,6 +210,46 @@ public class JdbcAuditServiceTests extends TestSupport {
 		and.then(datumCountMap)
 				.as("Counter removed once flushed, as nothing queues the key again after the hour")
 				.isEmpty();
+	}
+
+	@Test
+	public void auditPublishMessage_interruptedDuringUpdateDelay_countNotFlushedAgain()
+			throws Exception {
+		// GIVEN
+		given(dataSource.getConnection()).willReturn(jdbcConnection);
+
+		given(jdbcConnection.prepareCall(JdbcAuditService.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
+				.willReturn(jdbcStatement);
+
+		final CountDownLatch executed = new CountDownLatch(1);
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			executed.countDown();
+			return false;
+		});
+
+		// delay long enough that the writer is still sleeping after the update when interrupted
+		auditor.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
+
+		// WHEN
+		PublishRequest msg = PublishRequest.builder()
+				.withTopic(topicForNodeSource(TEST_NODE_1, TEST_SOURCE_1))
+				.withPayload("Hello, world.".getBytes()).build();
+		auditor.auditPublishMessage(null, TEST_NODE_1, TEST_SOURCE_1, msg);
+
+		auditor.enableWriting();
+		final boolean flushed = executed.await(5, TimeUnit.SECONDS);
+
+		// interrupt the writer while it sleeps after the update
+		auditor.disableWriting(Duration.ofMillis(100));
+
+		// start another writer, which would flush the count again if it had been added back
+		auditor.enableWriting();
+		auditor.disableWriting(Duration.ofMillis(500));
+
+		// THEN
+		and.then(flushed).as("Count flushed").isTrue();
+		verifyStatement(TEST_NODE_1, TEST_SOURCE_1, topOfHour.toEpochMilli(), msg.getPayload().length);
+		and.then(datumCountMap).as("Flushed count not added back when interrupted").isEmpty();
 	}
 
 	@Test

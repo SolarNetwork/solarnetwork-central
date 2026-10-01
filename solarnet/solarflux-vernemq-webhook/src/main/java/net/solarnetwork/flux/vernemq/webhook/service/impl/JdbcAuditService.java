@@ -425,25 +425,18 @@ public class JdbcAuditService implements AuditService {
 			stmt.setTimestamp(4, java.sql.Timestamp.from(key.timestamp));
 			stmt.setInt(5, count);
 			stmt.execute();
-			long currUpdateCount = updateCount.incrementAndGet();
-			if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
-				log.info("Updated {} node source byte count records", currUpdateCount);
-			}
-			if ( updateDelay > 0 ) {
-				Thread.sleep(updateDelay);
-			}
-		} catch ( SQLException | InterruptedException e ) {
+		} catch ( SQLException | RuntimeException e ) {
 			addCount(key, count);
 			throw e;
-		} catch ( Exception e ) {
-			addCount(key, count);
-			RuntimeException re;
-			if ( e instanceof RuntimeException runtime ) {
-				re = runtime;
-			} else {
-				re = new RuntimeException("Exception flushing node source audit data", e);
-			}
-			throw re;
+		}
+		// the count has been written now, so it must not be added back if what follows fails,
+		// such as being interrupted during the update delay, or it would be written again
+		long currUpdateCount = updateCount.incrementAndGet();
+		if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
+			log.info("Updated {} node source byte count records", currUpdateCount);
+		}
+		if ( updateDelay > 0 ) {
+			Thread.sleep(updateDelay);
 		}
 	}
 
