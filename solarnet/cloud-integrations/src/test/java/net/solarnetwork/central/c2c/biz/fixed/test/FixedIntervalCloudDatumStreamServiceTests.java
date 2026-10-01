@@ -95,7 +95,7 @@ import tools.jackson.databind.JsonNode;
  * Test cases for the {@link FixedIntervalCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -728,10 +728,14 @@ public class FixedIntervalCloudDatumStreamServiceTests implements CloudIntegrati
 			expectedQueryEndDate = expectedQueryEndDate.plusMonths(1);
 		}
 
+		// the window covers 3 or 4 calendar months, depending on the current date
+		final int expectedCount = (int) ChronoUnit.MONTHS.between(expectedQueryStartDate,
+				expectedQueryEndDate);
+
 		// @formatter:off
 		and.then(result)
-			.as("Datum generated from static values for 4 days")
-			.hasSize((int)ChronoUnit.MONTHS.between(expectedQueryStartDate, expectedQueryEndDate))
+			.as("Datum generated from static values for each month")
+			.hasSize(expectedCount)
 			.allSatisfy(d -> {
 				and.then(d)
 					.as("Datum kind is from DatumStream configuration")
@@ -745,7 +749,7 @@ public class FixedIntervalCloudDatumStreamServiceTests implements CloudIntegrati
 			.satisfies(list -> {
 				DatumSamples expectedSamples1 = new DatumSamples();
 				expectedSamples1.putInstantaneousSampleValue("a", Integer.valueOf(prop1.getValueReference()));
-				for (int i = 0; i < 4; i++ ) {
+				for (int i = 0; i < expectedCount; i++ ) {
 					and.then(list)
 						.element(i)
 						.as("Datum %d timestamp is first day of month SOD in configured time zone", i)

@@ -26,7 +26,7 @@ package net.solarnetwork.central.in.mqtt;
  * SolarIn MQTT statistic types.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.1
  */
 public enum SolarInCountStat {
@@ -42,6 +42,22 @@ public enum SolarInCountStat {
 	LegacyLocationDatumReceived("Legacy location datum received"),
 
 	StreamDatumReceived("stream datum received"),
+
+	/**
+	 * A message the handler had no capacity to accept, and so was not
+	 * acknowledged.
+	 *
+	 * @since 2.2
+	 */
+	MessagesRejected("messages rejected"),
+
+	/**
+	 * A message that could not be parsed, and so was discarded rather than left
+	 * to be redelivered.
+	 *
+	 * @since 2.2
+	 */
+	MessagesDiscarded("messages discarded"),
 
 	;
 

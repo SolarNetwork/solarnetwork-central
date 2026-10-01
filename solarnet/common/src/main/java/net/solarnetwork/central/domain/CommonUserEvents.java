@@ -33,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public interface CommonUserEvents {
 
@@ -178,6 +178,18 @@ public interface CommonUserEvents {
 	 * @since 1.6
 	 */
 	String CORRELATION_ID_DATA_KEY = "correlationId";
+
+	/**
+	 * User event data key for a content value, such as a message payload.
+	 *
+	 * <p>
+	 * If the content is textual, the content will be included as-is. Otherwise,
+	 * it will be Base64 encoded.
+	 * </p>
+	 *
+	 * @since 1.7
+	 */
+	String CONTENT_DATA_KEY = "content";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

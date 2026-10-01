@@ -34,15 +34,18 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.InstanceOfAssertFactories.array;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +55,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -74,7 +78,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Test cases for the {@link CentralOcppWebSocketHandshakeInterceptor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -106,6 +110,33 @@ public class CentralOcppWebSocketHandshakeInterceptorTests {
 		interceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 
 		return interceptor;
+	}
+
+	private static ServletServerHttpRequest basicAuthRequest(String chargerIdent, String username,
+			String password) {
+		// @formatter:off
+		final MockHttpServletRequest req = MockMvcRequestBuilders
+				.get("http://localhost/ocpp/j/v16/{ident}", chargerIdent)
+				.header("Connection", "Upgrade")
+				.header("Upgrade", "websocket")
+				.header("Sec-WebSocket-Protocol", "ocpp1.6")
+				.header("Authorization", "Basic %s".formatted(Base64.getEncoder()
+						.encodeToString("%s:%s".formatted(
+								username, password).getBytes(StandardCharsets.US_ASCII))))
+				.buildRequest(null);
+		// @formatter:on
+		return new ServletServerHttpRequest(req);
+	}
+
+	private CentralSystemUser givenValidBasicCredentials(String chargerIdent, String username,
+			String password) {
+		given(((SubProtocolCapable) handler).getSubProtocols())
+				.willReturn(Arrays.asList(WebSocketSubProtocol.OCPP_V16.getValue()));
+		final CentralSystemUser sysUser = new CentralSystemUser(randomLong(), Instant.now(), username,
+				"supersecret");
+		given(systemUserDao.getForUsernameAndChargePoint(username, chargerIdent)).willReturn(sysUser);
+		given(passwordEncoder.matches(password, sysUser.getPassword())).willReturn(true);
+		return sysUser;
 	}
 
 	@BeforeEach
@@ -445,6 +476,164 @@ public class CentralOcppWebSocketHandshakeInterceptorTests {
 
 		// OK result
 		and.then(result).as("Handshake fail").isFalse();
+	}
+
+	@Test
+	public void handshakeCap_permitReleasedAfterHandshake() throws Exception {
+		// GIVEN
+		final var interceptor = createInterceptor(BASIC_CLIENT_ID_REGEX, null, null);
+		final var semaphore = new Semaphore(1, true);
+		interceptor.setHandshakeSemaphore(semaphore);
+
+		final var chargerIdent = randomString();
+		givenValidBasicCredentials(chargerIdent, "foo", "bar");
+
+		// WHEN
+		boolean result = interceptor.beforeHandshake(basicAuthRequest(chargerIdent, "foo", "bar"),
+				new ServletServerHttpResponse(new MockHttpServletResponse()), handler,
+				new LinkedHashMap<>(8));
+
+		// THEN
+		// @formatter:off
+		and.then(result).as("Handshake OK").isTrue();
+		and.then(semaphore.availablePermits())
+			.as("Permit released after handshake")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void handshakeCap_full_rejected() throws Exception {
+		// GIVEN
+		final var interceptor = createInterceptor(BASIC_CLIENT_ID_REGEX, null, null);
+		final var semaphore = new Semaphore(1, true);
+		interceptor.setHandshakeSemaphore(semaphore);
+
+		// another handshake in progress
+		semaphore.acquire();
+
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+
+		// WHEN
+		boolean result = interceptor.beforeHandshake(
+				basicAuthRequest(randomString(), "foo", "bar"), new ServletServerHttpResponse(res),
+				handler, new LinkedHashMap<>(8));
+
+		// THEN
+		// @formatter:off
+		then(systemUserDao).shouldHaveNoInteractions();
+		then(passwordEncoder).shouldHaveNoInteractions();
+		then(userEventAppenderBiz).shouldHaveNoInteractions();
+		and.then(result).as("Handshake rejected").isFalse();
+		and.then(res.getStatus())
+			.as("Service unavailable status returned so charger retries later")
+			.isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
+			;
+		and.then(semaphore.availablePermits())
+			.as("Permit held by other handshake not released")
+			.isEqualTo(0)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void handshakeCap_full_rejectedAfterTimeout() throws Exception {
+		// GIVEN
+		final var interceptor = createInterceptor(BASIC_CLIENT_ID_REGEX, null, null);
+		final var semaphore = new Semaphore(0, true);
+		interceptor.setHandshakeSemaphore(semaphore);
+		interceptor.setHandshakeAcquireTimeout(Duration.ofMillis(50));
+
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+
+		// WHEN
+		final long start = System.nanoTime();
+		boolean result = interceptor.beforeHandshake(
+				basicAuthRequest(randomString(), "foo", "bar"), new ServletServerHttpResponse(res),
+				handler, new LinkedHashMap<>(8));
+		final Duration waited = Duration.ofNanos(System.nanoTime() - start);
+
+		// THEN
+		// @formatter:off
+		then(systemUserDao).shouldHaveNoInteractions();
+		and.then(result).as("Handshake rejected").isFalse();
+		and.then(res.getStatus())
+			.as("Service unavailable status returned")
+			.isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
+			;
+		and.then(waited)
+			.as("Waited for permit up to timeout")
+			.isGreaterThanOrEqualTo(Duration.ofMillis(50))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void handshakeCap_waitsForPermit() throws Exception {
+		// GIVEN
+		final var interceptor = createInterceptor(BASIC_CLIENT_ID_REGEX, null, null);
+		final var semaphore = new Semaphore(0, true);
+		interceptor.setHandshakeSemaphore(semaphore);
+		interceptor.setHandshakeAcquireTimeout(Duration.ofSeconds(10));
+
+		final var chargerIdent = randomString();
+		givenValidBasicCredentials(chargerIdent, "foo", "bar");
+
+		// other handshake completes shortly
+		Thread.ofVirtual().start(() -> {
+			try {
+				Thread.sleep(100);
+			} catch ( InterruptedException e ) {
+				// ignore
+			}
+			semaphore.release();
+		});
+
+		// WHEN
+		boolean result = interceptor.beforeHandshake(basicAuthRequest(chargerIdent, "foo", "bar"),
+				new ServletServerHttpResponse(new MockHttpServletResponse()), handler,
+				new LinkedHashMap<>(8));
+
+		// THEN
+		// @formatter:off
+		and.then(result).as("Handshake OK after permit became available").isTrue();
+		and.then(semaphore.availablePermits())
+			.as("Permit released after handshake")
+			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void handshakeCap_permitReleasedAfterException() throws Exception {
+		// GIVEN
+		final var interceptor = createInterceptor(BASIC_CLIENT_ID_REGEX, null, null);
+		final var semaphore = new Semaphore(1, true);
+		interceptor.setHandshakeSemaphore(semaphore);
+
+		final var chargerIdent = randomString();
+		given(((SubProtocolCapable) handler).getSubProtocols())
+				.willReturn(Arrays.asList(WebSocketSubProtocol.OCPP_V16.getValue()));
+		final var ex = new RuntimeException("Boom");
+		given(systemUserDao.getForUsernameAndChargePoint(anyString(), eq(chargerIdent))).willThrow(ex);
+
+		// WHEN
+		// @formatter:off
+		and.thenThrownBy(() -> interceptor.beforeHandshake(
+					basicAuthRequest(chargerIdent, "foo", "bar"),
+					new ServletServerHttpResponse(new MockHttpServletResponse()), handler,
+					new LinkedHashMap<>(8)))
+			.as("DAO exception propagated")
+			.isSameAs(ex)
+			;
+
+		// THEN
+		and.then(semaphore.availablePermits())
+			.as("Permit released after exception")
+			.isEqualTo(1)
+			;
+		// @formatter:on
 	}
 
 }
