@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -16,39 +16,39 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{flux-agg-pub.settings.edit.title}">Edit default SolarFlux settings</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{flux-agg-pub.settings.edit.intro}">Edit the setting details on this form.</p>
-		 		<div class="form-group rule">
-		 			<label class="col-sm-3 control-label" data-th-text="#{flux-agg-pub.settings.nodeIds.label}">
+		 		<div class="row mb-3 rule">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{flux-agg-pub.settings.nodeIds.label}">
 		 				Node IDs
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="nodeIdsValue" type="text">
-						<div class="help-block" data-th-utext="#{flux-agg-pub.settings.nodeIds.caption}">
+						<div class="form-text" data-th-utext="#{flux-agg-pub.settings.nodeIds.caption}">
 							Comma-delimited list of node IDs.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group rule">
-		 			<label class="col-sm-3 control-label" data-th-text="#{flux-agg-pub.settings.sourceIds.label}">
+		 		<div class="row mb-3 rule">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{flux-agg-pub.settings.sourceIds.label}">
 		 				Source IDs
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="sourceIdsValue" type="text">
-						<div class="help-block" data-th-utext="#{flux-agg-pub.settings.sourceIds.caption}">
+						<div class="form-text" data-th-utext="#{flux-agg-pub.settings.sourceIds.caption}">
 							Comma-delimited list of source IDs.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{flux-agg-pub.settings.publish.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{flux-agg-pub.settings.publish.label}">
 		 				Publish
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="publish" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="publish" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
@@ -57,19 +57,19 @@
 						</button>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{flux-agg-pub.settings.retain.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{flux-agg-pub.settings.retain.label}">
 		 				Retain
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="retain" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="retain" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
 							data-th-text="#{settings.toggle.disabled}">
 							Disabled
 						</button>
-						<div class="help-block" data-th-utext="#{flux-agg-pub.settings.retain.caption}">
+						<div class="form-text" data-th-utext="#{flux-agg-pub.settings.retain.caption}">
 							Set the retain flag.
 						</div>
 		 			</div>
@@ -81,11 +81,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{flux-agg-pub.settings.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

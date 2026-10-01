@@ -4,7 +4,7 @@
 	<title>DNP3 Trusted Issuer Certificate Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -14,25 +14,25 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-utext="#{dnp3.ca.edit.title}">Edit DNP3 Trusted Issuer Certificate</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{dnp3.ca.edit.intro}">You can toggle the enabled state, or delete this item.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{dnp3.ca.subjectDn.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{dnp3.ca.subjectDn.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="subjectDn" type="text" readonly>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{dnp3.ca.enabled.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{dnp3.ca.enabled.label}">
 		 				Enabled
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="enabled" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
@@ -48,11 +48,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config" data-th-classappend="'hidden'">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{dnp3.ca.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

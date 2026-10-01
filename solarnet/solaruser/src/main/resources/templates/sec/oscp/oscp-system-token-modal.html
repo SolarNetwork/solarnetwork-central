@@ -4,7 +4,7 @@
 	<title>OSCP System Token</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -15,38 +15,38 @@
 			<div class="modal-header">
 				<h4 class="modal-title" data-th-utext="#{oscp.system.token.title}">View OSCP System Token</h4>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{oscp.system.token.intro}">Here is the OSCP Authentication Token.</p>
 		 		<div class="alert alert-danger" data-th-utext="#{oscp.system.token.copySafe.intro}">
 		 			<b>Please note</b> that the token will not be shown again. Please copy it to a safe place.
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.name.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.system.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<p class="form-control-static" id="system-token-name">Lines Co.</p>
+		 				<p class="form-control-plaintext" id="system-token-name">Lines Co.</p>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.authToken.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.system.authToken.label}">
 		 				Authentication Token
 		 			</label>
-		 			<div class="input-group col-sm-8 copyable-container">
-		 				<input type="text" class="form-control copyable" value="ABC123abc" readonly id="system-token">
-		 				<span class="input-group-btn">
-							<button type="button" class="btn btn-default copy"
-								data-toggle="tooltip" data-placement="top"
+		 			<div class="col-sm-8">
+		 				<div class="input-group copyable-container">
+			 				<input type="text" class="form-control copyable" value="ABC123abc" readonly id="system-token">
+							<button type="button" class="btn btn-secondary copy"
+								data-bs-toggle="tooltip" data-bs-placement="top"
 								title="Copy to Clipboard"
 								data-th-title="#{copy.tooltip}">
-								<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+								<span class="bi bi-clipboard2" aria-hidden="true"></span>
 							</button>
-						</span>
+		 				</div>
 		 			</div>
 		 		</div>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" data-dismiss="modal" class="btn btn-primary" data-th-text="#{close.label}">Close</button>
+		 		<button type="button" data-bs-dismiss="modal" class="btn btn-primary" data-th-text="#{close.label}">Close</button>
 		 	</div>
 		 </div>
  	</div>

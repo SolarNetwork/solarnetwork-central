@@ -4,7 +4,7 @@
 	<title>Capacity Groups</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -12,8 +12,8 @@
 <section id="oscp-cgs">
 	<h2>
 		<span data-th-text="#{oscp.cgs.header}">Capacity Groups</span>
-		<button type="button" id="oscp-add-cg-button" class="btn btn-primary pull-right" data-th-title="#{oscp.cgs.add}">
-			<i class="glyphicon glyphicon-plus"></i>
+		<button type="button" id="oscp-add-cg-button" class="btn btn-primary float-end" data-th-title="#{oscp.cgs.add}">
+			<i class="bi bi-plus-lg"></i>
 		</button>
 	</h2>
 	<p class="intro" data-th-utext="#{oscp.cgs.intro(0)}">
@@ -36,7 +36,7 @@
 				<td data-tprop="createdDisplay"></td>
 				<td data-tprop="identifier"></td>
 				<td>
-					<span class="label" data-tprop="enabled"
+					<span class="badge" data-tprop="enabled"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span>
 				</td>
@@ -68,22 +68,22 @@
 						<dt data-th-text="#{oscp.settings.sourceIdTemplate.label}">Source ID template</dt>
 						<dd data-tprop="sourceIdTemplate"></dd>
 						<dt data-th-text="#{oscp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
-						<dd><span class="label label-default" data-tprop="publishToSolarIn"
+						<dd><span class="badge text-bg-secondary" data-tprop="publishToSolarIn"
 								data-th-data-true-text="#{settings.enabled.label}"
 								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
 						<dt data-th-text="#{oscp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
-						<dd><span class="label label-default" data-tprop="publishToSolarFlux"
+						<dd><span class="badge text-bg-secondary" data-tprop="publishToSolarFlux"
 								data-th-data-true-text="#{settings.enabled.label}"
 								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
 					</dl>
 					<dl class="dl-horizontal">
 						<dt></dt>
 						<dd>
-							<button type="button" class="btn btn-xs btn-default edit-link" data-th-text="#{oscp.settings.edit.label}"
+							<button type="button" class="btn btn-sm btn-secondary edit-link" data-th-text="#{oscp.settings.edit.label}"
 								data-edit-modal="#oscp-settings-edit-modal">
 								Edit Settings
 							</button>
-							<button type="button" class="btn btn-xs btn-default oscp-cg-toggle-assets"
+							<button type="button" class="btn btn-sm btn-secondary oscp-cg-toggle-assets"
 									data-th-text="#{oscp.cg.assets.show}">
 								Show Assets
 							</button>
@@ -96,8 +96,8 @@
 				<td colspan="6">
 					<h3>
 						<span data-th-text="#{oscp.cg.assets.header}">Flexibility Assets</span>
-						<button type="button" class="btn btn-primary pull-right oscp-add-cg-asset-button" data-th-title="#{oscp.cg.assets.add}">
-							<i class="glyphicon glyphicon-plus"></i>
+						<button type="button" class="btn btn-primary float-end oscp-add-cg-asset-button" data-th-title="#{oscp.cg.assets.add}">
+							<i class="bi bi-plus-lg"></i>
 						</button>
 					</h3>
 					<p class="intro" data-th-utext="#{oscp.cg.assets.intro(0)}">
@@ -107,8 +107,8 @@
 					<div class="assets-loading">
 						<p data-th-text="#{loading.intro}">One moment please...</p>
 						<div class="progress">
-							<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-								<span class="sr-only" data-th-text="#{loading.label}">Loading...</span>
+							<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+								<span class="visually-hidden" data-th-text="#{loading.label}">Loading...</span>
 							</div>
 						</div>
 					</div>
@@ -131,7 +131,7 @@
 								<td data-tprop="asset.identifier"></td>
 								<td data-tprop="asset.audienceDisplay"></td>
 								<td>
-									<span class="label" data-tprop="asset.enabled"
+									<span class="badge" data-tprop="asset.enabled"
 										data-th-data-true-text="#{settings.enabled.label}"
 										data-th-data-false-text="#{settings.disabled.label}"></span>
 								</td>
@@ -197,7 +197,7 @@
 								<td>CHG.001</td>
 								<td>Capacity Provider</td>
 								<td>
-									<span class="label label-success">Enabled</span>
+									<span class="badge text-bg-success">Enabled</span>
 								</td>
 								<td class="small">
 									<dl class="dl-horizontal">

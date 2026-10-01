@@ -24,7 +24,12 @@ $(document).ready(function() {
 		}
 		SolarReg.Templates.populateTemplateItems(container, counts);
 		$('#data-insight-recent-table').DataTable({
-			"ordering": false
+			"ordering": false,
+			"autoWidth": false,
+			"columnDefs": [
+				// node IDs are identifiers, so keep them out of the right-aligned numeric columns
+				{ "targets": 1, "type": "string" }
+			]
 		});
 	}
 

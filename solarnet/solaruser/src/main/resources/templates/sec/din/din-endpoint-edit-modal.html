@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -13,112 +13,112 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{din.endpoint.edit.title}">Edit Endpoint</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{din.endpoint.edit.intro}">Edit the Endpoint endpoint details on this form.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.name.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="name" maxlength="64" required>
 			 		</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.transformId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.transformId.label}">
 		 				Transform
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control" name="transformId" required>
+		 				<select class="form-select" name="transformId" required>
 		 				</select>
 			 		</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.nodeId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.nodeId.label}">
 		 				Node ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="number" class="form-control" name="nodeId">
-				 		<span class="help-block" data-th-utext="#{din.endpoint.nodeId.caption}">Override the Transform datum node ID.</span>
+				 		<span class="form-text" data-th-utext="#{din.endpoint.nodeId.caption}">Override the Transform datum node ID.</span>
 			 		</div>
 		 		</div>
-			   <div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.sourceId.label}">
+			   <div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.sourceId.label}">
 		 				Source ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="sourceId" type="text" maxlength="64">
-				 		<span class="help-block" data-th-utext="#{din.endpoint.sourceId.caption}">Override the Transform datum source ID.</span>
+				 		<span class="form-text" data-th-utext="#{din.endpoint.sourceId.caption}">Override the Transform datum source ID.</span>
 		 			</div>
 		 		</div>
-			   <div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.requestContentType.label}">
+			   <div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.requestContentType.label}">
 		 				Request Type
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="requestContentType" type="text" maxlength="96">
-				 		<span class="help-block" data-th-utext="#{din.endpoint.requestContentType.caption}">Provide an explicit HTTP request Content-Type value.</span>
+				 		<span class="form-text" data-th-utext="#{din.endpoint.requestContentType.caption}">Provide an explicit HTTP request Content-Type value.</span>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.publishToSolarFlux.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.publishToSolarFlux.label}">
 		 				Publish SolarFlux
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="publishToSolarFlux" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="publishToSolarFlux" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
 							data-th-text="#{settings.toggle.disabled}">
 							Disabled
 						</button>
-						<div class="help-block" data-th-utext="#{din.endpoint.publishToSolarFlux.caption}">
+						<div class="form-text" data-th-utext="#{din.endpoint.publishToSolarFlux.caption}">
 							Publish datum streams to SolarFlux.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.previousInputTracking.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.previousInputTracking.label}">
 		 				Track Previous Input
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="previousInputTracking" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="previousInputTracking" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
 							data-th-text="#{settings.toggle.disabled}">
 							Disabled
 						</button>
-						<div class="help-block" data-th-utext="#{din.endpoint.previousInputTracking.caption}">
+						<div class="form-text" data-th-utext="#{din.endpoint.previousInputTracking.caption}">
 							Track previous input data to provide to transformations.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.includeResponseBody.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.includeResponseBody.label}">
 		 				Include Response Body
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="includeResponseBody" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="includeResponseBody" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
 							data-th-text="#{settings.toggle.disabled}">
 							Disabled
 						</button>
-						<div class="help-block" data-th-utext="#{din.endpoint.includeResponseBody.caption}">
+						<div class="form-text" data-th-utext="#{din.endpoint.includeResponseBody.caption}">
 							Include a response body.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.enabled.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{din.endpoint.enabled.label}">
 		 				Enabled
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="enabled" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
@@ -134,11 +134,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{din.endpoint.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

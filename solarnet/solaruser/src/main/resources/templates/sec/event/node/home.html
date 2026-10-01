@@ -4,7 +4,7 @@
     <title data-th-text="#{node-event.title}">Node Events</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../../static/css/global.css">
 </head>
 <body>
@@ -18,9 +18,9 @@
 <section id="node-event-hooks">
 	<h2>
 		<span data-th-text="#{node-event.hookList.header}">Node Event Hooks</span>
-		<a href="#edit-node-event-hook-modal" class="btn btn-primary pull-right" data-toggle="modal"
+		<a href="#edit-node-event-hook-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
 			data-th-title="#{node-event.hook.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{node-event.hookList.intro(0)}">
@@ -37,7 +37,7 @@
 			</tr>
 			<tr class="template">
 				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-node-event-hook-modal"></a></td>
-				<td><span data-tprop="topicName"></span><br><span class="label label-default" data-tprop="topic"></span></td>
+				<td><span data-tprop="topicName"></span><br><span class="badge text-bg-secondary" data-tprop="topic"></span></td>
 				<td data-tprop="nodes"></td>
 				<td data-tprop="sources"></td>
 				<td>

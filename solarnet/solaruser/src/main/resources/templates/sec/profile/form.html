@@ -4,16 +4,18 @@
     <title data-th-text="#{app.name}">SolarUser Profile Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
 <main class="container">
-	<form data-th-action="@{/u/sec/profile/save}" method="post" data-th-object="${user}" class="form-horizontal">
+	<form data-th-action="@{/u/sec/profile/save}" method="post" data-th-object="${user}">
 		<input type="hidden" name="id" data-th-field="*{id}">
 		<fieldset data-th-replace="~{user/detail-form :: fieldset}">User form content here.</fieldset>
-		<div class="col-sm-offset-2 col-sm-10">
-			<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+		<div class="row mb-3">
+			<div class="offset-sm-2 col-sm-10">
+				<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+			</div>
 		</div>
 	</form>
 </main>

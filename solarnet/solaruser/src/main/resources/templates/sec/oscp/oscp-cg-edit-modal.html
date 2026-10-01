@@ -4,7 +4,7 @@
 	<title>OSCP Capacity Group Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -14,36 +14,36 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-utext="#{oscp.cg.edit.title}">Edit OSCP Capacity Group</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{oscp.cg.edit.intro}">Edit the OSCP Capacity Provider details on this form.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.name.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="name" type="text" maxlength="64" required>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.identifier.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.identifier.label}">
 		 				Identifier
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="identifier" maxlength="128" required>
-		 				<div class="help-block" data-th-utext="#{oscp.cg.identifier.caption}">
+		 				<div class="form-text" data-th-utext="#{oscp.cg.identifier.caption}">
 							The identifier must be unique.
 						</div>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.enabled.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.enabled.label}">
 		 				Enabled
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="enabled" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
@@ -52,13 +52,13 @@
 						</button>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.settings.groupCombinedAssetId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{oscp.settings.groupCombinedAssetId.label}">
 		 				Combined Asset ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="serviceProps.group-combined-asset-id" maxlength="128">
-		 				<div class="help-block" data-th-utext="#{oscp.settings.groupCombinedAssetId.caption}">
+		 				<div class="form-text" data-th-utext="#{oscp.settings.groupCombinedAssetId.caption}">
 							If provided then, when reporting group measurements, combine all Flexibility Assets
 							into one virtual asset with this identifier.
 						</div>
@@ -66,12 +66,12 @@
 		 		</div>
 		 		<fieldset>
 		 			<legend data-th-text="#{oscp.cg.cpDetails.label}">Capacity Provider</legend>
-					<div class="form-group">
-						<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.cp.label}">
+					<div class="row mb-3">
+						<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.cp.label}">
 							Provider
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityProviderId" class="form-control">
+							<select name="capacityProviderId" class="form-select">
 								<!--/*-->
 								<option></option>
 								<option value="1">1 - Provider 1</option>
@@ -80,12 +80,12 @@
 							</select>
 						</div>
 					</div>
-					<div class="form-group">
-						<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.measurementPeriod.label}">
+					<div class="row mb-3">
+						<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.measurementPeriod.label}">
 							Measurement Period
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityProviderMeasurementPeriod" class="form-control" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
+							<select name="capacityProviderMeasurementPeriod" class="form-select" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
 								<option value="Minute">Every minute</option>
 								<option value="Hour">Hourly</option>
 							</select>
@@ -94,12 +94,12 @@
 		 		</fieldset>
 		 		<fieldset>
 		 			<legend data-th-text="#{oscp.cg.coDetails.label}">Capacity Optimizer</legend>
-					<div class="form-group">
-						<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.co.label}">
+					<div class="row mb-3">
+						<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.co.label}">
 							Optimizer
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityOptimizerId" class="form-control">
+							<select name="capacityOptimizerId" class="form-select">
 								<!--/*-->
 								<option></option>
 								<option value="1">1 - Provider 1</option>
@@ -108,12 +108,12 @@
 							</select>
 						</div>
 					</div>
-					<div class="form-group">
-						<label class="col-sm-3 control-label" data-th-text="#{oscp.cg.measurementPeriod.label}">
+					<div class="row mb-3">
+						<label class="col-sm-3 col-form-label" data-th-text="#{oscp.cg.measurementPeriod.label}">
 							Measurement Period
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityOptimizerMeasurementPeriod" class="form-control" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
+							<select name="capacityOptimizerMeasurementPeriod" class="form-select" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
 								<option value="Minute">Every minute</option>
 								<option value="Hour">Hourly</option>
 							</select>
@@ -127,11 +127,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config" data-th-classappend="'hidden'">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{oscp.cg.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

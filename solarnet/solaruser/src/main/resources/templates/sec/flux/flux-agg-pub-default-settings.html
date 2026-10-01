@@ -4,15 +4,15 @@
 	<title>SolarFlux Aggregate Datum Publish Default Settings</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
 <section id="flux-agg-pub-default-settings" data-th-fragment="content">
 	<h2>
 		<span data-th-text="#{flux-agg-pub.default-settings.header}">Aggregate Datum Publish Default Settings</span>
-		<button type="button" id="flux-agg-pub-default-settings-edit-button" class="btn btn-primary pull-right"
-			data-target="#flux-agg-pub-settings-edit-modal" data-toggle="modal"
+		<button type="button" id="flux-agg-pub-default-settings-edit-button" class="btn btn-primary float-end"
+			data-bs-target="#flux-agg-pub-settings-edit-modal" data-bs-toggle="modal"
 			data-th-title="#{flux-agg-pub.default-settings.edit}"
 			data-th-text="#{flux-agg-pub.default-settings.edit}">
 		</button>
@@ -27,10 +27,10 @@
 				<th data-th-text="#{flux-agg-pub.settings.retain.label}">Retain</th>
 			</tr>
 			<tr data-th-classappend="'template'">
-				<td><span class="label" data-tprop="publish"
+				<td><span class="badge" data-tprop="publish"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
-				<td><span class="label" data-tprop="retain"
+				<td><span class="badge" data-tprop="retain"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
 			</tr>

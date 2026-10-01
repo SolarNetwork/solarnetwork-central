@@ -4,8 +4,8 @@
     <title data-th-text="#{my-nodes.title}">My Nodes</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
-	<link rel="stylesheet" href="../../../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
+	<link rel="stylesheet" href="../../../static/css/dataTables.bootstrap5.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 	<link rel="stylesheet" href="../../../static/css/edit-node.css">
 </head>
@@ -34,7 +34,7 @@
 					1 Jan 2010
 				</td>
 				<td>
-					<button type="button" class="btn btn-small btn-default decide-ownership-transfer"
+					<button type="button" class="btn btn-sm btn-secondary decide-ownership-transfer"
 						data-th-data-user-id="${transfer.user.id}"
 						data-th-data-node-id="${transfer.node.id}"
 						data-th-data-requester="${transfer.user.email}"
@@ -53,8 +53,7 @@
 		You have 2 node invitations.
 	</p>
 	<div class="alert alert-info alert-dismissible" role="alert">
-		<button type="button" class="close" data-dismiss="alert"
-		data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		<span data-th-utext="#{my-nodes.solarnode.link.help}">
 			Your SolarNode is available at http://solarnode/.
 		</span>
@@ -73,18 +72,17 @@
 				</td>
 				<td>
 					<div class="btn-group">
-						<a class="btn btn-default" data-th-href="@{/u/sec/my-nodes/invitation(id=${userNodeConf.id})}"
+						<a class="btn btn-secondary" data-th-href="@{/u/sec/my-nodes/invitation(id=${userNodeConf.id})}"
 							data-th-text="#{my-nodes.view-invitation.link}">
 							View Invitation
 						</a>
-						<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-							<span class="caret"></span>
-							<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
+						<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+							<span class="visually-hidden" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
 						</button>
 						<ul class="dropdown-menu" role="menu">
 							<li>
-								<a class="btn btn-danger" data-th-href="@{/u/sec/my-nodes/cancelInvitation(id=${userNodeConf.id})}">
-									<i class="glyphicon glyphicon-trash"></i>
+								<a class="dropdown-item text-danger" data-th-href="@{/u/sec/my-nodes/cancelInvitation(id=${userNodeConf.id})}">
+									<i class="bi bi-trash3"></i>
 									<span data-th-text="#{my-nodes.cancel-invitation.link}">Cancel</span>
 								</a>
 							</li>
@@ -133,7 +131,7 @@
 						data-th-data-user-id="${userNode.user.id}"
 						data-th-data-node-id="${userNode.node.id}"
 						data-th-title="#{my-nodes.transferOwnership.action.cancel}"
-						class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
+						class="btn btn-sm btn-danger cancel-ownership-transfer"><i class="bi bi-x-lg"></i></button>
 				</td>
 			</tr>
 		</tbody>
@@ -143,8 +141,8 @@
 <section id="nodes">
 	<h2>
 		<span data-th-text="#{my-nodes.nodelist.header}">My Nodes</span>
-		<button type="button" id="invite-new-node-button" class="btn btn-primary pull-right" data-target="#invite-modal" data-toggle="modal">
-			<i class="glyphicon glyphicon-plus"></i> <span data-th-text="#{my-nodes.inviteNode}">+</span>
+		<button type="button" id="invite-new-node-button" class="btn btn-primary float-end" data-bs-target="#invite-modal" data-bs-toggle="modal">
+			<i class="bi bi-plus-lg"></i> <span data-th-text="#{my-nodes.inviteNode}">+</span>
 		</button>
 	</h2>
 	<p class="intro" data-th-utext="#{my-nodes.intro(${userNodesList.size})}">
@@ -174,54 +172,53 @@
 				<td data-th-text="${userNode.name}">Home Node</td>
 				<td data-th-text="${userNode.description}">Node at home.</td>
 				<td>
-					<span class="label" data-th-classappend="${!userNode.requiresAuthorization} ? 'label-success'"
+					<span class="badge" data-th-classappend="${userNode.requiresAuthorization} ? 'text-bg-secondary' : 'text-bg-success'"
 						data-th-text="#{user.node.private.__${userNode.requiresAuthorization}__}">
 					</span>
 				</td>
 				<td>
-					<span class="label" data-th-if="${userNode.certificate}"
+					<span class="badge" data-th-if="${userNode.certificate}"
 						data-th-classappend="${userNode.certificate.status.value == 'Active'
-							? 'label-success' : userNode.certificate.status.value  == 'Disabled'
-							? 'label-warning' : 'label-primary'}"
+							? 'text-bg-success' : userNode.certificate.status.value  == 'Disabled'
+							? 'text-bg-warning' : 'text-bg-primary'}"
 						data-th-text="#{user.node.certificate.status.__${userNode.certificate.status.value}__}">
 						Active
 					</span>
-					<span class="label label-danger" data-th-unless="${userNode.certificate}"
+					<span class="badge text-bg-danger" data-th-unless="${userNode.certificate}"
 						data-th-text="#{user.node.certificate.unmanaged}">
 						Unmanaged
 					</span>
 				</td>
 				<td>
 					<div class="btn-group">
-						<button type="button" class="btn btn-small btn-default edit-node"
-							data-target="#edit-node-modal"
+						<button type="button" class="btn btn-sm btn-secondary edit-node"
+							data-bs-target="#edit-node-modal"
 							data-th-data-user-id="${userNode.user.id}"
 							data-th-data-node-id="${userNode.node.id}"
 							data-th-text="#{my-nodes.action.edit}"
 							>Edit</button>
-						<button type="button" class="btn btn-small btn-default dropdown-toggle"
-							data-toggle="dropdown" aria-expanded="false">
-							<span class="caret"></span>
-							<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
+						<button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split"
+							data-bs-toggle="dropdown" aria-expanded="false">
+							<span class="visually-hidden" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
 						</button>
-						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+						<ul class="dropdown-menu dropdown-menu-end" role="menu">
 							<li data-th-if="${userNode.certificate?.status?.value == 'Active'}">
-								<a href="#" class="view-cert" data-th-text="#{user.node.certificate.action.view}">View</a>
+								<a href="#" class="dropdown-item view-cert" data-th-text="#{user.node.certificate.action.view}">View</a>
 							</li>
 							<li data-th-if="${userNode.certificate?.status?.value == 'Active'}">
-								<a href="#" class="view-cert" data-th-text="#{user.node.certificate.action.renew}">Renew</a>
+								<a href="#" class="dropdown-item view-cert" data-th-text="#{user.node.certificate.action.renew}">Renew</a>
 							</li>
 							<li>
-								<a href="#" class="transfer-ownership" data-th-text="#{user.node.action.transferOwnership}">Transfer</a>
+								<a href="#" class="dropdown-item transfer-ownership" data-th-text="#{user.node.action.transferOwnership}">Transfer</a>
 							</li>
-							<li role="separator" class="divider"></li>
+							<li><hr class="dropdown-divider"></li>
 							<li>
-								<a href="#" class="archive" data-th-text="#{user.node.action.archive}">Archive</a>
+								<a href="#" class="dropdown-item archive" data-th-text="#{user.node.action.archive}">Archive</a>
 							</li>
 						</ul>
 					</div>
-					<button class="btn btn-small btn-danger view-situation hidden" type="button">
-						<span aria-hidden="true" class="glyphicon glyphicon-alert"></span>
+					<button class="btn btn-sm btn-danger view-situation hidden" type="button">
+						<span aria-hidden="true" class="bi bi-exclamation-triangle-fill"></span>
 					</button>
 				</td>
 			</tr>
@@ -231,28 +228,28 @@
 
 <!--/* Modal forms */-->
 
-<form id="invite-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/new}" method="post">
+<form id="invite-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/new}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.inviteNode}">Invite Node</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-text="#{my-nodes-invitation.create.intro}">Generate an invitation for a new SolarNode.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{my-nodes.invitation.securityPhrase.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{my-nodes.invitation.securityPhrase.label}">
 		 				Security Phrase
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="phrase"
 		 					data-th-placeholder="#{my-nodes.invitation.securityPhrase.label}"
 		 					maxlength="128" required="required"/>
-			 			<span class="help-block"><small data-th-text="#{my-nodes.invitation.securityPhrase.caption}">This will be shown on the SolarNode you are inviting.</small></span>
+			 			<span class="form-text"><small data-th-text="#{my-nodes.invitation.securityPhrase.caption}">This will be shown on the SolarNode you are inviting.</small></span>
 			 		</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{my-nodes.invitation.tz.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{my-nodes.invitation.tz.label}">
 		 				Time Zone
 		 			</label>
 		 			<div class="col-sm-8">
@@ -260,8 +257,8 @@
 		 					data-th-placeholder="#{my-nodes.invitation.tz.placeholder}"
 		 					maxlength="128" required="required"/>
 		 			</div>
-		 			<div class="col-sm-1">
-		 				<span class="help-block" id="invite-tz-country"></span>
+		 			<div class="col-sm-1 plaintext-form-value">
+		 				<span id="invite-tz-country"></span>
 		 			</div>
 		 		</div>
 	 			<div id="tz-picker-container" class="tz-picker-container"></div>
@@ -273,31 +270,35 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" id="node-cert-create" class="btn btn-default pull-left"
+		 		<button type="button" id="node-cert-create" class="btn btn-secondary me-auto"
 		 			data-th-data-confirm-title="#{my-nodes.create.reaffirm}"
 		 			data-th-text="#{my-nodes.create.link}"
 		 			>Create Invitation</button>
-		 		<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+		 		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</button>
 		 		<input type="hidden" name="country" id="invite-country"/>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{my-nodes.inviteNode}">Invite</button>
 		 	</div>
 		 </div>
  	</div>
 </form>
-<form id="view-cert-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/cert/0}" method="post">
+<form id="view-cert-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/cert/0}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.cert.view.title}">View Certificate</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
 		 	<div class="modal-body">
 		 		<p class="nocert" data-th-text="#{my-nodes.cert.view.intro}">View your certificate here.</p>
 		 		<p class="cert hidden" data-th-text="#{my-nodes.cert.view.cert-intro}">Here is your certificate:</p>
 		 		<div class="alert alert-info renewed hidden" data-th-text="#{my-nodes.cert.renewed.queued}">Your renewal request has been received.</div>
-		 		<fieldset class="form-inline nocert">
-		 			<label for="view-cert-password" data-th-text="#{my-nodes.cert.view.password.label}">Certificate Password</label>
-					<input class="span3 form-control" type="password" name="password" id="view-cert-password" />
+		 		<fieldset class="row g-2 align-items-center nocert">
+		 			<div class="col-auto">
+			 			<label class="col-form-label" for="view-cert-password" data-th-text="#{my-nodes.cert.view.password.label}">Certificate Password</label>
+			 		</div>
+		 			<div class="col-auto">
+						<input class="form-control" type="password" name="password" id="view-cert-password" />
+					</div>
 		 		</fieldset>
 		 		<fieldset class="cert hidden">
 			 		<table class="table">
@@ -332,8 +333,8 @@
 		 		</fieldset>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
-		 		<a data-th-href="@{/u/sec/my-nodes/cert/0}" id="modal-cert-download" class="btn btn-default"
+		 		<a href="#" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<a data-th-href="@{/u/sec/my-nodes/cert/0}" id="modal-cert-download" class="btn btn-secondary"
 		 			data-th-text="#{my-nodes.cert.action.download}">
 		 			Download
 		 		</a>
@@ -348,99 +349,97 @@
 		 </div>
 	</div>
 </form>
-<form id="edit-node-modal" class="modal fade page1" data-th-action="@{/u/sec/my-nodes/updateNode}" method="post">
+<form id="edit-node-modal" class="modal fade page1" data-th-action="@{/u/sec/my-nodes/updateNode}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.edit-node.title}">Edit Node</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
 		 	<div class="modal-body">
 				<div class="hbox">
-					<fieldset class="form-horizontal">
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="usernode-id" data-th-text="#{user.node.id.label}">Node ID</label>
+					<fieldset>
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="usernode-id" data-th-text="#{user.node.id.label}">Node ID</label>
 							<div class="col-sm-10">
-								<span class="uneditable-input span2 form-control" id="usernode-id"></span>
+								<span class="form-control-plaintext" id="usernode-id"></span>
 							</div>
 						</div>
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="usernode-name" data-th-text="#{user.node.name.label}">Name</label>
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="usernode-name" data-th-text="#{user.node.name.label}">Name</label>
 							<div class="col-sm-10">
 								<input name="name" type="text" maxlength="128" class="form-control" id="usernode-name">
-								<span class="help-block" data-th-text="#{user.node.name.caption}">A short name to identify this node by.</span>
+								<span class="form-text" data-th-text="#{user.node.name.caption}">A short name to identify this node by.</span>
 							</div>
 						</div>
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="usernode-description" data-th-text="#{user.node.description.label}">Description</label>
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="usernode-description" data-th-text="#{user.node.description.label}">Description</label>
 							<div class="col-sm-10">
 								<input name="description" type="text" maxlength="512" class="form-control" id="usernode-description">
-								<span class="help-block" data-th-text="#{user.node.description.caption}">A brief description.</span>
+								<span class="form-text" data-th-text="#{user.node.description.caption}">A brief description.</span>
 							</div>
 						</div>
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="usernode-private" data-th-text="#{user.node.private.label}">Private</label>
-							<div class="col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input name="requiresAuthorization" type="checkbox" value="true" id="usernode-private">
-										<span data-th-utext="#{user.node.private.caption}">A private node's data cannot be accessed without an appropriate security token.</span>
-									</label>
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="usernode-private" data-th-text="#{user.node.private.label}">Private</label>
+							<div class="col-sm-10 plaintext-form-value">
+								<div class="form-check">
+									<input class="form-check-input" name="requiresAuthorization" type="checkbox" value="true" id="usernode-private">
+									<label class="form-check-label" for="usernode-private" data-th-utext="#{user.node.private.caption}">A private node's data cannot be accessed without an appropriate security token.</label>
 								</div>
 							</div>
 						</div>
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="usernode-location" data-th-text="#{user.node.location.label}">Location</label>
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="usernode-location" data-th-text="#{user.node.location.label}">Location</label>
 							<div class="col-sm-10">
 								<span id="usernode-location"></span>
-								<button type="button" class="btn btn-default change-location" data-th-text="#{change.label}">Change</button>
+								<button type="button" class="btn btn-secondary change-location" data-th-text="#{change.label}">Change</button>
 							</div>
 						</div>
 					</fieldset>
-					<fieldset class="form-horizontal edit-location-tz">
+					<fieldset class="edit-location-tz">
 						<p data-th-utext="#{my-nodes.edit-node.choose-tz.intro}">Choose time zone.</p>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-tz" data-th-text="#{location.tz.label}">Zone</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-tz" data-th-text="#{location.tz.label}">Zone</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.zone" id="edit-node-location-tz"
 		 							data-th-placeholder="#{my-nodes.invitation.tz.placeholder}"
 		 							maxlength="128" />
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-country" data-th-text="#{location.country.label}">Country</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-country" data-th-text="#{location.country.label}">Country</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.country" id="edit-node-location-country" maxlength="2" />
 							</div>
 				 		</div>
 						<div class="tz-picker-container"></div>
 					</fieldset>
-					<fieldset class="form-horizontal" id="edit-node-location-details"
+					<fieldset id="edit-node-location-details"
 						data-th-data-lookup-url="${serviceUrls['solarquery'] + '/api/v1/pub/location'}">
 						<p data-th-utext="#{my-nodes.edit-node.choose-location.intro}">Choose a location.</p>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-postal-code" data-th-text="#{location.postalCode.label}">Postal code</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-postal-code" data-th-text="#{location.postalCode.label}">Postal code</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.postalCode" id="edit-node-location-postal-code"
 		 							maxlength="128" />
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-locality" data-th-text="#{location.locality.label}">Locality</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-locality" data-th-text="#{location.locality.label}">Locality</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.locality" id="edit-node-location-locality"
 		 							maxlength="128" />
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-state" data-th-text="#{location.state.label}">State</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-state" data-th-text="#{location.state.label}">State</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.stateOrProvince" id="edit-node-location-state"
 		 							maxlength="128" />
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-region" data-th-text="#{location.region.label}">Region</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-region" data-th-text="#{location.region.label}">Region</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.region" id="edit-node-location-region"
 		 							maxlength="128" />
@@ -470,44 +469,44 @@
 							</tbody>
 						</table>
 					</fieldset>
-					<fieldset class="form-horizontal" id="edit-node-location-private-details">
+					<fieldset id="edit-node-location-private-details">
 						<p data-th-utext="#{my-nodes.edit-node.private-location.intro}">Private location details.</p>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-street" data-th-text="#{location.address.label}">Address</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-street" data-th-text="#{location.address.label}">Address</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.street" id="edit-node-location-street"
 		 							maxlength="256">
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-latitude" data-th-text="#{location.lat.label}">Latitude</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-latitude" data-th-text="#{location.lat.label}">Latitude</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.lat" id="edit-node-location-latitude"
 		 							maxlength="16"  aria-describedby="edit-node-locaiton-latitude-help">
-		 						<span class="help-block" id="edit-node-locaiton-latitude-help" data-th-text="#{my-nodes.edit-node.choose-location-private.latlon.caption}">GPS decimal notation.</span>
+		 						<span class="form-text" id="edit-node-locaiton-latitude-help" data-th-text="#{my-nodes.edit-node.choose-location-private.latlon.caption}">GPS decimal notation.</span>
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-longitude" data-th-text="#{location.lon.label}">Longitude</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-longitude" data-th-text="#{location.lon.label}">Longitude</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.lon" id="edit-node-location-longitude"
 		 							maxlength="16" aria-describedby="edit-node-locaiton-longitude-help">
-		 						<span class="help-block" id="edit-node-locaiton-longitude-help" data-th-text="#{my-nodes.edit-node.choose-location-private.latlon.caption}">GPS decimal notation.</span>
+		 						<span class="form-text" id="edit-node-locaiton-longitude-help" data-th-text="#{my-nodes.edit-node.choose-location-private.latlon.caption}">GPS decimal notation.</span>
 							</div>
 				 		</div>
-						<div class="form-group">
-				 			<label class="col-sm-3 control-label" for="edit-node-location-elevation" data-th-text="#{location.elevation.label}">Elevation</label>
+						<div class="row mb-3">
+				 			<label class="col-sm-3 col-form-label" for="edit-node-location-elevation" data-th-text="#{location.elevation.label}">Elevation</label>
 							<div class="col-sm-9">
 								<input type="text" class="form-control" name="node.location.el" id="edit-node-location-elevation"
 		 							maxlength="12"  aria-describedby="edit-node-locaiton-elevation-help">
-		 						<span class="help-block" id="edit-node-locaiton-elevation-help" data-th-text="#{my-nodes.edit-node.choose-location-private.elevation.caption}">Elevation in meters.</span>
+		 						<span class="form-text" id="edit-node-locaiton-elevation-help" data-th-text="#{my-nodes.edit-node.choose-location-private.elevation.caption}">Elevation in meters.</span>
 							</div>
 				 		</div>
 					</fieldset>
 				</div>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+		 		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</button>
 		 		<button type="button" class="btn page2 page3 page4 btn-info" id="edit-node-page-back" data-th-text="#{back.label}">Back</button>
 		 		<button type="submit" class="btn page1 btn-primary" data-th-text="#{save.label}">Save</button>
 		 		<button type="button" class="btn page2 btn-primary" id="edit-node-select-tz" data-th-text="#{my-nodes.edit-node.choose-tz.action.select}">Edit time zone</button>
@@ -520,34 +519,34 @@
 	<input type="hidden" name="user.id">
 	<input type="hidden" name="node.locationId">
 </form>
-<form id="transfer-ownership-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/requestNodeTransfer}" method="post">
+<form id="transfer-ownership-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/requestNodeTransfer}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.transferOwnership.title}"></h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{my-nodes.transferOwnership.intro}">Transfer node ownership.</p>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="transfer-ownership-node" data-th-text="#{user.node.id.label}">Node ID</label>
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="transfer-ownership-node" data-th-text="#{user.node.id.label}">Node ID</label>
 					<div class="col-sm-10">
-						<p id="transfer-ownership-node" class="form-control-static"></p>
+						<p id="transfer-ownership-node" class="form-control-plaintext"></p>
 					</div>
 				</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-2 control-label" for="transfer-ownership-recipient" data-th-text="#{my-nodes.transferOwnership.recipient.label}">Recipient</label>
+		 		<div class="row mb-3">
+		 			<label class="col-sm-2 col-form-label" for="transfer-ownership-recipient" data-th-text="#{my-nodes.transferOwnership.recipient.label}">Recipient</label>
 					<div class="col-sm-10">
 						<input class="form-control" type="text" name="recipient" maxlength="240" id="transfer-ownership-recipient"
 							required="required"
 							data-th-placeholder="#{my-nodes.transferOwnership.recipient.placeholder}"
 							aria-describedby="transfer-ownership-recipient-help">
-						<span class="help-block" id="transfer-ownership-recipient-help" data-th-text="#{my-nodes.transferOwnership.recipient.caption}">Recipient must have a SolarNetwork account.</span>
+						<span class="form-text" id="transfer-ownership-recipient-help" data-th-text="#{my-nodes.transferOwnership.recipient.caption}">Recipient must have a SolarNetwork account.</span>
 					</div>
 		 		</div>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<a href="#" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</a>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{my-nodes.transferOwnership.action.submit}">
 		 			Submit
 		 		</button>
@@ -557,30 +556,30 @@
 	<input type="hidden" name="nodeId">
 	<input type="hidden" name="userId">
 </form>
-<form id="decide-transfer-ownership-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/confirmNodeTransferRequest}" method="post">
+<form id="decide-transfer-ownership-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/confirmNodeTransferRequest}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.transferOwnership.requestDecision.title}">Accept or decline ownership transfer</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{my-nodes.transferOwnership.requestDecision.intro}">Accept or decline this ownership transfer request.</p>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="transfer-ownership-request-node" data-th-text="#{user.node.id.label}">Node ID</label>
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="transfer-ownership-request-node" data-th-text="#{user.node.id.label}">Node ID</label>
 					<div class="col-sm-10">
-						<p id="transfer-ownership-request-node" class="form-control-static"></p>
+						<p id="transfer-ownership-request-node" class="form-control-plaintext"></p>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="transfer-ownership-request-requester" data-th-text="#{my-nodes.transferOwnership.requester.label}">Requester</label>
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="transfer-ownership-request-requester" data-th-text="#{my-nodes.transferOwnership.requester.label}">Requester</label>
 					<div class="col-sm-10">
-						<p id="transfer-ownership-request-requester" class="form-control-static"></p>
+						<p id="transfer-ownership-request-requester" class="form-control-plaintext"></p>
 					</div>
 				</div>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<a href="#" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</a>
 		 		<button type="button" class="btn btn-danger submit" data-th-text="#{my-nodes.transferOwnership.action.decline}">
 		 			Decline
 		 		</button>
@@ -594,24 +593,24 @@
 	<input type="hidden" name="userId">
 	<input type="hidden" name="accept" value="false">
 </form>
-<form id="archive-node-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/archived}" method="post">
+<form id="archive-node-modal" class="modal fade" data-th-action="@{/u/sec/my-nodes/archived}" method="post" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title" data-th-text="#{my-nodes.archive.title}">Archive node</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{my-nodes.archive.intro}">Archive this node to hide it from your account.</p>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="archive-node" data-th-text="#{user.node.id.label}">Node ID</label>
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="archive-node" data-th-text="#{user.node.id.label}">Node ID</label>
 					<div class="col-sm-10">
-						<p class="form-control-static node-name-label"></p>
+						<p class="form-control-plaintext node-name-label"></p>
 					</div>
 				</div>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<a href="#" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</a>
 		 		<button type="submit" class="btn btn-danger submit" data-th-text="#{my-nodes.archive.action.archive}">
 		 			Archive
 		 		</button>

@@ -335,9 +335,9 @@ function dinManagement() {
 		SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function endpointTemplateCallback(item, el) {
 			// update all accordian item IDs to be unique, with the associated endpoint ID
 			let id = item.id;
-			el.find('div.panel-heading').attr('id', 'endpoint-heading-' + id);
-			el.find('.panel-title a').attr('href', '#endpoint-body-' + id).attr('aria-controls', 'endpoint-body-' + id);
-			el.find('div.panel-collapse ').attr('id', 'endpoint-body-' + id).attr('aria-labelledby', 'endpoint-heading-' + id);
+			el.find('div.card-header').attr('id', 'endpoint-heading-' + id);
+			el.find('.card-title a').attr('href', '#endpoint-body-' + id).attr('aria-controls', 'endpoint-body-' + id);
+			el.children('div.collapse').attr('id', 'endpoint-body-' + id).attr('aria-labelledby', 'endpoint-heading-' + id);
 			
 			// populate inner details
 			SolarReg.Templates.replaceTemplateProperties(el.find('.endpoint-details'), item);
@@ -399,9 +399,9 @@ function dinManagement() {
 
 		// check if clicked on accordian title bar, to toggle visibility
 		const target = $(event.target);
-		if ( target.hasClass('panel-title') || target.hasClass('panel-heading') ) {
-			// toggle this panel
-			let dest = target.parent().find('a[data-parent="#din-endpoints-accordian"]').attr('href');
+		if ( target.hasClass('card-title') || target.hasClass('card-header') ) {
+			// toggle this card
+			let dest = target.parent().find('a[data-bs-toggle="collapse"]').attr('href');
 			if ( dest ) {
 				$(dest).collapse('toggle');
 			}

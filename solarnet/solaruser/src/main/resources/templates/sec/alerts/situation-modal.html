@@ -4,16 +4,16 @@
     <title>Alert Situation</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
-<div id="alert-situation-modal" class="modal fade alert-situation-form" data-th-fragment="modal">
+<div id="alert-situation-modal" class="modal fade alert-situation-form" data-th-fragment="modal" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
-		 	<div class="modal-header bg-danger">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 	<div class="modal-header bg-danger-subtle">
 		 		<h4 class="modal-title" data-th-text="#{alerts.situation.view.title}">Alert Situation</h4>
+		 		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 		 	</div>
 		 	<div class="modal-body">
 		 		<!--/* Note: when we have more than one alert type, use JS to toggle the visibility of alert-type elements
@@ -31,7 +31,7 @@
 		 					<th data-th-text="#{alert.situation.created.label}">Created</th>
 		 					<td>
 		 						<span class="alert-situation-created"></span>
-		 						<div class="help-block" data-th-text="#{alert.situation.created.caption}">Situation created on this date.</div>
+		 						<div class="form-text" data-th-text="#{alert.situation.created.caption}">Situation created on this date.</div>
 		 					</td>
 		 				</tr>
 		 				<tr>
@@ -61,7 +61,7 @@
 		 					<th data-th-text="#{alert.situation.notified.label}">Notified</th>
 		 					<td>
 		 						<span class="alert-situation-notified"></span>
-		 						<div class="help-block" data-th-text="#{alert.situation.notified.caption}">The last notification date.</div>
+		 						<div class="form-text" data-th-text="#{alert.situation.notified.caption}">The last notification date.</div>
 		 					</td>
 		 				</tr>
 		 			</tbody>
@@ -69,11 +69,11 @@
 		 		<p class="alert-type alert-type-NodeStaleData" data-th-utext="#{alerts.situation.resolve.caption}">Resolve</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left" id="alert-situation-resolve">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto" id="alert-situation-resolve">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{alerts.action.resolve}">Resolve</span>
 		 		</button>
-		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<a href="#" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</a>
 		 	</div>
 		</div>
 	</div>

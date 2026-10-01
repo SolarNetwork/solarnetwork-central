@@ -40,7 +40,7 @@ $(document).ready(function() {
 	function resetAuthTokenForm() {
 		const form = this;
 		form.reset();
-		$('#create-user-auth-token .nav-pills > *:first').tab('show');
+		$(form).find('.nav-pills .nav-link').first().tab('show');
 		reloadIfTokenCreated();
 	}
 
@@ -180,7 +180,7 @@ $(document).ready(function() {
 				beforeSubmit: beforeSubmitTokenForm,
 				success: handleAuthTokenCreated,
 				error: function(_xhr, _status, statusText) {
-					SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+					SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-danger', statusText);
 				}
 			});
 		});
@@ -225,7 +225,7 @@ $(document).ready(function() {
 				document.location.reload(true);
 			},
 			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#edit-auth-token-info .modal-body > *:first-child', 'alert-error', statusText);
+				SolarReg.showAlertBefore('#edit-auth-token-info .modal-body > *:first-child', 'alert-danger', statusText);
 			}
 		});
 	});
@@ -247,7 +247,7 @@ $(document).ready(function() {
 				document.location.reload(true);
 			},
 			error: function(_xhr, _status, statusText) {
-				SolarReg.showAlertBefore('#delete-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+				SolarReg.showAlertBefore('#delete-auth-token .modal-body > *:first-child', 'alert-danger', statusText);
 			}
 		});
 	});

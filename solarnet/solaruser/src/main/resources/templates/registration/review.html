@@ -4,8 +4,8 @@
     <title data-th-text="#{app.name}">SolarUser Registration Confirm</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
-	<link rel="stylesheet" href="../../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-icons.css">
+	<link rel="stylesheet" href="../../static/css/dataTables.bootstrap5.css">
 	<link rel="stylesheet" href="../../static/css/global.css">
 	<link rel="stylesheet" href="../../static/css/edit-node.css">
 </head>
@@ -14,12 +14,12 @@
 	<p class="intro" data-th-text="#{user.register.review.intro}" data-th-fragment="intro">
 		Let's review what you entered.
 	</p>
-	<form class="form-horizontal registration-form" method="post">
+	<form class="registration-form" method="post">
 		<fieldset data-th-replace="~{user/detail-view :: fieldset}">User review form content here.</fieldset>
-		<div class="form-group">
-			<div class="col-sm-offset-2 col-sm-10">
+		<div class="row mb-3">
+			<div class="offset-sm-2 col-sm-10">
 				<button type="submit" class="btn btn-primary" name="_eventId_next" data-th-text="#{continue.label}">Continue</button>
-				<button type="submit" class="btn btn-default" name="_eventId_prev" data-th-text="#{back.label}">Back</button>
+				<button type="submit" class="btn btn-secondary" name="_eventId_prev" data-th-text="#{back.label}">Back</button>
 			</div>
 		</div>
 		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}" data-th-if="${_csrf}">

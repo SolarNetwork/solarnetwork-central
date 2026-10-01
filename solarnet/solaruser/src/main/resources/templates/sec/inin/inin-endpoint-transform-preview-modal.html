@@ -4,7 +4,7 @@
 	<title>DIN Entpoint Transform Preview</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -13,36 +13,36 @@
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{inin.endpoint.preview.title}">Endpoint Transform Preview</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
 		 	<div class="modal-body endpoint-details-container">
 		 		<p data-th-utext="#{inin.endpoint.preview.intro}">Fill in your test measurement data and click <b>Execute</b> to preview the transform output.</p>
 		 		<div class="row">
-		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.name.label}">Endpoint</b></div>
-		 			<div class="col-xs-8" data-tprop="name" data-th-remove="body">My Device XML</div>
+		 			<div class="col-4"><b data-th-text="#{inin.endpoint.name.label}">Endpoint</b></div>
+		 			<div class="col-8" data-tprop="name" data-th-remove="body">My Device XML</div>
 		 		</div>
 		 		<div class="row">
-		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.requestTransformId.label}">Request Transform</b></div>
-		 			<div class="col-xs-8" data-tprop="requestTransformDisplay" data-th-remove="body">Group Capacity req</div>
+		 			<div class="col-4"><b data-th-text="#{inin.endpoint.requestTransformId.label}">Request Transform</b></div>
+		 			<div class="col-8" data-tprop="requestTransformDisplay" data-th-remove="body">Group Capacity req</div>
 		 		</div>
 		 		<div class="row">
-		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.responseTransformId.label}">Request Transform</b></div>
-		 			<div class="col-xs-8" data-tprop="responseTransformDisplay" data-th-remove="body">Group Capacity res</div>
+		 			<div class="col-4"><b data-th-text="#{inin.endpoint.responseTransformId.label}">Request Transform</b></div>
+		 			<div class="col-8" data-tprop="responseTransformDisplay" data-th-remove="body">Group Capacity res</div>
 		 		</div>
 		 		<hr>
 		 		<div class="row">
-		 			<div class="col-xs-4 border-rule-right">
-						<div class="form-group">
-							<label for="inin-endpoint-preview-input-data" data-th-text="#{inin.endpoint.preview.inputData.label}">Input data</label>
+		 			<div class="col-4 border-rule-right">
+						<div class="mb-3">
+							<label for="inin-endpoint-preview-input-data" data-th-text="#{inin.endpoint.preview.inputData.label}" class="form-label">Input data</label>
 							<textarea class="form-control" id="inin-endpoint-preview-input-data" name="inputData" required></textarea>
-							<label for="inin-endpoint-transform-query-params" data-th-text="#{inin.endpoint.preview.queryParams.label}">Query parameters</label>
+							<label for="inin-endpoint-transform-query-params" data-th-text="#{inin.endpoint.preview.queryParams.label}" class="form-label mt-2">Query parameters</label>
 							<input type="text" class="form-control" id="inin-endpoint-transform-query-params" name="queryParams" maxlength="255">
 						</div>
-						<div class="form-group">
-							<label for="inin-endpoint-preview-input-type" data-th-text="#{inin.endpoint.preview.inputType.label}">Data type</label>
+						<div class="mb-3">
+							<label for="inin-endpoint-preview-input-type" data-th-text="#{inin.endpoint.preview.inputType.label}" class="form-label">Data type</label>
 							<input type="text" class="form-control" id="inin-endpoint-preview-input-type" name="inputType" required>
-							<select class="form-control" id="inin-endpoint-preview-input-type-shortcuts">
+							<select class="form-select" id="inin-endpoint-preview-input-type-shortcuts">
 								<option></option>
 								<optgroup label="Data type shortcuts" data-th-label="#{inin.endpoint.preview.type.shortcuts.label}">
 									<option value="application/json" data-th-text="#{inin.endpoint.preview.type.json}">JSON</option>
@@ -50,12 +50,12 @@
 								</optgroup>
 							</select>
 						</div>
-						<div class="form-group">
-							<label for="inin-endpoint-preview-instruction-results" data-th-text="#{inin.endpoint.preview.instructionResults.label}">Instruction results</label>
+						<div class="mb-3">
+							<label for="inin-endpoint-preview-instruction-results" data-th-text="#{inin.endpoint.preview.instructionResults.label}" class="form-label">Instruction results</label>
 							<textarea class="form-control" id="inin-endpoint-preview-instruction-results" name="instructionResults"></textarea>
 						</div>
 		 			</div>
-		 			<div class="col-xs-8" id="inin-endpoint-preview-output-container">
+		 			<div class="col-8" id="inin-endpoint-preview-output-container">
 						<p class="hidden" data-th-class="'before'" data-th-text="#{inin.endpoint.preview.output.intro}">The output will appear here.</p>
 						<div class="instruction-container" data-th-classappend="'hidden'">
 							<p data-th-text="#{inin.endpoint.preview.output.instructions.intro}">The following table shows the successfully generated SolarNetwork instructions.</p>
@@ -124,7 +124,7 @@
 						</div>
 						<div class="response-container" data-th-classappend="'hidden'">
 							<p data-th-text="#{inin.endpoint.preview.output.response.intro}">The generated response is:</p>
-							<div id="inin-endpoint-preview-output-response" class="well"></div>
+							<div id="inin-endpoint-preview-output-response" class="card card-body bg-body-tertiary"></div>
 						</div>
 						<div class="error-container" data-th-classappend="'hidden'"></div>
 		 			</div>

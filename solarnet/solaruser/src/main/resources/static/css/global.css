@@ -25,6 +25,7 @@ label {
 	font-weight: 700;
 }
 
+label.form-check,
 label.form-check-label {
 	font-weight: normal;
 }
@@ -39,10 +40,6 @@ pre {
 	background-color: var(--bs-tertiary-bg);
 	border: var(--bs-border-width) solid var(--bs-border-color);
 	border-radius: var(--bs-border-radius);
-}
-
-fieldset.review .uneditable-input {
-	color: black;
 }
 
 pre.cert {
@@ -79,7 +76,7 @@ section + section {
 }
 
 #invite-tz-country {
-	margin-left: -15px;
+	margin-left: -0.75rem;
 	font-weight: 700;
 }
 
@@ -99,6 +96,16 @@ section + section {
 .hidden,
 .template {
 	display: none !important;
+}
+
+/* inline checks and radios sit in a form row beside a label; match the label's top padding */
+.row > [class*="col-"] > .form-check-inline {
+	margin-top: calc(0.375rem + var(--bs-border-width));
+}
+
+/* read-only controls look non-editable, as Bootstrap does for disabled ones */
+.form-control[readonly] {
+	background-color: var(--bs-tertiary-bg);
 }
 
 .form-text {
@@ -122,6 +129,17 @@ section + section {
 	--bs-btn-border-color: var(--bs-border-color);
 }
 
+/* server error messages can include long names without any break opportunity */
+.alert {
+	overflow-wrap: anywhere;
+}
+
+/* a progress bar label is an amount element followed by its unit; Bootstrap would stack them */
+.progress-bar {
+	flex-direction: row;
+	align-items: center;
+}
+
 a.setting-help {
 	color: var(--bs-secondary-color);
 	cursor: pointer;
@@ -140,24 +158,13 @@ a.setting-help:focus {
 	font-size: 1.25rem;
 }
 
-.modal-body {
-	overflow-x: hidden;
-}
-
 .modal-body + .modal-body.service-props-container {
 	padding-top: 0 !important;
 }
 
-#create-data-auth-token .checkbox label {
-	margin-right: 18px;
-}
-
 .modal-content .carousel-indicators {
 	bottom: 0;
-}
-
-.modal-content .carousel-indicators li + li {
-	margin-left: 10px;
+	margin-bottom: 0;
 }
 
 .modal.danger .modal-content {
@@ -181,14 +188,12 @@ a.setting-help:focus {
 	background-color: var(--bs-body-bg);
 }
 
-.carousel-indicators.dark li {
+.carousel-indicators.dark [data-bs-target] {
 	background-color: #777;
-	border: none;
 }
 
 .carousel-indicators.dark .active {
 	background-color: var(--sn-accent-color);
-	border: none;
 }
 
 .alert-situation-count {
@@ -223,6 +228,11 @@ td dl {
 	margin-bottom: 0;
 }
 
+/* separate a list of details from visible content that follows it in the same table cell */
+td dl:has(> :not(.hidden)):has(+ :not(.hidden)) {
+	margin-bottom: 0.75rem;
+}
+
 dl:not(.hbox):not(.dl-horizontal) dd + dt {
 	margin-top: 12px;
 }
@@ -253,9 +263,13 @@ table.tally th:last-child {
 	text-align: right;
 }
 
-table.tally tfoot td,
-table.tally tfoot th {
-	border-top: 1px solid #666;
+/* Bootstrap rules rows along the bottom, so the rule above a tally footer belongs to the last body row */
+table.tally:has(> tfoot) > tbody > tr:last-child > * {
+	border-bottom-color: #666;
+}
+
+table.tally > tfoot > tr:last-child > * {
+	border-bottom-width: 0;
 }
 
 table.invoice table.tally td + td,
@@ -269,7 +283,8 @@ table.table *.borderless tr th {
 }
 
 /* Bootstrap rules table rows along the bottom, so a detail row joins the row above by clearing that row's rule */
-table.table tr:has(+ tr.borderless-row:not(.hidden)) > * {
+table.table tr:has(+ tr.borderless-row:not(.hidden)) > *,
+table.table tr:has(+ tr.no-rule:not(.hidden)) > * {
 	border-bottom-width: 0;
 }
 
@@ -278,9 +293,9 @@ table.table-body-borderless tbody th {
 	border: none;
 }
 
-table.table-body-borderless tbody tr.rule + tr td,
-table.table-body-borderless tbody tr.rule + tr th {
-	border-top: inherit;
+/* each item is its own tbody; rule the items off from one another */
+table.table-body-borderless > tbody + tbody {
+	border-top: 2px solid var(--bs-border-color);
 }
 
 .edit-config span.config-name,
@@ -311,19 +326,25 @@ th.edit-dropdown {
 	min-width: 100px;
 }
 
-tr.no-rule > td,
-tr.no-rule > th {
-	border-top: none !important;
-}
-
 .dynamic-list .dynamic-list-container .dynamic-list-item + .dynamic-list-item {
 	margin-top: 2rem;
 }
 
+/* minor headings label groups of details within a table cell or list, at text size */
 h5, h6 {
+	font-size: 1rem;
 	font-weight: normal;
 	color: var(--bs-secondary-color);
 	text-decoration: underline;
+}
+
+h6 {
+	font-size: 0.875rem;
+}
+
+/* separate groups of details within a table cell, each a block starting with a minor heading */
+td > div:not(.hidden) ~ div:has(> h5:first-child) {
+	margin-top: 0.75rem;
 }
 
 .alert-form .sources {
@@ -336,12 +357,20 @@ h5, h6 {
 	margin-top: 8px;
 }
 
-.panel-title .btn-link {
-	padding: 0 4px !important;
+/* a collapsible card heading: title link first, then its status badge and action buttons at the end */
+.card-title:has(> .float-end) {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	gap: 0.5rem;
 }
 
-.panel-title .pull-right + .pull-right {
-	margin-right: 6px;
+.card-title:has(> .float-end) > a {
+	flex: 1;
+}
+
+.card-title .btn-link {
+	padding: 0 4px;
 }
 
 /** Constrain DIN transform settings (e.g. XSLT) */

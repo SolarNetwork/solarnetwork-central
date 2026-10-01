@@ -277,7 +277,7 @@ $(document).ready(function() {
 	
 	$('#nodes').on('click', 'button.edit-node', function(_event) {
 		var btn = $(this);
-		var form = $(btn.data('target'));
+		var form = $(btn.data('bs-target'));
 		var url = form.attr('action').replace(/\/[^\/]+$/, '/node');
 		var req = {userId : btn.data('user-id'), nodeId : btn.data('node-id') };
 		setupEditUserNodeFields(form, {node : {id : req.nodeId}, user : {id : req.userId}});
@@ -370,9 +370,9 @@ $(document).ready(function() {
 	$('#edit-node-location-search-results').on('click', 'tr', function(_event) {
 		var me = $(this);
 		var loc = me.data('location');
-		if ( me.hasClass('success') === false ) {
-			me.parent().find('tr.success').removeClass('success');
-			me.addClass('success');
+		if ( me.hasClass('table-success') === false ) {
+			me.parent().find('tr.table-success').removeClass('table-success');
+			me.addClass('table-success');
 		}
 		setupEditUserLocationFields(loc);
 	});
@@ -502,7 +502,7 @@ $(document).ready(function() {
 	function makeInviteCertCreateVisible(form, visible) {
 		form.find('.cert-create').toggleClass('hidden', !visible);
 		var btn = $('#node-cert-create');
-		btn.toggleClass('btn-default', !visible)
+		btn.toggleClass('btn-secondary', !visible)
 			.toggleClass('btn-warning', visible);
 		if ( visible ) {
 			btn.data('default-title', btn.text());

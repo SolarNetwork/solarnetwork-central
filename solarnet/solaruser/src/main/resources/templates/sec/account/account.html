@@ -4,7 +4,7 @@
     <title data-th-text="#{account.title}">Account</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
 	<p data-th-utext="#{account.unregistered.features.intro}">
 		Check out these amazing features, guaranteed to knock your socks off, each and every one.
 	</p>
-	<table class="table table-condensed">
+	<table class="table table-sm">
 		<thead>
 			<tr>
 				<th data-th-text="#{account.feature.name.label}">Feature</th>
@@ -44,7 +44,7 @@
 <section data-th-if="${account}" data-th-remove="tag">
 	<h2>
 		<span data-th-text="#{account.title}">Account</span>
-		<a href="#" class="btn btn-primary pull-right"
+		<a href="#" class="btn btn-primary float-end"
 			data-th-href="@{/u/sec/account/edit}"
 			data-th-text="#{edit.label}">Edit</a>
 	</h2>

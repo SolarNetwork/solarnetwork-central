@@ -4,7 +4,7 @@
     <title data-th-text="#{account.register.confirm.title}">Account Register Review</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -15,13 +15,13 @@
 	How's all that look?
 </p>
 
-<form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/register/confirm}">
+<form data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/register/confirm}">
 	<div data-th-replace="~{sec/account/input-review :: content}">Account form review content here.</div>
-	<div class="form-group">
-		<div class="col-sm-offset-2 col-sm-10">
+	<div class="row mb-3">
+		<div class="offset-sm-2 col-sm-10">
 			<p class="alert alert-warning" role="alert" data-th-utext="#{account.register.confirm.terms}">Are you sure?</p>
 			<button type="submit" class="btn btn-primary" data-th-text="#{account.register.submit.label}">Submit</button>
-			<a href="." class="btn btn-default" data-th-href="@{/u/sec/account/register}" data-th-text="#{edit.label}">Edit</a>
+			<a href="." class="btn btn-secondary" data-th-href="@{/u/sec/account/register}" data-th-text="#{edit.label}">Edit</a>
 		</div>
 	</div>
 </form>

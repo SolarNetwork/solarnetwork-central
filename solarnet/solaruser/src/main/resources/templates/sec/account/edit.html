@@ -4,7 +4,7 @@
     <title data-th-text="#{account.edit.title}">Account Edit</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -15,10 +15,10 @@
 	Let's update your details, shall we?
 </p>
 
-<form class="form-horizontal" data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/edit}">
+<form data-th-object="${accountInput}" method="post" data-th-action="@{/u/sec/account/edit}">
 	<div data-th-replace="~{sec/account/input-form :: content}">Account form content here.</div>
-	<div class="form-group">
-		<div class="col-sm-offset-2 col-sm-10">
+	<div class="row mb-3">
+		<div class="offset-sm-2 col-sm-10">
 			<button type="submit" class="btn btn-primary" data-th-text="#{continue.label}">Continue</button>
 		</div>
 	</div>

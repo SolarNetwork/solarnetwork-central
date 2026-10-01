@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -11,9 +11,9 @@
 <section id="datum-delete-jobs">
 	<h2>
 		<span data-th-text="#{datumDelete.jobList.header}">Jobs</span>
-		<a href="#edit-datum-delete-job-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-datum-delete-job-modal" class="btn btn-primary float-end" data-bs-toggle="modal" 
 			data-th-title="#{datumDelete.jobList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{datumDelete.jobList.intro(0)}">
@@ -51,8 +51,8 @@
 				</td>
 				<td>
 					<p>
-						<span class="label label-danger success-error hidden" data-th-text="#{datumDelete.job.success.error}">Error</span>
-						<span class="label label-success success-ok hidden" data-th-text="#{datumDelete.job.success.ok}">Success</span>
+						<span class="badge text-bg-danger success-error hidden" data-th-text="#{datumDelete.job.success.error}">Error</span>
+						<span class="badge text-bg-success success-ok hidden" data-th-text="#{datumDelete.job.success.ok}">Success</span>
 					</p>
 					<p class="success-error hidden" data-tprop="messageHtml"></p>
 					<p class="complete hidden">
@@ -64,59 +64,59 @@
 	</table>
 </section>
 
-<form id="edit-datum-delete-job-modal" class="modal fade" data-th-action="@{/u/sec/expire/datum-delete}" method="post">
+<form id="edit-datum-delete-job-modal" class="modal fade" data-th-action="@{/u/sec/expire/datum-delete}" method="post" tabindex="-1">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{datumDelete.title}">Delete</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{datumDelete.intro}">Fill in this form to delete datum matching the given criteria.</p>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="datum-delete-node-ids" data-th-text="#{datumDelete.nodes.label}">
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="datum-delete-node-ids" data-th-text="#{datumDelete.nodes.label}">
 						Nodes
 					</label>
 					<div class="col-sm-10">
 						<input type="text" name="nodeIds" class="form-control" id="datum-delete-node-ids"
 							data-th-placeholder="#{datumDelete.nodes.placeholder}">
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.nodes.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{datumDelete.nodes.caption}">
 				 			A comma-delimited list of node IDs to match. 
 				 		</span>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="datum-delete-source-ids" data-th-text="#{datumDelete.sources.label}">
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="datum-delete-source-ids" data-th-text="#{datumDelete.sources.label}">
 						Sources
 					</label>
 					<div class="col-sm-10">
 						<input type="text" name="sourceIds" class="form-control" id="datum-delete-source-ids"
 							data-th-placeholder="#{datumDelete.sources.placeholder}">
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.sources.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{datumDelete.sources.caption}">
 				 			A comma-delimited list of source IDs to match.
 						</span>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="datum-delete-min-date" data-th-text="#{datumDelete.minDate.label}">
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="datum-delete-min-date" data-th-text="#{datumDelete.minDate.label}">
 						Min date
 					</label>
 					<div class="col-sm-10">
 						<input type="text" name="localStartDate" class="form-control" id="datum-delete-min-date"
 							data-th-placeholder="#{datumDelete.minDate.placeholder}" required>
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.minDate.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{datumDelete.minDate.caption}">
 				 			The minimum date to match.
 				 		</span>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="datum-delete-max-date" data-th-text="#{datumDelete.maxDate.label}">
+				<div class="row mb-3">
+					<label class="col-sm-2 col-form-label" for="datum-delete-max-date" data-th-text="#{datumDelete.maxDate.label}">
 						Max date
 					</label>
 					<div class="col-sm-10">
 						<input type="text" name="localEndDate" class="form-control" id="datum-delete-max-date"
 							data-th-placeholder="#{datumDelete.maxDate.placeholder}" required>
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.maxDate.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{datumDelete.maxDate.caption}">
 				 			The maximum date to match.
 				 		</span>
 					</div>
@@ -133,13 +133,13 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{datumDelete.preview.title}">Preview delete</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
 		 	<div class="modal-body">
 		 		<p data-th-utext="#{datumDelete.preview.intro}">Preview the delete here.</p>
 		 		<div class="progress waiting">
-					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+					<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
 				</div>
 				<p class="waiting" data-th-text="#{onemomentplease.label}">One moment please...</p>
 		 		<table class="expire-preview-counts tally table ready hidden">
@@ -170,11 +170,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{datumDelete.action.delete}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</button>
 		 	</div>
 		 </div>
  	</div>

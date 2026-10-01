@@ -4,7 +4,7 @@
     <title data-th-text="#{user.resetpassword.title}">Reset Password</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../static/css/global.css">
 </head>
 <body>
@@ -13,26 +13,26 @@
 		Enter your new password.
 	</p>
 
-	<form class="form-horizontal" method="post" data-th-action="@{/u/resetPassword/reset}" data-th-object="${form}">
+	<form method="post" data-th-action="@{/u/resetPassword/reset}" data-th-object="${form}">
 		<fieldset>
-			<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
-				<label class="col-sm-2 control-label" for="reset-pass-password" data-th-text="#{user.password.label}">Password</label>
+			<div class="row mb-3">
+				<label class="col-sm-2 col-form-label" for="reset-pass-password" data-th-text="#{user.password.label}">Password</label>
 				<div class="col-sm-6">
-					<input type="password" data-th-field="*{password}" maxlength="240" id="user-password"
+					<input type="password" data-th-field="*{password}" data-th-errorclass="is-invalid" maxlength="240" id="user-password"
 						data-th-placeholder="#{user.password.placeholder}" class="form-control">
-					<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></span>
+					<div class="invalid-feedback" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></div>
 				</div>
 			</div>
-			<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
-				<label class="col-sm-2 control-label" for="reset-pass-password-again" data-th-text="#{user.password.again.label}">Password Again</label>
+			<div class="row mb-3">
+				<label class="col-sm-2 col-form-label" for="reset-pass-password-again" data-th-text="#{user.password.again.label}">Password Again</label>
 				<div class="col-sm-6">
-					<input type="password" data-th-field="*{passwordConfirm}" maxlength="240" id="user-password" class="form-control">
-					<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{passwordConfirm}"></span>
+					<input type="password" data-th-field="*{passwordConfirm}" data-th-classappend="${#fields.hasErrors('password')}? is-invalid" maxlength="240" id="user-password" class="form-control">
+					<div class="invalid-feedback" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{passwordConfirm}"></div>
 				</div>
 			</div>
 		</fieldset>
-		<div class="form-group">
-			<div class="col-sm-offset-2 col-sm-10">
+		<div class="row mb-3">
+			<div class="offset-sm-2 col-sm-10">
 				<input type="submit" class="btn btn-primary" data-th-value="#{user.resetpassword.confirm.submit.label}">
 			</div>
 		</div>

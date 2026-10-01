@@ -104,8 +104,8 @@ $(document).ready(function() {
 			if ( invoice.hasOwnProperty(prop) ) {
 				cell = container.find("[data-tprop='" +prop +"']").text(invoice[prop]);
 				if ( prop === 'localizedAmount' ) {
-					cell.toggleClass('label-danger', invoice.balance > 0);
-					cell.toggleClass('label-success', !(invoice.balance > 0));
+					cell.toggleClass('text-bg-danger', invoice.balance > 0);
+					cell.toggleClass('text-bg-success', !(invoice.balance > 0));
 				}
 			}
 		}

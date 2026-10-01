@@ -1,43 +1,30 @@
-#edit-node-modal .modal-dialog {
-	width: 600px;
+/* The edit node form is four pages laid side by side; only the current page is in view. */
+#edit-node-modal .modal-body {
+	overflow-x: hidden;
 }
 
 #edit-node-modal .modal-body .hbox {
-	width: 2400px;
-	-webkit-transition: -webkit-transform 0.3s ease-in-out;
-	-moz-transition: -moz-transform 0.3s ease-in-out;
-	-ms-transition: -ms-transform 0.3s ease-in-out;
-	-o-transition: -o-transform 0.3s ease-in-out;
+	--page-gap: 2rem;
+	gap: var(--page-gap);
+	width: calc(400% + 3 * var(--page-gap));
 	transition: transform 0.3s ease-in-out;
 }
 
 #edit-node-modal .modal-body .hbox > * {
-	margin-right: 30px;
-	width: 570px;
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 #edit-node-modal.page2 .modal-body .hbox {
-    -webkit-transform:  translate(-600px,0px);
-	-moz-transform:  translate(-600px,0px);
-    -ms-transform:  translate(-600px,0px);
-    -o-transform:  translate(-600px,0px);
-    transform:  translate(-600px,0px);
+	transform: translateX(calc((100% + var(--page-gap)) / -4));
 }
 
 #edit-node-modal.page3 .modal-body .hbox {
-    -webkit-transform:  translate(-1200px,0px);
-	-moz-transform:  translate(-1200px,0px);
-    -ms-transform:  translate(-1200px,0px);
-    -o-transform:  translate(-1200px,0px);
-    transform:  translate(-1200px,0px);
+	transform: translateX(calc((100% + var(--page-gap)) / -4 * 2));
 }
 
 #edit-node-modal.page4 .modal-body .hbox {
-    -webkit-transform:  translate(-1800px,0px);
-	-moz-transform:  translate(-1800px,0px);
-    -ms-transform:  translate(-1800px,0px);
-    -o-transform:  translate(-1800px,0px);
-    transform:  translate(-1800px,0px);
+	transform: translateX(calc((100% + var(--page-gap)) / -4 * 3));
 }
 
 #edit-node-modal.page1 .page2:not(.page1),
