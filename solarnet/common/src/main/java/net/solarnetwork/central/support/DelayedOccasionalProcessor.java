@@ -25,6 +25,7 @@ package net.solarnetwork.central.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
@@ -55,6 +56,12 @@ import net.solarnetwork.util.StatTracker;
  * implementations, such as {@link LinkedHashSetBlockingQueue} for
  * de-duplication or {@link DelayQueueSet} for consistently delayed
  * de-duplication.
+ * </p>
+ *
+ * <p>
+ * When {@link #serviceDidShutdown()} is called all remaining items are
+ * processed immediately, including items a delaying queue would not yet
+ * release.
  * </p>
  *
  * @author matt
@@ -145,17 +152,28 @@ public abstract class DelayedOccasionalProcessor<T>
 			if ( flushTask != null && !flushTask.isDone() ) {
 				flushTask.cancel(false);
 			}
-			T item;
-			while ( (item = items.poll()) != null ) {
-				stats.increment(Stats.ItemsRemoved);
-				try {
-					processItemInternal(item);
-					stats.increment(Stats.ItemsProcessed);
-				} catch ( Exception e ) {
-					stats.increment(Stats.ItemsFailed);
-					log.error("Error processing delayed item [{}]: {}", item, e.getMessage(), e);
+			// iterate over a copy of the items rather than poll for them, as a
+			// queue like DelayQueueSet only polls items whose delay has expired;
+			// repeat until nothing is found, to handle items added along the way
+			boolean found;
+			do {
+				found = false;
+				for ( T item : new ArrayList<>(items) ) {
+					if ( !items.remove(item) ) {
+						// already taken, for example by a flush task still running
+						continue;
+					}
+					found = true;
+					stats.increment(Stats.ItemsRemoved);
+					try {
+						processItemInternal(item);
+						stats.increment(Stats.ItemsProcessed);
+					} catch ( Exception e ) {
+						stats.increment(Stats.ItemsFailed);
+						log.error("Error processing delayed item [{}]: {}", item, e.getMessage(), e);
+					}
 				}
-			}
+			} while ( found );
 		} finally {
 			flushLock.unlock();
 		}
