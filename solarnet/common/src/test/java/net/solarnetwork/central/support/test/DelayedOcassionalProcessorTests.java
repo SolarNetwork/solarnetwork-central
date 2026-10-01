@@ -24,10 +24,12 @@ package net.solarnetwork.central.support.test;
 
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -57,7 +59,7 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link DelayedOccasionalProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -258,6 +260,116 @@ public class DelayedOcassionalProcessorTests {
 		and.then(processed)
 			.as("Items 1, 2 processed because they are ready")
 			.containsExactly(i1, i2)
+			;
+		// @formatter:on
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shutdown_cancelsScheduledFlushTask() {
+		// GIVEN
+		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
+		final var processed = new ArrayList<>(8);
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
+
+			@Override
+			protected void processItemInternal(Integer item) {
+				processed.add(item);
+			}
+
+		};
+
+		given(scheduler.schedule(same(processor), any(Instant.class))).willReturn(future);
+
+		// flush task scheduled but not run yet
+		given(future.isDone()).willReturn(false);
+
+		processor.asyncProcessItem(1);
+		processor.asyncProcessItem(2);
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		then(scheduler).should().schedule(same(processor),
+				eq(clock.instant().plus(processor.getDelay())));
+		then(scheduler).shouldHaveNoMoreInteractions();
+		then(future).should().cancel(false);
+		and.then(processed)
+			.as("Queued items processed on shutdown")
+			.containsExactly(1, 2)
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shutdown_completedFlushTaskNotCancelled() {
+		// GIVEN
+		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
+		final var processed = new ArrayList<>(8);
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
+
+			@Override
+			protected void processItemInternal(Integer item) {
+				processed.add(item);
+			}
+
+		};
+
+		given(scheduler.schedule(same(processor), any(Instant.class))).willReturn(future);
+
+		processor.asyncProcessItem(1);
+
+		// flush task already completed
+		given(future.isDone()).willReturn(true);
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		then(future).should(never()).cancel(anyBoolean());
+		and.then(processed)
+			.as("Queued item processed on shutdown")
+			.containsExactly(1)
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void shutdown_noFlushTask() {
+		// GIVEN
+		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
+		final var processed = new ArrayList<>(8);
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
+
+			@Override
+			protected void processItemInternal(Integer item) {
+				processed.add(item);
+			}
+
+		};
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		then(scheduler).shouldHaveNoInteractions();
+		then(future).shouldHaveNoInteractions();
+		and.then(processed)
+			.as("Nothing to process")
+			.isEmpty()
 			;
 		// @formatter:on
 	}

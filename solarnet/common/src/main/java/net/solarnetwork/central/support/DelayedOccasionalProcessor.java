@@ -58,7 +58,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class DelayedOccasionalProcessor<T>
 		implements AsyncProcessor<T>, Runnable, ServiceLifecycleObserver, PingTest {
@@ -143,7 +143,7 @@ public abstract class DelayedOccasionalProcessor<T>
 		flushLock.lock();
 		try {
 			if ( flushTask != null && !flushTask.isDone() ) {
-				flushTask.cancel(true);
+				flushTask.cancel(false);
 			}
 			T item;
 			while ( (item = items.poll()) != null ) {
