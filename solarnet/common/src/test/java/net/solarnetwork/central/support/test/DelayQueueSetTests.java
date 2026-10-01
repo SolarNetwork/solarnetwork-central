@@ -262,6 +262,89 @@ public class DelayQueueSetTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unlikely-arg-type")
+	@Test
+	public void contains() {
+		// GIVEN
+		final var queue = new DelayQueueSet<DelayedInteger>(10);
+		queue.add(i(1, 0));
+		queue.add(i(2));
+
+		// THEN
+		then(queue.contains(i(1))).as("Element equal to expired element found").isTrue();
+		then(queue.contains(i(2))).as("Element equal to unexpired element found").isTrue();
+		then(queue.contains(i(3))).as("Element never added not found").isFalse();
+		then(queue.contains(null)).as("Null not found").isFalse();
+		then(queue.contains("1")).as("Object of some other type not found").isFalse();
+
+		queue.poll();
+		then(queue.contains(i(1))).as("Polled element not found").isFalse();
+
+		queue.remove(i(2));
+		then(queue.contains(i(2))).as("Removed element not found").isFalse();
+
+		queue.add(i(3));
+		queue.clear();
+		then(queue.contains(i(3))).as("Cleared element not found").isFalse();
+	}
+
+	@SuppressWarnings("unlikely-arg-type")
+	@Test
+	public void remove_object() {
+		// GIVEN
+		final var delegateSet = new HashSet<DelayedInteger>();
+		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
+		final DelayedInteger one = i(1);
+		queue.add(one);
+		queue.add(i(2));
+
+		// WHEN
+		final boolean missing = queue.remove(i(3));
+		final boolean present = queue.remove(i(2));
+		final boolean repeated = queue.remove(i(2));
+		final boolean nullObject = queue.remove(null);
+		final boolean otherType = queue.remove("1");
+
+		// THEN
+		then(missing).as("Element never added not removed").isFalse();
+		then(present).as("Element equal to unexpired element removed").isTrue();
+		then(repeated).as("Element already removed not removed again").isFalse();
+		then(nullObject).as("Null not removed").isFalse();
+		then(otherType).as("Object of some other type not removed").isFalse();
+		// @formatter:off
+		then(queue)
+			.as("Other element remains in queue")
+			.containsExactly(one)
+			;
+		then(delegateSet)
+			.as("Delegate set in sync with queue")
+			.containsExactly(one)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void drainTo_nullCollection() {
+		// GIVEN
+		final var queue = new DelayQueueSet<DelayedInteger>(10);
+		queue.add(i(1, 0));
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> queue.drainTo(null));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("NullPointerException thrown, per BlockingQueue API")
+			.isInstanceOf(NullPointerException.class)
+			;
+		then(queue)
+			.as("Queue unchanged")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
 	@Test
 	public void clear() throws Exception {
 		// GIVEN
@@ -311,7 +394,6 @@ public class DelayQueueSetTests {
 		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
 
 		final var accepted = synchronizedList(new ArrayList<Integer>(maxCount));
-		final var rejected = synchronizedList(new ArrayList<Integer>(maxCount));
 		final var uniqueAccepted = synchronizedSet(new TreeSet<Integer>());
 
 		final long start = System.currentTimeMillis();
@@ -324,21 +406,17 @@ public class DelayQueueSetTests {
 					while ( true ) {
 						int count = producerCounter.incrementAndGet();
 						if ( count > maxCount ) {
-							log.info("Producer: maximum reached: {}/{}/{}", maxCount, accepted.size(),
-									rejected.size());
+							log.info("Producer: maximum reached: {}/{}", maxCount, accepted.size());
 							return;
 						}
 
 						int val = rng.nextInt(rngMax);
 
-						if ( queue.offer(i(val, delay)) ) {
-							log.debug("ADD: |{}", val);
-							accepted.add(val);
-							uniqueAccepted.add(val);
-						} else {
-							log.debug("REJ: |{}", val);
-							rejected.add(val);
-						}
+						// offer always returns true, even for duplicates
+						queue.offer(i(val, delay));
+						log.debug("ADD: |{}", val);
+						accepted.add(val);
+						uniqueAccepted.add(val);
 						long sleep = rng.nextLong(10L, 50L);
 						if ( sleep > 0 ) {
 							log.debug("Producer: sleep {}", sleep);
@@ -407,9 +485,9 @@ public class DelayQueueSetTests {
 
 		// THEN
 		// @formatter:off
-		then(accepted.size() + rejected.size())
+		then(accepted)
 			.as("Handled all")
-			.isEqualTo(maxCount)
+			.hasSize(maxCount)
 			;
 		
 		final var consumedCountsByValue = consumed.stream().collect(groupingBy(e -> e.i, counting()));
