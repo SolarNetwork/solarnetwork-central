@@ -47,7 +47,7 @@ import org.jspecify.annotations.Nullable;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implements BlockingQueue<E> {
 
@@ -97,14 +97,26 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	/**
 	 * Creates a new {@code DelayQueue} that is initially empty.
 	 *
+	 * <p>
+	 * The given set is used directly to track the elements in this queue, and
+	 * is <b>not</b> a source of initial elements. To create a queue initially
+	 * containing the elements of a set, add them with
+	 * {@link #addAll(Collection)} after construction.
+	 * </p>
+	 *
 	 * @param delegateSet
-	 *        a specific set instance to use
+	 *        a specific set instance to use; must be empty and must not be
+	 *        modified outside of this queue
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 *         if any argument is {@code null}, or {@code delegateSet} is not
+	 *         empty
 	 */
 	public DelayQueueSet(Set<E> delegateSet) {
 		super();
 		this.s = requireNonNullArgument(delegateSet, "delegateSet");
+		if ( !delegateSet.isEmpty() ) {
+			throw new IllegalArgumentException("The delegateSet argument must be empty.");
+		}
 	}
 
 	/**
@@ -151,7 +163,15 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		lock.lock();
 		try {
 			if ( s.add(e) ) {
-				q.offer(e);
+				boolean queued = false;
+				try {
+					queued = q.offer(e);
+				} finally {
+					if ( !queued ) {
+						// keep set in sync with queue
+						s.remove(e);
+					}
+				}
 				if ( q.peek() == e ) {
 					leader = null;
 					available.signal();
@@ -335,7 +355,8 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 */
 	@Override
 	public E remove() {
-		return nonnull(removed(super.remove()), "removed");
+		// poll() maintains the delegate set, while holding the lock
+		return super.remove();
 	}
 
 	/**

@@ -27,12 +27,16 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
+import static org.assertj.core.api.BDDAssertions.catchThrowable;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenObject;
+import static org.mockito.Mockito.mock;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.Delayed;
@@ -40,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -54,7 +59,7 @@ import net.solarnetwork.central.support.DelayQueueSet;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelayQueueSetTests {
 
@@ -132,6 +137,129 @@ public class DelayQueueSetTests {
 		// WHEN
 		then(queue.offer(i(123))).as("First offer returns true").isTrue();
 		then(queue.offer(i(123))).as("Offer duplicate returns true").isTrue();
+	}
+
+	@Test
+	public void construct_nonEmptyDelegateSet() {
+		// GIVEN
+		final var delegateSet = new HashSet<DelayedInteger>(List.of(i(1), i(2)));
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> new DelayQueueSet<>(delegateSet));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Non-empty delegate set rejected, as its elements would never be queued")
+			.isInstanceOf(IllegalArgumentException.class)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offer_queueThrows() {
+		// GIVEN
+		final var delegateSet = new HashSet<Delayed>();
+		final var queue = new DelayQueueSet<Delayed>(delegateSet);
+
+		// a DelayedInteger cannot be compared to some other Delayed type
+		final Delayed other = mock(Delayed.class);
+		queue.offer(other);
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> queue.offer(i(1)));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Comparison exception propagated")
+			.isInstanceOf(ClassCastException.class)
+			;
+		then(queue)
+			.as("Rejected element not queued")
+			.containsExactly(other)
+			;
+		then(delegateSet)
+			.as("Rejected element not left in delegate set")
+			.containsExactly(other)
+			;
+		// @formatter:on
+
+		// equal element can be offered once comparison no longer fails
+		final DelayedInteger again = i(1);
+		queue.remove(other);
+		queue.offer(again);
+
+		// @formatter:off
+		then(queue)
+			.as("Element equal to rejected element is queued")
+			.containsExactly(again)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void remove_head_concurrentOfferOfEqualElement() throws Exception {
+		// GIVEN
+		final var offerThreads = new ArrayList<Thread>(2);
+		final var queueRef = new AtomicReference<DelayQueueSet<DelayedInteger>>();
+		final var delegateSet = new HashSet<DelayedInteger>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean remove(Object o) {
+				// each time the delegate set is modified, have another thread
+				// try to offer an equal element; that offer can only complete
+				// before this method returns if the queue lock is not held
+				final Thread t = new Thread(() -> queueRef.get().offer(i(1, 0)));
+				offerThreads.add(t);
+				t.start();
+				try {
+					t.join(200);
+				} catch ( InterruptedException e ) {
+					throw new RuntimeException(e);
+				}
+				return super.remove(o);
+			}
+
+		};
+		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
+		queueRef.set(queue);
+
+		final DelayedInteger first = i(1, 0);
+		queue.offer(first);
+
+		// WHEN
+		final DelayedInteger result = queue.remove();
+		for ( Thread t : offerThreads ) {
+			t.join();
+		}
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Expired head removed")
+			.isSameAs(first)
+			;
+		then(queue)
+			.as("Equal element offered during removal is queued once")
+			.hasSize(1)
+			;
+		then(delegateSet)
+			.as("Delegate set in sync with queue")
+			.containsExactlyElementsOf(queue)
+			;
+		// @formatter:on
+
+		queue.offer(i(1, 0));
+
+		// @formatter:off
+		then(queue)
+			.as("Further equal element is a duplicate")
+			.hasSize(1)
+			;
+		// @formatter:on
 	}
 
 	@Test
