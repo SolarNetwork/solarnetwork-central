@@ -87,8 +87,8 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * deleted from the SQS queue.
  * </p>
  * <p>
- * This design is meant to prioritize saving entities directly, without added to
- * the SQS queue, for maximum performance. There is a small chance for data
+ * This design is meant to prioritize saving entities directly, without adding
+ * to the SQS queue, for maximum performance. There is a small chance for data
  * loss, however, for entities added to the internal work queue but have not yet
  * been persisted and have not yet "overflowed" to SQS. Configuring a smaller
  * work queue and/or shorter {@code workItemMaxWaitMs} reduces the amount of
@@ -246,8 +246,8 @@ public class SqsOverflowQueue<T, K>
 		ObjectsFailed,
 
 		/**
-		 * An overall count of objects whose persistence failure was ignored, per
-		 * the configured {@code ignoredDaoExceptions}.
+		 * An overall count of objects whose persistence failure was ignored,
+		 * per the configured {@code ignoredDaoExceptions}.
 		 *
 		 * @since 1.2
 		 */
@@ -656,8 +656,8 @@ public class SqsOverflowQueue<T, K>
 	 * <p>
 	 * An entity is never rejected or discarded here: if the work queue cannot
 	 * take it, or this service is not running and so has no writer threads to
-	 * drain the work queue, the entity is sent to the SQS queue instead, falling
-	 * back to a direct DAO write if that fails.
+	 * drain the work queue, the entity is sent to the SQS queue instead,
+	 * falling back to a direct DAO write if that fails.
 	 * </p>
 	 */
 	@Override
@@ -702,8 +702,8 @@ public class SqsOverflowQueue<T, K>
 	 *
 	 * <p>
 	 * Runs on the calling thread, rather than on the SQS client thread that
-	 * reports the failure, so that a slow delegate DAO cannot block the client's
-	 * I/O threads.
+	 * reports the failure, so that a slow delegate DAO cannot block the
+	 * client's I/O threads.
 	 * </p>
 	 *
 	 * @param entity
@@ -790,8 +790,9 @@ public class SqsOverflowQueue<T, K>
 		} else {
 			log.warn("Error adding entity to SQS queue [{}]: {}", sqsQueueUrl, cause.toString());
 		}
-		f.completeExceptionally(new RemoteServiceException("Error adding entity [%s] to SQS queue [%s]: %s"
-				.formatted(entity, sqsQueueUrl, cause.toString()), cause));
+		f.completeExceptionally(
+				new RemoteServiceException("Error adding entity [%s] to SQS queue [%s]: %s"
+						.formatted(entity, sqsQueueUrl, cause.toString()), cause));
 	}
 
 	private @Nullable K persistEntityInternal(T entity) {
@@ -900,8 +901,7 @@ public class SqsOverflowQueue<T, K>
 						sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
 						e.requestId());
 			} else if ( ex.getCause() instanceof SdkClientException e ) {
-				log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
-						e.getMessage());
+				log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl, e.getMessage());
 			} else {
 				log.warn("Error deleting entities from from SQS queue [{}]: {}", sqsQueueUrl,
 						ex.toString());
@@ -919,8 +919,7 @@ public class SqsOverflowQueue<T, K>
 	 * @return the approximate receive count, or {@literal 1} if not available
 	 */
 	private static long approximateReceiveCount(Message msg) {
-		final String count = msg.attributes()
-				.get(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT);
+		final String count = msg.attributes().get(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT);
 		if ( count != null ) {
 			try {
 				return Long.parseLong(count);
@@ -987,7 +986,8 @@ public class SqsOverflowQueue<T, K>
 											"Discarding unparsable message [{}] from SQS queue [{}]: {}; body: {}",
 											msg.messageId(), sqsQueueUrl, e.toString(), msg.body());
 								} else {
-									log.debug("Discarding unparsable message [{}] from SQS queue [{}]: {}",
+									log.debug(
+											"Discarding unparsable message [{}] from SQS queue [{}]: {}",
 											msg.messageId(), sqsQueueUrl, e.toString());
 								}
 								continue;
@@ -1037,7 +1037,7 @@ public class SqsOverflowQueue<T, K>
 			}
 			log.info("Reader thread exiting for SQS queue [{}]", sqsQueueUrl);
 		}
-	
+
 		/**
 		 * Adjust the read throttle.
 		 *
@@ -1058,7 +1058,7 @@ public class SqsOverflowQueue<T, K>
 				log.info("Decreased read throttle from SQS queue [{}] to {}ms.", sqsQueueUrl, sleep);
 			}
 		}
-	
+
 		/**
 		 * Pause before the next SQS receive request.
 		 *
@@ -1074,7 +1074,7 @@ public class SqsOverflowQueue<T, K>
 				}
 			}
 		}
-	
+
 		/**
 		 * Make messages the work queue could not accept visible again, after a
 		 * backoff.
@@ -1089,10 +1089,10 @@ public class SqsOverflowQueue<T, K>
 			final int backoffSecs = (int) Math.max(1L, TimeUnit.MILLISECONDS.toSeconds(sleep));
 			var _ = sqsClient.changeMessageVisibilityBatch(req -> {
 				List<ChangeMessageVisibilityBatchRequestEntry> entries = receiptHandles.stream()
-							.map(handle -> ChangeMessageVisibilityBatchRequestEntry.builder()
-									.id(UUID.randomUUID().toString()).receiptHandle(handle)
-									.visibilityTimeout(backoffSecs).build())
-							.toList();
+						.map(handle -> ChangeMessageVisibilityBatchRequestEntry.builder()
+								.id(UUID.randomUUID().toString()).receiptHandle(handle)
+								.visibilityTimeout(backoffSecs).build())
+						.toList();
 				req.queueUrl(sqsQueueUrl).entries(entries);
 			}).handle((resp, ex) -> {
 				if ( ex == null ) {
@@ -1171,8 +1171,8 @@ public class SqsOverflowQueue<T, K>
 	 *
 	 * <p>
 	 * An exception is ignored only if it is an instance of one of the
-	 * configured {@link #getIgnoredDaoExceptions()}, in which case the entity is
-	 * treated as if it had been persisted successfully.
+	 * configured {@link #getIgnoredDaoExceptions()}, in which case the entity
+	 * is treated as if it had been persisted successfully.
 	 * </p>
 	 *
 	 * @param entity
@@ -1369,8 +1369,7 @@ public class SqsOverflowQueue<T, K>
 	 *        {@literal 10}
 	 */
 	public final void setReadMaxMessageCount(int readMaxMessageCount) {
-		this.readMaxMessageCount = Math.clamp(readMaxMessageCount, 1,
-				SQS_MAX_RECEIVE_MESSAGE_COUNT);
+		this.readMaxMessageCount = Math.clamp(readMaxMessageCount, 1, SQS_MAX_RECEIVE_MESSAGE_COUNT);
 	}
 
 	/**
@@ -1386,12 +1385,11 @@ public class SqsOverflowQueue<T, K>
 	 * Set the maximum SQS receive wait time, in seconds.
 	 *
 	 * @param readMaxWaitTimeSecs
-	 *        the seconds to set, clamped to the range SQS allows, {@literal 0} to
-	 *        {@literal 20}; {@literal 0} turns off long polling
+	 *        the seconds to set, clamped to the range SQS allows, {@literal 0}
+	 *        to {@literal 20}; {@literal 0} turns off long polling
 	 */
 	public final void setReadMaxWaitTimeSecs(int readMaxWaitTimeSecs) {
-		this.readMaxWaitTimeSecs = Math.clamp(readMaxWaitTimeSecs, 0,
-				SQS_MAX_RECEIVE_WAIT_TIME_SECS);
+		this.readMaxWaitTimeSecs = Math.clamp(readMaxWaitTimeSecs, 0, SQS_MAX_RECEIVE_WAIT_TIME_SECS);
 	}
 
 	/**
