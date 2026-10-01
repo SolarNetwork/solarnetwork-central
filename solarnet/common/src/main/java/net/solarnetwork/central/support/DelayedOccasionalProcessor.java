@@ -142,7 +142,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	public void serviceDidShutdown() {
 		flushLock.lock();
 		try {
-			if ( flushTask != null && flushTask.isDone() ) {
+			if ( flushTask != null && !flushTask.isDone() ) {
 				flushTask.cancel(true);
 			}
 			T item;
