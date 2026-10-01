@@ -31,8 +31,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.time.Duration;
@@ -67,8 +67,8 @@ import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.EntityCodec;
-import net.solarnetwork.central.support.SqsOverflowQueueSettings;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
+import net.solarnetwork.central.support.SqsOverflowQueueSettings;
 import net.solarnetwork.central.support.UserEventBasicDeserializer;
 import net.solarnetwork.central.support.UserEventBasicSerializer;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -85,9 +85,9 @@ import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRes
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResponse;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchResultEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
@@ -417,36 +417,35 @@ public class SqsOverflowQueueTests {
 		// @formatter:on
 	}
 
-
 	/**
 	 * Verify that an exception that is <b>not</b> assignable to any of the
-	 * configured ignored exceptions is treated as a persistence failure, and the
-	 * entity overflows to SQS.
+	 * configured ignored exceptions is treated as a persistence failure, and
+	 * the entity overflows to SQS.
 	 */
 	@Test
 	public void exceptionOnStore_notIgnored() throws IOException {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setIgnoredDaoExceptions(Set.of(IllegalStateException.class));
-	
+
 		SendMessageResponse sendToSqsResponse = SendMessageResponse.builder().messageId(randomString())
 				.build();
 		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
 				.willReturn(CompletableFuture.completedFuture(sendToSqsResponse));
-	
+
 		// note this is NOT assignable to the configured IllegalStateException
 		Throwable t = new IllegalArgumentException("boom!");
 		given(delegateDao.persist(any())).willThrow(t);
-	
+
 		// WHEN
 		collector.serviceDidStartup();
-	
+
 		UserEvent entity = newEvent();
-	
+
 		UserUuidPK result = collector.persist(entity);
-	
+
 		collector.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		then(exceptionHandler).should().uncaughtException(any(), throwableCaptor.capture());
@@ -474,7 +473,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that a SQS message that cannot be deserialized does not stop the
 	 * reader thread from processing subsequent messages.
@@ -486,45 +485,41 @@ public class SqsOverflowQueueTests {
 		collector.setReadConcurrency(1); // enable read thread
 		collector.setReadSleepMinMs(20);
 		collector.setReadSleepThrottleStepMs(20);
-	
+
 		// the same malformed message, redelivered: SQS reports a rising receive count
 		// until the queue redrive policy moves it to the dead-letter queue
 		final String badMessageId = randomString();
 		final Message badMessage = Message.builder().messageId(badMessageId)
 				.receiptHandle(randomString()).body("{not valid json")
-				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1"))
-				.build();
+				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1")).build();
 		final Message badMessageRedelivered = Message.builder().messageId(badMessageId)
 				.receiptHandle(randomString()).body("{not valid json")
-				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "2"))
-				.build();
-	
+				.attributes(Map.of(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "2")).build();
+
 		final UserEvent entity = newEvent();
 		final Message goodMessage = Message.builder().messageId(randomString())
 				.receiptHandle(randomString()).body(JSON_MAPPER.writeValueAsString(entity)).build();
-	
+
 		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().messages(badMessage).build()))
+				.willReturn(CompletableFuture
+						.completedFuture(ReceiveMessageResponse.builder().messages(badMessage).build()))
 				.willReturn(CompletableFuture.completedFuture(
 						ReceiveMessageResponse.builder().messages(badMessageRedelivered).build()))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().messages(goodMessage).build()))
 				.willReturn(CompletableFuture
-						.completedFuture(ReceiveMessageResponse.builder().build()));
-	
+						.completedFuture(ReceiveMessageResponse.builder().messages(goodMessage).build()))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		// these are only exercised once the reader survives the malformed message
 		lenient().when(delegateDao.persist(any())).thenReturn(entity.getId());
-		lenient().when(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class)))
-				.thenReturn(CompletableFuture.completedFuture(
-						DeleteMessageBatchResponse.builder().build()));
+		lenient().when(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).thenReturn(
+				CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build()));
 		lenient().when(sqsClient.changeMessageVisibilityBatch(any(Consumer.class)))
-				.thenReturn(CompletableFuture.completedFuture(
-						ChangeMessageVisibilityBatchResponse.builder().build()));
-	
+				.thenReturn(CompletableFuture
+						.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build()));
+
 		// WHEN
 		collector.serviceDidStartup();
-	
+
 		// THEN
 		// @formatter:off
 		then(sqsClient).should(timeout(3_000).atLeast(3))
@@ -548,7 +543,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * The outcome of {@link #runDeleteBatchPartialFailure(boolean)}.
 	 *
@@ -557,11 +552,10 @@ public class SqsOverflowQueueTests {
 	 * @param requests
 	 *        the delete batch requests issued, in order
 	 */
-	private record DeleteBatchScenario(String failedHandle,
-			List<DeleteMessageBatchRequest> requests) {
-	
+	private record DeleteBatchScenario(String failedHandle, List<DeleteMessageBatchRequest> requests) {
+
 	}
-	
+
 	/**
 	 * Process two SQS messages, failing the delete of the first as part of a
 	 * batch delete request.
@@ -580,39 +574,37 @@ public class SqsOverflowQueueTests {
 		queue.setReadConcurrency(1);
 		queue.setWriteConcurrency(1);
 		queue.setShutdownWaitSecs(3600);
-	
+
 		final String handleA = "handle-A-" + randomString();
 		final String handleB = "handle-B-" + randomString();
-	
+
 		final UserEvent entityA = newEvent();
 		final UserEvent entityB = newEvent();
-	
+
 		final Message msgA = Message.builder().messageId(randomString()).receiptHandle(handleA)
 				.body(JSON_MAPPER.writeValueAsString(entityA)).build();
 		final Message msgB = Message.builder().messageId(randomString()).receiptHandle(handleB)
 				.body(JSON_MAPPER.writeValueAsString(entityB)).build();
-	
+
 		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
 				.willReturn(CompletableFuture
-						.completedFuture(ReceiveMessageResponse.builder().build()));
-	
+						.completedFuture(ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		// persist slowly, so the reader registers both completion callbacks before
 		// the writer completes the first work item, keeping the delete order stable
 		given(delegateDao.persist(any())).willAnswer(inv -> {
 			Thread.sleep(100);
 			return ((UserEvent) inv.getArgument(0)).getId();
 		});
-	
+
 		final List<DeleteMessageBatchRequest> deleteRequests = Collections
 				.synchronizedList(new ArrayList<>(2));
 		given(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).willAnswer(inv -> {
 			final DeleteMessageBatchRequest req = inv.getArgument(0);
 			deleteRequests.add(req);
 			if ( deleteRequests.size() > 1 ) {
-				return CompletableFuture
-						.completedFuture(DeleteMessageBatchResponse.builder().build());
+				return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
 			}
 			// fail just the entry for handle A
 			var failed = req.entries().stream().filter(e -> handleA.equals(e.receiptHandle()))
@@ -622,30 +614,30 @@ public class SqsOverflowQueueTests {
 					.toList();
 			var successful = req.entries().stream().filter(e -> !handleA.equals(e.receiptHandle()))
 					.map(e -> DeleteMessageBatchResultEntry.builder().id(e.id()).build()).toList();
-			return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder()
-					.failed(failed).successful(successful).build());
+			return CompletableFuture.completedFuture(
+					DeleteMessageBatchResponse.builder().failed(failed).successful(successful).build());
 		});
-	
+
 		queue.serviceDidStartup();
-	
+
 		then(delegateDao).should(timeout(5_000).times(2)).persist(any());
 		Thread.sleep(200); // let the delete batching settle
-	
+
 		queue.shutdownAndWait(); // forces a flush of anything still pending
-	
+
 		return new DeleteBatchScenario(handleA, deleteRequests);
 	}
-	
+
 	/**
 	 * Verify that when a message fails to delete from SQS as part of a batch
-	 * request, the receipt handle of the message that actually failed is the one
-	 * retried.
+	 * request, the receipt handle of the message that actually failed is the
+	 * one retried.
 	 */
 	@Test
 	public void deleteFromSqs_partialFailure_retriesFailedHandle() throws Exception {
 		// GIVEN / WHEN
 		final DeleteBatchScenario scenario = runDeleteBatchPartialFailure(false);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(scenario.requests())
@@ -661,7 +653,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that a delete failure reported as a sender fault, which can never
 	 * succeed on retry, is not retried.
@@ -670,7 +662,7 @@ public class SqsOverflowQueueTests {
 	public void deleteFromSqs_partialFailure_senderFaultNotRetried() throws Exception {
 		// GIVEN / WHEN
 		final DeleteBatchScenario scenario = runDeleteBatchPartialFailure(true);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(scenario.requests())
@@ -700,7 +692,7 @@ public class SqsOverflowQueueTests {
 		queue.setWriteConcurrency(1);
 		queue.setReadMaxMessageCount(messageCount);
 		queue.setShutdownWaitSecs(3600);
-	
+
 		final List<String> receiptHandles = new ArrayList<>(messageCount);
 		final List<Message> msgs = new ArrayList<>(messageCount);
 		for ( int i = 0; i < messageCount; i++ ) {
@@ -709,31 +701,28 @@ public class SqsOverflowQueueTests {
 			msgs.add(Message.builder().messageId(randomString()).receiptHandle(handle)
 					.body(JSON_MAPPER.writeValueAsString(newEvent())).build());
 		}
-	
+
 		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().messages(msgs).build()))
 				.willReturn(CompletableFuture
-						.completedFuture(ReceiveMessageResponse.builder().build()));
-	
-		given(delegateDao.persist(any()))
-				.willAnswer(inv -> ((UserEvent) inv.getArgument(0)).getId());
-	
+						.completedFuture(ReceiveMessageResponse.builder().messages(msgs).build()))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
+		given(delegateDao.persist(any())).willAnswer(inv -> ((UserEvent) inv.getArgument(0)).getId());
+
 		final List<DeleteMessageBatchRequest> deleteRequests = Collections
 				.synchronizedList(new ArrayList<>(4));
 		given(sqsClient.deleteMessageBatch(any(DeleteMessageBatchRequest.class))).willAnswer(inv -> {
 			deleteRequests.add(inv.getArgument(0));
-			return CompletableFuture
-					.completedFuture(DeleteMessageBatchResponse.builder().build());
+			return CompletableFuture.completedFuture(DeleteMessageBatchResponse.builder().build());
 		});
-	
+
 		// WHEN
 		queue.serviceDidStartup();
 		then(delegateDao).should(timeout(5_000).times(messageCount)).persist(any());
 		Thread.sleep(200); // let the handles accumulate
-	
+
 		queue.shutdownAndWait(); // forces a flush of everything pending
-	
+
 		// THEN
 		// @formatter:off
 		and.then(deleteRequests)
@@ -759,21 +748,21 @@ public class SqsOverflowQueueTests {
 
 	/**
 	 * Verify that {@link SqsOverflowQueue#shutdownAndWait()} returns promptly
-	 * when the shutdown wait is configured as zero, rather than joining forever.
+	 * when the shutdown wait is configured as zero, rather than joining
+	 * forever.
 	 */
 	@Test
 	public void shutdownAndWait_zeroWaitReturnsPromptly() throws Exception {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setShutdownWaitSecs(0); // i.e. "do not wait"
-	
+
 		final CountDownLatch persisting = new CountDownLatch(1);
 		given(delegateDao.persist(any())).willAnswer(inv -> {
 			persisting.countDown();
 			// ignore interrupts, to simulate a write that cannot be cancelled
 			final long end = System.currentTimeMillis() + 2_000L;
-			for ( long now = System.currentTimeMillis(); now < end; now = System
-					.currentTimeMillis() ) {
+			for ( long now = System.currentTimeMillis(); now < end; now = System.currentTimeMillis() ) {
 				try {
 					Thread.sleep(end - now);
 				} catch ( InterruptedException e ) {
@@ -782,19 +771,17 @@ public class SqsOverflowQueueTests {
 			}
 			return ((UserEvent) inv.getArgument(0)).getId();
 		});
-	
+
 		collector.serviceDidStartup();
 		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
-	
-		and.then(persisting.await(3, TimeUnit.SECONDS))
-				.as("Writer thread is busy persisting")
-				.isTrue();
-	
+
+		and.then(persisting.await(3, TimeUnit.SECONDS)).as("Writer thread is busy persisting").isTrue();
+
 		// WHEN
 		final ExecutorService executor = Executors.newSingleThreadExecutor();
 		try {
 			final Future<?> shutdown = executor.submit(collector::shutdownAndWait);
-	
+
 			// THEN
 			// @formatter:off
 			and.thenCode(() -> shutdown.get(500, TimeUnit.MILLISECONDS))
@@ -806,7 +793,7 @@ public class SqsOverflowQueueTests {
 			executor.shutdownNow();
 		}
 	}
-	
+
 	/**
 	 * Verify that the shutdown wait is a total budget shared by all threads,
 	 * rather than applied to each thread in turn.
@@ -818,14 +805,13 @@ public class SqsOverflowQueueTests {
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setWriteConcurrency(writerCount);
 		collector.setShutdownWaitSecs(1);
-	
+
 		final CountDownLatch persisting = new CountDownLatch(writerCount);
 		given(delegateDao.persist(any())).willAnswer(inv -> {
 			persisting.countDown();
 			// ignore interrupts, so every writer outlives the shutdown wait
 			final long end = System.currentTimeMillis() + 6_000L;
-			for ( long now = System.currentTimeMillis(); now < end; now = System
-					.currentTimeMillis() ) {
+			for ( long now = System.currentTimeMillis(); now < end; now = System.currentTimeMillis() ) {
 				try {
 					Thread.sleep(end - now);
 				} catch ( InterruptedException e ) {
@@ -834,21 +820,20 @@ public class SqsOverflowQueueTests {
 			}
 			return ((UserEvent) inv.getArgument(0)).getId();
 		});
-	
+
 		collector.serviceDidStartup();
 		for ( int i = 0; i < writerCount; i++ ) {
 			workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
 		}
-	
-		and.then(persisting.await(5, TimeUnit.SECONDS))
-				.as("All writer threads are busy persisting")
+
+		and.then(persisting.await(5, TimeUnit.SECONDS)).as("All writer threads are busy persisting")
 				.isTrue();
-	
+
 		// WHEN
 		final long start = System.nanoTime();
 		collector.shutdownAndWait();
 		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(durationMs)
@@ -867,27 +852,24 @@ public class SqsOverflowQueueTests {
 	public void shutdown_pendingWorkItemsCompleted() throws Exception {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
-	
+
 		// only exercised if shutdown drains remaining work to SQS
-		lenient().when(sqsClient.sendMessage(any(SendMessageRequest.class)))
-				.thenReturn(CompletableFuture.completedFuture(
-						SendMessageResponse.builder().messageId(randomString()).build()));
-	
+		lenient().when(sqsClient.sendMessage(any(SendMessageRequest.class))).thenReturn(CompletableFuture
+				.completedFuture(SendMessageResponse.builder().messageId(randomString()).build()));
+
 		final CountDownLatch persisting = new CountDownLatch(1);
 		given(delegateDao.persist(any())).willAnswer(inv -> {
 			persisting.countDown();
 			Thread.sleep(300);
 			return ((UserEvent) inv.getArgument(0)).getId();
 		});
-	
+
 		collector.serviceDidStartup();
-	
+
 		// occupy the single writer thread
 		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
-		and.then(persisting.await(3, TimeUnit.SECONDS))
-				.as("Writer thread is busy persisting")
-				.isTrue();
-	
+		and.then(persisting.await(3, TimeUnit.SECONDS)).as("Writer thread is busy persisting").isTrue();
+
 		// queue more work behind it
 		final List<CompletableFuture<UserUuidPK>> pending = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
@@ -895,12 +877,12 @@ public class SqsOverflowQueueTests {
 			pending.add(f);
 			workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), f));
 		}
-	
+
 		// WHEN
 		collector.serviceDidShutdown();
-	
+
 		Thread.sleep(500); // allow any shutdown draining to finish
-	
+
 		// THEN
 		// @formatter:off
 		and.then(pending)
@@ -910,7 +892,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that an ignored exception thrown by the "last ditch" direct DAO
 	 * write, after failing to send the entity to SQS, is counted as ignored.
@@ -921,27 +903,27 @@ public class SqsOverflowQueueTests {
 		// a work queue that never accepts, so persist() goes straight to SQS
 		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
 				0);
-	
+
 		// a codec that cannot serialize, so the SQS send fails before any request
 		final EntityCodec<UserEvent, UserUuidPK, String> brokenCodec = new EntityCodec<>() {
-	
+
 			@Override
 			public String serialize(UserEvent entity) {
 				throw new IllegalStateException("cannot serialize");
 			}
-	
+
 			@Override
 			public UserEvent deserialize(String json) {
 				throw new UnsupportedOperationException();
 			}
-	
+
 			@Override
 			public UserUuidPK entityId(UserEvent entity) {
 				return entity.getId();
 			}
-	
+
 		};
-	
+
 		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
 				fullQueue, completedSqsMessageHandles, delegateDao, brokenCodec);
 		queue.setExceptionHandler(exceptionHandler);
@@ -949,17 +931,17 @@ public class SqsOverflowQueueTests {
 		queue.setWriteConcurrency(1);
 		queue.setShutdownWaitSecs(3600);
 		queue.setIgnoredDaoExceptions(Set.of(IllegalArgumentException.class));
-	
+
 		given(delegateDao.persist(any())).willThrow(new IllegalArgumentException("boom!"));
-	
+
 		// WHEN
 		queue.serviceDidStartup();
-	
+
 		final UserEvent entity = newEvent();
 		final UserUuidPK result = queue.persist(entity);
-	
+
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		then(exceptionHandler).shouldHaveNoInteractions();
@@ -986,8 +968,8 @@ public class SqsOverflowQueueTests {
 	}
 
 	/**
-	 * Verify that work items the writer threads cannot drain within the shutdown
-	 * wait are overflowed to SQS, rather than dropped.
+	 * Verify that work items the writer threads cannot drain within the
+	 * shutdown wait are overflowed to SQS, rather than dropped.
 	 */
 	@Test
 	public void shutdown_undrainedWorkItemsOverflowToSqs() throws Exception {
@@ -995,18 +977,16 @@ public class SqsOverflowQueueTests {
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setWriteConcurrency(1);
 		collector.setShutdownWaitSecs(0); // no time for the writer to drain
-	
-		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						SendMessageResponse.builder().messageId(randomString()).build()));
-	
+
+		given(sqsClient.sendMessage(any(SendMessageRequest.class))).willReturn(CompletableFuture
+				.completedFuture(SendMessageResponse.builder().messageId(randomString()).build()));
+
 		final CountDownLatch persisting = new CountDownLatch(1);
 		given(delegateDao.persist(any())).willAnswer(inv -> {
 			persisting.countDown();
 			// ignore interrupts, so the writer cannot pick up any more work
 			final long end = System.currentTimeMillis() + 3_000L;
-			for ( long now = System.currentTimeMillis(); now < end; now = System
-					.currentTimeMillis() ) {
+			for ( long now = System.currentTimeMillis(); now < end; now = System.currentTimeMillis() ) {
 				try {
 					Thread.sleep(end - now);
 				} catch ( InterruptedException e ) {
@@ -1015,15 +995,13 @@ public class SqsOverflowQueueTests {
 			}
 			return ((UserEvent) inv.getArgument(0)).getId();
 		});
-	
+
 		collector.serviceDidStartup();
-	
+
 		// occupy the only writer thread
 		workQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
-		and.then(persisting.await(3, TimeUnit.SECONDS))
-				.as("Writer thread is busy persisting")
-				.isTrue();
-	
+		and.then(persisting.await(3, TimeUnit.SECONDS)).as("Writer thread is busy persisting").isTrue();
+
 		// queue work the writer will never get to
 		final List<UserEvent> stranded = new ArrayList<>(3);
 		final List<CompletableFuture<UserUuidPK>> pending = new ArrayList<>(3);
@@ -1034,10 +1012,10 @@ public class SqsOverflowQueueTests {
 			pending.add(f);
 			workQueue.put(new SqsOverflowQueue.WorkItem<>(entity, f));
 		}
-	
+
 		// WHEN
 		collector.serviceDidShutdown();
-	
+
 		// THEN
 		// @formatter:off
 		then(sqsClient).should(times(3)).sendMessage(sendMessageRequestCaptor.capture());
@@ -1069,7 +1047,7 @@ public class SqsOverflowQueueTests {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setWriteConcurrency(1);
-	
+
 		// work queue never accepts, so persist() goes straight to SQS
 		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
 				0);
@@ -1079,19 +1057,19 @@ public class SqsOverflowQueueTests {
 		queue.setReadConcurrency(0);
 		queue.setWriteConcurrency(1);
 		queue.setShutdownWaitSecs(3600);
-	
+
 		// the SQS send fails asynchronously
 		given(sqsClient.sendMessage(any(SendMessageRequest.class))).willReturn(
 				CompletableFuture.failedFuture(SdkClientException.create("no route to host")));
-	
+
 		final UserEvent entity = newEvent();
 		given(delegateDao.persist(any())).willReturn(entity.getId());
-	
+
 		// WHEN
 		queue.serviceDidStartup();
 		final UserUuidPK result = queue.persist(entity);
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(result)
@@ -1115,7 +1093,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that a SQS send that never completes does not block the caller
 	 * indefinitely.
@@ -1124,7 +1102,7 @@ public class SqsOverflowQueueTests {
 	public void sendToSqsNeverCompletes_boundedBySqsSendMaxWait() throws Exception {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
-	
+
 		// work queue never accepts, so persist() goes straight to SQS
 		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
 				0);
@@ -1135,21 +1113,21 @@ public class SqsOverflowQueueTests {
 		queue.setWriteConcurrency(1);
 		queue.setShutdownWaitSecs(3600);
 		queue.setSqsSendMaxWaitMs(300);
-	
+
 		// a send that never completes, like a hung connection
 		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
 				.willReturn(new CompletableFuture<>());
-	
+
 		final UserEvent entity = newEvent();
 		given(delegateDao.persist(any())).willReturn(entity.getId());
-	
+
 		// WHEN
 		queue.serviceDidStartup();
 		final long start = System.nanoTime();
 		final UserUuidPK result = queue.persist(entity);
 		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(durationMs)
@@ -1162,7 +1140,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that an entity a writer thread persists within the work item wait
 	 * is never sent to SQS.
@@ -1172,19 +1150,19 @@ public class SqsOverflowQueueTests {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setWorkItemMaxWaitMs(2_000);
-	
+
 		final UserEvent entity = newEvent();
-	
-		given(delegateDao.persist(any())).willAnswer(inv -> {
+
+		given(delegateDao.persist(any())).willAnswer(_ -> {
 			Thread.sleep(50);
 			return entity.getId();
 		});
-	
+
 		// WHEN
 		collector.serviceDidStartup();
 		final UserUuidPK result = collector.persist(entity);
 		collector.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(result)
@@ -1214,7 +1192,7 @@ public class SqsOverflowQueueTests {
 				2);
 		smallQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
 		smallQueue.put(new SqsOverflowQueue.WorkItem<>(newEvent(), new CompletableFuture<>()));
-	
+
 		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
 				smallQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
 		queue.setExceptionHandler(exceptionHandler);
@@ -1223,21 +1201,21 @@ public class SqsOverflowQueueTests {
 		queue.setReadMaxMessageCount(10);
 		queue.setReadSleepMinMs(50);
 		queue.setShutdownWaitSecs(0);
-	
+
 		given(delegateDao.persist(any())).willAnswer(_ -> {
 			wedgeForever();
 			return null;
 		});
-	
-		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).willReturn(
-				CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
-	
+
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		// WHEN
 		queue.serviceDidStartup();
 		then(sqsClient).should(timeout(3_000).atLeastOnce())
 				.receiveMessage(receiveMessageRequestCaptor.capture());
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(receiveMessageRequestCaptor.getAllValues())
@@ -1246,10 +1224,10 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
-	 * Verify that the reader stops issuing receive requests while the work queue
-	 * is full.
+	 * Verify that the reader stops issuing receive requests while the work
+	 * queue is full.
 	 */
 	@Test
 	public void readFromSqs_doesNotReadWhileWorkQueueFull() throws Exception {
@@ -1257,25 +1235,25 @@ public class SqsOverflowQueueTests {
 		// a zero-capacity work queue, so no writer can ever free a slot
 		final BlockingQueue<SqsOverflowQueue.WorkItem<UserEvent, UserUuidPK>> fullQueue = new LinkedHashSetBlockingQueue<>(
 				0);
-	
+
 		final var queue = new SqsOverflowQueue<UserEvent, UserUuidPK>(stats, "test", sqsClient, sqsUrl,
 				fullQueue, completedSqsMessageHandles, delegateDao, ENTITY_CODEC);
 		queue.setExceptionHandler(exceptionHandler);
 		queue.setReadConcurrency(1);
 		queue.setWriteConcurrency(1);
 		queue.setShutdownWaitSecs(3600);
-	
+
 		// WHEN
 		queue.serviceDidStartup();
 		Thread.sleep(500);
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		then(sqsClient).should(never()).receiveMessage(any(ReceiveMessageRequest.class));
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that the read throttle relaxes again while the SQS queue is empty,
 	 * rather than staying where a transient error left it.
@@ -1287,25 +1265,24 @@ public class SqsOverflowQueueTests {
 		collector.setReadSleepMinMs(10);
 		collector.setReadSleepMaxMs(5_000);
 		collector.setReadSleepThrottleStepMs(1_000);
-	
+
 		// one transient error, which raises the throttle, then an empty queue
 		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
-				.willReturn(CompletableFuture
-						.failedFuture(SdkClientException.create("connection reset")))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().build()));
-	
+				.willReturn(
+						CompletableFuture.failedFuture(SdkClientException.create("connection reset")))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		// WHEN
 		collector.serviceDidStartup();
-	
+
 		// the throttle has to decay back to readSleepMinMs for the reader to poll
 		// this often; stuck at the 1s the error raised it to, it would manage about 4
 		then(sqsClient).should(timeout(4_000).atLeast(20))
 				.receiveMessage(any(ReceiveMessageRequest.class));
-	
+
 		collector.shutdownAndWait();
 	}
-	
+
 	/**
 	 * Verify that messages the work queue rejects are returned to SQS with a
 	 * backoff, rather than made visible again immediately.
@@ -1327,24 +1304,23 @@ public class SqsOverflowQueueTests {
 		queue.setReadSleepMinMs(1_000);
 		queue.setReadSleepThrottleStepMs(1_000);
 		queue.setShutdownWaitSecs(0);
-	
+
 		given(delegateDao.persist(any())).willAnswer(_ -> {
 			wedgeForever();
 			return null;
 		});
-	
+
 		final String rejectedHandle = "handle-rejected-" + randomString();
-		final Message msgA = Message.builder().messageId(randomString())
-				.receiptHandle(randomString()).body(JSON_MAPPER.writeValueAsString(newEvent())).build();
-		final Message msgB = Message.builder().messageId(randomString())
-				.receiptHandle(rejectedHandle).body(JSON_MAPPER.writeValueAsString(newEvent())).build();
-	
+		final Message msgA = Message.builder().messageId(randomString()).receiptHandle(randomString())
+				.body(JSON_MAPPER.writeValueAsString(newEvent())).build();
+		final Message msgB = Message.builder().messageId(randomString()).receiptHandle(rejectedHandle)
+				.body(JSON_MAPPER.writeValueAsString(newEvent())).build();
+
 		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
-				.willReturn(CompletableFuture.completedFuture(
-						ReceiveMessageResponse.builder().build()));
-	
+				.willReturn(CompletableFuture
+						.completedFuture(ReceiveMessageResponse.builder().messages(msgA, msgB).build()))
+				.willReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		final List<ChangeMessageVisibilityBatchRequest> vizRequests = Collections
 				.synchronizedList(new ArrayList<>(1));
 		given(sqsClient.changeMessageVisibilityBatch(any(Consumer.class))).willAnswer(inv -> {
@@ -1352,15 +1328,15 @@ public class SqsOverflowQueueTests {
 			var b = ChangeMessageVisibilityBatchRequest.builder();
 			c.accept(b);
 			vizRequests.add(b.build());
-			return CompletableFuture.completedFuture(
-					ChangeMessageVisibilityBatchResponse.builder().build());
+			return CompletableFuture
+					.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
 		});
-	
+
 		// WHEN
 		queue.serviceDidStartup();
 		then(sqsClient).should(timeout(3_000)).changeMessageVisibilityBatch(any(Consumer.class));
 		queue.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(vizRequests)
@@ -1385,30 +1361,29 @@ public class SqsOverflowQueueTests {
 	}
 
 	/**
-	 * Verify that an entity submitted after shutdown still reaches SQS, promptly,
-	 * rather than waiting out the work item timeout on a queue no writer thread
-	 * is draining.
+	 * Verify that an entity submitted after shutdown still reaches SQS,
+	 * promptly, rather than waiting out the work item timeout on a queue no
+	 * writer thread is draining.
 	 */
 	@Test
 	public void persistAfterShutdown_goesStraightToSqs() throws Exception {
 		// GIVEN
 		collector.setReadConcurrency(0); // disable read thread
 		collector.setWorkItemMaxWaitMs(5_000);
-	
-		given(sqsClient.sendMessage(any(SendMessageRequest.class)))
-				.willReturn(CompletableFuture.completedFuture(
-						SendMessageResponse.builder().messageId(randomString()).build()));
-	
+
+		given(sqsClient.sendMessage(any(SendMessageRequest.class))).willReturn(CompletableFuture
+				.completedFuture(SendMessageResponse.builder().messageId(randomString()).build()));
+
 		collector.serviceDidStartup();
 		collector.shutdownAndWait();
-	
+
 		final UserEvent entity = newEvent();
-	
+
 		// WHEN
 		final long start = System.nanoTime();
 		final UserUuidPK result = collector.persist(entity);
 		final long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(durationMs)
@@ -1435,7 +1410,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify that an unexpected error reading from SQS does not stop the reader
 	 * thread.
@@ -1447,14 +1422,14 @@ public class SqsOverflowQueueTests {
 		collector.setReadSleepMinMs(20);
 		collector.setReadSleepThrottleStepMs(20);
 		collector.setReadSleepMaxMs(100);
-	
+
 		// neither an AWS nor an interrupt failure, i.e. a bug rather than a fault
-		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).willReturn(
-				CompletableFuture.failedFuture(new IllegalStateException("unexpected")));
-	
+		given(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.willReturn(CompletableFuture.failedFuture(new IllegalStateException("unexpected")));
+
 		// WHEN
 		collector.serviceDidStartup();
-	
+
 		// THEN
 		// @formatter:off
 		then(sqsClient).should(timeout(3_000).atLeast(3))
@@ -1470,14 +1445,14 @@ public class SqsOverflowQueueTests {
 	@Test
 	public void pingTest_notRunning() throws Exception {
 		// GIVEN
-		given(sqsClient.getQueueAttributes(ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any()))
-				.willReturn(CompletableFuture.completedFuture(
-						GetQueueAttributesResponse.builder().build()));
-	
+		given(sqsClient.getQueueAttributes(
+				ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any())).willReturn(
+						CompletableFuture.completedFuture(GetQueueAttributesResponse.builder().build()));
+
 		// WHEN
 		// never started, so no writer or reader threads exist
 		PingTest.Result result = collector.performPingTest();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(result)
@@ -1488,7 +1463,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify the ping test succeeds while the service is running.
 	 */
@@ -1497,17 +1472,17 @@ public class SqsOverflowQueueTests {
 		// GIVEN
 		collector.setReadConcurrency(1);
 		collector.setWriteConcurrency(2);
-		given(sqsClient.getQueueAttributes(ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any()))
-				.willReturn(CompletableFuture.completedFuture(
-						GetQueueAttributesResponse.builder().build()));
-		lenient().when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(
-				CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
-	
+		given(sqsClient.getQueueAttributes(
+				ArgumentMatchers.<Consumer<GetQueueAttributesRequest.Builder>> any())).willReturn(
+						CompletableFuture.completedFuture(GetQueueAttributesResponse.builder().build()));
+		lenient().when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+				.thenReturn(CompletableFuture.completedFuture(ReceiveMessageResponse.builder().build()));
+
 		// WHEN
 		collector.serviceDidStartup();
 		PingTest.Result result = collector.performPingTest();
 		collector.shutdownAndWait();
-	
+
 		// THEN
 		// @formatter:off
 		and.then(result)
@@ -1520,7 +1495,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify the SQS receive properties are clamped to the ranges SQS allows.
 	 */
@@ -1529,7 +1504,7 @@ public class SqsOverflowQueueTests {
 		// WHEN
 		collector.setReadMaxMessageCount(50);
 		collector.setReadMaxWaitTimeSecs(300);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(collector.getReadMaxMessageCount())
@@ -1554,7 +1529,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify a sub-second configured read wait does not truncate to zero, which
 	 * would turn off long polling and busy-poll the SQS queue.
@@ -1565,10 +1540,10 @@ public class SqsOverflowQueueTests {
 		var settings = new SqsOverflowQueueSettings();
 		settings.setReadMaxWaitTime(Duration.ofMillis(500));
 		settings.setShutdownWait(Duration.ofMillis(500));
-	
+
 		// WHEN
 		settings.configure(collector);
-	
+
 		// THEN
 		// @formatter:off
 		and.then(collector.getReadMaxWaitTimeSecs())
@@ -1588,7 +1563,7 @@ public class SqsOverflowQueueTests {
 			;
 		// @formatter:on
 	}
-	
+
 	/**
 	 * Verify the convenience constructor derives its configuration from the
 	 * service identity.
@@ -1631,8 +1606,8 @@ public class SqsOverflowQueueTests {
 	}
 
 	private UserEvent newEvent() {
-		return new UserEvent(randomLong(), UUID_GENERATOR.generate(),
-				new String[] { randomString() }, null, null);
+		return new UserEvent(randomLong(), UUID_GENERATOR.generate(), new String[] { randomString() },
+				null, null);
 	}
 
 }
