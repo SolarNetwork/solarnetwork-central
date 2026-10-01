@@ -64,7 +64,7 @@ $(document).ready(function() {
 			}
 			if ( data.sourceIds !== undefined ) {
 				// convert sourceIds delimited string into array of strings
-				var sourceIds = data.sourceIds.split(/\s*,\s*/);
+				var sourceIds = (data.sourceIds ? data.sourceIds.split(/\s*,\s*/) : []);
 				if ( sourceIds.length ) {
 					data.sourceIds = sourceIds;
 				} else {
@@ -72,6 +72,9 @@ $(document).ready(function() {
 				}
 			}
 			return data;
+		}, {
+			// hooks are created and updated at the same URL
+			urlSerializer: (url) => url
 		});
 		return false;
 	})

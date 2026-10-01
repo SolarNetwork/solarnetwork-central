@@ -27,6 +27,7 @@ import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +39,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.domain.CompositeKey2;
+import net.solarnetwork.central.reg.web.domain.UserNodeEventHookConfigurationInput;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.datum.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
@@ -51,7 +54,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Web service API for node event hook management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 2.3
  */
 @GlobalExceptionRestController
@@ -112,11 +115,10 @@ public class NodeEventController {
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks", method = RequestMethod.POST)
 	public Result<UserNodeEventHookConfiguration> saveNodeHookConfiguration(
-			@RequestBody UserNodeEventHookConfiguration config) {
+			@Valid @RequestBody UserNodeEventHookConfigurationInput input) {
 		if ( eventHookBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config = config.withUserId(SecurityUtils.getCurrentActorUserId());
-			}
+			UserNodeEventHookConfiguration config = input.toEntity(SecurityUtils.getCurrentActorUserId(),
+					Instant.now());
 			CompositeKey2<Long, Long> id = eventHookBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config = eventHookBiz.configurationForUser(id.keyComponent1(),
