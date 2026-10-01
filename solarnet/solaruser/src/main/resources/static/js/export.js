@@ -71,7 +71,7 @@ $(document).ready(function() {
 			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
-			el.find('.status').addClass('label-' +item.statusClass);
+			el.find('.status').addClass('text-bg-' +item.statusClass);
 			if ( item.completed ) {
 				el.find('.completed.hidden').removeClass('hidden');
 			}

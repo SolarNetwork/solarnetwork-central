@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -12,13 +12,13 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{export.destinationConfig.edit.title}">Edit destination configuration</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{export.destinationConfig.edit.intro}">Edit the destination details on this form.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{export.destinationConfig.name.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{export.destinationConfig.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
@@ -27,17 +27,17 @@
 		 					maxlength="64" required="required">
 			 		</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{export.destinationConfig.type.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{export.destinationConfig.type.label}">
 		 				Type
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control" name="serviceIdentifier" required="required">
+		 				<select class="form-select" name="serviceIdentifier" required="required">
 		 				</select>
 		 			</div>
 		 		</div>
 		 	</div>
-		 	<div class="modal-body form-horizontal service-props-container hidden">
+		 	<div class="modal-body service-props-container hidden">
 		 	</div>
 		 	<div class="modal-body delete-confirm hidden">
 		 		<p class="alert alert-danger" data-th-utext="#{export.deleteConfiguration.confirm.intro}">
@@ -45,11 +45,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{export.deleteConfiguration.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

@@ -6,122 +6,116 @@
 	<meta name="solarUserRootPublicURL" content="/solaruser">
 	<meta name="solarUserRootURL" content="/solaruser/u">
 	<link rel="stylesheet" href="../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css">
 	<link rel="stylesheet" href="../static/css/global.css">
 	<link rel="stylesheet" href="../static/css/edit-node.css">
 	<script src="../static/js-lib/jquery-3.7.0.js"></script>
-	<script src="../static/js-lib/bootstrap.js"></script>
+	<script src="../static/js-lib/bootstrap.bundle.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-default" data-th-fragment="navbar" data-th-with="homeUrl=${#authentication != null && #authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}">
+<nav class="navbar navbar-expand-xl bg-body-tertiary mb-3" data-th-fragment="navbar" data-th-with="homeUrl=${#authentication != null && #authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}">
 	<div class="container-fluid">
-		<div class="navbar-header">
-			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#solaruser-navbar-collapse-1">
-				<span class="sr-only">Toggle navigation</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<a class="navbar-brand" href="/index.do" data-th-href="${homeUrl}">
-				<img src="../static/img/logo.svg" data-th-src="@{/img/logo.svg}" data-th-alt="#{app.name}" width="214" height="30">
-			</a>
-	    </div>
+		<a class="navbar-brand" href="/index.do" data-th-href="${homeUrl}">
+			<img src="../static/img/logo.svg" data-th-src="@{/img/logo.svg}" data-th-alt="#{app.name}" width="214" height="30">
+		</a>
+		<button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#solaruser-navbar-collapse-1"
+				aria-controls="solaruser-navbar-collapse-1" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
 
 	    <div class="collapse navbar-collapse" id="solaruser-navbar-collapse-1">
-			<ul class="nav navbar-nav">
-				<li data-th-classappend="${navloc == 'home'}?active"><a href="/index.do" data-th-href="${homeUrl}" data-th-text="#{link.home}">Home</a></li>
-				<li data-th-classappend="${navloc == 'login'}?active" sec:authorize="!hasRole('ROLE_USER')">
-					<a data-th-href="@{/login}" data-th-text="#{link.login}">Login</a>
+			<ul class="navbar-nav me-auto">
+				<li class="nav-item">
+					<a class="nav-link" data-th-classappend="${navloc == 'home'}?active" href="/index.do" data-th-href="${homeUrl}" data-th-text="#{link.home}">Home</a>
 				</li>
-				<li data-th-classappend="${navloc == 'my-nodes'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a data-th-href="@{/u/sec/my-nodes}" data-th-text="#{link.my-nodes}">My Nodes</a>
+				<li class="nav-item" sec:authorize="!hasRole('ROLE_USER')">
+					<a class="nav-link" data-th-classappend="${navloc == 'login'}?active" data-th-href="@{/login}" data-th-text="#{link.login}">Login</a>
 				</li>
-				<li data-th-classappend="${navloc == 'alerts'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a data-th-href="@{/u/sec/alerts}"><span data-th-text="#{link.alerts}" data-th-remove="tag">Alerts</span> <span class="label label-danger label-as-badge alert-situation-count"></span></a>
+				<li class="nav-item" sec:authorize="hasRole('ROLE_USER')">
+					<a class="nav-link" data-th-classappend="${navloc == 'my-nodes'}?active" data-th-href="@{/u/sec/my-nodes}" data-th-text="#{link.my-nodes}">My Nodes</a>
 				</li>
-				<li data-th-classappend="${navloc == 'auth-tokens'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a data-th-href="@{/u/sec/auth-tokens}" data-th-text="#{link.auth-tokens}">Security Tokens</a>
+				<li class="nav-item" sec:authorize="hasRole('ROLE_USER')">
+					<a class="nav-link" data-th-classappend="${navloc == 'alerts'}?active" data-th-href="@{/u/sec/alerts}"><span data-th-text="#{link.alerts}" data-th-remove="tag">Alerts</span> <span class="badge text-bg-danger rounded-pill alert-situation-count"></span></a>
 				</li>
-				<li class="dropdown" data-th-classappend="${
+				<li class="nav-item" sec:authorize="hasRole('ROLE_USER')">
+					<a class="nav-link" data-th-classappend="${navloc == 'auth-tokens'}?active" data-th-href="@{/u/sec/auth-tokens}" data-th-text="#{link.auth-tokens}">Security Tokens</a>
+				</li>
+				<li class="nav-item dropdown" sec:authorize="hasRole('ROLE_USER')">
+					<a href="#" class="nav-link dropdown-toggle" data-th-classappend="${
 						   navloc == 'data'
 						|| navloc == 'data-insight'
 						|| navloc == 'expire'
 						|| navloc == 'export'
 						|| navloc == 'flux'
 						|| navloc == 'node-event'
-						}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-						<span data-th-text="#{nav.label.data}" data-th-remove="tag">My Data</span> <b class="caret"></b>
-					</a>
+						}?active" data-bs-toggle="dropdown" role="button" aria-expanded="false"
+						data-th-text="#{nav.label.data}">My Data</a>
 					<ul class="dropdown-menu">
-						<li data-th-classappend="${navloc == 'data-insight'}?active">
-							<a data-th-href="@{/u/sec/data-insight}" data-th-text="#{link.dataInsight}">Data Insight</a>
+						<li>
+							<a class="dropdown-item" data-th-classappend="${navloc == 'data-insight'}?active" data-th-href="@{/u/sec/data-insight}" data-th-text="#{link.dataInsight}">Data Insight</a>
 						</li>
-						<li data-th-classappend="${navloc == 'expire'}?active" data-th-if="expireBiz">
-							<a data-th-href="@{/u/sec/expire}" data-th-text="#{link.expire}">Data Expire</a>
+						<li data-th-if="expireBiz">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'expire'}?active" data-th-href="@{/u/sec/expire}" data-th-text="#{link.expire}">Data Expire</a>
 						</li>
-						<li data-th-classappend="${navloc == 'import'}?active" sec:authorize="hasRole('ROLE_IMPORT')" data-th-if="importBiz">
-							<a data-th-href="@{/u/sec/import}" data-th-text="#{link.import}">Data Import</a>
+						<li sec:authorize="hasRole('ROLE_IMPORT')" data-th-if="importBiz">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'import'}?active" data-th-href="@{/u/sec/import}" data-th-text="#{link.import}">Data Import</a>
 						</li>
-						<li data-th-classappend="${navloc == 'export'}?active" sec:authorize="hasRole('ROLE_EXPORT')" data-th-if="exportBiz">
-							<a data-th-href="@{/u/sec/export}" data-th-text="#{link.export}">Data Export</a>
+						<li sec:authorize="hasRole('ROLE_EXPORT')" data-th-if="exportBiz">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'export'}?active" data-th-href="@{/u/sec/export}" data-th-text="#{link.export}">Data Export</a>
 						</li>
-						<li data-th-classappend="${navloc == 'node-event'}?active" sec:authorize="hasRole('ROLE_EVENT')" data-th-if="eventHookBiz">
-							<a data-th-href="@{/u/sec/event/node}" data-th-text="#{link.node-event}">Node Event Hooks</a>
+						<li sec:authorize="hasRole('ROLE_EVENT')" data-th-if="eventHookBiz">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'node-event'}?active" data-th-href="@{/u/sec/event/node}" data-th-text="#{link.node-event}">Node Event Hooks</a>
 						</li>
-						<li data-th-classappend="${navloc == 'flux'}?active" data-th-if="eventHookBiz">
-							<a data-th-href="@{/u/sec/flux}" data-th-text="#{link.flux}">SolarFlux Settings</a>
+						<li data-th-if="eventHookBiz">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'flux'}?active" data-th-href="@{/u/sec/flux}" data-th-text="#{link.flux}">SolarFlux Settings</a>
 						</li>
 					</ul>
 				</li>
-				<li class="dropdown" data-th-classappend="${
+				<li class="nav-item dropdown" sec:authorize="hasAnyRole('ROLE_DATUM_INPUT', 'ROLE_DNP3', 'ROLE_INSTRUCTION_INPUT', 'ROLE_OCPP', 'ROLE_OSCP')">
+					<a href="#" class="nav-link dropdown-toggle" data-th-classappend="${
 						   navloc == 'din'
 						|| navloc == 'dnp3'
 						|| navloc == 'inin'
 						|| navloc == 'ocpp'
 						|| navloc == 'oscp'
-						}?active" sec:authorize="hasAnyRole('ROLE_DATUM_INPUT', 'ROLE_DNP3', 'ROLE_INSTRUCTION_INPUT', 'ROLE_OCPP', 'ROLE_OSCP')">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-						<span data-th-text="#{nav.label.integrations}" data-th-remove="tag">Integrations</span> <b class="caret"></b>
-					</a>
+						}?active" data-bs-toggle="dropdown" role="button" aria-expanded="false"
+						data-th-text="#{nav.label.integrations}">Integrations</a>
 					<ul class="dropdown-menu">
-						<li data-th-classappend="${navloc == 'din'}?active" sec:authorize="hasRole('ROLE_DATUM_INPUT')">
-							<a data-th-href="@{/u/sec/din}" data-th-text="#{link.din}">DIN</a>
+						<li sec:authorize="hasRole('ROLE_DATUM_INPUT')">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'din'}?active" data-th-href="@{/u/sec/din}" data-th-text="#{link.din}">DIN</a>
 						</li>
-						<li data-th-classappend="${navloc == 'dnp3'}?active" sec:authorize="hasRole('ROLE_DNP3')">
-							<a data-th-href="@{/u/sec/dnp3}" data-th-text="#{link.dnp3}">DNP3</a>
+						<li sec:authorize="hasRole('ROLE_DNP3')">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'dnp3'}?active" data-th-href="@{/u/sec/dnp3}" data-th-text="#{link.dnp3}">DNP3</a>
 						</li>
-						<li data-th-classappend="${navloc == 'inin'}?active" sec:authorize="hasRole('ROLE_INSTRUCTION_INPUT')">
-							<a data-th-href="@{/u/sec/inin}" data-th-text="#{link.inin}">DIN</a>
+						<li sec:authorize="hasRole('ROLE_INSTRUCTION_INPUT')">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'inin'}?active" data-th-href="@{/u/sec/inin}" data-th-text="#{link.inin}">ININ</a>
 						</li>
-						<li data-th-classappend="${navloc == 'ocpp'}?active" sec:authorize="hasRole('ROLE_OCPP')">
-							<a data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
+						<li sec:authorize="hasRole('ROLE_OCPP')">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'ocpp'}?active" data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
 						</li>
-						<li data-th-classappend="${navloc == 'oscp'}?active" sec:authorize="hasRole('ROLE_OSCP')">
-							<a data-th-href="@{/u/sec/oscp}" data-th-text="#{link.oscp}">OSCP</a>
+						<li sec:authorize="hasRole('ROLE_OSCP')">
+							<a class="dropdown-item" data-th-classappend="${navloc == 'oscp'}?active" data-th-href="@{/u/sec/oscp}" data-th-text="#{link.oscp}">OSCP</a>
 						</li>
 					</ul>
 				</li>
-				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')">
-					<a data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
+				<li class="nav-item" sec:authorize="hasRole('ROLE_BILLING')">
+					<a class="nav-link" data-th-classappend="${navloc == 'billing'}?active" data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
 				</li>
-				<li data-th-classappend="${navloc == 'account'}?active" sec:authorize="hasRole('ROLE_USER') && !hasRole('ROLE_BILLING')">
-					<a data-th-href="@{/u/sec/account}" data-th-text="#{link.subscribe}">Subscribe</a>
+				<li class="nav-item" sec:authorize="hasRole('ROLE_USER') && !hasRole('ROLE_BILLING')">
+					<a class="nav-link" data-th-classappend="${navloc == 'account'}?active" data-th-href="@{/u/sec/account}" data-th-text="#{link.subscribe}">Subscribe</a>
 				</li>
 	 		</ul>
 
-			<ul class="nav navbar-nav navbar-right" sec:authorize="hasRole('ROLE_USER')">
-				<li class="dropdown">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-						<span data-th-text="#{nav.label.principal(${#authentication.principal.username})}">user@localhost</span>
-						<b class="caret"></b>
-					</a>
-					<ul class="dropdown-menu">
-						<li  data-th-classappend="${navloc == 'profile'}?active">
-							<a data-th-href="@{/u/sec/profile}" data-th-text="#{link.profile}">Profile</a>
+			<ul class="navbar-nav" sec:authorize="hasRole('ROLE_USER')">
+				<li class="nav-item dropdown">
+					<a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false"
+						data-th-text="#{nav.label.principal(${#authentication.principal.username})}">user@localhost</a>
+					<ul class="dropdown-menu dropdown-menu-end">
+						<li>
+							<a class="dropdown-item" data-th-classappend="${navloc == 'profile'}?active" data-th-href="@{/u/sec/profile}" data-th-text="#{link.profile}">Profile</a>
 						</li>
-						<li><a class="logout" href="#" data-th-text="#{link.logout}" onclick="document.getElementById('logout-form').submit();">Logout</a></li>
+						<li><a class="dropdown-item logout" href="#" data-th-text="#{link.logout}" onclick="document.getElementById('logout-form').submit();">Logout</a></li>
 					</ul>
 				</li>
 			</ul>

@@ -4,7 +4,7 @@
     <title data-th-text="#{login.title}">SolarUser Login</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css">
 	<link rel="stylesheet" href="../static/css/global.css">
 	<link rel="stylesheet" href="../static/css/edit-node.css">
@@ -17,28 +17,28 @@
 
 	<p class="intro" data-th-utext="#{login.intro(@{/register.do},@{/u/resetPassword})}">Please log in.</p>
 
-	<form data-th-action="@{/login}" class="form-horizontal login-form" method="post">
+	<form data-th-action="@{/login}" class="login-form" method="post">
 		<fieldset>
-			<div class="form-group">
-				<label class="col-sm-2 control-label" for="login-username" data-th-text="#{user.email.label}">Email</label>
+			<div class="row mb-3">
+				<label class="col-sm-2 col-form-label" for="login-username" data-th-text="#{user.email.label}">Email</label>
 				<div class="col-sm-4">
 					<input class="form-control" type="text" name="username" id="login-username" maxlength="240"
 						data-th-placeholder="#{user.email.placeholder}"
 						aria-describedby="login-username-help"
 						data-th-value="${param.login_error} ? ${SPRING_SECURITY_LAST_USERNAME}">
-					<span class="help-block" id="login-username-help" data-th-text="#{user.email.caption}"></span>
+					<span class="form-text" id="login-username-help" data-th-text="#{user.email.caption}"></span>
 				</div>
 			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label" for="login-password" data-th-text="#{user.password.label}">Password</label>
+			<div class="row mb-3">
+				<label class="col-sm-2 col-form-label" for="login-password" data-th-text="#{user.password.label}">Password</label>
 				<div class="col-sm-4">
 					<input class="form-control" type="password" name="password" id="login-password" maxlength="255"
 						data-th-placeholder="#{user.password.placeholder}">
 				</div>
 			</div>
 		</fieldset>
-		<div class="form-group">
-			<div class="col-sm-offset-2 col-sm-10">
+		<div class="row mb-3">
+			<div class="offset-sm-2 col-sm-10">
 				<button type="submit" class="btn btn-primary" data-th-text="#{action.login}">Login</button>
 			</div>
 		</div>

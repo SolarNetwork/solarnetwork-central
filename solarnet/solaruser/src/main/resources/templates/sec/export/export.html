@@ -4,7 +4,7 @@
     <title data-th-text="#{export.title}">Export</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
 </p>
 
 <div class="datum-export-getstarted hidden alert alert-info alert-dismissible" role="alert">
-	<button type="button" class="close" data-dismiss="alert" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 	<strong data-th-text="#{export.getstarted.title}">Let's get started!</strong>
 	<div data-th-utext="#{export.getstarted.intro}">To get started, do the following easy things:</div>
 </div>
@@ -24,9 +24,9 @@
 <section id="adhoc-datum-export-configs">
 	<h2>
 		<span data-th-text="#{export.adhocDatumExportList.header}">Adhoc exports</span>
-		<a href="#edit-adhoc-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
-			title="<fmt:message key='export.adhocDatumExportList.action.create'/>">
-			<i class="glyphicon glyphicon-plus"></i>
+		<a href="#edit-adhoc-datum-export-config-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
+			data-th-title="#{export.adhocDatumExportList.action.create}">
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{export.adhocDatumExportList.intro(0)}">
@@ -49,7 +49,7 @@
 			<tr class="template">
 				<td >
 					<span data-tprop="name"></span>
-					<p class="help-block"><small>
+					<p class="form-text"><small>
 						<span data-tprop="startDate"></span>
 						<span> - </span>
 						<span data-tprop="endDate"></span>
@@ -59,13 +59,13 @@
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
 				<td>
-					<span class="label status" data-tprop="status"></span>
+					<span class="badge status" data-tprop="status"></span>
 					<p class="completed hidden">
 						<span data-th-text="#{export.adhocConfig.status.completed.label}">Completed</span>
 						<span> </span>
 						<span data-tprop="completed"></span>
 						<span> </span>
-						<small class="help-block" data-tprop="message"></small>
+						<small class="form-text" data-tprop="message"></small>
 					</p>
 				</td>
 			</tr>
@@ -78,15 +78,15 @@
 <section id="datum-export-configs">
 	<h2>
 		<span data-th-text="#{export.datumExportList.header}">Exports</span>
-		<a href="#edit-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+		<a href="#edit-datum-export-config-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
 			data-th-title="#{export.datumExportList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{export.datumExportList.intro(0)}">
 		You've got <span class="listCount">1</span> export configuration.
 	</p>
-	<div id="datum-export-list-container" class="table configs hidden">
+	<div id="datum-export-list-container" class="configs mb-3 hidden">
 		<ol class="list-container">
 		</ol>
 		<ol class="hidden">
@@ -102,9 +102,9 @@
 <section id="export-data-configs">
 	<h2>
 		<span data-th-text="#{export.dataConfigList.header}">Data configurations</span>
-		<a href="#edit-export-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+		<a href="#edit-export-data-config-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
 			data-th-title="#{export.dataConfigList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{export.dataConfigList.intro(0)}">
@@ -139,9 +139,9 @@
 <section id="export-destination-configs">
 	<h2>
 		<span data-th-text="#{export.destinationConfigList.header}">Destination configurations</span>
-		<a href="#edit-export-destination-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+		<a href="#edit-export-destination-config-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
 			data-th-title="#{export.destinationConfigList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{export.destinationConfigList.intro(0)}">
@@ -178,9 +178,9 @@
 <section id="export-output-configs">
 	<h2>
 		<span data-th-text="#{export.outputConfigList.header}">Output configurations</span>
-		<a href="#edit-export-output-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+		<a href="#edit-export-output-config-modal" class="btn btn-primary float-end" data-bs-toggle="modal"
 			data-th-title="#{export.outputConfigList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</a>
 	</h2>
 	<p class="intro" data-th-utext="#{export.outputConfigList.intro(0)}">

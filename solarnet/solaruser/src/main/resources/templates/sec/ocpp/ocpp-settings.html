@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
 <section id="ocpp-settings">
 	<h2>
 		<span data-th-text="#{ocpp.settings.header}">Connectors</span>
-		<button type="button" id="ocpp-edit-settings-button" class="btn btn-primary pull-right"
-			data-target="#ocpp-settings-edit-modal" data-toggle="modal"
+		<button type="button" id="ocpp-edit-settings-button" class="btn btn-primary float-end"
+			data-bs-target="#ocpp-settings-edit-modal" data-bs-toggle="modal"
 			data-th-title="#{ocpp.settings.add}"
 			data-th-text="#{ocpp.settings.add}">
 		</button>
@@ -31,10 +31,10 @@
 			<tr data-th-classappend="'template'">
 				<td data-tprop="hid"></td>
 				<td data-tprop="sourceIdTemplate"></td>
-				<td><span class="label" data-tprop="publishToSolarIn"
+				<td><span class="badge" data-tprop="publishToSolarIn"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
-				<td><span class="label" data-tprop="publishToSolarFlux"
+				<td><span class="badge" data-tprop="publishToSolarFlux"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
 			</tr>

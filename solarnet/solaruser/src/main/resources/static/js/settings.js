@@ -331,11 +331,14 @@ SolarReg.Settings.handleSettingToggleButtonChange = function handleSettingToggle
 		return;
 	}
 	btn.toggleClass('btn-success', enabled)
-		.toggleClass('btn-default', !enabled)
+		.toggleClass('btn-light', !enabled)
 		.toggleClass('active', enabled)
 		.attr('aria-pressed', enabled )
-		.button(enabled ? 'on' : 'off')
 		.val(enabled ? 'true' : 'false');
+	const text = btn.data(enabled ? 'on-text' : 'off-text');
+	if ( text !== undefined ) {
+		btn.text(text);
+	}
 }
 
 /**
@@ -399,8 +402,8 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 			.attr('name', 'serviceProperties.' + setting.key);
 		SolarReg.Settings.setupSettingToggleButton(fieldElement, formItem.value === 'true');
         var helpElement = templateElement.find('.setting-help');
-        if ( helpElement.data('toggle') === 'popover' ) {
-            helpElement.attr('data-content', formItem.description);
+        if ( helpElement.data('bs-toggle') === 'popover' ) {
+            helpElement.attr('data-bs-content', formItem.description);
             helpElement.on('click', function(event) {
                 event.preventDefault();
                 $(event.currentTarget).popover('show');

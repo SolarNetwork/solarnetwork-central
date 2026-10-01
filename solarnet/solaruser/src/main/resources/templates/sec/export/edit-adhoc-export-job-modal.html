@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -12,13 +12,13 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{export.adhocDatumExportConfig.edit.title}">Adhoc export configuration</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{export.adhocDatumExportConfig.edit.intro}">Edit this form to create your adhoc export.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{export.adhocDatumExportConfig.name.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{export.adhocDatumExportConfig.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
@@ -32,8 +32,8 @@
 		 		</div>
 
 		 		<!-- Data filter config -->
-				<div class="form-group">
-					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.nodes.label}">
+				<div class="row mb-3">
+					<label class="col-sm-3 col-form-label" data-th-text="#{export.dataConfig.nodes.label}">
 						Nodes
 					</label>
 					<div class="col-sm-8">
@@ -42,8 +42,8 @@
 							maxlength="128">
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.sources.label}">
+				<div class="row mb-3">
+					<label class="col-sm-3 col-form-label" data-th-text="#{export.dataConfig.sources.label}">
 						Sources
 					</label>
 					<div class="col-sm-8">
@@ -52,56 +52,56 @@
 							maxlength="256">
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.aggregation.label}">
+				<div class="row mb-3">
+					<label class="col-sm-3 col-form-label" data-th-text="#{export.dataConfig.aggregation.label}">
 						Aggregation
 					</label>
 					<div class="col-sm-8">
-						<select class="form-control export-data-aggregation-types" name="dataConfiguration.datumFilter.aggregationKey">
+						<select class="form-select export-data-aggregation-types" name="dataConfiguration.datumFilter.aggregationKey">
 						</select>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label" for="adhoc-datum-export-min-date" data-th-text="#{export.adhocDatumExportConfig.minDate.label}">
+				<div class="row mb-3">
+					<label class="col-sm-3 col-form-label" for="adhoc-datum-export-min-date" data-th-text="#{export.adhocDatumExportConfig.minDate.label}">
 						Min date
 					</label>
 					<div class="col-sm-8">
 						<input type="text" name="dataConfiguration.datumFilter.startDate" class="form-control" id="adhoc-datum-export-min-date"
 							data-th-placeholder="#{datumDelete.minDate.placeholder}" required>
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{export.adhocDatumExportConfig.minDate.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{export.adhocDatumExportConfig.minDate.caption}">
 				 			The minimum export date.
 				 		</span>
 					</div>
 				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label" for="adhoc-datum-export-max-date" data-th-text="#{export.adhocDatumExportConfig.maxDate.label}">
+				<div class="row mb-3">
+					<label class="col-sm-3 col-form-label" for="adhoc-datum-export-max-date" data-th-text="#{export.adhocDatumExportConfig.maxDate.label}">
 						Max date
 					</label>
 					<div class="col-sm-8">
 						<input type="text" name="dataConfiguration.datumFilter.endDate" class="form-control" id="adhoc-datum-export-max-date"
 							data-th-placeholder="#{export.adhocDatumExportConfig.maxDate.placeholder}" required>
-				 		<span id="helpBlock" class="help-block" data-th-utext="#{export.adhocDatumExportConfig.maxDate.caption}">
+				 		<span id="helpBlock" class="form-text" data-th-utext="#{export.adhocDatumExportConfig.maxDate.caption}">
 				 			The maximum date, exclusive.
 				 		</span>
 					</div>
 				</div>
 
 				<!-- Destination, format service config -->
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{export.datumExportConfig.destinationConfigurationId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{export.datumExportConfig.destinationConfigurationId.label}">
 		 				Destination
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control" name="destinationConfigurationId" required>
+		 				<select class="form-select" name="destinationConfigurationId" required>
 		 				</select>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{export.datumExportConfig.outputConfigurationId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{export.datumExportConfig.outputConfigurationId.label}">
 		 				Output
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control" name="outputConfigurationId" required>
+		 				<select class="form-select" name="outputConfigurationId" required>
 		 				</select>
 		 			</div>
 		 		</div>
@@ -109,7 +109,7 @@
 		 	<!--/*
 		 		The .service-props-container class defines where dynamic setting form elements will be rendered.
 		 	 */-->
-		 	<div class="modal-body form-horizontal service-props-container hidden">
+		 	<div class="modal-body service-props-container hidden">
 		 	</div>
 		 	<!--/*
 		 		The .delete-confirm class will be shown/hidden via the .hidden class to confirm the delete action.
@@ -123,11 +123,11 @@
 			 	<!--/*
 			 		The .delete-config button defines the button used to initiate the delete action.
 			 	 */-->
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{export.deleteConfiguration.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{close.label}">Close</button>
 				<!--/*
 					The submit button performs the create/update save action.
 				 */-->

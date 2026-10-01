@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -12,13 +12,13 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{ocpp.connectors.edit.title}">Edit OCPP connector</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{ocpp.connectors.edit.intro}">Edit the OCPP connector details on this form.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.chargePointId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.chargePointId.label}">
 		 				Charge Point ID
 		 			</label>
 		 			<div class="col-sm-8">
@@ -26,28 +26,28 @@
 		 					data-th-data-error-invalid-text="#{ocpp.connectors.error.invalidChargePointId}">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.evseId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.evseId.label}">
 		 				EVSE ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="evseId" type="number" min="0" required>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.connectorId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.connectorId.label}">
 		 				Connector ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input class="form-control" name="connectorId" type="number" min="1" required>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.status.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.status.label}">
 		 				Status
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select name="info.status" class="form-control">
+		 				<select name="info.status" class="form-select">
 		 					<option value="Unknown" data-th-text="#{ocpp.connectors.status.Unknown}">Unknown</option>
 		 					<option value="Available" data-th-text="#{ocpp.connectors.status.Available}">Available</option>
 		 					<option value="Faulted" data-th-text="#{ocpp.connectors.status.Faulted}">Faulted</option>
@@ -61,12 +61,12 @@
 		 				</select>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.errorCode.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.errorCode.label}">
 		 				Status
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select name="info.errorCode" class="form-control">
+		 				<select name="info.errorCode" class="form-select">
 		 					<option value="Unknown" data-th-text="#{ocpp.connectors.errorCode.Unknown}">Unknown</option>
 		 					<option value="ConnectorLockFailure" data-th-text="#{ocpp.connectors.errorCode.ConnectorLockFailure}">ConnectorLockFailure</option>
 		 					<option value="HighTemperature" data-th-text="#{ocpp.connectors.errorCode.HighTemperature}">HighTemperature</option>
@@ -87,24 +87,24 @@
 		 				</select>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.info.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.info.label}">
 		 				Info
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.info" maxlength="50">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.vendorId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.vendorId.label}">
 		 				Vendor ID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.vendorId" maxlength="255">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.connectors.vendorErrorCode.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.connectors.vendorErrorCode.label}">
 		 				Vendor Error Code
 		 			</label>
 		 			<div class="col-sm-8">
@@ -118,11 +118,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{ocpp.connectors.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

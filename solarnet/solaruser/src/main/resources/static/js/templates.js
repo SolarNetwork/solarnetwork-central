@@ -177,8 +177,8 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * ```
 *
 * The element with the `data-tprop` attribute can also define other `data-X-label` attributes, where `X`
-* is the replacement value. If available, and the element also has a `label` class, then the attribute
-* value will be added as a label class, and `label-default` removed.
+* is the replacement value. If available, and the element also has a `badge` class, then the attribute
+* value will be added as a `text-bg-X` badge color class, and `text-bg-secondary` removed.
 *
 * In addition, if `obj` has an object property named `serviceProperties`, special handling is performed
 * to generate a dynamic list of key/value property pairs using another HTML template. The desintation
@@ -254,18 +254,18 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 				continue;
 			} else {
 				vel = el.find(sel).addBack(sel);
-				if ( vel.hasClass('label') ) {
-					// for boolean values, toggle 'success' and 'default' label classes if 'label' class exists
+				if ( vel.hasClass('badge') ) {
+					// for boolean values, toggle 'success' and 'secondary' badge colors if 'badge' class exists
 					if ( typeof val == 'boolean' ) {
-						vel.toggleClass('label-success', val);
-						vel.toggleClass('label-default', !val);
+						vel.toggleClass('text-bg-success', val);
+						vel.toggleClass('text-bg-secondary', !val);
 					} else {
 						vkey = String(val).toLowerCase()+'-label';
 						vlabel = vel.data(vkey);
-						vel.toggleClass('label-default', vlabel === undefined);
-						vel.removeClass(['label-success', 'label-info', 'label-warning', 'label-danger']);
+						vel.toggleClass('text-bg-secondary', vlabel === undefined);
+						vel.removeClass(['text-bg-success', 'text-bg-info', 'text-bg-warning', 'text-bg-danger']);
 						if ( vlabel ) {
-							vel.addClass('label-' + vlabel);
+							vel.addClass('text-bg-' + vlabel);
 						}
 					}
 				}

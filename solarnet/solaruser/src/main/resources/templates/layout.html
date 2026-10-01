@@ -9,7 +9,7 @@
 	<meta name="solarUserRootPublicURL" content="/solaruser" data-th-content="@{/}">
 	<meta name="solarUserRootURL" content="/solaruser/u" data-th-content="@{/u}">
 	<link rel="stylesheet" href="../static/css/bootstrap.css" data-th-href="@{/css/bootstrap.css}">
-	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" data-th-href="@{/css/bootstrap-theme.css}">
+	<link rel="stylesheet" href="../static/css/bootstrap-icons.css" data-th-href="@{/css/bootstrap-icons.css}">
 	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css" data-th-href="@{/css/dataTables.bootstrap.css}">
 	<link rel="stylesheet" href="../static/css/global.css" data-th-href="@{/css/global.css}">
 	<link rel="stylesheet" href="../static/css/edit-node.css" data-th-href="@{/css/edit-node.css}">
@@ -19,7 +19,7 @@
 	<script src="../static/js-lib/jquery.timezone-picker.js" data-th-src="@{/js-lib/jquery.timezone-picker.js}"></script>
 	<script src="../static/js-lib/jquery.dataTables.js" data-th-src="@{/js-lib/jquery.dataTables.js}"></script>
 	<script src="../static/js-lib/moment.js" data-th-src="@{/js-lib/moment.js}"></script>
-	<script src="../static/js-lib/bootstrap.js" data-th-src="@{/js-lib/bootstrap.js}"></script>
+	<script src="../static/js-lib/bootstrap.bundle.js" data-th-src="@{/js-lib/bootstrap.bundle.js}"></script>
 	<script src="../static/js-lib/dataTables.bootstrap.js" data-th-src="@{/js-lib/dataTables.bootstrap.js}"></script>
 	<script src="../static/js/global.js" data-th-src="@{/js/global.js}"></script>
 	<script src="../static/js/templates.js" data-th-src="@{/js/templates.js}"></script>
@@ -44,16 +44,15 @@
 	<script src="../static/js/c2c-oauth.js" data-th-src="@{/js/c2c-oauth.js}"></script>
 </head>
 <body
+	data-th-data-i18n-close-label="#{close.label}"
 	data-th-data-i18n-copy-tooltip="#{copy.tooltip}"
 	data-th-data-i18n-copied-tooltip="#{copied.tooltip}"
 	data-th-data-i18n-copy-failed-tooltip="#{copy.failed.tooltip}">
-	<nav class="navbar navbar-default" data-th-replace="~{navbar :: navbar}">
+	<nav class="navbar navbar-expand-xl bg-body-tertiary mb-3" data-th-replace="~{navbar :: navbar}">
 		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="#">
-					<img src="../static/img/logo.svg" alt="SolarUser" width="214" height="30">
-				</a>
-		    </div>
+			<a class="navbar-brand" href="#">
+				<img src="../static/img/logo.svg" alt="SolarUser" width="214" height="30">
+			</a>
 		</div>
 	</nav>
 	<div class="container" data-th-if="${statusMessageKey}">

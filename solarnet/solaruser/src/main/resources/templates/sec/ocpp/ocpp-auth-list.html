@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -11,10 +11,10 @@
 <section id="ocpp-auths">
 	<h2>
 		<span data-th-text="#{ocpp.auths.header}">Credentials</span>
-		<button type="button" id="ocpp-add-auth-button" class="btn btn-primary pull-right"
-			data-target="#ocpp-auth-edit-modal" data-toggle="modal"
+		<button type="button" id="ocpp-add-auth-button" class="btn btn-primary float-end"
+			data-bs-target="#ocpp-auth-edit-modal" data-bs-toggle="modal"
 			data-th-title="#{ocpp.auths.add}">
-			<i class="glyphicon glyphicon-plus"></i>
+			<i class="bi bi-plus-lg"></i>
 		</button>
 	</h2>
 	<p class="intro" data-th-utext="#{ocpp.auths.intro(0)}">
@@ -35,11 +35,11 @@
 				<td data-tprop="token"></td>
 				<td data-tprop="expiryDateDisplay"></td>
 				<td>
-					<span class="label" data-tprop="valid"
+					<span class="badge" data-tprop="valid"
 						data-th-data-true-text="#{settings.notExpired.label}"
 						data-th-data-false-text="#{settings.expired.label}"></span>
 				</td>
-				<td><span class="label" data-tprop="enabled"
+				<td><span class="badge" data-tprop="enabled"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
 			</tr>

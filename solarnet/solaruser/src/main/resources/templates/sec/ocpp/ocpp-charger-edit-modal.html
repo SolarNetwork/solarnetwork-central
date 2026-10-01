@@ -3,7 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
-	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-icons.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
@@ -12,13 +12,13 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" data-th-text="#{ocpp.chargers.edit.title}">Edit OCPP charger</h4>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" data-th-aria-label="#{close.label}"></button>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body">
 		 		<p data-th-utext="#{ocpp.chargers.edit.intro}">Edit the OCPP charger details on this form.</p>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.identifier.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.identifier.label}">
 		 				Identifier
 		 			</label>
 		 			<div class="col-sm-8">
@@ -26,12 +26,12 @@
 							data-th-data-error-duplicate-text="#{ocpp.chargers.error.duplicateIdentifier}">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.registrationStatus.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.registrationStatus.label}">
 		 				Registration Status
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select name="registrationStatus" class="form-control">
+		 				<select name="registrationStatus" class="form-select">
 		 					<option value="Unknown" data-th-text="#{ocpp.chargers.registrationStatus.Unknown}">Unknown</option>
 		 					<option value="Pending" data-th-text="#{ocpp.chargers.registrationStatus.Pending}">Pending</option>
 		 					<option value="Accepted" data-th-text="#{ocpp.chargers.registrationStatus.Accepted}">Accepted</option>
@@ -39,8 +39,8 @@
 		 				</select>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.nodeId.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.nodeId.label}">
 		 				Node
 		 			</label>
 		 			<div class="col-sm-8">
@@ -48,92 +48,92 @@
 		 					data-th-data-error-invalid-text="#{ocpp.chargers.error.invalidNodeId}">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.connectorCount.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.connectorCount.label}">
 		 				Connector Count
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="number" min="0" max="32767" class="form-control" name="connectorCount" value="0">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.vendor.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.vendor.label}">
 		 				Vendor
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.chargePointVendor" maxlength="20" required>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.model.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.model.label}">
 		 				Model
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.chargePointModel" maxlength="20" required>
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.serialNumber.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.serialNumber.label}">
 		 				Serial Number
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.chargePointSerialNumber" maxlength="25">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.chargeBoxSerialNumber.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.chargeBoxSerialNumber.label}">
 		 				Charge Box Serial Number
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.chargeBoxSerialNumber" maxlength="25">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.firmwareVersion.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.firmwareVersion.label}">
 		 				Firmware Version
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.firmwareVersion" maxlength="50">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.iccid.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.iccid.label}">
 		 				ICCID
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.iccid" maxlength="20">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.imsi.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.imsi.label}">
 		 				IMSI
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.imsi" maxlength="20">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.meterType.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.meterType.label}">
 		 				Meter Type
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.meterType" maxlength="25">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.meterSerialNumber.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.meterSerialNumber.label}">
 		 				Meter Serial Number
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="text" class="form-control" name="info.meterSerialNumber" maxlength="25">
 		 			</div>
 		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{ocpp.chargers.enabled.label}">
+		 		<div class="row mb-3">
+		 			<label class="col-sm-3 col-form-label" data-th-text="#{ocpp.chargers.enabled.label}">
 		 				Enabled
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+						<button type="button" name="enabled" class="setting-form-element toggle btn btn-light w-100"
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-th-data-on-text="#{settings.enabled.label}"
 							data-th-data-off-text="#{settings.disabled.label}"
@@ -149,11 +149,11 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
-		 			<span class="glyphicon glyphicon-trash"></span>
+		 		<button type="button" class="btn btn-danger me-auto delete-config hidden">
+		 			<span class="bi bi-trash3"></span>
 		 			<span data-th-text="#{ocpp.chargers.delete.label}">Delete</span>
 		 		</button>
-				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
 		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
 		 	</div>
 		 </div>

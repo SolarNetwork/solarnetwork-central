@@ -11,9 +11,11 @@ var SolarReg = {
 	 * @returns {void}
 	 */
 	showAlertBefore: function(el, clazz, msg) {
-	    $('<div class="alert'+(clazz.length > 0 ? ' ' +clazz : '')
-	    		+'"><button type="button" class="close" data-dismiss="alert">\u00d7</button>'
-	    		+msg +'</div>').insertBefore(el);
+	    $('<div class="alert alert-dismissible'+(clazz.length > 0 ? ' ' +clazz : '')
+	    		+'">' +msg
+	    		+'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>')
+	    	.find('.btn-close').attr('aria-label', (SolarReg.i18n && SolarReg.i18n.closeLabel) || 'Close').end()
+	    	.insertBefore(el);
 	},
 
 	solarUserURL: function(relativeURL) {
@@ -391,7 +393,8 @@ $(document).ready(function() {
 		$(this).removeData('modal');
 	});
 
-	$('[data-toggle="tooltip"]').tooltip();
+	// delegate from the body so tooltips also work on elements cloned from templates
+	$('body').tooltip({selector: '[data-bs-toggle="tooltip"]'});
 
 	/* ==================
 	   Global i18n
@@ -418,11 +421,17 @@ $(document).ready(function() {
 			}
 			}
 	}).on('copied', function handleCopyResult(_event, message) {
-		$(this).attr('title', message)
-			.tooltip('fixTitle')
-			.tooltip('show')
-			.attr('title', SolarReg.i18n.copyTooltip)
-			.tooltip('fixTitle');
+		const btn = this,
+			tip = bootstrap.Tooltip.getOrCreateInstance(btn);
+		// show the result now, then go back to the normal tooltip once this one hides
+		$(btn).one('hidden.bs.tooltip', function() {
+			tip.setContent({'.tooltip-inner': SolarReg.i18n.copyTooltip});
+		});
+		tip.setContent({'.tooltip-inner': message});
+		if ( !btn.hasAttribute('aria-describedby') ) {
+			// not already showing from a hover
+			tip.show();
+		}
 	});
 
 }).ajaxComplete(function(_event, xhr, _ajaxOptions) {
