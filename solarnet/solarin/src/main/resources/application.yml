@@ -80,6 +80,7 @@ app:
       secret-key: "SECRET_KEY_HERE"
       work-queue-size: 100
       work-item-max-wait: "5s"
+      sqs-send-max-wait: "2s"
       read-concurrency: 1
       write-concurrency: 2
       read-max-message-count: 10
@@ -106,6 +107,8 @@ app:
         write-timeout-seconds: -1
     data-collector:
       node-datum-topic-template: "node/%s/datum"
+      thread-count: 20
+      shutdown-wait: "30s"
       subscribe-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
@@ -132,6 +135,7 @@ app:
       secret-key: "SECRET_KEY_HERE"
       work-queue-size: 100
       work-item-max-wait: "5s"
+      sqs-send-max-wait: "2s"
       read-concurrency: 0
       write-concurrency: 1
       read-max-message-count: 10

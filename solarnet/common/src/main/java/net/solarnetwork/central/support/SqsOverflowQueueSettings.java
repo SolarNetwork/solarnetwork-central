@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
  * Settings for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SqsOverflowQueueSettings extends SqsProperties {
 
@@ -47,6 +47,8 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	private int statFrequency = DEFAULT_STAT_FREQUENCY;
 	private int workQueueSize = DEFUALT_WORK_QUEUE_SIZE;
 	private Duration workItemMaxWait = Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
+	private Duration sqsSendMaxWait = Duration
+			.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS);
 	private int readConcurrency = SqsOverflowQueue.DEFAULT_READ_CONCURRENCY;
 	private int writeConcurrency = SqsOverflowQueue.DEFAULT_WRITE_CONCURRENCY;
 	private int readMaxMessageCount = SqsOverflowQueue.DEFAULT_READ_MAX_MESSAGE_COUNT;
@@ -58,7 +60,8 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 			.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 	private Duration pingTestTimeout = Duration.ofMillis(SqsOverflowQueue.DEFAULT_PING_TEST_TIMEOUT_MS);
 
-	private Duration shutdownWait = Duration.ZERO;
+	private Duration shutdownWait = Duration
+			.ofSeconds(SqsOverflowQueue.DEFAULT_SHUTDOWN_WAIT_SECS);
 
 	/**
 	 * Create an asynchronous client from the settings of this instance.
@@ -92,9 +95,16 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 		if ( workItemMaxWait != null ) {
 			queue.setWorkItemMaxWaitMs(workItemMaxWait.toMillis());
 		}
+		if ( sqsSendMaxWait != null ) {
+			queue.setSqsSendMaxWaitMs(sqsSendMaxWait.toMillis());
+		}
 		queue.setReadMaxMessageCount(readMaxMessageCount);
 		if ( readMaxWaitTime != null ) {
-			queue.setReadMaxWaitTimeSecs((int) readMaxWaitTime.toSeconds());
+			// round a positive sub-second wait up to 1s rather than truncating it to 0,
+			// which would turn off long polling and busy-poll the queue instead
+			queue.setReadMaxWaitTimeSecs((int) (readMaxWaitTime.isZero() || readMaxWaitTime.isNegative()
+					? 0
+					: Math.max(1L, readMaxWaitTime.toSeconds())));
 		}
 		if ( readSleepMin != null ) {
 			queue.setReadSleepMinMs(readSleepMin.toMillis());
@@ -106,7 +116,9 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 			queue.setReadSleepThrottleStepMs(readSleepThrottleStep.toMillis());
 		}
 		if ( shutdownWait != null ) {
-			queue.setShutdownWaitSecs((int) shutdownWait.toSeconds());
+			// as above: a positive sub-second wait means wait a little, not do not wait
+			queue.setShutdownWaitSecs((int) (shutdownWait.isZero() || shutdownWait.isNegative() ? 0
+					: Math.max(1L, shutdownWait.toSeconds())));
 		}
 	}
 
@@ -239,6 +251,32 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	public final void setWorkItemMaxWait(Duration workItemMaxWait) {
 		this.workItemMaxWait = (workItemMaxWait != null ? workItemMaxWait
 				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS));
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @return the maximum time
+	 * @since 1.2
+	 */
+	public final Duration getSqsSendMaxWait() {
+		return sqsSendMaxWait;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @param sqsSendMaxWait
+	 *        the maximum time to set; if {@code null} then
+	 *        {@link SqsOverflowQueue#DEFAULT_SQS_SEND_MAX_WAIT_MS} milliseconds
+	 *        will be used
+	 * @since 1.2
+	 */
+	public final void setSqsSendMaxWait(Duration sqsSendMaxWait) {
+		this.sqsSendMaxWait = (sqsSendMaxWait != null ? sqsSendMaxWait
+				: Duration.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS));
 	}
 
 	/**

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.common.biz.impl;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
@@ -58,6 +57,7 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
@@ -107,13 +107,20 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * @param <K>
  *        the message entity key type
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SqsOverflowQueue<T, K>
 		implements GenericWriteOnlyDao<T, K>, PingTest, ServiceLifecycleObserver {
 
 	/** The {@code workItemMaxWaitMs} property default value. */
 	public static final long DEFAULT_WORK_ITEM_MAX_WAIT_MS = 5000L;
+
+	/**
+	 * The {@code sqsSendMaxWaitMs} property default value.
+	 *
+	 * @since 1.2
+	 */
+	public static final long DEFAULT_SQS_SEND_MAX_WAIT_MS = 2_000L;
 
 	/** The {@code readConcurrency} property default value. */
 	public static final int DEFAULT_READ_CONCURRENCY = 1;
@@ -167,6 +174,31 @@ public class SqsOverflowQueue<T, K>
 	 */
 	public static final long DEFAULT_PING_TEST_TIMEOUT_MS = 2_000L;
 
+	/**
+	 * The {@code shutdownWaitSecs} property default value.
+	 *
+	 * @since 1.2
+	 */
+	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
+
+	/**
+	 * The work queue poll timeout, so writer threads notice a shutdown while
+	 * draining.
+	 */
+	private static final long WRITER_QUEUE_POLL_MS = 1_000L;
+
+	/** The maximum number of messages SQS allows in one receive request. */
+	private static final int SQS_MAX_RECEIVE_MESSAGE_COUNT = 10;
+
+	/** The maximum number of messages SQS allows in one delete request. */
+	private static final int SQS_MAX_DELETE_BATCH_SIZE = 10;
+
+	/** The maximum receive wait time SQS allows, in seconds. */
+	private static final int SQS_MAX_RECEIVE_WAIT_TIME_SECS = 20;
+
+	/** The minimum pause before re-checking a full work queue. */
+	private static final long WORK_QUEUE_FULL_PAUSE_MS = 100L;
+
 	private static final Logger log = LoggerFactory.getLogger(SqsOverflowQueue.class);
 
 	private static final AtomicInteger READER_COUNTER = new AtomicInteger(0);
@@ -183,6 +215,7 @@ public class SqsOverflowQueue<T, K>
 	private final BlockingQueue<String> completedSqsMessageHandles;
 
 	private long workItemMaxWaitMs = DEFAULT_WORK_ITEM_MAX_WAIT_MS;
+	private long sqsSendMaxWaitMs = DEFAULT_SQS_SEND_MAX_WAIT_MS;
 	private int readConcurrency = DEFAULT_READ_CONCURRENCY;
 	private int writeConcurrency = DEFAULT_WRITE_CONCURRENCY;
 	private int readMaxMessageCount = DEFAULT_READ_MAX_MESSAGE_COUNT;
@@ -190,7 +223,7 @@ public class SqsOverflowQueue<T, K>
 	private long readSleepMinMs = DEFAULT_READ_SLEEP_MIN_MS;
 	private long readSleepMaxMs = DEFAULT_READ_SLEEP_MAX_MS;
 	private long readSleepThrottleStepMs = DEFAULT_READ_SLEEP_THROTTLE_STEP_MS;
-	private int shutdownWaitSecs;
+	private int shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
 	private @Nullable UncaughtExceptionHandler exceptionHandler;
 	private String pingTestName = DEFAULT_PING_TEST_NAME;
 	private long pingTestTimeoutMs = DEFAULT_PING_TEST_TIMEOUT_MS;
@@ -211,6 +244,14 @@ public class SqsOverflowQueue<T, K>
 
 		/** An overall count of objects that failed to be persisted. */
 		ObjectsFailed,
+
+		/**
+		 * An overall count of objects whose persistence failure was ignored, per
+		 * the configured {@code ignoredDaoExceptions}.
+		 *
+		 * @since 1.2
+		 */
+		ObjectsIgnored,
 
 		/** An overall count of objects that failed to be processed at all. */
 		ObjectsDiscarded,
@@ -268,8 +309,10 @@ public class SqsOverflowQueue<T, K>
 	public SqsOverflowQueue(String identity, SqsAsyncClient sqsClient, String sqsQueueUrl,
 			BlockingQueue<WorkItem<T, K>> queue, GenericWriteOnlyDao<T, K> dao,
 			EntityCodec<T, K, String> entityCodec) {
-		this(new StatTracker("SqsDatumCollector", null, log, 200), identity, sqsClient, sqsQueueUrl,
-				queue, new LinkedHashSetBlockingQueue<>(9), dao, entityCodec);
+		this(new StatTracker(requireNonNullArgument(identity, "identity"), null, log, 200), identity,
+				sqsClient, sqsQueueUrl, queue,
+				// one short of a full delete batch, so a handle the queue rejects completes it
+				new LinkedHashSetBlockingQueue<>(SQS_MAX_DELETE_BATCH_SIZE - 1), dao, entityCodec);
 	}
 
 	/**
@@ -286,9 +329,10 @@ public class SqsOverflowQueue<T, K>
 	 * @param queue
 	 *        the temporary queue to use
 	 * @param completedSqsMessageHandles
-	 *        a blocking queue to buffer message handles for deletion; the queue
-	 *        size should be no more than the maximum allowed in a single SQS
-	 *        delete request (10)
+	 *        a blocking queue to buffer message handles for deletion; its
+	 *        capacity is how many handles accumulate before a delete request is
+	 *        sent, and a capacity above the SQS per-request maximum of 10 gains
+	 *        nothing, as each request can delete at most that many
 	 * @param dao
 	 *        the delegate DAO
 	 * @param entityCodec
@@ -347,14 +391,28 @@ public class SqsOverflowQueue<T, K>
 
 	/**
 	 * Call when no longer needed.
+	 *
+	 * <p>
+	 * Delegates to {@link #shutdownAndWait()}, so work already accepted is
+	 * given {@code shutdownWaitSecs} seconds to be persisted and anything left
+	 * over is overflowed to SQS.
+	 * </p>
 	 */
 	@Override
 	public synchronized void serviceDidShutdown() {
-		doShutdown();
-		readerThreads = null;
-		writerThreads = null;
+		shutdownAndWait();
 	}
 
+	/**
+	 * Stop accepting work and stop reading from SQS.
+	 *
+	 * <p>
+	 * The writer threads are interrupted only to wake them from a queue poll so
+	 * they re-check their loop condition: that condition keeps them draining
+	 * whatever is already in the work queue, so entities that can still be
+	 * persisted directly are not pushed to SQS.
+	 * </p>
+	 */
 	private void doShutdown() {
 		writeEnabled = false;
 		if ( readerThreads != null ) {
@@ -367,40 +425,118 @@ public class SqsOverflowQueue<T, K>
 				t.interrupt();
 			}
 		}
-		flushSqsHandledMessages();
 	}
 
 	/**
 	 * Shutdown and wait for all threads to finish.
+	 *
+	 * <p>
+	 * Waits up to {@code shutdownWaitSecs} seconds in <b>total</b> for all
+	 * threads to finish, then abandons any still running. A
+	 * {@code shutdownWaitSecs} of {@literal 0} means do not wait at all.
+	 * </p>
 	 */
 	public synchronized void shutdownAndWait() {
 		doShutdown();
+		final long expire = System.nanoTime() + TimeUnit.SECONDS.toNanos(shutdownWaitSecs);
+		int abandoned = 0;
 		if ( readerThreads != null ) {
-			for ( QueueReaderThread t : readerThreads ) {
-				try {
-					t.join(TimeUnit.SECONDS.toMillis(shutdownWaitSecs));
-				} catch ( InterruptedException e ) {
-					// ignore
-				}
-				if ( t.isAlive() ) {
-					t.interrupt();
-				}
-			}
+			abandoned += joinAll(readerThreads, expire);
 			readerThreads = null;
 		}
 		if ( writerThreads != null ) {
-			for ( DaoWriterThread t : writerThreads ) {
-				try {
-					t.join(TimeUnit.SECONDS.toMillis(shutdownWaitSecs));
-				} catch ( InterruptedException e ) {
-					// ignore
-				}
-				if ( t.isAlive() ) {
-					t.interrupt();
-				}
-			}
+			abandoned += joinAll(writerThreads, expire);
 			writerThreads = null;
 		}
+		if ( abandoned > 0 ) {
+			log.warn("Abandoned {} thread(s) still running after waiting {}s for SQS queue [{}].",
+					abandoned, shutdownWaitSecs, sqsQueueUrl);
+		}
+		flushSqsHandledMessages();
+		drainWorkQueue(expire);
+	}
+
+	/**
+	 * Overflow any work items left in the work queue to SQS.
+	 *
+	 * <p>
+	 * Called once the writer threads have stopped, so that nothing accepted by
+	 * {@link #persist(Object)} is dropped, and no caller is left waiting on a
+	 * future that will never complete.
+	 * </p>
+	 *
+	 * @param expire
+	 *        the shutdown deadline, as a {@link System#nanoTime()} value
+	 */
+	private void drainWorkQueue(long expire) {
+		final List<WorkItem<T, K>> remaining = new ArrayList<>(queue.size());
+		queue.drainTo(remaining);
+		if ( remaining.isEmpty() ) {
+			return;
+		}
+		log.info("Overflowing {} work item(s) to SQS queue [{}] at shutdown.", remaining.size(),
+				sqsQueueUrl);
+		final List<CompletableFuture<K>> pending = new ArrayList<>(remaining.size());
+		for ( WorkItem<T, K> item : remaining ) {
+			stats.increment(BasicCount.WorkQueueRemovals, true);
+			if ( item.future.isDone() ) {
+				stats.increment(BasicCount.WorkQueueCancels, true);
+				continue;
+			}
+			pending.add(sendToSqs(item.entity, item.future));
+		}
+		if ( pending.isEmpty() ) {
+			return;
+		}
+		// wait for the sends to land, so nothing is lost if the process exits as
+		// soon as shutdown returns
+		final long remainingMs = Math.max(WRITER_QUEUE_POLL_MS,
+				TimeUnit.NANOSECONDS.toMillis(expire - System.nanoTime()));
+		try {
+			CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).get(remainingMs,
+					TimeUnit.MILLISECONDS);
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
+		} catch ( Exception e ) {
+			log.warn("Error overflowing {} work item(s) to SQS queue [{}] at shutdown: {}",
+					pending.size(), sqsQueueUrl, e.toString());
+		}
+	}
+
+	/**
+	 * Wait for threads to finish, up to a deadline shared by all of them.
+	 *
+	 * <p>
+	 * Any thread still alive at the deadline is interrupted again and left to
+	 * finish on its own.
+	 * </p>
+	 *
+	 * @param threads
+	 *        the threads to wait for
+	 * @param expire
+	 *        the deadline, as a {@link System#nanoTime()} value
+	 * @return the number of threads still alive at the deadline
+	 */
+	private static int joinAll(List<? extends Thread> threads, long expire) {
+		int alive = 0;
+		for ( Thread t : threads ) {
+			final long remainingMs = TimeUnit.NANOSECONDS.toMillis(expire - System.nanoTime());
+			if ( remainingMs > 0 ) {
+				try {
+					// note join(0) would wait forever, so only called with a positive value
+					t.join(remainingMs);
+				} catch ( InterruptedException e ) {
+					// restore the flag; subsequent join() calls then return immediately,
+					// so the remaining threads are abandoned rather than waited on
+					Thread.currentThread().interrupt();
+				}
+			}
+			if ( t.isAlive() ) {
+				alive++;
+				t.interrupt();
+			}
+		}
+		return alive;
 	}
 
 	@Override
@@ -465,35 +601,31 @@ public class SqsOverflowQueue<T, K>
 		}
 		final List<DaoWriterThread> writers = this.writerThreads;
 		final List<QueueReaderThread> readers = this.readerThreads;
+		if ( !writeEnabled || writers == null || readers == null ) {
+			// nothing is draining the work queue, so this service is not usable
+			return new PingTestResult(false, "Service not running.", statMap);
+		}
 		int writersAlive = 0;
 		int readersAlive = 0;
-		if ( writeEnabled ) {
-			if ( writers != null ) {
-				for ( DaoWriterThread t : writers ) {
-					if ( t.isAlive() ) {
-						writersAlive++;
-					}
-				}
+		for ( DaoWriterThread t : writers ) {
+			if ( t.isAlive() ) {
+				writersAlive++;
 			}
-			if ( readers != null ) {
-				for ( QueueReaderThread t : readers ) {
-					if ( t.isAlive() ) {
-						readersAlive++;
-					}
-				}
+		}
+		for ( QueueReaderThread t : readers ) {
+			if ( t.isAlive() ) {
+				readersAlive++;
 			}
-			if ( (writers != null && writersAlive < writers.size())
-					|| (readers != null && readersAlive < readers.size()) ) {
-				return new PingTestResult(false,
-						String.format("Not all threads running: %d/%d writers, %d/%d readers.",
-								writersAlive, (writers != null ? writers.size() : 0), readersAlive,
-								(readers != null ? readers.size() : 0)),
-						statMap);
-			}
+		}
+		if ( writersAlive < writers.size() || readersAlive < readers.size() ) {
+			return new PingTestResult(false,
+					String.format("Not all threads running: %d/%d writers, %d/%d readers.", writersAlive,
+							writers.size(), readersAlive, readers.size()),
+					statMap);
 		}
 		return new PingTestResult(true,
 				String.format("Processed %d entities using %d writers, %d readers.", recvCount,
-						writers != null ? writers.size() : 0, readers != null ? readers.size() : 0),
+						writers.size(), readers.size()),
 				statMap);
 	}
 
@@ -518,33 +650,99 @@ public class SqsOverflowQueue<T, K>
 		sqsDeleteMessage(receiptHandle, false);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An entity is never rejected or discarded here: if the work queue cannot
+	 * take it, or this service is not running and so has no writer threads to
+	 * drain the work queue, the entity is sent to the SQS queue instead, falling
+	 * back to a direct DAO write if that fails.
+	 * </p>
+	 */
 	@Override
 	public @Nullable K persist(T entity) {
 		stats.increment(BasicCount.ObjectsReceived);
 		CompletableFuture<K> f = new CompletableFuture<>();
-		if ( queue.offer(new WorkItem<T, K>(entity, f)) ) {
+		if ( writeEnabled && queue.offer(new WorkItem<T, K>(entity, f)) ) {
 			stats.increment(BasicCount.WorkQueueAdds);
 			if ( workItemMaxWaitMs > 0 ) {
 				// wait to complete within timeout, then send to SQS
 				try {
 					return f.get(workItemMaxWaitMs, TimeUnit.MILLISECONDS);
+				} catch ( InterruptedException e ) {
+					Thread.currentThread().interrupt();
+					var _ = f.cancel(false);
+					throw persistException(e);
 				} catch ( Exception e ) {
-					f.cancel(false);
+					if ( !f.cancel(false) && !f.isCompletedExceptionally() ) {
+						// a writer completed it while timing out, so no need to pay for SQS
+						return f.getNow(null);
+					}
 					f = sendToSqs(entity, new CompletableFuture<K>());
 				}
 			}
 		} else {
+			// the work queue is full, or has no writer threads draining it
 			var _ = sendToSqs(entity, f);
 		}
 		try {
-			return f.get();
+			return (sqsSendMaxWaitMs > 0 ? f.get(sqsSendMaxWaitMs, TimeUnit.MILLISECONDS) : f.get());
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
+			throw persistException(e);
 		} catch ( Exception e ) {
-			Throwable cause = e.getCause();
-			if ( cause instanceof RuntimeException re ) {
-				throw re;
-			}
-			throw new RuntimeException(cause);
+			return persistAfterSqsFailure(entity, e);
 		}
+	}
+
+	/**
+	 * Last ditch attempt to persist an entity directly, after it could not be
+	 * handed off to the SQS queue.
+	 *
+	 * <p>
+	 * Runs on the calling thread, rather than on the SQS client thread that
+	 * reports the failure, so that a slow delegate DAO cannot block the client's
+	 * I/O threads.
+	 * </p>
+	 *
+	 * @param entity
+	 *        the entity to persist
+	 * @param sqsException
+	 *        the failure that prevented the entity reaching SQS
+	 * @return the entity ID
+	 * @throws RuntimeException
+	 *         if the entity cannot be persisted either
+	 */
+	private @Nullable K persistAfterSqsFailure(T entity, Exception sqsException) {
+		try {
+			return persistEntityInternal(entity);
+		} catch ( Exception e ) {
+			if ( isIgnoredPersistException(entity, e) ) {
+				stats.increment(BasicCount.ObjectsIgnored);
+				return entityId(entity);
+			}
+			// give up
+			stats.increment(BasicCount.ObjectsDiscarded);
+			log.warn("Failed to persist [{}] after failing to send to SQS queue [{}]: {}", entity,
+					sqsQueueUrl, e.toString(), e);
+			throw persistException(sqsException);
+		}
+	}
+
+	/**
+	 * Unwrap an exception from waiting on a work item into one to throw.
+	 *
+	 * @param e
+	 *        the exception
+	 * @return the exception to throw, never {@code null}
+	 */
+	private static RuntimeException persistException(Exception e) {
+		final Throwable cause = (e.getCause() != null ? e.getCause() : e);
+		if ( cause instanceof RuntimeException re ) {
+			return re;
+		}
+		return new RuntimeException(cause);
 	}
 
 	private CompletableFuture<K> sendToSqs(T entity, CompletableFuture<K> f) {
@@ -558,49 +756,42 @@ public class SqsOverflowQueue<T, K>
 					stats.increment(BasicCount.SqsQueueAdds);
 					f.complete(entityCodec.entityId(entity));
 				} else {
-					if ( ex.getCause() instanceof AwsServiceException e ) {
-						log.warn("AWS error: {}; HTTP code {}; AWS code {}; request ID {}",
-								e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
-								e.requestId());
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, e.toString()),
-								e));
-					} else if ( ex.getCause() instanceof SdkClientException e ) {
-						log.warn("Error communicating with AWS: {}", e.getMessage());
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, e.toString()),
-								e));
-					} else {
-						f.completeExceptionally(new RemoteServiceException(
-								"Error adding entities [%s] to SQS queue [%s]: %s".formatted(entity,
-										sqsQueueUrl, ex.toString()),
-								ex));
-					}
+					sqsSendFailed(entity, f, ex);
 				}
 				return resp;
 			});
 		} catch ( Exception e ) {
-			stats.increment(BasicCount.SqsQueueFail);
-			// last ditch: write directly to DAO
-			try {
-				var id = persistEntityInternal(entity);
-				f.complete(id);
-			} catch ( Exception e2 ) {
-				final K ignoredId = ignorePersistExceptionAndComplete(entity, e2);
-				if ( ignoredId != null ) {
-					f.complete(ignoredId);
-				} else {
-					// give up
-					stats.increment(BasicCount.ObjectsDiscarded);
-					log.warn("Failed to persist [{}] after failing to send to SQS queue: {}", entity, e2,
-							e2);
-					f.completeExceptionally(e);
-				}
-			}
+			sqsSendFailed(entity, f, e);
 		}
 		return f;
+	}
+
+	/**
+	 * Complete a work item future exceptionally after the entity could not be
+	 * sent to the SQS queue.
+	 *
+	 * @param entity
+	 *        the entity that could not be sent
+	 * @param f
+	 *        the future to complete
+	 * @param ex
+	 *        the failure
+	 */
+	private void sqsSendFailed(T entity, CompletableFuture<K> f, Throwable ex) {
+		stats.increment(BasicCount.SqsQueueFail);
+		final Throwable cause = (ex.getCause() != null ? ex.getCause() : ex);
+		if ( cause instanceof AwsServiceException e ) {
+			log.warn(
+					"AWS error adding entity to SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
+					sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
+					e.requestId());
+		} else if ( cause instanceof SdkClientException e ) {
+			log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl, e.getMessage());
+		} else {
+			log.warn("Error adding entity to SQS queue [{}]: {}", sqsQueueUrl, cause.toString());
+		}
+		f.completeExceptionally(new RemoteServiceException("Error adding entity [%s] to SQS queue [%s]: %s"
+				.formatted(entity, sqsQueueUrl, cause.toString()), cause));
 	}
 
 	private @Nullable K persistEntityInternal(T entity) {
@@ -629,61 +820,116 @@ public class SqsOverflowQueue<T, K>
 		final boolean rejected = (receiptHandle != null
 				? !completedSqsMessageHandles.offer(receiptHandle)
 				: false);
-		if ( rejected || force ) {
-			List<String> handleIds = new ArrayList<>(10);
-			completedSqsMessageHandles.drainTo(handleIds, 9);
-			if ( rejected && receiptHandle != null ) {
-				handleIds.add(receiptHandle);
+		if ( rejected ) {
+			// the pending queue would not take the handle, so send a batch including it
+			sendDeleteBatch(receiptHandle);
+		} else if ( force ) {
+			// emptying the queue can take more than one batch; bound the loop so that a
+			// delete failure re-queueing its handle cannot spin here
+			int batches = (completedSqsMessageHandles.size() / SQS_MAX_DELETE_BATCH_SIZE) + 1;
+			while ( batches-- > 0 && sendDeleteBatch(null) ) {
+				// send another batch
 			}
-
-			if ( handleIds.isEmpty() ) {
-				return;
-			}
-
-			log.debug("Deleting {} messages from SQS queue.", handleIds.size());
-
-			Map<String, String> batchIdToReceiptHandlers = new HashMap<>(10);
-			List<DeleteMessageBatchRequestEntry> entries = handleIds.stream().map(s -> {
-				String id = UUID.randomUUID().toString();
-				batchIdToReceiptHandlers.put(id, receiptHandle);
-				return DeleteMessageBatchRequestEntry.builder().id(id).receiptHandle(s).build();
-			}).toList();
-
-			DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
-					.queueUrl(sqsQueueUrl).entries(entries).build();
-
-			var _ = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
-				if ( ex == null ) {
-					if ( resp != null ) {
-						if ( resp.hasFailed() ) {
-							resp.failed().forEach(entry -> {
-								String handleId = nonnull(batchIdToReceiptHandlers.get(entry.id()),
-										"Batch handleId");
-								log.warn(
-										"Failed to delete message from SQS queue (will retry): {}; receiptHandle: {}",
-										entry.message(), handleId);
-								sqsDeleteMessage(handleId);
-							});
-						}
-						if ( resp.hasSuccessful() ) {
-							stats.increment(BasicCount.SqsQueueRemovals, resp.successful().size());
-						}
-					}
-				} else if ( ex.getCause() instanceof AwsServiceException e ) {
-					log.warn(
-							"AWS error deleting entities from SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
-							sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
-							e.requestId());
-				} else if ( ex.getCause() instanceof SdkClientException e ) {
-					log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
-							e.getMessage());
-				} else {
-					log.warn("Error deleting entities from from SQS queue [{}]: {}", sqsQueueUrl,
-							ex.toString());
-				}
-				return resp;
-			});
 		}
+	}
+
+	/**
+	 * Send one batch of completed message handles to be deleted from SQS.
+	 *
+	 * @param extraHandle
+	 *        a handle to include that is not in the pending queue, or
+	 *        {@code null} to send pending handles only
+	 * @return {@literal true} if a request was sent
+	 */
+	private boolean sendDeleteBatch(final @Nullable String extraHandle) {
+		final List<String> handleIds = new ArrayList<>(SQS_MAX_DELETE_BATCH_SIZE);
+		completedSqsMessageHandles.drainTo(handleIds,
+				SQS_MAX_DELETE_BATCH_SIZE - (extraHandle != null ? 1 : 0));
+		if ( extraHandle != null ) {
+			handleIds.add(extraHandle);
+		}
+
+		if ( handleIds.isEmpty() ) {
+			return false;
+		}
+
+		log.debug("Deleting {} messages from SQS queue.", handleIds.size());
+
+		Map<String, String> batchIdToReceiptHandles = new HashMap<>(SQS_MAX_DELETE_BATCH_SIZE);
+		List<DeleteMessageBatchRequestEntry> entries = handleIds.stream().map(s -> {
+			String id = UUID.randomUUID().toString();
+			batchIdToReceiptHandles.put(id, s);
+			return DeleteMessageBatchRequestEntry.builder().id(id).receiptHandle(s).build();
+		}).toList();
+
+		DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
+				.queueUrl(sqsQueueUrl).entries(entries).build();
+
+		var _ = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
+			if ( ex == null ) {
+				if ( resp != null ) {
+					if ( resp.hasFailed() ) {
+						resp.failed().forEach(entry -> {
+							final String handle = batchIdToReceiptHandles.get(entry.id());
+							if ( handle == null ) {
+								log.warn(
+										"Unknown entry [{}] in SQS queue [{}] delete response, cannot retry: {} {}",
+										entry.id(), sqsQueueUrl, entry.code(), entry.message());
+							} else if ( Boolean.TRUE.equals(entry.senderFault()) ) {
+								// a sender fault cannot succeed on retry, for example an
+								// expired receipt handle; the message will be redelivered
+								// and reprocessed instead
+								log.warn(
+										"Failed to delete message from SQS queue [{}], will not retry: {} {}",
+										sqsQueueUrl, entry.code(), entry.message());
+							} else {
+								log.warn(
+										"Failed to delete message from SQS queue [{}], will retry: {} {}",
+										sqsQueueUrl, entry.code(), entry.message());
+								sqsDeleteMessage(handle);
+							}
+						});
+					}
+					if ( resp.hasSuccessful() ) {
+						stats.increment(BasicCount.SqsQueueRemovals, resp.successful().size());
+					}
+				}
+			} else if ( ex.getCause() instanceof AwsServiceException e ) {
+				log.warn(
+						"AWS error deleting entities from SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
+						sqsQueueUrl, e.getMessage(), e.statusCode(), e.awsErrorDetails().errorCode(),
+						e.requestId());
+			} else if ( ex.getCause() instanceof SdkClientException e ) {
+				log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
+						e.getMessage());
+			} else {
+				log.warn("Error deleting entities from from SQS queue [{}]: {}", sqsQueueUrl,
+						ex.toString());
+			}
+			return resp;
+		});
+		return true;
+	}
+
+	/**
+	 * Get the approximate number of times a message has been received.
+	 *
+	 * @param msg
+	 *        the message
+	 * @return the approximate receive count, or {@literal 1} if not available
+	 */
+	private static long approximateReceiveCount(Message msg) {
+		final String count = msg.attributes()
+				.get(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT);
+		if ( count != null ) {
+			try {
+				return Long.parseLong(count);
+			} catch ( NumberFormatException e ) {
+				log.debug("Unparsable {} attribute on SQS message [{}]: {}",
+						MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, msg.messageId(), count);
+			}
+		}
+		return 1;
 	}
 
 	/**
@@ -700,78 +946,67 @@ public class SqsOverflowQueue<T, K>
 		@Override
 		public void run() {
 			while ( writeEnabled ) {
+				final int capacity = queue.remainingCapacity();
+				if ( capacity < 1 ) {
+					// the work queue cannot accept anything, so do not pay to receive
+					// messages that would only have to be returned to the queue
+					log.debug("Work queue full, not reading from SQS queue [{}].", sqsQueueUrl);
+					adjustThrottle(1.0);
+					pause(Math.max(sleep, WORK_QUEUE_FULL_PAUSE_MS));
+					continue;
+				}
+				// never request more than the work queue can take
+				final int maxMessages = Math.min(readMaxMessageCount, capacity);
 				// @formatter:off
 				ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
-						.queueUrl(sqsQueueUrl)
-						.maxNumberOfMessages(readMaxMessageCount)
-						.waitTimeSeconds(readMaxWaitTimeSecs)
-						.build();
+							.queueUrl(sqsQueueUrl)
+							.maxNumberOfMessages(maxMessages)
+							.waitTimeSeconds(readMaxWaitTimeSecs)
+							.messageSystemAttributeNames(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT)
+							.build();
 				// @formatter:on
 				try {
 					ReceiveMessageResponse resp = sqsClient.receiveMessage(receiveMessageRequest).get();
-					if ( resp.hasMessages() ) {
-						List<Message> msgs = resp.messages();
+					final List<Message> msgs = (resp.hasMessages() ? resp.messages() : List.of());
+					final List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
+					if ( !msgs.isEmpty() ) {
 						stats.increment(BasicCount.SqsQueueReceived, msgs.size());
-						int accepted = 0;
-						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
-						try {
-							for ( Message msg : msgs ) {
-								T o = entityCodec.deserialize(msg.body());
-								CompletableFuture<K> f = new CompletableFuture<>();
-								if ( o != null && queue.offer(new WorkItem<T, K>(o, f)) ) {
-									stats.increment(BasicCount.WorkQueueAdds);
-									var _ = f.thenAccept(_ -> {
-										sqsDeleteMessage(msg.receiptHandle());
-									});
-									accepted++;
+						for ( Message msg : msgs ) {
+							final T o;
+							try {
+								o = entityCodec.deserialize(msg.body());
+							} catch ( Exception e ) {
+								// this message can never be processed; leave it alone so the
+								// queue visibility timeout paces the redelivery, and the queue
+								// redrive policy moves it to the dead-letter queue. It will be
+								// seen once per redelivery, so only count and log it in full
+								// the first time.
+								if ( approximateReceiveCount(msg) < 2 ) {
+									stats.increment(BasicCount.ObjectsDiscarded);
+									log.warn(
+											"Discarding unparsable message [{}] from SQS queue [{}]: {}; body: {}",
+											msg.messageId(), sqsQueueUrl, e.toString(), msg.body());
 								} else {
-									// adjust visibility to 0 to allow reprocessing
-									rejectedReceiptHandles.add(msg.receiptHandle());
+									log.debug("Discarding unparsable message [{}] from SQS queue [{}]: {}",
+											msg.messageId(), sqsQueueUrl, e.toString());
 								}
+								continue;
 							}
-						} finally {
-							if ( !rejectedReceiptHandles.isEmpty() ) {
-								var _ = sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
-									List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
-											.stream().map(id -> {
-												return ChangeMessageVisibilityBatchRequestEntry.builder()
-														.id(UUID.randomUUID().toString())
-														.receiptHandle(id).visibilityTimeout(0).build();
-											}).toList();
-									changeVizReq.queueUrl(sqsQueueUrl).entries(entries);
-								}).handle((changeVizResp, changeVizEx) -> {
-									if ( changeVizEx == null ) {
-										log.debug(
-												"Un-hid {} messages received from SQS queue but rejected by work queue.",
-												rejectedReceiptHandles.size());
-									} else {
-										Throwable t = changeVizEx.getCause();
-										log.warn(
-												"Failed to un-hide {} messages received from SQS queue but rejected by work queue: {}",
-												rejectedReceiptHandles.size(),
-												(t != null ? t.toString() : changeVizEx.toString()));
-									}
-									return changeVizResp;
+							CompletableFuture<K> f = new CompletableFuture<>();
+							if ( o != null && queue.offer(new WorkItem<T, K>(o, f)) ) {
+								stats.increment(BasicCount.WorkQueueAdds);
+								var _ = f.thenAccept(_ -> {
+									sqsDeleteMessage(msg.receiptHandle());
 								});
-							}
-							int rejected = msgs.size() - accepted;
-							double rejectedRatio = (rejected > 0
-									? ((double) rejected / (double) msgs.size())
-									: 0.0);
-							if ( rejected > 0 && sleep < readSleepMaxMs ) {
-								sleep = Math.min(
-										sleep + (long) (readSleepThrottleStepMs * rejectedRatio),
-										readSleepMaxMs);
-								log.info(
-										"Increased read throttle from SQS queue to {}ms after {} work queue rejections.",
-										sleep, rejected);
-							} else if ( rejected < 1 && sleep > readSleepMinMs ) {
-								sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
-								log.info(
-										"Decreased read throttle from SQS queue to {}ms after all {} work queue items accepted.",
-										sleep, accepted);
+							} else {
+								rejectedReceiptHandles.add(msg.receiptHandle());
 							}
 						}
+					}
+					adjustThrottle(msgs.isEmpty() ? 0.0
+							: (double) rejectedReceiptHandles.size() / (double) msgs.size());
+					if ( !rejectedReceiptHandles.isEmpty() ) {
+						returnToQueue(rejectedReceiptHandles);
 					}
 				} catch ( Exception ex ) {
 					final Throwable t = (ex.getCause() != null ? ex.getCause() : ex);
@@ -791,25 +1026,85 @@ public class SqsOverflowQueue<T, K>
 						log.warn("Error communicating with AWS SQS queue [{}]: {}", sqsQueueUrl,
 								e.getMessage());
 					} else if ( !(t instanceof InterruptedException) ) {
-						log.error("Fatal error in entity collector SQS queue [{}]: {}", sqsQueueUrl,
+						// keep reading: an unexpected error here is a bug, and exiting would
+						// leave the SQS queue undrained until the application restarts
+						log.error("Unexpected error reading from SQS queue [{}]: {}", sqsQueueUrl,
 								t.toString(), t);
-						return;
 					}
-					if ( sleep < readSleepMaxMs ) {
-						sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
-						log.info("Increased read throttle from SQS queue to {}ms after exception: {}",
-								sleep, t.getMessage());
-					}
+					adjustThrottle(1.0);
 				}
-				if ( writeEnabled && sleep > 0 ) {
-					try {
-						Thread.sleep(sleep);
-					} catch ( InterruptedException e ) {
-						// continue
-					}
-				}
+				pause(sleep);
 			}
 			log.info("Reader thread exiting for SQS queue [{}]", sqsQueueUrl);
+		}
+	
+		/**
+		 * Adjust the read throttle.
+		 *
+		 * @param rejectedRatio
+		 *        the proportion of received messages the work queue would not
+		 *        accept, or {@literal 0} to relax the throttle
+		 */
+		private void adjustThrottle(double rejectedRatio) {
+			if ( rejectedRatio > 0.0 ) {
+				if ( sleep < readSleepMaxMs ) {
+					sleep = Math.min(
+							sleep + (long) Math.max(1.0, readSleepThrottleStepMs * rejectedRatio),
+							readSleepMaxMs);
+					log.info("Increased read throttle from SQS queue [{}] to {}ms.", sqsQueueUrl, sleep);
+				}
+			} else if ( sleep > readSleepMinMs ) {
+				sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
+				log.info("Decreased read throttle from SQS queue [{}] to {}ms.", sqsQueueUrl, sleep);
+			}
+		}
+	
+		/**
+		 * Pause before the next SQS receive request.
+		 *
+		 * @param ms
+		 *        the time to pause, in milliseconds
+		 */
+		private void pause(long ms) {
+			if ( writeEnabled && ms > 0 ) {
+				try {
+					Thread.sleep(ms);
+				} catch ( InterruptedException e ) {
+					// continue
+				}
+			}
+		}
+	
+		/**
+		 * Make messages the work queue could not accept visible again, after a
+		 * backoff.
+		 *
+		 * @param receiptHandles
+		 *        the receipt handles of the messages to return
+		 */
+		private void returnToQueue(List<String> receiptHandles) {
+			// back off rather than un-hiding immediately: a zero visibility timeout
+			// makes the message available again at once, costing a receive request per
+			// retry for as long as the work queue stays full
+			final int backoffSecs = (int) Math.max(1L, TimeUnit.MILLISECONDS.toSeconds(sleep));
+			var _ = sqsClient.changeMessageVisibilityBatch(req -> {
+				List<ChangeMessageVisibilityBatchRequestEntry> entries = receiptHandles.stream()
+							.map(handle -> ChangeMessageVisibilityBatchRequestEntry.builder()
+									.id(UUID.randomUUID().toString()).receiptHandle(handle)
+									.visibilityTimeout(backoffSecs).build())
+							.toList();
+				req.queueUrl(sqsQueueUrl).entries(entries);
+			}).handle((resp, ex) -> {
+				if ( ex == null ) {
+					log.debug("Returned {} message(s) to SQS queue [{}] for retry in {}s.",
+							receiptHandles.size(), sqsQueueUrl, backoffSecs);
+				} else {
+					final Throwable t = (ex.getCause() != null ? ex.getCause() : ex);
+					log.warn("Failed to return {} message(s) to SQS queue [{}] for retry: {}",
+							receiptHandles.size(), sqsQueueUrl, t.toString());
+				}
+				return resp;
+			});
 		}
 	}
 
@@ -824,11 +1119,16 @@ public class SqsOverflowQueue<T, K>
 
 		@Override
 		public void run() {
-			while ( writeEnabled ) {
+			// keep going while shutting down, until the work queue is drained, so
+			// queued entities are persisted directly rather than pushed to SQS
+			while ( writeEnabled || !queue.isEmpty() ) {
 				final WorkItem<T, K> item;
 				try {
-					item = queue.take();
+					item = queue.poll(WRITER_QUEUE_POLL_MS, TimeUnit.MILLISECONDS);
 				} catch ( InterruptedException e ) {
+					continue;
+				}
+				if ( item == null ) {
 					continue;
 				}
 				stats.increment(BasicCount.WorkQueueRemovals, true);
@@ -841,9 +1141,9 @@ public class SqsOverflowQueue<T, K>
 					var id = persistEntityInternal(item.entity);
 					item.future.complete(id);
 				} catch ( Throwable t ) {
-					final K ignoredId = ignorePersistExceptionAndComplete(item.entity, t);
-					if ( ignoredId != null ) {
-						item.future.complete(ignoredId);
+					if ( isIgnoredPersistException(item.entity, t) ) {
+						stats.increment(BasicCount.ObjectsIgnored);
+						item.future.complete(entityId(item.entity));
 					} else {
 						stats.increment(BasicCount.ObjectsFailed);
 						log.warn("Error storing entity {}: {}", item.entity, t.getMessage(), t);
@@ -868,30 +1168,47 @@ public class SqsOverflowQueue<T, K>
 
 	/**
 	 * Test if an exception that occurred during persistence should be ignored.
-	 * 
+	 *
+	 * <p>
+	 * An exception is ignored only if it is an instance of one of the
+	 * configured {@link #getIgnoredDaoExceptions()}, in which case the entity is
+	 * treated as if it had been persisted successfully.
+	 * </p>
+	 *
 	 * @param entity
 	 *        the entity being persisted
 	 * @param t
 	 *        the exception
-	 * @return the entity ID to complete the future successfully with, or
-	 *         {@code null} to complete the future exceptionally
+	 * @return {@literal true} if {@code t} should be ignored
 	 */
-	private @Nullable K ignorePersistExceptionAndComplete(T entity, Throwable t) {
+	private boolean isIgnoredPersistException(T entity, Throwable t) {
 		final Set<Class<? extends Throwable>> ignored = getIgnoredDaoExceptions();
-		K id = null;
-		if ( ignored != null ) {
-			for ( Class<? extends Throwable> ignore : ignored ) {
-				if ( ignore.isAssignableFrom(t.getClass()) ) {
-					log.debug("Ignoring exception storing entity {}: {}", entity, t.getMessage(), t);
-				}
-			}
-			if ( entity instanceof Unique<?> ) {
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				Unique<K> unq = (Unique) entity;
-				id = unq.id();
+		if ( ignored == null ) {
+			return false;
+		}
+		for ( Class<? extends Throwable> ignore : ignored ) {
+			if ( ignore.isInstance(t) ) {
+				log.debug("Ignoring exception storing entity {}: {}", entity, t.getMessage(), t);
+				return true;
 			}
 		}
-		return id;
+		return false;
+	}
+
+	/**
+	 * Get the ID of an entity, if the entity provides one.
+	 *
+	 * @param entity
+	 *        the entity to get the ID for
+	 * @return the entity ID, or {@code null} if the entity does not provide one
+	 */
+	private @Nullable K entityId(T entity) {
+		if ( entity instanceof Unique<?> ) {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Unique<K> unq = (Unique) entity;
+			return unq.id();
+		}
+		return null;
 	}
 
 	/**
@@ -976,8 +1293,8 @@ public class SqsOverflowQueue<T, K>
 	 * shutdown.
 	 *
 	 * @param shutdownWaitSecs
-	 *        the wait secs; anything less than {@literal 0} will be treated as
-	 *        {@literal 0}
+	 *        the wait secs, or {@literal 0} to not wait at all; anything less
+	 *        than {@literal 0} will be treated as {@literal 0}
 	 */
 	public final void setShutdownWaitSecs(int shutdownWaitSecs) {
 		if ( shutdownWaitSecs < 0 ) {
@@ -1006,6 +1323,36 @@ public class SqsOverflowQueue<T, K>
 	}
 
 	/**
+	 * Get the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * @return the maximum time, in milliseconds; defaults to
+	 *         {@link #DEFAULT_SQS_SEND_MAX_WAIT_MS}
+	 * @since 1.2
+	 */
+	public final long getSqsSendMaxWaitMs() {
+		return sqsSendMaxWaitMs;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for an entity to be handed off to
+	 * the SQS queue.
+	 *
+	 * <p>
+	 * Together with {@code workItemMaxWaitMs} this bounds the total time
+	 * {@link #persist(Object)} can take. Anything less than {@literal 1} means
+	 * wait indefinitely.
+	 * </p>
+	 *
+	 * @param sqsSendMaxWaitMs
+	 *        the maximum time to set, in milliseconds
+	 * @since 1.2
+	 */
+	public final void setSqsSendMaxWaitMs(long sqsSendMaxWaitMs) {
+		this.sqsSendMaxWaitMs = sqsSendMaxWaitMs;
+	}
+
+	/**
 	 * Get the maximum number of SQS messages to read per request.
 	 *
 	 * @return the count; defaults to {@link #DEFAULT_READ_MAX_MESSAGE_COUNT}
@@ -1018,11 +1365,12 @@ public class SqsOverflowQueue<T, K>
 	 * Set the maximum number of SQS messages to read per request.
 	 *
 	 * @param readMaxMessageCount
-	 *        the count to set; see AWS documentation for valid range (e.g.
-	 *        1-10)
+	 *        the count to set, clamped to the range SQS allows, {@literal 1} to
+	 *        {@literal 10}
 	 */
 	public final void setReadMaxMessageCount(int readMaxMessageCount) {
-		this.readMaxMessageCount = readMaxMessageCount;
+		this.readMaxMessageCount = Math.clamp(readMaxMessageCount, 1,
+				SQS_MAX_RECEIVE_MESSAGE_COUNT);
 	}
 
 	/**
@@ -1038,11 +1386,12 @@ public class SqsOverflowQueue<T, K>
 	 * Set the maximum SQS receive wait time, in seconds.
 	 *
 	 * @param readMaxWaitTimeSecs
-	 *        the seconds to set; see AWS documentation for valid range (e.g.
-	 *        1-20)
+	 *        the seconds to set, clamped to the range SQS allows, {@literal 0} to
+	 *        {@literal 20}; {@literal 0} turns off long polling
 	 */
 	public final void setReadMaxWaitTimeSecs(int readMaxWaitTimeSecs) {
-		this.readMaxWaitTimeSecs = readMaxWaitTimeSecs;
+		this.readMaxWaitTimeSecs = Math.clamp(readMaxWaitTimeSecs, 0,
+				SQS_MAX_RECEIVE_WAIT_TIME_SECS);
 	}
 
 	/**
