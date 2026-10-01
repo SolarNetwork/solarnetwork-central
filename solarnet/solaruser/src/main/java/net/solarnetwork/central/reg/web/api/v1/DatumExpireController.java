@@ -40,10 +40,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
+import net.solarnetwork.central.reg.web.domain.ExpireUserDataConfigurationInput;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.datum.expire.biz.UserDatumDeleteBiz;
 import net.solarnetwork.central.user.datum.expire.biz.UserExpireBiz;
@@ -59,7 +61,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for datum expire management.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.29
  */
 @GlobalExceptionRestController
@@ -111,14 +113,10 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
 	public Result<DataConfiguration> saveDataConfiguration(
-			@RequestBody ExpireUserDataConfiguration config) {
+			@Valid @RequestBody ExpireUserDataConfigurationInput input) {
 		if ( expireBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
+			ExpireUserDataConfiguration config = input.toEntity(SecurityUtils.getCurrentActorUserId(),
+					Instant.now());
 			Long id = expireBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
