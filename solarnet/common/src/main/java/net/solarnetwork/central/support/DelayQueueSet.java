@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -40,14 +41,34 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A combination of {@link BlockingQueue} and {@link Set}.
+ * A combination of {@link BlockingQueue} and {@link Set}: an unbounded
+ * blocking queue of {@link Delayed} elements that holds at most one of any
+ * elements that are equal to each other.
  *
  * <p>
- * Adapted from {@link java.util.concurrent.DelayQueue}
+ * Adapted from {@link java.util.concurrent.DelayQueue}. An element is
+ * considered <em id="expired">expired</em> when its
+ * {@code getDelay(TimeUnit.NANOSECONDS)} method returns a value less than or
+ * equal to zero. The <em id="head">head</em> of the queue is the element with
+ * the earliest expiration time, whether or not it has expired. The
+ * <em id="expired-head">expired head</em> of the queue is the head, if it has
+ * expired. Only expired elements can be taken from the queue, so when there
+ * is no expired head {@link #poll()} returns {@code null}, even though
+ * {@link #size()} counts both expired and unexpired elements.
+ * </p>
+ *
+ * <p>
+ * Elements are ordered by their {@code compareTo()} method, while duplicates
+ * are detected by the delegate set, which by default means their
+ * {@code equals()} and {@code hashCode()} methods. Offering an element equal
+ * to one already in the queue leaves the queue unchanged: the existing
+ * element is kept, along with its delay, and the offered element is
+ * discarded. That is not treated as a failure, so the insertion methods
+ * return {@code true} for duplicate elements.
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implements BlockingQueue<E> {
 
@@ -78,14 +99,14 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	private final Condition available = lock.newCondition();
 
 	/**
-	 * Creates a new {@code DelayQueue} that is initially empty.
+	 * Creates a new {@code DelayQueueSet} that is initially empty.
 	 */
 	public DelayQueueSet() {
 		this(256);
 	}
 
 	/**
-	 * Creates a new {@code DelayQueue} that is initially empty.
+	 * Creates a new {@code DelayQueueSet} that is initially empty.
 	 *
 	 * @param capacity
 	 *        an initial estimated capacity
@@ -95,20 +116,32 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Creates a new {@code DelayQueue} that is initially empty.
+	 * Creates a new {@code DelayQueueSet} that is initially empty.
+	 *
+	 * <p>
+	 * The given set is used directly to track the elements in this queue, and
+	 * is <b>not</b> a source of initial elements. To create a queue initially
+	 * containing the elements of a set, add them with
+	 * {@link #addAll(Collection)} after construction.
+	 * </p>
 	 *
 	 * @param delegateSet
-	 *        a specific set instance to use
+	 *        a specific set instance to use; must be empty and must not be
+	 *        modified outside of this queue
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 *         if any argument is {@code null}, or {@code delegateSet} is not
+	 *         empty
 	 */
 	public DelayQueueSet(Set<E> delegateSet) {
 		super();
 		this.s = requireNonNullArgument(delegateSet, "delegateSet");
+		if ( !delegateSet.isEmpty() ) {
+			throw new IllegalArgumentException("The delegateSet argument must be empty.");
+		}
 	}
 
 	/**
-	 * Creates a {@code DelayQueue} initially containing the elements of the
+	 * Creates a {@code DelayQueueSet} initially containing the elements of the
 	 * given collection of {@link Delayed} instances.
 	 *
 	 * @param c
@@ -122,11 +155,13 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Inserts the specified element into this delay queue.
+	 * Inserts the specified element into this delay queue, unless an equal
+	 * element is already present.
 	 *
 	 * @param e
 	 *        the element to add
-	 * @return {@code true} (as specified by {@link Collection#add})
+	 * @return {@code true}, even if an equal element is already present and
+	 *         this queue is left unchanged
 	 * @throws NullPointerException
 	 *         if the specified element is null
 	 */
@@ -136,11 +171,13 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Inserts the specified element into this delay queue.
+	 * Inserts the specified element into this delay queue, unless an equal
+	 * element is already present.
 	 *
 	 * @param e
 	 *        the element to add
-	 * @return {@code true}
+	 * @return {@code true}, even if an equal element is already present and
+	 *         this queue is left unchanged
 	 * @throws NullPointerException
 	 *         if the specified element is null
 	 */
@@ -151,7 +188,15 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		lock.lock();
 		try {
 			if ( s.add(e) ) {
-				q.offer(e);
+				boolean queued = false;
+				try {
+					queued = q.offer(e);
+				} finally {
+					if ( !queued ) {
+						// keep set in sync with queue
+						s.remove(e);
+					}
+				}
 				if ( q.peek() == e ) {
 					leader = null;
 					available.signal();
@@ -335,7 +380,8 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 */
 	@Override
 	public E remove() {
-		return nonnull(removed(super.remove()), "removed");
+		// poll() maintains the delegate set, while holding the lock
+		return super.remove();
 	}
 
 	/**
@@ -377,7 +423,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
-		requireNonNullArgument(c, "c");
+		Objects.requireNonNull(c);
 		if ( c == this ) {
 			throw new IllegalArgumentException();
 		}
@@ -418,8 +464,8 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Always returns {@code Integer.MAX_VALUE} because a {@code DelayQueue} is
-	 * not capacity constrained.
+	 * Always returns {@code Integer.MAX_VALUE} because a {@code DelayQueueSet}
+	 * is not capacity constrained.
 	 *
 	 * @return {@code Integer.MAX_VALUE}
 	 */
@@ -507,17 +553,39 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Removes a single instance of the specified element from this queue, if it
-	 * is present, whether or not it has expired.
+	 * Removes the element equal to the specified element from this queue, if
+	 * it is present, whether or not it has expired.
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean remove(Object o) {
+	public boolean remove(@Nullable Object o) {
+		if ( o == null ) {
+			return false;
+		}
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			removed((E) o);
-			return q.remove(o);
+			// consult the set first to avoid a scan of the queue when absent
+			return s.remove(o) && q.remove(o);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	/**
+	 * Returns {@code true} if this queue contains an element equal to the
+	 * specified element, whether or not it has expired.
+	 *
+	 * @since 1.1
+	 */
+	@Override
+	public boolean contains(@Nullable Object o) {
+		if ( o == null ) {
+			return false;
+		}
+		final ReentrantLock lock = this.lock;
+		lock.lock();
+		try {
+			return s.contains(o);
 		} finally {
 			lock.unlock();
 		}
@@ -549,8 +617,11 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * order.
 	 *
 	 * <p>
-	 * The returned iterator is <a href="package-summary.html#Weakly"><i>weakly
-	 * consistent</i></a>.
+	 * The returned iterator is <i>weakly consistent</i>: it iterates over a
+	 * snapshot of the elements taken when the iterator was created, so never
+	 * throws {@link java.util.ConcurrentModificationException} and does not
+	 * reflect later changes to this queue.
+	 * </p>
 	 *
 	 * @return an iterator over the elements in this queue
 	 */

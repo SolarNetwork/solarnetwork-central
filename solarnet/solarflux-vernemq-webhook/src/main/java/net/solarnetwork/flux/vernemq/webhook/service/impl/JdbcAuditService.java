@@ -56,7 +56,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcAuditService implements AuditService {
 
@@ -161,7 +161,8 @@ public class JdbcAuditService implements AuditService {
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @param counters
-	 *        the node source counters map
+	 *        the node source counters map; the map must perform
+	 *        {@code compute()} atomically, as {@link ConcurrentHashMap} does
 	 * @param clock
 	 *        the clock to use; the clock should tick only at the rate that
 	 *        counts should be aggregated to, e.g.
@@ -218,7 +219,15 @@ public class JdbcAuditService implements AuditService {
 	}
 
 	private void addCount(DelayedKey key, int count) {
-		counters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
+		// increment within compute() so the update is serialized with flushCount() removing
+		// the counter; otherwise the count could land on a counter that was just removed
+		counters.compute(key, (_, counter) -> {
+			if ( counter == null ) {
+				return new AtomicInteger(count);
+			}
+			counter.addAndGet(count);
+			return counter;
+		});
 		counterQueue.add(key);
 	}
 
@@ -390,14 +399,14 @@ public class JdbcAuditService implements AuditService {
 
 	private void flushCount(DelayedKey key, PreparedStatement stmt)
 			throws SQLException, InterruptedException {
-		AtomicInteger counter = counters.get(key);
+		// remove the counter, rather than reset it to 0, because once the key's hour has passed
+		// the key is never queued again and so the counter would otherwise never be removed
+		final AtomicInteger counter = counters.remove(key);
 		if ( counter == null ) {
 			return;
 		}
-		final int count = counter.getAndSet(0);
+		final int count = counter.get();
 		if ( count < 1 ) {
-			// clean out stale 0 valued counter
-			counters.remove(key, counter);
 			return;
 		}
 		try {
@@ -416,25 +425,18 @@ public class JdbcAuditService implements AuditService {
 			stmt.setTimestamp(4, java.sql.Timestamp.from(key.timestamp));
 			stmt.setInt(5, count);
 			stmt.execute();
-			long currUpdateCount = updateCount.incrementAndGet();
-			if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
-				log.info("Updated {} node source byte count records", currUpdateCount);
-			}
-			if ( updateDelay > 0 ) {
-				Thread.sleep(updateDelay);
-			}
-		} catch ( SQLException | InterruptedException e ) {
+		} catch ( SQLException | RuntimeException e ) {
 			addCount(key, count);
 			throw e;
-		} catch ( Exception e ) {
-			addCount(key, count);
-			RuntimeException re;
-			if ( e instanceof RuntimeException runtime ) {
-				re = runtime;
-			} else {
-				re = new RuntimeException("Exception flushing node source audit data", e);
-			}
-			throw re;
+		}
+		// the count has been written now, so it must not be added back if what follows fails,
+		// such as being interrupted during the update delay, or it would be written again
+		long currUpdateCount = updateCount.incrementAndGet();
+		if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
+			log.info("Updated {} node source byte count records", currUpdateCount);
+		}
+		if ( updateDelay > 0 ) {
+			Thread.sleep(updateDelay);
 		}
 	}
 

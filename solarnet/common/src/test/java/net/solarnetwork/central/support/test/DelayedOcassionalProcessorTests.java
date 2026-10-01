@@ -374,4 +374,135 @@ public class DelayedOcassionalProcessorTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void shutdown_delayedItems() {
+		// GIVEN
+		final var i1 = new DelayedInteger(clock, clock.instant(), 1);
+		final var i2 = new DelayedInteger(clock, clock.instant().plus(Duration.ofSeconds(2)), 2);
+		final var i3 = new DelayedInteger(clock, clock.instant().plus(Duration.ofSeconds(3)), 3);
+		final var queue = new DelayQueueSet<DelayedInteger>();
+		queue.addAll(Arrays.asList(i1, i2, i3));
+
+		final var processed = new ArrayList<DelayedInteger>(8);
+		final var processor = new DelayedOccasionalProcessor<DelayedInteger>(clock, stats, scheduler,
+				queue) {
+
+			@Override
+			protected void processItemInternal(DelayedInteger item) {
+				processed.add(item);
+			}
+
+		};
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		then(scheduler).shouldHaveNoInteractions();
+		and.then(processed)
+			.as("All items processed on shutdown, even those whose delay has not expired")
+			.containsExactlyInAnyOrder(i1, i2, i3)
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		and.then(stats.allCounts())
+			.as("Remove count incremented for each item processed")
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsRemoved.name(), 3L)
+			.as("Process count incremented for each item processed")
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsProcessed.name(), 3L)
+			.as("No other counts created")
+			.hasSize(2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void shutdown_itemTakenWhileDraining() {
+		// GIVEN
+		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
+		queue.add(1);
+		queue.add(2);
+		queue.add(3);
+
+		final var processed = new ArrayList<>(8);
+		final var taken = new ArrayList<>(8);
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
+
+			@Override
+			protected void processItemInternal(Integer item) {
+				processed.add(item);
+				if ( item == 1 ) {
+					// simulate a flush task still running in another thread
+					taken.add(queue.poll());
+				}
+			}
+
+		};
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		and.then(taken)
+			.as("Item taken from queue by other task")
+			.containsExactly(2)
+			;
+		and.then(processed)
+			.as("Item taken by other task not processed again on shutdown")
+			.containsExactly(1, 3)
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		and.then(stats.allCounts())
+			.as("Remove count incremented for each item processed")
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsRemoved.name(), 2L)
+			.as("Process count incremented for each item processed")
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsProcessed.name(), 2L)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void shutdown_itemAddedWhileDraining() {
+		// GIVEN
+		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
+		queue.add(1);
+		queue.add(2);
+
+		final var processed = new ArrayList<>(8);
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
+
+			@Override
+			protected void processItemInternal(Integer item) {
+				processed.add(item);
+				if ( item == 1 ) {
+					// simulate another thread adding an item
+					queue.add(3);
+				}
+			}
+
+		};
+
+		// WHEN
+		processor.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		and.then(processed)
+			.as("Item added during shutdown is processed")
+			.containsExactly(1, 2, 3)
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
 }

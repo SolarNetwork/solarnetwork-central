@@ -27,12 +27,16 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
+import static org.assertj.core.api.BDDAssertions.catchThrowable;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenObject;
+import static org.mockito.Mockito.mock;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.Delayed;
@@ -40,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -54,7 +59,7 @@ import net.solarnetwork.central.support.DelayQueueSet;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelayQueueSetTests {
 
@@ -135,6 +140,212 @@ public class DelayQueueSetTests {
 	}
 
 	@Test
+	public void construct_nonEmptyDelegateSet() {
+		// GIVEN
+		final var delegateSet = new HashSet<DelayedInteger>(List.of(i(1), i(2)));
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> new DelayQueueSet<>(delegateSet));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Non-empty delegate set rejected, as its elements would never be queued")
+			.isInstanceOf(IllegalArgumentException.class)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offer_queueThrows() {
+		// GIVEN
+		final var delegateSet = new HashSet<Delayed>();
+		final var queue = new DelayQueueSet<Delayed>(delegateSet);
+
+		// a DelayedInteger cannot be compared to some other Delayed type
+		final Delayed other = mock(Delayed.class);
+		queue.offer(other);
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> queue.offer(i(1)));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Comparison exception propagated")
+			.isInstanceOf(ClassCastException.class)
+			;
+		then(queue)
+			.as("Rejected element not queued")
+			.containsExactly(other)
+			;
+		then(delegateSet)
+			.as("Rejected element not left in delegate set")
+			.containsExactly(other)
+			;
+		// @formatter:on
+
+		// equal element can be offered once comparison no longer fails
+		final DelayedInteger again = i(1);
+		queue.remove(other);
+		queue.offer(again);
+
+		// @formatter:off
+		then(queue)
+			.as("Element equal to rejected element is queued")
+			.containsExactly(again)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void remove_head_concurrentOfferOfEqualElement() throws Exception {
+		// GIVEN
+		final var offerThreads = new ArrayList<Thread>(2);
+		final var queueRef = new AtomicReference<DelayQueueSet<DelayedInteger>>();
+		final var delegateSet = new HashSet<DelayedInteger>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean remove(Object o) {
+				// each time the delegate set is modified, have another thread
+				// try to offer an equal element; that offer can only complete
+				// before this method returns if the queue lock is not held
+				final Thread t = new Thread(() -> queueRef.get().offer(i(1, 0)));
+				offerThreads.add(t);
+				t.start();
+				try {
+					t.join(200);
+				} catch ( InterruptedException e ) {
+					throw new RuntimeException(e);
+				}
+				return super.remove(o);
+			}
+
+		};
+		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
+		queueRef.set(queue);
+
+		final DelayedInteger first = i(1, 0);
+		queue.offer(first);
+
+		// WHEN
+		final DelayedInteger result = queue.remove();
+		for ( Thread t : offerThreads ) {
+			t.join();
+		}
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Expired head removed")
+			.isSameAs(first)
+			;
+		then(queue)
+			.as("Equal element offered during removal is queued once")
+			.hasSize(1)
+			;
+		then(delegateSet)
+			.as("Delegate set in sync with queue")
+			.containsExactlyElementsOf(queue)
+			;
+		// @formatter:on
+
+		queue.offer(i(1, 0));
+
+		// @formatter:off
+		then(queue)
+			.as("Further equal element is a duplicate")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@SuppressWarnings("unlikely-arg-type")
+	@Test
+	public void contains() {
+		// GIVEN
+		final var queue = new DelayQueueSet<DelayedInteger>(10);
+		queue.add(i(1, 0));
+		queue.add(i(2));
+
+		// THEN
+		then(queue.contains(i(1))).as("Element equal to expired element found").isTrue();
+		then(queue.contains(i(2))).as("Element equal to unexpired element found").isTrue();
+		then(queue.contains(i(3))).as("Element never added not found").isFalse();
+		then(queue.contains(null)).as("Null not found").isFalse();
+		then(queue.contains("1")).as("Object of some other type not found").isFalse();
+
+		queue.poll();
+		then(queue.contains(i(1))).as("Polled element not found").isFalse();
+
+		queue.remove(i(2));
+		then(queue.contains(i(2))).as("Removed element not found").isFalse();
+
+		queue.add(i(3));
+		queue.clear();
+		then(queue.contains(i(3))).as("Cleared element not found").isFalse();
+	}
+
+	@SuppressWarnings("unlikely-arg-type")
+	@Test
+	public void remove_object() {
+		// GIVEN
+		final var delegateSet = new HashSet<DelayedInteger>();
+		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
+		final DelayedInteger one = i(1);
+		queue.add(one);
+		queue.add(i(2));
+
+		// WHEN
+		final boolean missing = queue.remove(i(3));
+		final boolean present = queue.remove(i(2));
+		final boolean repeated = queue.remove(i(2));
+		final boolean nullObject = queue.remove(null);
+		final boolean otherType = queue.remove("1");
+
+		// THEN
+		then(missing).as("Element never added not removed").isFalse();
+		then(present).as("Element equal to unexpired element removed").isTrue();
+		then(repeated).as("Element already removed not removed again").isFalse();
+		then(nullObject).as("Null not removed").isFalse();
+		then(otherType).as("Object of some other type not removed").isFalse();
+		// @formatter:off
+		then(queue)
+			.as("Other element remains in queue")
+			.containsExactly(one)
+			;
+		then(delegateSet)
+			.as("Delegate set in sync with queue")
+			.containsExactly(one)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void drainTo_nullCollection() {
+		// GIVEN
+		final var queue = new DelayQueueSet<DelayedInteger>(10);
+		queue.add(i(1, 0));
+
+		// WHEN
+		final Throwable result = catchThrowable(() -> queue.drainTo(null));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("NullPointerException thrown, per BlockingQueue API")
+			.isInstanceOf(NullPointerException.class)
+			;
+		then(queue)
+			.as("Queue unchanged")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void clear() throws Exception {
 		// GIVEN
 		var queue = new DelayQueueSet<DelayedInteger>(10);
@@ -183,7 +394,6 @@ public class DelayQueueSetTests {
 		final var queue = new DelayQueueSet<DelayedInteger>(delegateSet);
 
 		final var accepted = synchronizedList(new ArrayList<Integer>(maxCount));
-		final var rejected = synchronizedList(new ArrayList<Integer>(maxCount));
 		final var uniqueAccepted = synchronizedSet(new TreeSet<Integer>());
 
 		final long start = System.currentTimeMillis();
@@ -196,21 +406,17 @@ public class DelayQueueSetTests {
 					while ( true ) {
 						int count = producerCounter.incrementAndGet();
 						if ( count > maxCount ) {
-							log.info("Producer: maximum reached: {}/{}/{}", maxCount, accepted.size(),
-									rejected.size());
+							log.info("Producer: maximum reached: {}/{}", maxCount, accepted.size());
 							return;
 						}
 
 						int val = rng.nextInt(rngMax);
 
-						if ( queue.offer(i(val, delay)) ) {
-							log.debug("ADD: |{}", val);
-							accepted.add(val);
-							uniqueAccepted.add(val);
-						} else {
-							log.debug("REJ: |{}", val);
-							rejected.add(val);
-						}
+						// offer always returns true, even for duplicates
+						queue.offer(i(val, delay));
+						log.debug("ADD: |{}", val);
+						accepted.add(val);
+						uniqueAccepted.add(val);
 						long sleep = rng.nextLong(10L, 50L);
 						if ( sleep > 0 ) {
 							log.debug("Producer: sleep {}", sleep);
@@ -279,9 +485,9 @@ public class DelayQueueSetTests {
 
 		// THEN
 		// @formatter:off
-		then(accepted.size() + rejected.size())
+		then(accepted)
 			.as("Handled all")
-			.isEqualTo(maxCount)
+			.hasSize(maxCount)
 			;
 		
 		final var consumedCountsByValue = consumed.stream().collect(groupingBy(e -> e.i, counting()));
