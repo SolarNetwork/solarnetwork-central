@@ -89,7 +89,7 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
 SolarReg.findByName = function findByName(array, name) {
 	if ( name && array ) {
 		for ( const el of array ) {
-			if ( el.name === identifier ) {
+			if ( el.name === name ) {
 				return el;
 			}
 		}
@@ -300,7 +300,7 @@ SolarReg.extractResponseMessage = function extractResponseMessage(xhr, statusTex
 	}
 	if ( !result ) {
 		try {
-			json = JSON.parse(xhr.responseText);
+			const json = JSON.parse(xhr.responseText);
 			result = SolarReg.formatResponseMessage(json);
 		} catch (ex) {
 			// ignore

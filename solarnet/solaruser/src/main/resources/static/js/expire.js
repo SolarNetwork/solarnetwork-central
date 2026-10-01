@@ -84,6 +84,9 @@ $(document).ready(function() {
 				}
 			}
 			return data;
+		}, {
+			// policies are created and updated at the same URL
+			urlSerializer: (url) => url
 		});
 		return false;
 	})
