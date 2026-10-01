@@ -149,7 +149,7 @@ subprojects {
 		snCommonOcppVersion = '6.1.2'
 		snCommonOcpp16JakartaVersion = '6.1.1'
 		snCommonOcpp201Version = '3.1.1'
-		snCommonOcppWebJakartaVersion = '4.2.1'
+		snCommonOcppWebJakartaVersion = '4.3.0'
 		snCommonPkiBcVersion = '4.1.1'
 		snCommonTmplSt4 = '4.1.0'
 		snCommonWebJakartaVersion = '2.6.0'
