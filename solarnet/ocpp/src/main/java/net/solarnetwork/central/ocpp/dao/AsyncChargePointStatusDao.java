@@ -26,9 +26,13 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import org.jspecify.annotations.Nullable;
@@ -49,11 +53,29 @@ import net.solarnetwork.util.StatTracker;
 /**
  * Asynchronous implementation of {@link ChargePointStatusDao}.
  * 
+ * <p>
+ * Connection status updates are buffered per charger, and written to the
+ * delegate DAO once the configured delay has passed since the first buffered
+ * update for that charger. This limits the rate of database updates when
+ * chargers connect and disconnect quickly, while keeping the stored status
+ * eventually consistent.
+ * </p>
+ * 
+ * <p>
+ * Buffered updates are merged per connection session: a newer update for a
+ * session replaces an older one, and a disconnection of a session whose
+ * connection has not been written yet cancels both. The remaining updates are
+ * written in the order they were made. The delegate only clears a status when
+ * disconnecting the session it has stored, so a disconnection of an older
+ * session can not overwrite a newer connection, whatever order the session
+ * events were received in.
+ * </p>
+ * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncChargePointStatusDao
-		extends DelayedOccasionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
+		extends DelayedOccasionalProcessor<AsyncChargePointStatusDao.PendingCharger>
 		implements ChargePointStatusDao, Runnable, ServiceLifecycleObserver {
 
 	/** The {@code flushDelay} property default value. */
@@ -62,6 +84,7 @@ public class AsyncChargePointStatusDao
 	private static final Logger log = LoggerFactory.getLogger(AsyncChargePointStatusDao.class);
 
 	private final ChargePointStatusDao delegate;
+	private final ConcurrentMap<PendingCharger, Map<String, StatusUpdate>> pending;
 
 	/**
 	 * Constructor.
@@ -78,17 +101,21 @@ public class AsyncChargePointStatusDao
 	/**
 	 * Constructor.
 	 * 
+	 * @param clock
+	 *        the clock
 	 * @param scheduler
 	 *        the scheduler
 	 * @param delegate
 	 *        the delegate
-	 * @param statuses
-	 *        the status buffer
+	 * @param chargers
+	 *        the queue of chargers with buffered updates; must not accept
+	 *        duplicate elements
 	 */
 	public AsyncChargePointStatusDao(Clock clock, TaskScheduler scheduler, ChargePointStatusDao delegate,
-			Queue<StatusUpdate> statuses) {
-		super(clock, new StatTracker("AsyncChargePointStatus", null, log, 500), scheduler, statuses);
+			Queue<PendingCharger> chargers) {
+		super(clock, new StatTracker("AsyncChargePointStatus", null, log, 500), scheduler, chargers);
 		this.delegate = ObjectUtils.requireNonNullArgument(delegate, "delegate");
+		this.pending = new ConcurrentHashMap<>(64, 0.9f, 2);
 	}
 
 	@Override
@@ -109,73 +136,82 @@ public class AsyncChargePointStatusDao
 	@Override
 	public void updateConnectionStatus(Long userId, String chargePointIdentifier, String connectedTo,
 			String sessionId, Instant connectionDate, boolean connected) {
-		asyncProcessItem(new StatusUpdate(clock.instant(), userId, chargePointIdentifier, connectedTo,
-				sessionId, connectionDate, connected));
+		final PendingCharger charger = new PendingCharger(clock.instant(), userId,
+				chargePointIdentifier);
+		final StatusUpdate update = new StatusUpdate(userId, chargePointIdentifier, connectedTo,
+				sessionId, connectionDate, connected);
+		// buffer the update before queuing the charger, so a flush that removes the charger from
+		// the queue after this point also sees this update
+		pending.compute(charger, (_, updates) -> merge(updates, update));
+		asyncProcessItem(charger);
+	}
+
+	private static @Nullable Map<String, StatusUpdate> merge(@Nullable Map<String, StatusUpdate> updates,
+			StatusUpdate update) {
+		final Map<String, StatusUpdate> result = (updates != null ? updates : new LinkedHashMap<>(2));
+		final String sessionKey = update.sessionKey();
+		final StatusUpdate prev = result.remove(sessionKey);
+		if ( !update.connected && prev != null && prev.connected ) {
+			// connection not written yet, so nothing to disconnect
+			return (result.isEmpty() ? null : result);
+		}
+		result.put(sessionKey, update);
+		return result;
 	}
 
 	@Override
-	protected void processItemInternal(StatusUpdate item) {
-		delegate.updateConnectionStatus(item.userId, item.chargePointIdentifier, item.connectedTo,
-				item.sessionId, item.connectionDate, item.connected);
+	protected void processItemInternal(PendingCharger item) {
+		final Map<String, StatusUpdate> updates = pending.remove(item);
+		if ( updates == null ) {
+			return;
+		}
+		for ( StatusUpdate update : updates.values() ) {
+			try {
+				delegate.updateConnectionStatus(update.userId, update.chargePointIdentifier,
+						update.connectedTo, update.sessionId, update.connectionDate, update.connected);
+			} catch ( RuntimeException e ) {
+				log.error("Error updating charger {} connection status {}: {}",
+						update.chargePointIdentifier, update, e.getMessage(), e);
+			}
+		}
 	}
 
 	/**
-	 * Create a new status update instance.
+	 * Write all buffered updates, including those whose delay has not yet
+	 * passed.
+	 */
+	@Override
+	public void serviceDidShutdown() {
+		super.serviceDidShutdown();
+		for ( PendingCharger charger : pending.keySet() ) {
+			processItemInternal(charger);
+		}
+	}
+
+	/**
+	 * A charger with buffered status updates.
 	 * 
 	 * <p>
-	 * This method is targeted for unit tests.
+	 * Chargers are equal when their user and charge point identifier are
+	 * equal, regardless of when their updates are due.
 	 * </p>
-	 * 
-	 * @param ts
-	 *        the timestamp
-	 * @param userId
-	 *        the user ID
-	 * @param chargePointIdentifier
-	 *        the charge point identifier
-	 * @param connectedTo
-	 *        the connected to
-	 * @param sessionId
-	 *        the session ID
-	 * @param connectionDate
-	 *        the connection date
-	 * @param connected
-	 *        the connected flag
-	 * @return the new instance
 	 */
-	public StatusUpdate updateFor(Instant ts, Long userId, String chargePointIdentifier,
-			String connectedTo, String sessionId, Instant connectionDate, boolean connected) {
-		return new StatusUpdate(ts, userId, chargePointIdentifier, connectedTo, sessionId,
-				connectionDate, connected);
-	}
-
-	/**
-	 * A delayed status update.
-	 */
-	public final class StatusUpdate implements Delayed {
+	public final class PendingCharger implements Delayed {
 
 		private final Instant ready;
 		private final Long userId;
 		private final String chargePointIdentifier;
-		private final String connectedTo;
-		private final String sessionId;
-		private final Instant connectionDate;
-		private final boolean connected;
 
-		private StatusUpdate(Instant ts, Long userId, String chargePointIdentifier, String connectedTo,
-				String sessionId, Instant connectionDate, boolean connected) {
+		private PendingCharger(Instant ts, Long userId, String chargePointIdentifier) {
 			super();
 			this.ready = ts.plus(AsyncChargePointStatusDao.this.getDelay());
 			this.userId = userId;
 			this.chargePointIdentifier = chargePointIdentifier;
-			this.connectedTo = connectedTo;
-			this.sessionId = sessionId;
-			this.connectionDate = connectionDate;
-			this.connected = connected;
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if ( obj instanceof StatusUpdate o ) {
+		public boolean equals(@Nullable Object obj) {
+			if ( obj instanceof PendingCharger o ) {
 				return Objects.equals(userId, o.userId)
 						&& Objects.equals(chargePointIdentifier, o.chargePointIdentifier);
 			}
@@ -190,7 +226,7 @@ public class AsyncChargePointStatusDao
 		@Override
 		public int compareTo(Delayed o) {
 			// not bothering to check instanceof for performance
-			StatusUpdate other = (StatusUpdate) o;
+			PendingCharger other = (PendingCharger) o;
 			int result = ready.compareTo(other.ready);
 			if ( result == 0 ) {
 				result = userId.compareTo(other.userId);
@@ -206,58 +242,22 @@ public class AsyncChargePointStatusDao
 			return clock.instant().until(ready, unit.toChronoUnit());
 		}
 
-		/**
-		 * Get the user ID.
-		 * 
-		 * @return the user ID
-		 */
-		public Long getUserId() {
-			return userId;
+		@Override
+		public String toString() {
+			return "PendingCharger{userId=" + userId + ", chargePointIdentifier="
+					+ chargePointIdentifier + ", ready=" + ready + "}";
 		}
 
-		/**
-		 * Get the charge point identifier.
-		 * 
-		 * @return the charge point identifier
-		 */
-		public String getChargePointIdentifier() {
-			return chargePointIdentifier;
-		}
+	}
 
-		/**
-		 * Get the connected to.
-		 * 
-		 * @return the connected to
-		 */
-		public String getConnectedTo() {
-			return connectedTo;
-		}
+	/**
+	 * A buffered connection status update.
+	 */
+	private record StatusUpdate(Long userId, String chargePointIdentifier, String connectedTo,
+			String sessionId, Instant connectionDate, boolean connected) {
 
-		/**
-		 * Get the session ID.
-		 * 
-		 * @return the session ID
-		 */
-		public String getSessionId() {
-			return sessionId;
-		}
-
-		/**
-		 * Get the connection date.
-		 * 
-		 * @return the connection date
-		 */
-		public Instant getConnectionDate() {
-			return connectionDate;
-		}
-
-		/**
-		 * Get the connected flag.
-		 * 
-		 * @return the connected flag
-		 */
-		public boolean isConnected() {
-			return connected;
+		private String sessionKey() {
+			return connectedTo + '\n' + sessionId;
 		}
 
 	}

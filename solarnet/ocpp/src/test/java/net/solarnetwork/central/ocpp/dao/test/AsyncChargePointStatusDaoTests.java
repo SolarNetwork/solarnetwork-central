@@ -25,19 +25,21 @@ package net.solarnetwork.central.ocpp.dao.test;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
-import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +49,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.dao.AsyncChargePointStatusDao;
-import net.solarnetwork.central.ocpp.dao.AsyncChargePointStatusDao.StatusUpdate;
+import net.solarnetwork.central.ocpp.dao.AsyncChargePointStatusDao.PendingCharger;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
@@ -60,7 +62,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Test cases for the {@link AsyncChargePointStatusDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -75,18 +77,15 @@ public class AsyncChargePointStatusDaoTests {
 	@Mock
 	private FilteredResultsProcessor<ChargePointStatus> processor;
 
-	@Mock
-	private ScheduledFuture<?> future;
-
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.SECONDS),
 			ZoneOffset.UTC);
-	private Queue<StatusUpdate> statuses;
+	private Queue<PendingCharger> chargers;
 	private AsyncChargePointStatusDao dao;
 
 	@BeforeEach
 	public void setup() {
-		statuses = new DelayQueueSet<>();
-		dao = new AsyncChargePointStatusDao(clock, scheduler, delegate, statuses);
+		chargers = new DelayQueueSet<>();
+		dao = new AsyncChargePointStatusDao(clock, scheduler, delegate, chargers);
 	}
 
 	@Test
@@ -123,7 +122,6 @@ public class AsyncChargePointStatusDaoTests {
 				same(offset), same(max));
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public void updateStatus_connected() {
 		// GIVEN
@@ -134,8 +132,6 @@ public class AsyncChargePointStatusDaoTests {
 		final Instant connectionDate = Instant.now();
 		final boolean connected = true;
 
-		given(scheduler.schedule(any(), any(Instant.class))).willReturn((ScheduledFuture) future);
-
 		// WHEN
 		dao.updateConnectionStatus(userId, chargePointIdentifier, connectedTo, sessionId, connectionDate,
 				connected);
@@ -143,22 +139,10 @@ public class AsyncChargePointStatusDaoTests {
 		// THEN
 		// @formatter:off
 		then(scheduler).should().schedule(same(dao), eq(clock.instant().plus(dao.getDelay())));
-		and.then(statuses)
-			.as("Status buffered")
+		then(delegate).shouldHaveNoInteractions();
+		and.then(chargers)
+			.as("Charger buffered")
 			.hasSize(1)
-			.first()
-			.as("User ID same as passed in method")
-			.returns(userId, from(StatusUpdate::getUserId))
-			.as("Charge point ID same as passed in method")
-			.returns(chargePointIdentifier, from(StatusUpdate::getChargePointIdentifier))
-			.as("Connected to same as passed in method")
-			.returns(connectedTo, from(StatusUpdate::getConnectedTo))
-			.as("Session ID same as passed in method")
-			.returns(sessionId, from(StatusUpdate::getSessionId))
-			.as("Connection date same as passed in method")
-			.returns(connectionDate, from(StatusUpdate::getConnectionDate))
-			.as("Connected flag same as passed in method")
-			.returns(connected, from(StatusUpdate::isConnected))
 			;
 		// @formatter:on
 	}
@@ -172,8 +156,8 @@ public class AsyncChargePointStatusDaoTests {
 		final String sessionId = randomString();
 		final Instant connectionDate = Instant.now();
 		final boolean connected = true;
-		statuses.add(dao.updateFor(clock.instant(), userId, chargePointIdentifier, connectedTo,
-				sessionId, connectionDate, connected));
+		dao.updateConnectionStatus(userId, chargePointIdentifier, connectedTo, sessionId, connectionDate,
+				connected);
 
 		// WHEN
 		// jump ahead in time
@@ -181,18 +165,17 @@ public class AsyncChargePointStatusDaoTests {
 		dao.run();
 
 		// THEN
+		// @formatter:off
 		then(delegate).should().updateConnectionStatus(userId, chargePointIdentifier, connectedTo,
 				sessionId, connectionDate, connected);
-
-		// @formatter:off
-		and.then(statuses)
-			.as("Status emptied")
+		and.then(chargers)
+			.as("Chargers emptied")
 			.isEmpty()
 			;
-		// @formatter:on
-
-		// nothing new to schedule
+		// only the initial flush scheduled, nothing new to schedule
+		then(scheduler).should().schedule(same(dao), any(Instant.class));
 		then(scheduler).shouldHaveNoMoreInteractions();
+		// @formatter:on
 	}
 
 	@Test
@@ -204,49 +187,236 @@ public class AsyncChargePointStatusDaoTests {
 		final String sessionId = randomString();
 		final Instant connectionDate = Instant.now();
 		final boolean connected = true;
-		statuses.add(dao.updateFor(clock.instant(), userId, chargePointIdentifier, connectedTo,
-				sessionId, connectionDate, connected));
+		dao.updateConnectionStatus(userId, chargePointIdentifier, connectedTo, sessionId, connectionDate,
+				connected);
 
 		// add another newer update, too new to flush
+		clock.add(dao.getDelay().dividedBy(2));
 		final Long userId2 = randomLong();
 		final String chargePointIdentifier2 = randomString();
-		final String connectedTo2 = randomString();
-		final String sessionId2 = randomString();
-		final Instant connectionDate2 = Instant.now();
-		final boolean connected2 = false;
-		statuses.add(dao.updateFor(clock.instant().plusSeconds(1), userId2, chargePointIdentifier2,
-				connectedTo2, sessionId2, connectionDate2, connected2));
+		dao.updateConnectionStatus(userId2, chargePointIdentifier2, randomString(), randomString(),
+				Instant.now(), false);
 
 		// WHEN
-		// jump ahead in time
-		clock.add(dao.getDelay());
+		// jump ahead in time to when the first update is due
+		clock.add(dao.getDelay().dividedBy(2));
 		dao.run();
 
 		// THEN
+		// @formatter:off
 		then(delegate).should().updateConnectionStatus(userId, chargePointIdentifier, connectedTo,
 				sessionId, connectionDate, connected);
-
-		// @formatter:off
-		and.then(statuses)
-			.as("Status reduced by 1")
+		then(delegate).shouldHaveNoMoreInteractions();
+		and.then(chargers)
+			.as("Chargers reduced by 1")
 			.hasSize(1)
-			.first()
-			.as("User ID same as passed in method")
-			.returns(userId2, from(StatusUpdate::getUserId))
-			.as("Charge point ID same as passed in method")
-			.returns(chargePointIdentifier2, from(StatusUpdate::getChargePointIdentifier))
-			.as("Connected to same as passed in method")
-			.returns(connectedTo2, from(StatusUpdate::getConnectedTo))
-			.as("Session ID same as passed in method")
-			.returns(sessionId2, from(StatusUpdate::getSessionId))
-			.as("Connection date same as passed in method")
-			.returns(connectionDate2, from(StatusUpdate::getConnectionDate))
-			.as("Connected flag same as passed in method")
-			.returns(connected2, from(StatusUpdate::isConnected))
 			;
-		// @formatter:on
-
 		// need to re-schedule as more statuses to flush
 		then(scheduler).should().schedule(same(dao), eq(clock.instant().plus(dao.getDelay())));
+		// @formatter:on
 	}
+
+	/**
+	 * A charger connection status row, as stored by the delegate DAO.
+	 */
+	private record StatusRow(String connectedTo, String sessionId) {
+
+	}
+
+	/**
+	 * Make the delegate DAO behave like the real SQL: a connected update
+	 * always replaces the row, and a disconnected update only clears the row
+	 * when it is for the stored instance and session.
+	 *
+	 * @return the simulated rows, keyed by charger identifier
+	 */
+	private Map<String, StatusRow> givenSimulatedStatusRows() {
+		final Map<String, StatusRow> rows = new HashMap<>(4);
+		willAnswer(inv -> {
+			final String cpId = inv.getArgument(1);
+			final String connectedTo = inv.getArgument(2);
+			final String sessionId = inv.getArgument(3);
+			final boolean connected = inv.getArgument(5);
+			if ( connected ) {
+				rows.put(cpId, new StatusRow(connectedTo, sessionId));
+			} else {
+				rows.computeIfPresent(cpId,
+						(_, row) -> row.connectedTo().equals(connectedTo)
+								&& row.sessionId().equals(sessionId) ? new StatusRow(null, null)
+										: row);
+			}
+			return null;
+		}).given(delegate).updateConnectionStatus(any(), any(), any(), any(), any(), anyBoolean());
+		return rows;
+	}
+
+	private void connect(Long userId, String cpId, String instance, String sessionId) {
+		dao.updateConnectionStatus(userId, cpId, instance, sessionId, clock.instant(), true);
+	}
+
+	private void disconnect(Long userId, String cpId, String instance, String sessionId) {
+		dao.updateConnectionStatus(userId, cpId, instance, sessionId, clock.instant(), false);
+	}
+
+	private void flushAfterDelay() {
+		clock.add(dao.getDelay());
+		dao.run();
+	}
+
+	@Test
+	public void coalesce_connectThenDisconnectSameSession() {
+		// GIVEN
+		final Long userId = randomLong();
+		final String cpId = randomString();
+
+		// WHEN
+		// charger connects and drops again within the delay
+		connect(userId, cpId, "i1", "s1");
+		disconnect(userId, cpId, "i1", "s1");
+		flushAfterDelay();
+
+		// THEN
+		// the connection was never written, so neither update needs to be
+		then(delegate).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void coalesce_disconnectThenReconnect() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+		rows.put(cpId, new StatusRow("i1", "s1"));
+
+		// WHEN
+		// charger drops and quickly reconnects within the delay
+		disconnect(userId, cpId, "i1", "s1");
+		connect(userId, cpId, "i1", "s2");
+		flushAfterDelay();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Charger connected to the new session")
+			.isEqualTo(new StatusRow("i1", "s2"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void coalesce_reconnectThenLateDisconnect() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+		rows.put(cpId, new StatusRow("i1", "s1"));
+
+		// WHEN
+		// new session established before the old session's close is processed
+		connect(userId, cpId, "i1", "s2");
+		disconnect(userId, cpId, "i1", "s1");
+		flushAfterDelay();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Charger connected to the new session")
+			.isEqualTo(new StatusRow("i1", "s2"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void coalesce_staleDisconnectThenDisconnect() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+		rows.put(cpId, new StatusRow("i1", "s1"));
+
+		// WHEN
+		// a late close for an older session, then the current session closes
+		disconnect(userId, cpId, "i1", "s0");
+		disconnect(userId, cpId, "i1", "s1");
+		flushAfterDelay();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Charger disconnected")
+			.isEqualTo(new StatusRow(null, null))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void coalesce_disconnectThenStaleDisconnect() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+		rows.put(cpId, new StatusRow("i1", "s1"));
+
+		// WHEN
+		// the current session closes, then a late close for an older session
+		disconnect(userId, cpId, "i1", "s1");
+		disconnect(userId, cpId, "i1", "s0");
+		flushAfterDelay();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Charger disconnected")
+			.isEqualTo(new StatusRow(null, null))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void coalesce_latestWrittenAtFirstDeadline() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+
+		// WHEN
+		connect(userId, cpId, "i1", "s1");
+		clock.add(dao.getDelay().dividedBy(2));
+		connect(userId, cpId, "i1", "s2");
+
+		// flush when the first update is due, before the second update's own delay
+		clock.add(dao.getDelay().dividedBy(2));
+		dao.run();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Latest status written when first update due, so updates are not postponed")
+			.isEqualTo(new StatusRow("i1", "s2"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void shutdown_flushesPendingBeforeDelay() {
+		// GIVEN
+		final Map<String, StatusRow> rows = givenSimulatedStatusRows();
+		final Long userId = randomLong();
+		final String cpId = randomString();
+		rows.put(cpId, new StatusRow("i1", "s1"));
+
+		// WHEN
+		// charger disconnected as the app shuts down
+		disconnect(userId, cpId, "i1", "s1");
+		dao.serviceDidShutdown();
+
+		// THEN
+		// @formatter:off
+		and.then(rows.get(cpId))
+			.as("Pending status written on shutdown, even though its delay has not elapsed")
+			.isEqualTo(new StatusRow(null, null))
+			;
+		// @formatter:on
+	}
+
 }
