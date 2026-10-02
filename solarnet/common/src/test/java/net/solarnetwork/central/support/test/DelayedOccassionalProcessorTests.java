@@ -1,5 +1,5 @@
 /* ==================================================================
- * DelayedOcassionalProcessorTests.java - 3/07/2024 1:38:18 pm
+ * DelayedOccassionalProcessorTests.java - 3/07/2024 1:38:18 pm
  * 
  * Copyright 2024 SolarNetwork.net Dev Team
  * 
@@ -63,7 +63,7 @@ import net.solarnetwork.util.StatTracker;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DelayedOcassionalProcessorTests {
+public class DelayedOccassionalProcessorTests {
 
 	private final static Logger log = LoggerFactory.getLogger(DelayedOccasionalProcessor.class);
 

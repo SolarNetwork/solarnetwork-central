@@ -120,7 +120,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -1139,6 +1139,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		User entity = userDao.get(requireNonNullArgument(userEntry.getId(), "user.id"));
 		if ( entity == null ) {
 			throw new AuthorizationException(userEntry.getEmail(), Reason.UNKNOWN_EMAIL);
+		}
+
+		// apply the changes to a copy: the loaded instance can end up in the
+		// DAO's cache, so it must not be left with changes that are not saved
+		entity = entity.clone();
+		final SolarLocation loc = entity.getLocation();
+		if ( loc != null ) {
+			entity.setLocation(loc.clone());
 		}
 
 		if ( StringUtils.hasText(userEntry.getEmail()) ) {

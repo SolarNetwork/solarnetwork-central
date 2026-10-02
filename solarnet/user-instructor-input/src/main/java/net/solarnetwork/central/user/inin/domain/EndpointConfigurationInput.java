@@ -39,7 +39,7 @@ import net.solarnetwork.util.StringUtils;
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
 public class EndpointConfigurationInput
@@ -228,10 +228,16 @@ public class EndpointConfigurationInput
 	 * Set the maximum execution seconds.
 	 *
 	 * @param maxExecutionSeconds
-	 *        the seconds to set; anything less than 1 will be saved as 1
+	 *        the seconds to set; {@code null} will be saved as
+	 *        {@link EndpointConfiguration#DEFAULT_MAX_EXECUTION_SECONDS} and
+	 *        anything less than 1 will be saved as 1
 	 */
-	public final void setMaxExecutionSeconds(int maxExecutionSeconds) {
-		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
+	public final void setMaxExecutionSeconds(@Nullable Integer maxExecutionSeconds) {
+		if ( maxExecutionSeconds == null ) {
+			this.maxExecutionSeconds = EndpointConfiguration.DEFAULT_MAX_EXECUTION_SECONDS;
+		} else {
+			this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
+		}
 	}
 
 	/**

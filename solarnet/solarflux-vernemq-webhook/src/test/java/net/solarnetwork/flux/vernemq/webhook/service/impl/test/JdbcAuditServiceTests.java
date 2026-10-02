@@ -61,6 +61,7 @@ import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
  * @author matt
  * @version 1.3
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class JdbcAuditServiceTests extends TestSupport {
 
