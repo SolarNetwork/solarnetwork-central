@@ -131,7 +131,6 @@ subprojects {
 		batikVersion = '1.19'
 		bouncyCastleVersion = '1.83'
 		bucket4jVersion = '8.14.0'
-		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.19.0'
 		cronUtilsVersion = '9.2.0'
 		fastCsvVersion = '4.1.0'

@@ -68,23 +68,19 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 
 	/**
 	 * The default value for the {@code nodeDatumTopicRegex} property.
 	 */
-	// CHECKSTYLE OFF: LineLength
 	public static final String DEFAULT_NODE_DATUM_TOPIC_REGEX = "(?:user/(\\d+)/)?node/(\\d+|\\+)/datum/([^/]+)(/.+)";
-	// CHECKSTYLE ON: LineLength
 
 	/**
 	 * The default value for the {@code userTopicRegex} property.
 	 */
-	// CHECKSTYLE OFF: LineLength
 	public static final String DEFAULT_USER_TOPIC_REGEX = "(?:user/(\\d+)/)?(.+)";
-	// CHECKSTYLE ON: LineLength
 
 	private Pattern nodeDatumTopicRegex = Pattern.compile(DEFAULT_NODE_DATUM_TOPIC_REGEX);
 	private Pattern userTopicRegex = Pattern.compile(DEFAULT_USER_TOPIC_REGEX);

@@ -59,7 +59,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * </p>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class JdbcAuthService implements AuthService {
 
@@ -91,8 +91,6 @@ public class JdbcAuthService implements AuthService {
 	 */
 	public static final String DEFAULT_SN_PATH = "/solarflux/auth";
 
-	// CHECKSTYLE OFF: LineLength
-
 	/**
 	 * The default value for the {@code authenticateCall} property.
 	 */
@@ -107,8 +105,6 @@ public class JdbcAuthService implements AuthService {
 	 * The default value for the {@code authorizeCall} property.
 	 */
 	public static final String DEFAULT_AUTHORIZE_CALL = "SELECT user_id,token_type,jpolicy,node_ids FROM solaruser.user_auth_token_node_ids WHERE auth_token = ?";
-
-	// CHECKSTYLE ON: LineLength
 
 	/**
 	 * The default value for the {@code maxDateSkew} property.

@@ -37,7 +37,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
  * Configuration for application-level caching.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @EnableCaching
@@ -69,7 +69,6 @@ public class CacheConfig {
 		return cacheManager.createCache(ACTOR_CACHE_NAME, actorCacheConfiguration());
 	}
 
-	// CHECKSTYLE IGNORE LineLength FOR NEXT 1 LINE
 	private javax.cache.configuration.Configuration<String, Actor> actorCacheConfiguration() {
 		MutableConfiguration<String, Actor> conf = new MutableConfiguration<>();
 		conf.setExpiryPolicyFactory(

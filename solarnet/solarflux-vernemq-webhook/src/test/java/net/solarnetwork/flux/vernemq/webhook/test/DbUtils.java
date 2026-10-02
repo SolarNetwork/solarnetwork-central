@@ -25,7 +25,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Utilities to help with SolarNetwork database access.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class DbUtils {
 
@@ -86,13 +86,11 @@ public final class DbUtils {
 	 */
 	public static void createToken(JdbcOperations jdbcOps, String tokenId, String tokenSecret,
 			Long userId, boolean active, String type, SecurityPolicy policy) {
-		// CHECKSTYLE OFF: LineLength
 		jdbcOps.update(
 				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
 						+ " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::jsonb)",
 				tokenId, tokenSecret, userId, active ? "Active" : "Disabled", type,
 				net.solarnetwork.codec.jackson.JsonUtils.getJSONString(policy, null));
-		// CHECKSTYLE ON: LineLength
 	}
 
 	/**

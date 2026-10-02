@@ -60,8 +60,6 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
  */
 public class JdbcAuditService implements AuditService {
 
-	// CHECKSTYLE OFF: LineLength
-
 	/**
 	 * The default value for the {@code updateDelay} property.
 	 */
@@ -110,8 +108,6 @@ public class JdbcAuditService implements AuditService {
 	 * The default value for the {@code deliverTopicRegex} property.
 	 */
 	public static final String DEFAULT_DELIVER_TOPIC_REGEX = "user/(\\d+)/.*";
-
-	// CHECKSTYLE ON: LineLength
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
