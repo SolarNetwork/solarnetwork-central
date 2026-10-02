@@ -55,19 +55,19 @@
 						<li>
 							<a class="dropdown-item" data-th-classappend="${navloc == 'data-insight'}?active" data-th-href="@{/u/sec/data-insight}" data-th-text="#{link.dataInsight}">Data Insight</a>
 						</li>
-						<li data-th-if="expireBiz">
+						<li data-th-if="${expireBiz}">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'expire'}?active" data-th-href="@{/u/sec/expire}" data-th-text="#{link.expire}">Data Expire</a>
 						</li>
-						<li sec:authorize="hasRole('ROLE_IMPORT')" data-th-if="importBiz">
+						<li sec:authorize="hasRole('ROLE_IMPORT')" data-th-if="${importBiz}">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'import'}?active" data-th-href="@{/u/sec/import}" data-th-text="#{link.import}">Data Import</a>
 						</li>
-						<li sec:authorize="hasRole('ROLE_EXPORT')" data-th-if="exportBiz">
+						<li sec:authorize="hasRole('ROLE_EXPORT')" data-th-if="${exportBiz}">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'export'}?active" data-th-href="@{/u/sec/export}" data-th-text="#{link.export}">Data Export</a>
 						</li>
-						<li sec:authorize="hasRole('ROLE_EVENT')" data-th-if="eventHookBiz">
+						<li sec:authorize="hasRole('ROLE_EVENT')" data-th-if="${eventHookBiz}">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'node-event'}?active" data-th-href="@{/u/sec/event/node}" data-th-text="#{link.node-event}">Node Event Hooks</a>
 						</li>
-						<li data-th-if="eventHookBiz">
+						<li>
 							<a class="dropdown-item" data-th-classappend="${navloc == 'flux'}?active" data-th-href="@{/u/sec/flux}" data-th-text="#{link.flux}">SolarFlux Settings</a>
 						</li>
 					</ul>
@@ -91,7 +91,7 @@
 						<li sec:authorize="hasRole('ROLE_INSTRUCTION_INPUT')">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'inin'}?active" data-th-href="@{/u/sec/inin}" data-th-text="#{link.inin}">ININ</a>
 						</li>
-						<li sec:authorize="hasRole('ROLE_OCPP')">
+						<li sec:authorize="hasRole('ROLE_OCPP')" data-th-if="${ocppBiz}">
 							<a class="dropdown-item" data-th-classappend="${navloc == 'ocpp'}?active" data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
 						</li>
 						<li sec:authorize="hasRole('ROLE_OSCP')">
