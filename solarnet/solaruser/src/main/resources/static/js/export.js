@@ -102,7 +102,8 @@ $(document).ready(function() {
 			});
 		});
 
-		SolarReg.populateListCount(container, configs);
+		// when preserving, configs holds just the changed items
+		SolarReg.populateListCount(container, preserve ? exportConfigs.adhocDatumExportConfigs : configs);
 		return configs;
 	}
 
@@ -197,7 +198,8 @@ $(document).ready(function() {
 			});
 		});
 
-		SolarReg.populateListCount(container, configs);
+		// when preserving, configs holds just the changed items
+		SolarReg.populateListCount(container, preserve ? exportConfigs.datumExportConfigs : configs);
 		return configs;
 	}
 
