@@ -290,7 +290,7 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
-	$('#edit-node-modal').data('page', 1).on('show', function() {
+	$('#edit-node-modal').data('page', 1).on('show.bs.modal', function() {
 		dynamicSearchTimer = undefined;
 		$('#edit-node-location-search-results').addClass('hidden');
 	}).ajaxForm({
