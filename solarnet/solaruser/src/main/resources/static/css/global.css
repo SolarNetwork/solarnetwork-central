@@ -1,5 +1,11 @@
 :root {
 	--sn-accent-color: #d6ad15;
+	--bs-secondary-color: #a1a7ab;
+}
+
+.btn-secondary {
+  --bs-btn-bg: #a1a7ab;
+  --bs-btn-border-color: #a1a7ab;
 }
 
 footer {
