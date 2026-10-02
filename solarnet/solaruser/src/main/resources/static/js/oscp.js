@@ -373,7 +373,12 @@ $(document).ready(function() {
 			return false;
 		})
 		.on('hidden.bs.modal', function handleModalHidden() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-settings-container .list-container'), (id, deleted) => {
+			// group settings are shown with their group, so have no row in the settings list to remove
+			const config = SolarReg.Templates.findContextItem(this);
+			const container = (config && config.groupId !== undefined
+				? undefined
+				: $('#oscp-settings-container .list-container'));
+			SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
 				if ( deleted ) {
 					groupSettingConfigsMap.delete(id);
 					let groupItem = systems.cg.configsMap.get(id);
@@ -670,6 +675,11 @@ $(document).ready(function() {
 				SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
 				if ( deleted ) {
 					sys.configsMap.delete(id);
+
+					// a group is shown as two rows, so remove the assets row as well
+					SolarReg.Templates.findExistingTemplateItem(container, id).remove();
+					cgGroupAssets.delete(id);
+					sys.container.toggleClass('hidden', sys.configs.length < 1);
 				}
 			});
 		})

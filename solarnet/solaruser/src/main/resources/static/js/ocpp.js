@@ -152,10 +152,12 @@ function ocppManagement() {
 			let settingConfig = (item.settings ? item.settings : {id:item.id,chargePointId:item.id});
 			SolarReg.Templates.setContextItem(settingsEditContainer, settingConfig);
 
-			el.find('.connectors-link').on('click', (/** @type {Event} */ event) => {
+			// replace any handler from before, as updated rows are passed here again
+			el.find('.connectors-link').off('click').on('click', (/** @type {Event} */ event) => {
 				toggleConnectors(item, event.target);
 			});
 		});
+		const priorCount = chargerConfigs.length;
 		SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
 
 		// pagination (when not updating rows)
@@ -190,6 +192,9 @@ function ocppManagement() {
 			chargerPagination.page = page;
 
 			chargerPaginationNav.toggleClass('hidden', pageCount < 2);
+		} else {
+			// count any newly added chargers
+			chargerPagination.total += (chargerConfigs.length - priorCount);
 		}
 
 		chargerCountLabel.text(chargerPagination.total);
@@ -269,11 +274,19 @@ function ocppManagement() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-chargers-container .list-container'), (id, deleted) => {
+		const container = $('#ocpp-chargers-container .list-container');
+		SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
 			SolarReg.deleteServiceConfiguration(deleted ? id : null, chargerConfigs, chargersContainer);
 			if ( deleted ) {
 				chargerConfigsMap.delete(id);
 				chargerSettingConfigsMap.delete(id);
+
+				// a charger is shown as two rows, so remove the connectors row as well
+				SolarReg.Templates.findExistingTemplateItem(container, id).remove();
+
+				chargerPagination.total -= 1;
+				chargerCountLabel.text(chargerPagination.total);
+				chargersContainer.toggleClass('hidden', chargerPagination.total < 1);
 			}
 		});
 	})
@@ -614,7 +627,12 @@ function ocppManagement() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-settings-container .list-container'), (id, deleted) => {
+		// charger settings are shown with their charger, so have no row in the settings list to remove
+		const config = SolarReg.Templates.findContextItem(this);
+		const container = (config && config.chargePointId !== undefined
+			? undefined
+			: $('#ocpp-settings-container .list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
 			if ( deleted ) {
 				chargerSettingConfigsMap.delete(id);
 				let chargerItem = chargerConfigsMap.get(id);

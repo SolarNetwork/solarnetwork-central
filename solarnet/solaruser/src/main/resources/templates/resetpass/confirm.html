@@ -18,7 +18,7 @@
 			<div class="row mb-3">
 				<label class="col-sm-2 col-form-label" for="reset-pass-password" data-th-text="#{user.password.label}">Password</label>
 				<div class="col-sm-6">
-					<input type="password" data-th-field="*{password}" data-th-errorclass="is-invalid" maxlength="240" id="user-password"
+					<input type="password" data-th-field="*{password}" data-th-errorclass="is-invalid" maxlength="240" id="reset-pass-password"
 						data-th-placeholder="#{user.password.placeholder}" class="form-control">
 					<div class="invalid-feedback" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></div>
 				</div>
@@ -26,7 +26,7 @@
 			<div class="row mb-3">
 				<label class="col-sm-2 col-form-label" for="reset-pass-password-again" data-th-text="#{user.password.again.label}">Password Again</label>
 				<div class="col-sm-6">
-					<input type="password" data-th-field="*{passwordConfirm}" data-th-classappend="${#fields.hasErrors('password')}? is-invalid" maxlength="240" id="user-password" class="form-control">
+					<input type="password" data-th-field="*{passwordConfirm}" data-th-classappend="${#fields.hasErrors('password')}? is-invalid" maxlength="240" id="reset-pass-password-again" class="form-control">
 					<div class="invalid-feedback" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{passwordConfirm}"></div>
 				</div>
 			</div>

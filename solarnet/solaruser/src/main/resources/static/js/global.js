@@ -264,6 +264,11 @@ SolarReg.deleteServiceConfiguration = function deleteServiceConfiguration(delete
 /**
  * Update counter elements with a `listCount` class with the count of items in an array.
  *
+ * The counters are searched for in the closest `section` of the container, unless the container
+ * is nested within an item of another list (a `.list-container` element), in which case they are
+ * searched for in that item only. Counters within list items and templates are left alone, as
+ * those belong to nested lists.
+ *
  * @param {jQuery} container the element to search for `.listCount` elements in
  * @param {Array.<Object>} configurations the array whose lenght to use
  */
@@ -271,8 +276,13 @@ SolarReg.deleteServiceConfiguration = function deleteServiceConfiguration(delete
 	if ( !container ) {
 		return;
 	}
-	container.closest('section').find('.listCount').text(
-		Array.isArray(configurations) ? configurations.length : 0);
+	const outerList = container.parent().closest('.list-container');
+	const scope = (outerList.length > 0
+		? container.parentsUntil(outerList).addBack().first() // the item holding the container
+		: container.closest('section'));
+	scope.find('.listCount')
+		.not(scope.find('.list-container, .template').find('.listCount'))
+		.text(Array.isArray(configurations) ? configurations.length : 0);
 };
 
 /**
