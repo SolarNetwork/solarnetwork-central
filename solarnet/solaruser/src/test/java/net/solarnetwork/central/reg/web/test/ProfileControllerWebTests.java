@@ -32,9 +32,13 @@ import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAUL
 import static net.solarnetwork.central.test.security.WithMockSecurityUser.DEFAULT_USER_ID;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +60,7 @@ import net.solarnetwork.central.user.domain.User;
  * Web integration tests for the {@link ProfileController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -145,6 +149,77 @@ public class ProfileControllerWebTests {
 		then(userRow(DEFAULT_USER_ID))
 			.as("Active user profile updated instead of the given user ID")
 			.containsOnly(entry("email", email), entry("name", name))
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void saveProfile_invalid() throws Exception {
+		// GIVEN
+		final String name = randomString();
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/profile/save")
+				.param("id", DEFAULT_USER_ID.toString())
+				.param("email", DEFAULT_USERNAME)
+				.param("name", name)
+				.param("country", "ZZ")
+				.param("timeZoneId", "Not/AZone")
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andExpect(view().name("sec/profile/form"))
+			.andExpect(model().attributeHasFieldErrorCode("user", "country",
+					"registration.country.unknown"))
+			.andExpect(model().attributeHasFieldErrorCode("user", "timeZoneId",
+					"registration.timeZoneId.unknown"))
+			.andExpect(content().string(containsString("The country is not recognized.")))
+			.andExpect(content().string(containsString("The time zone is not recognized.")))
+			;
+
+		// THEN
+		then(userRow(DEFAULT_USER_ID))
+			.as("Active user profile not updated")
+			.containsOnly(entry("email", DEFAULT_USERNAME), entry("name", DEFAULT_NAME))
+			;
+		// @formatter:on
+	}
+
+	@WithMockSecurityUser
+	@Test
+	public void saveProfile_afterInvalid() throws Exception {
+		// GIVEN
+		// @formatter:off
+		mvc.perform(post("/u/sec/profile/save")
+				.param("id", DEFAULT_USER_ID.toString())
+				.param("email", randomEmail())
+				.param("name", randomString())
+				.param("country", "ZZ")
+				.param("timeZoneId", "Not/AZone")
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andExpect(view().name("sec/profile/form"))
+			;
+
+		// WHEN
+		final String name = randomString();
+		mvc.perform(post("/u/sec/profile/save")
+				.param("id", DEFAULT_USER_ID.toString())
+				.param("email", DEFAULT_USERNAME)
+				.param("name", name)
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andExpect(view().name("sec/profile/view"))
+			;
+
+		// THEN
+		then(userRow(DEFAULT_USER_ID))
+			.as("Active user profile updated without any of the values rejected before")
+			.containsOnly(entry("email", DEFAULT_USERNAME), entry("name", name))
 			;
 		// @formatter:on
 	}

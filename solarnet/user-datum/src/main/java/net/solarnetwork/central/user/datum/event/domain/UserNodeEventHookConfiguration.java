@@ -39,7 +39,7 @@ import net.solarnetwork.dao.BasicEntity;
  * User and node specific event configuration entity.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @JsonPropertyOrder({ "id", "userId", "created", "name", "topic", "serviceIdentifier", "nodeIds",
 		"sourceIds", "serviceProperties" })
@@ -116,22 +116,6 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 			String serviceIdentifier) {
 		this(new UserLongPK(requireNonNullArgument(userId, "userId"), id), created, name,
 				serviceIdentifier);
-	}
-
-	/**
-	 * Create a copy with a given user ID.
-	 *
-	 * @param userId
-	 *        the user ID ot assign to the copy
-	 * @return the new copy
-	 */
-	public UserNodeEventHookConfiguration withUserId(Long userId) {
-		UserNodeEventHookConfiguration copy = new UserNodeEventHookConfiguration(getConfigurationId(),
-				userId, created(), name, serviceIdentifier);
-		copy.setNodeIds(nodeIds);
-		copy.setServiceProps(serviceProps);
-		copy.setTopic(topic);
-		return copy;
 	}
 
 	@Override

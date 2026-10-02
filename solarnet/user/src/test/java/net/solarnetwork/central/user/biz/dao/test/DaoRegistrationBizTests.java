@@ -69,6 +69,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.FieldError;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.NetworkIdentificationBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -83,6 +85,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
+import net.solarnetwork.central.user.biz.dao.UserValidator;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
@@ -112,7 +115,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoRegistrationBizTests {
 
@@ -680,6 +683,93 @@ public class DaoRegistrationBizTests {
 		}
 		then(associationData).isNotNull();
 		return associationData;
+	}
+
+	@Test
+	public void updateUser() {
+		// GIVEN
+		final User entry = new User(TEST_USER_ID, "updated@localhost");
+		entry.setName("Updated Name");
+
+		final User saved = testUser.clone();
+		saved.setEmail(entry.getEmail());
+		saved.setName(entry.getName());
+
+		final Capture<User> userCaptor = new Capture<>();
+
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(passwordEncoder.isPasswordEncrypted(TEST_ENC_PASSWORD)).andReturn(Boolean.TRUE);
+		expect(userDao.getUserByEmail(entry.getEmail())).andReturn(null);
+		expect(userDao.save(EasyMock.capture(userCaptor))).andReturn(TEST_USER_ID);
+		expect(userDao.getUserWithLocation(TEST_USER_ID)).andReturn(saved);
+
+		// WHEN
+		replayAll();
+		final User result = registrationBiz.updateUser(entry);
+
+		// THEN
+		verifyAll();
+		// @formatter:off
+		then(result)
+			.as("Saved user returned")
+			.isSameAs(saved)
+			;
+		then(userCaptor.getValue())
+			.as("Changes saved on a copy of the loaded user")
+			.isNotSameAs(testUser)
+			.returns(TEST_USER_ID, from(User::getId))
+			.returns(entry.getEmail(), from(User::getEmail))
+			.returns(entry.getName(), from(User::getName))
+			.returns(TEST_ENC_PASSWORD, from(User::getPassword))
+			;
+		then(testUser)
+			.as("Loaded user not changed")
+			.returns(TEST_EMAIL, from(User::getEmail))
+			.returns(null, from(User::getName))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateUser_invalid() {
+		// GIVEN
+		registrationBiz.setUserValidator(new UserValidator());
+
+		final User entry = new User(TEST_USER_ID, "updated@localhost");
+		entry.setName("Updated Name");
+		entry.setPassword("new.password");
+		entry.setCountry("ZZ");
+		entry.setTimeZoneId("Pacific/Auckland");
+		entry.setLang("en");
+
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+
+		// WHEN
+		replayAll();
+		// @formatter:off
+		thenExceptionOfType(ValidationException.class)
+			.as("Unknown country rejected")
+			.isThrownBy(() -> registrationBiz.updateUser(entry))
+			.satisfies(e -> {
+				then(e.getErrors().getFieldError("country"))
+					.as("Country field error")
+					.isNotNull()
+					.returns("registration.country.unknown", from(FieldError::getCode))
+					;
+			})
+			;
+
+		// THEN
+		verifyAll();
+		then(testUser)
+			.as("Loaded user not changed by the rejected update")
+			.returns(TEST_EMAIL, from(User::getEmail))
+			.returns(null, from(User::getName))
+			.returns(TEST_ENC_PASSWORD, from(User::getPassword))
+			.returns(null, from(User::getLocation))
+			.returns(null, from(User::getLang))
+			;
+		// @formatter:on
 	}
 
 	@Test

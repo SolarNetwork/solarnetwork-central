@@ -24,9 +24,13 @@ package net.solarnetwork.central.reg.web;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
@@ -37,7 +41,7 @@ import net.solarnetwork.central.user.domain.User;
  * Controller for user profile management.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 @RequestMapping("/u/sec/profile")
@@ -64,10 +68,21 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/save", method = RequestMethod.POST)
-	public ModelAndView saveProfile(User user) {
+	public ModelAndView saveProfile(@ModelAttribute("user") User user, BindingResult errors) {
 		// only the active user's own profile can be updated
 		user.setId(SecurityUtils.getCurrentUser().getUserId());
-		User u = registrationBiz.updateUser(user);
+		final User u;
+		try {
+			u = registrationBiz.updateUser(user);
+		} catch ( ValidationException e ) {
+			final Errors validationErrors = e.getErrors();
+			if ( validationErrors == null ) {
+				throw e;
+			}
+			// show the form again, with the validation errors
+			errors.addAllErrors(validationErrors);
+			return new ModelAndView("sec/profile/form");
+		}
 		u.setPassword(RegistrationBiz.DO_NOT_CHANGE_VALUE);
 		ModelAndView mv = new ModelAndView("sec/profile/view", "user", u);
 		mv.addObject(WebConstants.MODEL_KEY_STATUS_MSG, "user.profile.saved");
