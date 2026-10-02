@@ -214,7 +214,12 @@ $(document).ready(function() {
 		modal.find('.before').removeClass('hidden');
 		modal.find('.upload').addClass('hidden');
 		updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
-		SolarReg.Settings.resetEditServiceForm(this, $('#datum-import-job-list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, $('#datum-import-job-list-container'), function(_id, deleted) {
+			if ( deleted ) {
+				// refresh the list, to update the job count and hide the list if now empty
+				loadDatumImportJobs(false);
+			}
+		});
 	});
 	
 	// ***** Preview job form
