@@ -172,7 +172,7 @@
 				<td data-th-text="${userNode.name}">Home Node</td>
 				<td data-th-text="${userNode.description}">Node at home.</td>
 				<td>
-					<span class="badge" data-th-classappend="${userNode.requiresAuthorization} ? 'text-bg-secondary' : 'text-bg-success'"
+					<span class="badge" data-th-classappend="${userNode.requiresAuthorization} ? 'text-bg-danger' : 'text-bg-success'"
 						data-th-text="#{user.node.private.__${userNode.requiresAuthorization}__}">
 					</span>
 				</td>
