@@ -23,22 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static org.assertj.core.api.BDDAssertions.and;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.withSettings;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -47,13 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,19 +48,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
-import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditorCount;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link JdbcQueryAuditor} class.
+ *
+ * <p>
+ * The writing behavior comes from the base auditor class, and is tested with
+ * it; these tests cover how query results are counted and written.
+ * </p>
  *
  * @author matt
  * @version 2.4
@@ -90,7 +81,9 @@ public class JdbcQueryAuditorTests {
 	private static final long UPDATE_DELAY = 0;
 	private static final long RECONNECT_DELAY = 300;
 	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_NODE_ID_2 = -2L;
 	private static final String TEST_SOURCE_1 = "test.source.1";
+	private static final String TEST_SOURCE_2 = "test.source.2";
 
 	@Mock
 	private DataSource dataSource;
@@ -101,7 +94,7 @@ public class JdbcQueryAuditorTests {
 	@Mock
 	private CallableStatement jdbcStatement;
 
-	private ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> datumCountMap;
+	private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
 	private Clock testClock;
 	private StatTracker stats;
 	private JdbcQueryAuditor auditor;
@@ -121,6 +114,7 @@ public class JdbcQueryAuditorTests {
 	public void teardown() {
 		// stop any writer a test left running
 		auditor.disableWriting();
+		auditor.resetCurrentAuditResults();
 	}
 
 	/**
@@ -129,42 +123,20 @@ public class JdbcQueryAuditorTests {
 	 */
 	private void awaitFirstFlush() throws InterruptedException {
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(JdbcQueryAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1
+				&& System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
-	}
-
-	/**
-	 * Wait for a statistic to reach a count.
-	 */
-	private void awaitStat(JdbcQueryAuditorCount stat, long count) throws InterruptedException {
-		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(stat) < count && System.nanoTime() < end ) {
-			Thread.sleep(10);
-		}
-	}
-
-	/**
-	 * Wait for the ping test to give a result, as the writer's state changes.
-	 */
-	private PingTest.Result awaitPingResult(boolean success) throws Exception {
-		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		PingTest.Result result = auditor.performPingTest();
-		while ( result.isSuccess() != success && System.nanoTime() < end ) {
-			Thread.sleep(10);
-			result = auditor.performPingTest();
-		}
-		return result;
-	}
-
-	private static GeneralDatum testDatum() {
-		return GeneralDatum.nodeDatum(TEST_NODE_ID, TEST_SOURCE_1, Instant.now(), new DatumSamples());
 	}
 
 	private void givenWriterConnection() throws Exception {
 		given(dataSource.getConnection()).willReturn(jdbcConnection);
-		given(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
+		given(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_SERVICE_INCREMENT_SQL))
 				.willReturn(jdbcStatement);
+	}
+
+	private static GeneralNodeDatumMatch match(Long nodeId, String sourceId) {
+		return new GeneralNodeDatumMatch(new GeneralNodeDatumPK(nodeId, Instant.now(), sourceId));
 	}
 
 	@Test
@@ -236,6 +208,45 @@ public class JdbcQueryAuditorTests {
 	}
 
 	@Test
+	public void datumFilterResults_manyNodesAndSources() {
+		// GIVEN
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_2 });
+		filter.setSourceIds(new String[] { TEST_SOURCE_1, TEST_SOURCE_2 });
+
+		List<GeneralNodeDatumFilterMatch> matches = List.of(match(TEST_NODE_ID, TEST_SOURCE_1),
+				match(TEST_NODE_ID, TEST_SOURCE_1), match(TEST_NODE_ID, TEST_SOURCE_2),
+				match(TEST_NODE_ID_2, TEST_SOURCE_1));
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 4L, 0L, 4);
+
+		// WHEN
+		auditor.auditNodeDatumFilterResults(filter, results);
+
+		// THEN
+		final Instant auditDate = testClock.instant();
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Results counted per node and source, at the audit date")
+			.hasSize(3)
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_1, auditDate),
+					c -> and.then(c).hasValue(2))
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_2, auditDate),
+					c -> and.then(c).hasValue(1))
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID_2, TEST_SOURCE_1, auditDate),
+					c -> and.then(c).hasValue(1))
+			;
+		and.then(auditor.currentAuditResults())
+			.as("Current results counted per node and source, at the audit date")
+			.containsOnly(
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_1), 2),
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_2), 1),
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID_2, auditDate, TEST_SOURCE_1), 1))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void auditSingleDatum() throws Exception {
 		// GIVEN
 		givenWriterConnection();
@@ -267,439 +278,23 @@ public class JdbcQueryAuditorTests {
 	}
 
 	@Test
-	public void auditNodeDatum_concurrentAddAndFlush_noLostCounts() throws Exception {
+	public void addNodeDatumAuditResults_sameCounterAsAuditedDatum() {
 		// GIVEN
-		final int adderCount = 4;
-		final int nodeCount = 256;
-		final long runNanos = TimeUnit.SECONDS.toNanos(3);
-
-		// stub-only statement that tallies the flushed counts, to avoid recording every invocation
-		final CallableStatement stmt = mock(CallableStatement.class, withSettings().stubOnly());
-		final AtomicInteger stmtCount = new AtomicInteger();
-		final AtomicLong flushed = new AtomicLong();
-		willAnswer(inv -> {
-			stmtCount.set(inv.getArgument(1));
-			return null;
-		}).given(stmt).setInt(eq(4), anyInt());
-		given(stmt.execute()).willAnswer(_ -> {
-			flushed.addAndGet(stmtCount.get());
-			return false;
-		});
-
-		given(dataSource.getConnection()).willReturn(jdbcConnection);
-		given(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
-				.willReturn(stmt);
-
-		// flush continuously, so the writer keeps removing the counters being added to
-		auditor.setFlushDelay(0);
-
-		// do not log statistics for every few of the many counts added
-		auditor.setStatLogUpdateCount(Integer.MAX_VALUE);
+		GeneralDatum datum = GeneralDatum.nodeDatum(TEST_NODE_ID, TEST_SOURCE_1, Instant.now(),
+				new DatumSamples());
 
 		// WHEN
-		auditor.enableWriting();
-
-		final AtomicLong added = new AtomicLong();
-		final long start = System.nanoTime();
-		final Thread[] adders = new Thread[adderCount];
-		for ( int i = 0; i < adderCount; i++ ) {
-			adders[i] = new Thread(() -> {
-				final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-				while ( System.nanoTime() - start < runNanos ) {
-					auditor.auditNodeDatum(GeneralDatum.nodeDatum((long) rnd.nextInt(nodeCount),
-							TEST_SOURCE_1, Instant.now(), new DatumSamples()));
-					added.incrementAndGet();
-					// pause, so most counters hold nothing when the writer reaches them
-					LockSupport.parkNanos(rnd.nextInt(20_000));
-				}
-			}, "Adder-" + i);
-			adders[i].start();
-		}
-		for ( Thread adder : adders ) {
-			adder.join();
-		}
-
-		// wait for the writer to flush everything added
-		final long drainStart = System.nanoTime();
-		while ( flushed.get() < added.get()
-				&& System.nanoTime() - drainStart < TimeUnit.SECONDS.toNanos(5) ) {
-			Thread.sleep(50);
-		}
-		auditor.disableWriting();
+		auditor.auditNodeDatum(datum);
+		auditor.addNodeDatumAuditResults(
+				Map.of(new GeneralNodeDatumPK(TEST_NODE_ID, testClock.instant(), TEST_SOURCE_1), 2));
 
 		// THEN
 		// @formatter:off
-		and.then(flushed.get())
-			.as("Every count added is flushed")
-			.isEqualTo(added.get())
-			;
 		and.then(datumCountMap)
-			.as("Counters removed once flushed")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void serviceDidShutdown_writesCountsAddedAfterLastFlush() throws Exception {
-		// GIVEN
-		givenWriterConnection();
-
-		// a long delay, so the writer is waiting for its next flush when the count is added
-		auditor.setFlushDelay(TimeUnit.MINUTES.toMillis(1));
-
-		auditor.serviceDidStartup();
-		awaitFirstFlush();
-
-		// WHEN
-		auditor.auditNodeDatum(testDatum());
-
-		final long start = System.nanoTime();
-		auditor.serviceDidShutdown();
-		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
-
-		// THEN
-		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
-		then(jdbcStatement).should().setString(2, TEST_SOURCE_1);
-		then(jdbcStatement).should().setTimestamp(3, Timestamp.from(testClock.instant()));
-		then(jdbcStatement).should().setInt(4, 1);
-		then(jdbcStatement).should().execute();
-
-		// the count is written with the writer's connection, not another one
-		then(dataSource).should().getConnection();
-
-		// @formatter:off
-		and.then(shutdownTime)
-			.as("Shutdown did not wait for the next flush")
-			.isLessThan(Duration.ofSeconds(5))
-			;
-		and.then(auditor.performPingTest().isSuccess())
-			.as("Writer stopped by shutdown")
-			.isFalse()
-			;
-		and.then(datumCountMap)
-			.as("Count written at shutdown")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void disableWriting_interruptedDuringUpdateDelay_countNotWrittenAgain() throws Exception {
-		// GIVEN
-		givenWriterConnection();
-
-		final CountDownLatch executed = new CountDownLatch(1);
-		given(jdbcStatement.execute()).willAnswer(_ -> {
-			executed.countDown();
-			return false;
-		});
-
-		// delay long enough that the writer is still sleeping after the update when interrupted
-		auditor.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
-
-		// WHEN
-		auditor.auditNodeDatum(testDatum());
-
-		auditor.enableWriting();
-		final boolean written = executed.await(5, TimeUnit.SECONDS);
-
-		// interrupt the writer while it sleeps after the update
-		auditor.disableWriting();
-
-		// start another writer, which would write the count again if it had been added back
-		auditor.enableWriting();
-		auditor.disableWriting();
-
-		// THEN
-		then(jdbcStatement).should().execute();
-
-		// @formatter:off
-		and.then(written)
-			.as("Count written")
-			.isTrue()
-			;
-		and.then(datumCountMap)
-			.as("Written count not added back when interrupted")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void serviceDidShutdown_writeFails_stopsWriting() throws Exception {
-		// GIVEN
-		givenWriterConnection();
-		given(jdbcStatement.execute()).willThrow(new SQLException("Connection reset", "08006"));
-
-		// a long delay, so the counts are left for the writer to write at shutdown
-		auditor.setFlushDelay(TimeUnit.MINUTES.toMillis(1));
-
-		auditor.serviceDidStartup();
-		awaitFirstFlush();
-
-		// WHEN
-		auditor.auditNodeDatum(testDatum());
-		auditor.auditNodeDatum(GeneralDatum.nodeDatum(TEST_NODE_ID - 1, TEST_SOURCE_1, Instant.now(),
-				new DatumSamples()));
-		auditor.serviceDidShutdown();
-
-		// THEN
-		// no more writes are tried after the first fails, and no other connection is used
-		then(jdbcStatement).should().execute();
-		then(dataSource).should().getConnection();
-
-		// @formatter:off
-		and.then(datumCountMap)
-			.as("Counts not written once writing failed")
-			.hasSize(2)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void serviceDidShutdown_noConnection_countsNotWritten() throws Exception {
-		// GIVEN
-		final CountDownLatch connecting = new CountDownLatch(1);
-		given(dataSource.getConnection()).willAnswer(_ -> {
-			connecting.countDown();
-			throw new SQLException("Connection refused", "08001");
-		});
-
-		// a long delay, so the writer is waiting to connect again at shutdown
-		auditor.setConnectionRecoveryDelay(TimeUnit.MINUTES.toMillis(1));
-
-		auditor.serviceDidStartup();
-		final boolean attempted = connecting.await(5, TimeUnit.SECONDS);
-
-		// WHEN
-		auditor.auditNodeDatum(testDatum());
-
-		final long start = System.nanoTime();
-		auditor.serviceDidShutdown();
-		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
-
-		// THEN
-		// no other connection is tried at shutdown
-		then(dataSource).should().getConnection();
-
-		// @formatter:off
-		and.then(attempted)
-			.as("Writer tried to connect")
-			.isTrue()
-			;
-		and.then(shutdownTime)
-			.as("Shutdown did not wait to connect again")
-			.isLessThan(Duration.ofSeconds(5))
-			;
-		and.then(datumCountMap)
-			.as("Count not written without a connection")
+			.as("Added results counted with the audited datum, as they have the same key")
 			.hasSize(1)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void serviceDidShutdown_noWriter_countsNotWritten() throws Exception {
-		// GIVEN
-		auditor.auditNodeDatum(testDatum());
-
-		// WHEN
-		auditor.serviceDidShutdown();
-
-		// THEN
-		then(dataSource).shouldHaveNoInteractions();
-
-		// @formatter:off
-		and.then(datumCountMap)
-			.as("Count not written without a writer")
-			.hasSize(1)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void auditNodeDatum_writeFailsForOneCount_othersWritten() throws Exception {
-		// GIVEN
-		final Long badNodeId = -100L;
-		final List<Long> goodNodeIds = List.of(1L, 2L, 3L, 4L, 5L);
-
-		givenWriterConnection();
-
-		// the connection stays usable, so the problem is with the count itself
-		given(jdbcStatement.getConnection()).willReturn(jdbcConnection);
-		given(jdbcConnection.isValid(anyInt())).willReturn(true);
-
-		// fail to write the bad node's count, as a value too large for the database would
-		final AtomicReference<Object> boundNodeId = new AtomicReference<>();
-		willAnswer(inv -> {
-			boundNodeId.set(inv.getArgument(1));
-			return null;
-		}).given(jdbcStatement).setObject(eq(1), any());
-		given(jdbcStatement.execute()).willAnswer(_ -> {
-			if ( badNodeId.equals(boundNodeId.get()) ) {
-				throw new SQLException("integer out of range", "22003");
-			}
-			return false;
-		});
-
-		// WHEN
-		auditor.auditNodeDatum(
-				GeneralDatum.nodeDatum(badNodeId, TEST_SOURCE_1, Instant.now(), new DatumSamples()));
-		for ( Long nodeId : goodNodeIds ) {
-			auditor.auditNodeDatum(
-					GeneralDatum.nodeDatum(nodeId, TEST_SOURCE_1, Instant.now(), new DatumSamples()));
-		}
-
-		auditor.enableWriting();
-		awaitFirstFlush();
-		auditor.serviceDidShutdown();
-
-		// THEN
-		for ( Long nodeId : goodNodeIds ) {
-			then(jdbcStatement).should().setObject(1, nodeId);
-		}
-
-		// the writer did not give up on its connection
-		then(dataSource).should().getConnection();
-
-		// @formatter:off
-		and.then(stats.get(JdbcQueryAuditorCount.ResultsDiscarded))
-			.as("Bad count discarded")
-			.isEqualTo(1L)
-			;
-		and.then(datumCountMap)
-			.as("Bad count not kept to try again")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void auditNodeDatum_transientWriteFailure_countWrittenAfterReconnect() throws Exception {
-		// GIVEN
-		givenWriterConnection();
-
-		// fail the first write as a deadlock would, then succeed
-		given(jdbcStatement.execute()).willThrow(new SQLException("deadlock detected", "40P01"))
-				.willReturn(false);
-
-		// WHEN
-		auditor.auditNodeDatum(testDatum());
-
-		auditor.enableWriting();
-		awaitStat(JdbcQueryAuditorCount.UpdatesExecuted, 1);
-		auditor.serviceDidShutdown();
-
-		// THEN
-		// tried again without checking the connection, as the error is transient
-		then(jdbcStatement).should(never()).getConnection();
-		then(jdbcStatement).should(times(2)).setInt(4, 1);
-		then(jdbcStatement).should(times(2)).execute();
-		then(dataSource).should(times(2)).getConnection();
-
-		// @formatter:off
-		and.then(stats.get(JdbcQueryAuditorCount.ResultsDiscarded))
-			.as("Count not discarded")
-			.isZero()
-			;
-		and.then(stats.get(JdbcQueryAuditorCount.ResultsAdded))
-			.as("Count added back not counted as added again")
-			.isEqualTo(1L)
-			;
-		and.then(stats.get(JdbcQueryAuditorCount.ResultsReadded))
-			.as("Count added back counted as re-added")
-			.isEqualTo(1L)
-			;
-		and.then(datumCountMap)
-			.as("Count written once tried again")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void addNodeDatumAuditResults_negativeCount_ignored() {
-		// GIVEN
-		final GeneralNodeDatumPK key = new GeneralNodeDatumPK(TEST_NODE_ID, testClock.instant(),
-				TEST_SOURCE_1);
-
-		// WHEN
-		auditor.addNodeDatumAuditResults(Map.of(key, -5));
-
-		// THEN
-		// @formatter:off
-		and.then(datumCountMap)
-			.as("Negative count ignored")
-			.isEmpty()
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void addNodeDatumAuditResults_countOverflow_limitedToMaxValue() {
-		// GIVEN
-		final GeneralNodeDatumPK key = new GeneralNodeDatumPK(TEST_NODE_ID, testClock.instant(),
-				TEST_SOURCE_1);
-
-		// WHEN
-		auditor.addNodeDatumAuditResults(Map.of(key, Integer.MAX_VALUE));
-		auditor.addNodeDatumAuditResults(Map.of(key, 10));
-
-		// THEN
-		// @formatter:off
-		and.then(datumCountMap.get(key))
-			.as("Total limited to the largest count, rather than overflowing to negative")
-			.hasValue(Integer.MAX_VALUE)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void setUpdateDelay_negative() {
-		// @formatter:off
-		and.thenThrownBy(() -> auditor.setUpdateDelay(-1))
-			.as("Negative delay rejected")
-			.isInstanceOf(IllegalArgumentException.class)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void performPingTest_writerConnectionFails() throws Exception {
-		// GIVEN
-		final CountDownLatch reconnect = new CountDownLatch(1);
-		given(dataSource.getConnection()).willThrow(new SQLException("Connection refused", "08001"))
-				.willAnswer(_ -> {
-					// connect again only once the failure has been seen
-					reconnect.await(5, TimeUnit.SECONDS);
-					return jdbcConnection;
-				});
-		given(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
-				.willReturn(jdbcStatement);
-
-		// a short delay, so the writer soon tries to connect again
-		auditor.setConnectionRecoveryDelay(50);
-
-		// WHEN
-		auditor.serviceDidStartup();
-		final PingTest.Result failedResult = awaitPingResult(false);
-		reconnect.countDown();
-		final PingTest.Result recoveredResult = awaitPingResult(true);
-
-		// THEN
-		// @formatter:off
-		and.then(failedResult.isSuccess())
-			.as("Ping fails while the writer cannot connect")
-			.isFalse()
-			;
-		and.then(failedResult.getMessage())
-			.as("Ping says why the writer cannot write")
-			.contains("Connection refused")
-			;
-		and.then(recoveredResult.isSuccess())
-			.as("Ping passes once the writer has written again")
-			.isTrue()
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_1, testClock.instant()),
+					c -> and.then(c).hasValue(3))
 			;
 		// @formatter:on
 	}

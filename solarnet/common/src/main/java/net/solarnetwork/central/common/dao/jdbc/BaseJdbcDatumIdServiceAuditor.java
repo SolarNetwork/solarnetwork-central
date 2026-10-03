@@ -264,7 +264,12 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 							break;
 						}
 						writeError = e.toString();
-						log.warn("Exception with auditing", e);
+						if ( isTransientException(e) ) {
+							// such as the database being unavailable, so no need for the stack trace
+							log.warn("Transient exception with auditing: {}", e.toString());
+						} else {
+							log.warn("Exception with auditing: {}", e.getMessage(), e);
+						}
 						// sleep, then try again
 						try {
 							Thread.sleep(connectionRecoveryDelay);
