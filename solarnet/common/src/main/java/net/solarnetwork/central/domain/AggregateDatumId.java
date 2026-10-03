@@ -244,7 +244,14 @@ public class AggregateDatumId extends BaseId
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(kind, objectId, sourceId, timestamp, aggregation);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + kind.hashCode();
+		result = prime * result + objectId.hashCode();
+		result = prime * result + sourceId.hashCode();
+		result = prime * result + timestamp.hashCode();
+		result = prime * result + aggregation.hashCode();
+		return result;
 	}
 
 	@Override

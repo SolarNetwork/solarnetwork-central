@@ -118,7 +118,11 @@ public final class UserUuidPK extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, uuid);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + userId.hashCode();
+		result = prime * result + uuid.hashCode();
+		return result;
 	}
 
 	@Override

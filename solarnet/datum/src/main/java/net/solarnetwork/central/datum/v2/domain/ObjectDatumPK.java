@@ -149,7 +149,9 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(kind, objectId, sourceId);
+		result = prime * result + kind.hashCode();
+		result = prime * result + objectId.hashCode();
+		result = prime * result + sourceId.hashCode();
 		return result;
 	}
 

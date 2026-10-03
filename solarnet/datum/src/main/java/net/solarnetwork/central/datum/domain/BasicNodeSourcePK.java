@@ -87,7 +87,11 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(nodeId, sourceId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + nodeId.hashCode();
+		result = prime * result + sourceId.hashCode();
+		return result;
 	}
 
 	@Override

@@ -315,7 +315,23 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(aggregation, kind, streamId, objectId, sourceId, timestamp);
+		final int prime = 31;
+		int result = 1;
+		if ( aggregation != null ) {
+			result = prime * result + aggregation.hashCode();
+		}
+		result = prime * result + kind.hashCode();
+		if ( streamId != null ) {
+			result = prime * result + streamId.hashCode();
+		}
+		if ( objectId != null ) {
+			result = prime * result + objectId.hashCode();
+		}
+		if ( sourceId != null ) {
+			result = prime * result + sourceId.hashCode();
+		}
+		result = prime * result + timestamp.hashCode();
+		return result;
 	}
 
 	@Override

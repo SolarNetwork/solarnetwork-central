@@ -25,7 +25,6 @@ package net.solarnetwork.central.ocpp.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -189,7 +188,14 @@ public class ChargePointActionStatusKey extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, chargePointId, evseId, connectorId, action);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Long.hashCode(userId);
+		result = prime * result + Long.hashCode(chargePointId);
+		result = prime * result + evseId;
+		result = prime * result + connectorId;
+		result = prime * result + action.hashCode();
+		return result;
 	}
 
 	@Override

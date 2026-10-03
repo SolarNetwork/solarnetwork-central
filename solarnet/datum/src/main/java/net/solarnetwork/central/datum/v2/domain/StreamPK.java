@@ -147,7 +147,11 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(streamId, timestamp);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + streamId.hashCode();
+		result = prime * result + timestamp.hashCode();
+		return result;
 	}
 
 	@Override

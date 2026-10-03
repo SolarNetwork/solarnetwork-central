@@ -115,7 +115,11 @@ public final class LongStringCompositePK extends BasePK implements Serializable,
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(groupId, entityId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + groupId.hashCode();
+		result = prime * result + entityId.hashCode();
+		return result;
 	}
 
 	@Override

@@ -271,7 +271,12 @@ public class ObjectDatumStreamPK extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(objectId, sourceId, timestamp);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + objectId.hashCode();
+		result = prime * result + sourceId.hashCode();
+		result = prime * result + timestamp.hashCode();
+		return result;
 	}
 
 	@Override

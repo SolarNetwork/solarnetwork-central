@@ -111,7 +111,11 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, type);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + key.hashCode();
+		result = prime * result + type.hashCode();
+		return result;
 	}
 
 	@Override

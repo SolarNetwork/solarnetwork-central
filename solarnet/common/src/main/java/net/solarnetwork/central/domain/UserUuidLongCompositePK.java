@@ -145,7 +145,12 @@ public final class UserUuidLongCompositePK extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, groupId, entityId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + userId.hashCode();
+		result = prime * result + groupId.hashCode();
+		result = prime * result + entityId.hashCode();
+		return result;
 	}
 
 	@Override

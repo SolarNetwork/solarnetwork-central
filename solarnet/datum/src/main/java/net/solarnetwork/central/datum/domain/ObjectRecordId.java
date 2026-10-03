@@ -85,7 +85,18 @@ public class ObjectRecordId implements Serializable, Cloneable, Comparable<Objec
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(objectId, sourceId, timestamp);
+		final int prime = 31;
+		int result = 1;
+		if ( objectId != null ) {
+			result = prime * result + objectId.hashCode();
+		}
+		if ( sourceId != null ) {
+			result = prime * result + sourceId.hashCode();
+		}
+		if ( timestamp != null ) {
+			result = prime * result + timestamp.hashCode();
+		}
+		return result;
 	}
 
 	@Override

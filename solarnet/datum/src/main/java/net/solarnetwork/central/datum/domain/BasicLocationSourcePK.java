@@ -87,7 +87,11 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(locationId, sourceId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + locationId.hashCode();
+		result = prime * result + sourceId.hashCode();
+		return result;
 	}
 
 	@Override

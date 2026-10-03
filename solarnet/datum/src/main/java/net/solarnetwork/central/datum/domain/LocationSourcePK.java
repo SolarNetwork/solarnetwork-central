@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -94,7 +93,11 @@ public class LocationSourcePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(locationId, sourceId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + locationId.hashCode();
+		result = prime * result + sourceId.hashCode();
+		return result;
 	}
 
 	@Override

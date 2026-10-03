@@ -62,7 +62,11 @@ public final class ObjectDatumStreamKind implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(kind, objectId);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + kind.hashCode();
+		result = prime * result + objectId.hashCode();
+		return result;
 	}
 
 	@Override
