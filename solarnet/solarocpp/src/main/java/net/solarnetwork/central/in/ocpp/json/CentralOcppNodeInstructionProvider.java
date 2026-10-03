@@ -344,7 +344,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(ident);
+			return Objects.hashCode(ident);
 		}
 
 		@Override
