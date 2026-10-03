@@ -1033,4 +1033,40 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void performPingTest_reportsUpdatesWritten() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a2");
+
+		dao.serviceDidStartup();
+		awaitAllWritten();
+
+		// WHEN
+		final PingTest.Result result = dao.performPingTest();
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Ping OK")
+			.returns(true, from(PingTest.Result::isSuccess))
+			.as("Ping reports the updates written, not those added")
+			.returns("Wrote 2 updates; lag 0.", from(PingTest.Result::getMessage))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void setUpdateDelay_negative() {
+		// @formatter:off
+		and.thenThrownBy(() -> dao.setUpdateDelay(-1))
+			.as("Negative delay rejected")
+			.isInstanceOf(IllegalArgumentException.class)
+			;
+		// @formatter:on
+	}
+
 }

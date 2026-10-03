@@ -51,7 +51,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	/** The charge point ID. */
 	private final String chargePointIdentifier;
 
-	/** The connector ID. */
+	/** The EVSE ID. */
 	private final int evseId;
 
 	/** The connector ID. */

@@ -71,9 +71,6 @@ public class AsyncJdbcChargePointActionStatusDao
 	/** The default value for the {@code updateDelay} property. */
 	public static final long DEFAULT_UPDATE_DELAY = 0;
 
-	/** The default value for the {@code flushDelay} property. */
-	public static final long DEFAULT_FLUSH_DELAY = 10000;
-
 	/** The default value for the {@code statLogUpdateCount} property. */
 	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
@@ -550,8 +547,6 @@ public class AsyncJdbcChargePointActionStatusDao
 	@Override
 	public Result performPingTest() throws Exception {
 		final Map<String, Long> statMap = stats.allCounts();
-		final long addCount = statMap
-				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
 		// verify buffer removals do not lag additions: the queue holds the actions waiting
 		final long removeLag = statuses.size();
 		final WriterThread t = this.writerThread;
@@ -568,7 +563,9 @@ public class AsyncJdbcChargePointActionStatusDao
 		if ( writeError != null ) {
 			return new PingTestResult(false, "Writer thread cannot write: " + writeError, statMap);
 		}
-		return new PingTestResult(true, format("Processed %d updates; lag %d.", addCount, removeLag),
+		final long writeCount = statMap
+				.getOrDefault(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted.name(), 0L);
+		return new PingTestResult(true, format("Wrote %d updates; lag %d.", writeCount, removeLag),
 				statMap);
 	}
 
@@ -596,8 +593,13 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param updateDelay
 	 *        the delay, in milliseconds; set to 0 for no delay; defaults to
 	 *        {@link #DEFAULT_UPDATE_DELAY}
+	 * @throws IllegalArgumentException
+	 *         if {@code updateDelay} is &lt; 0
 	 */
 	public void setUpdateDelay(long updateDelay) {
+		if ( updateDelay < 0 ) {
+			throw new IllegalArgumentException("updateDelay must be >= 0");
+		}
 		this.updateDelay = updateDelay;
 	}
 
@@ -619,7 +621,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	}
 
 	/**
-	 * Get the datum cache removal alert threshold.
+	 * Get the buffer removal lag alert threshold.
 	 *
 	 * @return the threshold
 	 */
@@ -628,7 +630,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	}
 
 	/**
-	 * Set the datum cache removal alert threshold.
+	 * Set the buffer removal lag alert threshold.
 	 *
 	 * <p>
 	 * This threshold represents the number of charge point actions waiting to
