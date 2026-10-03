@@ -145,7 +145,7 @@ subprojects {
 		snCommonExprSpelVersion = '4.2.1'
 		snCommonMqttVersion = '6.4.0'
 		snCommonMqttNettyVersion = '5.3.3'
-		snCommonOcppVersion = '6.1.2'
+		snCommonOcppVersion = '6.1.3'
 		snCommonOcpp16JakartaVersion = '6.1.1'
 		snCommonOcpp201Version = '3.1.1'
 		snCommonOcppWebJakartaVersion = '4.3.0'
