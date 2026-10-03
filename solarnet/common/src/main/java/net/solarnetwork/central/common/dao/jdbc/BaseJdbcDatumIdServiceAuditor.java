@@ -251,7 +251,8 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 			log.info("Started JDBC audit writer thread {}", this);
 			statCounter.increment(JdbcNodeServiceAuditorCount.WriterThreadsStarted);
 			try {
-				while ( keepGoing ) {
+				// go at least once, so counts added when asked to stop before connecting are written
+				do {
 					reconnect = false;
 					try {
 						execute();
@@ -278,7 +279,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 							keepGoing = false;
 						}
 					}
-				}
+				} while ( keepGoing );
 				if ( writeOnExit ) {
 					logUnwrittenServiceData();
 				}
@@ -288,6 +289,14 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 		}
 
 		private void execute() throws SQLException {
+			if ( !keepGoing ) {
+				// asked to stop before connecting
+				if ( !writeOnExit || serviceCounters.isEmpty() ) {
+					return;
+				}
+				// clear the interrupt that asked, so it cannot stop connecting to write what remains
+				Thread.interrupted();
+			}
 			final String sql = nonnull(serviceIncrementSql, "serviceIncrementSql");
 			try (Connection conn = dataSource.getConnection()) {
 				statCounter.increment(JdbcNodeServiceAuditorCount.ConnectionsCreated);
