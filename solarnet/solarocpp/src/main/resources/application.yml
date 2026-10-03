@@ -39,6 +39,7 @@ app:
     stat-log-update-count: 1000
     update-delay: 0
     buffer-removal-lag-alert-threshold: 1000
+    shutdown-max-wait: "10s"
   ocpp.async-status-updater:
     flush-delay: "3s"
   ocpp.auth-service:

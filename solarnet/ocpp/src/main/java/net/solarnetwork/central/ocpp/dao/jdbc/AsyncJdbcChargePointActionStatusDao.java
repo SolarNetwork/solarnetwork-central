@@ -35,7 +35,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -78,6 +77,13 @@ public class AsyncJdbcChargePointActionStatusDao
 	/** The {@code bufferRemovalLagAlertThreshold} default value. */
 	public static final int DEFAULT_BUFFER_REMOVAL_LAG_ALERT_THRESHOLD = 500;
 
+	/**
+	 * The default value for the {@code shutdownMaxWait} property.
+	 *
+	 * @since 1.2
+	 */
+	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofSeconds(10);
+
 	private static final Logger log = LoggerFactory.getLogger(AsyncJdbcChargePointActionStatusDao.class);
 
 	private final DataSource dataSource;
@@ -85,10 +91,11 @@ public class AsyncJdbcChargePointActionStatusDao
 	private final ConcurrentMap<ChargePointActionStatusUpdate, ChargePointActionStatusUpdate> latestStatuses;
 	private final StatTracker stats;
 
-	private @Nullable WriterThread writerThread;
-	private long updateDelay;
-	private long connectionRecoveryDelay;
-	private int bufferRemovalLagAlertThreshold;
+	private volatile @Nullable WriterThread writerThread;
+	private volatile long updateDelay;
+	private volatile long connectionRecoveryDelay;
+	private volatile int bufferRemovalLagAlertThreshold;
+	private volatile Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 
 	/**
 	 * Constructor.
@@ -156,9 +163,19 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	}
 
+	/**
+	 * Stop writing, after writing any updates waiting to be written.
+	 *
+	 * <p>
+	 * The writing thread writes the waiting updates with its own connection
+	 * before it stops. If it has no working connection, or writing fails, it
+	 * gives up and logs the updates not written as an error. This waits at most
+	 * {@code shutdownMaxWait} for the thread to stop.
+	 * </p>
+	 */
 	@Override
 	public void serviceDidShutdown() {
-		disableWriting();
+		stopWriting(true, shutdownMaxWait);
 	}
 
 	@Override
@@ -182,8 +199,11 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	private class WriterThread extends Thread {
 
-		private final AtomicBoolean keepGoingWithConnection = new AtomicBoolean(true);
-		private final AtomicBoolean keepGoing = new AtomicBoolean(true);
+		// keepGoing only ever changes from true to false, so a request to exit cannot be undone
+		// when the writer starts a new connection, as resetting a combined flag could
+		private volatile boolean keepGoing = true;
+		private volatile boolean writeOnExit = false;
+		private volatile boolean reconnect = false;
 		private boolean started = false;
 
 		private boolean hasStarted() {
@@ -191,31 +211,45 @@ public class AsyncJdbcChargePointActionStatusDao
 		}
 
 		private boolean isGoing() {
-			return keepGoing.get();
+			return keepGoing;
 		}
 
 		private void reconnect() {
-			keepGoingWithConnection.compareAndSet(true, false);
+			reconnect = true;
 		}
 
-		private void exit() {
-			keepGoing.compareAndSet(true, false);
-			keepGoingWithConnection.compareAndSet(true, false);
+		private void exit(boolean writeRemaining) {
+			// set before keepGoing, so the writer sees it once it sees it is to exit; never
+			// cleared, so a later request to just stop cannot cancel writing what remains
+			if ( writeRemaining ) {
+				writeOnExit = true;
+			}
+			keepGoing = false;
 		}
 
 		@Override
 		public void run() {
+			// signal before anything that could fail, so enableWriting() is not left waiting
+			synchronized ( this ) {
+				started = true;
+				this.notifyAll();
+			}
 			stats.increment(AsyncJdbcChargePointActionStatusCount.WriterThreadsStarted);
 			try {
-				while ( keepGoing.get() ) {
-					keepGoingWithConnection.set(true);
-					synchronized ( this ) {
-						started = true;
-						this.notifyAll();
-					}
+				// go at least once, so updates waiting when asked to stop before connecting are written
+				do {
+					reconnect = false;
 					try {
-						keepGoing.compareAndSet(true, execute());
+						execute();
 					} catch ( SQLException | RuntimeException e ) {
+						if ( !keepGoing ) {
+							// stopping, so give up rather than try again
+							if ( writeOnExit ) {
+								log.error("Error writing remaining OCPP charge point action statuses: {}",
+										e.toString());
+							}
+							break;
+						}
 						if ( e instanceof SQLTransientException ) {
 							log.warn("Transient SQL exception with OCPP charge point action status: {}",
 									e.toString());
@@ -229,9 +263,12 @@ public class AsyncJdbcChargePointActionStatusDao
 						} catch ( InterruptedException e2 ) {
 							log.info(
 									"Writer thread interrupted during connection recovery: exiting now.");
-							keepGoing.set(false);
+							keepGoing = false;
 						}
 					}
+				} while ( keepGoing );
+				if ( writeOnExit ) {
+					logUnwrittenUpdates();
 				}
 			} finally {
 				stats.increment(AsyncJdbcChargePointActionStatusCount.WriterThreadsEnded);
@@ -243,48 +280,112 @@ public class AsyncJdbcChargePointActionStatusDao
 			return conn.prepareStatement(sql);
 		}
 
-		private Boolean execute() throws SQLException {
+		private void execute() throws SQLException {
+			if ( !keepGoing ) {
+				// asked to stop before connecting
+				if ( !writeOnExit || statuses.isEmpty() ) {
+					return;
+				}
+				// clear the interrupt that asked, so it cannot stop connecting to write what remains
+				Thread.interrupted();
+			}
 			try (Connection conn = dataSource.getConnection()) {
 				stats.increment(AsyncJdbcChargePointActionStatusCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = createPreparedStatement(conn);
-				do {
-					try {
-						flushUpdates(stmt);
-						if ( Thread.interrupted() ) {
-							throw new InterruptedException();
-						}
-					} catch ( InterruptedException e ) {
-						log.info("Writer thread interrupted: exiting now.");
-						return false;
+				try {
+					while ( keepGoing && !reconnect ) {
+						writeUpdate(stmt, statuses.take(), true);
 					}
-				} while ( keepGoingWithConnection.get() );
-				return true;
+				} catch ( InterruptedException e ) {
+					log.info("Writer thread interrupted: exiting now.");
+					keepGoing = false;
+				}
+				if ( writeOnExit ) {
+					writeRemainingUpdates(stmt);
+				}
 			}
 		}
 
-		private void flushUpdates(PreparedStatement stmt) throws SQLException, InterruptedException {
-			while ( keepGoingWithConnection.get() ) {
-				final var key = statuses.take();
-				stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
-				final var upd = latestStatuses.remove(key);
-				if ( upd == null ) {
-					continue;
-				}
-				try {
-					UpsertChargePointIdentifierActionTimestamp.prepareStatement(stmt, upd.getUserId(),
-							upd.getChargePointIdentifier(), upd.getEvseId(), upd.getConnectorId(),
-							upd.getAction(), upd.getMessageId(), upd.getDate());
-					stmt.execute();
-					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
-				} catch ( SQLException | RuntimeException e ) {
-					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-					throw e;
-				}
-				if ( updateDelay > 0 ) {
-					Thread.sleep(updateDelay);
+	}
+
+	/**
+	 * Write the latest update of a charge point action.
+	 *
+	 * @param stmt
+	 *        the statement to write with
+	 * @param key
+	 *        the action to write, as taken from the queue
+	 * @param throttle
+	 *        {@code true} to wait for the update delay after writing
+	 * @throws SQLException
+	 *         if any error occurs writing
+	 * @throws InterruptedException
+	 *         if interrupted during the update delay
+	 */
+	private void writeUpdate(PreparedStatement stmt, ChargePointActionStatusUpdate key,
+			boolean throttle) throws SQLException, InterruptedException {
+		stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
+		// remove the update before writing it, so an update added from now on queues the action again
+		final var upd = latestStatuses.remove(key);
+		if ( upd == null ) {
+			return;
+		}
+		try {
+			UpsertChargePointIdentifierActionTimestamp.prepareStatement(stmt, upd.getUserId(),
+					upd.getChargePointIdentifier(), upd.getEvseId(), upd.getConnectorId(),
+					upd.getAction(), upd.getMessageId(), upd.getDate());
+			stmt.execute();
+			stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
+		} catch ( SQLException | RuntimeException e ) {
+			stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
+			throw e;
+		}
+		if ( throttle && updateDelay > 0 ) {
+			Thread.sleep(updateDelay);
+		}
+	}
+
+	/**
+	 * Write any updates waiting to be written, without the update delay.
+	 *
+	 * @param stmt
+	 *        the statement to write with
+	 * @throws SQLException
+	 *         if any error occurs writing
+	 */
+	private void writeRemainingUpdates(PreparedStatement stmt) throws SQLException {
+		// clear the interrupt asking the writer to stop, so it cannot disturb writing what remains
+		Thread.interrupted();
+		if ( statuses.isEmpty() ) {
+			return;
+		}
+		log.info("Writing {} remaining OCPP charge point action statuses", statuses.size());
+		try {
+			// a few passes, to also write updates added while writing, but not wait on updates
+			// that keep coming
+			for ( int i = 0; i < 3 && !statuses.isEmpty(); i++ ) {
+				for ( int n = statuses.size(); n > 0; n-- ) {
+					final var key = statuses.poll();
+					if ( key == null ) {
+						break;
+					}
+					writeUpdate(stmt, key, false);
 				}
 			}
+		} catch ( InterruptedException e ) {
+			// not thrown without the update delay, but keep the interrupt status
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	/**
+	 * Log any updates not written, as an error.
+	 */
+	private void logUnwrittenUpdates() {
+		if ( !latestStatuses.isEmpty() ) {
+			log.error("Stopping with {} OCPP charge point action statuses not written: {}",
+					latestStatuses.size(), latestStatuses.values());
 		}
 	}
 
@@ -293,8 +394,9 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * connection.
 	 */
 	public synchronized void reconnectWriter() {
-		if ( writerThread != null && writerThread.isGoing() ) {
-			writerThread.reconnect();
+		final WriterThread t = writerThread;
+		if ( t != null && t.isGoing() ) {
+			t.reconnect();
 		}
 	}
 
@@ -302,44 +404,86 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Enable writing, and wait until the writing thread is going.
 	 */
 	public synchronized void enableWriting() {
-		if ( writerThread == null || !writerThread.isGoing() ) {
+		final WriterThread curr = writerThread;
+		if ( curr == null || !curr.isGoing() ) {
 			WriterThread t = new WriterThread();
 			t.setName("OcppChargePointActionStatusUpdater");
 			this.writerThread = t;
+			boolean interrupted = false;
 			synchronized ( t ) {
 				t.start();
-				while ( !t.hasStarted() ) {
+				// stop waiting if the thread ends without signalling that it started
+				while ( !t.hasStarted() && t.isAlive() ) {
 					try {
 						t.wait(5000L);
 					} catch ( InterruptedException e ) {
-						// ignore
+						interrupted = true;
 					}
 				}
 			}
-		}
-	}
-
-	/**
-	 * Disable writing.
-	 */
-	public synchronized void disableWriting() {
-		if ( writerThread != null ) {
-			writerThread.exit();
-			writerThread.interrupt();
-		}
-	}
-
-	/**
-	 * Disable writing, waiting for the writer thread to exit.
-	 */
-	public synchronized void shutdownAndWait(Duration max) {
-		disableWriting();
-		if ( writerThread != null && writerThread.isAlive() ) {
-			try {
-				writerThread.join(max);
-			} catch ( InterruptedException e ) {
-				// ignore and continue
+			if ( interrupted ) {
+				Thread.currentThread().interrupt();
 			}
+		}
+	}
+
+	/**
+	 * Disable writing, and wait for the writing thread to stop.
+	 *
+	 * <p>
+	 * The writing thread is interrupted, so it stops without waiting for
+	 * another update. Any updates it has not written remain in memory, for a
+	 * later writing thread to write. This waits at most {@code shutdownMaxWait}
+	 * for the thread to stop.
+	 * </p>
+	 */
+	public void disableWriting() {
+		stopWriting(false, shutdownMaxWait);
+	}
+
+	/**
+	 * Stop writing, after writing any updates waiting to be written, and wait
+	 * for the writing thread to stop.
+	 *
+	 * <p>
+	 * This is like {@link #serviceDidShutdown()}, but waits at most {@code max}
+	 * rather than {@code shutdownMaxWait} for the thread to stop.
+	 * </p>
+	 *
+	 * @param max
+	 *        the maximum time to wait for the writing thread to stop
+	 */
+	public void shutdownAndWait(Duration max) {
+		stopWriting(true, max);
+	}
+
+	/**
+	 * Stop the writing thread, and wait for it to stop.
+	 *
+	 * @param writeRemaining
+	 *        {@code true} for the writing thread to write any updates waiting
+	 *        to be written before it stops, and log any it cannot write
+	 * @param maxWait
+	 *        the maximum time to wait for the writing thread to stop
+	 */
+	private synchronized void stopWriting(boolean writeRemaining, Duration maxWait) {
+		final WriterThread t = writerThread;
+		if ( t == null || !t.isAlive() ) {
+			if ( writeRemaining ) {
+				// there is no writer to write them
+				logUnwrittenUpdates();
+			}
+			return;
+		}
+		t.exit(writeRemaining);
+		t.interrupt();
+		try {
+			if ( !t.join(maxWait) ) {
+				log.warn("OCPP charge point action status writer thread {} did not stop within {}",
+						t.getName(), maxWait);
+			}
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -377,7 +521,7 @@ public class AsyncJdbcChargePointActionStatusDao
 		}
 		if ( !writerRunning ) {
 			return new PingTestResult(false,
-					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+					(t == null ? "Writer thread missing." : "Writer thread dead."), statMap);
 		}
 		return new PingTestResult(true, format("Processed %d updates; lag %d.", addCount, removeLag),
 				statMap);
@@ -457,5 +601,18 @@ public class AsyncJdbcChargePointActionStatusDao
 	 */
 	public void setBufferRemovalLagAlertThreshold(int bufferRemovalLagAlertThreshold) {
 		this.bufferRemovalLagAlertThreshold = bufferRemovalLagAlertThreshold;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for the writing thread to stop,
+	 * including writing any remaining updates when the service shuts down.
+	 *
+	 * @param shutdownMaxWait
+	 *        the maximum time to wait; if {@code null} then
+	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
+	 * @since 1.2
+	 */
+	public void setShutdownMaxWait(@Nullable Duration shutdownMaxWait) {
+		this.shutdownMaxWait = (shutdownMaxWait != null ? shutdownMaxWait : DEFAULT_SHUTDOWN_MAX_WAIT);
 	}
 }

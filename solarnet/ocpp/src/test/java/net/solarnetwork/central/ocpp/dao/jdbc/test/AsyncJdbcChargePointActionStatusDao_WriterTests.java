@@ -45,6 +45,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -148,6 +149,24 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 			return false;
 		});
 		return writing;
+	}
+
+	/**
+	 * Make the writer signal when it has written its first update.
+	 *
+	 * @return a latch counted down once the writer has written its first update
+	 */
+	private CountDownLatch givenFirstWriteSignals() throws SQLException {
+		final CountDownLatch executed = new CountDownLatch(1);
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			executed.countDown();
+			return false;
+		});
+		return executed;
+	}
+
+	private static List<String> queuedMessageIds(BlockingQueue<ChargePointActionStatusUpdate> queue) {
+		return queue.stream().map(ChargePointActionStatusUpdate::getMessageId).toList();
 	}
 
 	/**
@@ -459,6 +478,301 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 			.returns(updateCount, from(s -> s.get(ResultsAdded)))
 			.as("Every update written or replaced")
 			.returns(updateCount, from(s -> s.get(UpdatesExecuted) + s.get(ResultsReplaced)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_writesWaitingUpdates() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		final CountDownLatch executed = givenFirstWriteSignals();
+
+		// a long delay, so the writer is sleeping after its first update when the others are added
+		dao.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
+		dao.serviceDidStartup();
+
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		final boolean written = executed.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+		update(TEST_CHARGER_IDENT, 1, 3, TEST_ACTION, "c1");
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b2");
+
+		final long start = System.nanoTime();
+		dao.serviceDidShutdown();
+		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
+
+		// THEN
+		then(jdbcStatement).should(times(3)).setString(eq(4), messageIdCaptor.capture());
+
+		// the updates are written with the writer's connection, not another one
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(written)
+			.as("First update written")
+			.isTrue()
+			;
+		and.then(messageIdCaptor.getAllValues())
+			.as("Latest update of each action waiting at shutdown written")
+			.containsExactly("a1", "b2", "c1")
+			;
+		and.then(shutdownTime)
+			.as("Shutdown did not wait for the update delay")
+			.isLessThan(Duration.ofSeconds(5))
+			;
+		and.then(dao.performPingTest().isSuccess())
+			.as("Writer stopped by shutdown")
+			.isFalse()
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_rightAfterStartup_writesWaitingUpdates() throws Exception {
+		// GIVEN
+		final int attempts = 200;
+		givenWriterConnection();
+
+		// WHEN
+		// shut down as soon as started, often before the writer has connected
+		int unwritten = 0;
+		for ( int i = 0; i < attempts; i++ ) {
+			final var q = new LinkedBlockingQueue<ChargePointActionStatusUpdate>();
+			final var d = new AsyncJdbcChargePointActionStatusDao(dataSource, q, stats);
+			d.serviceDidStartup();
+			d.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "m" + i,
+					Instant.now());
+			d.serviceDidShutdown();
+			if ( !q.isEmpty() ) {
+				unwritten++;
+			}
+		}
+
+		// THEN
+		then(jdbcStatement).should(times(attempts)).execute();
+
+		// @formatter:off
+		and.then(unwritten)
+			.as("Update written at every shutdown")
+			.isZero()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_duringWrite_writesWaitingUpdates() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		final CountDownLatch writing = new CountDownLatch(1);
+		final CountDownLatch release = new CountDownLatch(1);
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			if ( writing.getCount() > 0 ) {
+				writing.countDown();
+				// like a driver waiting on its socket, carry on writing when interrupted
+				boolean interrupted = false;
+				final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+				while ( release.getCount() > 0 && System.nanoTime() < end ) {
+					interrupted |= Thread.interrupted();
+					LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+				}
+				if ( interrupted ) {
+					Thread.currentThread().interrupt();
+				}
+			}
+			return false;
+		});
+		dao.serviceDidStartup();
+
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		final boolean writerWriting = writing.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+
+		final Thread stopper = new Thread(dao::serviceDidShutdown, "Stopper");
+		stopper.start();
+
+		// let the write finish once the stopper has interrupted the writer and waits for it
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while ( stopper.getState() != Thread.State.TIMED_WAITING && stopper.isAlive()
+				&& System.nanoTime() < end ) {
+			Thread.sleep(5);
+		}
+		release.countDown();
+		stopper.join(TimeUnit.SECONDS.toMillis(5));
+
+		// THEN
+		then(jdbcStatement).should(times(2)).setString(eq(4), messageIdCaptor.capture());
+
+		// @formatter:off
+		and.then(writerWriting)
+			.as("Writer writing first update")
+			.isTrue()
+			;
+		and.then(stopper.isAlive())
+			.as("Shutdown finished")
+			.isFalse()
+			;
+		and.then(messageIdCaptor.getAllValues())
+			.as("Update waiting at shutdown written after the update being written")
+			.containsExactly("a1", "b1")
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void disableWriting_leavesWaitingUpdatesForLaterWriter() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		final CountDownLatch executed = givenFirstWriteSignals();
+
+		// a long delay, so the writer is sleeping after its first update when the others are added
+		dao.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
+		dao.serviceDidStartup();
+
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		final boolean written = executed.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+		update(TEST_CHARGER_IDENT, 1, 3, TEST_ACTION, "c1");
+
+		dao.disableWriting();
+		final List<String> waitingAfterDisable = queuedMessageIds(queue);
+
+		dao.setUpdateDelay(0);
+		dao.enableWriting();
+		awaitAllWritten();
+		dao.disableWriting();
+
+		// THEN
+		then(jdbcStatement).should(times(3)).setString(eq(4), messageIdCaptor.capture());
+
+		// @formatter:off
+		and.then(written)
+			.as("First update written")
+			.isTrue()
+			;
+		and.then(waitingAfterDisable)
+			.as("Updates left waiting when writing disabled")
+			.containsExactly("b1", "c1")
+			;
+		and.then(messageIdCaptor.getAllValues())
+			.as("Updates left waiting written by the later writer")
+			.containsExactly("a1", "b1", "c1")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_writeFails_stopsWriting() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		final CountDownLatch executed = new CountDownLatch(1);
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			if ( executed.getCount() > 0 ) {
+				executed.countDown();
+				return false;
+			}
+			throw new SQLException("Connection reset", "08006");
+		});
+
+		// a long delay, so the writer is sleeping after its first update when the others are added
+		dao.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
+		dao.serviceDidStartup();
+
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		final boolean written = executed.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+		update(TEST_CHARGER_IDENT, 1, 3, TEST_ACTION, "c1");
+		dao.serviceDidShutdown();
+
+		// THEN
+		// no more writes are tried after one fails, and no other connection is used
+		then(jdbcStatement).should(times(2)).execute();
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(written)
+			.as("First update written")
+			.isTrue()
+			;
+		and.then(queuedMessageIds(queue))
+			.as("Update after the one that failed not written")
+			.containsExactly("c1")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_noConnection_updatesNotWritten() throws Exception {
+		// GIVEN
+		final CountDownLatch connecting = new CountDownLatch(1);
+		given(dataSource.getConnection()).willAnswer(_ -> {
+			connecting.countDown();
+			throw new SQLException("Connection refused", "08001");
+		});
+
+		// a long delay, so the writer is waiting to connect again at shutdown
+		dao.setConnectionRecoveryDelay(TimeUnit.MINUTES.toMillis(1));
+		dao.serviceDidStartup();
+		final boolean attempted = connecting.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+
+		final long start = System.nanoTime();
+		dao.serviceDidShutdown();
+		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
+
+		// THEN
+		// no other connection is tried at shutdown
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(attempted)
+			.as("Writer tried to connect")
+			.isTrue()
+			;
+		and.then(shutdownTime)
+			.as("Shutdown did not wait to connect again")
+			.isLessThan(Duration.ofSeconds(5))
+			;
+		and.then(queuedMessageIds(queue))
+			.as("Update not written without a connection")
+			.containsExactly("a1")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_noWriter_updatesNotWritten() throws Exception {
+		// GIVEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+
+		// WHEN
+		dao.serviceDidShutdown();
+
+		// THEN
+		then(dataSource).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(queuedMessageIds(queue))
+			.as("Update not written without a writer")
+			.containsExactly("a1")
 			;
 		// @formatter:on
 	}

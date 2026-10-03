@@ -115,6 +115,8 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 		buf.append("; evseId=").append(evseId);
 		buf.append("; connectorId=").append(connectorId);
 		buf.append("; action=").append(action);
+		buf.append("; messageId=").append(messageId);
+		buf.append("; date=").append(date);
 	}
 
 	@Override

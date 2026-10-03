@@ -71,7 +71,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 	private static Long TEST_CHARGER_ID = UUID.randomUUID().getMostSignificantBits();
 	private static String TEST_CHARGER_IDENT = UUID.randomUUID().toString();
 
-	/** The maximum time to wait for queued updates to be processed. */
+	/** The maximum time to wait for the threaded test to add its updates. */
 	private static final Duration PROCESS_TIMEOUT = Duration.ofSeconds(30);
 
 	@Autowired
@@ -146,33 +146,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		}
 	}
 
-	/**
-	 * Wait for the writer thread to process every update added that was not
-	 * replaced by a later one.
-	 *
-	 * <p>
-	 * The writer thread is interrupted when the DAO shuts down, discarding
-	 * anything still queued, so the updates must be processed before then.
-	 * </p>
-	 *
-	 * @throws InterruptedException
-	 *         if interrupted
-	 */
-	private void awaitProcessed() throws InterruptedException {
-		final long expiry = System.currentTimeMillis() + PROCESS_TIMEOUT.toMillis();
-		while ( System.currentTimeMillis() < expiry ) {
-			final long waiting = statCounter.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded)
-					- statCounter.get(AsyncJdbcChargePointActionStatusCount.ResultsReplaced)
-					- statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
-					- statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-			if ( waiting < 1 ) {
-				return;
-			}
-			Thread.sleep(20L);
-		}
-		// leave any shortfall to the assertions, which report what is missing
-	}
-
 	private void thenAssertAllProcessed(long added, long failed) {
 		final long processed = statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
 				+ statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
@@ -205,7 +178,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -241,7 +213,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -276,7 +247,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, connId, action, messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -313,7 +283,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action,
 					messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -351,7 +320,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, connId, action, messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -391,7 +359,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action,
 					messageId, ts);
-			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -461,7 +428,6 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 				// WHEN
 				then(threadPool.awaitTermination(PROCESS_TIMEOUT.toSeconds(), TimeUnit.SECONDS))
 						.as("Every update submitted before the queue is examined").isTrue();
-				awaitProcessed();
 				dao.shutdownAndWait(Duration.ofSeconds(2));
 
 				// THEN
