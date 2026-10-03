@@ -53,7 +53,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hashCode(id);
 	}
 
 	/**
@@ -74,7 +74,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 
 	/**
 	 * Get the ID.
-	 * 
+	 *
 	 * @return the id
 	 */
 	@Override
@@ -84,7 +84,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 
 	/**
 	 * Set the ID.
-	 * 
+	 *
 	 * @param id
 	 *        the id to set
 	 */
