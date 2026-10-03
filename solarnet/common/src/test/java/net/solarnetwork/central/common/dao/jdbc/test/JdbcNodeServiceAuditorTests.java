@@ -22,11 +22,9 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Timestamp;
@@ -34,15 +32,15 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
@@ -51,10 +49,12 @@ import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link JdbcNodeServiceAuditor} class.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class JdbcNodeServiceAuditorTests {
 
 	private static final Logger log = LoggerFactory.getLogger(JdbcNodeServiceAuditorTests.class);
@@ -65,21 +65,22 @@ public class JdbcNodeServiceAuditorTests {
 	private static final Long TEST_NODE_ID = -1L;
 	private static final String TEST_SERVICE_ID = "test";
 
-	private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
+	@Mock
 	private DataSource dataSource;
+
+	@Mock
 	private Connection jdbcConnection;
+
+	@Mock
 	private CallableStatement jdbcStatement;
 
+	private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
 	private Clock testClock;
-
 	private JdbcNodeServiceAuditor auditor;
 
 	@BeforeEach
 	public void setup() {
 		testClock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
-		dataSource = EasyMock.createMock(DataSource.class);
-		jdbcConnection = EasyMock.createMock(Connection.class);
-		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
 		auditor = new JdbcNodeServiceAuditor(dataSource, datumCountMap, testClock,
 				new StatTracker("NodeServiceAuditor", "", log, 20));
@@ -88,39 +89,15 @@ public class JdbcNodeServiceAuditorTests {
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
 	}
 
-	private void replayAll() {
-		EasyMock.replay(dataSource, jdbcConnection, jdbcStatement);
-	}
-
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(dataSource, jdbcConnection, jdbcStatement);
-	}
-
-	private void sleep(long ms) {
-		try {
-			Thread.sleep(ms);
-		} catch ( InterruptedException e ) {
-			// ignore
-		}
-	}
-
-	private void stopAuditingAndWaitForFlush() {
+	private void stopAuditingAndWaitForFlush() throws InterruptedException {
 		auditor.disableWriting();
-		sleep(FLUSH_DELAY * 2);
+		Thread.sleep(FLUSH_DELAY * 2);
 	}
 
-	private static DatumId nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-		return DatumId.nodeId(nodeId, sourceId, date);
-	}
-
-	private <K> void assertMapValueZeroOrMissing(Map<K, AtomicInteger> countMap, K key) {
-		AtomicInteger l = countMap.get(key);
-		if ( l != null ) {
-			assertThat("Count for " + key, l.get(), equalTo(0));
-		} else {
-			assertThat("Count for " + key, l, nullValue());
-		}
+	private int countFor(Long nodeId, String service) {
+		final AtomicInteger counter = datumCountMap
+				.get(DatumId.nodeId(nodeId, service, testClock.instant()));
+		return (counter != null ? counter.get() : 0);
 	}
 
 	@Test
@@ -128,33 +105,30 @@ public class JdbcNodeServiceAuditorTests {
 		// GIVEN
 		final int count = 123;
 
-		expect(dataSource.getConnection()).andReturn(jdbcConnection);
-
-		jdbcConnection.setAutoCommit(true);
-		expectLastCall().anyTimes();
-
-		expect(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
-				.andReturn(jdbcStatement);
-
-		jdbcStatement.setObject(1, TEST_NODE_ID);
-		jdbcStatement.setString(2, TEST_SERVICE_ID);
-		jdbcStatement.setTimestamp(3, Timestamp.from(Instant.now(testClock)));
-		jdbcStatement.setInt(4, count);
-		expect(jdbcStatement.execute()).andReturn(false);
-
-		jdbcConnection.close();
+		given(dataSource.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
+				.willReturn(jdbcStatement);
 
 		// WHEN
-		replayAll();
-
 		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, count);
 
 		auditor.enableWriting();
 		stopAuditingAndWaitForFlush();
 
 		// THEN
-		assertMapValueZeroOrMissing(datumCountMap,
-				nodeDatumKey(Instant.now(testClock), TEST_NODE_ID, TEST_SERVICE_ID));
+		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
+		then(jdbcStatement).should().setString(2, TEST_SERVICE_ID);
+		then(jdbcStatement).should().setTimestamp(3, Timestamp.from(testClock.instant()));
+		then(jdbcStatement).should().setInt(4, count);
+		then(jdbcStatement).should().execute();
+		then(jdbcConnection).should().close();
+
+		// @formatter:off
+		and.then(countFor(TEST_NODE_ID, TEST_SERVICE_ID))
+			.as("Count flushed")
+			.isZero()
+			;
+		// @formatter:on
 	}
 
 }

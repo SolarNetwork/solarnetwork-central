@@ -22,11 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Timestamp;
@@ -36,15 +34,15 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -60,8 +58,10 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link JdbcQueryAuditor} class.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class JdbcQueryAuditorTests {
 
 	private static final Logger log = LoggerFactory.getLogger(JdbcQueryAuditorTests.class);
@@ -72,70 +72,51 @@ public class JdbcQueryAuditorTests {
 	private static final Long TEST_NODE_ID = -1L;
 	private static final String TEST_SOURCE_1 = "test.source.1";
 
-	private ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> datumCountMap;
+	@Mock
 	private DataSource dataSource;
+
+	@Mock
 	private Connection jdbcConnection;
+
+	@Mock
 	private CallableStatement jdbcStatement;
 
+	private ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> datumCountMap;
 	private Clock testClock;
 	private JdbcQueryAuditor auditor;
 
 	@BeforeEach
 	public void setup() {
 		testClock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
-		dataSource = EasyMock.createMock(DataSource.class);
-		jdbcConnection = EasyMock.createMock(Connection.class);
-		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
 		auditor = new JdbcQueryAuditor(testClock, dataSource, datumCountMap,
 				new StatTracker("QueryAuditor", "", log, 20));
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
-
 	}
 
-	private void replayAll() {
-		EasyMock.replay(dataSource, jdbcConnection, jdbcStatement);
-	}
-
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(dataSource, jdbcConnection, jdbcStatement);
-	}
-
-	private void sleep(long ms) {
-		try {
-			Thread.sleep(ms);
-		} catch ( InterruptedException e ) {
-			// ignore
-		}
-	}
-
-	private void stopAuditingAndWaitForFlush() {
+	private void stopAuditingAndWaitForFlush() throws InterruptedException {
 		auditor.disableWriting();
-		sleep(FLUSH_DELAY * 2);
+		Thread.sleep(FLUSH_DELAY * 2);
 	}
 
-	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-		return new GeneralNodeDatumPK(nodeId, date, sourceId);
+	private int countFor(Long nodeId, String sourceId) {
+		final AtomicInteger counter = datumCountMap
+				.get(new GeneralNodeDatumPK(nodeId, testClock.instant(), sourceId));
+		return (counter != null ? counter.get() : 0);
+	}
+
+	private void givenWriterConnection() throws Exception {
+		given(dataSource.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
+				.willReturn(jdbcStatement);
 	}
 
 	@Test
 	public void datumFilterResultsOneNodeAndSourceNoResults() throws Exception {
-		// given
-		expect(dataSource.getConnection()).andReturn(jdbcConnection);
-
-		jdbcConnection.setAutoCommit(true);
-		expectLastCall().anyTimes();
-
-		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
-				.andReturn(jdbcStatement);
-
-		jdbcConnection.close();
-
-		// when
-		replayAll();
+		// GIVEN
+		givenWriterConnection();
 
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
@@ -144,46 +125,29 @@ public class JdbcQueryAuditorTests {
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
 		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
 				matches, 0L, 0L, 0);
+
+		// WHEN
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();
 		stopAuditingAndWaitForFlush();
 
-		// then
-		assertMapValueZeroOrMissing(datumCountMap,
-				nodeDatumKey(Instant.now(testClock), TEST_NODE_ID, TEST_SOURCE_1));
-	}
+		// THEN
+		then(jdbcStatement).shouldHaveNoInteractions();
+		then(jdbcConnection).should().close();
 
-	private <K> void assertMapValueZeroOrMissing(Map<K, AtomicInteger> countMap, K key) {
-		AtomicInteger l = countMap.get(key);
-		if ( l != null ) {
-			assertThat("Count for " + key, l.get(), equalTo(0));
-		} else {
-			assertThat("Count for " + key, l, nullValue());
-		}
+		// @formatter:off
+		and.then(countFor(TEST_NODE_ID, TEST_SOURCE_1))
+			.as("No count added")
+			.isZero()
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void datumFilterResultsOneNodeAndSourceSomeResults() throws Exception {
-		// given
-		expect(dataSource.getConnection()).andReturn(jdbcConnection);
-
-		jdbcConnection.setAutoCommit(true);
-		expectLastCall().anyTimes();
-
-		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
-				.andReturn(jdbcStatement);
-
-		jdbcStatement.setObject(1, TEST_NODE_ID);
-		jdbcStatement.setString(2, TEST_SOURCE_1);
-		jdbcStatement.setTimestamp(3, Timestamp.from(Instant.now(testClock)));
-		jdbcStatement.setInt(4, 3);
-		expect(jdbcStatement.execute()).andReturn(false);
-
-		jdbcConnection.close();
-
-		// when
-		replayAll();
+		// GIVEN
+		givenWriterConnection();
 
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
@@ -192,44 +156,57 @@ public class JdbcQueryAuditorTests {
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
 		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
 				matches, 5L, 0L, 3);
+
+		// WHEN
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();
 		stopAuditingAndWaitForFlush();
 
-		// then
-		//assertMapValueZeroOrMissing(datumCountMap, nodeDatumKey(topOfHour, TEST_NODE_ID, TEST_SOURCE_1));
+		// THEN
+		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
+		then(jdbcStatement).should().setString(2, TEST_SOURCE_1);
+		then(jdbcStatement).should().setTimestamp(3, Timestamp.from(testClock.instant()));
+		then(jdbcStatement).should().setInt(4, 3);
+		then(jdbcStatement).should().execute();
+		then(jdbcConnection).should().close();
+
+		// @formatter:off
+		and.then(countFor(TEST_NODE_ID, TEST_SOURCE_1))
+			.as("Count flushed")
+			.isZero()
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void auditSingleDatum() throws Exception {
 		// GIVEN
-		expect(dataSource.getConnection()).andReturn(jdbcConnection);
+		givenWriterConnection();
 
-		jdbcConnection.setAutoCommit(true);
-		expectLastCall().anyTimes();
-
-		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
-				.andReturn(jdbcStatement);
-
-		jdbcStatement.setObject(1, TEST_NODE_ID);
-		jdbcStatement.setString(2, TEST_SOURCE_1);
-		jdbcStatement.setTimestamp(3, Timestamp.from(testClock.instant()));
-		jdbcStatement.setInt(4, 1);
-		expect(jdbcStatement.execute()).andReturn(false);
-
-		jdbcConnection.close();
-
-		// WHEN
-		replayAll();
 		GeneralDatum datum = GeneralDatum.nodeDatum(TEST_NODE_ID, TEST_SOURCE_1, Instant.now(),
 				new DatumSamples());
+
+		// WHEN
 		auditor.auditNodeDatum(datum);
 
 		auditor.enableWriting();
 		stopAuditingAndWaitForFlush();
 
 		// THEN
+		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
+		then(jdbcStatement).should().setString(2, TEST_SOURCE_1);
+		then(jdbcStatement).should().setTimestamp(3, Timestamp.from(testClock.instant()));
+		then(jdbcStatement).should().setInt(4, 1);
+		then(jdbcStatement).should().execute();
+		then(jdbcConnection).should().close();
+
+		// @formatter:off
+		and.then(countFor(TEST_NODE_ID, TEST_SOURCE_1))
+			.as("Count flushed")
+			.isZero()
+			;
+		// @formatter:on
 	}
 
 }
