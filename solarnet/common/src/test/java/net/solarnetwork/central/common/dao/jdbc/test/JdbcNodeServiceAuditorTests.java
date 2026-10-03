@@ -62,7 +62,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
+import net.solarnetwork.central.common.dao.jdbc.JdbcServiceAuditorCount;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
@@ -128,7 +128,7 @@ public class JdbcNodeServiceAuditorTests {
 	 */
 	private void awaitFirstFlush() throws InterruptedException {
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+		while ( stats.get(JdbcServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
 	}
@@ -136,7 +136,7 @@ public class JdbcNodeServiceAuditorTests {
 	/**
 	 * Wait for a statistic to reach a count.
 	 */
-	private void awaitStat(JdbcNodeServiceAuditorCount stat, long count) throws InterruptedException {
+	private void awaitStat(JdbcServiceAuditorCount stat, long count) throws InterruptedException {
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
 		while ( stats.get(stat) < count && System.nanoTime() < end ) {
 			Thread.sleep(10);
@@ -513,7 +513,7 @@ public class JdbcNodeServiceAuditorTests {
 		then(dataSource).should().getConnection();
 
 		// @formatter:off
-		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsDiscarded))
+		and.then(stats.get(JdbcServiceAuditorCount.ResultsDiscarded))
 			.as("Bad count discarded")
 			.isEqualTo(1L)
 			;
@@ -540,7 +540,7 @@ public class JdbcNodeServiceAuditorTests {
 		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, count);
 
 		auditor.enableWriting();
-		awaitStat(JdbcNodeServiceAuditorCount.UpdatesExecuted, 1);
+		awaitStat(JdbcServiceAuditorCount.UpdatesExecuted, 1);
 		auditor.serviceDidShutdown();
 
 		// THEN
@@ -551,15 +551,15 @@ public class JdbcNodeServiceAuditorTests {
 		then(dataSource).should(times(2)).getConnection();
 
 		// @formatter:off
-		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsDiscarded))
+		and.then(stats.get(JdbcServiceAuditorCount.ResultsDiscarded))
 			.as("Count not discarded")
 			.isZero()
 			;
-		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsAdded))
+		and.then(stats.get(JdbcServiceAuditorCount.ResultsAdded))
 			.as("Count added back not counted as added again")
 			.isEqualTo(1L)
 			;
-		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsReadded))
+		and.then(stats.get(JdbcServiceAuditorCount.ResultsReadded))
 			.as("Count added back counted as re-added")
 			.isEqualTo(1L)
 			;

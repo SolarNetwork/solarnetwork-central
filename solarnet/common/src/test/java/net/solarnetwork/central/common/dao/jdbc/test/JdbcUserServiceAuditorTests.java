@@ -44,7 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
+import net.solarnetwork.central.common.dao.jdbc.JdbcServiceAuditorCount;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserServiceAuditor;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.StatTracker;
@@ -98,7 +98,7 @@ public class JdbcUserServiceAuditorTests {
 	 */
 	private void awaitFirstFlush() throws InterruptedException {
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+		while ( stats.get(JdbcServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
 	}

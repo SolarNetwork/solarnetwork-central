@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
+import net.solarnetwork.central.common.dao.jdbc.JdbcServiceAuditorCount;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.DeliverRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
@@ -112,7 +112,7 @@ public class JdbcAuditServiceTests extends TestSupport {
 	private void writeCounts() throws InterruptedException {
 		auditor.serviceDidStartup();
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+		while ( stats.get(JdbcServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
 		auditor.serviceDidShutdown();
@@ -172,7 +172,7 @@ public class JdbcAuditServiceTests extends TestSupport {
 			.as("Publish without a source not counted, as it would be written as a user count")
 			.isEmpty()
 			;
-		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsAdded))
+		and.then(stats.get(JdbcServiceAuditorCount.ResultsAdded))
 			.as("No count added")
 			.isZero()
 			;

@@ -192,7 +192,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 			return;
 		}
 		incrementServiceCounter(key, count);
-		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
+		statCounter.increment(JdbcServiceAuditorCount.ResultsAdded);
 	}
 
 	private void incrementServiceCounter(DatumId key, int count) {
@@ -249,7 +249,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 				this.notifyAll();
 			}
 			log.info("Started JDBC audit writer thread {}", this);
-			statCounter.increment(JdbcNodeServiceAuditorCount.WriterThreadsStarted);
+			statCounter.increment(JdbcServiceAuditorCount.WriterThreadsStarted);
 			try {
 				// go at least once, so counts added when asked to stop before connecting are written
 				do {
@@ -284,7 +284,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 					logUnwrittenServiceData();
 				}
 			} finally {
-				statCounter.increment(JdbcNodeServiceAuditorCount.WriterThreadsEnded);
+				statCounter.increment(JdbcServiceAuditorCount.WriterThreadsEnded);
 			}
 		}
 
@@ -299,7 +299,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 			}
 			final String sql = nonnull(serviceIncrementSql, "serviceIncrementSql");
 			try (Connection conn = dataSource.getConnection()) {
-				statCounter.increment(JdbcNodeServiceAuditorCount.ConnectionsCreated);
+				statCounter.increment(JdbcServiceAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = isCallableStatement(sql) ? conn.prepareCall(sql)
 						: conn.prepareStatement(sql);
@@ -326,7 +326,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	private void flushServiceData(PreparedStatement stmt, boolean throttle)
 			throws SQLException, InterruptedException {
-		statCounter.increment(JdbcNodeServiceAuditorCount.CountsFlushed);
+		statCounter.increment(JdbcServiceAuditorCount.CountsFlushed);
 		for ( DatumId key : serviceCounters.keySet() ) {
 			// remove the counter, rather than reset it to 0 and remove it on a later flush if it
 			// is still 0, so a count added after this goes to a new counter rather than being lost
@@ -336,7 +336,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 			}
 			final int count = counter.get();
 			if ( count < 1 ) {
-				statCounter.increment(JdbcNodeServiceAuditorCount.ZeroCountsCleared);
+				statCounter.increment(JdbcServiceAuditorCount.ZeroCountsCleared);
 				continue;
 			}
 			try {
@@ -347,23 +347,23 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 				setServiceIncrementParameters(stmt, key, count);
 				stmt.execute();
 			} catch ( SQLException | RuntimeException e ) {
-				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesFailed);
+				statCounter.increment(JdbcServiceAuditorCount.UpdatesFailed);
 				if ( !isTransientException(e) && isConnectionUsable(stmt) ) {
 					// the problem is with this count and will not go away, so discard it rather
 					// than try it again on every flush, which would block the counts after it
-					statCounter.increment(JdbcNodeServiceAuditorCount.ResultsDiscarded);
+					statCounter.increment(JdbcServiceAuditorCount.ResultsDiscarded);
 					log.error("Discarding audit count {} for {} that could not be written: {}", count,
 							key, e.toString());
 					continue;
 				}
 				// add the count back, to try again after reconnecting
 				incrementServiceCounter(key, count);
-				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
+				statCounter.increment(JdbcServiceAuditorCount.ResultsReadded);
 				throw e;
 			}
 			// the count has been written now, so it must not be added back if what follows fails,
 			// such as being interrupted during the update delay, or it would be written again
-			statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesExecuted);
+			statCounter.increment(JdbcServiceAuditorCount.UpdatesExecuted);
 			if ( throttle && updateDelay > 0 ) {
 				Thread.sleep(updateDelay);
 			}

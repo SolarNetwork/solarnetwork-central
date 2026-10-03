@@ -37,7 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
+import net.solarnetwork.central.common.dao.jdbc.JdbcServiceAuditorCount;
 import net.solarnetwork.flux.vernemq.webhook.config.ServiceConfig;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.DeliverRequest;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
@@ -71,7 +71,7 @@ public class ServiceConfigTests {
 
 	private static long countsFlushed(JdbcAuditService service) throws Exception {
 		return (service.performPingTest().getProperties()
-				.get(JdbcNodeServiceAuditorCount.CountsFlushed.name()) instanceof Long n ? n : 0L);
+				.get(JdbcServiceAuditorCount.CountsFlushed.name()) instanceof Long n ? n : 0L);
 	}
 
 	@Test
