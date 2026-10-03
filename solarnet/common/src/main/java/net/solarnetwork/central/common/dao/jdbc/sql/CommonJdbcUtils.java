@@ -29,6 +29,8 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLRecoverableException;
+import java.sql.SQLTransientException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
@@ -60,7 +62,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Common JDBC utilities.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public final class CommonJdbcUtils {
 
@@ -642,6 +644,38 @@ public final class CommonJdbcUtils {
 			return Period.of(pg.getYears(), pg.getMonths(), pg.getDays());
 		}
 		throw new IllegalArgumentException("Unsupported Period type: %s".formatted(value.getClass()));
+	}
+
+	/**
+	 * Test if an exception from a JDBC operation looks transient, so the
+	 * operation might succeed if tried again later.
+	 *
+	 * <p>
+	 * An exception is considered transient if it is a
+	 * {@link SQLTransientException} or {@link SQLRecoverableException}, or has
+	 * a SQL state for a connection exception ({@code 08}), a transaction
+	 * rollback such as a deadlock ({@code 40}), insufficient resources
+	 * ({@code 53}), a lock not available ({@code 55P03}), or operator
+	 * intervention such as a statement timeout ({@code 57}).
+	 * </p>
+	 *
+	 * @param t
+	 *        the exception to test
+	 * @return {@code true} if {@code t} looks transient
+	 * @since 2.5
+	 */
+	public static boolean isTransientException(@Nullable Throwable t) {
+		if ( t instanceof SQLTransientException || t instanceof SQLRecoverableException ) {
+			return true;
+		}
+		if ( t instanceof SQLException sqlEx ) {
+			final String state = sqlEx.getSQLState();
+			if ( state != null ) {
+				return (state.startsWith("08") || state.startsWith("40") || state.startsWith("53")
+						|| state.equals("55P03") || state.startsWith("57"));
+			}
+		}
+		return false;
 	}
 
 }

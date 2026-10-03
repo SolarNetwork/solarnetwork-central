@@ -26,7 +26,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
  * Statistics for JDBC query audit processing.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.0
  */
 public enum JdbcQueryAuditorCount {
@@ -57,6 +57,13 @@ public enum JdbcQueryAuditorCount {
 
 	/** Results re-added (from errors). */
 	ResultsReadded,
+
+	/**
+	 * Results discarded (from errors writing them).
+	 *
+	 * @since 1.2
+	 */
+	ResultsDiscarded,
 
 	;
 

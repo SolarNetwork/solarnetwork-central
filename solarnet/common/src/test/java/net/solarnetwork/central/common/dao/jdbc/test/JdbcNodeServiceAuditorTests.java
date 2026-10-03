@@ -23,12 +23,15 @@
 package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.withSettings;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -39,6 +42,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -46,8 +50,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
 import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
 
 /**
@@ -103,6 +110,12 @@ public class JdbcNodeServiceAuditorTests {
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
 	}
 
+	@AfterEach
+	public void teardown() {
+		// stop any writer a test left running
+		auditor.disableWriting();
+	}
+
 	private void givenWriterConnection() throws SQLException {
 		given(dataSource.getConnection()).willReturn(jdbcConnection);
 		given(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
@@ -118,6 +131,29 @@ public class JdbcNodeServiceAuditorTests {
 		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
+	}
+
+	/**
+	 * Wait for a statistic to reach a count.
+	 */
+	private void awaitStat(JdbcNodeServiceAuditorCount stat, long count) throws InterruptedException {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while ( stats.get(stat) < count && System.nanoTime() < end ) {
+			Thread.sleep(10);
+		}
+	}
+
+	/**
+	 * Wait for the ping test to give a result, as the writer's state changes.
+	 */
+	private PingTest.Result awaitPingResult(boolean success) throws Exception {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		PingTest.Result result = auditor.performPingTest();
+		while ( result.isSuccess() != success && System.nanoTime() < end ) {
+			Thread.sleep(10);
+			result = auditor.performPingTest();
+		}
+		return result;
 	}
 
 	@Test
@@ -398,6 +434,138 @@ public class JdbcNodeServiceAuditorTests {
 		and.then(datumCountMap)
 			.as("Count not written without a writer")
 			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auditNodeService_writeFailsForOneCount_othersWritten() throws Exception {
+		// GIVEN
+		final Long badNodeId = -100L;
+		final List<Long> goodNodeIds = List.of(1L, 2L, 3L, 4L, 5L);
+
+		givenWriterConnection();
+
+		// the connection stays usable, so the problem is with the count itself
+		given(jdbcStatement.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.isValid(anyInt())).willReturn(true);
+
+		// fail to write the bad node's count, as a value too large for the database would
+		final AtomicReference<Object> boundNodeId = new AtomicReference<>();
+		willAnswer(inv -> {
+			boundNodeId.set(inv.getArgument(1));
+			return null;
+		}).given(jdbcStatement).setObject(eq(1), any());
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			if ( badNodeId.equals(boundNodeId.get()) ) {
+				throw new SQLException("integer out of range", "22003");
+			}
+			return false;
+		});
+
+		// WHEN
+		auditor.auditNodeService(badNodeId, TEST_SERVICE_ID, 1);
+		for ( Long nodeId : goodNodeIds ) {
+			auditor.auditNodeService(nodeId, TEST_SERVICE_ID, 1);
+		}
+
+		auditor.enableWriting();
+		awaitFirstFlush();
+		auditor.serviceDidShutdown();
+
+		// THEN
+		for ( Long nodeId : goodNodeIds ) {
+			then(jdbcStatement).should().setObject(1, nodeId);
+		}
+
+		// the writer did not give up on its connection
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsDiscarded))
+			.as("Bad count discarded")
+			.isEqualTo(1L)
+			;
+		and.then(datumCountMap)
+			.as("Bad count not kept to try again")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auditNodeService_transientWriteFailure_countWrittenAfterReconnect()
+			throws Exception {
+		// GIVEN
+		final int count = 123;
+
+		givenWriterConnection();
+
+		// fail the first write as a deadlock would, then succeed
+		given(jdbcStatement.execute()).willThrow(new SQLException("deadlock detected", "40P01"))
+				.willReturn(false);
+
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, count);
+
+		auditor.enableWriting();
+		awaitStat(JdbcNodeServiceAuditorCount.UpdatesExecuted, 1);
+		auditor.serviceDidShutdown();
+
+		// THEN
+		// tried again without checking the connection, as the error is transient
+		then(jdbcStatement).should(never()).getConnection();
+		then(jdbcStatement).should(times(2)).setInt(4, count);
+		then(jdbcStatement).should(times(2)).execute();
+		then(dataSource).should(times(2)).getConnection();
+
+		// @formatter:off
+		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsDiscarded))
+			.as("Count not discarded")
+			.isZero()
+			;
+		and.then(datumCountMap)
+			.as("Count written once tried again")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void performPingTest_writerConnectionFails() throws Exception {
+		// GIVEN
+		final CountDownLatch reconnect = new CountDownLatch(1);
+		given(dataSource.getConnection()).willThrow(new SQLException("Connection refused", "08001"))
+				.willAnswer(_ -> {
+					// connect again only once the failure has been seen
+					reconnect.await(5, TimeUnit.SECONDS);
+					return jdbcConnection;
+				});
+		given(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
+				.willReturn(jdbcStatement);
+
+		// a short delay, so the writer soon tries to connect again
+		auditor.setConnectionRecoveryDelay(50);
+
+		// WHEN
+		auditor.serviceDidStartup();
+		final PingTest.Result failedResult = awaitPingResult(false);
+		reconnect.countDown();
+		final PingTest.Result recoveredResult = awaitPingResult(true);
+
+		// THEN
+		// @formatter:off
+		and.then(failedResult.isSuccess())
+			.as("Ping fails while the writer cannot connect")
+			.isFalse()
+			;
+		and.then(failedResult.getMessage())
+			.as("Ping says why the writer cannot write")
+			.contains("Connection refused")
+			;
+		and.then(recoveredResult.isSuccess())
+			.as("Ping passes once the writer has written again")
+			.isTrue()
 			;
 		// @formatter:on
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.isTransientException;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
@@ -82,6 +83,12 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 */
 	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*}",
 			Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * The time to wait, in seconds, when checking if the connection is still
+	 * usable after an error writing a count.
+	 */
+	private static final int CONNECTION_VALID_TIMEOUT = 5;
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -202,6 +209,9 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 		private volatile boolean reconnect = false;
 		private boolean started = false;
 
+		// the error stopping the writer from writing, until it next writes successfully
+		private volatile @Nullable String writeError;
+
 		private boolean hasStarted() {
 			return started;
 		}
@@ -245,6 +255,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 							}
 							break;
 						}
+						writeError = e.toString();
 						log.warn("Exception with auditing", e);
 						// sleep, then try again
 						try {
@@ -276,6 +287,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 							throw new InterruptedException();
 						}
 						flushServiceData(stmt, true);
+						writeError = null;
 						Thread.sleep(flushDelay);
 					} catch ( InterruptedException e ) {
 						log.info("Writer thread interrupted: exiting now.");
@@ -317,6 +329,15 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 				stmt.execute();
 			} catch ( SQLException | RuntimeException e ) {
 				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesFailed);
+				if ( !isTransientException(e) && isConnectionUsable(stmt) ) {
+					// the problem is with this count and will not go away, so discard it rather
+					// than try it again on every flush, which would block the counts after it
+					statCounter.increment(JdbcNodeServiceAuditorCount.ResultsDiscarded);
+					log.error("Discarding audit count {} for {} that could not be written: {}", count,
+							key, e.toString());
+					continue;
+				}
+				// add the count back, to try again after reconnecting
 				addServiceCount(key, count);
 				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
 				throw e;
@@ -327,6 +348,15 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 			if ( throttle && updateDelay > 0 ) {
 				Thread.sleep(updateDelay);
 			}
+		}
+	}
+
+	private static boolean isConnectionUsable(PreparedStatement stmt) {
+		try {
+			return stmt.getConnection().isValid(CONNECTION_VALID_TIMEOUT);
+		} catch ( SQLException | RuntimeException e ) {
+			// any error checking means it is not usable, so the count is kept to try again
+			return false;
 		}
 	}
 
@@ -441,8 +471,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 		t.interrupt();
 		try {
 			if ( !t.join(shutdownMaxWait) ) {
-				log.warn("Audit writer thread {} did not stop within {}", t.getName(),
-						shutdownMaxWait);
+				log.warn("Audit writer thread {} did not stop within {}", t.getName(), shutdownMaxWait);
 			}
 		} catch ( InterruptedException e ) {
 			Thread.currentThread().interrupt();
@@ -467,11 +496,14 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	@Override
 	public Result performPingTest() throws Exception {
 		final WriterThread t = this.writerThread;
-		boolean writerRunning = t != null && t.isAlive();
 		Map<String, Long> statMap = statCounter.allCounts();
-		if ( !writerRunning ) {
+		if ( t == null || !t.isAlive() ) {
 			return new PingTestResult(false,
 					(t == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+		}
+		final String writeError = t.writeError;
+		if ( writeError != null ) {
+			return new PingTestResult(false, "Writer thread cannot write: " + writeError, statMap);
 		}
 		return new PingTestResult(true, "Writer thread alive.", statMap);
 	}
