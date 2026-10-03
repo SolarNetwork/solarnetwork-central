@@ -23,11 +23,11 @@
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.isTransientException;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -54,6 +54,12 @@ import net.solarnetwork.util.StatTracker;
  * update of a charge point action needs to be written, so an update replaces
  * any update of the same action not written yet. Actions are written in the
  * order they were first updated.
+ * </p>
+ *
+ * <p>
+ * An update that cannot be written because of a problem with the update
+ * itself is discarded. Otherwise, such as when the connection to the database
+ * is lost, the update is kept to try again after reconnecting.
  * </p>
  *
  * @author matt
@@ -83,6 +89,12 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @since 1.2
 	 */
 	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofSeconds(10);
+
+	/**
+	 * The time to wait, in seconds, when checking if the connection is still
+	 * usable after an error writing an update.
+	 */
+	private static final int CONNECTION_VALID_TIMEOUT = 5;
 
 	private static final Logger log = LoggerFactory.getLogger(AsyncJdbcChargePointActionStatusDao.class);
 
@@ -206,6 +218,9 @@ public class AsyncJdbcChargePointActionStatusDao
 		private volatile boolean reconnect = false;
 		private boolean started = false;
 
+		// the error stopping the writer from writing, until it next connects
+		private volatile @Nullable String writeError;
+
 		private boolean hasStarted() {
 			return started;
 		}
@@ -250,8 +265,10 @@ public class AsyncJdbcChargePointActionStatusDao
 							}
 							break;
 						}
-						if ( e instanceof SQLTransientException ) {
-							log.warn("Transient SQL exception with OCPP charge point action status: {}",
+						writeError = e.toString();
+						if ( isTransientException(e) ) {
+							// such as the database being unavailable, so no need for the stack trace
+							log.warn("Transient exception with OCPP charge point action status: {}",
 									e.toString());
 						} else {
 							log.warn("Exception with OCPP charge point action status: {}",
@@ -293,6 +310,7 @@ public class AsyncJdbcChargePointActionStatusDao
 				stats.increment(AsyncJdbcChargePointActionStatusCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = createPreparedStatement(conn);
+				writeError = null;
 				try {
 					while ( keepGoing && !reconnect ) {
 						writeUpdate(stmt, statuses.take(), true);
@@ -339,10 +357,37 @@ public class AsyncJdbcChargePointActionStatusDao
 			stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
 		} catch ( SQLException | RuntimeException e ) {
 			stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
+			if ( !isTransientException(e) && isConnectionUsable(stmt) ) {
+				// the problem is with this update and will not go away, so discard it rather than
+				// try it again, and carry on writing with the same connection
+				stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsDiscarded);
+				log.error("Discarding OCPP charge point action status {} that could not be written: {}",
+						upd, e.toString());
+				return;
+			}
+			// add the update back, to try again after reconnecting, unless a later update of the
+			// same action has been added since, which replaces it
+			if ( latestStatuses.putIfAbsent(upd, upd) == null ) {
+				if ( statuses.offer(upd) ) {
+					stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsReadded);
+				} else {
+					// the queue is full, so drop the update, letting a later one queue the action
+					latestStatuses.remove(upd);
+				}
+			}
 			throw e;
 		}
 		if ( throttle && updateDelay > 0 ) {
 			Thread.sleep(updateDelay);
+		}
+	}
+
+	private static boolean isConnectionUsable(PreparedStatement stmt) {
+		try {
+			return stmt.getConnection().isValid(CONNECTION_VALID_TIMEOUT);
+		} catch ( SQLException | RuntimeException e ) {
+			// any error checking means it is not usable, so the update is kept to try again
+			return false;
 		}
 	}
 
@@ -505,23 +550,23 @@ public class AsyncJdbcChargePointActionStatusDao
 	@Override
 	public Result performPingTest() throws Exception {
 		final Map<String, Long> statMap = stats.allCounts();
-		// verify buffer removals does not lag additions; replaced updates are never removed
 		final long addCount = statMap
 				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
-		final long removeLag = addCount
-				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsReplaced.name(),
-						0L)
-				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
+		// verify buffer removals do not lag additions: the queue holds the actions waiting
+		final long removeLag = statuses.size();
 		final WriterThread t = this.writerThread;
-		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {
 			return new PingTestResult(false,
 					format("Buffer removal lag %d > %d", removeLag, bufferRemovalLagAlertThreshold),
 					statMap);
 		}
-		if ( !writerRunning ) {
+		if ( t == null || !t.isAlive() ) {
 			return new PingTestResult(false,
 					(t == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+		}
+		final String writeError = t.writeError;
+		if ( writeError != null ) {
+			return new PingTestResult(false, "Writer thread cannot write: " + writeError, statMap);
 		}
 		return new PingTestResult(true, format("Processed %d updates; lag %d.", addCount, removeLag),
 				statMap);
@@ -586,14 +631,10 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Set the datum cache removal alert threshold.
 	 *
 	 * <p>
-	 * This threshold represents the number of updates waiting to be written:
-	 * the {@link AsyncJdbcChargePointActionStatusCount#ResultsAdded} statistic
-	 * less the {@link AsyncJdbcChargePointActionStatusCount#ResultsReplaced}
-	 * and {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved}
-	 * statistics. If the {@code ResultsRemoved} count lags behind it means
-	 * updates are not getting persisted fast enough. Passing this threshold
-	 * will trigger a failure {@link PingTest} result in
-	 * {@link #performPingTest()}.
+	 * This threshold represents the number of charge point actions waiting to
+	 * be written. If too many are waiting it means updates are not getting
+	 * persisted fast enough. Passing this threshold will trigger a failure
+	 * {@link PingTest} result in {@link #performPingTest()}.
 	 * </p>
 	 *
 	 * @param bufferRemovalLagAlertThreshold

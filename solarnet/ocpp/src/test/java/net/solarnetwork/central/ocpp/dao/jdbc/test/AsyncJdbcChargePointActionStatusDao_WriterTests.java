@@ -23,6 +23,8 @@
 package net.solarnetwork.central.ocpp.dao.jdbc.test;
 
 import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.ResultsAdded;
+import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.ResultsDiscarded;
+import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.ResultsReadded;
 import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.ResultsRemoved;
 import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.ResultsReplaced;
 import static net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount.UpdatesExecuted;
@@ -36,6 +38,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.withSettings;
 import java.sql.Connection;
@@ -68,6 +71,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCount;
 import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.jdbc.ChargePointActionStatusUpdate;
 import net.solarnetwork.central.ocpp.dao.jdbc.sql.UpsertChargePointIdentifierActionTimestamp;
@@ -197,6 +201,30 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 			}
 			Thread.sleep(10);
 		}
+	}
+
+	/**
+	 * Wait for a statistic to reach a count.
+	 */
+	private void awaitStat(AsyncJdbcChargePointActionStatusCount stat, long count)
+			throws InterruptedException {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while ( stats.get(stat) < count && System.nanoTime() < end ) {
+			Thread.sleep(10);
+		}
+	}
+
+	/**
+	 * Wait for the ping test to give a result, as the writer's state changes.
+	 */
+	private PingTest.Result awaitPingResult(boolean success) throws Exception {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		PingTest.Result result = dao.performPingTest();
+		while ( result.isSuccess() != success && System.nanoTime() < end ) {
+			Thread.sleep(10);
+			result = dao.performPingTest();
+		}
+		return result;
 	}
 
 	private static int[] toArray(AtomicIntegerArray array) {
@@ -711,8 +739,12 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 			.isTrue()
 			;
 		and.then(queuedMessageIds(queue))
-			.as("Update after the one that failed not written")
-			.containsExactly("c1")
+			.as("Update after the one that failed not written, and the one that failed kept")
+			.containsExactly("c1", "b1")
+			;
+		and.then(stats)
+			.as("Update that failed added back")
+			.returns(1L, from(s -> s.get(ResultsReadded)))
 			;
 		// @formatter:on
 	}
@@ -773,6 +805,230 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 		and.then(queuedMessageIds(queue))
 			.as("Update not written without a writer")
 			.containsExactly("a1")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateActionTimestamp_writeFailsForOneUpdate_othersWritten() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+
+		// the connection stays usable, so the problem is with the update itself
+		given(jdbcStatement.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.isValid(anyInt())).willReturn(true);
+
+		// fail to write the second update, as one for a charger deleted meanwhile would
+		final AtomicInteger executions = new AtomicInteger();
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			if ( executions.incrementAndGet() == 2 ) {
+				throw new SQLException("violates foreign key constraint", "23503");
+			}
+			return false;
+		});
+
+		// a long delay, so the writer would not write the last update had it reconnected
+		dao.setConnectionRecoveryDelay(TimeUnit.MINUTES.toMillis(1));
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+		update(TEST_CHARGER_IDENT, 1, 2, TEST_ACTION, "b1");
+		update(TEST_CHARGER_IDENT, 1, 3, TEST_ACTION, "c1");
+
+		dao.serviceDidStartup();
+		awaitStat(UpdatesExecuted, 2);
+		final PingTest.Result result = dao.performPingTest();
+		dao.shutdownAndWait(SHUTDOWN_WAIT);
+
+		// THEN
+		then(jdbcStatement).should(times(3)).setString(eq(4), messageIdCaptor.capture());
+
+		// the writer did not give up on its connection
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(messageIdCaptor.getAllValues())
+			.as("Every update tried once")
+			.containsExactly("a1", "b1", "c1")
+			;
+		and.then(stats)
+			.as("Update that failed discarded")
+			.returns(1L, from(s -> s.get(ResultsDiscarded)))
+			.as("Update that failed not added back")
+			.returns(0L, from(s -> s.get(ResultsReadded)))
+			.as("Other updates written")
+			.returns(2L, from(s -> s.get(UpdatesExecuted)))
+			;
+		and.then(result)
+			.as("Ping OK, as discarding an update does not stop writing")
+			.returns(true, from(PingTest.Result::isSuccess))
+			;
+		and.then(queue)
+			.as("Update that failed not kept to try again")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateActionTimestamp_transientWriteFailure_writtenAfterReconnect() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+
+		// fail the first write as a lost connection would, then succeed
+		given(jdbcStatement.execute())
+				.willThrow(new SQLException("An I/O error occurred while sending to the backend.",
+						"08006"))
+				.willReturn(false);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+
+		dao.serviceDidStartup();
+		awaitStat(UpdatesExecuted, 1);
+		dao.shutdownAndWait(SHUTDOWN_WAIT);
+
+		// THEN
+		// tried again without checking the connection, as the error is transient
+		then(jdbcStatement).should(never()).getConnection();
+		then(jdbcStatement).should(times(2)).setString(eq(4), messageIdCaptor.capture());
+		then(jdbcStatement).should(times(2)).execute();
+		then(dataSource).should(times(2)).getConnection();
+
+		// @formatter:off
+		and.then(messageIdCaptor.getAllValues())
+			.as("Update tried again after reconnecting")
+			.containsExactly("a1", "a1")
+			;
+		and.then(stats)
+			.as("Update added back not counted as added again")
+			.returns(1L, from(s -> s.get(ResultsAdded)))
+			.as("Update added back counted as re-added")
+			.returns(1L, from(s -> s.get(ResultsReadded)))
+			.as("Update not discarded")
+			.returns(0L, from(s -> s.get(ResultsDiscarded)))
+			;
+		and.then(queue)
+			.as("Update written once tried again")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateActionTimestamp_writeFailsWithUnusableConnection_writtenAfterReconnect()
+			throws Exception {
+		// GIVEN
+		givenWriterConnection();
+
+		// the connection is not usable after the error, so the problem is with the connection
+		given(jdbcStatement.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.isValid(anyInt())).willReturn(false);
+		given(jdbcStatement.execute()).willThrow(new SQLException("Unexpected error"))
+				.willReturn(false);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+
+		dao.serviceDidStartup();
+		awaitStat(UpdatesExecuted, 1);
+		dao.shutdownAndWait(SHUTDOWN_WAIT);
+
+		// THEN
+		then(jdbcStatement).should(times(2)).setString(eq(4), messageIdCaptor.capture());
+		then(dataSource).should(times(2)).getConnection();
+
+		// @formatter:off
+		and.then(messageIdCaptor.getAllValues())
+			.as("Update tried again after reconnecting")
+			.containsExactly("a1", "a1")
+			;
+		and.then(stats)
+			.as("Update added back")
+			.returns(1L, from(s -> s.get(ResultsReadded)))
+			.as("Update not discarded")
+			.returns(0L, from(s -> s.get(ResultsDiscarded)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateActionTimestamp_laterUpdateWhileWriteFails_laterWrittenInstead()
+			throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		final Instant laterDate = nextDate.plusSeconds(60);
+
+		// add a later update of the same action while writing the first fails, as a lost
+		// connection would
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a2",
+					laterDate);
+			throw new SQLException("Connection reset", "08006");
+		}).willReturn(false);
+
+		// WHEN
+		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
+
+		dao.serviceDidStartup();
+		awaitStat(UpdatesExecuted, 1);
+		dao.shutdownAndWait(SHUTDOWN_WAIT);
+
+		// THEN
+		then(jdbcStatement).should(times(2)).setString(eq(4), messageIdCaptor.capture());
+		then(jdbcStatement).should().setTimestamp(5, Timestamp.from(laterDate));
+
+		// @formatter:off
+		and.then(messageIdCaptor.getAllValues())
+			.as("Later update written after reconnecting, rather than the one that failed")
+			.containsExactly("a1", "a2")
+			;
+		and.then(stats)
+			.as("Update that failed not added back, as a later one replaces it")
+			.returns(0L, from(s -> s.get(ResultsReadded)))
+			;
+		and.then(queue)
+			.as("Queue emptied")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void performPingTest_writerConnectionFails() throws Exception {
+		// GIVEN
+		final CountDownLatch reconnect = new CountDownLatch(1);
+		given(dataSource.getConnection()).willThrow(new SQLException("Connection refused", "08001"))
+				.willAnswer(_ -> {
+					// connect again only once the failure has been seen
+					reconnect.await(5, TimeUnit.SECONDS);
+					return jdbcConnection;
+				});
+		given(jdbcConnection.prepareStatement(UpsertChargePointIdentifierActionTimestamp.sql()))
+				.willReturn(jdbcStatement);
+
+		// a short delay, so the writer soon tries to connect again
+		dao.setConnectionRecoveryDelay(50);
+
+		// WHEN
+		dao.serviceDidStartup();
+		final PingTest.Result failedResult = awaitPingResult(false);
+		reconnect.countDown();
+		final PingTest.Result recoveredResult = awaitPingResult(true);
+
+		// THEN
+		// @formatter:off
+		and.then(failedResult.isSuccess())
+			.as("Ping fails while the writer cannot connect")
+			.isFalse()
+			;
+		and.then(failedResult.getMessage())
+			.as("Ping says why the writer cannot write")
+			.contains("Connection refused")
+			;
+		and.then(recoveredResult.isSuccess())
+			.as("Ping passes once the writer has connected again")
+			.isTrue()
 			;
 		// @formatter:on
 	}
