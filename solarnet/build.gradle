@@ -141,7 +141,7 @@ subprojects {
 		myBatisStarterVersion = '4.0.0'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '4.53.1'
+		snCommonVersion = '4.53.2'
 		snCommonExprSpelVersion = '4.2.1'
 		snCommonMqttVersion = '6.4.0'
 		snCommonMqttNettyVersion = '5.3.3'
