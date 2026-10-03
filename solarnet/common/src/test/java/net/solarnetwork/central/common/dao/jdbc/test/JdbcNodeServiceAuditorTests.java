@@ -306,6 +306,37 @@ public class JdbcNodeServiceAuditorTests {
 	}
 
 	@Test
+	public void serviceDidShutdown_rightAfterStartup_writesCounts() throws Exception {
+		// GIVEN
+		final int attempts = 200;
+		givenWriterConnection();
+
+		// WHEN
+		// shut down as soon as started, often before the writer has connected
+		int unwritten = 0;
+		for ( int i = 0; i < attempts; i++ ) {
+			final ConcurrentMap<DatumId, AtomicInteger> counts = new ConcurrentHashMap<>(8);
+			final var a = new JdbcNodeServiceAuditor(dataSource, counts, testClock, stats);
+			a.serviceDidStartup();
+			a.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 1);
+			a.serviceDidShutdown();
+			if ( !counts.isEmpty() ) {
+				unwritten++;
+			}
+		}
+
+		// THEN
+		then(jdbcStatement).should(times(attempts)).execute();
+
+		// @formatter:off
+		and.then(unwritten)
+			.as("Count written at every shutdown")
+			.isZero()
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void disableWriting_interruptedDuringUpdateDelay_countNotWrittenAgain() throws Exception {
 		// GIVEN
 		givenWriterConnection();
