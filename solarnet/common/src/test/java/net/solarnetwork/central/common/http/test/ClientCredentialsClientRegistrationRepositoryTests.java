@@ -55,7 +55,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -78,7 +78,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void unsupportedRegistrationId() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 
 		final String registrationId = userIdSystemIdentifier(userId, srvc);
 
@@ -100,7 +100,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void missingConfiguration() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 		final Long configId = randomLong();
 
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
@@ -123,7 +123,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void missingTokenUri() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 		final Long configId = randomLong();
 
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
@@ -155,7 +155,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void find_clientCreds_basic() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 		final Long configId = randomLong();
 
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
@@ -207,7 +207,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void find_clientCreds_form() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 		final Long configId = randomLong();
 
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
@@ -260,7 +260,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	public void find_username_basic() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String srvc = randomString();
+		final String srvc = "test-" + randomString();
 		final Long configId = randomLong();
 
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
