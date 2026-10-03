@@ -1,21 +1,21 @@
 /* ==================================================================
  * OcppV16WebSocketConfig.java - 12/11/2021 3:10:28 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -76,7 +76,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v1.6 web socket configuration.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -106,6 +106,9 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Value("${app.ocpp.handshake.acquire-timeout:2s}")
 	private Duration handshakeAcquireTimeout = Duration.ofSeconds(2);
+
+	@Value("${app.ocpp.handshake.allow-raw-passwords:false}")
+	private boolean allowRawPasswords;
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
@@ -239,6 +242,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthInterceptor.setHandshakeSemaphore(handshakeSemaphore);
 		basicAuthInterceptor.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
+		basicAuthInterceptor.setAllowRawPasswords(allowRawPasswords);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
 		// support path credentials /v16u/username/password/identifier
@@ -251,6 +255,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		pathAuthInterceptor.setHandshakeSemaphore(handshakeSemaphore);
 		pathAuthInterceptor.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
+		basicAuthInterceptor.setAllowRawPasswords(allowRawPasswords);
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
 
 		// support HID /v16h/hid/identifier
@@ -263,6 +268,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		basicAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthInterceptorHid.setHandshakeSemaphore(handshakeSemaphore);
 		basicAuthInterceptorHid.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
+		basicAuthInterceptor.setAllowRawPasswords(allowRawPasswords);
 		basicAuthRegHid.addInterceptors(basicAuthInterceptorHid);
 
 		// support HID + path credentials /v16hu/hid/username/password/identifier
@@ -276,6 +282,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		pathAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
 		pathAuthInterceptorHid.setHandshakeSemaphore(handshakeSemaphore);
 		pathAuthInterceptorHid.setHandshakeAcquireTimeout(handshakeAcquireTimeout);
+		basicAuthInterceptor.setAllowRawPasswords(allowRawPasswords);
 		pathAuthRegHid.addInterceptors(pathAuthInterceptorHid);
 	}
 
