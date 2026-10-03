@@ -34,7 +34,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -82,7 +81,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -140,7 +139,9 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param nodeSourceCounters
-	 *        the map to use for tracking counts for node datum
+	 *        the map to use for tracking counts for node datum; the map must
+	 *        perform {@code compute()} atomically, as {@link ConcurrentHashMap}
+	 *        does
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@code null}
 	 */
@@ -159,7 +160,9 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param nodeSourceCounters
-	 *        the map to use for tracking counts for node datum
+	 *        the map to use for tracking counts for node datum; the map must
+	 *        perform {@code compute()} atomically, as {@link ConcurrentHashMap}
+	 *        does
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@code null}
 	 * @since 2.1
@@ -270,21 +273,29 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	}
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
-		nodeSourceCounters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
+		// increment within compute() so the update is serialized with flushNodeSourceData()
+		// removing the counter; otherwise the count could land on a counter that was just removed
+		nodeSourceCounters.compute(key, (_, counter) -> {
+			if ( counter == null ) {
+				return new AtomicInteger(count);
+			}
+			counter.addAndGet(count);
+			return counter;
+		});
 		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
 	}
 
 	private void flushNodeSourceData(PreparedStatement stmt) throws SQLException, InterruptedException {
 		stats.increment(JdbcQueryAuditorCount.CountsFlushed);
-		for ( Iterator<Map.Entry<GeneralNodeDatumPK, AtomicInteger>> itr = nodeSourceCounters.entrySet()
-				.iterator(); itr.hasNext(); ) {
-			Map.Entry<GeneralNodeDatumPK, AtomicInteger> me = itr.next();
-			GeneralNodeDatumPK key = me.getKey();
-			AtomicInteger counter = me.getValue();
-			final int count = counter.getAndSet(0);
+		for ( GeneralNodeDatumPK key : nodeSourceCounters.keySet() ) {
+			// remove the counter, rather than reset it to 0 and remove it on a later flush if it
+			// is still 0, so a count added after this goes to a new counter rather than being lost
+			final AtomicInteger counter = nodeSourceCounters.remove(key);
+			if ( counter == null ) {
+				continue;
+			}
+			final int count = counter.get();
 			if ( count < 1 ) {
-				// clean out stale 0 valued counter
-				itr.remove();
 				stats.increment(JdbcQueryAuditorCount.ZeroCountsCleared, true);
 				continue;
 			}

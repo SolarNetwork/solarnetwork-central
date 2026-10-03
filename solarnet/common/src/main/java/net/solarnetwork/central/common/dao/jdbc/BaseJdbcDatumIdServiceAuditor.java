@@ -30,7 +30,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Clock;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,7 +50,7 @@ import net.solarnetwork.util.StatTracker;
  * Base class for {@link DatumId} related service auditors using JDBC.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, ServiceLifecycleObserver {
 
@@ -123,7 +122,8 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @param serviceCounters
-	 *        the service counters map
+	 *        the service counters map; the map must perform {@code compute()}
+	 *        atomically, as {@link java.util.concurrent.ConcurrentHashMap} does
 	 * @param clock
 	 *        the clock to use; a tick-based clock is typical, to align updates
 	 *        to time-based "buckets"
@@ -164,7 +164,15 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 *        the count to add
 	 */
 	protected void addServiceCount(DatumId key, int count) {
-		serviceCounters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
+		// increment within compute() so the update is serialized with flushServiceData() removing
+		// the counter; otherwise the count could land on a counter that was just removed
+		serviceCounters.compute(key, (_, counter) -> {
+			if ( counter == null ) {
+				return new AtomicInteger(count);
+			}
+			counter.addAndGet(count);
+			return counter;
+		});
 		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
 	}
 
@@ -247,15 +255,15 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	private void flushServiceData(PreparedStatement stmt) throws SQLException, InterruptedException {
 		statCounter.increment(JdbcNodeServiceAuditorCount.CountsFlushed);
-		for ( Iterator<Map.Entry<DatumId, AtomicInteger>> itr = serviceCounters.entrySet()
-				.iterator(); itr.hasNext(); ) {
-			Map.Entry<DatumId, AtomicInteger> me = itr.next();
-			DatumId key = me.getKey();
-			AtomicInteger counter = me.getValue();
-			final int count = counter.getAndSet(0);
+		for ( DatumId key : serviceCounters.keySet() ) {
+			// remove the counter, rather than reset it to 0 and remove it on a later flush if it
+			// is still 0, so a count added after this goes to a new counter rather than being lost
+			final AtomicInteger counter = serviceCounters.remove(key);
+			if ( counter == null ) {
+				continue;
+			}
+			final int count = counter.get();
 			if ( count < 1 ) {
-				// clean out stale 0 valued counter
-				itr.remove();
 				statCounter.increment(JdbcNodeServiceAuditorCount.ZeroCountsCleared);
 				continue;
 			}

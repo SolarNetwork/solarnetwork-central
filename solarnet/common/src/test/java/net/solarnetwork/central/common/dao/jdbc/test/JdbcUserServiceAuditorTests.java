@@ -94,12 +94,6 @@ public class JdbcUserServiceAuditorTests {
 		Thread.sleep(FLUSH_DELAY * 2);
 	}
 
-	private int countFor(Long userId, String service) {
-		final AtomicInteger counter = datumCountMap
-				.get(DatumId.nodeId(userId, service, testClock.instant()));
-		return (counter != null ? counter.get() : 0);
-	}
-
 	@Test
 	public void auditUserService_one() throws Exception {
 		// GIVEN
@@ -124,9 +118,9 @@ public class JdbcUserServiceAuditorTests {
 		then(jdbcConnection).should().close();
 
 		// @formatter:off
-		and.then(countFor(TEST_USER_ID, TEST_SERVICE_ID))
-			.as("Count flushed")
-			.isZero()
+		and.then(datumCountMap)
+			.as("Counter removed once flushed")
+			.isEmpty()
 			;
 		// @formatter:on
 	}

@@ -73,7 +73,8 @@ public class JdbcNodeServiceAuditor extends BaseJdbcDatumIdServiceAuditor implem
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @param serviceCounters
-	 *        the service counters map
+	 *        the service counters map; the map must perform {@code compute()}
+	 *        atomically, as {@link ConcurrentHashMap} does
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
