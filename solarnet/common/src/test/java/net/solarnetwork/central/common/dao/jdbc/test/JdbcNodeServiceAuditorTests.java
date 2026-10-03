@@ -524,9 +524,56 @@ public class JdbcNodeServiceAuditorTests {
 			.as("Count not discarded")
 			.isZero()
 			;
+		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsAdded))
+			.as("Count added back not counted as added again")
+			.isEqualTo(1L)
+			;
+		and.then(stats.get(JdbcNodeServiceAuditorCount.ResultsReadded))
+			.as("Count added back counted as re-added")
+			.isEqualTo(1L)
+			;
 		and.then(datumCountMap)
 			.as("Count written once tried again")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auditNodeService_negativeCount_ignored() {
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, -5);
+
+		// THEN
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Negative count ignored")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auditNodeService_countOverflow_limitedToMaxValue() {
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, Integer.MAX_VALUE);
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 10);
+
+		// THEN
+		// @formatter:off
+		and.then(datumCountMap.get(DatumId.nodeId(TEST_NODE_ID, TEST_SERVICE_ID, testClock.instant())))
+			.as("Total limited to the largest count, rather than overflowing to negative")
+			.hasValue(Integer.MAX_VALUE)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void setUpdateDelay_negative() {
+		// @formatter:off
+		and.thenThrownBy(() -> auditor.setUpdateDelay(-1))
+			.as("Negative delay rejected")
+			.isInstanceOf(IllegalArgumentException.class)
 			;
 		// @formatter:on
 	}

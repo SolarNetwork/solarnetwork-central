@@ -132,10 +132,10 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	private final StatTracker stats;
 
 	private volatile @Nullable WriterThread writerThread;
-	private long updateDelay;
-	private long flushDelay;
-	private long connectionRecoveryDelay;
-	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private volatile long updateDelay;
+	private volatile long flushDelay;
+	private volatile long connectionRecoveryDelay;
+	private volatile Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 	private volatile String nodeSourceIncrementSql;
 
 	/**
@@ -297,16 +297,24 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	}
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
+		if ( count < 1 ) {
+			return;
+		}
+		incrementNodeSourceCounter(key, count);
+		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
+	}
+
+	private void incrementNodeSourceCounter(GeneralNodeDatumPK key, int count) {
 		// increment within compute() so the update is serialized with flushNodeSourceData()
 		// removing the counter; otherwise the count could land on a counter that was just removed
 		nodeSourceCounters.compute(key, (_, counter) -> {
 			if ( counter == null ) {
 				return new AtomicInteger(count);
 			}
-			counter.addAndGet(count);
+			// limit the total rather than let it overflow to negative, which would be discarded
+			counter.accumulateAndGet(count, (a, b) -> (int) Math.min((long) a + b, Integer.MAX_VALUE));
 			return counter;
 		});
-		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
 	}
 
 	private void flushNodeSourceData(PreparedStatement stmt, boolean throttle)
@@ -341,7 +349,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 					continue;
 				}
 				// add the count back, to try again after reconnecting
-				addNodeSourceCount(key, count);
+				incrementNodeSourceCounter(key, count);
 				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
 				throw e;
 			}
@@ -639,7 +647,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * before trying to recover and connect again.
 	 *
 	 * @param connectionRecoveryDelay
-	 *        the delay, in milliseconds; defaults t[
+	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
 	 * @throws IllegalArgumentException
 	 *         if {@code connectionRecoveryDelay} is &lt; 0
@@ -656,12 +664,15 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * within a loop before executing another statement.
 	 *
 	 * @param updateDelay
-	 *        the delay, in milliseconds; defaults t[
+	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_UPDATE_DELAY}
 	 * @throws IllegalArgumentException
 	 *         if {@code updateDelay} is &lt; 0
 	 */
 	public final void setUpdateDelay(long updateDelay) {
+		if ( updateDelay < 0 ) {
+			throw new IllegalArgumentException("updateDelay must be >= 0");
+		}
 		this.updateDelay = updateDelay;
 	}
 

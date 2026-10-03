@@ -126,10 +126,10 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	private volatile @Nullable String serviceIncrementSql;
 
 	private volatile @Nullable WriterThread writerThread;
-	private long updateDelay;
-	private long flushDelay;
-	private long connectionRecoveryDelay;
-	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private volatile long updateDelay;
+	private volatile long flushDelay;
+	private volatile long connectionRecoveryDelay;
+	private volatile Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 
 	/**
 	 * Constructor.
@@ -185,19 +185,27 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @param key
 	 *        the key of the count
 	 * @param count
-	 *        the count to add
+	 *        the count to add; counts less than {@literal 1} are ignored
 	 */
 	protected void addServiceCount(DatumId key, int count) {
+		if ( count < 1 ) {
+			return;
+		}
+		incrementServiceCounter(key, count);
+		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
+	}
+
+	private void incrementServiceCounter(DatumId key, int count) {
 		// increment within compute() so the update is serialized with flushServiceData() removing
 		// the counter; otherwise the count could land on a counter that was just removed
 		serviceCounters.compute(key, (_, counter) -> {
 			if ( counter == null ) {
 				return new AtomicInteger(count);
 			}
-			counter.addAndGet(count);
+			// limit the total rather than let it overflow to negative, which would be discarded
+			counter.accumulateAndGet(count, (a, b) -> (int) Math.min((long) a + b, Integer.MAX_VALUE));
 			return counter;
 		});
-		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
 	}
 
 	private class WriterThread extends Thread {
@@ -338,7 +346,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 					continue;
 				}
 				// add the count back, to try again after reconnecting
-				addServiceCount(key, count);
+				incrementServiceCounter(key, count);
 				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
 				throw e;
 			}
@@ -485,7 +493,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	@Override
 	public String getPingTestName() {
-		return "JDBC Query Auditor";
+		return "JDBC Service Auditor";
 	}
 
 	@Override
@@ -529,7 +537,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * before trying to recover and connect again.
 	 *
 	 * @param connectionRecoveryDelay
-	 *        the delay, in milliseconds; defaults t[
+	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
 	 * @throws IllegalArgumentException
 	 *         if {@code connectionRecoveryDelay} is &lt; 0
@@ -546,12 +554,15 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * within a loop before executing another statement.
 	 *
 	 * @param updateDelay
-	 *        the delay, in milliseconds; defaults t[
+	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_UPDATE_DELAY}
 	 * @throws IllegalArgumentException
 	 *         if {@code updateDelay} is &lt; 0
 	 */
 	public final void setUpdateDelay(long updateDelay) {
+		if ( updateDelay < 0 ) {
+			throw new IllegalArgumentException("updateDelay must be >= 0");
+		}
 		this.updateDelay = updateDelay;
 	}
 

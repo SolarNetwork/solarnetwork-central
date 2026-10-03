@@ -44,6 +44,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -602,9 +603,64 @@ public class JdbcQueryAuditorTests {
 			.as("Count not discarded")
 			.isZero()
 			;
+		and.then(stats.get(JdbcQueryAuditorCount.ResultsAdded))
+			.as("Count added back not counted as added again")
+			.isEqualTo(1L)
+			;
+		and.then(stats.get(JdbcQueryAuditorCount.ResultsReadded))
+			.as("Count added back counted as re-added")
+			.isEqualTo(1L)
+			;
 		and.then(datumCountMap)
 			.as("Count written once tried again")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void addNodeDatumAuditResults_negativeCount_ignored() {
+		// GIVEN
+		final GeneralNodeDatumPK key = new GeneralNodeDatumPK(TEST_NODE_ID, testClock.instant(),
+				TEST_SOURCE_1);
+
+		// WHEN
+		auditor.addNodeDatumAuditResults(Map.of(key, -5));
+
+		// THEN
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Negative count ignored")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void addNodeDatumAuditResults_countOverflow_limitedToMaxValue() {
+		// GIVEN
+		final GeneralNodeDatumPK key = new GeneralNodeDatumPK(TEST_NODE_ID, testClock.instant(),
+				TEST_SOURCE_1);
+
+		// WHEN
+		auditor.addNodeDatumAuditResults(Map.of(key, Integer.MAX_VALUE));
+		auditor.addNodeDatumAuditResults(Map.of(key, 10));
+
+		// THEN
+		// @formatter:off
+		and.then(datumCountMap.get(key))
+			.as("Total limited to the largest count, rather than overflowing to negative")
+			.hasValue(Integer.MAX_VALUE)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void setUpdateDelay_negative() {
+		// @formatter:off
+		and.thenThrownBy(() -> auditor.setUpdateDelay(-1))
+			.as("Negative delay rejected")
+			.isInstanceOf(IllegalArgumentException.class)
 			;
 		// @formatter:on
 	}

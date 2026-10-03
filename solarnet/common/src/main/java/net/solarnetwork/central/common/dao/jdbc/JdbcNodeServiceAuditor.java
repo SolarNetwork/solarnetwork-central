@@ -45,12 +45,12 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcNodeServiceAuditor extends BaseJdbcDatumIdServiceAuditor implements NodeServiceAuditor {
 
 	/**
-	 * The default value for the {@code nodeServiceIncrementSql} property.
+	 * The default value for the {@code serviceIncrementSql} property.
 	 */
 	public static final String DEFAULT_NODE_SERVICE_INCREMENT_SQL = "{call solardatm.audit_increment_node_count(?,?,?,?)}";
 
@@ -95,7 +95,7 @@ public class JdbcNodeServiceAuditor extends BaseJdbcDatumIdServiceAuditor implem
 
 	@Override
 	public void auditNodeService(Long nodeId, String service, int count) {
-		if ( count == 0 ) {
+		if ( count < 1 ) {
 			return;
 		}
 		addServiceCount(DatumId.nodeId(nodeId, service, clock.instant()), count);
