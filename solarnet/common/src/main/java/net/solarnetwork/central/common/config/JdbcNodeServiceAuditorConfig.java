@@ -36,7 +36,7 @@ import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
  * Node service auditor configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(JdbcNodeServiceAuditorConfig.NODE_SERVICE_AUDITOR)
@@ -84,6 +84,7 @@ public class JdbcNodeServiceAuditorConfig {
 		auditor.setFlushDelay(settings.getFlushDelay());
 		auditor.setConnectionRecoveryDelay(settings.getConnectionRecoveryDelay());
 		auditor.setStatLogUpdateCount(settings.getStatLogUpdateCount());
+		auditor.setShutdownMaxWait(settings.getShutdownMaxWait());
 		return auditor;
 	}
 

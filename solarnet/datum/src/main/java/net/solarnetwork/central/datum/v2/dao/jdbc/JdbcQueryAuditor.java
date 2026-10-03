@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,7 +76,8 @@ import net.solarnetwork.util.StatTracker;
  * This class opens and maintains a single JDBC {@link Connection} in a
  * dedicated thread. All database updates are buffered in memory and then
  * flushed to the database after the configured {@code flushDelay}. If the
- * connection is lost, a new connection will be created.
+ * connection is lost, a new connection will be created. When the service is
+ * shut down, any updates not yet flushed are written before it stops.
  * </p>
  *
  * @author matt
@@ -96,6 +96,13 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	/** The default value for the {@code connectionRecoveryDelay} property. */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
+
+	/**
+	 * The default value for the {@code shutdownMaxWait} property.
+	 *
+	 * @since 2.5
+	 */
+	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofSeconds(10);
 
 	/** The default value for the {@code nodeSourceIncrementSql} property. */
 	public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solardatm.audit_increment_datum_q_count(?,?,?,?)}";
@@ -117,11 +124,12 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
 	private final StatTracker stats;
 
-	private @Nullable WriterThread writerThread;
+	private volatile @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long flushDelay;
 	private long connectionRecoveryDelay;
-	private String nodeSourceIncrementSql;
+	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private volatile String nodeSourceIncrementSql;
 
 	/**
 	 * Constructor.
@@ -188,9 +196,18 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	}
 
+	/**
+	 * Stop writing, after writing any counts not yet written.
+	 *
+	 * <p>
+	 * The writing thread writes the remaining counts with its own connection
+	 * before it stops. If it has no working connection, or writing fails, it
+	 * gives up and logs the counts not written as an error.
+	 * </p>
+	 */
 	@Override
 	public void serviceDidShutdown() {
-		disableWriting();
+		stopWriting(true);
 	}
 
 	@Override
@@ -285,7 +302,8 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
 	}
 
-	private void flushNodeSourceData(PreparedStatement stmt) throws SQLException, InterruptedException {
+	private void flushNodeSourceData(PreparedStatement stmt, boolean throttle)
+			throws SQLException, InterruptedException {
 		stats.increment(JdbcQueryAuditorCount.CountsFlushed);
 		for ( GeneralNodeDatumPK key : nodeSourceCounters.keySet() ) {
 			// remove the counter, rather than reset it to 0 and remove it on a later flush if it
@@ -305,27 +323,52 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 				stmt.setTimestamp(3, Timestamp.from(key.getCreated()));
 				stmt.setInt(4, count);
 				stmt.execute();
-				stats.increment(JdbcQueryAuditorCount.UpdatesExecuted);
-				if ( updateDelay > 0 ) {
-					Thread.sleep(updateDelay);
-				}
-			} catch ( SQLException | InterruptedException e ) {
+			} catch ( SQLException | RuntimeException e ) {
 				stats.increment(JdbcQueryAuditorCount.UpdatesFailed);
 				addNodeSourceCount(key, count);
 				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
 				throw e;
-			} catch ( Exception e ) {
-				stats.increment(JdbcQueryAuditorCount.UpdatesFailed);
-				addNodeSourceCount(key, count);
-				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
-				RuntimeException re;
-				if ( e instanceof RuntimeException runtime ) {
-					re = runtime;
-				} else {
-					re = new RuntimeException("Exception flushing node source audit data", e);
-				}
-				throw re;
 			}
+			// the count has been written now, so it must not be added back if what follows fails,
+			// such as being interrupted during the update delay, or it would be written again
+			stats.increment(JdbcQueryAuditorCount.UpdatesExecuted);
+			if ( throttle && updateDelay > 0 ) {
+				Thread.sleep(updateDelay);
+			}
+		}
+	}
+
+	/**
+	 * Write any counts not yet written, without the update delay.
+	 *
+	 * @param stmt
+	 *        the statement to write with
+	 * @throws SQLException
+	 *         if any error occurs writing
+	 */
+	private void writeRemainingNodeSourceData(PreparedStatement stmt) throws SQLException {
+		if ( nodeSourceCounters.isEmpty() ) {
+			return;
+		}
+		log.info("Writing {} remaining query audit counts", nodeSourceCounters.size());
+		try {
+			// a few passes, to also write counts added while writing
+			for ( int i = 0; i < 3 && !nodeSourceCounters.isEmpty(); i++ ) {
+				flushNodeSourceData(stmt, false);
+			}
+		} catch ( InterruptedException e ) {
+			// not thrown without the update delay, but keep the interrupt status
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	/**
+	 * Log any counts not written, as an error.
+	 */
+	private void logUnwrittenNodeSourceData() {
+		if ( !nodeSourceCounters.isEmpty() ) {
+			log.error("Stopping with {} query audit counts not written: {}",
+					nodeSourceCounters.size(), nodeSourceCounters);
 		}
 	}
 
@@ -336,8 +379,11 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	private class WriterThread extends Thread {
 
-		private final AtomicBoolean keepGoingWithConnection = new AtomicBoolean(true);
-		private final AtomicBoolean keepGoing = new AtomicBoolean(true);
+		// keepGoing only ever changes from true to false, so a request to exit cannot be undone
+		// when the writer starts a new connection, as resetting a combined flag could
+		private volatile boolean keepGoing = true;
+		private volatile boolean writeOnExit = false;
+		private volatile boolean reconnect = false;
 		private boolean started = false;
 
 		private boolean hasStarted() {
@@ -345,31 +391,44 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		}
 
 		private boolean isGoing() {
-			return keepGoing.get();
+			return keepGoing;
 		}
 
 		private void reconnect() {
-			keepGoingWithConnection.compareAndSet(true, false);
+			reconnect = true;
 		}
 
-		private void exit() {
-			keepGoing.compareAndSet(true, false);
-			keepGoingWithConnection.compareAndSet(true, false);
+		private void exit(boolean writeRemaining) {
+			// set before keepGoing, so the writer sees it once it sees it is to exit; never
+			// cleared, so a later request to just stop cannot cancel writing what remains
+			if ( writeRemaining ) {
+				writeOnExit = true;
+			}
+			keepGoing = false;
 		}
 
 		@Override
 		public void run() {
+			// signal before anything that could fail, so enableWriting() is not left waiting
+			synchronized ( this ) {
+				started = true;
+				this.notifyAll();
+			}
 			stats.increment(JdbcQueryAuditorCount.WriterThreadsStarted);
 			try {
-				while ( keepGoing.get() ) {
-					keepGoingWithConnection.set(true);
-					synchronized ( this ) {
-						started = true;
-						this.notifyAll();
-					}
+				while ( keepGoing ) {
+					reconnect = false;
 					try {
-						keepGoing.compareAndSet(true, execute());
+						execute();
 					} catch ( SQLException | RuntimeException e ) {
+						if ( !keepGoing ) {
+							// stopping, so give up rather than try again
+							if ( writeOnExit ) {
+								log.error("Error writing remaining query audit counts: {}",
+										e.toString());
+							}
+							break;
+						}
 						if ( e instanceof SQLTransientException ) {
 							log.warn("Transient SQL exception with query auditing: {}", e.toString());
 						} else {
@@ -380,35 +439,40 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 							Thread.sleep(connectionRecoveryDelay);
 						} catch ( InterruptedException e2 ) {
 							log.info("Writer thread interrupted: exiting now.");
-							keepGoing.set(false);
+							keepGoing = false;
 						}
 					}
+				}
+				if ( writeOnExit ) {
+					logUnwrittenNodeSourceData();
 				}
 			} finally {
 				stats.increment(JdbcQueryAuditorCount.WriterThreadsEnded);
 			}
 		}
 
-		private Boolean execute() throws SQLException {
+		private void execute() throws SQLException {
+			final String sql = nodeSourceIncrementSql;
 			try (Connection conn = dataSource.getConnection()) {
 				stats.increment(JdbcQueryAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
-				PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
-						? conn.prepareCall(nodeSourceIncrementSql)
-						: conn.prepareStatement(nodeSourceIncrementSql);
-				do {
+				PreparedStatement stmt = isCallableStatement(sql) ? conn.prepareCall(sql)
+						: conn.prepareStatement(sql);
+				while ( keepGoing && !reconnect ) {
 					try {
 						if ( Thread.interrupted() ) {
 							throw new InterruptedException();
 						}
-						flushNodeSourceData(stmt);
+						flushNodeSourceData(stmt, true);
 						Thread.sleep(flushDelay);
 					} catch ( InterruptedException e ) {
 						log.info("Writer thread interrupted: exiting now.");
-						return false;
+						keepGoing = false;
 					}
-				} while ( keepGoingWithConnection.get() );
-				return true;
+				}
+				if ( writeOnExit ) {
+					writeRemainingNodeSourceData(stmt);
+				}
 			}
 		}
 
@@ -419,8 +483,9 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * connection.
 	 */
 	public synchronized void reconnectWriter() {
-		if ( writerThread != null && writerThread.isGoing() ) {
-			writerThread.reconnect();
+		final WriterThread t = writerThread;
+		if ( t != null && t.isGoing() ) {
+			t.reconnect();
 		}
 	}
 
@@ -428,29 +493,68 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * Enable writing, and wait until the writing thread is going.
 	 */
 	public synchronized void enableWriting() {
-		if ( writerThread == null || !writerThread.isGoing() ) {
+		final WriterThread curr = writerThread;
+		if ( curr == null || !curr.isGoing() ) {
 			WriterThread t = new WriterThread();
 			t.setName("JdbcQueryAuditorWriter");
 			this.writerThread = t;
+			boolean interrupted = false;
 			synchronized ( t ) {
 				t.start();
-				while ( !t.hasStarted() ) {
+				// stop waiting if the thread ends without signalling that it started
+				while ( !t.hasStarted() && t.isAlive() ) {
 					try {
 						t.wait(5000L);
 					} catch ( InterruptedException e ) {
-						// ignore
+						interrupted = true;
 					}
 				}
+			}
+			if ( interrupted ) {
+				Thread.currentThread().interrupt();
 			}
 		}
 	}
 
 	/**
-	 * Disable writing.
+	 * Disable writing, and wait for the writing thread to stop.
+	 *
+	 * <p>
+	 * The writing thread is interrupted, so it stops without waiting for its
+	 * next flush. Any counts it has not written remain in memory, for a later
+	 * writing thread to write. This waits at most {@code shutdownMaxWait} for
+	 * the thread to stop.
+	 * </p>
 	 */
-	public synchronized void disableWriting() {
-		if ( writerThread != null ) {
-			writerThread.exit();
+	public void disableWriting() {
+		stopWriting(false);
+	}
+
+	/**
+	 * Stop the writing thread, and wait for it to stop.
+	 *
+	 * @param writeRemaining
+	 *        {@code true} for the writing thread to write any remaining counts
+	 *        before it stops, and log any it cannot write
+	 */
+	private synchronized void stopWriting(boolean writeRemaining) {
+		final WriterThread t = writerThread;
+		if ( t == null || !t.isAlive() ) {
+			if ( writeRemaining ) {
+				// there is no writer to write them
+				logUnwrittenNodeSourceData();
+			}
+			return;
+		}
+		t.exit(writeRemaining);
+		t.interrupt();
+		try {
+			if ( !t.join(shutdownMaxWait) ) {
+				log.warn("Query audit writer thread {} did not stop within {}", t.getName(),
+						shutdownMaxWait);
+			}
+		} catch ( InterruptedException e ) {
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -476,7 +580,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		Map<String, Long> statMap = stats.allCounts();
 		if ( !writerRunning ) {
 			return new PingTestResult(false,
-					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+					(t == null ? "Writer thread missing." : "Writer thread dead."), statMap);
 		}
 		return new PingTestResult(true, "Writer thread alive.", statMap);
 	}
@@ -526,6 +630,19 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 */
 	public final void setUpdateDelay(long updateDelay) {
 		this.updateDelay = updateDelay;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for the writing thread to stop,
+	 * including writing any remaining counts when the service shuts down.
+	 *
+	 * @param shutdownMaxWait
+	 *        the maximum time to wait; if {@code null} then
+	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
+	 * @since 2.5
+	 */
+	public final void setShutdownMaxWait(@Nullable Duration shutdownMaxWait) {
+		this.shutdownMaxWait = (shutdownMaxWait != null ? shutdownMaxWait : DEFAULT_SHUTDOWN_MAX_WAIT);
 	}
 
 	/**

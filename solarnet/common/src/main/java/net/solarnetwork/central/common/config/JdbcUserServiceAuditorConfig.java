@@ -37,7 +37,7 @@ import net.solarnetwork.central.common.dao.jdbc.JdbcUserServiceAuditor;
  * User service auditor configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(USER_SERVICE_AUDITOR)
@@ -82,6 +82,7 @@ public class JdbcUserServiceAuditorConfig {
 		auditor.setFlushDelay(settings.getFlushDelay());
 		auditor.setConnectionRecoveryDelay(settings.getConnectionRecoveryDelay());
 		auditor.setStatLogUpdateCount(settings.getStatLogUpdateCount());
+		auditor.setShutdownMaxWait(settings.getShutdownMaxWait());
 		return auditor;
 	}
 

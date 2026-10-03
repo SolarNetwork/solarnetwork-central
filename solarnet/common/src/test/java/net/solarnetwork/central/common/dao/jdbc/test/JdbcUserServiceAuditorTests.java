@@ -34,6 +34,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserServiceAuditor;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.StatTracker;
@@ -76,22 +78,29 @@ public class JdbcUserServiceAuditorTests {
 
 	private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
 	private Clock testClock;
+	private StatTracker stats;
 	private JdbcUserServiceAuditor auditor;
 
 	@BeforeEach
 	public void setup() {
 		testClock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
 		datumCountMap = new ConcurrentHashMap<>(8);
-		auditor = new JdbcUserServiceAuditor(dataSource, datumCountMap, testClock,
-				new StatTracker("UserServiceAuditor", "", log, 20));
+		stats = new StatTracker("UserServiceAuditor", "", log, 20);
+		auditor = new JdbcUserServiceAuditor(dataSource, datumCountMap, testClock, stats);
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
 	}
 
-	private void stopAuditingAndWaitForFlush() throws InterruptedException {
-		auditor.disableWriting();
-		Thread.sleep(FLUSH_DELAY * 2);
+	/**
+	 * Wait for the writer to start its first flush, so it writes the counts
+	 * added before it started.
+	 */
+	private void awaitFirstFlush() throws InterruptedException {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+			Thread.sleep(10);
+		}
 	}
 
 	@Test
@@ -107,7 +116,8 @@ public class JdbcUserServiceAuditorTests {
 		auditor.auditUserService(TEST_USER_ID, TEST_SERVICE_ID, count);
 
 		auditor.enableWriting();
-		stopAuditingAndWaitForFlush();
+		awaitFirstFlush();
+		auditor.serviceDidShutdown();
 
 		// THEN
 		then(jdbcStatement).should().setObject(1, TEST_USER_ID);

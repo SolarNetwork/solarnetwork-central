@@ -397,6 +397,7 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+    shutdown-max-wait: "10s"
   oauth:
     client:
       registration-cache:

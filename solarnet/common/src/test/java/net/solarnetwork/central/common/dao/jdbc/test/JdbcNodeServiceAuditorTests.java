@@ -32,13 +32,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,6 +56,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
+import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.StatTracker;
 
@@ -85,22 +89,35 @@ public class JdbcNodeServiceAuditorTests {
 
 	private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
 	private Clock testClock;
+	private StatTracker stats;
 	private JdbcNodeServiceAuditor auditor;
 
 	@BeforeEach
 	public void setup() {
 		testClock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
 		datumCountMap = new ConcurrentHashMap<>(8);
-		auditor = new JdbcNodeServiceAuditor(dataSource, datumCountMap, testClock,
-				new StatTracker("NodeServiceAuditor", "", log, 20));
+		stats = new StatTracker("NodeServiceAuditor", "", log, 20);
+		auditor = new JdbcNodeServiceAuditor(dataSource, datumCountMap, testClock, stats);
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
 	}
 
-	private void stopAuditingAndWaitForFlush() throws InterruptedException {
-		auditor.disableWriting();
-		Thread.sleep(FLUSH_DELAY * 2);
+	private void givenWriterConnection() throws SQLException {
+		given(dataSource.getConnection()).willReturn(jdbcConnection);
+		given(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
+				.willReturn(jdbcStatement);
+	}
+
+	/**
+	 * Wait for the writer to start its first flush, so it writes the counts
+	 * added before it started.
+	 */
+	private void awaitFirstFlush() throws InterruptedException {
+		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while ( stats.get(JdbcNodeServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
+			Thread.sleep(10);
+		}
 	}
 
 	@Test
@@ -108,15 +125,14 @@ public class JdbcNodeServiceAuditorTests {
 		// GIVEN
 		final int count = 123;
 
-		given(dataSource.getConnection()).willReturn(jdbcConnection);
-		given(jdbcConnection.prepareCall(JdbcNodeServiceAuditor.DEFAULT_NODE_SERVICE_INCREMENT_SQL))
-				.willReturn(jdbcStatement);
+		givenWriterConnection();
 
 		// WHEN
 		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, count);
 
 		auditor.enableWriting();
-		stopAuditingAndWaitForFlush();
+		awaitFirstFlush();
+		auditor.serviceDidShutdown();
 
 		// THEN
 		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
@@ -203,6 +219,185 @@ public class JdbcNodeServiceAuditorTests {
 		and.then(datumCountMap)
 			.as("Counters removed once flushed")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_writesCountsAddedAfterLastFlush() throws Exception {
+		// GIVEN
+		final int count = 123;
+
+		givenWriterConnection();
+
+		// a long delay, so the writer is waiting for its next flush when the count is added
+		auditor.setFlushDelay(TimeUnit.MINUTES.toMillis(1));
+
+		auditor.serviceDidStartup();
+		awaitFirstFlush();
+
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, count);
+
+		final long start = System.nanoTime();
+		auditor.serviceDidShutdown();
+		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
+
+		// THEN
+		then(jdbcStatement).should().setObject(1, TEST_NODE_ID);
+		then(jdbcStatement).should().setString(2, TEST_SERVICE_ID);
+		then(jdbcStatement).should().setTimestamp(3, Timestamp.from(testClock.instant()));
+		then(jdbcStatement).should().setInt(4, count);
+		then(jdbcStatement).should().execute();
+
+		// the count is written with the writer's connection, not another one
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(shutdownTime)
+			.as("Shutdown did not wait for the next flush")
+			.isLessThan(Duration.ofSeconds(5))
+			;
+		and.then(auditor.performPingTest().isSuccess())
+			.as("Writer stopped by shutdown")
+			.isFalse()
+			;
+		and.then(datumCountMap)
+			.as("Count written at shutdown")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void disableWriting_interruptedDuringUpdateDelay_countNotWrittenAgain() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+
+		final CountDownLatch executed = new CountDownLatch(1);
+		given(jdbcStatement.execute()).willAnswer(_ -> {
+			executed.countDown();
+			return false;
+		});
+
+		// delay long enough that the writer is still sleeping after the update when interrupted
+		auditor.setUpdateDelay(TimeUnit.MINUTES.toMillis(1));
+
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 123);
+
+		auditor.enableWriting();
+		final boolean written = executed.await(5, TimeUnit.SECONDS);
+
+		// interrupt the writer while it sleeps after the update
+		auditor.disableWriting();
+
+		// start another writer, which would write the count again if it had been added back
+		auditor.enableWriting();
+		auditor.disableWriting();
+
+		// THEN
+		then(jdbcStatement).should().execute();
+
+		// @formatter:off
+		and.then(written)
+			.as("Count written")
+			.isTrue()
+			;
+		and.then(datumCountMap)
+			.as("Written count not added back when interrupted")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_writeFails_stopsWriting() throws Exception {
+		// GIVEN
+		givenWriterConnection();
+		given(jdbcStatement.execute()).willThrow(new SQLException("Connection reset", "08006"));
+
+		// a long delay, so the counts are left for the writer to write at shutdown
+		auditor.setFlushDelay(TimeUnit.MINUTES.toMillis(1));
+
+		auditor.serviceDidStartup();
+		awaitFirstFlush();
+
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 123);
+		auditor.auditNodeService(TEST_NODE_ID - 1, TEST_SERVICE_ID, 321);
+		auditor.serviceDidShutdown();
+
+		// THEN
+		// no more writes are tried after the first fails, and no other connection is used
+		then(jdbcStatement).should().execute();
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Counts not written once writing failed")
+			.hasSize(2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_noConnection_countsNotWritten() throws Exception {
+		// GIVEN
+		final CountDownLatch connecting = new CountDownLatch(1);
+		given(dataSource.getConnection()).willAnswer(_ -> {
+			connecting.countDown();
+			throw new SQLException("Connection refused", "08001");
+		});
+
+		// a long delay, so the writer is waiting to connect again at shutdown
+		auditor.setConnectionRecoveryDelay(TimeUnit.MINUTES.toMillis(1));
+
+		auditor.serviceDidStartup();
+		final boolean attempted = connecting.await(5, TimeUnit.SECONDS);
+
+		// WHEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 123);
+
+		final long start = System.nanoTime();
+		auditor.serviceDidShutdown();
+		final Duration shutdownTime = Duration.ofNanos(System.nanoTime() - start);
+
+		// THEN
+		// no other connection is tried at shutdown
+		then(dataSource).should().getConnection();
+
+		// @formatter:off
+		and.then(attempted)
+			.as("Writer tried to connect")
+			.isTrue()
+			;
+		and.then(shutdownTime)
+			.as("Shutdown did not wait to connect again")
+			.isLessThan(Duration.ofSeconds(5))
+			;
+		and.then(datumCountMap)
+			.as("Count not written without a connection")
+			.hasSize(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void serviceDidShutdown_noWriter_countsNotWritten() throws Exception {
+		// GIVEN
+		auditor.auditNodeService(TEST_NODE_ID, TEST_SERVICE_ID, 123);
+
+		// WHEN
+		auditor.serviceDidShutdown();
+
+		// THEN
+		then(dataSource).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Count not written without a writer")
+			.hasSize(1)
 			;
 		// @formatter:on
 	}

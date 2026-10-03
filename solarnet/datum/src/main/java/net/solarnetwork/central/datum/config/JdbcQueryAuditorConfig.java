@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.config;
 
+import java.time.Duration;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,7 +36,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
  * Query auditor configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("query-auditor")
@@ -50,6 +51,7 @@ public class JdbcQueryAuditorConfig {
 		private long flushDelay = 10000;
 		private long connectionRecoveryDelay = 15000;
 		private int statLogUpdateCount = 1000;
+		private Duration shutdownMaxWait = Duration.ofSeconds(10);
 
 		public long getUpdateDelay() {
 			return updateDelay;
@@ -83,6 +85,14 @@ public class JdbcQueryAuditorConfig {
 			this.statLogUpdateCount = statLogUpdateCount;
 		}
 
+		public Duration getShutdownMaxWait() {
+			return shutdownMaxWait;
+		}
+
+		public void setShutdownMaxWait(Duration shutdownMaxWait) {
+			this.shutdownMaxWait = shutdownMaxWait;
+		}
+
 	}
 
 	@Autowired
@@ -109,6 +119,7 @@ public class JdbcQueryAuditorConfig {
 		auditor.setUpdateDelay(settings.updateDelay);
 		auditor.setFlushDelay(settings.flushDelay);
 		auditor.setConnectionRecoveryDelay(settings.connectionRecoveryDelay);
+		auditor.setShutdownMaxWait(settings.shutdownMaxWait);
 		auditor.setStatLogUpdateCount(settings.statLogUpdateCount);
 		return auditor;
 	}

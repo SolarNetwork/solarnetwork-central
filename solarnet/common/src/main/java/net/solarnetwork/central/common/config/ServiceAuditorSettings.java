@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.config;
 
+import java.time.Duration;
+
 /**
  * Settings for service auditors.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ServiceAuditorSettings {
 
@@ -34,6 +36,7 @@ public class ServiceAuditorSettings {
 	private long flushDelay = 10000;
 	private long connectionRecoveryDelay = 15000;
 	private int statLogUpdateCount = 1000;
+	private Duration shutdownMaxWait = Duration.ofSeconds(10);
 
 	/**
 	 * Constructor.
@@ -116,6 +119,29 @@ public class ServiceAuditorSettings {
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
 		this.statLogUpdateCount = statLogUpdateCount;
+	}
+
+	/**
+	 * Get the maximum time to wait for the writer to write any remaining counts
+	 * and stop at shutdown.
+	 *
+	 * @return the maximum wait
+	 * @since 1.1
+	 */
+	public Duration getShutdownMaxWait() {
+		return shutdownMaxWait;
+	}
+
+	/**
+	 * Set the maximum time to wait for the writer to write any remaining counts
+	 * and stop at shutdown.
+	 *
+	 * @param shutdownMaxWait
+	 *        the maximum wait to set
+	 * @since 1.1
+	 */
+	public void setShutdownMaxWait(Duration shutdownMaxWait) {
+		this.shutdownMaxWait = shutdownMaxWait;
 	}
 
 }

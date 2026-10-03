@@ -39,8 +39,9 @@ import net.solarnetwork.util.StatTracker;
  * <p>
  * This service coalesces updates per node/service/hour in memory and flushes
  * these to the database via a single "writer" thread after a small delay. This
- * design is meant to support better throughput of audit updates, but has the
- * potential to drop some count values if the service is restarted.
+ * design is meant to support better throughput of audit updates. Counts not
+ * yet written are written when the service shuts down, but can be lost if the
+ * service stops without shutting down or the database is unavailable.
  * </p>
  * 
  * @author matt

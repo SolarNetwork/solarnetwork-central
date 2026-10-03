@@ -216,6 +216,7 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+    shutdown-max-wait: "10s"
   oauth:
     client:
       registration-cache:
@@ -383,6 +384,7 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 50000
+    shutdown-max-wait: "10s"
   versioned-messages-cache:
       ttl: 600
   web.rate-limit:
