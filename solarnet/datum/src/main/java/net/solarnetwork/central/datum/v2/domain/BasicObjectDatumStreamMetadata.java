@@ -199,7 +199,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(kind);
+		result = prime * result + Objects.hashCode(kind);
 		return result;
 	}
 

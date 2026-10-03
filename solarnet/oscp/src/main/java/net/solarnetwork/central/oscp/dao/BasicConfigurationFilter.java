@@ -23,7 +23,6 @@
 package net.solarnetwork.central.oscp.dao;
 
 import java.util.Arrays;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.IdentifierCriteria;
@@ -114,8 +113,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(lockResults);
-		result = prime * result + Objects.hash(skipLockedResults);
+		result = prime * result + Boolean.hashCode(lockResults);
+		result = prime * result + Boolean.hashCode(skipLockedResults);
 		result = prime * result + Arrays.hashCode(configurationIds);
 		result = prime * result + Arrays.hashCode(groupIds);
 		result = prime * result + Arrays.hashCode(providerIds);

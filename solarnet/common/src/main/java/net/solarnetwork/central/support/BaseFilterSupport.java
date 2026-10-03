@@ -94,7 +94,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 		int result = 1;
 		result = prime * result + Arrays.hashCode(tags);
 		result = prime * result + Arrays.hashCode(userIds);
-		result = prime * result + Objects.hash(metadataFilter);
+		result = prime * result + Objects.hashCode(metadataFilter);
 		return result;
 	}
 

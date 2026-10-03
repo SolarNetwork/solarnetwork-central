@@ -121,7 +121,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + Objects.hash(format);
+			result = prime * result + Objects.hashCode(format);
 			result = prime * result + Arrays.deepHashCode(params);
 			return result;
 		}

@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicUserAuthTokenFilter.java - 2/04/2025 9:02:30 am
- * 
+ *
  * Copyright 2025 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of {@link UserAuthTokenFilter}.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -50,7 +50,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -61,7 +61,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 	/**
 	 * Create a new filter instance for just the first identifier in a given
 	 * filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter ({@code null} allowed)
 	 * @return the new filter instance, never {@code null}
@@ -105,7 +105,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(identifiers);
 		result = prime * result + Arrays.hashCode(tokenTypes);
-		result = prime * result + Objects.hash(active);
+		result = prime * result + Objects.hashCode(active);
 		return result;
 	}
 
@@ -163,7 +163,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Set the active criteria.
-	 * 
+	 *
 	 * @param active
 	 *        the criteria value to set
 	 */
@@ -178,7 +178,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Set the identifier criteria.
-	 * 
+	 *
 	 * @param identifiers
 	 *        the identifiers to set
 	 */
@@ -188,7 +188,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Set a single identifier criteria.
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -203,7 +203,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Set the token type criteria.
-	 * 
+	 *
 	 * @param types
 	 *        the criteria to set
 	 */
@@ -213,7 +213,7 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 
 	/**
 	 * Set a single token type criteria.
-	 * 
+	 *
 	 * @param type
 	 *        the type to set
 	 */

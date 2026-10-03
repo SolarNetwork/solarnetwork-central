@@ -71,7 +71,7 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(created);
+		result = prime * result + Objects.hashCode(created);
 		return result;
 	}
 

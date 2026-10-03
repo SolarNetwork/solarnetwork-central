@@ -91,7 +91,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(type);
+		result = prime * result + Objects.hashCode(type);
 		return result;
 	}
 

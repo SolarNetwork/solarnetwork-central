@@ -173,7 +173,7 @@ public final class AuditDatumRecordCounts implements Unique<ObjectRecordId>, Clo
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hashCode(id);
 	}
 
 	@Override

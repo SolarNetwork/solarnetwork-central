@@ -117,7 +117,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(streamId);
+		return Objects.hashCode(streamId);
 	}
 
 	/**
