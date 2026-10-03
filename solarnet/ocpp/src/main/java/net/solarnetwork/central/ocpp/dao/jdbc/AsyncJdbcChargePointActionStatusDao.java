@@ -32,6 +32,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
@@ -48,8 +50,15 @@ import net.solarnetwork.util.StatTracker;
 /**
  * Asynchronous JDBC {@link ChargePointActionStatusUpdateDao} implementation.
  *
+ * <p>
+ * A single writing thread writes updates as soon as it can. Only the latest
+ * update of a charge point action needs to be written, so an update replaces
+ * any update of the same action not written yet. Actions are written in the
+ * order they were first updated.
+ * </p>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncJdbcChargePointActionStatusDao
 		implements ChargePointActionStatusUpdateDao, ServiceLifecycleObserver, PingTest {
@@ -73,6 +82,7 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	private final DataSource dataSource;
 	private final BlockingQueue<ChargePointActionStatusUpdate> statuses;
+	private final ConcurrentMap<ChargePointActionStatusUpdate, ChargePointActionStatusUpdate> latestStatuses;
 	private final StatTracker stats;
 
 	private @Nullable WriterThread writerThread;
@@ -102,7 +112,8 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param statuses
-	 *        the map to use for tracking status updates
+	 *        the queue of charge point actions waiting to be written, in the
+	 *        order they were first updated
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@code null}
 	 */
@@ -118,7 +129,8 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param statuses
-	 *        the map to use for tracking status updates
+	 *        the queue of charge point actions waiting to be written, in the
+	 *        order they were first updated
 	 * @param stats
 	 *        the statistics counter
 	 * @throws IllegalArgumentException
@@ -130,6 +142,7 @@ public class AsyncJdbcChargePointActionStatusDao
 		super();
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.statuses = requireNonNullArgument(statuses, "statuses");
+		this.latestStatuses = new ConcurrentHashMap<>();
 		this.stats = requireNonNullArgument(stats, "stats");
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
@@ -151,11 +164,20 @@ public class AsyncJdbcChargePointActionStatusDao
 	@Override
 	public void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer evseId,
 			Integer connectorId, String action, String messageId, Instant date) {
-		ChargePointActionStatusUpdate upd = new ChargePointActionStatusUpdate(userId,
+		// an update is its own key, as its equality ignores the message ID and date
+		final ChargePointActionStatusUpdate upd = new ChargePointActionStatusUpdate(userId,
 				chargePointIdentifier, evseId, connectorId, action, messageId, date);
-		if ( statuses.offer(upd) ) {
-			stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsAdded);
+		// queue the action only if it has no update waiting, so it is queued at most once; the
+		// writer removes the update when it takes the action from the queue, so an update added
+		// after that queues the action again
+		if ( latestStatuses.put(upd, upd) != null ) {
+			stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsReplaced);
+		} else if ( !statuses.offer(upd) ) {
+			// the queue is full, so drop the update, letting a later one queue the action again
+			latestStatuses.remove(upd);
+			return;
 		}
+		stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsAdded);
 	}
 
 	private class WriterThread extends Thread {
@@ -243,8 +265,12 @@ public class AsyncJdbcChargePointActionStatusDao
 
 		private void flushUpdates(PreparedStatement stmt) throws SQLException, InterruptedException {
 			while ( keepGoingWithConnection.get() ) {
-				var upd = statuses.take();
+				final var key = statuses.take();
 				stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
+				final var upd = latestStatuses.remove(key);
+				if ( upd == null ) {
+					continue;
+				}
 				try {
 					UpsertChargePointIdentifierActionTimestamp.prepareStatement(stmt, upd.getUserId(),
 							upd.getChargePointIdentifier(), upd.getEvseId(), upd.getConnectorId(),
@@ -335,10 +361,12 @@ public class AsyncJdbcChargePointActionStatusDao
 	@Override
 	public Result performPingTest() throws Exception {
 		final Map<String, Long> statMap = stats.allCounts();
-		// verify buffer removals does not lag additions
+		// verify buffer removals does not lag additions; replaced updates are never removed
 		final long addCount = statMap
 				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
 		final long removeLag = addCount
+				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsReplaced.name(),
+						0L)
 				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
@@ -414,12 +442,13 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Set the datum cache removal alert threshold.
 	 *
 	 * <p>
-	 * This threshold represents the <i>difference</i> between the
-	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsAdded} and
-	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved} statistics.
-	 * If the {@code ResultsRemoved} count lags behind {@code ResultsAdded} it
-	 * means updates are not getting persisted fast enough. Passing this
-	 * threshold will trigger a failure {@link PingTest} result in
+	 * This threshold represents the number of updates waiting to be written:
+	 * the {@link AsyncJdbcChargePointActionStatusCount#ResultsAdded} statistic
+	 * less the {@link AsyncJdbcChargePointActionStatusCount#ResultsReplaced}
+	 * and {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved}
+	 * statistics. If the {@code ResultsRemoved} count lags behind it means
+	 * updates are not getting persisted fast enough. Passing this threshold
+	 * will trigger a failure {@link PingTest} result in
 	 * {@link #performPingTest()}.
 	 * </p>
 	 *

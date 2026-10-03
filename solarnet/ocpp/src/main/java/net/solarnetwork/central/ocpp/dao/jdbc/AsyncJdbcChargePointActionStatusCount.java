@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.dao.jdbc;
  * Statistics for asynchronous JDBC charge point action status processing.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public enum AsyncJdbcChargePointActionStatusCount {
 
@@ -50,6 +50,14 @@ public enum AsyncJdbcChargePointActionStatusCount {
 
 	/** SQL updates failed. */
 	UpdatesFailed,
+
+	/**
+	 * Results replaced by a later result for the same charge point action,
+	 * before being written.
+	 *
+	 * @since 1.2
+	 */
+	ResultsReplaced,
 
 	;
 

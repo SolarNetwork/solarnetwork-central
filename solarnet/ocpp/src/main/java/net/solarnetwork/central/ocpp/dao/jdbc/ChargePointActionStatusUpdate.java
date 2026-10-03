@@ -26,7 +26,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
@@ -39,7 +38,7 @@ import net.solarnetwork.central.domain.BasePK;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointActionStatusUpdate extends BasePK implements Serializable, Cloneable {
 
@@ -125,7 +124,14 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, chargePointIdentifier, evseId, connectorId, action);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Long.hashCode(userId);
+		result = prime * result + chargePointIdentifier.hashCode();
+		result = prime * result + Integer.hashCode(evseId);
+		result = prime * result + Integer.hashCode(connectorId);
+		result = prime * result + action.hashCode();
+		return result;
 	}
 
 	@Override

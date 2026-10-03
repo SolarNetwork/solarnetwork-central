@@ -63,7 +63,7 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link AsyncJdbcChargePointActionStatusDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -147,25 +147,25 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 	}
 
 	/**
-	 * Wait for the writer thread to process the given number of updates.
+	 * Wait for the writer thread to process every update added that was not
+	 * replaced by a later one.
 	 *
 	 * <p>
 	 * The writer thread is interrupted when the DAO shuts down, discarding
 	 * anything still queued, so the updates must be processed before then.
 	 * </p>
 	 *
-	 * @param count
-	 *        the number of updates to wait for
 	 * @throws InterruptedException
 	 *         if interrupted
 	 */
-	private void awaitProcessed(long count) throws InterruptedException {
+	private void awaitProcessed() throws InterruptedException {
 		final long expiry = System.currentTimeMillis() + PROCESS_TIMEOUT.toMillis();
 		while ( System.currentTimeMillis() < expiry ) {
-			final long processed = statCounter
-					.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
-					+ statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-			if ( processed >= count ) {
+			final long waiting = statCounter.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded)
+					- statCounter.get(AsyncJdbcChargePointActionStatusCount.ResultsReplaced)
+					- statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
+					- statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
+			if ( waiting < 1 ) {
 				return;
 			}
 			Thread.sleep(20L);
@@ -173,17 +173,22 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		// leave any shortfall to the assertions, which report what is missing
 	}
 
-	private void thenAssertAllProcessed(long added, long updated, long failed) {
+	private void thenAssertAllProcessed(long added, long failed) {
+		final long processed = statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
+				+ statCounter.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
 		then(queue).as("Queue emptied").isEmpty();
 		then(statCounter).as("ResultsAdded stat tracked")
 				.returns(added, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded))
-				.as("ResultsRemoved stat tracked")
-				.returns(updated + failed,
-						(s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved))
-				.as("UpdatesExecuted stat tracked")
-				.returns(updated, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted))
 				.as("UpdatesFailed stat tracked")
-				.returns(failed, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed));
+				.returns(failed, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed))
+				.as("Every update written, failed, or replaced by a later one")
+				.returns(added,
+						(s) -> s.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted)
+								+ s.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed)
+								+ s.get(AsyncJdbcChargePointActionStatusCount.ResultsReplaced))
+				.as("ResultsRemoved stat tracked")
+				.returns(processed,
+						(s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved));
 	}
 
 	@Test
@@ -200,7 +205,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -214,7 +219,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -236,7 +241,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -251,7 +256,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -271,7 +276,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, connId, action, messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -286,7 +291,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -308,7 +313,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action,
 					messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -323,7 +328,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -346,7 +351,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, connId, action, messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -361,7 +366,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -386,7 +391,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action,
 					messageId, ts);
-			awaitProcessed(1L);
+			awaitProcessed();
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
@@ -401,7 +406,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 			assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 			assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
 
-			thenAssertAllProcessed(1L, 1L, 0L);
+			thenAssertAllProcessed(1L, 0L);
 		});
 	}
 
@@ -456,7 +461,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 				// WHEN
 				then(threadPool.awaitTermination(PROCESS_TIMEOUT.toSeconds(), TimeUnit.SECONDS))
 						.as("Every update submitted before the queue is examined").isTrue();
-				awaitProcessed(taskCount);
+				awaitProcessed();
 				dao.shutdownAndWait(Duration.ofSeconds(2));
 
 				// THEN
@@ -473,7 +478,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 									chargerToActionToMessageIdMap.get(rowChargerIdent).get(rowAction));
 				}
 
-				thenAssertAllProcessed(taskCount, taskCount, 0L);
+				thenAssertAllProcessed(taskCount, 0L);
 			});
 		} finally {
 			threadPool.shutdownNow();
