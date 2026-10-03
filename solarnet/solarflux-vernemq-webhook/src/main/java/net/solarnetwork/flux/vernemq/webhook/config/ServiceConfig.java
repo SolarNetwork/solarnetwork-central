@@ -41,7 +41,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuthService;
  * Service configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class ServiceConfig {
@@ -104,15 +104,17 @@ public class ServiceConfig {
 	/**
 	 * The audit service.
 	 * 
+	 * <p>
+	 * Writing starts once the configuration properties are applied, and any
+	 * counts not yet written are written at shutdown.
+	 * </p>
+	 * 
 	 * @return the service
 	 */
 	@ConfigurationProperties(prefix = "app.audit.jdbc")
-	@Bean(destroyMethod = "disableWriting")
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public JdbcAuditService auditService() {
-		JdbcAuditService service = new JdbcAuditService(
-				auditDataSource != null ? auditDataSource : dataSource);
-		service.enableWriting();
-		return service;
+		return new JdbcAuditService(auditDataSource != null ? auditDataSource : dataSource);
 	}
 
 }

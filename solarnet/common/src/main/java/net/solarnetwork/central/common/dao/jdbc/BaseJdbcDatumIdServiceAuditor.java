@@ -330,10 +330,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 					log.trace("Incrementing node {} service {} @ {} count by {}", key.getObjectId(),
 							key.getSourceId(), key.getTimestamp(), count);
 				}
-				stmt.setObject(1, key.getObjectId());
-				stmt.setString(2, key.getSourceId());
-				stmt.setTimestamp(3, Timestamp.from(key.getTimestamp()));
-				stmt.setInt(4, count);
+				setServiceIncrementParameters(stmt, key, count);
 				stmt.execute();
 			} catch ( SQLException | RuntimeException e ) {
 				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesFailed);
@@ -357,6 +354,34 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 				Thread.sleep(updateDelay);
 			}
 		}
+	}
+
+	/**
+	 * Set the parameters of the {@code serviceIncrementSql} statement, to
+	 * write a count.
+	 *
+	 * <p>
+	 * This implementation sets the parameters described in
+	 * {@link #setServiceIncrementSql(String)}. Extending classes can override
+	 * this to support a statement with different parameters.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        the statement
+	 * @param key
+	 *        the key of the count
+	 * @param count
+	 *        the count to add
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 1.1
+	 */
+	protected void setServiceIncrementParameters(PreparedStatement stmt, DatumId key, int count)
+			throws SQLException {
+		stmt.setObject(1, key.getObjectId());
+		stmt.setString(2, key.getSourceId());
+		stmt.setTimestamp(3, Timestamp.from(key.getTimestamp()));
+		stmt.setInt(4, count);
 	}
 
 	private static boolean isConnectionUsable(PreparedStatement stmt) {
@@ -584,7 +609,9 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * {@code DatumId} key.
 	 *
 	 * <p>
-	 * The statement must accept the following parameters:
+	 * The statement must accept the following parameters, unless an extending
+	 * class overrides
+	 * {@link #setServiceIncrementParameters(PreparedStatement, DatumId, int)}:
 	 * </p>
 	 *
 	 * <ol>
