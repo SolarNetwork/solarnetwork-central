@@ -28,10 +28,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Account balance entity.
@@ -41,10 +40,10 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public class AccountBalance extends BasicEntity<UserLongPK>
-		implements UserRelatedEntity<UserLongPK>, Differentiable<AccountBalance> {
+public class AccountBalance extends BasicEntity<UserLongCompositePK>
+		implements UserRelatedEntity<UserLongCompositePK>, Differentiable<AccountBalance> {
 
 	@Serial
 	private static final long serialVersionUID = -7116991858593931605L;
@@ -70,7 +69,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param availableCredit
 	 *        the available credit; {@code null} will be stored as {@literal 0}
 	 */
-	public AccountBalance(@Nullable UserLongPK id, @Nullable Instant created,
+	public AccountBalance(UserLongCompositePK id, @Nullable Instant created,
 			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,
 			@Nullable BigDecimal availableCredit) {
 		super(id, created);
@@ -98,18 +97,32 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	public AccountBalance(Long accountId, Long userId, @Nullable Instant created,
 			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,
 			@Nullable BigDecimal availableCredit) {
-		this(new UserLongPK(userId, accountId), created, chargeTotal, paymentTotal, availableCredit);
+		this(new UserLongCompositePK(userId, accountId), created, chargeTotal, paymentTotal,
+				availableCredit);
 	}
 
 	@Override
 	public boolean hasId() {
-		UserLongPK id = getId();
-		return (id != null && id.getId() != null && id.userIdIsAssigned());
+		return id().entityIdIsAssigned();
+	}
+
+	/**
+	 * Get the account ID.
+	 *
+	 * @return the account ID
+	 */
+	public Long getAccountId() {
+		return id().getEntityId();
 	}
 
 	@Override
 	public Long getUserId() {
-		return ObjectUtils.nonnull(getId(), "id").getUserId();
+		return id().getUserId();
+	}
+
+	@Override
+	public AccountBalance clone() {
+		return (AccountBalance) super.clone();
 	}
 
 	/**
