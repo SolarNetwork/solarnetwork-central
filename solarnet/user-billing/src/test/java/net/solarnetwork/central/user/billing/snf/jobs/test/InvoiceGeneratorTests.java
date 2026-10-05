@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
@@ -43,7 +42,6 @@ import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
@@ -58,7 +56,7 @@ import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator;
  * Test cases for the {@link InvoiceGenerator} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoiceGeneratorTests {
 
@@ -106,8 +104,7 @@ public class InvoiceGeneratorTests {
 		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
-		expect(accountDao.get(new UserLongCompositePK(UNASSIGNED_LONG_ID, account.getAccountId())))
-				.andReturn(account);
+		expect(accountDao.getForAccountId(account.getAccountId())).andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
@@ -148,8 +145,7 @@ public class InvoiceGeneratorTests {
 		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_US",
 				createAddress("US", "America/Los_Angeles"));
-		expect(accountDao.get(new UserLongCompositePK(UNASSIGNED_LONG_ID, account.getAccountId())))
-				.andReturn(account);
+		expect(accountDao.getForAccountId(account.getAccountId())).andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),

@@ -34,9 +34,26 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link Account} entities.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
+
+	/**
+	 * Get an account for a given account ID.
+	 *
+	 * <p>
+	 * Unlike {@link #get(Comparable)} this method does not restrict the
+	 * account to a specific user, and is meant for internal tasks that only
+	 * know the account ID.
+	 * </p>
+	 *
+	 * @param accountId
+	 *        the ID of the account to get
+	 * @return the account, or {@code null} if not available
+	 * @since 2.1
+	 */
+	@Nullable
+	Account getForAccountId(Long accountId);
 
 	/**
 	 * Get an account for a given user ID.

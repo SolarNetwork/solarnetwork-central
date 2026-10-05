@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
  * Test cases for the {@link MyBatisAccountDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -100,6 +101,48 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Account", entity.isSameAs(last), equalTo(true));
+	}
+
+	@Test
+	public void getByAccountId() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		Account entity = dao.getForAccountId(last.getAccountId());
+
+		// THEN
+		// @formatter:off
+		then(entity)
+			.as("Account found")
+			.isNotNull()
+			.as("ID")
+			.returns(last.getId(), from(Account::getId))
+			.as("Created")
+			.returns(last.getCreated(), from(Account::getCreated))
+			.as("Account details")
+			.returns(true, from(e -> e.isSameAs(last)))
+			.as("Address")
+			.returns(last.getAddress(), from(Account::getAddress))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getByAccountId_noMatch() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		Account entity = dao.getForAccountId(randomLong());
+
+		// THEN
+		// @formatter:off
+		then(entity)
+			.as("No account found for unknown account ID")
+			.isNull()
+			;
+		// @formatter:on
 	}
 
 	@Test

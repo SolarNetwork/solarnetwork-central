@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
  * MyBatis implementation of {@link AccountDao}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongCompositePK>
 		implements AccountDao {
@@ -51,6 +51,13 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 
 		/** Get account balance for a user. */
 		GetAccountBalanceForUser("get-AccountBalance-for-user"),
+
+		/**
+		 * Get an account for an account ID.
+		 *
+		 * @since 2.1
+		 */
+		GetForAccountId("get-Account-for-account-id"),
 
 		/** Get an account for a user. */
 		GetForUser("get-Account-for-user"),
@@ -94,6 +101,11 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 			id = new UserLongCompositePK(id.getUserId(), entity.getConfigId());
 		}
 		return id;
+	}
+
+	@Override
+	public @Nullable Account getForAccountId(Long accountId) {
+		return selectFirst(QueryName.GetForAccountId.getQueryName(), accountId);
 	}
 
 	@Override

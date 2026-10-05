@@ -55,6 +55,18 @@
 			AND acct.id = #{entityId}
 	</select>
 	
+	<select id="get-Account-for-account-id" parameterType="long" resultMap="Account-FullResult">
+		SELECT
+			<include refid="fragment-Account-full-result"/>,
+			<include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_account acct
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = acct.addr_id
+		WHERE
+			acct.id = #{id}
+	</select>
+	
 	<select id="get-Account-for-user" parameterType="long" resultMap="Account-FullResult">
 		SELECT
 			<include refid="fragment-Account-full-result"/>,
