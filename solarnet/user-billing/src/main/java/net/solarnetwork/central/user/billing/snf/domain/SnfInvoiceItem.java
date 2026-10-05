@@ -43,7 +43,7 @@ import net.solarnetwork.util.ObjectUtils;
  * SNF invoice item entity.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
 
@@ -103,10 +103,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 */
 	public static SnfInvoiceItem newItem(SnfInvoice invoice, InvoiceItemType type, String key,
 			BigDecimal quantity, BigDecimal amount) {
-		return newItem(requireNonNullArgument(
-				requireNonNullArgument(requireNonNullArgument(invoice, "invoice").getId(), "invoice.id")
-						.getId(),
-				"invoice.id.id"), type, key, quantity, amount);
+		return newItem(requireNonNullArgument(requireNonNullArgument(invoice, "invoice").getInvoiceId(),
+				"invoice.invoiceId"), type, key, quantity, amount);
 	}
 
 	/**

@@ -46,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -107,8 +107,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public String getInvoiceNumber() {
-		return nonnull(SnfBillingUtils.invoiceNumForId(nonnull(invoice.getId(), "invoice.id").getId()),
-				"invoice.id.id");
+		return nonnull(SnfBillingUtils.invoiceNumForId(invoice.getInvoiceId()), "invoice.invoiceId");
 	}
 
 	@Override

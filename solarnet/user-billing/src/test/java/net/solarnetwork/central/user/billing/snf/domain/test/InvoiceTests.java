@@ -53,7 +53,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * Test cases for the {@link InvoiceImpl} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class InvoiceTests {
 
@@ -95,7 +95,7 @@ public class InvoiceTests {
 		assertThat("Balance same as total amount", invoice.getBalance(), equalTo(inv.getTotalAmount()));
 		assertThat("Currency same", invoice.getCurrencyCode(), equalTo(inv.getCurrencyCode()));
 		assertThat("InvoiceImpl number is upper-case base-36 string of ID", invoice.getInvoiceNumber(),
-				equalTo(SnfBillingUtils.invoiceNumForId(inv.getId().getId())));
+				equalTo(SnfBillingUtils.invoiceNumForId(inv.getInvoiceId())));
 		assertThat("Tax is added up", invoice.getTaxAmount(),
 				equalTo(tax1.getAmount().add(tax2.getAmount())));
 		assertThat("Time zone same as invoice address", invoice.getTimeZoneId(),
@@ -121,7 +121,7 @@ public class InvoiceTests {
 		// create set with reverse node ID order, to test sort output
 		Set<SnfInvoiceNodeUsage> nodeUsages = new LinkedHashSet<>(4);
 		for ( int i = 5; i > 0; i-- ) {
-			SnfInvoiceNodeUsage usage = new SnfInvoiceNodeUsage(inv.getId().getId(), (long) i,
+			SnfInvoiceNodeUsage usage = new SnfInvoiceNodeUsage(inv.getInvoiceId(), (long) i,
 					inv.getCreated(), BigInteger.valueOf(1L), BigInteger.valueOf(2L),
 					BigInteger.valueOf(3L));
 			nodeUsages.add(usage);

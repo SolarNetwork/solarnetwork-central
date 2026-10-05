@@ -59,7 +59,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
  * Test cases for invoice payment DB procedures.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 
@@ -140,7 +140,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getInvoiceId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -148,7 +148,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		thenExceptionOfType(DataIntegrityViolationException.class)
 				.as("Should throw DataIntegrigtyViolationException from lack of funds in payment.")
 				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(),
-						invoice.getId().getId(), new BigDecimal("0.01")));
+						invoice.getInvoiceId(), new BigDecimal("0.01")));
 	}
 
 	@Test
@@ -169,7 +169,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, $1 short amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getInvoiceId(),
 				dollarShortAmount);
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -182,7 +182,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		paymentDao.save(payment2);
 		getSqlSessionTemplate().flushStatements();
 
-		addInvoicePayment(invoice.getAccountId(), payment2.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment2.getId().getUuid(), invoice.getInvoiceId(),
 				payment2.getAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), invoice.getTotalAmount());
 	}
@@ -203,7 +203,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getInvoiceId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -231,7 +231,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getInvoiceId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -259,7 +259,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		getSqlSessionTemplate().flushStatements();
 
 		// add one payment, full amount
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getId().getId(),
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(), invoice.getInvoiceId(),
 				invoice.getTotalAmount());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
@@ -267,7 +267,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		thenExceptionOfType(DataIntegrityViolationException.class).as(
 				"Should throw DataIntegrigtyViolationException from paying more than invoice amount.")
 				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getUuid(),
-						invoice.getId().getId(), BigDecimal.ONE));
+						invoice.getInvoiceId(), BigDecimal.ONE));
 	}
 
 	private List<Map<String, Object>> addPaymentViaProcedure(Long accountId, Long invoiceId,
@@ -284,7 +284,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		List<Map<String, Object>> payRows = addPaymentViaProcedure(invoice.getAccountId(),
-				invoice.getId().getId(), invoice.getTotalAmount(), now());
+				invoice.getInvoiceId(), invoice.getTotalAmount(), now());
 		assertThat("Payment row added", payRows, hasSize(1));
 		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
 		assertThat("Payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
@@ -292,8 +292,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 
 		// now verify invoice payment is present
 		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
-				"select * from solarbill.bill_invoice_payment where inv_id = ?",
-				invoice.getId().getId());
+				"select * from solarbill.bill_invoice_payment where inv_id = ?", invoice.getInvoiceId());
 		assertThat("Invoice payment row added", invPayRows, hasSize(1));
 		val = (BigDecimal) invPayRows.get(0).get("amount");
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
@@ -318,7 +317,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		final BigDecimal totalPayment = invoice1.getTotalAmount().add(invoice2.getTotalAmount());
 
 		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice1.getAccountId(),
-				new Long[] { invoice1.getId().getId(), invoice2.getId().getId() }, totalPayment, now());
+				new Long[] { invoice1.getInvoiceId(), invoice2.getInvoiceId() }, totalPayment, now());
 		assertThat("Payment row added", payRows, hasSize(1));
 		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
 		assertThat("Payment for full payment amount", val.compareTo(totalPayment), equalTo(0));
@@ -330,10 +329,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Invoice payment row added", invPayRows, hasSize(2));
 		Map<Long, Map<String, Object>> invoicePaymentsById = invPayRows.stream()
 				.collect(toMap(e -> (Long) e.get("inv_id"), e -> e));
-		val = (BigDecimal) invoicePaymentsById.get(invoice1.getId().getId()).get("amount");
+		val = (BigDecimal) invoicePaymentsById.get(invoice1.getInvoiceId()).get("amount");
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice1.getTotalAmount()),
 				equalTo(0));
-		val = (BigDecimal) invoicePaymentsById.get(invoice2.getId().getId()).get("amount");
+		val = (BigDecimal) invoicePaymentsById.get(invoice2.getInvoiceId()).get("amount");
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice2.getTotalAmount()),
 				equalTo(0));
 	}
@@ -348,15 +347,14 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		final BigDecimal paymentAmount = invoice.getTotalAmount().subtract(underAmount);
 
 		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
-				new Long[] { invoice.getId().getId() }, paymentAmount, now());
+				new Long[] { invoice.getInvoiceId() }, paymentAmount, now());
 		assertThat("Payment row added", payRows, hasSize(1));
 		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
 		assertThat("Payment for partial payment amount", val.compareTo(paymentAmount), equalTo(0));
 
 		// now verify invoice payment is present
 		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
-				"select * from solarbill.bill_invoice_payment where inv_id = ?",
-				invoice.getId().getId());
+				"select * from solarbill.bill_invoice_payment where inv_id = ?", invoice.getInvoiceId());
 		assertThat("Invoice payment row added", invPayRows, hasSize(1));
 		val = (BigDecimal) invPayRows.get(0).get("amount");
 		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),
@@ -364,15 +362,14 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 
 		// now add another partial payment
 		List<Map<String, Object>> payRows2 = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
-				new Long[] { invoice.getId().getId() }, underAmount, now());
+				new Long[] { invoice.getInvoiceId() }, underAmount, now());
 		assertThat("Payment row added", payRows2, hasSize(1));
 		val = (BigDecimal) payRows2.get(0).get("amount");
 		assertThat("Payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
 
 		// now verify 2 invoice payments are present
 		invPayRows = jdbcTemplate.queryForList(
-				"select * from solarbill.bill_invoice_payment where inv_id = ?",
-				invoice.getId().getId());
+				"select * from solarbill.bill_invoice_payment where inv_id = ?", invoice.getInvoiceId());
 		assertThat("Invoice payment rows added", invPayRows, hasSize(2));
 		val = (BigDecimal) invPayRows.get(0).get("amount");
 		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),

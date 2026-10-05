@@ -23,9 +23,9 @@
 package net.solarnetwork.central.user.billing.snf.dao;
 
 import java.util.List;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SimpleSortDescriptor;
@@ -35,10 +35,10 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link SnfInvoice} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface SnfInvoiceDao extends GenericDao<SnfInvoice, UserLongPK>,
-		FilterableDao<SnfInvoice, UserLongPK, SnfInvoiceFilter> {
+public interface SnfInvoiceDao extends GenericDao<SnfInvoice, UserLongCompositePK>,
+		FilterableDao<SnfInvoice, UserLongCompositePK, SnfInvoiceFilter> {
 
 	/**
 	 * Sort descriptors to sort by date in descending order, followed by ID in

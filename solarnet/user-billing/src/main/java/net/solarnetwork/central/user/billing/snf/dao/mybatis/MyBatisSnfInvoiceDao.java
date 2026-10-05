@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -38,9 +38,9 @@ import net.solarnetwork.domain.SortDescriptor;
  * MyBatis implementation of {@link SnfInvoiceDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoice, UserLongPK>
+public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoice, UserLongCompositePK>
 		implements SnfInvoiceDao {
 
 	/** Query name enumeration. */
@@ -77,11 +77,20 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 	 * Constructor.
 	 */
 	public MyBatisSnfInvoiceDao() {
-		super(SnfInvoice.class, UserLongPK.class);
+		super(SnfInvoice.class, UserLongCompositePK.class);
 	}
 
 	@Override
-	public FilterResults<SnfInvoice, UserLongPK> findFiltered(SnfInvoiceFilter filter,
+	protected UserLongCompositePK handleInsert(SnfInvoice entity) {
+		UserLongCompositePK id = super.handleInsert(entity);
+		if ( !id.entityIdIsAssigned() && entity.getInvoiceId() != null ) {
+			id = new UserLongCompositePK(id.getUserId(), entity.getInvoiceId());
+		}
+		return id;
+	}
+
+	@Override
+	public FilterResults<SnfInvoice, UserLongCompositePK> findFiltered(SnfInvoiceFilter filter,
 			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		if ( offset != null || max != null || sorts != null ) {
 			filter = filter.clone();

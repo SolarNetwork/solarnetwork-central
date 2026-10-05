@@ -3,7 +3,7 @@
 <mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoice">
 
 	<insert id="insert-SnfInvoice" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
-		<selectKey keyProperty="id.id" resultType="long" order="BEFORE"> 
+		<selectKey keyProperty="invoiceId" resultType="long" order="BEFORE"> 
               SELECT nextval('solarbill.bill_inv_seq') AS id 
 		</selectKey>
 		INSERT INTO solarbill.bill_invoice (
@@ -15,7 +15,7 @@
 			, date_end
 			, currency
 		) VALUES (
-			#{id.id}
+			#{invoiceId}
 			<if test="created != null">,#{created}</if>
 			, #{accountId}
 			, #{address.addressId}
@@ -50,7 +50,7 @@
 		<association property="usages" notNullColumn="bill_invoice_node_usage_node_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.SnfInvoiceNodeUsage-FullResult"/>
 	</resultMap>
 	
-	<select id="get-SnfInvoice-for-id" parameterType="net.solarnetwork.central.user.domain.UserLongPK" resultMap="SnfInvoice-FullResult">
+	<select id="get-SnfInvoice-for-id" parameterType="net.solarnetwork.central.domain.UserLongCompositePK" resultMap="SnfInvoice-FullResult">
 		SELECT
 			<include refid="fragment-SnfInvoice-full-result"/>
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
@@ -70,7 +70,7 @@
 		LEFT OUTER JOIN
 			solaruser.user_node un ON un.node_id = invu.node_id AND un.user_id = acct.user_id
 		WHERE
-			inv.id = #{id}
+			inv.id = #{entityId}
 			AND acct.user_id = #{userId}
 	</select>
 	

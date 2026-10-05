@@ -32,7 +32,6 @@ import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * API for generating invoices for the {@link SnfBillingSystem}.
@@ -113,7 +112,7 @@ public interface SnfInvoicingSystem {
 	 *        the ID of the invoice to deliver
 	 * @return {@literal true} if the invoice was delivered successfully
 	 */
-	boolean deliverInvoice(UserLongPK invoiceId);
+	boolean deliverInvoice(UserLongCompositePK invoiceId);
 
 	/**
 	 * Get a {@link MessageSource} appropriate for a given invoice.

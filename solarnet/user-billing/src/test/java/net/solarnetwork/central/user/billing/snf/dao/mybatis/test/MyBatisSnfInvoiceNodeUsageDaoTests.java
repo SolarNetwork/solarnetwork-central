@@ -94,7 +94,7 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 	public void insert() {
 		SnfInvoice invoice = createTestInvoice();
 
-		SnfInvoiceNodeUsage entity = nodeUsage(invoice.getId().getId(), TEST_NODE_ID,
+		SnfInvoiceNodeUsage entity = nodeUsage(invoice.getInvoiceId(), TEST_NODE_ID,
 				invoice.getCreated(), 2L, 3L, 4L, 5L, 6L);
 		SnfInvoiceRelatedPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, is(equalTo(entity.getId())));

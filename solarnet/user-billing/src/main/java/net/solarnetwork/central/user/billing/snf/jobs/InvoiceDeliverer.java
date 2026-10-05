@@ -25,16 +25,16 @@ package net.solarnetwork.central.user.billing.snf.jobs;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Deliver invoices to the account holder.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoiceDeliverer implements AccountTaskHandler {
 
@@ -93,7 +93,7 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 					task, AccountTask.USER_ID_PARAM, userIdVal);
 			return true;
 		}
-		return invoicingSystem.deliverInvoice(new UserLongPK(userId, invoiceId));
+		return invoicingSystem.deliverInvoice(new UserLongCompositePK(userId, invoiceId));
 	}
 
 }

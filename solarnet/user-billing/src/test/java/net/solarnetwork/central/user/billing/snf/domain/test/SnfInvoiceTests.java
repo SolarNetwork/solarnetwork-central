@@ -46,13 +46,12 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
-import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link SnfInvoice} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfInvoiceTests {
 
@@ -169,9 +168,9 @@ public class SnfInvoiceTests {
 				"Pacific/Auckland");
 		inv1.setAddress(addr);
 
-		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+		SnfInvoiceItem item1 = newItem(inv1.getInvoiceId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("1.23"), new BigDecimal("12345"), inv1.getCreated());
-		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+		SnfInvoiceItem item2 = newItem(inv1.getInvoiceId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("2.34"), new BigDecimal("23456"), inv1.getCreated());
 		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
 
@@ -205,9 +204,9 @@ public class SnfInvoiceTests {
 		// GIVEN
 		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
 				LocalDate.now(), LocalDate.now(), "NZD");
-		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+		SnfInvoiceItem item1 = newItem(inv1.getInvoiceId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("12345"), new BigDecimal("1.23"), inv1.getCreated());
-		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+		SnfInvoiceItem item2 = newItem(inv1.getInvoiceId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("23456"), new BigDecimal("2.34"), inv1.getCreated());
 		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
 
@@ -257,7 +256,7 @@ public class SnfInvoiceTests {
 		Collections.sort(invoices, SnfInvoice.SORT_BY_DATE);
 
 		// THEN
-		UserLongPK prev = null;
+		UserLongCompositePK prev = null;
 		for ( SnfInvoice inv : invoices ) {
 			if ( prev != null ) {
 				assertThat("Invoices sorted in asending order by ID for equal dates",

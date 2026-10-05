@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
@@ -41,18 +42,20 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * SNF invoice entity.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public class SnfInvoice extends BasicEntity<UserLongPK>
-		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
+public class SnfInvoice extends BasicEntity<UserLongCompositePK>
+		implements UserRelatedEntity<UserLongCompositePK>,
+		CopyingIdentity<SnfInvoice, UserLongCompositePK>, Differentiable<SnfInvoice> {
 
 	@Serial
 	private static final long serialVersionUID = 4095505242827622567L;
@@ -70,6 +73,9 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	private @Nullable Address address;
 	private @Nullable Set<SnfInvoiceItem> items;
 	private @Nullable Set<SnfInvoiceNodeUsage> usages;
+
+	// used by DAO insert to return assigned key
+	private transient @Nullable Long configId;
 
 	/**
 	 * Compare {@link SnfInvoice} instances by start date in ascending order.
@@ -105,7 +111,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(UserLongPK id, Long accountId, Instant created, LocalDate startDate,
+	public SnfInvoice(UserLongCompositePK id, Long accountId, Instant created, LocalDate startDate,
 			LocalDate endDate, String currencyCode) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 		this.accountId = requireNonNullArgument(accountId, "accountId");
@@ -134,7 +140,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public SnfInvoice(Long accountId, Long userId, Instant created, LocalDate startDate,
 			LocalDate endDate, String currencyCode) {
-		this(new UserLongPK(userId, null), accountId, created, startDate, endDate, currencyCode);
+		this(unassignedEntityIdKey(userId), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	/**
@@ -159,15 +165,17 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public SnfInvoice(Long id, Long userId, Long accountId, Instant created, LocalDate startDate,
 			LocalDate endDate, String currencyCode) {
-		this(new UserLongPK(userId, id), accountId, created, startDate, endDate, currencyCode);
+		this(new UserLongCompositePK(userId, id), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("SnfInvoice{");
-		builder.append("id=");
-		builder.append(getId() != null ? getId().getId() : null);
+		builder.append("invoiceId=");
+		if ( id().entityIdIsAssigned() ) {
+			builder.append(id().getEntityId());
+		}
 		builder.append(", accountId=");
 		builder.append(accountId);
 		builder.append(", startDate=");
@@ -211,26 +219,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	@Override
 	public boolean hasId() {
-		UserLongPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		return id().entityIdIsAssigned() || configId != null;
 	}
 
 	@Override
 	public final Long getUserId() {
-		return nonnull(getId(), "id").getUserId();
-	}
-
-	/**
-	 * Set the user ID.
-	 *
-	 * @param userId
-	 *        the user ID
-	 */
-	public final void setUserId(Long userId) {
-		final UserLongPK id = getId();
-		if ( id != null ) {
-			id.setUserId(userId);
-		}
+		return id().getUserId();
 	}
 
 	/**
@@ -242,7 +236,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	@JsonIgnore
 	public final Long getInvoiceId() {
-		return nonnull(nonnull(getId(), "Invoice PK").getId(), "Invoice ID");
+		final var pk = id();
+		Long invoiceId = (pk.entityIdIsAssigned() ? pk.getEntityId() : configId);
+		if ( invoiceId != null ) {
+			return invoiceId;
+		}
+		throw new IllegalStateException("Invoice ID is not available.");
 	}
 
 	/**
@@ -252,10 +251,49 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the invoice ID to set
 	 * @throws IllegalStateException
 	 *         if the invoice primary key is not available
+	 * @throws IllegalArgumentException
+	 *         if the invoice is already assigned and {@code invoiceId} differs
 	 */
 	@JsonIgnore
 	public final void setInvoiceId(Long invoiceId) {
-		nonnull(getId(), "Invoice PK").setId(invoiceId);
+		final var pk = id();
+		if ( pk.entityIdIsAssigned() ) {
+			if ( !pk.getEntityId().equals(invoiceId) ) {
+				throw new IllegalArgumentException("Cannot change the invoice ID from %d to %d."
+						.formatted(pk.getEntityId(), invoiceId));
+			}
+			return;
+		}
+		this.configId = invoiceId;
+	}
+
+	@Override
+	public SnfInvoice copyWithId(UserLongCompositePK id) {
+		var copy = new SnfInvoice(requireNonNullArgument(id, "id"), accountId, created(), startDate,
+				endDate, currencyCode);
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(SnfInvoice other) {
+		if ( other == null ) {
+			return;
+		}
+		if ( address != null ) {
+			other.address = address.clone();
+		}
+		if ( items != null ) {
+			other.items = new LinkedHashSet<>(items);
+		}
+		if ( usages != null ) {
+			other.usages = new LinkedHashSet<>(usages);
+		}
+	}
+
+	@Override
+	public SnfInvoice clone() {
+		return (SnfInvoice) super.clone();
 	}
 
 	/**

@@ -72,7 +72,6 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 
 /**
@@ -156,7 +155,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 			BigDecimal amount) {
 		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
 		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
-				equalTo(invoice.getId().getId()));
+				equalTo(invoice.getInvoiceId()));
 		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Usage));
 		assertThat(item.getKey() + " Item quantity", item.getQuantity(),
 				equalTo(new BigDecimal(quantity)));
@@ -166,7 +165,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	private static void assertTaxItem(SnfInvoice invoice, SnfInvoiceItem item, BigDecimal amount) {
 		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
 		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
-				equalTo(invoice.getId().getId()));
+				equalTo(invoice.getInvoiceId()));
 		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Tax));
 		assertThat(item.getKey() + " Item quantity", item.getQuantity(), equalTo(BigDecimal.ONE));
 		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
@@ -176,7 +175,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 			BigDecimal remainingCredit) {
 		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
 		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
-				equalTo(invoice.getId().getId()));
+				equalTo(invoice.getInvoiceId()));
 		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Credit));
 		assertThat(item.getKey() + " Item quantity", item.getQuantity(), equalTo(BigDecimal.ONE));
 		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
@@ -187,13 +186,13 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 	private static void assertInvoiceNodeUsage(SnfInvoice invoice, SnfInvoiceNodeUsage usage,
 			Long nodeId, BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
-		assertThat(format("Invoice %d node usage node ID", invoice.getId().getId()), usage.getNodeId(),
+		assertThat(format("Invoice %d node usage node ID", invoice.getInvoiceId()), usage.getNodeId(),
 				is(equalTo(nodeId)));
-		assertThat(format("Invoice %d node usage datumPropertiesIn", invoice.getId().getId()),
+		assertThat(format("Invoice %d node usage datumPropertiesIn", invoice.getInvoiceId()),
 				usage.getDatumPropertiesIn(), is(equalTo(datumPropertiesIn)));
-		assertThat(format("Invoice %d node usage datumOut", invoice.getId().getId()),
-				usage.getDatumOut(), is(equalTo(datumOut)));
-		assertThat(format("Invoice %d node usage datumDaysStored", invoice.getId().getId()),
+		assertThat(format("Invoice %d node usage datumOut", invoice.getInvoiceId()), usage.getDatumOut(),
+				is(equalTo(datumOut)));
+		assertThat(format("Invoice %d node usage datumDaysStored", invoice.getInvoiceId()),
 				usage.getDatumDaysStored(), is(equalTo(datumDaysStored)));
 	}
 
@@ -244,7 +243,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongCompositePK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage", invoice.getItems(), hasSize(3));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
@@ -322,7 +321,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongCompositePK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax", invoice.getItems(), hasSize(4));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
@@ -413,7 +412,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongCompositePK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax and credit", invoice.getItems(),
 				hasSize(5));
 
@@ -512,7 +511,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongCompositePK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax and credit", invoice.getItems(),
 				hasSize(5));
 

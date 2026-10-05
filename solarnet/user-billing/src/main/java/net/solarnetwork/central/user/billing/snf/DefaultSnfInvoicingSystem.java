@@ -105,7 +105,6 @@ import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.TemplateRenderer;
@@ -114,7 +113,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -210,7 +209,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		SnfInvoiceFilter filter = SnfInvoiceFilter
 				.forAccount(requireNonNullArgument(accountId.getEntityId(), "accountId.entityId"));
 		filter.setIgnoreCreditOnly(true);
-		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
+		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> results = invoiceDao
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);
@@ -245,7 +244,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 
 		// turn usage into invoice items
-		final SnfInvoice invoice = new SnfInvoice(accountId, userId, Instant.now(), startDate, endDate,
+		var invoice = new SnfInvoice(accountId, userId, Instant.now(), startDate, endDate,
 				account.getCurrencyCode());
 		invoice.setAddress(account.getAddress());
 
@@ -253,10 +252,10 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);
 
 		// for dryRun support, we generate a negative invoice ID
-		final UserLongPK invoicePk = (dryRun ? new UserLongPK(userId, DRAFT_INVOICE_ID)
+		final UserLongCompositePK invoicePk = (dryRun ? new UserLongCompositePK(userId, DRAFT_INVOICE_ID)
 				: invoiceDao.save(invoice));
-		final Long invoiceId = nonnull(invoicePk.getId(), "Invoice ID");
-		invoice.setInvoiceId(invoiceId); // for return
+		invoice = invoice.copyWithId(invoicePk);
+		final Long invoiceId = invoice.getInvoiceId();
 
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
@@ -443,7 +442,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public boolean deliverInvoice(final UserLongPK invoiceId) {
+	public boolean deliverInvoice(final UserLongCompositePK invoiceId) {
 		// get account
 		final Account account = accountDao.getForUser(invoiceId.getUserId());
 		if ( account == null ) {
@@ -458,7 +457,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		SnfInvoiceDeliverer deliverer = invoiceDeliverer();
 		if ( deliverer == null ) {
 			String msg = format("No invoice delivery service available to delivery invoice %d",
-					invoiceId.getId());
+					invoiceId.getEntityId());
 			log.error(msg);
 			throw new RepeatableTaskException(msg);
 		}

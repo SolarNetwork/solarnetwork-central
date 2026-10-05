@@ -64,14 +64,13 @@ import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisSnfInvoiceDao} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -108,10 +107,10 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
 				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
-		UserLongPK pk = dao.save(entity);
+		UserLongCompositePK pk = dao.save(entity);
 		assertThat("PK created", pk.getId(), notNullValue());
 		getSqlSessionTemplate().flushStatements();
-		last = entity;
+		last = entity.copyWithId(pk);
 	}
 
 	@Test
@@ -166,7 +165,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 					Instant.ofEpochMilli(System.currentTimeMillis()), start.plusMonths(i),
 					start.plusMonths(i + 1), currencyCode);
 			invoice.setAddress(address);
-			UserLongPK invoiceId = dao.save(invoice);
+			UserLongCompositePK invoiceId = dao.save(invoice);
 
 			SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 					new BigDecimal("1.23"));
@@ -190,7 +189,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
 				currencyCode);
 		invoice.setAddress(address);
-		UserLongPK invoiceId = dao.save(invoice);
+		UserLongCompositePK invoiceId = dao.save(invoice);
 
 		SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE, fixed);
 		SnfInvoiceItem item2 = newItem(invoice, Credit, AccountBalance.ACCOUNT_CREDIT_KEY,
@@ -208,7 +207,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
 				currencyCode);
 		invoice.setAddress(address);
-		UserLongPK invoiceId = dao.save(invoice);
+		UserLongCompositePK invoiceId = dao.save(invoice);
 
 		SnfInvoiceItem item1 = newItem(invoice, Credit, "account-credit-add", BigDecimal.ONE, credit);
 		itemDao.save(item1);
@@ -226,7 +225,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, null, null);
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter, null,
+				null, null);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -262,7 +262,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
 
 		for ( int offset = 0; offset < 6; offset += 2 ) {
-			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null,
+			final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter, null,
 					(long) offset, 2);
 
 			// THEN
@@ -294,7 +294,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, null, null);
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter, null,
+				null, null);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -330,7 +331,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 
 		for ( int offset = 0; offset < 6; offset += 2 ) {
-			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null,
+			final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter, null,
 					(long) offset, 2);
 
 			// THEN
@@ -366,7 +367,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
@@ -402,7 +403,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
@@ -438,7 +439,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setIgnoreCreditOnly(true);
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
@@ -511,7 +512,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setUnpaidOnly(Boolean.TRUE);
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
@@ -553,7 +554,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
@@ -605,7 +606,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setUnpaidOnly(true);
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
 
 		// THEN
@@ -660,7 +661,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setUnpaidOnly(true);
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
 
 		// THEN
@@ -713,7 +714,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setUnpaidOnly(true);
-		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
 
 		// THEN

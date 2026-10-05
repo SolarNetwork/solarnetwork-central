@@ -74,7 +74,6 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -83,7 +82,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
@@ -319,7 +318,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		if ( filter.getUnpaid() != null ) {
 			invoiceFilter.setUnpaidOnly(filter.getUnpaid());
 		}
-		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
+		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> results = invoiceDao
 				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, offset, max);
 		List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
 				.map(InvoiceImpl::new).collect(toList());
@@ -329,7 +328,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 	private @Nullable SnfInvoice getSnfInvoice(final Long userId, final String invoiceId)
 			throws AuthorizationException {
-		final UserLongPK id = new UserLongPK(userId, Long.valueOf(invoiceId));
+		final UserLongCompositePK id = new UserLongCompositePK(userId, Long.valueOf(invoiceId));
 		return invoiceDao.get(id);
 	}
 
