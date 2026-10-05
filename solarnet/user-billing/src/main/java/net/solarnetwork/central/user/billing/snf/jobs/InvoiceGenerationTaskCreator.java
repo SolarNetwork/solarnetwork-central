@@ -149,8 +149,8 @@ public class InvoiceGenerationTaskCreator {
 		// grab current account time zone
 		final ZoneId accountTimeZone = account.getTimeZone();
 		if ( accountTimeZone == null ) {
-			throw new RuntimeException(String.format("Account %s (%s) has no time zone set.",
-					account.getId().getId(), user.getEmail()));
+			throw new RuntimeException(String.format("Account %d (%s) has no time zone set.",
+					account.getAccountId(), user.getEmail()));
 		}
 
 		final ZonedDateTime invoiceEndDate = endDate.atStartOfDay(accountTimeZone);
