@@ -83,8 +83,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		final SnfInvoice inv = requireNonNullArgument(invoice, "invoice");
 		this.invoice = inv;
 		this.items = items;
-		setId(requireNonNullArgument(requireNonNullArgument(inv.getId(), "invoice.id").getId(),
-				"invoice.id.id").toString());
+		setId(inv.getInvoiceId().toString());
 		setCreated(invoice.getCreated());
 	}
 

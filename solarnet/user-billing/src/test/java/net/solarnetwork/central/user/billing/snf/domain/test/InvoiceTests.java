@@ -88,7 +88,7 @@ public class InvoiceTests {
 		InvoiceImpl invoice = new InvoiceImpl(inv);
 
 		// THEN
-		assertThat("ID is Long string", invoice.getId(), equalTo(inv.getId().getId().toString()));
+		assertThat("ID is Long string", invoice.getId(), equalTo(inv.getInvoiceId().toString()));
 		assertThat("Creation same", invoice.getCreated(), equalTo(inv.getCreated()));
 		assertThat("Month populated", invoice.getInvoiceMonth(), equalTo(YearMonth.of(2020, 1)));
 		assertThat("Amount same as total amount", invoice.getAmount(), equalTo(inv.getTotalAmount()));
