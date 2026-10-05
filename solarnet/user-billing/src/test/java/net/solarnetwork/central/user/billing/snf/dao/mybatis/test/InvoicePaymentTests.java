@@ -212,7 +212,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				.as("Should throw DataIntegrigtyViolationException from lack of funds in payment.")
 				.isThrownBy(() -> jdbcTemplate.update(
 						"update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
-						new BigDecimal("1.11"), payment.getId().getId()));
+						new BigDecimal("1.11"), payment.getId().getUuid()));
 	}
 
 	@Test
