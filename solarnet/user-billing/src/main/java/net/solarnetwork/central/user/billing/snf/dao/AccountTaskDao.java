@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao;
 
+import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
@@ -31,7 +32,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link AccountTask} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface AccountTaskDao extends GenericDao<AccountTask, UUID> {
 
@@ -57,5 +58,17 @@ public interface AccountTaskDao extends GenericDao<AccountTask, UUID> {
 	 * @see #claimAccountTask()
 	 */
 	void taskCompleted(AccountTask task);
+
+	/**
+	 * Defer a task, so that it cannot be claimed again until a given time.
+	 *
+	 * @param id
+	 *        the ID of the task to defer
+	 * @param execAt
+	 *        the earliest time the task may be claimed again
+	 * @see #claimAccountTask()
+	 * @since 1.1
+	 */
+	void deferAccountTask(UUID id, Instant execAt);
 
 }

@@ -57,4 +57,10 @@
 		WHERE id = #{id}
 	</delete>
 
+	<update id="update-AccountTask-exec-at" parameterType="map">
+		UPDATE solarbill.bill_account_task
+		SET exec_at = #{execAt}
+		WHERE id = #{id}
+	</update>
+
 </mapper>

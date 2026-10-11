@@ -181,6 +181,7 @@ app:
         maximum-iterations: 1000
         maximum-wait-ms: 2400000
         parallelism: 1
+        retry-delay: "5m"
         schedule: "20 2/5 * * * *"
       invoice-gen:
         maximum-wait-ms: 240000

@@ -351,12 +351,14 @@ CREATE TRIGGER bill_payment_checker
     EXECUTE PROCEDURE solarbill.validate_bill_payment();
 
 -- table to hold asynchronous account tasks
+-- exec_at is the earliest time the task may be claimed, so a task can be deferred
 CREATE TABLE IF NOT EXISTS solarbill.bill_account_task (
 	id				uuid NOT NULL DEFAULT uuid_generate_v4(),
 	acct_id			BIGINT NOT NULL,
 	task_type		SMALLINT NOT NULL DEFAULT 0,
 	created 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	jdata			jsonb,
+	exec_at			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT bill_account_task_pkey PRIMARY KEY (id),
 	CONSTRAINT bill_account_task_acct_fk FOREIGN KEY (acct_id)
 		REFERENCES solarbill.bill_account (id) MATCH SIMPLE
@@ -369,12 +371,13 @@ ON solarbill.bill_account_task (created);
 /**
  * "Claim" an account task, so it may be processed by some external job. This function must be
  * called within a transaction. The returned row will be locked, so that the external job can
- * delete it once complete. The oldest available row is returned.
+ * delete it once complete. The oldest row whose `exec_at` time has arrived is returned.
  */
 CREATE OR REPLACE FUNCTION solarbill.claim_bill_account_task()
   RETURNS solarbill.bill_account_task LANGUAGE SQL VOLATILE AS
 $$
 	SELECT * FROM solarbill.bill_account_task
+	WHERE exec_at <= CURRENT_TIMESTAMP
 	ORDER BY created
 	LIMIT 1
 	FOR UPDATE SKIP LOCKED

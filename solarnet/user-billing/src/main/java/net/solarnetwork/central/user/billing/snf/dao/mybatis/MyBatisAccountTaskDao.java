@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
@@ -32,7 +34,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
  * MyBatis implementation of {@link AccountTaskDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisAccountTaskDao extends BaseMyBatisGenericDaoSupport<AccountTask, UUID>
 		implements AccountTaskDao {
@@ -52,6 +54,11 @@ public class MyBatisAccountTaskDao extends BaseMyBatisGenericDaoSupport<AccountT
 	@Override
 	public void taskCompleted(AccountTask task) {
 		delete(task);
+	}
+
+	@Override
+	public void deferAccountTask(UUID id, Instant execAt) {
+		getSqlSession().update("update-AccountTask-exec-at", Map.of("id", id, "execAt", execAt));
 	}
 
 }

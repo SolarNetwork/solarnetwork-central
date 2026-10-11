@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
  * Test cases for the {@link MyBatisAccountTaskDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -139,6 +143,99 @@ public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Entity returned", entity.isSameAs(last), equalTo(true));
 		dao.delete(entity);
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	private Instant execAt(AccountTask task) {
+		getSqlSessionTemplate().flushStatements();
+		return jdbcTemplate.queryForObject(
+				"SELECT exec_at FROM solarbill.bill_account_task WHERE id = ?", Timestamp.class,
+				task.getId()).toInstant();
+	}
+
+	@Test
+	public void defer() {
+		// GIVEN
+		insert();
+		final Instant execAt = Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MILLIS);
+
+		// WHEN
+		dao.deferAccountTask(last.getId(), execAt);
+
+		// THEN
+		// @formatter:off
+		then(execAt(last))
+			.as("Task exec time updated")
+			.isEqualTo(execAt)
+			;
+		then(dao.get(last.getId()))
+			.as("Task otherwise unchanged")
+			.matches(t -> t.isSameAs(last))
+			.as("Created date unchanged")
+			.returns(last.getCreated(), from(AccountTask::getCreated))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claim_deferred() {
+		// GIVEN
+		insert();
+		dao.deferAccountTask(last.getId(), Instant.now().plus(1, ChronoUnit.HOURS));
+
+		// WHEN
+		AccountTask result = dao.claimAccountTask();
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Deferred task not claimed before its exec time")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claim_deferredExecTimeArrived() {
+		// GIVEN
+		insert();
+		dao.deferAccountTask(last.getId(), Instant.now().minus(1, ChronoUnit.MINUTES));
+
+		// WHEN
+		AccountTask result = dao.claimAccountTask();
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Deferred task claimed once its exec time has arrived")
+			.isNotNull()
+			.matches(t -> t.isSameAs(last))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claim_deferredSkipped() {
+		// GIVEN
+		insert();
+		final AccountTask deferred = last;
+		dao.deferAccountTask(deferred.getId(), Instant.now().plus(1, ChronoUnit.HOURS));
+
+		AccountTask later = new AccountTask(UUID.randomUUID(),
+				deferred.getCreated().plus(1, ChronoUnit.MINUTES), AccountTaskType.DeliverInvoice,
+				account.getAccountId(), Map.of("id", 1L));
+		dao.save(later);
+
+		// WHEN
+		AccountTask result = dao.claimAccountTask();
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Newer task claimed while older one deferred")
+			.isNotNull()
+			.returns(later.getId(), from(AccountTask::getId))
+			;
+		// @formatter:on
 	}
 
 }
