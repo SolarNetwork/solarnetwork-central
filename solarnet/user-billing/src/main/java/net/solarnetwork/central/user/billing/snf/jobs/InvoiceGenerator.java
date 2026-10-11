@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.jobs;
 import static java.lang.String.format;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTask.newTask;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
+import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.SyncInvoiceToAccounting;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -56,6 +57,7 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	private final AccountDao accountDao;
 	private final AccountTaskDao taskDao;
 	private final SnfInvoicingSystem invoicingSystem;
+	private boolean syncInvoicesToAccounting;
 
 	/**
 	 * Constructor.
@@ -115,9 +117,37 @@ public class InvoiceGenerator implements AccountTaskHandler {
 			taskData.put("userId", invoice.getUserId());
 			taskData.put("id", invoice.getInvoiceId());
 			taskDao.save(newTask(Instant.now(), DeliverInvoice, accountId, taskData));
+			if ( syncInvoicesToAccounting ) {
+				taskDao.save(newTask(Instant.now(), SyncInvoiceToAccounting, accountId, taskData));
+			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get the setting to record generated invoices in the accounting system.
+	 *
+	 * @return {@code true} to add a
+	 *         {@link AccountTaskType#SyncInvoiceToAccounting} task for each
+	 *         generated invoice; defaults to {@code false}
+	 * @since 1.1
+	 */
+	public final boolean isSyncInvoicesToAccounting() {
+		return syncInvoicesToAccounting;
+	}
+
+	/**
+	 * Set the setting to record generated invoices in the accounting system.
+	 *
+	 * @param syncInvoicesToAccounting
+	 *        {@code true} to add a
+	 *        {@link AccountTaskType#SyncInvoiceToAccounting} task for each
+	 *        generated invoice
+	 * @since 1.1
+	 */
+	public final void setSyncInvoicesToAccounting(boolean syncInvoicesToAccounting) {
+		this.syncInvoicesToAccounting = syncInvoicesToAccounting;
 	}
 
 }

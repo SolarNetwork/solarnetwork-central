@@ -28,7 +28,7 @@ import net.solarnetwork.domain.CodedValue;
  * Account task type enumeration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public enum AccountTaskType implements CodedValue {
 
@@ -38,7 +38,16 @@ public enum AccountTaskType implements CodedValue {
 	GenerateInvoice(1),
 
 	/** Deliver an invoice to the account holder. */
-	DeliverInvoice(2);
+	DeliverInvoice(2),
+
+	/**
+	 * Record an invoice in the accounting system.
+	 *
+	 * @since 1.1
+	 */
+	SyncInvoiceToAccounting(3),
+	
+	;
 
 	private final byte code;
 

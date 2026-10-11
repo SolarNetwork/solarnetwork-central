@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.GenerateInvoice;
+import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.SyncInvoiceToAccounting;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.within;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,6 +69,9 @@ public class AccountTaskJobQueueTests extends AbstractMyBatisDaoTestSupport {
 
 	@Mock
 	private AccountTaskHandler deliverInvoiceHandler;
+
+	@Mock
+	private AccountTaskHandler syncInvoiceHandler;
 
 	private MyBatisAccountTaskDao taskDao;
 	private Account account;
@@ -206,6 +210,49 @@ public class AccountTaskJobQueueTests extends AbstractMyBatisDaoTestSupport {
 		and.then(taskDao.get(failTask.getId()))
 			.as("Failed task kept for a later attempt")
 			.isNotNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void syncInvoice_handled() {
+		// GIVEN
+		job.setSyncInvoiceTaskHandler(syncInvoiceHandler);
+		final AccountTask task = saveTask(SyncInvoiceToAccounting, Instant.now());
+
+		given(syncInvoiceHandler.handleTask(any())).willReturn(true);
+
+		// WHEN
+		job.run();
+
+		// THEN
+		// @formatter:off
+		then(syncInvoiceHandler).should().handleTask(any());
+		and.then(taskDao.get(task.getId()))
+			.as("Task completed")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void syncInvoice_noHandler() {
+		// GIVEN
+		final AccountTask task = saveTask(SyncInvoiceToAccounting, Instant.now());
+
+		// WHEN
+		final Instant start = Instant.now();
+		job.run();
+
+		// THEN
+		// @formatter:off
+		and.then(taskDao.get(task.getId()))
+			.as("Task kept for when an accounting system is available")
+			.isNotNull()
+			;
+		and.then(execAt(task))
+			.as("Task deferred")
+			.isAfter(start)
 			;
 		// @formatter:on
 	}

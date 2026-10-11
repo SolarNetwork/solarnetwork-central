@@ -4,6 +4,26 @@ app:
     key: jobs
   billing:
     delivery-timeout-secs: 60
+    gnucash:
+      schema: "public"
+      customer-id-template: "SN_%d"
+      create-customers: true
+      time-zone: "Pacific/Auckland"
+      due-period: "P1M"
+      itemized: true
+      credit-note-taxable: false
+      lock-timeout-secs: 30
+      currencies:
+        NZD:
+          receivable-account: "Assets:Accounts Receivable"
+          income-account: "Income:Subscription"
+          tax-table: "GST (Sales)"
+          summary-description: "Posted Datum Metrics"
+        USD:
+          receivable-account: "Assets:Accounts Receivable USD"
+          income-account: "Income:Subscription USD"
+          tax-table: "GST Zero (Sales)"
+          summary-description: "USD Posted Datum Metrics"
     invoice:
       mail.from: "accounts@localhost"
       html-template-cache:
@@ -112,6 +132,17 @@ app:
     url: "jdbc:postgresql://localhost/solarnetwork_unittest"
     username: "solartest"
     password: "solartest"
+    initialize: false
+  datasource-gnucash:
+    hikari:
+      minimumIdle: 0
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url-example: "jdbc:postgresql://localhost/gnucash"
+    username: "gnucash"
+    password: "gnucash"
     initialize: false
   datum:
     export:

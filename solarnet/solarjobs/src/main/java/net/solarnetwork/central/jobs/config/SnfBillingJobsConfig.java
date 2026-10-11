@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfi
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
 import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskJob;
+import net.solarnetwork.central.user.billing.snf.jobs.InvoiceAccountingSyncer;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreator;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreatorJob;
@@ -45,7 +47,7 @@ import net.solarnetwork.central.user.dao.UserDao;
  * SNF billing jobs configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(SolarNetUserBillingConfiguration.SNF_BILLING)
@@ -70,8 +72,11 @@ public class SnfBillingJobsConfig {
 	private UserDao userDao;
 
 	@Bean
-	public InvoiceGenerator invoiceGenerator() {
-		return new InvoiceGenerator(accountDao, accountTaskDao, snfInvoicingSystem);
+	public InvoiceGenerator invoiceGenerator(
+			ObjectProvider<InvoiceAccountingSyncer> invoiceAccountingSyncer) {
+		var generator = new InvoiceGenerator(accountDao, accountTaskDao, snfInvoicingSystem);
+		generator.setSyncInvoicesToAccounting(invoiceAccountingSyncer.getIfAvailable() != null);
+		return generator;
 	}
 
 	@Bean
@@ -81,9 +86,11 @@ public class SnfBillingJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.billing.account-task")
 	@Bean
-	public ManagedJob accountTaskProcessorJob(InvoiceGenerator generator, InvoiceDeliverer deliverer) {
+	public ManagedJob accountTaskProcessorJob(InvoiceGenerator generator, InvoiceDeliverer deliverer,
+			ObjectProvider<InvoiceAccountingSyncer> invoiceAccountingSyncer) {
 		AccountTaskJob job = new AccountTaskJob(transactionTemplate, accountTaskDao, generator,
 				deliverer);
+		job.setSyncInvoiceTaskHandler(invoiceAccountingSyncer.getIfAvailable());
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

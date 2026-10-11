@@ -61,6 +61,7 @@ public class AccountTaskJob extends JobSupport {
 	private final AccountTaskDao taskDao;
 	private final AccountTaskHandler generateInvoiceTaskHandler;
 	private final AccountTaskHandler deliverInvoiceTaskHandler;
+	private @Nullable AccountTaskHandler syncInvoiceTaskHandler;
 	private Duration retryDelay = DEFAULT_RETRY_DELAY;
 
 	/**
@@ -156,6 +157,15 @@ public class AccountTaskJob extends JobSupport {
 				retry = !deliverInvoiceTaskHandler.handleTask(task);
 				break;
 
+			case SyncInvoiceToAccounting:
+				if ( syncInvoiceTaskHandler != null ) {
+					retry = !syncInvoiceTaskHandler.handleTask(task);
+				} else {
+					log.warn("No accounting system is available for account task {}", task.getId());
+					retry = true;
+				}
+				break;
+
 			default:
 				// do nothing, but delete
 				break;
@@ -172,6 +182,35 @@ public class AccountTaskJob extends JobSupport {
 
 	private void defer(AccountTask task, Instant execAt) {
 		taskDao.deferAccountTask(nonnull(task.getId(), "Task ID"), execAt);
+	}
+
+	/**
+	 * Get the handler for {@link AccountTaskType#SyncInvoiceToAccounting}
+	 * tasks.
+	 *
+	 * @return the handler, or {@code null} if there is no accounting system
+	 * @since 2.2
+	 */
+	public final @Nullable AccountTaskHandler getSyncInvoiceTaskHandler() {
+		return syncInvoiceTaskHandler;
+	}
+
+	/**
+	 * Set the handler for {@link AccountTaskType#SyncInvoiceToAccounting}
+	 * tasks.
+	 *
+	 * <p>
+	 * Without a handler these tasks are deferred, so they are handled once a
+	 * handler is configured.
+	 * </p>
+	 *
+	 * @param syncInvoiceTaskHandler
+	 *        the handler to set, or {@code null} if there is no accounting
+	 *        system
+	 * @since 2.2
+	 */
+	public final void setSyncInvoiceTaskHandler(@Nullable AccountTaskHandler syncInvoiceTaskHandler) {
+		this.syncInvoiceTaskHandler = syncInvoiceTaskHandler;
 	}
 
 	/**

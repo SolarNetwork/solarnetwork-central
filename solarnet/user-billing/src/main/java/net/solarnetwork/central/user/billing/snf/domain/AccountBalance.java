@@ -51,6 +51,13 @@ public class AccountBalance extends BasicEntity<UserLongCompositePK>
 	/** A key to use for credit used in an invoice. */
 	public static final String ACCOUNT_CREDIT_KEY = "account-credit";
 
+	/**
+	 * A key to use for credit added to an account, in an invoice of its own.
+	 *
+	 * @since 2.0
+	 */
+	public static final String ACCOUNT_CREDIT_ADD_KEY = ACCOUNT_CREDIT_KEY + "-add";
+
 	private final BigDecimal chargeTotal;
 	private final BigDecimal paymentTotal;
 	private final BigDecimal availableCredit;
