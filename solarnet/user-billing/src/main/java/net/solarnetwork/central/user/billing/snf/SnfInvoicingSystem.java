@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
  * API for generating invoices for the {@link SnfBillingSystem}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface SnfInvoicingSystem {
 
@@ -83,6 +83,26 @@ public interface SnfInvoicingSystem {
 	 */
 	@Nullable
 	SnfInvoice findLatestInvoiceForAccount(UserLongCompositePK accountId);
+
+	/**
+	 * Find an invoice for a given account that starts within a period.
+	 *
+	 * <p>
+	 * Invoices that only add account credit are ignored.
+	 * </p>
+	 *
+	 * @param accountId
+	 *        the ID of the account to find the invoice for
+	 * @param startDate
+	 *        the minimum invoice start date (inclusive)
+	 * @param endDate
+	 *        the maximum invoice start date (exclusive)
+	 * @return the invoice, or {@code null} if none available
+	 * @since 2.1
+	 */
+	@Nullable
+	SnfInvoice findInvoiceForPeriod(UserLongCompositePK accountId, LocalDate startDate,
+			LocalDate endDate);
 
 	/**
 	 * Generate a new invoice.

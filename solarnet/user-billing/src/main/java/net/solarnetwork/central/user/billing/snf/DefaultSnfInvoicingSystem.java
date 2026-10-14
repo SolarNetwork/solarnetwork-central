@@ -113,7 +113,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -208,6 +208,21 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public @Nullable SnfInvoice findLatestInvoiceForAccount(UserLongCompositePK accountId) {
 		SnfInvoiceFilter filter = SnfInvoiceFilter
 				.forAccount(requireNonNullArgument(accountId.getEntityId(), "accountId.entityId"));
+		filter.setIgnoreCreditOnly(true);
+		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> results = invoiceDao
+				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
+		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
+		return (itr != null && itr.hasNext() ? itr.next() : null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable SnfInvoice findInvoiceForPeriod(UserLongCompositePK accountId,
+			LocalDate startDate, LocalDate endDate) {
+		SnfInvoiceFilter filter = SnfInvoiceFilter
+				.forAccount(requireNonNullArgument(accountId.getEntityId(), "accountId.entityId"));
+		filter.setStartDate(requireNonNullArgument(startDate, "startDate"));
+		filter.setEndDate(requireNonNullArgument(endDate, "endDate"));
 		filter.setIgnoreCreditOnly(true);
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> results = invoiceDao
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);

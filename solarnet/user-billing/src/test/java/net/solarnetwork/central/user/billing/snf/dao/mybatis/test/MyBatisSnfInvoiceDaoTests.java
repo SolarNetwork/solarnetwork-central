@@ -33,6 +33,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Credit;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -70,7 +71,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisSnfInvoiceDao} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -454,6 +455,65 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				equalTo(expectedInvoices.get(0)));
 		assertThat("InvoiceImpl data preserved", invoice.isSameAs(expectedInvoices.get(0)),
 				equalTo(true));
+	}
+
+	@Test
+	public void findForPeriod_ignoreCreditOnly() {
+		// GIVEN
+		insert();
+		final Account account = accountDao
+				.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
+		final List<SnfInvoice> monthly = createMonthlyInvoices(account, last.getAddress(), "NZD",
+				last.getStartDate().plusMonths(1), 3);
+		final SnfInvoice month = monthly.get(1);
+
+		// a credit grant starting in the same month
+		createInvoiceWithCreditGrant(account, last.getAddress(), "NZD", month.getStartDate(),
+				new BigDecimal("-4.56"));
+
+		// WHEN
+		final SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setStartDate(month.getStartDate());
+		filter.setEndDate(month.getEndDate());
+		filter.setIgnoreCreditOnly(true);
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Only the invoice for the month is found, not the credit grant")
+			.extracting(SnfInvoice::getId)
+			.containsExactly(month.getId())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findForPeriod_onlyCreditGrant() {
+		// GIVEN
+		insert();
+		final Account account = accountDao
+				.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
+		final LocalDate month = last.getStartDate().plusMonths(1);
+		createInvoiceWithCreditGrant(account, last.getAddress(), "NZD", month,
+				new BigDecimal("-4.56"));
+
+		// WHEN
+		final SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setStartDate(month);
+		filter.setEndDate(month.plusMonths(1));
+		filter.setIgnoreCreditOnly(true);
+		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("A credit grant alone is not an invoice for the month")
+			.isEmpty()
+			;
+		// @formatter:on
 	}
 
 	private UUID insertPayment(Long accountId, PaymentType type, BigDecimal amount,

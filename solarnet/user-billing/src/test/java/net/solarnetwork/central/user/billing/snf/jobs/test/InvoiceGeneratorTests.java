@@ -56,7 +56,7 @@ import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator;
  * Test cases for the {@link InvoiceGenerator} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InvoiceGeneratorTests {
 
@@ -106,6 +106,10 @@ public class InvoiceGeneratorTests {
 				createAddress("NZ", "Pacific/Auckland"));
 		expect(accountDao.getForAccountId(account.getAccountId())).andReturn(account);
 
+		// no invoice yet for the month
+		expect(invoicingSystem.findInvoiceForPeriod(account.id(), date, date.plusMonths(1)))
+				.andReturn(null);
+
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getAccountId(), Instant.now(), LocalDate.now(),
@@ -146,6 +150,10 @@ public class InvoiceGeneratorTests {
 		final Account account = createAccount(TEST_USER_ID, "en_US",
 				createAddress("US", "America/Los_Angeles"));
 		expect(accountDao.getForAccountId(account.getAccountId())).andReturn(account);
+
+		// no invoice yet for the month
+		expect(invoicingSystem.findInvoiceForPeriod(account.id(), date, date.plusMonths(1)))
+				.andReturn(null);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
