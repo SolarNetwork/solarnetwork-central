@@ -62,6 +62,7 @@ public class AccountTaskJob extends JobSupport {
 	private final AccountTaskHandler generateInvoiceTaskHandler;
 	private final AccountTaskHandler deliverInvoiceTaskHandler;
 	private @Nullable AccountTaskHandler syncInvoiceTaskHandler;
+	private @Nullable AccountTaskHandler syncPaymentTaskHandler;
 	private Duration retryDelay = DEFAULT_RETRY_DELAY;
 
 	/**
@@ -158,12 +159,11 @@ public class AccountTaskJob extends JobSupport {
 				break;
 
 			case SyncInvoiceToAccounting:
-				if ( syncInvoiceTaskHandler != null ) {
-					retry = !syncInvoiceTaskHandler.handleTask(task);
-				} else {
-					log.warn("No accounting system is available for account task {}", task.getId());
-					retry = true;
-				}
+				retry = !handleAccountingTask(task, syncInvoiceTaskHandler);
+				break;
+
+			case SyncPaymentToAccounting:
+				retry = !handleAccountingTask(task, syncPaymentTaskHandler);
 				break;
 
 			default:
@@ -178,6 +178,14 @@ public class AccountTaskJob extends JobSupport {
 			taskDao.delete(task);
 		}
 		return true;
+	}
+
+	private boolean handleAccountingTask(AccountTask task, @Nullable AccountTaskHandler handler) {
+		if ( handler == null ) {
+			log.warn("No accounting system is available for account task {}", task.getId());
+			return false;
+		}
+		return handler.handleTask(task);
 	}
 
 	private void defer(AccountTask task, Instant execAt) {
@@ -211,6 +219,35 @@ public class AccountTaskJob extends JobSupport {
 	 */
 	public final void setSyncInvoiceTaskHandler(@Nullable AccountTaskHandler syncInvoiceTaskHandler) {
 		this.syncInvoiceTaskHandler = syncInvoiceTaskHandler;
+	}
+
+	/**
+	 * Get the handler for {@link AccountTaskType#SyncPaymentToAccounting}
+	 * tasks.
+	 *
+	 * @return the handler, or {@code null} if there is no accounting system
+	 * @since 2.2
+	 */
+	public final @Nullable AccountTaskHandler getSyncPaymentTaskHandler() {
+		return syncPaymentTaskHandler;
+	}
+
+	/**
+	 * Set the handler for {@link AccountTaskType#SyncPaymentToAccounting}
+	 * tasks.
+	 *
+	 * <p>
+	 * Without a handler these tasks are deferred, so they are handled once a
+	 * handler is configured.
+	 * </p>
+	 *
+	 * @param syncPaymentTaskHandler
+	 *        the handler to set, or {@code null} if there is no accounting
+	 *        system
+	 * @since 2.2
+	 */
+	public final void setSyncPaymentTaskHandler(@Nullable AccountTaskHandler syncPaymentTaskHandler) {
+		this.syncPaymentTaskHandler = syncPaymentTaskHandler;
 	}
 
 	/**

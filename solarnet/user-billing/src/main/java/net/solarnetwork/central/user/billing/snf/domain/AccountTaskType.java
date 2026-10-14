@@ -46,7 +46,14 @@ public enum AccountTaskType implements CodedValue {
 	 * @since 1.1
 	 */
 	SyncInvoiceToAccounting(3),
-	
+
+	/**
+	 * Record a payment in the accounting system.
+	 *
+	 * @since 1.1
+	 */
+	SyncPaymentToAccounting(4),
+
 	;
 
 	private final byte code;

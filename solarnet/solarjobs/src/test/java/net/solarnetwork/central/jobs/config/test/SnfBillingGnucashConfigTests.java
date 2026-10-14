@@ -45,11 +45,13 @@ import net.solarnetwork.central.user.billing.snf.SnfAccountingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.gnucash.GnucashSettings;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.GnucashDao;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceAccountingSyncer;
+import net.solarnetwork.central.user.billing.snf.jobs.PaymentAccountingSyncer;
 
 /**
  * Test cases for the {@link SnfBillingGnucashConfig} class.
@@ -101,6 +103,11 @@ public class SnfBillingGnucashConfigTests {
 			return mock(SnfInvoiceDao.class);
 		}
 
+		@Bean
+		public PaymentDao paymentDao() {
+			return mock(PaymentDao.class);
+		}
+
 	}
 
 	private final ApplicationContextRunner runner = new ApplicationContextRunner()
@@ -119,6 +126,7 @@ public class SnfBillingGnucashConfigTests {
 						.as("Nothing configured without the GnuCash profile")
 						.doesNotHaveBean(GnucashDao.class)
 						.doesNotHaveBean(InvoiceAccountingSyncer.class)
+						.doesNotHaveBean(PaymentAccountingSyncer.class)
 						;
 					// @formatter:on
 				});
@@ -129,6 +137,7 @@ public class SnfBillingGnucashConfigTests {
 		runner.withInitializer(SnfBillingGnucashConfigTests::activateProfiles)
 				.withPropertyValues(
 						"app.billing.gnucash.currencies.NZD.receivable-account=Assets:Receivable",
+						"app.billing.gnucash.currencies.NZD.payment-account=Assets:Bank",
 						"app.billing.gnucash.due-period=P2M")
 				.run(ctx -> {
 					// @formatter:off
@@ -137,6 +146,7 @@ public class SnfBillingGnucashConfigTests {
 						.hasSingleBean(GnucashDao.class)
 						.hasSingleBean(SnfAccountingSystem.class)
 						.hasSingleBean(InvoiceAccountingSyncer.class)
+						.hasSingleBean(PaymentAccountingSyncer.class)
 						.as("No GnuCash database configured")
 						.doesNotHaveBean("gnucashDataSource")
 						.doesNotHaveBean("gnucashTransactionManager")
@@ -147,6 +157,7 @@ public class SnfBillingGnucashConfigTests {
 						.extracting(s -> s.currency("NZD"))
 						.as("Currency settings bound")
 						.returns("Assets:Receivable", from(GnucashSettings.CurrencySettings::getReceivableAccount))
+						.returns("Assets:Bank", from(GnucashSettings.CurrencySettings::getPaymentAccount))
 						;
 					thenThrownBy(() -> ctx.getBean(GnucashDao.class).tableVersions())
 						.as("GnuCash tables read from the main database")

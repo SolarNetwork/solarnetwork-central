@@ -17,11 +17,13 @@ app:
         NZD:
           receivable-account: "Assets:Accounts Receivable"
           income-account: "Income:Subscription"
+          payment-account: "Assets:Kiwibank Business"
           tax-table: "GST (Sales)"
           summary-description: "Posted Datum Metrics"
         USD:
           receivable-account: "Assets:Accounts Receivable USD"
           income-account: "Income:Subscription USD"
+          payment-account: "Assets:Suspense USD"
           tax-table: "GST Zero (Sales)"
           summary-description: "USD Posted Datum Metrics"
     invoice:

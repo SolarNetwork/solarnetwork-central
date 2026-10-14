@@ -234,6 +234,17 @@ public interface GnucashDao {
 	void saveSlot(GncSlot slot);
 
 	/**
+	 * Get the objects that have a string slot with a given value.
+	 *
+	 * @param name
+	 *        the slot name
+	 * @param value
+	 *        the slot value
+	 * @return the GUIDs of the matching objects, never {@code null}
+	 */
+	List<String> objectsWithSlot(String name, String value);
+
+	/**
 	 * Get the open lots that hold credit for a customer in an account.
 	 *
 	 * <p>

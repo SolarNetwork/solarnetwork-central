@@ -30,7 +30,7 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Settings for recording SNF invoices in GnuCash.
+ * Settings for recording SNF invoices and payments in GnuCash.
  *
  * @author matt
  * @version 1.0
@@ -60,6 +60,7 @@ public class GnucashSettings {
 		private @Nullable String receivableAccount;
 		private @Nullable String incomeAccount;
 		private @Nullable String creditAccount;
+		private @Nullable String paymentAccount;
 		private @Nullable String taxTable;
 		private @Nullable String summaryDescription;
 
@@ -123,6 +124,27 @@ public class GnucashSettings {
 		 */
 		public final void setCreditAccount(@Nullable String creditAccount) {
 			this.creditAccount = creditAccount;
+		}
+
+		/**
+		 * Get the full name of the account that payments are deposited to.
+		 *
+		 * @return the account name, such as {@code Assets:Bank}, or
+		 *         {@code null} if payments cannot be recorded
+		 */
+		public final @Nullable String getPaymentAccount() {
+			return paymentAccount;
+		}
+
+		/**
+		 * Set the full name of the account that payments are deposited to.
+		 *
+		 * @param paymentAccount
+		 *        the account name to set, or {@code null} if payments cannot be
+		 *        recorded
+		 */
+		public final void setPaymentAccount(@Nullable String paymentAccount) {
+			this.paymentAccount = paymentAccount;
 		}
 
 		/**

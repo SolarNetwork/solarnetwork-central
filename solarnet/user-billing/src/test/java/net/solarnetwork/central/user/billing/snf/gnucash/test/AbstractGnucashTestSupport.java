@@ -139,6 +139,9 @@ public abstract class AbstractGnucashTestSupport {
 	/** The NZD bank account. */
 	protected GncAccount bank;
 
+	/** The USD bank account. */
+	protected GncAccount bankUsd;
+
 	/** The NZD GST account. */
 	protected GncAccount gst;
 
@@ -161,6 +164,7 @@ public abstract class AbstractGnucashTestSupport {
 		receivable = insertAccount("Accounts Receivable", "RECEIVABLE", nzd, assets, false);
 		receivableUsd = insertAccount("Accounts Receivable USD", "RECEIVABLE", usd, assets, false);
 		bank = insertAccount("Bank", "BANK", nzd, assets, false);
+		bankUsd = insertAccount("Bank USD", "BANK", usd, assets, false);
 		final GncAccount incomeParent = insertAccount("Income", "INCOME", nzd, null, true);
 		income = insertAccount("Subscription", "INCOME", nzd, incomeParent, false);
 		incomeUsd = insertAccount("Subscription USD", "INCOME", usd, incomeParent, false);

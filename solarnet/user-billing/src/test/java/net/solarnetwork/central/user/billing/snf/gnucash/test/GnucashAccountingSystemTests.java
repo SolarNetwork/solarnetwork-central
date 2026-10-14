@@ -27,6 +27,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.T
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.assertj.core.api.BDDAssertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
@@ -38,7 +39,9 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +56,9 @@ import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
+import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
+import net.solarnetwork.central.user.billing.snf.domain.Payment;
+import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
@@ -66,7 +72,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 
 /**
  * Test cases for the {@link GnucashAccountingSystem} class, recording invoices
- * in the {@code gnucashtest} database.
+ * and payments in the {@code gnucashtest} database.
  *
  * @author matt
  * @version 1.0
@@ -97,19 +103,21 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 	public void setup() {
 		settings = new GnucashSettings();
 		settings.getCurrencies().put("NZD", currency("Assets:Accounts Receivable",
-				"Income:Subscription", "GST (Sales)", "Posted Datum Metrics"));
+				"Income:Subscription", "Assets:Bank", "GST (Sales)", "Posted Datum Metrics"));
 		settings.getCurrencies().put("USD", currency("Assets:Accounts Receivable USD",
-				"Income:Subscription USD", "GST Zero (Sales)", "USD Posted Datum Metrics"));
+				"Income:Subscription USD", "Assets:Bank USD", "GST Zero (Sales)",
+				"USD Posted Datum Metrics"));
 		service = new GnucashAccountingSystem(Clock.fixed(CREATED, ZoneOffset.UTC),
 				transactionTemplate, new JdbcGnucashDao(jdbcTemplate, SCHEMA), settings,
 				invoicingSystem, taxCodeResolver, taxCodeDao);
 	}
 
 	private static GnucashSettings.CurrencySettings currency(String receivable, String income,
-			String taxTable, String summary) {
+			String payment, String taxTable, String summary) {
 		var s = new GnucashSettings.CurrencySettings();
 		s.setReceivableAccount(receivable);
 		s.setIncomeAccount(income);
+		s.setPaymentAccount(payment);
 		s.setTaxTable(taxTable);
 		s.setSummaryDescription(summary);
 		return s;
@@ -791,6 +799,370 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		then(GnucashAccountingSystem.localNoon(LocalDate.of(2026, 10, 5), ZoneId.of("Pacific/Auckland")))
 			.as("Noon NZDT")
 			.isEqualTo(Instant.parse("2026-10-04T23:00:00Z"))
+			;
+		// @formatter:on
+	}
+
+	/** Noon on 20 October 2026 in New Zealand, as the CLI dates a payment. */
+	private static final Instant PAID = Instant.parse("2026-10-19T23:00:00Z");
+
+	private static Payment payment(String amount, Instant date, String currency) {
+		return new Payment(UUID.randomUUID(), USER_ID, ACCOUNT_ID, date, PaymentType.Payment,
+				new BigDecimal(amount), currency);
+	}
+
+	private static InvoicePayment invoicePayment(Payment payment, Long invoiceId, String amount) {
+		var ip = new InvoicePayment(UUID.randomUUID(), USER_ID, ACCOUNT_ID,
+				payment.getId().getUuid(), invoiceId, payment.getCreated());
+		ip.setAmount(new BigDecimal(amount));
+		return ip;
+	}
+
+	private List<String> paymentTransactions(Payment payment) {
+		return jdbcTemplate.queryForList("""
+				SELECT t.guid FROM transactions t
+				INNER JOIN slots s ON s.obj_guid = t.guid
+				WHERE s.name = ? AND s.string_val = ?
+				""", String.class, GnucashAccountingSystem.PAYMENT_ID_SLOT,
+				payment.getId().getUuid().toString());
+	}
+
+	/** The lots holding a customer's unapplied payments. */
+	private List<Map<String, Object>> paymentLots(String customerGuid) {
+		return rows("""
+				SELECT l.*, t.int64_val AS owner_type
+				FROM lots l
+				INNER JOIN slots f ON f.obj_guid = l.guid AND f.name = 'gncOwner'
+				INNER JOIN slots o ON o.obj_guid = f.guid_val AND o.name = 'gncOwner/owner-guid'
+				INNER JOIN slots t ON t.obj_guid = f.guid_val AND t.name = 'gncOwner/owner-type'
+				WHERE o.guid_val = ?
+				""", customerGuid);
+	}
+
+	/** Sync NZD invoices of 12.06 each. */
+	private void givenNzdInvoices(Account account, Long... ids) {
+		givenMessages(account);
+		givenTaxCodes("datum-props-in", "datum-out");
+		for ( Long id : ids ) {
+			service.syncInvoice(nzdInvoice(id), account);
+		}
+	}
+
+	@Test
+	public void payment_paysInvoice() {
+		// GIVEN
+		final String customerGuid = insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		final Object invoiceLot = invoiceRow("1931").get("post_lot");
+
+		final Payment payment = payment("12.06", PAID, "NZD");
+		payment.setReference(" Bank ref 123 ");
+
+		// WHEN
+		boolean result = service.syncPayment(payment,
+				List.of(invoicePayment(payment, 1931L, "12.06")), account);
+
+		// THEN
+		// @formatter:off
+		then(result).as("Payment added").isTrue();
+
+		final List<String> txns = paymentTransactions(payment);
+		then(txns).as("One transaction tagged with the SNF payment ID").hasSize(1);
+		final String txGuid = txns.getFirst();
+		final Map<String, Object> txn = jdbcTemplate.queryForMap(
+				"SELECT * FROM transactions WHERE guid = ?", txGuid);
+		then(txn)
+			.as("Transaction numbered with the payment reference and described with customer name")
+			.containsEntry("num", "Bank ref 123")
+			.containsEntry("description", CUSTOMER_NAME)
+			.containsEntry("currency_guid", nzd.guid())
+			;
+		then(instant(txn.get("post_date")))
+			.as("Posted on the payment date, at GnuCash's day-neutral time")
+			.isEqualTo(Instant.parse("2026-10-20T10:59:00Z"))
+			;
+		then(instant(txn.get("enter_date"))).as("Entered now").isEqualTo(CREATED);
+		then(slots(txGuid).get("trans-txn-type"))
+			.as("Payment transaction")
+			.containsEntry("string_val", "P")
+			;
+
+		then(splitValues(txGuid))
+			.as("Bank debited and receivable credited with the payment")
+			.containsOnly(Map.entry(bank.guid(), 1206L), Map.entry(receivable.guid(), -1206L))
+			;
+		then(rows("SELECT * FROM splits WHERE tx_guid = ? ORDER BY value_num", txGuid))
+			.as("Receivable split applied to the invoice's lot")
+			.satisfiesExactly(
+				r -> then(r).containsEntry("account_guid", receivable.guid())
+						.containsEntry("lot_guid", invoiceLot),
+				r -> then(r).containsEntry("account_guid", bank.guid())
+						.containsEntry("lot_guid", null))
+			.allSatisfy(r -> then(r).containsEntry("action", "Payment").containsEntry("memo", "")
+					.containsEntry("reconcile_state", "n"))
+			;
+		then(lotBalance(invoiceLot)).as("Invoice paid").isEqualByComparingTo("0");
+		then(paymentLots(customerGuid)).as("Nothing left over as credit").isEmpty();
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_overpaid() {
+		// GIVEN
+		final String customerGuid = insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		final Object invoiceLot = invoiceRow("1931").get("post_lot");
+
+		final Payment payment = payment("20.00", PAID, "NZD");
+
+		// WHEN
+		service.syncPayment(payment, List.of(invoicePayment(payment, 1931L, "12.06")), account);
+
+		// THEN
+		final String txGuid = paymentTransactions(payment).getFirst();
+		// @formatter:off
+		then(jdbcTemplate.queryForMap("SELECT * FROM transactions WHERE guid = ?", txGuid))
+			.as("No reference, so no number")
+			.containsEntry("num", "")
+			;
+		then(lotBalance(invoiceLot)).as("Invoice paid").isEqualByComparingTo("0");
+
+		final var lots = paymentLots(customerGuid);
+		then(lots)
+			.as("Payment lot owned by customer holds the rest of the payment")
+			.singleElement()
+			.satisfies(l -> then(l)
+				.containsEntry("account_guid", receivable.guid())
+				.containsEntry("is_closed", -1)
+				.containsEntry("owner_type", 2L))
+			;
+		then(lotBalance(lots.getFirst().get("guid")))
+			.as("Overpayment left as credit")
+			.isEqualByComparingTo("-7.94")
+			;
+		then(splitValues(txGuid))
+			.as("Bank debited with the whole payment")
+			.containsOnly(Map.entry(bank.guid(), 2000L), Map.entry(receivable.guid(), -2000L))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_overpaid_creditUsedByLaterInvoice() {
+		// GIVEN
+		final String customerGuid = insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		final Payment payment = payment("130.00", PAID, "NZD");
+		service.syncPayment(payment, List.of(invoicePayment(payment, 1931L, "12.06")), account);
+		givenTaxCodes("datum-props-in");
+
+		// WHEN
+		service.syncInvoice(creditedInvoice(1932L, "113.78"), account);
+
+		// THEN
+		// @formatter:off
+		then(lotBalance(invoiceRow("1932").get("post_lot")))
+			.as("Later invoice paid from the overpayment")
+			.isEqualByComparingTo("0")
+			;
+		then(paymentLots(customerGuid))
+			.as("Overpayment lot kept with the rest of the credit")
+			.singleElement()
+			.satisfies(l -> then(lotBalance(l.get("guid"))).isEqualByComparingTo("-4.16"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_severalInvoices() {
+		// GIVEN
+		final String customerGuid = insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L, 1932L);
+		final Object lot1 = invoiceRow("1931").get("post_lot");
+		final Object lot2 = invoiceRow("1932").get("post_lot");
+
+		final Payment payment = payment("20.00", PAID, "NZD");
+
+		// WHEN
+		service.syncPayment(payment, List.of(invoicePayment(payment, 1932L, "7.94"),
+				invoicePayment(payment, 1931L, "12.06")), account);
+
+		// THEN
+		final String txGuid = paymentTransactions(payment).getFirst();
+		// @formatter:off
+		then(rows("SELECT value_num, lot_guid FROM splits WHERE tx_guid = ? AND account_guid = ?",
+				txGuid, receivable.guid()))
+			.as("One receivable split for each invoice paid")
+			.extracting(r -> r.get("lot_guid"), r -> r.get("value_num"))
+			.containsExactlyInAnyOrder(tuple(lot1, -1206L), tuple(lot2, -794L))
+			;
+		then(lotBalance(lot1)).as("First invoice paid").isEqualByComparingTo("0");
+		then(lotBalance(lot2)).as("Second invoice partly paid").isEqualByComparingTo("4.12");
+		then(paymentLots(customerGuid)).as("Nothing left over as credit").isEmpty();
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_alreadyPresent() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		final Payment payment = payment("12.06", PAID, "NZD");
+		final List<InvoicePayment> invoicePayments = List
+				.of(invoicePayment(payment, 1931L, "12.06"));
+		service.syncPayment(payment, invoicePayments, account);
+
+		// WHEN
+		boolean result = service.syncPayment(payment, invoicePayments, account);
+
+		// THEN
+		// @formatter:off
+		then(result).as("Payment already present").isFalse();
+		then(paymentTransactions(payment)).as("Not added again").hasSize(1);
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_usd() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, usd, gstZeroTable);
+		final Account account = account("USD");
+		givenMessages(account);
+		final SnfInvoice invoice = invoice(1921L, "USD", CREATED, START);
+		service.syncInvoice(
+				withItems(invoice, item(invoice, Usage, "datum-props-in", "1000000", "305.46")),
+				account);
+		final Payment payment = payment("305.46", PAID, "USD");
+
+		// WHEN
+		service.syncPayment(payment, List.of(invoicePayment(payment, 1921L, "305.46")), account);
+
+		// THEN
+		final String txGuid = paymentTransactions(payment).getFirst();
+		// @formatter:off
+		then(jdbcTemplate.queryForMap("SELECT * FROM transactions WHERE guid = ?", txGuid))
+			.as("USD transaction")
+			.containsEntry("currency_guid", usd.guid())
+			;
+		then(splitValues(txGuid))
+			.as("USD bank debited and USD receivable credited")
+			.containsOnly(Map.entry(bankUsd.guid(), 30546L), Map.entry(receivableUsd.guid(), -30546L))
+			;
+		then(lotBalance(invoiceRow("1921").get("post_lot"))).as("Invoice paid").isEqualByComparingTo("0");
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_dateInAccountTimeZone() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		account.getAddress().setTimeZoneId("America/New_York");
+
+		// noon on 6 October in New York, which is already 7 October in New Zealand
+		final Payment payment = payment("12.06", Instant.parse("2026-10-06T16:00:00Z"), "NZD");
+
+		// WHEN
+		service.syncPayment(payment, List.of(invoicePayment(payment, 1931L, "12.06")), account);
+
+		// THEN
+		final String txGuid = paymentTransactions(payment).getFirst();
+		// @formatter:off
+		then(instant(jdbcTemplate.queryForMap("SELECT * FROM transactions WHERE guid = ?", txGuid)
+				.get("post_date")))
+			.as("Posted on the payment date in the account's time zone")
+			.isEqualTo(Instant.parse("2026-10-06T10:59:00Z"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_invoiceNotInGnucash() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Payment payment = payment("12.06", PAID, "NZD");
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(GnucashSyncException.class)
+			.as("Invoice must be in GnuCash first")
+			.isThrownBy(() -> service.syncPayment(payment,
+					List.of(invoicePayment(payment, 1931L, "12.06")), account("NZD")))
+			.withMessageContaining("has no invoice 1931")
+			;
+		then(paymentTransactions(payment)).as("Nothing written").isEmpty();
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_moreThanDue() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenNzdInvoices(account, 1931L);
+		final Payment first = payment("10.00", PAID, "NZD");
+		service.syncPayment(first, List.of(invoicePayment(first, 1931L, "10.00")), account);
+		final Payment payment = payment("5.00", PAID, "NZD");
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(GnucashSyncException.class)
+			.as("GnuCash invoice already partly paid, perhaps by a payment entered in GnuCash")
+			.isThrownBy(() -> service.syncPayment(payment,
+					List.of(invoicePayment(payment, 1931L, "5.00")), account))
+			.withMessageContaining("has only 2.06 due")
+			;
+		then(paymentTransactions(payment)).as("Nothing written").isEmpty();
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_noPaymentAccount() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		settings.currency("NZD").setPaymentAccount(null);
+		final Payment payment = payment("12.06", PAID, "NZD");
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(GnucashSyncException.class)
+			.isThrownBy(() -> service.syncPayment(payment, List.of(), account("NZD")))
+			.withMessage("No GnuCash payment account is configured for currency NZD.")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_notPayment() {
+		// GIVEN
+		final Payment payment = new Payment(UUID.randomUUID(), USER_ID, ACCOUNT_ID, PAID,
+				PaymentType.Credit, new BigDecimal("12.06"), "NZD");
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(GnucashSyncException.class)
+			.isThrownBy(() -> service.syncPayment(payment, List.of(), account("NZD")))
+			.withMessageContaining("is a Credit")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void payment_bookOpen() {
+		// GIVEN
+		insertLock();
+		final Payment payment = payment("12.06", PAID, "NZD");
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(GnucashBookLockedException.class)
+			.isThrownBy(() -> service.syncPayment(payment, List.of(), account("NZD")))
 			;
 		// @formatter:on
 	}

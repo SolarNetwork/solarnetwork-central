@@ -111,4 +111,36 @@
 		</choose>
 	</select>
 
+	<resultMap id="InvoicePayment-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.InvoicePayment">
+		<constructor>
+			<idArg column="bill_invoice_payment_id" javaType="java.util.UUID"/>
+			<arg column="bill_invoice_payment_user_id" javaType="Long"/>
+			<arg column="bill_invoice_payment_acct_id" javaType="Long"/>
+			<arg column="bill_invoice_payment_pay_id" javaType="java.util.UUID"/>
+			<arg column="bill_invoice_payment_inv_id" javaType="Long"/>
+			<arg column="bill_invoice_payment_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="amount" column="bill_invoice_payment_amount"/>
+	</resultMap>
+
+	<select id="find-InvoicePayment-for-payment" parameterType="net.solarnetwork.central.domain.UserUuidPK" resultMap="InvoicePayment-FullResult">
+		SELECT
+			  ipay.id 			AS bill_invoice_payment_id
+			, ipay.created 		AS bill_invoice_payment_created
+			, ipay.acct_id 		AS bill_invoice_payment_acct_id
+			, ipay.pay_id 		AS bill_invoice_payment_pay_id
+			, ipay.inv_id 		AS bill_invoice_payment_inv_id
+			, ipay.amount 		AS bill_invoice_payment_amount
+			, acct.user_id 		AS bill_invoice_payment_user_id
+		FROM
+			solarbill.bill_invoice_payment ipay
+		INNER JOIN
+			solarbill.bill_account acct ON acct.id = ipay.acct_id
+		WHERE
+			ipay.pay_id = #{uuid}
+			AND acct.user_id = #{userId}
+		ORDER BY
+			ipay.inv_id, ipay.id
+	</select>
+
 </mapper>

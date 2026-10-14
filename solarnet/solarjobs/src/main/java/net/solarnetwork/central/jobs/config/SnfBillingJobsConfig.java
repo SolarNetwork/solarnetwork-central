@@ -41,6 +41,7 @@ import net.solarnetwork.central.user.billing.snf.jobs.InvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreator;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreatorJob;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator;
+import net.solarnetwork.central.user.billing.snf.jobs.PaymentAccountingSyncer;
 import net.solarnetwork.central.user.dao.UserDao;
 
 /**
@@ -87,10 +88,12 @@ public class SnfBillingJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.billing.account-task")
 	@Bean
 	public ManagedJob accountTaskProcessorJob(InvoiceGenerator generator, InvoiceDeliverer deliverer,
-			ObjectProvider<InvoiceAccountingSyncer> invoiceAccountingSyncer) {
+			ObjectProvider<InvoiceAccountingSyncer> invoiceAccountingSyncer,
+			ObjectProvider<PaymentAccountingSyncer> paymentAccountingSyncer) {
 		AccountTaskJob job = new AccountTaskJob(transactionTemplate, accountTaskDao, generator,
 				deliverer);
 		job.setSyncInvoiceTaskHandler(invoiceAccountingSyncer.getIfAvailable());
+		job.setSyncPaymentTaskHandler(paymentAccountingSyncer.getIfAvailable());
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

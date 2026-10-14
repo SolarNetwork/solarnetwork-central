@@ -62,7 +62,15 @@ public final class SelectGncInvoiceRef implements PreparedStatementCreator, SqlP
 
 	@Override
 	public String getSql() {
-		return "SELECT guid, id, owner_guid FROM " + schema + ".invoices WHERE id = ? ORDER BY guid";
+		return """
+				SELECT i.guid, i.id, i.owner_guid, i.post_lot, i.post_acc
+					, (SELECT SUM(s.quantity_num::NUMERIC / s.quantity_denom)
+						FROM {schema}.splits s
+						WHERE s.lot_guid = i.post_lot) AS balance
+				FROM {schema}.invoices i
+				WHERE i.id = ?
+				ORDER BY i.guid
+				""".replace("{schema}", schema);
 	}
 
 	@Override
@@ -73,7 +81,8 @@ public final class SelectGncInvoiceRef implements PreparedStatementCreator, SqlP
 	}
 
 	private static GncInvoiceRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-		return new GncInvoiceRef(rs.getString(1), rs.getString(2), rs.getString(3));
+		return new GncInvoiceRef(rs.getString(1), rs.getString(2), rs.getString(3),
+				rs.getString(4), rs.getString(5), rs.getBigDecimal(6));
 	}
 
 }

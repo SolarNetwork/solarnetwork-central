@@ -29,7 +29,7 @@ The following Spring runtime profiles are available:
 | `node-service-auditor` | Enables auditing node service events like instruction counts. See [InstructorBizConfig][InstructorBizConfig], [JdbcNodeServiceAuditorConfig][JdbcNodeServiceAuditorConfig].|
 | `rate-limit` | Enables rate-limiting maintenance jobs. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
-| `snf-billing-gnucash` | Record SNF invoices in a GnuCash book, with `snf-billing`. See [SnfBillingGnucashConfig][SnfBillingGnucashConfig]. |
+| `snf-billing-gnucash` | Record SNF invoices and payments in a GnuCash book, with `snf-billing`. See [SnfBillingGnucashConfig][SnfBillingGnucashConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 | `ocpp-jobs` | Enable OCPP specific jobs. See [OcppJobsConfig][OcppJobsConfig]. |
 | `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. |

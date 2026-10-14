@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
+import java.util.Collection;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
+import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 
 /**
- * API for recording SNF invoices in an accounting system.
+ * API for recording SNF invoices and payments in an accounting system.
  *
  * @author matt
  * @version 1.0
@@ -52,5 +55,30 @@ public interface SnfAccountingSystem {
 	 *         if the invoice cannot be recorded now, but might be later
 	 */
 	boolean syncInvoice(SnfInvoice invoice, Account account);
+
+	/**
+	 * Record a payment in the accounting system.
+	 *
+	 * <p>
+	 * The payment is applied to the invoices it pays, which the accounting
+	 * system must already have. Any amount not applied to an invoice is kept
+	 * as credit for the account. Recording a payment the accounting system
+	 * already has does nothing, so a failed attempt can safely be repeated.
+	 * </p>
+	 *
+	 * @param payment
+	 *        the payment
+	 * @param invoicePayments
+	 *        the payment's invoice payments, which say how much of the payment
+	 *        was applied to each invoice
+	 * @param account
+	 *        the payment's account
+	 * @return {@code true} if the payment was added, or {@code false} if the
+	 *         accounting system already had it
+	 * @throws RepeatableTaskException
+	 *         if the payment cannot be recorded now, but might be later
+	 */
+	boolean syncPayment(Payment payment, Collection<InvoicePayment> invoicePayments,
+			Account account);
 
 }

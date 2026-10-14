@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.GenerateInvoice;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.SyncInvoiceToAccounting;
+import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.SyncPaymentToAccounting;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.within;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,7 @@ import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskJob;
  * in the database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -72,6 +73,9 @@ public class AccountTaskJobQueueTests extends AbstractMyBatisDaoTestSupport {
 
 	@Mock
 	private AccountTaskHandler syncInvoiceHandler;
+
+	@Mock
+	private AccountTaskHandler syncPaymentHandler;
 
 	private MyBatisAccountTaskDao taskDao;
 	private Account account;
@@ -239,6 +243,51 @@ public class AccountTaskJobQueueTests extends AbstractMyBatisDaoTestSupport {
 	public void syncInvoice_noHandler() {
 		// GIVEN
 		final AccountTask task = saveTask(SyncInvoiceToAccounting, Instant.now());
+
+		// WHEN
+		final Instant start = Instant.now();
+		job.run();
+
+		// THEN
+		// @formatter:off
+		and.then(taskDao.get(task.getId()))
+			.as("Task kept for when an accounting system is available")
+			.isNotNull()
+			;
+		and.then(execAt(task))
+			.as("Task deferred")
+			.isAfter(start)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void syncPayment_handled() {
+		// GIVEN
+		job.setSyncInvoiceTaskHandler(syncInvoiceHandler);
+		job.setSyncPaymentTaskHandler(syncPaymentHandler);
+		final AccountTask task = saveTask(SyncPaymentToAccounting, Instant.now());
+
+		given(syncPaymentHandler.handleTask(any())).willReturn(true);
+
+		// WHEN
+		job.run();
+
+		// THEN
+		// @formatter:off
+		then(syncPaymentHandler).should().handleTask(any());
+		then(syncInvoiceHandler).shouldHaveNoInteractions();
+		and.then(taskDao.get(task.getId()))
+			.as("Task completed")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void syncPayment_noHandler() {
+		// GIVEN
+		final AccountTask task = saveTask(SyncPaymentToAccounting, Instant.now());
 
 		// WHEN
 		final Instant start = Instant.now();

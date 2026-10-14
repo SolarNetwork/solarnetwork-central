@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.dao;
 
+import java.util.List;
 import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentFilter;
 import net.solarnetwork.dao.FilterableDao;
@@ -36,5 +38,16 @@ import net.solarnetwork.dao.GenericDao;
  */
 public interface PaymentDao
 		extends GenericDao<Payment, UserUuidPK>, FilterableDao<Payment, UserUuidPK, PaymentFilter> {
+
+	/**
+	 * Get the invoice payments of a payment, which record the invoices the
+	 * payment was applied to.
+	 *
+	 * @param paymentId
+	 *        the payment ID
+	 * @return the invoice payments, ordered by invoice ID, never {@code null}
+	 * @since 2.0
+	 */
+	List<InvoicePayment> findInvoicePayments(UserUuidPK paymentId);
 
 }

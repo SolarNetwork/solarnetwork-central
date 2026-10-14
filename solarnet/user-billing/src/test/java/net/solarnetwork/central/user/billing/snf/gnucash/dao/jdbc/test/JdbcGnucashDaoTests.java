@@ -38,8 +38,14 @@ import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.JdbcGnucashDao
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncAddress;
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncCreditLot;
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncCustomer;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncInvoice;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncInvoiceRef;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncLot;
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncNumeric;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncSlot;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncSplit;
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncTaxTable;
+import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncTransaction;
 import net.solarnetwork.central.user.billing.snf.gnucash.test.AbstractGnucashTestSupport;
 
 /**
@@ -300,6 +306,92 @@ public class JdbcGnucashDaoTests extends AbstractGnucashTestSupport {
 				"""))
 			.as("Lot frame slots deleted")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void objectsWithSlot() {
+		// GIVEN
+		final String objGuid = guid();
+		dao.saveSlot(GncSlot.string(objGuid, "snf-payment-id", "a"));
+		dao.saveSlot(GncSlot.string(guid(), "snf-payment-id", "b"));
+		dao.saveSlot(GncSlot.string(guid(), "notes", "a"));
+
+		// WHEN
+		List<String> result = dao.objectsWithSlot("snf-payment-id", "a");
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Only the object with the named slot and value found")
+			.containsExactly(objGuid)
+			;
+		then(dao.objectsWithSlot("snf-payment-id", "c"))
+			.as("No object with value")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void invoices_lotBalance() {
+		// GIVEN
+		final String customerGuid = insertCustomer("SN_1", nzd, gstTable);
+		final Instant date = Instant.parse("2026-10-05T10:59:00Z");
+		final String invoiceGuid = guid();
+		final String txGuid = guid();
+		final String lotGuid = guid();
+		dao.saveInvoice(new GncInvoice(invoiceGuid, "1931", date, date, "", true, nzd.guid(),
+				GncInvoice.OWNER_TYPE_CUSTOMER, customerGuid, "", txGuid, lotGuid, receivable.guid()));
+		dao.saveLot(new GncLot(lotGuid, receivable.guid(), GncLot.CLOSED_UNKNOWN));
+		dao.saveTransaction(new GncTransaction(txGuid, nzd.guid(), "1931", date, date, CUSTOMER_NAME));
+		final GncNumeric total = new GncNumeric(1206, 100);
+		dao.saveSplit(GncSplit.unreconciled(guid(), txGuid, receivable.guid(), "", "Invoice", total,
+				total, lotGuid));
+		final String payTxGuid = guid();
+		dao.saveTransaction(new GncTransaction(payTxGuid, nzd.guid(), "", date, date, CUSTOMER_NAME));
+		final GncNumeric paid = new GncNumeric(-500, 100);
+		dao.saveSplit(GncSplit.unreconciled(guid(), payTxGuid, receivable.guid(), "", "Payment",
+				paid, paid, lotGuid));
+
+		// WHEN
+		List<GncInvoiceRef> result = dao.invoices("1931");
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Invoice found")
+			.singleElement()
+			.returns(invoiceGuid, from(GncInvoiceRef::guid))
+			.returns(customerGuid, from(GncInvoiceRef::ownerGuid))
+			.returns(lotGuid, from(GncInvoiceRef::lotGuid))
+			.returns(receivable.guid(), from(GncInvoiceRef::accountGuid))
+			.satisfies(inv -> then(inv.balance())
+					.as("Balance is the invoice total less the payment").isEqualByComparingTo("7.06"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void invoices_notPosted() {
+		// GIVEN
+		final String customerGuid = insertCustomer("SN_1", nzd, gstTable);
+		final Instant date = Instant.parse("2026-10-05T10:59:00Z");
+		dao.saveInvoice(new GncInvoice(guid(), "1931", date, null, "", true, nzd.guid(),
+				GncInvoice.OWNER_TYPE_CUSTOMER, customerGuid, "", null, null, null));
+
+		// WHEN
+		List<GncInvoiceRef> result = dao.invoices("1931");
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Invoice found, with no lot")
+			.singleElement()
+			.returns(null, from(GncInvoiceRef::lotGuid))
+			.returns(null, from(GncInvoiceRef::accountGuid))
+			.returns(null, from(GncInvoiceRef::balance))
 			;
 		// @formatter:on
 	}

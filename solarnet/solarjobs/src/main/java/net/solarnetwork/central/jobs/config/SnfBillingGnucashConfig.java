@@ -43,6 +43,7 @@ import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver;
 import net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfiguration;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.gnucash.GnucashAccountingSystem;
@@ -50,9 +51,10 @@ import net.solarnetwork.central.user.billing.snf.gnucash.GnucashSettings;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.GnucashDao;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.JdbcGnucashDao;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceAccountingSyncer;
+import net.solarnetwork.central.user.billing.snf.jobs.PaymentAccountingSyncer;
 
 /**
- * Configuration for recording SNF invoices in a GnuCash book.
+ * Configuration for recording SNF invoices and payments in a GnuCash book.
  *
  * <p>
  * The GnuCash tables can be in a database of their own, configured with the
@@ -126,6 +128,12 @@ public class SnfBillingGnucashConfig {
 	public InvoiceAccountingSyncer invoiceAccountingSyncer(AccountDao accountDao,
 			SnfInvoiceDao invoiceDao, SnfAccountingSystem accountingSystem) {
 		return new InvoiceAccountingSyncer(accountDao, invoiceDao, accountingSystem);
+	}
+
+	@Bean
+	public PaymentAccountingSyncer paymentAccountingSyncer(AccountDao accountDao,
+			PaymentDao paymentDao, SnfAccountingSystem accountingSystem) {
+		return new PaymentAccountingSyncer(accountDao, paymentDao, accountingSystem);
 	}
 
 }

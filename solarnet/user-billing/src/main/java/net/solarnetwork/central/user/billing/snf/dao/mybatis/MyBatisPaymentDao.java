@@ -28,6 +28,7 @@ import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
+import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentFilter;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -38,7 +39,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * MyBatis implementation of {@link PaymentDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, UserUuidPK>
 		implements PaymentDao {
@@ -46,7 +47,16 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		FindFiltered("find-Payment-for-filter");
+		FindFiltered("find-Payment-for-filter"),
+
+		/**
+		 * Find the invoice payments of a payment.
+		 *
+		 * @since 2.2
+		 */
+		FindInvoicePaymentsForPayment("find-InvoicePayment-for-payment"),
+		
+		;
 
 		private final String queryName;
 
@@ -84,6 +94,12 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 		List<Payment> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null, null);
 		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
 				results.size());
+	}
+
+	@Override
+	public List<InvoicePayment> findInvoicePayments(UserUuidPK paymentId) {
+		return getSqlSession().selectList(QueryName.FindInvoicePaymentsForPayment.getQueryName(),
+				paymentId);
 	}
 
 }

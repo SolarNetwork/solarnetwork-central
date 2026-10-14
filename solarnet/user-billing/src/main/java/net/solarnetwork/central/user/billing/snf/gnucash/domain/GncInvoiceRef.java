@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.gnucash.domain;
 
+import java.math.BigDecimal;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -33,9 +34,20 @@ import org.jspecify.annotations.Nullable;
  *        the document ID
  * @param ownerGuid
  *        the GUID of the document's owner
+ * @param lotGuid
+ *        the GUID of the lot the document was posted to, or {@code null} if
+ *        not posted
+ * @param accountGuid
+ *        the GUID of the account the document was posted to, or {@code null}
+ *        if not posted
+ * @param balance
+ *        the balance of the document's lot: the amount still due on an
+ *        invoice, or the negative of the credit left on a credit note; or
+ *        {@code null} if not posted
  * @author matt
  * @version 1.0
  */
-public record GncInvoiceRef(String guid, String id, @Nullable String ownerGuid) {
+public record GncInvoiceRef(String guid, String id, @Nullable String ownerGuid,
+		@Nullable String lotGuid, @Nullable String accountGuid, @Nullable BigDecimal balance) {
 
 }

@@ -56,6 +56,7 @@ import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncC
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncInvoiceRef;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncLotSplits;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncOpenCreditLots;
+import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncSlotObjects;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGncTaxTables;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGnucashLock;
 import net.solarnetwork.central.user.billing.snf.gnucash.dao.jdbc.sql.SelectGnucashTableVersions;
@@ -227,6 +228,12 @@ public class JdbcGnucashDao implements GnucashDao {
 	@Override
 	public void saveSlot(GncSlot slot) {
 		jdbcOps.update(new InsertGncSlot(schema, slot));
+	}
+
+	@Override
+	public List<String> objectsWithSlot(String name, String value) {
+		return jdbcOps.query(new SelectGncSlotObjects(schema, name, value),
+				(rs, _) -> rs.getString(1));
 	}
 
 	@Override

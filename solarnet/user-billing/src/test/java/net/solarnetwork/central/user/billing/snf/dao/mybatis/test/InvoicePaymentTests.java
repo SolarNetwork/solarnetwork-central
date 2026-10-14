@@ -28,6 +28,8 @@ import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -43,6 +45,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisPaymentDao;
@@ -50,6 +53,7 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDa
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -59,7 +63,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
  * Test cases for invoice payment DB procedures.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 
@@ -376,6 +380,70 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				equalTo(0));
 		val = (BigDecimal) invPayRows.get(1).get("amount");
 		assertThat("Invoice payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
+	}
+
+	@Test
+	public void findInvoicePayments() {
+		// GIVEN
+		final SnfInvoice invoice1 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+		final SnfInvoice invoice2 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 3, 1));
+		final BigDecimal partial = new BigDecimal("1.00");
+		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(
+				account.getAccountId(), new Long[] { invoice2.getInvoiceId(), invoice1.getInvoiceId() },
+				invoice1.getTotalAmount().add(partial), now());
+		final UUID paymentId = (UUID) payRows.getFirst().get("id");
+
+		// WHEN
+		List<InvoicePayment> result = paymentDao
+				.findInvoicePayments(new UserUuidPK(account.getUserId(), paymentId));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Invoice payment returned for each invoice paid")
+			.hasSize(2)
+			.allSatisfy(ip -> then(ip)
+				.returns(paymentId, from(InvoicePayment::getPaymentId))
+				.returns(account.getAccountId(), from(InvoicePayment::getAccountId))
+				.returns(account.getUserId(), from(InvoicePayment::getUserId)))
+			.extracting(InvoicePayment::getInvoiceId)
+			.as("Ordered by invoice ID")
+			.containsExactly(invoice1.getInvoiceId(), invoice2.getInvoiceId())
+			;
+		then(result.get(0).getAmount())
+			.as("First invoice paid in full")
+			.isEqualByComparingTo(invoice1.getTotalAmount())
+			;
+		then(result.get(1).getAmount())
+			.as("Rest of payment applied to second invoice")
+			.isEqualByComparingTo(partial)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findInvoicePayments_otherUser() {
+		// GIVEN
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(
+				account.getAccountId(), new Long[] { invoice.getInvoiceId() },
+				invoice.getTotalAmount(), now());
+		final UUID paymentId = (UUID) payRows.getFirst().get("id");
+
+		// WHEN
+		List<InvoicePayment> result = paymentDao
+				.findInvoicePayments(new UserUuidPK(account.getUserId() + 1, paymentId));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No invoice payments for a payment of another user")
+			.isEmpty()
+			;
+		// @formatter:on
 	}
 
 }
