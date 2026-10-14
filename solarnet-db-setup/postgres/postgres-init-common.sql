@@ -379,26 +379,32 @@ $$
 $$;
 
 /**
- * Convert a bigint into a base 36 string.
+ * Encode a non-negative integer as a string of a specific radix.
+ *
+ * Digits above 9 are encoded as upper case letters, so the radix can be at most 36.
  *
  * @param n the number to encode
+ * @param radix the radix to use, from 2 to 36; defaults to `16`
+ * @return the encoded number, or `NULL` if `n` is negative or `radix` is not supported
  */
 CREATE OR REPLACE FUNCTION solarcommon.to_baseX(n BIGINT, radix INT DEFAULT 16) RETURNS TEXT LANGUAGE plpgsql IMMUTABLE AS
 $$
 DECLARE
 	s TEXT := '';
+	d INTEGER;
 BEGIN
-	IF ( n < 0 ) THEN
+	IF n < 0 OR radix < 2 OR radix > 36 THEN
 		RETURN NULL;
+	ELSIF n = 0 THEN
+		RETURN '0';
 	END IF;
 	LOOP
 		EXIT WHEN n <= 0;
-		s := CHR(n % radix + CASE WHEN n % radix < 10 THEN 48 ELSE 55 END) || s;
-		n := FLOOR(n / radix);
+		d := (n % radix)::INTEGER;
+		s := CHR(d + CASE WHEN d < 10 THEN 48 ELSE 55 END) || s;
+		n := n / radix;
 	END LOOP;
-	RETURN s::BIGINT;
-	EXCEPTION WHEN OTHERS THEN
-	RETURN NULL;
+	RETURN s;
 END
 $$;
 

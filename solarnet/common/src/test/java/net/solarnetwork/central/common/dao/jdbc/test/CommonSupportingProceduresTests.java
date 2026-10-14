@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,8 +33,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidUtils;
@@ -42,7 +46,7 @@ import net.solarnetwork.util.UuidUtils;
  * Test cases for common supporting database functions.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class CommonSupportingProceduresTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -126,6 +130,84 @@ public class CommonSupportingProceduresTests extends AbstractJUnit5JdbcDaoTestSu
 		// THEN
 		assertThat("UUID returned as boundary", result,
 				is(equalTo(UuidUtils.createUuidV7Boundary(t.truncatedTo(ChronoUnit.MICROS)))));
+	}
+
+
+	@ParameterizedTest
+	@CsvSource({ "1290,36", "255,16", "36,36", "1,36", "9223372036854775807,36" })
+	public void toBaseX(long n, int radix) {
+		// WHEN
+		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?, ?)", String.class,
+				n, radix);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Upper case base %d encoding of %d", radix, n)
+			.isEqualTo(Long.toString(n, radix).toUpperCase(Locale.ENGLISH))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void toBaseX_defaultRadix() {
+		// WHEN
+		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?)", String.class,
+				255L);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Base 16 used by default")
+			.isEqualTo("FF")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void toBaseX_zero() {
+		// WHEN
+		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?, ?)", String.class,
+				0L, 36);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Zero encoded")
+			.isEqualTo("0")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void toBaseX_negative() {
+		// WHEN
+		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?, ?)", String.class,
+				-1L, 36);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Negative numbers not supported")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void toBaseX_roundTrip() {
+		// WHEN
+		Long result = jdbcTemplate.queryForObject(
+				"SELECT solarcommon.baseX_integer(solarcommon.to_baseX(?, ?), ?)", Long.class, 1290L,
+				36, 36);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Decoding the encoded value returns the original value")
+			.isEqualTo(1290L)
+			;
+		// @formatter:on
 	}
 
 }
