@@ -102,7 +102,7 @@ import tools.jackson.databind.module.SimpleModule;
  * Test cases for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -1305,7 +1305,9 @@ public class SqsOverflowQueueTests {
 		queue.setReadSleepThrottleStepMs(1_000);
 		queue.setShutdownWaitSecs(0);
 
+		final CountDownLatch persistLatch = new CountDownLatch(1);
 		given(delegateDao.persist(any())).willAnswer(_ -> {
+			persistLatch.countDown();
 			wedgeForever();
 			return null;
 		});
@@ -1323,18 +1325,24 @@ public class SqsOverflowQueueTests {
 
 		final List<ChangeMessageVisibilityBatchRequest> vizRequests = Collections
 				.synchronizedList(new ArrayList<>(1));
+		final CountDownLatch vizLatch = new CountDownLatch(1);
 		given(sqsClient.changeMessageVisibilityBatch(any(Consumer.class))).willAnswer(inv -> {
 			Consumer<ChangeMessageVisibilityBatchRequest.Builder> c = inv.getArgument(0);
 			var b = ChangeMessageVisibilityBatchRequest.builder();
 			c.accept(b);
 			vizRequests.add(b.build());
+			vizLatch.countDown();
 			return CompletableFuture
 					.completedFuture(ChangeMessageVisibilityBatchResponse.builder().build());
 		});
 
 		// WHEN
 		queue.serviceDidStartup();
-		then(sqsClient).should(timeout(3_000)).changeMessageVisibilityBatch(any(Consumer.class));
+		// wait on latches the answers release rather than on Mockito verifications: Mockito
+		// records a call before it runs the answer, and shutdownAndWait() does not wait for the
+		// reader and writer threads
+		and.then(vizLatch.await(3, TimeUnit.SECONDS)).as("Visibility request made").isTrue();
+		and.then(persistLatch.await(3, TimeUnit.SECONDS)).as("Writer wedged in persist").isTrue();
 		queue.shutdownAndWait();
 
 		// THEN
