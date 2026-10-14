@@ -7,8 +7,8 @@ plugins {
 apply plugin: 'java-library'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'com.diffplug.spotless'
-apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply plugin: 'com.vanniktech.maven.publish'
 
 dependencyManagement {
 	imports {
@@ -64,49 +64,37 @@ jar.manifest {
     attributes('Implementation-Version': version)
 }
 
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-			pom {
-				name = project.description
-				description = 'Shared library for all SolarNet web projects.'
-				url = 'https://github.com/SolarNetwork/solarnetwork-central'
-				licenses {
-					license {
-						name = 'GNU General Public License, Version 2.0'
-						url = 'https://opensource.org/licenses/GPL-2.0'
-					}
-				}
-				developers {
-					developer {
-						name = 'SolarNetwork Developers'
-						email = 'code@solarnetwork.net'
-						organization = 'SolarNetwork Foundation'
-						organizationUrl = 'https://solarnetwork.net'
-					}
-				}
-				scm {
-					connection = 'scm:git:https://github.com/SolarNetwork/solarnetwork-central.git'
-					developerConnection = 'scm:git:git@github.com:SolarNetwork/solarnetwork-central.git'
-					url = 'https://github.com/SolarNetwork/solarnetwork-central'
-				}
+mavenPublishing {
+	coordinates(group, project.name, version)
+	publishToMavenCentral()
+	signAllPublications()
+
+	pom {
+		name = project.description
+		description = 'Shared library for all SolarNet web projects.'
+		url = 'https://github.com/SolarNetwork/solarnetwork-central'
+		licenses {
+			license {
+				name = 'GNU General Public License, Version 2.0'
+				url = 'https://opensource.org/licenses/GPL-2.0'
 			}
 		}
-	}
-	repositories {
-		maven {
-			name = "OSSRH"
-			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-			credentials {
-				username = rootProject.ext.ossrhUsername
-				password = rootProject.ext.ossrhPassword
+		developers {
+			developer {
+				name = 'SolarNetwork Developers'
+				email = 'code@solarnetwork.net'
+				organization = 'SolarNetwork Foundation'
+				organizationUrl = 'https://solarnetwork.net'
 			}
+		}
+		scm {
+			connection = 'scm:git:https://github.com/SolarNetwork/solarnetwork-central.git'
+			developerConnection = 'scm:git:git@github.com:SolarNetwork/solarnetwork-central.git'
+			url = 'https://github.com/SolarNetwork/solarnetwork-central'
 		}
 	}
 }
 
 signing {
 	useGpgCmd()
-	sign publishing.publications.mavenJava
 }

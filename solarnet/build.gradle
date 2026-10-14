@@ -6,6 +6,7 @@ buildscript {
 }
 
 plugins {
+	id "com.vanniktech.maven.publish" version "0.34.0" apply false
 	id('net.ltgt.errorprone') version '5.1.0' apply false
 	id('com.diffplug.spotless') version "8.10.2" apply false
 }
@@ -25,8 +26,21 @@ subprojects {
 		toolchain {
 	        languageVersion = JavaLanguageVersion.of(25)
 	    }
-		withJavadocJar()
-		withSourcesJar()
+	}
+
+	// Dependency versions come from the Spring Boot BOM via the dependency-management plugin,
+	// which Gradle's published metadata does not carry, so publish the resolved versions.
+	plugins.withId('com.vanniktech.maven.publish') {
+		publishing.publications.withType(MavenPublication).configureEach {
+			versionMapping {
+				usage('java-api') {
+					fromResolutionOf('runtimeClasspath')
+				}
+				usage('java-runtime') {
+					fromResolutionResult()
+				}
+			}
+		}
 	}
 
 	repositories {
