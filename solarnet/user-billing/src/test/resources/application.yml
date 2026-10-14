@@ -24,3 +24,9 @@ spring:
     username: solartest
     password: solartest
     initialize: false
+
+gnucash:
+  test:
+    url: jdbc:postgresql://localhost/gnucashtest
+    username: gnucashtest
+    password: gnucashtest

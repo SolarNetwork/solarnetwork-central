@@ -35,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -59,15 +60,18 @@ import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncTaxTableEntry
  * <p>
  * Each test runs in a transaction that is rolled back. The database starts
  * with an empty book, so a book like SolarNetwork's is set up before each
- * test. The connection can be changed with the {@code gnucash.test.url},
- * {@code gnucash.test.username}, and {@code gnucash.test.password} system
- * properties.
+ * test. The connection is set by the {@code gnucash.test.url},
+ * {@code gnucash.test.username}, and {@code gnucash.test.password}
+ * properties, loaded from {@code application.yml} the way Spring Boot tests
+ * load it, so an {@code application.yml} in the working directory can
+ * change them.
  * </p>
  *
  * @author matt
  * @version 1.0
  */
-@SpringJUnitConfig(classes = AbstractGnucashTestSupport.GnucashTestConfig.class)
+@SpringJUnitConfig(classes = AbstractGnucashTestSupport.GnucashTestConfig.class,
+		initializers = ConfigDataApplicationContextInitializer.class)
 @Transactional
 @Rollback
 public abstract class AbstractGnucashTestSupport {
@@ -79,10 +83,9 @@ public abstract class AbstractGnucashTestSupport {
 	public static class GnucashTestConfig {
 
 		@Bean
-		public DataSource gnucashDataSource(
-				@Value("${gnucash.test.url:jdbc:postgresql://localhost/gnucashtest}") String url,
-				@Value("${gnucash.test.username:gnucashtest}") String username,
-				@Value("${gnucash.test.password:gnucashtest}") String password) {
+		public DataSource gnucashDataSource(@Value("${gnucash.test.url}") String url,
+				@Value("${gnucash.test.username}") String username,
+				@Value("${gnucash.test.password}") String password) {
 			return new DriverManagerDataSource(url, username, password);
 		}
 

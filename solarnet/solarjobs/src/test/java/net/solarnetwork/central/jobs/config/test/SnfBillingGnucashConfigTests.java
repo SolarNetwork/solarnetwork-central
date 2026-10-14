@@ -33,6 +33,7 @@ import java.time.Period;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -55,6 +56,14 @@ import net.solarnetwork.central.user.billing.snf.jobs.PaymentAccountingSyncer;
 
 /**
  * Test cases for the {@link SnfBillingGnucashConfig} class.
+ *
+ * <p>
+ * The {@code gnucashDatabase} test connects to the database set by the
+ * {@code gnucash.test.url}, {@code gnucash.test.username}, and
+ * {@code gnucash.test.password} properties, loaded from {@code application.yml}
+ * the way Spring Boot loads it, so an {@code application.yml} in the working
+ * directory can change them.
+ * </p>
  *
  * @author matt
  * @version 1.0
@@ -169,12 +178,14 @@ public class SnfBillingGnucashConfigTests {
 
 	@Test
 	public void gnucashDatabase() {
-		runner.withInitializer(SnfBillingGnucashConfigTests::activateProfiles)
-				.withPropertyValues("app.datasource-gnucash.url=jdbc:postgresql://localhost/gnucashtest",
-						"app.datasource-gnucash.username=gnucashtest",
-						"app.datasource-gnucash.password=gnucashtest",
+		runner.withInitializer(new ConfigDataApplicationContextInitializer())
+				.withInitializer(SnfBillingGnucashConfigTests::activateProfiles)
+				.withPropertyValues("app.datasource-gnucash.url=${gnucash.test.url}",
+						"app.datasource-gnucash.username=${gnucash.test.username}",
+						"app.datasource-gnucash.password=${gnucash.test.password}",
 						"app.datasource-gnucash.hikari.minimum-idle=0")
 				.run(ctx -> {
+					final String url = ctx.getEnvironment().getRequiredProperty("gnucash.test.url");
 					// @formatter:off
 					then(ctx)
 						.as("GnuCash database configured")
@@ -183,7 +194,7 @@ public class SnfBillingGnucashConfigTests {
 						;
 					then(ctx.getBean("gnucashDataSource", HikariDataSource.class))
 						.as("Connection pool for the GnuCash database")
-						.returns("jdbc:postgresql://localhost/gnucashtest", from(HikariDataSource::getJdbcUrl))
+						.returns(url, from(HikariDataSource::getJdbcUrl))
 						.returns(0, from(HikariDataSource::getMinimumIdle))
 						;
 					then(ctx.getBean(GnucashDao.class).tableVersions())

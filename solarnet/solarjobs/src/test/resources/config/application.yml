@@ -1,0 +1,5 @@
+gnucash:
+  test:
+    url: jdbc:postgresql://localhost/gnucashtest
+    username: gnucashtest
+    password: gnucashtest
