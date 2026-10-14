@@ -32,6 +32,8 @@ import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.dryRunOptions;
 import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -79,7 +81,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  * {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
@@ -121,6 +123,42 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		assertThat("InvoiceImpl returned from DAO.", invoice, sameInstance(inv));
 		SnfInvoiceFilter filter = filterCaptor.getValue();
 		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getEntityId()));
+	}
+
+	@Test
+	public void findInvoiceForPeriod() {
+		// GIVEN
+		final var pk = new UserLongCompositePK(randomLong(), randomLong());
+		final LocalDate start = LocalDate.of(2026, 9, 1);
+		final LocalDate end = start.plusMonths(1);
+		final SnfInvoice inv = new SnfInvoice(pk.getEntityId(), pk.getUserId(), Instant.now(), start,
+				end, "NZD");
+		final Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
+		expect(invoiceDao.findFiltered(capture(filterCaptor),
+				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
+						.andReturn(new BasicFilterResults<>(singleton(inv)));
+
+		// WHEN
+		replayAll();
+		SnfInvoice result = invoicingSystem.findInvoiceForPeriod(pk, start, end);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Invoice returned from DAO")
+			.isSameAs(inv)
+			;
+		then(filterCaptor.getValue())
+			.as("Query filter by account ID")
+			.returns(pk.getEntityId(), from(SnfInvoiceFilter::getAccountId))
+			.as("Query filter from period start")
+			.returns(start, from(SnfInvoiceFilter::getStartDate))
+			.as("Query filter to period end")
+			.returns(end, from(SnfInvoiceFilter::getEndDate))
+			.as("Query filter ignores invoices that only add credit")
+			.returns(true, from(SnfInvoiceFilter::isIgnoreCreditOnly))
+			;
+		// @formatter:on
 	}
 
 	@Test

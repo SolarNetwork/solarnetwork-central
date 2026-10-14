@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptio
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
@@ -48,7 +49,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
  * Service to generate invoices for SNF accounts.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InvoiceGenerator implements AccountTaskHandler {
 
@@ -105,10 +106,20 @@ public class InvoiceGenerator implements AccountTaskHandler {
 
 		final ZonedDateTime invoiceStartDate = nonnull(task.getCreated(), "Task created date")
 				.atZone(accountTimeZone);
+		final LocalDate startDate = invoiceStartDate.toLocalDate();
+		final LocalDate endDate = invoiceStartDate.plusMonths(1).toLocalDate();
+
+		// the task creator does not look at pending tasks, so a month can have more than one
+		final SnfInvoice existing = invoicingSystem.findInvoiceForPeriod(account.id(), startDate,
+				endDate);
+		if ( existing != null ) {
+			log.warn("Not generating invoice for user {} for month {} because invoice {} exists.",
+					account.getUserId(), invoiceStartDate, existing.getInvoiceId());
+			return true;
+		}
 
 		log.info("Generating invoice for user {} for month {}", account.getUserId(), invoiceStartDate);
-		SnfInvoice invoice = invoicingSystem.generateInvoice(account.getUserId(),
-				invoiceStartDate.toLocalDate(), invoiceStartDate.plusMonths(1).toLocalDate(),
+		SnfInvoice invoice = invoicingSystem.generateInvoice(account.getUserId(), startDate, endDate,
 				defaultOptions());
 		if ( invoice != null ) {
 			log.info("InvoiceImpl for user {} for month {} total = {} {}", account.getUserId(),
