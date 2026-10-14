@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.test.CommonDbTestUtils.MS_CLOCK;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +59,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisPaymentDao} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -148,6 +150,37 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat(format("Payment %d data preserved", i), payment.isSameAs(expected),
 					equalTo(true));
 		}
+	}
+
+	private Payment savePayment(Instant date) {
+		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getAccountId(), date,
+				PaymentType.Payment, new BigDecimal("1.00"), account.getCurrencyCode());
+		dao.save(entity);
+		return entity;
+	}
+
+	@Test
+	public void filterForAccount_dateRange() {
+		// GIVEN
+		// payments either side of the start and end of September, in the account's time zone
+		savePayment(LocalDate.of(2026, 8, 31).atTime(23, 0).atZone(address.getTimeZone()).toInstant());
+		Payment sep = savePayment(
+				LocalDate.of(2026, 9, 1).atStartOfDay(address.getTimeZone()).toInstant());
+		savePayment(LocalDate.of(2026, 10, 1).atStartOfDay(address.getTimeZone()).toInstant());
+
+		// WHEN
+		PaymentFilter filter = PaymentFilter.forAccount(account.getAccountId());
+		filter.setStartDate(LocalDate.of(2026, 9, 1));
+		filter.setEndDate(LocalDate.of(2026, 10, 1));
+		final FilterResults<Payment, UserUuidPK> result = dao.findFiltered(filter, null, null, null);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Start date inclusive and end date exclusive, in the account's time zone")
+			.containsExactly(sep)
+			;
+		// @formatter:on
 	}
 
 }

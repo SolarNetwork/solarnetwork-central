@@ -89,10 +89,10 @@
 				AND pay.acct_id = #{accountId}
 			</if>
 			<if test="startDate != null">
-				AND pay.created &gt;= (#{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+				AND pay.created &gt;= (#{startDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
 			</if>
 			<if test="endDate != null">
-				AND pay.created &lt; (#{filter.endDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+				AND pay.created &lt; (#{endDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
 			</if>
 		</where>
 		ORDER BY
