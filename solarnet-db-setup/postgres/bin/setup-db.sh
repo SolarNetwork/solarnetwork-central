@@ -22,6 +22,8 @@ PG_DB="solarnetwork_unittest"
 PG_ADMIN_USER="postgres"
 PG_ADMIN_DB="postgres"
 PG_TEMPLATE_DB="template0"
+GNC_DB=""
+GNC_USER=""
 RECREATE_DB=""
 CREATE_USER=""
 DRY_RUN=""
@@ -34,6 +36,8 @@ Usage: $0 <arguments>
  -c <args>        - extra arguments to pass to psql
  -d <db name>     - the database name; defaults to 'solarnetwork_unittest'
  -D <admin db>    - the Postgres admin database name; defaults to 'postgres'
+ -g <gnc db name> - the GnuCash database name
+ -G <gnc db user> - the GnuCash database user
  -m               - create the Postgres database user
  -r               - recreate the database (drop and create again)
  -t               - dry run
@@ -58,7 +62,7 @@ To recreate the database (drop and create):
 EOF
 }
 
-while getopts ":c:d:D:hmrtT:u:U:v" opt; do
+while getopts ":c:d:D:hg:G:mrtT:u:U:v" opt; do
 	case $opt in
 		c) PSQL_CONN_ARGS="${OPTARG}";;
 		d) PG_DB="${OPTARG}";;
@@ -66,6 +70,8 @@ while getopts ":c:d:D:hmrtT:u:U:v" opt; do
 		h) do_help
 			exit 0
 			;;
+		g) GNC_DB="${OPTARG}";;
+		G) GNC_USER="${OPTARG}";;
 		m) CREATE_USER='TRUE';;
 		r) RECREATE_DB='TRUE';;
 		t) DRY_RUN='TRUE';;
@@ -95,8 +101,14 @@ if [ -n "$RECREATE_DB" ]; then
 	fi
 	if [ -n "$DRY_RUN" ]; then
 		echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'DROP DATABASE IF EXISTS $PG_DB'"
+		if [ -n "$GNC_DB" ]; then
+			echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'DROP DATABASE IF EXISTS $GNC_DB'"
+		fi
 	else
 		psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "DROP DATABASE IF EXISTS $PG_DB" || exit 3
+		if [ -n "$GNC_DB" ]; then
+			psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "DROP DATABASE IF EXISTS $GNC_DB" || exit 3
+		fi
 	fi
 fi
 
@@ -106,8 +118,14 @@ if [ -n "$CREATE_USER" ]; then
 	fi
 	if [ -n "$DRY_RUN" ]; then
 		echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'CREATE USER $PG_USER ENCRYPTED PASSWORD '$PG_USER''"
+		if [ -n "$GNC_USER" ]; then
+			echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'CREATE USER $GNC_USER ENCRYPTED PASSWORD '$GNC_USER''"
+		fi
 	else
 		psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "CREATE USER $PG_USER ENCRYPTED PASSWORD '$PG_USER'" || exit 3
+		if [ -n "$GNC_USER" ]; then
+			psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "CREATE USER $GNC_USER ENCRYPTED PASSWORD '$GNC_USER'" || exit 3
+		fi
 	fi
 fi
 
@@ -130,6 +148,17 @@ else
 	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c "CREATE EXTENSION IF NOT EXISTS aggs_for_vecs WITH SCHEMA public" || exit 3
 fi
 
+if [ -n "$GNC_DB" -a -n "$GNC_USER" ]; then
+	if [ -n "$VERBOSE" ]; then
+		echo "Creating database [$GNC_DB] with owner [$GNC_USER]"
+	fi
+	if [ -n "$DRY_RUN" ]; then
+		echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'CREATE DATABASE $GNC_DB WITH ENCODING='UTF8' OWNER=$GNC_USER TEMPLATE=$PG_TEMPLATE_DB LC_COLLATE='C' LC_CTYPE='C''"
+	else
+		psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "CREATE DATABASE $GNC_DB WITH ENCODING='UTF8' OWNER=$GNC_USER TEMPLATE=$PG_TEMPLATE_DB LC_COLLATE='C' LC_CTYPE='C'" || exit 3
+	fi
+fi
+
 if [ -n "$VERBOSE" ]; then
 	echo "Creating SolarNetwork database tables and functions"
 fi
@@ -139,3 +168,13 @@ else
 	psql $PSQL_CONN_ARGS -U $PG_USER -d $PG_DB -f postgres-init.sql || exit 3
 fi
 
+if [ -n "$GNC_DB" -a -n "$GNC_USER" ]; then
+	if [ -n "$VERBOSE" ]; then
+		echo "Creating GnuCash database tables"
+	fi
+	if [ -n "$DRY_RUN" ]; then
+		echo "psql $PSQL_CONN_ARGS -U $GNC_USER -d $GNC_DB -f gnucash-init.sql"
+	else
+		psql $PSQL_CONN_ARGS -U $GNC_USER -d $GNC_DB -f gnucash-init.sql || exit 3
+	fi
+fi
