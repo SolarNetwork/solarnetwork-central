@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -35,12 +36,14 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserMatch;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * MyBatis implementation of {@link UserDao}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMatch, UserFilter, Long>
 		implements UserDao {
@@ -92,6 +95,20 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	public static final String PARAM_FILTER = "filter";
+
+	/**
+	 * The JSON mapper for internal data updates.
+	 *
+	 * <p>
+	 * Unlike {@link JsonUtils#JSON_OBJECT_MAPPER} this keeps {@code null} map
+	 * values, as those are how {@link #storeInternalData(Long, Map)} is asked
+	 * to remove properties.
+	 * </p>
+	 */
+	private static final JsonMapper INTERNAL_DATA_MAPPER = JsonUtils.JSON_OBJECT_MAPPER.rebuild()
+			.changeDefaultPropertyInclusion(
+					incl -> incl.withContentInclusion(JsonInclude.Include.ALWAYS))
+			.build();
 
 	/**
 	 * Default constructor.
@@ -149,8 +166,20 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	public void storeInternalData(Long userId, @Nullable Map<String, Object> data) {
 		Map<String, Object> sqlParams = new HashMap<>(3);
 		sqlParams.put("userId", userId);
-		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));
+		sqlParams.put("dataJson", internalDataJson(data));
 		getSqlSession().update(UPDATE_INTERNAL_DATA, sqlParams);
+	}
+
+	private String internalDataJson(@Nullable Map<String, Object> data) {
+		if ( data == null ) {
+			return "{}";
+		}
+		try {
+			return INTERNAL_DATA_MAPPER.writeValueAsString(data);
+		} catch ( JacksonException e ) {
+			log.warn("Exception marshalling {} to JSON", data, e);
+			return "{}";
+		}
 	}
 
 }

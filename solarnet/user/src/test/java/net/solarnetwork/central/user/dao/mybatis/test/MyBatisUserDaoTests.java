@@ -47,7 +47,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisUserDao} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -437,6 +437,19 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		User updated = userDao.get(userId);
 		then(updated.getInternalData()).as("Internal data updated").isEqualTo(billingData);
+	}
+
+	@Test
+	public void storeInternalPropertyNullValueRemoves() {
+		storeNewUser();
+		userDao.storeInternalData(userId, Map.of("foo", "bar", "bim", "bam"));
+
+		// note can not use Map.of() here because that does not support null values
+		userDao.storeInternalData(userId, Collections.singletonMap("foo", null));
+
+		User updated = userDao.get(userId);
+		then(updated.getInternalData()).as("Property with null value removed")
+				.isEqualTo(Map.of("bim", "bam"));
 	}
 
 	@Test
