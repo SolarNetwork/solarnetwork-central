@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.BDDMockito.given;
+import java.util.Locale;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.context.support.StaticMessageSource;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.ExtendedModelMap;
 import net.solarnetwork.central.reg.web.AccountController;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -46,7 +50,7 @@ import net.solarnetwork.central.user.account.domain.SnAccountInfo;
  * Test cases for the {@link AccountController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -58,11 +62,13 @@ public class AccountControllerTests {
 	@Mock
 	private SnAccount<?, ?, ?> account;
 
+	private StaticMessageSource messageSource;
 	private AccountController controller;
 
 	@BeforeEach
 	public void setup() {
-		controller = new AccountController(userAccountBiz);
+		messageSource = new StaticMessageSource();
+		controller = new AccountController(userAccountBiz, messageSource);
 	}
 
 	@AfterEach
@@ -72,10 +78,74 @@ public class AccountControllerTests {
 
 	@Test
 	public void home() {
+		// GIVEN
+		final var model = new ExtendedModelMap();
+		model.addAttribute("account", new SnAccountInfo(randomString(), account, Set.of()));
+
+		// WHEN
+		final String result = controller.home(model, Locale.ENGLISH);
+
+		// THEN
 		// @formatter:off
-		and.then(controller.home())
+		and.then(result)
 			.as("Account main page view returned")
 			.isEqualTo("sec/account/account")
+			;
+		and.then(model)
+			.as("No consolidation problem provided when the account has none")
+			.doesNotContainKey("consolidationProblem")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void home_notRegistered() {
+		// GIVEN
+		final var model = new ExtendedModelMap();
+		model.addAttribute("account", null);
+
+		// WHEN
+		final String result = controller.home(model, Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Account main page view returned")
+			.isEqualTo("sec/account/account")
+			;
+		and.then(model)
+			.as("No consolidation problem provided without an account")
+			.doesNotContainKey("consolidationProblem")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void home_consolidationProblem() {
+		// GIVEN
+		final Long userId = randomLong();
+		messageSource.addMessage("test.problem", Locale.GERMAN,
+				"Benutzer {0,number,#} ist nicht vorhanden.");
+		final var problem = new DefaultMessageSourceResolvable(new String[] { "test.problem" },
+				new Object[] { userId }, "User {0,number,#} is not available.");
+
+		final var model = new ExtendedModelMap();
+		model.addAttribute("account",
+				new SnAccountInfo(randomString(), account, Set.of(), null, null, problem));
+
+		// WHEN
+		final String result = controller.home(model, Locale.GERMAN);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Account main page view returned")
+			.isEqualTo("sec/account/account")
+			;
+		and.then(model)
+			.as("Consolidation problem resolved in the request locale")
+			.containsEntry("consolidationProblem",
+					"Benutzer %d ist nicht vorhanden.".formatted(userId))
 			;
 		// @formatter:on
 	}

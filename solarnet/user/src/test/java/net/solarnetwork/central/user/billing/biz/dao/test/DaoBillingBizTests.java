@@ -23,9 +23,13 @@
 package net.solarnetwork.central.user.billing.biz.dao.test;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,13 +38,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
+import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
+import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link DaoBillingBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class DaoBillingBizTests {
@@ -85,6 +96,59 @@ public class DaoBillingBizTests {
 
 		// THEN
 		then(result).as("Null returned when no matching key found").isNull();
+	}
+
+	private void givenUser(Long userId, String systemKey) {
+		final User user = new User(userId, "test@localhost");
+		if ( systemKey != null ) {
+			user.putInternalDataValue(BillingDataConstants.ACCOUNTING_DATA_PROP, systemKey);
+		}
+		given(userDao.get(userId)).willReturn(user);
+	}
+
+	@Test
+	public void consolidatedInvoices_delegated() {
+		// GIVEN
+		final Long userId = randomLong();
+		final String key = randomString();
+		givenUser(userId, key);
+		given(system1.supportsAccountingSystemKey(key)).willReturn(true);
+
+		final var filter = new InvoiceFilterCommand();
+		filter.setUserId(userId);
+		final FilterResults<InvoiceMatch, String> matches = new BasicFilterResults<>(List.of());
+		given(system1.findFilteredConsolidatedInvoices(filter, null, null, null)).willReturn(matches);
+		final Invoice invoice = mock(Invoice.class);
+		given(system1.getConsolidatedInvoice(userId, "4", Locale.ENGLISH)).willReturn(invoice);
+
+		// WHEN
+		FilterResults<InvoiceMatch, String> findResult = service
+				.findFilteredConsolidatedInvoices(filter, null, null, null);
+		Invoice getResult = service.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
+
+		// THEN
+		then(findResult).as("Results from the user's billing system returned").isSameAs(matches);
+		then(getResult).as("Invoice from the user's billing system returned").isSameAs(invoice);
+	}
+
+	@Test
+	public void consolidatedInvoices_noBillingSystem() {
+		// GIVEN
+		final Long userId = randomLong();
+		givenUser(userId, null);
+
+		final var filter = new InvoiceFilterCommand();
+		filter.setUserId(userId);
+
+		// WHEN
+		FilterResults<InvoiceMatch, String> findResult = service
+				.findFilteredConsolidatedInvoices(filter, null, null, null);
+		Invoice getResult = service.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
+
+		// THEN
+		then(findResult.getReturnedResultCount()).as("No results without a billing system")
+				.isZero();
+		then(getResult).as("No invoice without a billing system").isNull();
 	}
 
 }

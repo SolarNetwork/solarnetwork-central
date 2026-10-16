@@ -52,7 +52,7 @@ import net.solarnetwork.domain.Identity;
  * Localized version of {@link Invoice}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -299,6 +299,16 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		}
 		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale, getCurrencyCode()))
 				.collect(Collectors.toList());
+	}
+
+	@Override
+	public boolean isConsolidated() {
+		return invoice.isConsolidated();
+	}
+
+	@Override
+	public @Nullable String getConsolidatedInvoiceNumber() {
+		return invoice.getConsolidatedInvoiceNumber();
 	}
 
 }

@@ -13,7 +13,7 @@
 <div data-th-fragment="content" data-th-object="${accountInput}" data-th-remove="tag">
 	<div class="alert alert-danger" role="alert" data-th-if="${#fields.hasGlobalErrors()}">
 	  <p data-th-each="err : ${#fields.globalErrors()}" data-th-text="${err}">...</p>
-	</div>	
+	</div>
 	<fieldset>
 		<legend data-th-text="#{account.address.title}">Address</legend>
 		<div class="row mb-3">
@@ -114,13 +114,31 @@
 	<fieldset>
 		<legend data-th-text="#{account.features.title}">Features</legend>
 		<p data-th-text="#{account.features.intro}">Enable the features you would like to use.</p>
-		<div class="row mb-3" data-th-each="feature : ${T(net.solarnetwork.central.user.account.domain.SnFeatureEntitlement).values()}">		
+		<div class="row mb-3" data-th-each="feature : ${T(net.solarnetwork.central.user.account.domain.SnFeatureEntitlement).values()}">
 			<label class="col-sm-2 col-form-label" for="account-feature" data-th-for="${'account-feature-' + feature}" data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}">Feature</label>
 			<div class="col-sm-6 plaintext-form-value">
 				<div class="form-check">
 					<input class="form-check-input" type="checkbox" data-th-id="${'account-feature-' + feature}" data-th-field="*{requestedEntitlements}" data-th-value="${feature}">
 					<label class="form-check-label" data-th-for="${'account-feature-' + feature}" data-th-utext="#{${'account.feature.entitlement.' + feature + '.desc'}}"></label>
 				</div>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset data-th-if="${account == null || (account.parentAccount == null && account.childAccounts == null)}">
+		<legend data-th-text="#{account.consolidated.title}">Consolidated Billing</legend>
+		<p data-th-utext="#{account.consolidated.intro}">Link to a parent account.</p>
+		<div class="row mb-3">
+			<label class="col-sm-2 col-form-label" for="account-consolidated-username" data-th-text="#{account.consolidated.username.label}">Parent Account Email</label>
+			<div class="col-sm-6">
+				<input type="text" data-th-field="*{parentAccount.username}" data-th-errorclass="is-invalid" id="account-consolidated-username" maxlength="128" class="form-control" autocomplete="off">
+				<div class="invalid-feedback" data-th-if="${#fields.hasErrors('parentAccount.username')}" data-th-errors="*{parentAccount.username}"></div>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-2 col-form-label" for="account-consolidated-password" data-th-text="#{account.consolidated.password.label}">Parent Account Password</label>
+			<div class="col-sm-6">
+				<input type="password" data-th-field="*{parentAccount.password}" data-th-errorclass="is-invalid" id="account-consolidated-password" maxlength="128" class="form-control" autocomplete="new-password">
+				<div class="invalid-feedback" data-th-if="${#fields.hasErrors('parentAccount.password')}" data-th-errors="*{parentAccount.password}"></div>
 			</div>
 		</div>
 	</fieldset>

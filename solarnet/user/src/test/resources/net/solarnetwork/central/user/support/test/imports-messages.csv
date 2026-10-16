@@ -1,0 +1,7 @@
+"vers","bundle","locale","msg_key","msg_val"
+"2001-01-01 00:00:00+12","/test/main","en","main.st","main(name) ::= ""<p>$greeting()$ $name$</p>$footer()$"""
+"2001-01-01 00:00:00+12","/test/parts","en","greeting.st","greeting() ::= ""Hello"""
+"2001-01-01 00:00:00+12","/test/parts","en","footer.st","footer() ::= ""<footer>parts</footer>"""
+"2002-01-01 00:00:00+13","/test/parts","en","greeting.st","greeting() ::= ""Hi"""
+"2001-01-01 00:00:00+12","/test/override","en","main.st","main(name) ::= ""<p>$greeting()$ $name$</p>$footer()$"""
+"2001-01-01 00:00:00+12","/test/override","en","footer.st","footer() ::= ""<footer>override</footer>"""

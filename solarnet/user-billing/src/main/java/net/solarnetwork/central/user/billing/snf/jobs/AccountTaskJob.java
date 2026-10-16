@@ -46,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class AccountTaskJob extends JobSupport {
 
@@ -63,6 +63,8 @@ public class AccountTaskJob extends JobSupport {
 	private final AccountTaskHandler deliverInvoiceTaskHandler;
 	private @Nullable AccountTaskHandler syncInvoiceTaskHandler;
 	private @Nullable AccountTaskHandler syncPaymentTaskHandler;
+	private @Nullable AccountTaskHandler generateConsolidatedInvoiceTaskHandler;
+	private @Nullable AccountTaskHandler deliverConsolidatedInvoiceTaskHandler;
 	private Duration retryDelay = DEFAULT_RETRY_DELAY;
 
 	/**
@@ -159,11 +161,19 @@ public class AccountTaskJob extends JobSupport {
 				break;
 
 			case SyncInvoiceToAccounting:
-				retry = !handleAccountingTask(task, syncInvoiceTaskHandler);
+				retry = !handleOptionalTask(task, syncInvoiceTaskHandler);
 				break;
 
 			case SyncPaymentToAccounting:
-				retry = !handleAccountingTask(task, syncPaymentTaskHandler);
+				retry = !handleOptionalTask(task, syncPaymentTaskHandler);
+				break;
+
+			case GenerateConsolidatedInvoice:
+				retry = !handleOptionalTask(task, generateConsolidatedInvoiceTaskHandler);
+				break;
+
+			case DeliverConsolidatedInvoice:
+				retry = !handleOptionalTask(task, deliverConsolidatedInvoiceTaskHandler);
 				break;
 
 			default:
@@ -180,9 +190,10 @@ public class AccountTaskJob extends JobSupport {
 		return true;
 	}
 
-	private boolean handleAccountingTask(AccountTask task, @Nullable AccountTaskHandler handler) {
+	private boolean handleOptionalTask(AccountTask task, @Nullable AccountTaskHandler handler) {
 		if ( handler == null ) {
-			log.warn("No accounting system is available for account task {}", task.getId());
+			log.warn("No handler is available for {} account task {}", task.getTaskType(),
+					task.getId());
 			return false;
 		}
 		return handler.handleTask(task);
@@ -248,6 +259,68 @@ public class AccountTaskJob extends JobSupport {
 	 */
 	public final void setSyncPaymentTaskHandler(@Nullable AccountTaskHandler syncPaymentTaskHandler) {
 		this.syncPaymentTaskHandler = syncPaymentTaskHandler;
+	}
+
+	/**
+	 * Get the handler for {@link AccountTaskType#GenerateConsolidatedInvoice}
+	 * tasks.
+	 *
+	 * @return the handler, or {@code null} if consolidated invoices are not
+	 *         supported
+	 * @since 2.3
+	 */
+	public final @Nullable AccountTaskHandler getGenerateConsolidatedInvoiceTaskHandler() {
+		return generateConsolidatedInvoiceTaskHandler;
+	}
+
+	/**
+	 * Set the handler for {@link AccountTaskType#GenerateConsolidatedInvoice}
+	 * tasks.
+	 *
+	 * <p>
+	 * Without a handler these tasks are deferred, so they are handled once a
+	 * handler is configured.
+	 * </p>
+	 *
+	 * @param generateConsolidatedInvoiceTaskHandler
+	 *        the handler to set, or {@code null} if consolidated invoices are
+	 *        not supported
+	 * @since 2.3
+	 */
+	public final void setGenerateConsolidatedInvoiceTaskHandler(
+			@Nullable AccountTaskHandler generateConsolidatedInvoiceTaskHandler) {
+		this.generateConsolidatedInvoiceTaskHandler = generateConsolidatedInvoiceTaskHandler;
+	}
+
+	/**
+	 * Get the handler for {@link AccountTaskType#DeliverConsolidatedInvoice}
+	 * tasks.
+	 *
+	 * @return the handler, or {@code null} if consolidated invoices are not
+	 *         supported
+	 * @since 2.3
+	 */
+	public final @Nullable AccountTaskHandler getDeliverConsolidatedInvoiceTaskHandler() {
+		return deliverConsolidatedInvoiceTaskHandler;
+	}
+
+	/**
+	 * Set the handler for {@link AccountTaskType#DeliverConsolidatedInvoice}
+	 * tasks.
+	 *
+	 * <p>
+	 * Without a handler these tasks are deferred, so they are handled once a
+	 * handler is configured.
+	 * </p>
+	 *
+	 * @param deliverConsolidatedInvoiceTaskHandler
+	 *        the handler to set, or {@code null} if consolidated invoices are
+	 *        not supported
+	 * @since 2.3
+	 */
+	public final void setDeliverConsolidatedInvoiceTaskHandler(
+			@Nullable AccountTaskHandler deliverConsolidatedInvoiceTaskHandler) {
+		this.deliverConsolidatedInvoiceTaskHandler = deliverConsolidatedInvoiceTaskHandler;
 	}
 
 	/**

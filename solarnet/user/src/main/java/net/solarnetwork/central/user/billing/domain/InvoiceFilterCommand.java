@@ -34,7 +34,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for invoice actions.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter {
 
@@ -45,6 +45,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	private @Nullable Long offset = 0L;
 	private @Nullable Integer max;
 	private @Nullable Boolean unpaid;
+	private @Nullable Boolean includeConsolidated;
 
 	@Override
 	public int hashCode() {
@@ -54,6 +55,8 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
 		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
 		result = prime * result + ((unpaid == null) ? 0 : unpaid.hashCode());
+		result = prime * result
+				+ ((includeConsolidated == null) ? 0 : includeConsolidated.hashCode());
 		return result;
 	}
 
@@ -87,9 +90,16 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 			return false;
 		}
 		if ( unpaid == null ) {
-			return other.unpaid == null;
+			if ( other.unpaid != null ) {
+				return false;
+			}
+		} else if ( !unpaid.equals(other.unpaid) ) {
+			return false;
 		}
-		return unpaid.equals(other.unpaid);
+		if ( includeConsolidated == null ) {
+			return other.includeConsolidated == null;
+		}
+		return includeConsolidated.equals(other.includeConsolidated);
 	}
 
 	/**
@@ -179,6 +189,23 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 */
 	public final void setUnpaid(@Nullable Boolean unpaid) {
 		this.unpaid = unpaid;
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeConsolidated() {
+		return includeConsolidated;
+	}
+
+	/**
+	 * Set the include consolidated invoices flag.
+	 *
+	 * @param includeConsolidated
+	 *        {@code true} to include consolidated invoices in place of the
+	 *        invoices they are made of
+	 * @since 1.3
+	 */
+	public final void setIncludeConsolidated(@Nullable Boolean includeConsolidated) {
+		this.includeConsolidated = includeConsolidated;
 	}
 
 }

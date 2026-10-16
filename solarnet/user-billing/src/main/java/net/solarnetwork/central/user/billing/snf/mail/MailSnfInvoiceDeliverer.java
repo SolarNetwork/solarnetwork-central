@@ -41,6 +41,7 @@ import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import net.solarnetwork.central.domain.BaseStringIdentity;
 import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.MessageDataSource;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.SimpleMessageDataSource;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
@@ -48,15 +49,24 @@ import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
  * Deliver invoices by mail.
  *
+ * <p>
+ * An invoice is sent as an HTML body with a PDF attachment. A consolidated
+ * invoice is sent with only its summary as the HTML body, and the full
+ * consolidated invoice, including the account invoices, as the PDF
+ * attachment.
+ * </p>
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfInvoiceDeliverer {
 
@@ -90,39 +100,76 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 		this.executor = requireNonNullArgument(executor, "executor");
 	}
 
+	@FunctionalInterface
+	private interface MessageCreator {
+
+		MessageDataSource createMessage(Locale locale) throws Exception;
+
+	}
+
 	@Override
 	public CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
 			@Nullable IdentifiableConfiguration configuration) {
+		return send(account, invoice, locale -> {
+			// TODO: allow output type to be specified via configuration
+			//       for now assume HTML body with PDF attachment
+			Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML, locale);
+			Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
+
+			// generate subject and pass invoice number and date as arguments
+			InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
+			String invoiceKey = invoiceImpl.getInvoiceNumber();
+			String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
+			Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
+
+			MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
+			String subject = nonnull(
+					messageSource.getMessage("invoice.mail.subject", subjectArgs,
+							format("SolarNetwork invoice %s (%s)", subjectArgs), locale),
+					"Email subject");
+
+			return new SimpleMessageDataSource(subject, copyToString(
+					new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
+					singleton(pdf));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Result<Object>> deliverConsolidatedInvoice(
+			SnfConsolidatedInvoice invoice, Account account,
+			@Nullable IdentifiableConfiguration configuration) {
+		return send(account, invoice, locale -> {
+			Resource content = invoicingSystem.renderConsolidatedInvoice(invoice,
+					MimeTypeUtils.TEXT_HTML, locale, true);
+			Resource pdf = invoicingSystem.renderConsolidatedInvoice(invoice, APPLICATION_PDF, locale,
+					false);
+
+			// generate subject and pass invoice number and date as arguments
+			String invoiceKey = SnfBillingUtils.invoiceNumForId(invoice.getInvoiceId());
+			String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
+			Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
+
+			MessageSource messageSource = invoicingSystem.messageSourceForConsolidatedInvoice(invoice);
+			String subject = nonnull(
+					messageSource.getMessage("consolidatedInvoice.mail.subject", subjectArgs,
+							format("SolarNetwork consolidated invoice %s (%s)", subjectArgs), locale),
+					"Email subject");
+
+			return new SimpleMessageDataSource(subject, copyToString(
+					new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
+					singleton(pdf));
+		});
+	}
+
+	private CompletableFuture<Result<Object>> send(Account account, Object invoice,
+			MessageCreator messageCreator) {
 		final CompletableFuture<Result<Object>> result = new CompletableFuture<>();
 		executor.execute(() -> {
 			try {
 				final Locale locale = account.locale();
 				final Address addr = nonnull(account.getAddress(), "Account address");
-
-				// TODO: allow output type to be specified via configuration
-				//       for now assume HTML body with PDF attachment
-				Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML,
-						locale);
-				Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
-
-				BasicMailAddress to = new BasicMailAddress(addr.getName(), addr.getEmail());
-
-				// generate subject and pass invoice number and date as arguments
-				InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
-				String invoiceKey = invoiceImpl.getInvoiceNumber();
-				String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
-				Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
-
-				MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
-				String subject = nonnull(
-						messageSource.getMessage("invoice.mail.subject", subjectArgs,
-								format("SolarNetwork invoice %s (%s)", subjectArgs), locale),
-						"Email subject");
-
-				mailService.sendMail(to,
-						new SimpleMessageDataSource(subject, copyToString(
-								new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
-								singleton(pdf)));
+				final BasicMailAddress to = new BasicMailAddress(addr.getName(), addr.getEmail());
+				mailService.sendMail(to, messageCreator.createMessage(locale));
 				result.complete(Result.result(null));
 			} catch ( Exception e ) {
 				result.completeExceptionally(e);

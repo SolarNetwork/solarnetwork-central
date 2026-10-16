@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -403,6 +404,26 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
+	public void findFilteredForInternalPropertyListElement() {
+		storeNewUser();
+		userDao.storeInternalData(userId,
+				Map.of("invoiceConsolidation", Map.of("userIds", List.of(2, 3))));
+		Long userId2 = storeTestUser("bar@example.com");
+		userDao.storeInternalData(userId2,
+				Map.of("invoiceConsolidation", Map.of("userIds", List.of(4))));
+		Long userId3 = storeTestUser("bam@example.com");
+		userDao.storeInternalData(userId3,
+				Map.of("invoiceConsolidation", Map.of("userIds", List.of("2"))));
+
+		UserFilterCommand criteria = new UserFilterCommand();
+		criteria.setInternalData(Map.of("invoiceConsolidation", Map.of("userIds", List.of(2L))));
+
+		FilterResults<UserFilterMatch, Long> results = userDao.findFiltered(criteria, null, null, null);
+		then(results).as("Only the user whose nested list contains the number matched")
+				.extracting(UserFilterMatch::getId).containsExactly(userId);
+	}
+
+	@Test
 	public void storeInternalPropertyNullColumn() {
 		storeNewUser();
 
@@ -462,6 +483,17 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		User updated = userDao.get(userId);
 		then(updated.getInternalData()).as("Internal data updated").isEqualTo(Map.of());
+	}
+
+	@Test
+	public void lockUser() {
+		storeNewUser();
+		then(userDao.lockUser(userId)).as("Existing user locked").isTrue();
+	}
+
+	@Test
+	public void lockUser_notFound() {
+		then(userDao.lockUser(-1L)).as("Missing user not locked").isFalse();
 	}
 
 	@Test

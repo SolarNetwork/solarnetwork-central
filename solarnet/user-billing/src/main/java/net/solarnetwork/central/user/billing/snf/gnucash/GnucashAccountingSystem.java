@@ -64,6 +64,7 @@ import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
@@ -124,7 +125,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GnucashAccountingSystem implements SnfAccountingSystem {
 
@@ -159,6 +160,15 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 
 	/** The description of a granted credit line, when no other is available. */
 	public static final String DEFAULT_CREDIT_DESCRIPTION = "Account credit";
+
+	/**
+	 * The invoice notes template for an SNF invoice that is part of a
+	 * consolidated invoice; the consolidated invoice number is the template
+	 * argument.
+	 *
+	 * @since 1.1
+	 */
+	public static final String CONSOLIDATED_INVOICE_NOTES_TEMPLATE = "Consolidated invoice %s";
 
 	/** The SNF invoice item metadata key for a description. */
 	public static final String META_DESCRIPTION = "description";
@@ -224,7 +234,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 */
 	private record Doc(SnfInvoice invoice, Account account, String id, Instant now,
 			GncCustomer customer, GncCommodity currency, CurrencySettings currencySettings,
-			GncAccount receivable) {
+			GncAccount receivable, String notes) {
 
 	}
 
@@ -304,7 +314,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final Ledger ledger = ledger(existingCustomer, customerId, account,
 				invoice.getCurrencyCode());
 		final Doc doc = new Doc(invoice, account, id, clock.instant(), ledger.customer(),
-				ledger.currency(), ledger.currencySettings(), ledger.receivable());
+				ledger.currency(), ledger.currencySettings(), ledger.receivable(), notes(invoice));
 		if ( isCreditGrant(invoice) ) {
 			addCreditNote(doc);
 		} else {
@@ -320,6 +330,24 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 					"GnuCash has %d customers with ID %s.".formatted(customers.size(), customerId));
 		}
 		return (customers.isEmpty() ? null : customers.getFirst());
+	}
+
+	/**
+	 * Get the notes for the GnuCash invoice of an SNF invoice.
+	 *
+	 * @param invoice
+	 *        the SNF invoice
+	 * @return the notes, naming the consolidated invoice the SNF invoice is part
+	 *         of, if any
+	 */
+	private String notes(SnfInvoice invoice) {
+		final SnfConsolidatedInvoice consolidated = invoicingSystem
+				.findConsolidatedInvoiceForInvoice(invoice.id());
+		if ( consolidated == null ) {
+			return "";
+		}
+		return CONSOLIDATED_INVOICE_NOTES_TEMPLATE
+				.formatted(SnfBillingUtils.invoiceNumForId(consolidated.getInvoiceId()));
 	}
 
 	private Ledger ledger(@Nullable GncCustomer existingCustomer, String customerId,
@@ -675,7 +703,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final Instant postDate = dayNeutral(date, zone);
 		final Instant lineInstant = localNoon(lineDate, zone);
 
-		dao.saveInvoice(new GncInvoice(invoiceGuid, doc.id(), postDate, postDate, "", true,
+		dao.saveInvoice(new GncInvoice(invoiceGuid, doc.id(), postDate, postDate, doc.notes(), true,
 				doc.currency().guid(), GncInvoice.OWNER_TYPE_CUSTOMER, doc.customer().guid(),
 				Objects.requireNonNullElse(
 						SnfBillingUtils.invoiceNumForId(doc.invoice().getInvoiceId()), ""),

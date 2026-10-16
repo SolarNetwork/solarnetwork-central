@@ -386,6 +386,49 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	}
 
 	@Test
+	public void generateInvoice_withTax_roundedItems_dryRun() {
+		// GIVEN
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
+		account.setAddress(addr);
+		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
+
+		// item amounts are saved rounded to cents: 6.00 + 6.03 = 12.03
+		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumPropertiesInCost(new BigDecimal("6.0049"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumOutCost(new BigDecimal("6.0299"));
+		usage.setTotalCost(new BigDecimal("12.0348"));
+
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
+				.andReturn(emptyList());
+
+		final Instant taxStart = LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone())
+				.toInstant();
+		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(asList(
+				new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST", new BigDecimal("0.15"),
+						taxStart, null),
+				new TaxCode("NZ", NodeUsage.DATUM_OUT_KEY, "GST", new BigDecimal("0.15"), taxStart,
+						null)));
+		expect(taxCodeDao.findFiltered(EasyMock.anyObject())).andReturn(taxCodeResults);
+
+		// WHEN
+		replayAll();
+		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, startDate, endDate,
+				dryRunOptions());
+
+		// THEN
+		assertThat("Invoice created", invoice, notNullValue());
+		// GnuCash taxes the rounded item amounts: 12.03 * 0.15 = 1.8045, rather than
+		// 12.0348 * 0.15 = 1.80522
+		assertTaxItem(invoice, invoice.getItemsByKey().get("GST"), new BigDecimal("1.80"));
+	}
+
+	@Test
 	public void generateInvoice_withTax_withFullCredit_dryRun() {
 		// GIVEN
 		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");

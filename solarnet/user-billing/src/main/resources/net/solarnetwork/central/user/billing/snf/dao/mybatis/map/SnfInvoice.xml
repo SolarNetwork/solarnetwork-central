@@ -33,6 +33,7 @@
 		, inv.date_start 	AS bill_invoice_date_start
 		, inv.date_end 		AS bill_invoice_date_end
 		, inv.currency 		AS bill_invoice_currency
+		, cmem.consol_id 	AS bill_invoice_consol_id
 		, (SELECT SUM(ipay.amount) FROM solarbill.bill_invoice_payment ipay
 			WHERE ipay.acct_id = inv.acct_id AND ipay.inv_id = inv.id) AS bill_invoice_paid_amount
 	</sql>
@@ -47,6 +48,7 @@
 			<arg column="bill_invoice_date_end" javaType="java.time.LocalDate"/>
 			<arg column="bill_invoice_currency" javaType="String"/>
 		</constructor>
+		<result property="consolidatedInvoiceId" column="bill_invoice_consol_id"/>
 		<result property="paidAmount" column="bill_invoice_paid_amount"/>
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
@@ -72,6 +74,8 @@
 			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
 		LEFT OUTER JOIN
 			solaruser.user_node un ON un.node_id = invu.node_id AND un.user_id = acct.user_id
+		LEFT OUTER JOIN
+			solarbill.bill_consol_invoice_member cmem ON cmem.inv_id = inv.id
 		WHERE
 			inv.id = #{entityId}
 			AND acct.user_id = #{userId}
@@ -90,6 +94,8 @@
 			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
 		LEFT OUTER JOIN
 			solaruser.user_node un ON un.node_id = invu.node_id AND un.user_id = acct.user_id
+		LEFT OUTER JOIN
+			solarbill.bill_consol_invoice_member cmem ON cmem.inv_id = inv.id
 		<if test="unpaidOnly and (offset == null or max == null)">
 			INNER JOIN LATERAL (
 				WITH paid AS (
@@ -168,6 +174,13 @@
 									AND invi1.item_key = 'account-credit-add'
 								)
 							</if>
+							<if test="excludeConsolidated">
+								AND NOT EXISTS(
+									SELECT cmem1.inv_id
+									FROM solarbill.bill_consol_invoice_member cmem1
+									WHERE cmem1.inv_id = inv1.id
+								)
+							</if>
 						</where>
 						ORDER BY
 						<choose>
@@ -198,6 +211,9 @@
 					</if>
 					<if test="endDate != null">
 						AND inv.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+					</if>
+					<if test="excludeConsolidated">
+						AND cmem.inv_id IS NULL
 					</if>
 				</otherwise>
 			</choose>

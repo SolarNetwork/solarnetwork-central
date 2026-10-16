@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javax.cache.Cache;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
 import net.solarnetwork.common.tmpl.st4.MessageSourceGroup;
+import net.solarnetwork.common.tmpl.st4.RecordModelAdaptor;
 import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 import net.solarnetwork.service.TemplateRenderer;
 
@@ -42,12 +44,19 @@ import net.solarnetwork.service.TemplateRenderer;
  * Support for creating {@link ST4TemplateRenderer} instances using a
  * {@link VersionedMessageDaoMessageSource} for templates.
  *
+ * <p>
+ * The templates of other message bundles can be imported, so the templates of
+ * the main bundle can use them. A template in the main bundle takes precedence
+ * over an imported template of the same name.
+ * </p>
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class VersionedMessageSourceSupport {
 
 	private final String[] bundleNames;
+	private final List<String> importedBundleNames;
 	private final String rootTemplateName;
 	private final List<MimeType> mimeTypes;
 	private final VersionedMessageDao messageDao;
@@ -75,8 +84,39 @@ public abstract class VersionedMessageSourceSupport {
 	public VersionedMessageSourceSupport(String bundleName, String rootTemplateName, MimeType mimeType,
 			VersionedMessageDao messageDao, Cache<String, VersionedMessages> messageCache,
 			Cache<String, ST4TemplateRenderer> templateCache) {
+		this(bundleName, List.of(), rootTemplateName, mimeType, messageDao, messageCache,
+				templateCache);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param bundleName
+	 *        the message bundle name to use
+	 * @param importedBundleNames
+	 *        the names of the message bundles whose templates are imported
+	 * @param rootTemplateName
+	 *        the root template name
+	 * @param mimeType
+	 *        the supported MIME type
+	 * @param messageDao
+	 *        the message DAO
+	 * @param messageCache
+	 *        the message cache
+	 * @param templateCache
+	 *        the template cache
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.1
+	 */
+	public VersionedMessageSourceSupport(String bundleName, List<String> importedBundleNames,
+			String rootTemplateName, MimeType mimeType, VersionedMessageDao messageDao,
+			Cache<String, VersionedMessages> messageCache,
+			Cache<String, ST4TemplateRenderer> templateCache) {
 		super();
 		this.bundleNames = new String[] { requireNonNullArgument(bundleName, "bundleName") };
+		this.importedBundleNames = List
+				.copyOf(requireNonNullArgument(importedBundleNames, "importedBundleNames"));
 		this.rootTemplateName = requireNonNullArgument(rootTemplateName, "rootTemplateName");
 		this.messageDao = requireNonNullArgument(messageDao, "messageDao");
 		this.mimeTypes = List.of(requireNonNullArgument(mimeType, "mimeType"));
@@ -90,6 +130,11 @@ public abstract class VersionedMessageSourceSupport {
 	 * <p>
 	 * The start and end delimiters for ST are both configured as the
 	 * {@literal $} character.
+	 * </p>
+	 *
+	 * <p>
+	 * Renderers are cached by the versions of the messages of all the bundles
+	 * they use, so a change to any of them results in a new renderer.
 	 * </p>
 	 * 
 	 * @param version
@@ -114,13 +159,33 @@ public abstract class VersionedMessageSourceSupport {
 		}
 		MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao, bundleNames,
 				version, messageCache);
-		String templateVersion = messageSource.getMessage("version", null, "", locale);
-		ST4TemplateRenderer renderer = templateCache.get(templateVersion);
+		final StringBuilder templateVersion = new StringBuilder(
+				messageSource.getMessage("version", null, "", locale));
+		final List<MessageSourceGroup> importedGroups = new ArrayList<>(importedBundleNames.size());
+		for ( String importedBundleName : importedBundleNames ) {
+			MessageSource importedMessageSource = new VersionedMessageDaoMessageSource(messageDao,
+					new String[] { importedBundleName }, version, messageCache);
+			templateVersion.append('|')
+					.append(importedMessageSource.getMessage("version", null, "", locale));
+			MessageSourceGroup importedGroup = new MessageSourceGroup(importedBundleName,
+					importedMessageSource, '$', '$');
+
+			// templates invoked by imported templates are created by the imported group, so it
+			// needs the same model adaptors ST4TemplateRenderer registers on the main group
+			importedGroup.registerModelAdaptor(Record.class, new RecordModelAdaptor());
+			importedGroups.add(importedGroup);
+		}
+		final String templateCacheKey = templateVersion.toString();
+		ST4TemplateRenderer renderer = templateCache.get(templateCacheKey);
 		if ( renderer == null ) {
-			renderer = new ST4TemplateRenderer(bundleNames[0],
-					new MessageSourceGroup(bundleNames[0], messageSource, '$', '$'), rootTemplateName,
-					mimeTypes, StandardCharsets.UTF_8);
-			templateCache.putIfAbsent(templateVersion, renderer);
+			MessageSourceGroup group = new MessageSourceGroup(bundleNames[0], messageSource, '$',
+					'$');
+			for ( MessageSourceGroup importedGroup : importedGroups ) {
+				group.importTemplates(importedGroup);
+			}
+			renderer = new ST4TemplateRenderer(bundleNames[0], group, rootTemplateName, mimeTypes,
+					StandardCharsets.UTF_8);
+			templateCache.putIfAbsent(templateCacheKey, renderer);
 		}
 		return renderer;
 	}

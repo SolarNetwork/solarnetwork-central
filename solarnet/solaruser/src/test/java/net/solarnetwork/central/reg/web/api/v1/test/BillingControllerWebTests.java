@@ -53,13 +53,15 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Web API level integration tests for the {@link BillingController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 public class BillingControllerWebTests extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final String PREVIEW_PATH = "/api/v1/sec/user/billing/invoices/preview";
+	private static final String CONSOLIDATED_PREVIEW_PATH = "/api/v1/sec/user/billing/consolidated-invoices/preview";
+	private static final String CONSOLIDATED_LIST_PATH = "/api/v1/sec/user/billing/consolidated-invoices/list";
 
 	@Autowired
 	private MockMvc mvc;
@@ -83,18 +85,22 @@ public class BillingControllerWebTests extends AbstractJUnit5CentralTransactiona
 	}
 
 	private ResultActions previewInvoice(Long userId) throws Exception {
+		return getForUser(PREVIEW_PATH, userId);
+	}
+
+	private ResultActions getForUser(String path, Long userId) throws Exception {
 		final Instant now = Instant.now();
 		final Map<String, String> params = Map.of("userId", userId.toString());
 		// @formatter:off
 		final String authHeader = new Snws2AuthorizationBuilder(tokenId)
 				.method(HttpMethod.GET.name())
 				.host("localhost")
-				.path(PREVIEW_PATH)
+				.path(path)
 				.queryParams(params)
 				.useSnDate(true).date(now)
 				.saveSigningKey(tokenSecret)
 				.build();
-		return mvc.perform(get(PREVIEW_PATH)
+		return mvc.perform(get(path)
 				.queryParam("userId", userId.toString())
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
@@ -113,6 +119,30 @@ public class BillingControllerWebTests extends AbstractJUnit5CentralTransactiona
 	public void previewInvoice_otherUser() throws Exception {
 		// WHEN
 		previewInvoice(otherUserId).andExpect(status().isForbidden());
+	}
+
+	@Test
+	public void previewConsolidatedInvoice() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_PREVIEW_PATH, userId).andExpect(status().isOk());
+	}
+
+	@Test
+	public void previewConsolidatedInvoice_otherUser() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_PREVIEW_PATH, otherUserId).andExpect(status().isForbidden());
+	}
+
+	@Test
+	public void listConsolidatedInvoices() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_LIST_PATH, userId).andExpect(status().isOk());
+	}
+
+	@Test
+	public void listConsolidatedInvoices_otherUser() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_LIST_PATH, otherUserId).andExpect(status().isForbidden());
 	}
 
 }

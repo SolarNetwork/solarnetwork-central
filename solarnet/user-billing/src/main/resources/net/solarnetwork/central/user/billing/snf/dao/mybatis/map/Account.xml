@@ -147,6 +147,13 @@
 			acct.user_id = #{id}
 	</select>
 	
+	<select id="lock-Account-for-update" parameterType="long" resultType="long"
+			flushCache="true" useCache="false">
+		SELECT id FROM solarbill.bill_account
+		WHERE id = #{id}
+		FOR UPDATE
+	</select>
+
 	<select id="claim-AccountBalance-credit" parameterType="map" resultType="java.math.BigDecimal" 
 			flushCache="true" useCache="false">
 		SELECT solarbill.claim_account_credit(

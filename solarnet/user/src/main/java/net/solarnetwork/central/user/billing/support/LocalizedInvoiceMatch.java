@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
  * Localized version of {@link InvoiceMatch}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatchInfo {
 
@@ -135,6 +135,16 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	@Override
 	public String getCurrencyCode() {
 		return match.getCurrencyCode();
+	}
+
+	@Override
+	public boolean isConsolidated() {
+		return match.isConsolidated();
+	}
+
+	@Override
+	public @Nullable String getConsolidatedInvoiceNumber() {
+		return match.getConsolidatedInvoiceNumber();
 	}
 
 }

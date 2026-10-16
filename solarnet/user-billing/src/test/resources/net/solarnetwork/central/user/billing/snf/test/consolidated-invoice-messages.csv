@@ -1,0 +1,261 @@
+vers,bundle,locale,msg_key,msg_val
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,style.st,"style() ::= ""body '{' margin: 0; '}'"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,fromSection.st,"fromSection() ::= ""<div class=\""from\"">$messages.companyName$</div>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,infoSection.st,"infoSection() ::= <<
+<div class=""info""><span class=""number"">$invoice.invoiceNumber$</span> <span class=""name"">$address.name$</span> <span class=""balance"">$invoice.localizedBalance$</span></div>
+>>"
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,costSection.st,"costSection() ::= <<
+<div class=""cost"">$invoice.localizedNonTaxInvoiceItems:itemRow()$</div>
+>>"
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,itemRow.st,"itemRow(item) ::= ""<p class=\""item\"">$item.localizedDescription$ $item.localizedAmount$</p>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,nodeUsageSection.st,"nodeUsageSection() ::= """""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,itemTaxGroupRow.st,"itemTaxGroupRow(aggItem) ::= ""<tr class=\""tax\""><td>$aggItem.localizedDescription$</td><td>$aggItem.localizedAmount$</td></tr>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,footer.st,"footer() ::= ""<footer>Please put <kbd>$invoice.invoiceNumber$</kbd> in the reference field.</footer>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,invoice.st,"invoice(invoice,address,messages) ::= ""<html><head>$head()$</head><body>$body()$</body></html>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,head.st,"head() ::= ""<title>$invoice.invoiceNumber$</title>"""
+2001-01-01 00:00:00+12,/snf/text/html/invoice,en,body.st,"body() ::= <<
+$fromSection()$
+$infoSection()$
+$costSection()$
+$nodeUsageSection()$
+$if(!invoice.draft)$
+$footer()$
+$endif$
+>>"
+2001-01-01 00:00:00+12,snf.billing,en,companyName,SolarNetwork Foundation
+2001-01-01 00:00:00+12,snf.billing,en,datum-props-in.item,Posted Properties
+2001-01-01 00:00:00+12,snf.billing,en,GST.item,GST
+2001-01-01 00:00:00+12,snf.billing,en,invoiceAmount,Total
+2001-01-01 00:00:00+12,snf.billing,en,invoiceBalance,Due
+2001-01-01 00:00:00+12,snf.billing,en,invoiceCredit,Credit
+2001-01-01 00:00:00+12,snf.billing,en,invoiceItemAmount,Amount
+2001-01-01 00:00:00+12,snf.billing,en,invoiceNumber,Invoice
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,consolidatedInvoice.st,"consolidatedInvoice(invoice,address,accounts,messages,summaryOnly) ::= ""<html><head>$consolidatedHead()$</head><body>$consolidatedBody()$</body></html>"""
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,consolidatedHead.st,"consolidatedHead() ::= <<
+<meta charset=""UTF-8"">
+<title>$messages.consolidatedInvoice-title$ $invoice.invoiceNumber$</title>
+<style type=""text/css"">
+$style()$
+$consolidatedStyle()$
+</style>
+$if(!summaryOnly)$
+<bookmarks>
+	<bookmark name=""$messages.consolidatedSummaryTitle$"" href=""#summary""/>
+	$accounts:accountBookmark()$
+</bookmarks>
+$endif$
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,accountBookmark.st,"accountBookmark(account) ::= <<
+<bookmark name=""$account.name$"" href=""#$account.anchor$""/>
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,consolidatedStyle.st,"consolidatedStyle() ::= <<
+	.account '{' page-break-before: always; '}'
+	.accounts th '{' width: auto; font-size: 0.8rem; '}'
+	.accounts .left '{' text-align: left; '}'
+	.accounts a '{' color: inherit; text-decoration: none; '}'
+	.accounts a.page::after '{' content: target-counter(attr(href), page); '}'
+	footer '{' clear: both; '}'
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,consolidatedBody.st,"consolidatedBody() ::= <<
+<div id=""summary""></div>
+$fromSection()$
+$infoSection()$
+$accountsSection()$
+$totalsSection()$
+$if(!invoice.draft)$
+$footer()$
+$endif$
+$if(!summaryOnly)$
+$accounts:accountSection()$
+$endif$
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,accountsSection.st,"accountsSection() ::= <<
+<h1>$messages.consolidatedAccountsTitle$</h1>
+<p>$if(summaryOnly)$$messages.consolidatedAccountsSummaryIntro$$else$$messages.consolidatedAccountsIntro$$endif$</p>
+<table class=""details accounts"">
+	<thead>
+		<tr>
+			<th>$messages.consolidatedAccount$</th>
+			<th class=""left"">$messages.invoiceNumber$</th>
+			<th>$messages.invoiceItemAmount$</th>
+			$if(!summaryOnly)$<th>$messages.consolidatedPage$</th>$endif$
+		</tr>
+		<tr>
+			<th colspan=""$if(summaryOnly)$3$else$4$endif$"" class=""hr""></th>
+		</tr>
+	</thead>
+	<tbody>
+$accounts:accountsRow()$
+	</tbody>
+</table>
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,accountsRow.st,"accountsRow(account) ::= <<
+		<tr>
+			<td>$if(summaryOnly)$$account.name$$else$<a href=""#$account.anchor$"">$account.name$</a>$endif$</td>
+			<td class=""left"">$account.invoice.invoiceNumber$</td>
+			<td>$account.invoice.localizedBalance$</td>
+			$if(!summaryOnly)$<td><a class=""page"" href=""#$account.anchor$""></a></td>$endif$
+		</tr>
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,totalsSection.st,"totalsSection() ::= <<
+<table class=""details totals"">
+	<tbody>
+		<tr>
+			<td>$messages.invoiceAmount$</td>
+			<td>$invoice.localizedNonTaxAmount$</td>
+		</tr>
+$invoice.localizedTaxInvoiceItemsGroupedByDescription:itemTaxGroupRow()$
+$if(invoice.creditAmount)$
+		<tr>
+			<td>$messages.invoiceCredit$</td>
+			<td>$invoice.localizedCreditAmount$</td>
+		</tr>
+$endif$
+		<tr>
+			<td>$messages.invoiceBalance$</td>
+			<td>$invoice.localizedBalance$</td>
+		</tr>
+	</tbody>
+</table>
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,accountSection.st,"accountSection(account) ::= <<
+<div class=""account"" id=""$account.anchor$""></div>
+$accountInvoice(account.invoice, account.address, invoice)$
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/consolidated-invoice,en,accountInvoice.st,"accountInvoice(invoice,address,consolidatedInvoice) ::= <<
+$fromSection()$
+$infoSection()$
+$consolidatedNote(consolidatedInvoice.invoiceNumber)$
+$costSection()$
+$nodeUsageSection()$
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/invoice,en,body.st,"body() ::= <<
+$fromSection()$
+$infoSection()$
+$if(invoice.consolidatedInvoiceNumber)$
+$consolidatedNote(invoice.consolidatedInvoiceNumber)$
+$endif$
+$costSection()$
+$nodeUsageSection()$
+$if(!invoice.draft && !invoice.consolidatedInvoiceNumber)$
+$footer()$
+$endif$
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/invoice,en,consolidatedNote.st,"consolidatedNote(consolidatedInvoiceNumber) ::= <<
+<p class=""consolidated secondary"">$messages.consolidatedIncludedIn$ $consolidatedInvoiceNumber$</p>
+>>"
+2026-10-01 00:00:00+13,/snf/text/html/invoice,en,style.st,"style() ::= <<
+	body '{'
+		font-family: sans-serif;
+		background-color: #FFF;
+		margin: 2rem; '}'
+	footer '{' border-top: 2px solid #F7C819; color: #666; margin-top: 2rem; '}'
+	body > p '{' font-size: 0.8rem; margin: 0.2rem 0 1rem 0; '}'
+	footer > p '{' margin-top: 4px; margin-bottom: 4px; font-size: 0.8rem; '}'
+	footer > p + p '{' border-top: 1px solid #CCC; padding-top: 2px; '}'
+	h1 '{' font-size: 1.5rem; font-weight: 200; margin: 1rem 0 0 0; clear: both; '}'
+	kbd '{' font-size: 1.1rem; font-weight: bold; '}'
+	body > table '{' clear: both; '}'
+	table '{' width: 100%; border-collapse: collapse; '}'
+	table + table '{' margin-top: 3rem; '}'
+	th.hr '{' border-top: 2px solid black; '}'
+	td.hr '{' border-bottom: 1px solid #CCC; '}'
+	td.space '{' height: 1rem; '}'
+	th '{' text-align: left; width: 225px; '}'
+	.addr p '{' margin: 0; '}'
+	.addr p + p '{' margin-top: 0.2rem; '}'
+	.draft '{' color: #c00; '}'
+	.head '{' font-weight: bold; '}'
+	.left '{' text-align: left; '}'
+	.right '{' text-align: right; '}'
+	.secondary '{' color: #666; '}'
+	.consolidated '{' clear: both; '}'
+
+	.from '{'
+		float: left;
+		width: 50%; '}'
+	.from .logo '{' height: 2rem; margin: 0 0 1rem 0; '}'
+	.from .addr '{' 
+		color: #666;
+		font-size: 0.8rem; '}'
+	.info '{'
+		float: right;
+		width: 50%;
+		margin-top: 3rem; 
+		margin-bottom: 1rem; '}'
+	.info td,
+	.info th '{' vertical-align: top; padding: 0.2rem; '}'
+	.info td:first-child '{'
+		font-weight: 700;
+		text-align: right;
+		padding-right: 1rem; '}'
+
+	.details > tbody > tr > th '{'
+		font-weight: 200;
+		font-size: 1.1rem; '}'
+	.details tbody td,
+	.details tbody th '{' 
+		padding-top: 2px;
+		padding-bottom: 2px;
+		vertical-align: text-bottom;
+		font-size:0.8rem; '}'
+	.details th + th,
+	.details td + td,
+	.details td + td '{'
+		padding-left: 0.5rem;
+		text-align: right; '}'
+		
+	.totals '{'
+		float: right;
+		width: auto;
+		margin-top: 1rem;
+		margin-bottom: 1rem; '}'
+	.totals tbody tr > * '{' font-size: 1rem; '}'
+	.totals tbody tr > *:first-child '{' padding-right: 1rem; '}'
+	.totals tbody tr:last-child > * '{'
+		font-weight: 700; '}'
+		
+	.items thead th '{' vertical-align: top; '}'
+	.items tbody td,
+	.items tbody th,
+	.items tfoot td,
+	.items tfoot th '{'
+		padding-top: 2px;
+		padding-bottom: 2px;
+		vertical-align: text-bottom;
+		font-size:0.8rem; '}'
+	.items th + th,
+	.items td + td '{'
+		padding-left: 0.5rem;
+		text-align: right; '}'
+	.items tbody td + td,
+	.items tfoot td + td '{'
+		font-size: 0.8rem;
+		padding-left: 0.5rem;
+		text-align: right; '}'
+	.items th '{' width: auto; '}'
+	.items th .unit '{'
+		display: block;
+		font-size: 0.8rem;
+		color: #666;
+		font-weight: 400;
+		text-transform: lowercase; '}'
+	.items td.desc '{'
+		color: #666;
+		font-weight: 400;
+		text-align: left !important; '}'
+	
+	@page '{'
+		size: a4;
+	'}'
+>>"
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedAccount,Account
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedAccountsIntro,"This invoice combines the invoices of the following accounts. Each account invoice follows, starting on the page shown:"
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedAccountsSummaryIntro,This invoice combines the invoices of the following accounts. Each account invoice is included in the attached PDF:
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedAccountsTitle,Accounts
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedIncludedIn,Included in consolidated invoice
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedInvoice-title,SolarNetwork consolidated invoice
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedInvoice.filename,SolarNetwork consolidated invoice {0} - {1}{2}
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedInvoice.mail.subject,SolarNetwork consolidated invoice {0} ({1})
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedPage,Page
+2026-10-01 00:00:00+13,snf.billing,en,consolidatedSummaryTitle,Summary

@@ -34,7 +34,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link Account} entities.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
 
@@ -104,5 +104,20 @@ public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
 	 *         requested {@code max} if not enough credit is available
 	 */
 	BigDecimal claimAccountBalanceCredit(Long accountId, BigDecimal max);
+
+	/**
+	 * Lock an account until the end of the current transaction.
+	 *
+	 * <p>
+	 * This should only be invoked within a transaction. Other transactions
+	 * that lock the same account wait for the lock.
+	 * </p>
+	 *
+	 * @param accountId
+	 *        the ID of the account to lock
+	 * @return {@code true} if the account exists and was locked
+	 * @since 2.2
+	 */
+	boolean lockAccount(Long accountId);
 
 }

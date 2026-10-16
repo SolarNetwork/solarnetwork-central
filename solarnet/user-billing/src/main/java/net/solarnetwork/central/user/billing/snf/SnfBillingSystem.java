@@ -31,9 +31,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.InstantSource;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.StreamSupport;
@@ -55,8 +57,10 @@ import net.solarnetwork.central.user.account.domain.SnAccountInput;
 import net.solarnetwork.central.user.account.domain.SnAddressInput;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
+import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceConsolidationGroup;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
@@ -67,11 +71,17 @@ import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.ConsolidatedInvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
+import net.solarnetwork.central.user.billing.snf.domain.LocalizedConsolidatedInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.LocalizedConsolidatedInvoiceAccount;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -82,7 +92,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
@@ -97,6 +107,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoicingSystem invoicingSystem;
 	private final NodeUsageDao nodeUsageDao;
+	private @Nullable InvoiceConsolidationResolver consolidationResolver;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -318,6 +329,9 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		if ( filter.getUnpaid() != null ) {
 			invoiceFilter.setUnpaidOnly(filter.getUnpaid());
 		}
+		if ( Boolean.TRUE.equals(filter.getIncludeConsolidated()) ) {
+			return findFilteredInvoicesWithConsolidated(account, invoiceFilter, offset, max);
+		}
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> results = invoiceDao
 				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, offset, max);
 		List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
@@ -386,19 +400,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
 
-		final LocalDate start;
-		final LocalDate end;
-		if ( options != null && options.getMonth() != null ) {
-			start = options.getMonth().atDay(1);
-		} else {
-			// find current month in account's time zone
-			ZoneId zone = account.getTimeZone();
-			if ( zone == null ) {
-				zone = ZoneId.systemDefault();
-			}
-			start = LocalDate.now(zone).withDayOfMonth(1);
-		}
-		end = start.plusMonths(1);
+		final LocalDate start = previewStartDate(account, options);
+		final LocalDate end = start.plusMonths(1);
 
 		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
 				account.getUserId(), start);
@@ -406,6 +409,204 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
 				options != null && options.isUseAccountCredit());
 		return invoicingSystem.generateInvoice(userId, start, end, opts);
+	}
+
+	private static LocalDate previewStartDate(Account account,
+			net.solarnetwork.central.user.billing.domain.@Nullable InvoiceGenerationOptions options) {
+		if ( options != null && options.getMonth() != null ) {
+			return options.getMonth().atDay(1);
+		}
+		// find current month in account's time zone
+		ZoneId zone = account.getTimeZone();
+		if ( zone == null ) {
+			zone = ZoneId.systemDefault();
+		}
+		return LocalDate.now(zone).withDayOfMonth(1);
+	}
+
+	/**
+	 * An invoice match with the start date and ID to sort it by.
+	 */
+	private record DatedInvoiceMatch(LocalDate startDate, Long invoiceId, InvoiceMatch match) {
+
+		private static final Comparator<DatedInvoiceMatch> NEWEST_FIRST = Comparator
+				.comparing(DatedInvoiceMatch::startDate).reversed()
+				.thenComparing(DatedInvoiceMatch::invoiceId);
+
+	}
+
+	private FilterResults<InvoiceMatch, String> findFilteredInvoicesWithConsolidated(
+			Account account, SnfInvoiceFilter invoiceFilter, @Nullable Long offset,
+			@Nullable Integer max) {
+		// both kinds of invoice are found in full and merged newest first, then paged here
+		invoiceFilter.setExcludeConsolidated(true);
+		final net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> invoices = invoiceDao
+				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
+		final SnfConsolidatedInvoiceFilter consolidatedFilter = SnfConsolidatedInvoiceFilter
+				.forAccount(account.getAccountId());
+		consolidatedFilter.setUnpaidOnly(invoiceFilter.getUnpaidOnly());
+		final net.solarnetwork.dao.FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> consolidated = invoicingSystem
+				.findFilteredConsolidatedInvoices(consolidatedFilter, null, null, null);
+
+		final List<DatedInvoiceMatch> all = new ArrayList<>();
+		for ( SnfInvoice invoice : invoices ) {
+			all.add(new DatedInvoiceMatch(invoice.getStartDate(), invoice.getInvoiceId(),
+					new InvoiceImpl(invoice)));
+		}
+		for ( SnfConsolidatedInvoice invoice : consolidated ) {
+			all.add(new DatedInvoiceMatch(invoice.getStartDate(), invoice.getInvoiceId(),
+					consolidatedInvoiceMatch(invoice)));
+		}
+		all.sort(DatedInvoiceMatch.NEWEST_FIRST);
+
+		final int start = (offset != null ? (int) Math.min(Math.max(offset, 0L), all.size()) : 0);
+		final int end = (max != null ? Math.min(start + max, all.size()) : all.size());
+		final List<InvoiceMatch> matches = all.subList(start, end).stream()
+				.map(DatedInvoiceMatch::match).toList();
+		return new BasicFilterResults<>(matches, (long) all.size(), start, matches.size());
+	}
+
+	private static ConsolidatedInvoiceImpl consolidatedInvoiceMatch(SnfConsolidatedInvoice invoice) {
+		final List<SnfInvoice> accountInvoices = invoice.getInvoices();
+		return new ConsolidatedInvoiceImpl(invoice, (accountInvoices != null
+				? accountInvoices.stream().map(InvoiceImpl::new).toList()
+				: List.of()));
+	}
+
+	/**
+	 * Get the invoice consolidation resolver.
+	 *
+	 * @return the resolver, or {@code null} if consolidated invoice previews are
+	 *         not supported
+	 * @since 2.5
+	 */
+	public final @Nullable InvoiceConsolidationResolver getConsolidationResolver() {
+		return consolidationResolver;
+	}
+
+	/**
+	 * Set the invoice consolidation resolver.
+	 *
+	 * @param consolidationResolver
+	 *        the resolver to set, to support consolidated invoice previews
+	 * @since 2.5
+	 */
+	public final void setConsolidationResolver(
+			@Nullable InvoiceConsolidationResolver consolidationResolver) {
+		this.consolidationResolver = consolidationResolver;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(
+			InvoiceFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		final Account account = accountDao.getForUser(filter.getUserId());
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+		}
+		final SnfConsolidatedInvoiceFilter consolidatedFilter = SnfConsolidatedInvoiceFilter
+				.forAccount(account.getAccountId());
+		consolidatedFilter.setUnpaidOnly(Boolean.TRUE.equals(filter.getUnpaid()));
+		final net.solarnetwork.dao.FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> results = invoicingSystem
+				.findFilteredConsolidatedInvoices(consolidatedFilter, null, offset, max);
+		final List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
+				.map(SnfBillingSystem::consolidatedInvoiceMatch).collect(toList());
+		return new BasicFilterResults<>(matches, results.getTotalResults(),
+				results.getStartingOffset(), results.getReturnedResultCount());
+	}
+
+	private @Nullable SnfConsolidatedInvoice getSnfConsolidatedInvoice(final Long userId,
+			final String invoiceId) {
+		return invoicingSystem
+				.getConsolidatedInvoice(new UserLongCompositePK(userId, Long.valueOf(invoiceId)));
+	}
+
+	/**
+	 * Localize a consolidated invoice, with each account invoice localized
+	 * with its own messages, as when rendered.
+	 */
+	private LocalizedConsolidatedInvoice localizedConsolidatedInvoice(
+			SnfConsolidatedInvoice invoice, Locale locale) {
+		final List<SnfInvoice> accountInvoices = invoice.getInvoices();
+		final int count = (accountInvoices != null ? accountInvoices.size() : 0);
+		final List<Invoice> invoices = new ArrayList<>(count);
+		final List<LocalizedConsolidatedInvoiceAccount> accounts = new ArrayList<>(count);
+		if ( accountInvoices != null ) {
+			for ( SnfInvoice accountInvoice : accountInvoices ) {
+				final InvoiceImpl accountInvoiceImpl = invoiceForSnfInvoice(accountInvoice,
+						invoicingSystem.messageSourceForInvoice(accountInvoice), locale);
+				invoices.add(accountInvoiceImpl);
+				final Address address = accountInvoice.getAddress();
+				accounts.add(new LocalizedConsolidatedInvoiceAccount(accountInvoice.getUserId(),
+						(address != null ? address.getName() : ""),
+						accountInvoiceImpl.getInvoiceNumber(),
+						new LocalizedInvoice(accountInvoiceImpl, locale).getLocalizedAmount()));
+			}
+		}
+		return new LocalizedConsolidatedInvoice(new ConsolidatedInvoiceImpl(invoice, invoices),
+				accounts, locale);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable Invoice getConsolidatedInvoice(Long userId, String invoiceId, Locale locale) {
+		final SnfConsolidatedInvoice invoice = getSnfConsolidatedInvoice(userId, invoiceId);
+		return (invoice != null ? localizedConsolidatedInvoice(invoice, locale) : null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable Resource renderConsolidatedInvoice(Long userId, String invoiceId,
+			MimeType outputType, Locale locale) {
+		final SnfConsolidatedInvoice invoice = getSnfConsolidatedInvoice(userId, invoiceId);
+		return (invoice != null
+				? invoicingSystem.renderConsolidatedInvoice(invoice, outputType, locale, false)
+				: null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public @Nullable Invoice getPreviewConsolidatedInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			Locale locale) {
+		final SnfConsolidatedInvoice invoice = createPreviewConsolidatedInvoice(userId, options);
+		return (invoice != null ? localizedConsolidatedInvoice(invoice, locale) : null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public @Nullable Resource previewConsolidatedInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
+		final SnfConsolidatedInvoice invoice = createPreviewConsolidatedInvoice(userId, options);
+		return (invoice != null
+				? invoicingSystem.renderConsolidatedInvoice(invoice, outputType, locale, false)
+				: null);
+	}
+
+	private @Nullable SnfConsolidatedInvoice createPreviewConsolidatedInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.@Nullable InvoiceGenerationOptions options) {
+		final InvoiceConsolidationResolver resolver = this.consolidationResolver;
+		if ( resolver == null ) {
+			return null;
+		}
+		final InvoiceConsolidationGroup group = resolver.groupForUser(userId);
+		if ( group == null || !group.isPrimary(userId) || !group.isValid() ) {
+			return null;
+		}
+		final Account account = accountDao.getForUser(userId);
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+		}
+		final LocalDate start = previewStartDate(account, options);
+
+		log.debug("Generating preview consolidated invoice for account {} (user {}) month {}",
+				account.getId(), account.getUserId(), start);
+
+		final SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
+				options != null && options.isUseAccountCredit());
+		return invoicingSystem.generateConsolidatedInvoice(group, YearMonth.from(start), opts);
 	}
 
 }

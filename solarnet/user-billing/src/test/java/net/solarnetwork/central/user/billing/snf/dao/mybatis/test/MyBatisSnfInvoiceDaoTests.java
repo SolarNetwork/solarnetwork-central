@@ -34,6 +34,7 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Credit;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -794,6 +795,91 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
 					equalTo(true));
 		}
+	}
+
+	private Long insertConsolidatedInvoice(Account primary, LocalDate startDate,
+			SnfInvoice... invoices) {
+		getSqlSessionTemplate().flushStatements();
+		final Long id = jdbcTemplate.queryForObject("""
+				INSERT INTO solarbill.bill_consol_invoice (acct_id, addr_id, date_start, date_end, currency)
+				VALUES (?, ?, ?, ?, ?)
+				RETURNING id
+				""", Long.class, primary.getAccountId(), primary.getAddress().getAddressId(),
+				startDate, startDate.plusMonths(1), primary.getCurrencyCode());
+		for ( SnfInvoice invoice : invoices ) {
+			jdbcTemplate.update(
+					"INSERT INTO solarbill.bill_consol_invoice_member (consol_id, inv_id) VALUES (?, ?)",
+					id, invoice.getInvoiceId());
+		}
+		return id;
+	}
+
+	@Test
+	public void getByPK_consolidated() {
+		// GIVEN
+		insert();
+		final Account account = accountDao
+				.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
+		final List<SnfInvoice> others = createMonthlyInvoices(account, last.getAddress(), "NZD",
+				last.getStartDate().plusMonths(1), 1);
+		final Long consolidatedId = insertConsolidatedInvoice(account, last.getStartDate(), last);
+
+		// WHEN
+		final SnfInvoice result = dao.get(last.getId());
+		final SnfInvoice other = dao.get(others.getFirst().getId());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Consolidated invoice of an account invoice provided")
+			.returns(consolidatedId, from(SnfInvoice::getConsolidatedInvoiceId))
+			;
+		then(other)
+			.as("No consolidated invoice for an invoice that is not part of one")
+			.returns(null, from(SnfInvoice::getConsolidatedInvoiceId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void filterForAccount_excludeConsolidated() {
+		// GIVEN
+		insert();
+		final Account account = accountDao
+				.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
+		final List<SnfInvoice> others = createMonthlyInvoices(account, last.getAddress(), "NZD",
+				last.getStartDate().plusMonths(1), 3);
+		final SnfInvoice consolidated = others.get(1);
+		insertConsolidatedInvoice(account, consolidated.getStartDate(), consolidated);
+
+		final SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setExcludeConsolidated(true);
+
+		// WHEN
+		final FilterResults<SnfInvoice, UserLongCompositePK> all = dao.findFiltered(filter, null,
+				null, null);
+		final FilterResults<SnfInvoice, UserLongCompositePK> page = dao.findFiltered(filter, null,
+				0L, 10);
+
+		// THEN
+		final List<Long> expected = List.of(others.get(2).getInvoiceId(),
+				others.get(0).getInvoiceId(), last.getInvoiceId());
+		// @formatter:off
+		then(all.getResults())
+			.as("Invoice that is part of a consolidated invoice left out, newest first")
+			.extracting(SnfInvoice::getInvoiceId)
+			.containsExactlyElementsOf(expected)
+			;
+		then(page.getResults())
+			.as("Invoice that is part of a consolidated invoice left out of a page")
+			.extracting(SnfInvoice::getInvoiceId)
+			.containsExactlyElementsOf(expected)
+			;
+		then(page.getTotalResults())
+			.as("Total leaves out the consolidated invoice too")
+			.isEqualTo(3L)
+			;
+		// @formatter:on
 	}
 
 	private Account createAccount(Long userId) {

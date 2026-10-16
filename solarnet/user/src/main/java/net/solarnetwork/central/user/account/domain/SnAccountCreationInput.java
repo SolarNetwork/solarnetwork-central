@@ -33,7 +33,7 @@ import jakarta.validation.constraints.NotNull;
  * DTO for account and address configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("MultipleNullnessAnnotations")
 public class SnAccountCreationInput implements Serializable {
@@ -53,6 +53,8 @@ public class SnAccountCreationInput implements Serializable {
 
 	private @Nullable Set<SnFeatureEntitlement> requestedEntitlements;
 
+	private @Nullable SnAccountLinkInput parentAccount;
+
 	/**
 	 * Constructor.
 	 */
@@ -62,7 +64,7 @@ public class SnAccountCreationInput implements Serializable {
 
 	/**
 	 * Get the system key.
-	 * 
+	 *
 	 * @return the system key, or {@code null} to use the default billing system
 	 */
 	public final @Nullable String getSystemKey() {
@@ -71,7 +73,7 @@ public class SnAccountCreationInput implements Serializable {
 
 	/**
 	 * Set the system key.
-	 * 
+	 *
 	 * @param systemKey
 	 *        the system key to set, or {@code null} to use the default billing
 	 *        system
@@ -136,6 +138,31 @@ public class SnAccountCreationInput implements Serializable {
 	public final void setRequestedEntitlements(
 			@Nullable Set<SnFeatureEntitlement> requestedEntitlements) {
 		this.requestedEntitlements = requestedEntitlements;
+	}
+
+	/**
+	 * Get the parentAccount billing configuration.
+	 *
+	 * @return the parentAccount billing configuration
+	 * @since 1.1
+	 */
+	public final @Nullable SnAccountLinkInput getParentAccount() {
+		return parentAccount;
+	}
+
+	/**
+	 * Set the parentAccount billing configuration.
+	 *
+	 * <p>
+	 * Only valid for linking as a child, to a parent account.
+	 * </p>
+	 *
+	 * @param parentAccount
+	 *        the parentAccount billing configuration to set
+	 * @since 1.1
+	 */
+	public final void setParentAccount(@Nullable SnAccountLinkInput parentAccount) {
+		this.parentAccount = parentAccount;
 	}
 
 }

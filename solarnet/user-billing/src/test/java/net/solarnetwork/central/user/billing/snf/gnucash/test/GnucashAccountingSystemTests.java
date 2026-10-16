@@ -59,6 +59,7 @@ import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.InvoicePayment;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
@@ -75,7 +76,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  * and payments in the {@code gnucashtest} database.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
@@ -1163,6 +1164,36 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		// @formatter:off
 		thenExceptionOfType(GnucashBookLockedException.class)
 			.isThrownBy(() -> service.syncPayment(payment, List.of(), account("NZD")))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nzdInvoice_consolidated() {
+		// GIVEN
+		insertCustomer(CUSTOMER_ID, nzd, gstTable);
+		final Account account = account("NZD");
+		givenMessages(account);
+		givenTaxCodes("datum-props-in", "datum-out");
+		final SnfInvoice invoice = nzdInvoice(1931L);
+
+		// the invoice is part of a consolidated invoice
+		final SnfConsolidatedInvoice consolidated = new SnfConsolidatedInvoice(2010L, USER_ID,
+				ACCOUNT_ID, CREATED, START, START.plusMonths(1), "NZD");
+		given(invoicingSystem.findConsolidatedInvoiceForInvoice(invoice.id()))
+				.willReturn(consolidated);
+
+		// WHEN
+		boolean result = service.syncInvoice(invoice, account);
+
+		// THEN
+		then(result).as("Invoice added").isTrue();
+		// @formatter:off
+		then(invoiceRow("1931"))
+			.as("Notes name the consolidated invoice")
+			.containsEntry("notes", "Consolidated invoice INV-1JU")
+			.as("Billing ID is still the SNF invoice number")
+			.containsEntry("billing_id", "INV-1HN")
 			;
 		// @formatter:on
 	}

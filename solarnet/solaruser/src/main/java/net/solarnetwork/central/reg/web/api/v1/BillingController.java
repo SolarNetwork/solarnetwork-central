@@ -33,6 +33,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.SignStyle;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -65,7 +66,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -108,6 +109,50 @@ public class BillingController {
 		return success(info);
 	}
 
+	private static Invoice localized(Invoice result, @Nullable Locale locale) {
+		if ( result instanceof LocalizedInvoiceInfo ) {
+			return result;
+		}
+		return new LocalizedInvoice(result, (locale != null ? locale : Locale.getDefault()));
+	}
+
+	private static FilterResults<InvoiceMatch, String> localized(
+			FilterResults<InvoiceMatch, String> results, @Nullable Locale locale) {
+		if ( results.getReturnedResultCount() < 1 ) {
+			return results;
+		}
+		return new LocalizedInvoiceMatchFilterResults(results,
+				(locale != null ? locale : Locale.getDefault()));
+	}
+
+	private static MediaType outputType(String accept) {
+		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		return (acceptTypes.isEmpty() ? MediaType.TEXT_HTML
+				: acceptTypes.getFirst().removeQualityValue());
+	}
+
+	private static @Nullable YearMonth month(@Nullable String month) {
+		if ( month == null || month.isEmpty() ) {
+			return null;
+		}
+		return MONTH_FORMAT.parse(month, YearMonth::from);
+	}
+
+	private static ResponseEntity<Resource> resourceResponse(@Nullable Resource result,
+			MediaType outputType) {
+		if ( result == null ) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(outputType);
+		if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
+			// add "attachment" header with suggested file name based on invoice
+			headers.set(HttpHeaders.CONTENT_DISPOSITION,
+					format("attachment; filename=\"%s\"", result.getFilename()));
+		}
+		return new ResponseEntity<>(result, headers, HttpStatus.OK);
+	}
+
 	/**
 	 * Get a single invoice with full details.
 	 *
@@ -129,16 +174,7 @@ public class BillingController {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
 		Invoice result = biz.getInvoice(userId, invoiceId, locale);
-
-		// localize the response
-		if ( result != null && !(result instanceof LocalizedInvoiceInfo) ) {
-			if ( locale == null ) {
-				locale = Locale.getDefault();
-			}
-			result = new LocalizedInvoice(result, locale);
-		}
-
-		return success(result);
+		return success(result != null ? localized(result, locale) : null);
 	}
 
 	/**
@@ -164,21 +200,9 @@ public class BillingController {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
-		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.getFirst().removeQualityValue();
-		Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
-		if ( result != null ) {
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(outputType);
-			if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
-				// add "attachment" header with suggested file name based on invoice
-				headers.set(HttpHeaders.CONTENT_DISPOSITION,
-						format("attachment; filename=\"%s\"", result.getFilename()));
-			}
-			return new ResponseEntity<>(result, headers, HttpStatus.OK);
-		}
-		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		MediaType outputType = outputType(accept);
+		return resourceResponse(biz.renderInvoice(userId, invoiceId, outputType, locale),
+				outputType);
 	}
 
 	/**
@@ -204,6 +228,12 @@ public class BillingController {
 	/**
 	 * Find matching invoices.
 	 *
+	 * <p>
+	 * With the {@code includeConsolidated} criteria, the results include the
+	 * consolidated invoices billed to the user, in place of the invoices they
+	 * are made of.
+	 * </p>
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param locale
@@ -220,16 +250,7 @@ public class BillingController {
 		}
 		FilterResults<InvoiceMatch, String> results = biz.findFilteredInvoices(filter,
 				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
-
-		// localize the response
-		if ( results.getReturnedResultCount() > 0 ) {
-			if ( locale == null ) {
-				locale = Locale.getDefault();
-			}
-			results = new LocalizedInvoiceMatchFilterResults(results, locale);
-		}
-
-		return success(results);
+		return success(localized(results, locale));
 	}
 
 	/** A YYYY-MM date format to use for parsing a billing month. */
@@ -272,23 +293,9 @@ public class BillingController {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
-		YearMonth date = null;
-		if ( month != null && !month.isEmpty() ) {
-			date = MONTH_FORMAT.parse(month, YearMonth::from);
-		}
-
 		Invoice result = biz.getPreviewInvoice(userId,
-				new BasicInvoiceGenerationOptions(date, useCredit), locale);
-
-		// localize the response
-		if ( result != null && !(result instanceof LocalizedInvoiceInfo) ) {
-			if ( locale == null ) {
-				locale = Locale.getDefault();
-			}
-			result = new LocalizedInvoice(result, locale);
-		}
-
-		return success(result);
+				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
+		return success(result != null ? localized(result, locale) : null);
 	}
 
 	/**
@@ -320,26 +327,10 @@ public class BillingController {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
-		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.getFirst().removeQualityValue();
-		YearMonth date = null;
-		if ( month != null && !month.isEmpty() ) {
-			date = MONTH_FORMAT.parse(month, YearMonth::from);
-		}
-		Resource result = biz.previewInvoice(userId, new BasicInvoiceGenerationOptions(date, useCredit),
-				outputType, locale);
-		if ( result != null ) {
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(outputType);
-			if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
-				// add "attachment" header with suggested file name based on invoice
-				headers.set(HttpHeaders.CONTENT_DISPOSITION,
-						format("attachment; filename=\"%s\"", result.getFilename()));
-			}
-			return new ResponseEntity<>(result, headers, HttpStatus.OK);
-		}
-		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		MediaType outputType = outputType(accept);
+		return resourceResponse(biz.previewInvoice(userId,
+				new BasicInvoiceGenerationOptions(month(month), useCredit), outputType, locale),
+				outputType);
 	}
 
 	/**
@@ -365,6 +356,201 @@ public class BillingController {
 			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
 		return renderPreviewInvoice("application/pdf", userId, month, useCredit, locale);
+	}
+
+	/**
+	 * Find the consolidated invoices billed to a user.
+	 *
+	 * @param filter
+	 *        the search criteria; the user is the primary account user
+	 * @param locale
+	 *        the locale
+	 * @return the search results
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/list", method = RequestMethod.GET)
+	public Result<FilterResults<InvoiceMatch, String>> findFilteredConsolidatedInvoices(
+			InvoiceFilterCommand filter, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( filter.getUserId() == null ) {
+			filter.setUserId(SecurityUtils.getCurrentActorUserId());
+		}
+		FilterResults<InvoiceMatch, String> results = biz.findFilteredConsolidatedInvoices(filter,
+				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
+		return success(localized(results, locale));
+	}
+
+	/**
+	 * Get a consolidated invoice, with a summary of the account invoices it is
+	 * made of.
+	 *
+	 * @param invoiceId
+	 *        the ID of the consolidated invoice to get
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the consolidated invoice
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/{invoiceId}", method = RequestMethod.GET)
+	public Result<Invoice> getConsolidatedInvoice(@PathVariable String invoiceId,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		Invoice result = biz.getConsolidatedInvoice(userId, invoiceId, locale);
+		return success(result != null ? localized(result, locale) : null);
+	}
+
+	/**
+	 * Render a consolidated invoice.
+	 *
+	 * @param invoiceId
+	 *        the ID of the consolidated invoice to render
+	 * @param accept
+	 *        an optional output type, defaults to {@literal text/html}
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered consolidated invoice entity
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/{invoiceId}/render", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderConsolidatedInvoice(@PathVariable String invoiceId,
+			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		MediaType outputType = outputType(accept);
+		return resourceResponse(
+				biz.renderConsolidatedInvoice(userId, invoiceId, outputType, locale), outputType);
+	}
+
+	/**
+	 * Render a consolidated invoice as PDF.
+	 *
+	 * @param invoiceId
+	 *        the ID of the consolidated invoice to render
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered consolidated invoice entity
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/{invoiceId}/render/pdf",
+			method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPdfConsolidatedInvoice(@PathVariable String invoiceId,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		return renderConsolidatedInvoice(invoiceId, "application/pdf", userId, locale);
+	}
+
+	/**
+	 * Preview the current billing cycle's consolidated invoice, for the
+	 * invoice consolidation group of a primary account.
+	 *
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
+	 * @param locale
+	 *        the request locale
+	 * @return the preview consolidated invoice, or {@code null} data if the
+	 *         user is not the primary account of a valid group
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/preview", method = RequestMethod.GET)
+	public Result<Invoice> previewConsolidatedInvoice(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		Invoice result = biz.getPreviewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
+		return success(result != null ? localized(result, locale) : null);
+	}
+
+	/**
+	 * Render a preview of the current billing cycle's consolidated invoice.
+	 *
+	 * @param accept
+	 *        an optional output type, defaults to {@literal text/html}
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered consolidated invoice entity
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/preview/render", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPreviewConsolidatedInvoice(
+			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		MediaType outputType = outputType(accept);
+		return resourceResponse(biz.previewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(month(month), useCredit), outputType, locale),
+				outputType);
+	}
+
+	/**
+	 * Render a preview of the current billing cycle's consolidated invoice as a
+	 * PDF.
+	 *
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered consolidated invoice entity
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/preview/render/pdf",
+			method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPreviewConsolidatedInvoicePdf(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		return renderPreviewConsolidatedInvoice("application/pdf", userId, month, useCredit,
+				locale);
 	}
 
 }

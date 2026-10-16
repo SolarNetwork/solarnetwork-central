@@ -35,7 +35,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for User objects.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserDao
 		extends GenericDao<User, Long>, FilterableDao<UserFilterMatch, Long, UserFilter> {
@@ -118,5 +118,21 @@ public interface UserDao
 	 * @since 1.1
 	 */
 	void storeInternalData(Long userId, @Nullable Map<String, Object> data);
+
+	/**
+	 * Lock a user until the end of the current transaction.
+	 *
+	 * <p>
+	 * Use this to serialize changes that read and then update the internal
+	 * data of a user: other transactions that lock the same user wait for the
+	 * lock.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the ID of the user to lock
+	 * @return {@code true} if the user exists and was locked
+	 * @since 1.4
+	 */
+	boolean lockUser(Long userId);
 
 }

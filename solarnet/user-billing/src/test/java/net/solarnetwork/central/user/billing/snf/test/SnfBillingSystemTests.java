@@ -31,16 +31,22 @@ import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javax.money.Monetary;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +56,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.context.support.StaticMessageSource;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -59,6 +67,12 @@ import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
 import net.solarnetwork.central.user.account.domain.SnAccountInput;
 import net.solarnetwork.central.user.account.domain.SnAddressInput;
+import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
+import net.solarnetwork.central.user.billing.domain.BasicInvoiceGenerationOptions;
+import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceConsolidationGroup;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
@@ -69,15 +83,26 @@ import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
+import net.solarnetwork.central.user.billing.snf.domain.LocalizedConsolidatedInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.LocalizedConsolidatedInvoiceAccount;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link SnfBillingSystem}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -97,6 +122,18 @@ public class SnfBillingSystemTests {
 
 	@Mock
 	private NodeUsageDao usageDao;
+
+	@Mock
+	private InvoiceConsolidationResolver consolidationResolver;
+
+	@Captor
+	private ArgumentCaptor<SnfInvoiceFilter> invoiceFilterCaptor;
+
+	@Captor
+	private ArgumentCaptor<SnfConsolidatedInvoiceFilter> consolidatedFilterCaptor;
+
+	@Captor
+	private ArgumentCaptor<SnfInvoicingOptions> invoicingOptionsCaptor;
 
 	@Captor
 	private ArgumentCaptor<Address> addressCaptor;
@@ -516,5 +553,305 @@ public class SnfBillingSystemTests {
 		// @formatter:on
 	}
 
+	private static final LocalDate JUL = LocalDate.of(2026, 7, 1);
+	private static final LocalDate AUG = LocalDate.of(2026, 8, 1);
+	private static final LocalDate SEP = LocalDate.of(2026, 9, 1);
+
+	private Account givenAccount(Long userId) {
+		final var account = new Account(new UserLongCompositePK(userId, randomLong()),
+				clock.instant(), "NZD", "en-NZ");
+		account.setAddress(new Address(userId, "Tester " + userId, randomEmail(), "NZ",
+				"Pacific/Auckland"));
+		given(accountDao.getForUser(userId)).willReturn(account);
+		return account;
+	}
+
+	private static SnfInvoice invoice(Long id, Long userId, LocalDate start, String amount) {
+		final var invoice = new SnfInvoice(id, userId, randomLong(), Instant.now(), start,
+				start.plusMonths(1), "NZD");
+		invoice.setAddress(
+				new Address(userId, "Tester " + userId, randomEmail(), "NZ", "Pacific/Auckland"));
+		invoice.setItems(Set.of(SnfInvoiceItem.newItem(id, InvoiceItemType.Usage,
+				"datum-props-in", BigDecimal.ONE, new BigDecimal(amount))));
+		return invoice;
+	}
+
+	private static SnfConsolidatedInvoice consolidatedInvoice(Long id, Account primary,
+			LocalDate start, SnfInvoice... invoices) {
+		final var invoice = new SnfConsolidatedInvoice(id, primary.getUserId(),
+				primary.getAccountId(), Instant.now(), start, start.plusMonths(1), "NZD");
+		invoice.setAddress(primary.getAddress());
+		invoice.setInvoices(List.of(invoices));
+		return invoice;
+	}
+
+	@Test
+	public void findFilteredInvoices_includeConsolidated() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Account account = givenAccount(userId);
+		final SnfInvoice jul = invoice(1L, userId, JUL, "1.00");
+		final SnfInvoice sep = invoice(5L, userId, SEP, "2.00");
+		given(invoiceDao.findFiltered(invoiceFilterCaptor.capture(), any(), isNull(), isNull()))
+				.willReturn(new BasicFilterResults<>(List.of(sep, jul)));
+
+		final SnfConsolidatedInvoice aug = consolidatedInvoice(4L, account, AUG,
+				invoice(2L, userId, AUG, "3.00"), invoice(3L, randomLong(), AUG, "4.00"));
+		given(invoicingSystem.findFilteredConsolidatedInvoices(consolidatedFilterCaptor.capture(),
+				isNull(), isNull(), isNull())).willReturn(new BasicFilterResults<>(List.of(aug)));
+
+		final var filter = new InvoiceFilterCommand();
+		filter.setUserId(userId);
+		filter.setUnpaid(true);
+		filter.setIncludeConsolidated(true);
+
+		// WHEN
+		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null,
+				null, null);
+
+		// THEN
+		final List<InvoiceMatch> matches = new ArrayList<>();
+		results.forEach(matches::add);
+		// @formatter:off
+		and.then(invoiceFilterCaptor.getValue())
+			.as("Account invoices of the user's account")
+			.returns(account.getAccountId(), from(SnfInvoiceFilter::getAccountId))
+			.as("Unpaid account invoices")
+			.returns(true, from(SnfInvoiceFilter::getUnpaidOnly))
+			.as("Account invoices that are part of a consolidated invoice left out")
+			.returns(true, from(SnfInvoiceFilter::isExcludeConsolidated))
+			;
+		and.then(consolidatedFilterCaptor.getValue())
+			.as("Consolidated invoices billed to the user's account")
+			.returns(account.getAccountId(), from(SnfConsolidatedInvoiceFilter::getAccountId))
+			.as("Unpaid consolidated invoices")
+			.returns(true, from(SnfConsolidatedInvoiceFilter::isUnpaidOnly))
+			;
+		and.then(matches)
+			.as("Account and consolidated invoices merged, newest first")
+			.extracting(InvoiceMatch::getId)
+			.containsExactly("5", "4", "1")
+			;
+		and.then(matches)
+			.as("Consolidated invoice marked")
+			.extracting(InvoiceMatch::isConsolidated)
+			.containsExactly(false, true, false)
+			;
+		and.then(matches.get(1).getAmount())
+			.as("Consolidated invoice amount is the total of its account invoices")
+			.isEqualByComparingTo("7.00")
+			;
+		and.then(results.getTotalResults()).as("Total of both").isEqualTo(3L);
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredInvoices_includeConsolidated_paged() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Account account = givenAccount(userId);
+		given(invoiceDao.findFiltered(any(), any(), isNull(), isNull()))
+				.willReturn(new BasicFilterResults<>(List.of(invoice(5L, userId, SEP, "2.00"),
+						invoice(1L, userId, JUL, "1.00"))));
+		given(invoicingSystem.findFilteredConsolidatedInvoices(any(), isNull(), isNull(), isNull()))
+				.willReturn(new BasicFilterResults<>(List.of(consolidatedInvoice(4L, account, AUG,
+						invoice(2L, userId, AUG, "3.00")))));
+
+		final var filter = new InvoiceFilterCommand();
+		filter.setUserId(userId);
+		filter.setIncludeConsolidated(true);
+
+		// WHEN
+		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null, 1L,
+				1);
+
+		// THEN
+		// @formatter:off
+		and.then(results.getResults())
+			.as("Second page of one")
+			.extracting(InvoiceMatch::getId)
+			.containsExactly("4")
+			;
+		and.then(results.getTotalResults()).as("Total of all pages").isEqualTo(3L);
+		and.then(results.getStartingOffset()).as("Starting offset").isEqualTo(1L);
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredConsolidatedInvoices() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Account account = givenAccount(userId);
+		final SnfConsolidatedInvoice aug = consolidatedInvoice(4L, account, AUG,
+				invoice(2L, userId, AUG, "3.00"), invoice(3L, randomLong(), AUG, "4.00"));
+		given(invoicingSystem.findFilteredConsolidatedInvoices(consolidatedFilterCaptor.capture(),
+				isNull(), isNull(), isNull())).willReturn(new BasicFilterResults<>(List.of(aug)));
+
+		final var filter = new InvoiceFilterCommand();
+		filter.setUserId(userId);
+
+		// WHEN
+		FilterResults<InvoiceMatch, String> results = system.findFilteredConsolidatedInvoices(filter,
+				null, null, null);
+
+		// THEN
+		// @formatter:off
+		and.then(consolidatedFilterCaptor.getValue())
+			.as("Consolidated invoices billed to the user's account")
+			.returns(account.getAccountId(), from(SnfConsolidatedInvoiceFilter::getAccountId))
+			.as("Paid and unpaid")
+			.returns(false, from(SnfConsolidatedInvoiceFilter::isUnpaidOnly))
+			;
+		and.then(results.getResults())
+			.as("Consolidated invoice returned")
+			.singleElement()
+			.returns("4", from(InvoiceMatch::getId))
+			.returns(true, from(InvoiceMatch::isConsolidated))
+			.satisfies(m -> and.then(m.getAmount()).isEqualByComparingTo("7.00"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getConsolidatedInvoice() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Account account = new Account(new UserLongCompositePK(userId, randomLong()),
+				clock.instant(), "NZD", "en-NZ");
+		account.setAddress(new Address(userId, "Primary", randomEmail(), "NZ", "Pacific/Auckland"));
+		final Long memberUserId = randomLong();
+		final SnfConsolidatedInvoice aug = consolidatedInvoice(4L, account, AUG,
+				invoice(2L, userId, AUG, "3.00"), invoice(3L, memberUserId, AUG, "4.00"));
+		given(invoicingSystem.getConsolidatedInvoice(new UserLongCompositePK(userId, 4L)))
+				.willReturn(aug);
+		given(invoicingSystem.messageSourceForInvoice(any())).willReturn(new StaticMessageSource());
+
+		// WHEN
+		Invoice result = system.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Localized consolidated invoice returned")
+			.asInstanceOf(InstanceOfAssertFactories.type(LocalizedConsolidatedInvoice.class))
+			.returns("4", from(Invoice::getId))
+			.returns(true, from(Invoice::isConsolidated))
+			.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("7.00"))
+			.extracting(LocalizedConsolidatedInvoice::getLocalizedAccountInvoices,
+					InstanceOfAssertFactories.list(LocalizedConsolidatedInvoiceAccount.class))
+			.as("Summary of each account invoice, in order")
+			.satisfiesExactly(
+				a -> and.then(a)
+					.returns(userId, from(LocalizedConsolidatedInvoiceAccount::userId))
+					.returns("Tester " + userId, from(LocalizedConsolidatedInvoiceAccount::name))
+					.returns("INV-2", from(LocalizedConsolidatedInvoiceAccount::invoiceNumber))
+					.returns("NZ$3.00", from(LocalizedConsolidatedInvoiceAccount::localizedAmount)),
+				a -> and.then(a)
+					.returns(memberUserId, from(LocalizedConsolidatedInvoiceAccount::userId))
+					.returns("INV-3", from(LocalizedConsolidatedInvoiceAccount::invoiceNumber))
+					.returns("NZ$4.00", from(LocalizedConsolidatedInvoiceAccount::localizedAmount)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getConsolidatedInvoice_notFound() {
+		// GIVEN
+		final Long userId = randomLong();
+
+		// WHEN
+		Invoice result = system.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No consolidated invoice").isNull();
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoice() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		final Long userId = randomLong();
+		final Long memberUserId = randomLong();
+		final Account account = givenAccount(userId);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
+				false);
+		given(consolidationResolver.groupForUser(userId)).willReturn(group);
+		final SnfConsolidatedInvoice preview = consolidatedInvoice(-1L, account, AUG,
+				invoice(-1L, userId, AUG, "3.00"), invoice(-1L, memberUserId, AUG, "4.00"));
+		given(invoicingSystem.generateConsolidatedInvoice(same(group), any(),
+				invoicingOptionsCaptor.capture())).willReturn(preview);
+		given(invoicingSystem.messageSourceForInvoice(any())).willReturn(new StaticMessageSource());
+
+		// WHEN
+		Invoice result = system.getPreviewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		then(invoicingSystem).should().generateConsolidatedInvoice(same(group),
+				eq(YearMonth.from(AUG)), any());
+		// @formatter:off
+		and.then(invoicingOptionsCaptor.getValue())
+			.as("Dry run, so nothing is saved")
+			.returns(true, from(SnfInvoicingOptions::isDryRun))
+			;
+		and.then(result)
+			.as("Localized preview returned")
+			.asInstanceOf(InstanceOfAssertFactories.type(LocalizedConsolidatedInvoice.class))
+			.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("7.00"))
+			.extracting(LocalizedConsolidatedInvoice::getLocalizedAccountInvoices,
+					InstanceOfAssertFactories.list(LocalizedConsolidatedInvoiceAccount.class))
+			.as("Each account of the group")
+			.extracting(LocalizedConsolidatedInvoiceAccount::userId)
+			.containsExactly(userId, memberUserId)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoice_member() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		final Long userId = randomLong();
+		final Long primaryUserId = randomLong();
+		given(consolidationResolver.groupForUser(userId)).willReturn(
+				new InvoiceConsolidationGroup(primaryUserId, List.of(primaryUserId, userId), false));
+
+		// WHEN
+		Invoice result = system.getPreviewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No preview for a member of a group").isNull();
+		then(invoicingSystem).should(never()).generateConsolidatedInvoice(any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoice_invalidGroup() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		final Long userId = randomLong();
+		given(consolidationResolver.groupForUser(userId))
+				.willReturn(new InvoiceConsolidationGroup(userId, List.of(userId, randomLong()),
+						false, new DefaultMessageSourceResolvable(
+								"error.consolidated.currencyMismatch")));
+
+		// WHEN
+		Invoice result = system.getPreviewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No preview for an invalid group").isNull();
+		then(invoicingSystem).should(never()).generateConsolidatedInvoice(any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoice_noResolver() {
+		// WHEN
+		Invoice result = system.getPreviewConsolidatedInvoice(randomLong(),
+				new BasicInvoiceGenerationOptions(false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No preview without consolidation support").isNull();
+	}
 
 }

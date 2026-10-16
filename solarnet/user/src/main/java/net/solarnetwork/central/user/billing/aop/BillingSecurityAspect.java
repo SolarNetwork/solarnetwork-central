@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
  * Security enforcing AOP aspect for {@link BillingBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -83,18 +83,78 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void findFilteredInvoices(InvoiceFilter filter) {
 	}
 
+	/**
+	 * Match getting a consolidated invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.2
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getConsolidatedInvoice(..)) && args(userId, ..)")
+	public void getConsolidatedInvoice(Long userId) {
+	}
+
+	/**
+	 * Match rendering a consolidated invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.2
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.renderConsolidatedInvoice(..)) && args(userId, ..)")
+	public void renderConsolidatedInvoice(Long userId) {
+	}
+
+	/**
+	 * Match getting a preview consolidated invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.2
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getPreviewConsolidatedInvoice(..)) && args(userId, ..)")
+	public void getPreviewConsolidatedInvoice(Long userId) {
+	}
+
+	/**
+	 * Match rendering a preview consolidated invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.2
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.previewConsolidatedInvoice(..)) && args(userId, ..)")
+	public void previewConsolidatedInvoice(Long userId) {
+	}
+
+	/**
+	 * Match finding consolidated invoices.
+	 *
+	 * @param filter
+	 *        the filter
+	 * @since 2.2
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.findFilteredConsolidatedInvoices(..)) && args(filter, ..)")
+	public void findFilteredConsolidatedInvoices(InvoiceFilter filter) {
+	}
+
 	@Before(value = """
 			forUserAccess(userId)
 			|| getInvoice(userId)
 			|| renderInvoice(userId)
 			|| previewInvoice(userId)
 			|| getPreviewInvoice(userId)
+			|| getConsolidatedInvoice(userId)
+			|| renderConsolidatedInvoice(userId)
+			|| getPreviewConsolidatedInvoice(userId)
+			|| previewConsolidatedInvoice(userId)
 			""", argNames = "userId")
 	public void checkForUserAccess(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before(value = "findFilteredInvoices(filter)", argNames = "filter")
+	@Before(value = "findFilteredInvoices(filter) || findFilteredConsolidatedInvoices(filter)",
+			argNames = "filter")
 	public void checkFindFilteredInvoices(@Nullable InvoiceFilter filter) {
 		Long userId = (filter != null ? filter.getUserId() : null);
 		requireUserReadAccess(userId);

@@ -32,7 +32,7 @@ import net.solarnetwork.dao.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface Invoice extends Entity<String> {
 
@@ -144,5 +144,27 @@ public interface Invoice extends Entity<String> {
 	 * @since 1.2
 	 */
 	List<InvoiceUsageRecord<Long>> getNodeUsageRecords();
+
+	/**
+	 * Test if this is a consolidated invoice, which combines the invoices of
+	 * the accounts of an invoice consolidation group.
+	 *
+	 * @return {@code true} if this is a consolidated invoice
+	 * @since 1.4
+	 */
+	default boolean isConsolidated() {
+		return false;
+	}
+
+	/**
+	 * Get the number of the consolidated invoice this invoice is part of.
+	 *
+	 * @return the consolidated invoice number, or {@code null} if this invoice
+	 *         is not part of a consolidated invoice
+	 * @since 1.4
+	 */
+	default @Nullable String getConsolidatedInvoiceNumber() {
+		return null;
+	}
 
 }

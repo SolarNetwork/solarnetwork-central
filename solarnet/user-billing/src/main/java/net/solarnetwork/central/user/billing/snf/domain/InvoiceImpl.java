@@ -189,4 +189,22 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 				.collect(Collectors.toList());
 	}
 
+	@Override
+	public boolean isConsolidated() {
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 2.3
+	 */
+	@Override
+	public @Nullable String getConsolidatedInvoiceNumber() {
+		final Long consolidatedInvoiceId = invoice.getConsolidatedInvoiceId();
+		return (consolidatedInvoiceId != null
+				? SnfBillingUtils.invoiceNumForId(consolidatedInvoiceId)
+				: null);
+	}
+
 }

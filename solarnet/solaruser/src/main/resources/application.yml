@@ -8,6 +8,8 @@ app:
       mail.from: accounts@localhost
       html-template-cache:
         ttl: 3600
+      consolidated-html-template-cache:
+        ttl: 3600
   cache:
     persistence.path: "var/cache"
     user-metadata-cache:
@@ -486,6 +488,10 @@ server:
 
 spring:
   jmx.enabled: false
+  messages:
+    basename:
+      - "messages"
+      - "net.solarnetwork.central.user.billing.snf.support.UserDataInvoiceConsolidationResolver"
   mvc.format:
     date: "iso"
     date-time: "iso"

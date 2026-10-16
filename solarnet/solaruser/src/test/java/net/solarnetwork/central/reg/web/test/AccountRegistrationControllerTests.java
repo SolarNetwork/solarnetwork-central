@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import java.util.HashMap;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.MapBindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.support.SimpleSessionStatus;
 import net.solarnetwork.central.ValidationException;
@@ -52,6 +55,8 @@ import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccount;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
 import net.solarnetwork.central.user.account.domain.SnAccountInfo;
+import net.solarnetwork.central.user.account.domain.SnAccountLinkInput;
+import net.solarnetwork.central.user.account.domain.SnLinkedAccountInfo;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.User;
 
@@ -59,7 +64,7 @@ import net.solarnetwork.central.user.domain.User;
  * Test cases for the {@link AccountRegistrationController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -91,6 +96,21 @@ public class AccountRegistrationControllerTests {
 
 	private static BindingResult errorsFor(SnAccountCreationInput input) {
 		return new BeanPropertyBindingResult(input, AccountRegistrationController.ACCOUNT_INPUT);
+	}
+
+	private static SnAccountCreationInput parentAccountInput() {
+		final var input = new SnAccountCreationInput();
+		final var link = new SnAccountLinkInput();
+		link.setUsername("parent@localhost");
+		link.setPassword("secret");
+		input.setParentAccount(link);
+		return input;
+	}
+
+	private static ValidationException linkException(String code) {
+		final var errors = new MapBindingResult(new HashMap<>(), "parentAccount");
+		errors.reject(code, new Object[] { "parent@localhost" }, "Not linked.");
+		return new ValidationException("Not linked.", errors, null);
 	}
 
 	@Test
@@ -304,6 +324,111 @@ public class AccountRegistrationControllerTests {
 		and.then(sessionStatus.isComplete())
 			.as("Session form bean preserved so the user can retry")
 			.isFalse()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void submit_parentAccount() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var input = parentAccountInput();
+		final BindingResult errors = errorsFor(input);
+		given(userAccountBiz.verifyParentAccount(eq(userId), same(input.getParentAccount())))
+				.willReturn(new SnLinkedAccountInfo(1L, "Parent", "parent@localhost"));
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final String result = controller.submit(input, errors);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Review view returned once the parent account is verified")
+			.isEqualTo("sec/account/register-confirm")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void submit_parentAccount_invalid() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var input = parentAccountInput();
+		final BindingResult errors = errorsFor(input);
+		given(userAccountBiz.verifyParentAccount(eq(userId), same(input.getParentAccount())))
+				.willThrow(linkException("account.consolidated.error.credentials"));
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final String result = controller.submit(input, errors);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Form view returned when the parent account is not verified")
+			.isEqualTo(REGISTER_VIEW)
+			;
+		and.then(errors.getFieldError("parentAccount.username"))
+			.as("Problem given as an error of the parent account email")
+			.isNotNull()
+			.returns("account.consolidated.error.credentials", from(FieldError::getCode))
+			.returns("Not linked.", from(FieldError::getDefaultMessage))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void submit_parentAccount_verified() {
+		// GIVEN
+		final var input = new SnAccountCreationInput();
+		final var link = new SnAccountLinkInput();
+		link.setUsername("parent@localhost");
+		link.verified(new SnLinkedAccountInfo(1L, "Parent", "parent@localhost"));
+		input.setParentAccount(link);
+		final BindingResult errors = errorsFor(input);
+
+		// WHEN
+		final String result = controller.submit(input, errors);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Review view returned")
+			.isEqualTo("sec/account/register-confirm")
+			;
+		// @formatter:on
+		then(userAccountBiz).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void confirm_linkException() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var input = new SnAccountCreationInput();
+		final BindingResult errors = errorsFor(input);
+		final var sessionStatus = new SimpleSessionStatus();
+		given(userAccountBiz.createAccount(eq(userId), same(input)))
+				.willThrow(linkException("account.consolidated.error.invalid"));
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final String result = controller.confirm(input, errors, sessionStatus);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Form view returned when the service rejects linking the account")
+			.isEqualTo(REGISTER_VIEW)
+			;
+		and.then(errors.getGlobalErrors())
+			.as("Error of the service, about another object, given as a global error")
+			.singleElement()
+			.returns("account.consolidated.error.invalid", from(ObjectError::getCode))
+			.returns("Not linked.", from(ObjectError::getDefaultMessage))
 			;
 		// @formatter:on
 	}

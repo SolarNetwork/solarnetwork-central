@@ -32,25 +32,31 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
+import net.solarnetwork.central.user.billing.snf.SnfConsolidatedInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfConsolidatedInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
+import net.solarnetwork.central.user.billing.snf.support.UserDataInvoiceConsolidationResolver;
+import net.solarnetwork.central.user.dao.UserDao;
 
 /**
  * SNF BillingSystem configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class SnfBillingSystemConfig {
@@ -81,11 +87,20 @@ public class SnfBillingSystemConfig {
 	private TaxCodeDao taxCodeDao;
 
 	@Autowired
+	private SnfConsolidatedInvoiceDao consolidatedInvoiceDao;
+
+	@Autowired
+	private UserDao userDao;
+
+	@Autowired
 	@Lazy
 	private List<SnfInvoiceDeliverer> snfInvoiceDeliverers;
 
 	@Autowired
 	private List<SnfInvoiceRendererResolver> snfInvoiceRendererResolvers;
+
+	@Autowired
+	private List<SnfConsolidatedInvoiceRendererResolver> snfConsolidatedInvoiceRendererResolvers;
 
 	@Autowired
 	private VersionedMessageDao messageDao;
@@ -94,9 +109,12 @@ public class SnfBillingSystemConfig {
 	private int deliveryTimeoutSecs = 60;
 
 	@Bean
-	public SnfBillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem) {
-		return new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao, accountDao,
-				invoiceDao, usageDao);
+	public SnfBillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem,
+			InvoiceConsolidationResolver invoiceConsolidationResolver) {
+		var system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao,
+				accountDao, invoiceDao, usageDao);
+		system.setConsolidationResolver(invoiceConsolidationResolver);
+		return system;
 	}
 
 	@Bean
@@ -107,7 +125,22 @@ public class SnfBillingSystemConfig {
 		system.setDeliveryTimeoutSecs(deliveryTimeoutSecs);
 		system.setDeliveryServices(snfInvoiceDeliverers);
 		system.setRendererResolvers(snfInvoiceRendererResolvers);
+		system.setConsolidatedInvoiceDao(consolidatedInvoiceDao);
+		system.setConsolidatedRendererResolvers(snfConsolidatedInvoiceRendererResolvers);
 		return system;
+	}
+
+	/**
+	 * The invoice consolidation resolver.
+	 *
+	 * @return the resolver
+	 * @since 1.2
+	 */
+	@Bean
+	public InvoiceConsolidationResolver invoiceConsolidationResolver() {
+		final var msg = new ResourceBundleMessageSource();
+		msg.setBasename(UserDataInvoiceConsolidationResolver.class.getName());
+		return new UserDataInvoiceConsolidationResolver(userDao, accountDao, msg);
 	}
 
 }

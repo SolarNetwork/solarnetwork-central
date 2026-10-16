@@ -30,7 +30,7 @@ import net.solarnetwork.domain.SimplePagination;
  * Query filter for {@link SnfInvoice} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SnfInvoiceFilter extends SimplePagination {
 
@@ -40,6 +40,7 @@ public class SnfInvoiceFilter extends SimplePagination {
 	private @Nullable LocalDate endDate;
 	private boolean unpaidOnly;
 	private boolean ignoreCreditOnly;
+	private boolean excludeConsolidated;
 
 	/**
 	 * Create a new filter with a user ID.
@@ -200,6 +201,29 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 */
 	public final void setIgnoreCreditOnly(boolean ignoreCreditOnly) {
 		this.ignoreCreditOnly = ignoreCreditOnly;
+	}
+
+	/**
+	 * Get the "exclude consolidated" flag.
+	 *
+	 * @return {@literal true} to leave out invoices that are part of a
+	 *         consolidated invoice
+	 * @since 1.2
+	 */
+	public final boolean isExcludeConsolidated() {
+		return excludeConsolidated;
+	}
+
+	/**
+	 * Set the "exclude consolidated" flag.
+	 *
+	 * @param excludeConsolidated
+	 *        {@literal true} to leave out invoices that are part of a
+	 *        consolidated invoice
+	 * @since 1.2
+	 */
+	public final void setExcludeConsolidated(boolean excludeConsolidated) {
+		this.excludeConsolidated = excludeConsolidated;
 	}
 
 }

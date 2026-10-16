@@ -9,7 +9,61 @@ $(document).ready(function() {
 
 	function resetInvoiceDetails(modal) {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
+		$(modal).find('table.consolidated-accounts').addClass('hidden').find('tbody').empty();
 		$(modal).find('.invoice-items-loading').removeClass('hidden');
+	}
+
+	/**
+	 * Show the consolidated invoice marks of an invoice row or details.
+	 *
+	 * @param {jQuery} el the element with the marks
+	 * @param {Object} invoice the invoice
+	 */
+	function showConsolidatedMarks(el, invoice) {
+		el.find('.consolidated-mark').toggleClass('hidden', !invoice.consolidated);
+		el.find('.consolidated-in').toggleClass('hidden', !invoice.consolidatedInvoiceNumber)
+			.find("[data-tprop='consolidatedInvoiceNumber']").text(invoice.consolidatedInvoiceNumber || '');
+	}
+
+	function populateConsolidatedAccounts(table, invoice) {
+		var accounts = (invoice ? invoice.localizedAccountInvoices : null),
+			haveAccounts = (Array.isArray(accounts) && accounts.length > 0),
+			tbody = table.find('tbody'),
+			templateRow = table.find('tr.template'),
+			i, len, tr;
+		tbody.empty();
+		if ( haveAccounts ) {
+			for ( i = 0, len = accounts.length; i < len; i += 1 ) {
+				tr = templateRow.clone(true);
+				tr.removeClass('template');
+				replaceTemplateProperties(tr, accounts[i]);
+				tbody.append(tr);
+			}
+		}
+		table.toggleClass('hidden', !haveAccounts);
+	}
+
+	function showConsolidatedInvoiceDetails(event) {
+		event.preventDefault();
+
+		var invoice = $(this).closest('tr').data('invoice');
+		console.log('Showing consolidated invoice %o', invoice);
+
+		var modal = $('#consolidated-invoice-details-modal');
+		replaceTemplateProperties(modal.find('.invoice-details'), invoice);
+		modal.find(".invoice-details [data-tprop='localizedAmount']")
+			.toggleClass('text-bg-danger', invoice.balance > 0)
+			.toggleClass('text-bg-success', !(invoice.balance > 0));
+
+		modal.find('a.invoice-render').attr('href', SolarReg.solarUserURL('/sec/billing/consolidated-invoices/' +invoice.id +'/render/pdf'));
+
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/consolidated-invoices/' +invoice.id), function(json) {
+			console.log('Got consolidated invoice detail: %o', json);
+			populateConsolidatedAccounts(modal.find('table.consolidated-accounts'), (json ? json.data : null));
+			modal.find('.invoice-items-loading').addClass('hidden');
+		});
+
+		modal.modal('show');
 	}
 	
 	function replaceTemplateProperties(el, obj, prefix) {
@@ -104,12 +158,15 @@ $(document).ready(function() {
 			if ( invoice.hasOwnProperty(prop) ) {
 				cell = container.find("[data-tprop='" +prop +"']").text(invoice[prop]);
 				if ( prop === 'localizedAmount' ) {
-					cell.toggleClass('text-bg-danger', invoice.balance > 0);
-					cell.toggleClass('text-bg-success', !(invoice.balance > 0));
+					// the balance of a consolidated invoice's account invoice is paid on the consolidated invoice
+					cell.toggleClass('text-bg-secondary', !!invoice.consolidatedInvoiceNumber);
+					cell.toggleClass('text-bg-danger', !invoice.consolidatedInvoiceNumber && invoice.balance > 0);
+					cell.toggleClass('text-bg-success', !invoice.consolidatedInvoiceNumber && !(invoice.balance > 0));
 				}
 			}
 		}
 		
+		showConsolidatedMarks(modal, invoice);
 		modal.find('a.invoice-render').attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render/pdf'));
 
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id), function(json) {
@@ -134,11 +191,12 @@ $(document).ready(function() {
 					if ( invoice.hasOwnProperty(prop) ) {
 						cell = tr.find("[data-tprop='" +prop +"']");
 						if ( cell.is('a') ) {
-							cell.on('click', showInvoiceDetails);
+							cell.on('click', invoice.consolidated ? showConsolidatedInvoiceDetails : showInvoiceDetails);
 						}
 						cell.text(invoice[prop]);
 					}
 				}
+				showConsolidatedMarks(tr, invoice);
 				tbody.append(tr);
 			}
 		}
@@ -294,6 +352,27 @@ $(document).ready(function() {
 		return haveRows;
 	}
 	
+	function renderPreviewConsolidatedInvoiceTable(table, json) {
+		var invoice = (json && json.data ? json.data : null),
+			accounts = (invoice ? invoice.localizedAccountInvoices : null),
+			haveAccounts = (Array.isArray(accounts) && accounts.length > 0),
+			tbody, templateRow, i, len, tr;
+		table = $(table);
+		if ( haveAccounts ) {
+			tbody = table.children('tbody');
+			templateRow = table.children('thead').children('tr.template');
+			tbody.empty();
+			for ( i = 0, len = accounts.length; i < len; i += 1 ) {
+				tr = templateRow.clone(true);
+				tr.removeClass('template');
+				replaceTemplateProperties(tr, accounts[i]);
+				tbody.append(tr);
+			}
+			replaceTemplateProperties(table.children('tfoot'), invoice);
+		}
+		return haveAccounts;
+	}
+
 	function loadInvoicePage(pageNum) {
 		console.log('Want page %d', pageNum);
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/list?unpaid=false&offset=' 
@@ -324,9 +403,16 @@ $(document).ready(function() {
 			loadInvoicePage(invoicePagination.page + 1);
 		});
 		
-		// reset invoice details modal on close
-		$('#invoice-details-modal').on('hidden.bs.modal', function(_event) {
+		// reset invoice details modals on close
+		$('#invoice-details-modal, #consolidated-invoice-details-modal').on('hidden.bs.modal', function(_event) {
 			resetInvoiceDetails(this);
+		});
+
+		// get current consolidated usage, for the primary account of linked accounts
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/consolidated-invoices/preview'), function(json) {
+			console.log('Got preview consolidated invoice: %o', json);
+			var havePreview = renderPreviewConsolidatedInvoiceTable('#upcoming-consolidated-invoice-table', json);
+			$('#upcoming-consolidated-invoice').toggleClass('hidden', !havePreview);
 		});
 
 		// get current usage
@@ -337,7 +423,7 @@ $(document).ready(function() {
 		});
 		
 		// get unpaid invoices
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/list?unpaid=true'), function(json) {
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/list?unpaid=true&includeConsolidated=true'), function(json) {
 			console.log('Got unpaid invoices: %o', json);
 			var haveUnpaid = renderInvoiceTable('#outstanding-invoice-list-table', null, 
 					'.outstandingInvoiceListCount', json);
@@ -346,6 +432,14 @@ $(document).ready(function() {
 		
 		// get all invoices
 		loadInvoicePage(0);
+
+		// get consolidated invoices
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/consolidated-invoices/list'), function(json) {
+			console.log('Got consolidated invoices: %o', json);
+			var haveConsolidated = renderInvoiceTable('#consolidated-invoice-list-table', null,
+					'.consolidatedInvoiceListCount', json);
+			$('#consolidated-invoices').toggleClass('hidden', !haveConsolidated);
+		});
 
 		return false; // break on each()
 	});

@@ -30,6 +30,7 @@ import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfConsolidatedInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisPaymentDao;
+import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfConsolidatedInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceNodeUsageDao;
@@ -47,7 +49,7 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisTaxCodeDao;
  * User billing DAO configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class BillingDaoConfig {
@@ -113,6 +115,19 @@ public class BillingDaoConfig {
 	@Bean
 	public PaymentDao paymentDao() {
 		var dao = new MyBatisPaymentDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
+	/**
+	 * The consolidated invoice DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.3
+	 */
+	@Bean
+	public SnfConsolidatedInvoiceDao snfConsolidatedInvoiceDao() {
+		var dao = new MyBatisSnfConsolidatedInvoiceDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}

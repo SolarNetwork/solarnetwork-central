@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
  * MyBatis implementation of {@link AccountDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongCompositePK>
 		implements AccountDao {
@@ -68,6 +68,13 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 		 * @since 1.1
 		 */
 		GetForUserAtDate("get-Account-for-user-at-date"),
+
+		/**
+		 * Lock an account.
+		 *
+		 * @since 2.2
+		 */
+		LockAccount("lock-Account-for-update"),
 
 		;
 
@@ -133,6 +140,11 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 		}
 		BigDecimal claimed = selectFirst(QueryName.ClaimCreditFromAccountBalance.getQueryName(), params);
 		return claimed != null ? claimed : BigDecimal.ZERO;
+	}
+
+	@Override
+	public boolean lockAccount(Long accountId) {
+		return selectFirst(QueryName.LockAccount.getQueryName(), accountId) != null;
 	}
 
 }

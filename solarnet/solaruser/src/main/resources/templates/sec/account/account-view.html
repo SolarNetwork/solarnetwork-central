@@ -85,15 +85,79 @@
 			</div>
 		</div>
 	</fieldset>
-	<fieldset  data-th-object="${account}">
+	<fieldset data-th-object="${account}">
 		<legend data-th-text="#{account.features.title}">Features</legend>
-		<div class="row mb-3">		
+		<div class="row mb-3">
 			<label class="col-sm-2 col-form-label" for="account-features"></label>
 			<div class="col-sm-6" id="account-features">
 				<p data-th-each="feature : *{entitlements}"
 					data-th-text="#{${'account.feature.entitlement.' + feature + '.title'}}"
 					class="form-control-plaintext">Feature</p>
 				<p data-th-if="${#sets.isEmpty(account.entitlements)}" data-th-text="#{account.features.none}">None</p>
+			</div>
+		</div>
+	</fieldset>
+	<fieldset data-th-object="${account}">
+		<legend data-th-text="#{account.consolidated.title}">Consolidated Billing</legend>
+		<div class="alert alert-warning" role="alert" data-th-if="${consolidationProblem}">
+			<span data-th-text="#{account.consolidated.problem}">Invoicing is on hold for these accounts until this problem is fixed:</span>
+			<span data-th-text="${consolidationProblem}">User 2 is billed in USD, not NZD.</span>
+		</div>
+		<div class="row mb-3">
+			<div class="col-sm-12">
+				<p data-th-unless="${account.parentAccount}" data-th-utext="#{account.consolidated.general.intro}">Your account is linked to another account.</p>
+				<p data-th-if="${account.parentAccount}" data-th-utext="#{account.consolidated.hasParent.intro}">Your account is linked to another account.</p>
+			</div>
+		</div>
+		<div class="row mb-3" data-th-if="${account.parentAccount}">
+			<label class="col-sm-2 col-form-label" for="account-parent-name" data-th-text="#{account.consolidated.parent.name.label}">Name</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{parentAccount.name}" class="form-control-plaintext" id="account-parent-name">Jane Doe</p>
+			</div>
+		</div>
+		<div class="row mb-3" data-th-if="${account.parentAccount}">
+			<label class="col-sm-2 col-form-label" for="account-parent-email" data-th-text="#{account.consolidated.parent.email.label}">Email</label>
+			<div class="col-sm-6">
+				<p data-th-text="*{parentAccount.email}" class="form-control-plaintext" id="account-parent-email">jane@doe</p>
+			</div>
+		</div>
+		<div class="row mb-3" data-th-if="${account.childAccounts}">
+			<div class="col-sm-12">
+				<table class="table">
+					<thead>
+						<tr>
+							<th data-th-text="#{account.consolidated.child.name.label}">Name</th>
+							<th data-th-text="#{account.consolidated.child.email.label}">Email</th>
+							<td></td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr data-th-each="child : *{childAccounts}">
+							<td data-th-text="${child.name}">Jane Doe</td>
+							<td data-th-text="${child.email}">jane@doe</td>
+							<td>
+								<button type="button" class="consolidated-child-unlink btn btn-sm btn-secondary"
+									data-th-data-user-id="${child.userId}"
+									data-th-data-user-name="${child.name}"
+									data-th-data-user-email="${child.email}"
+									>
+									<span class="bi bi-trash3"></span>
+									<span data-th-text="#{account.consolidated.unlink.action}">Unlink</span>
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="row mb-3" data-th-unless="${account.parentAccount}">
+			<div class="col-sm-12">
+				<button type="button" class="btn btn-primary"
+					data-bs-target="#account-link-modal" data-bs-toggle="modal"
+					data-th-title="#{account.consolidated.link.action}">
+					<i class="bi bi-plus-lg"></i>
+					<span data-th-text="#{account.consolidated.link.action}"></span>
+				</button>
 			</div>
 		</div>
 	</fieldset>

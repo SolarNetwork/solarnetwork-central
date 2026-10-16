@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface BillingBiz {
 
@@ -174,5 +174,96 @@ public interface BillingBiz {
 	@Nullable
 	Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
 			Locale locale);
+
+	/**
+	 * Search for consolidated invoices billed to a user.
+	 *
+	 * @param filter
+	 *        the query filter, whose user is the primary account user
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@code null}
+	 * @since 1.5
+	 */
+	FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(InvoiceFilter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max);
+
+	/**
+	 * Get a consolidated invoice billed to a user, with the invoices it is
+	 * made of.
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param invoiceId
+	 *        the consolidated invoice ID
+	 * @param locale
+	 *        the desired locale
+	 * @return the consolidated invoice, or {@code null} if not available
+	 * @since 1.5
+	 */
+	@Nullable
+	Invoice getConsolidatedInvoice(Long userId, String invoiceId, Locale locale);
+
+	/**
+	 * Render a consolidated invoice billed to a user.
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param invoiceId
+	 *        the consolidated invoice ID
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@code null} if the invoice
+	 *         is not available
+	 * @since 1.5
+	 */
+	@Nullable
+	Resource renderConsolidatedInvoice(Long userId, String invoiceId, MimeType outputType,
+			Locale locale);
+
+	/**
+	 * Get a preview of the consolidated invoice for the invoice consolidation
+	 * group a user is the primary account of.
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview consolidated invoice, or {@code null} if the user is
+	 *         not the primary account of a valid group
+	 * @since 1.5
+	 */
+	@Nullable
+	Invoice getPreviewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
+			Locale locale);
+
+	/**
+	 * Render a preview of the consolidated invoice for the invoice
+	 * consolidation group a user is the primary account of.
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@code null} if the user is
+	 *         not the primary account of a valid group
+	 * @since 1.5
+	 */
+	@Nullable
+	Resource previewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale);
 
 }

@@ -31,13 +31,15 @@ import jakarta.validation.Validator;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.biz.impl.DefaultUserAccountBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
+import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * Configuration for the User account service.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("NullAway.Init")
 @Configuration(proxyBeanMethods = false)
@@ -52,11 +54,19 @@ public class UserAccountBizConfig {
 	@Autowired
 	private Validator validator;
 
+	@Autowired(required = false)
+	private @Nullable PasswordEncoder passwordEncoder;
+
+	@Autowired(required = false)
+	private @Nullable InvoiceConsolidationResolver invoiceConsolidationResolver;
+
 	@Bean
 	public UserAccountBiz userAccountBiz() {
 		var biz = new DefaultUserAccountBiz(
 				billingSystemRegistrars != null ? billingSystemRegistrars : List.of(), userDao);
 		biz.setValidator(validator);
+		biz.setPasswordEncoder(passwordEncoder);
+		biz.setConsolidationResolver(invoiceConsolidationResolver);
 		return biz;
 	}
 

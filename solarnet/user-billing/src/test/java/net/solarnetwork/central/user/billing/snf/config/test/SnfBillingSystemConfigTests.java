@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
+import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.config.SnfBillingSystemConfig;
@@ -35,7 +36,7 @@ import net.solarnetwork.central.user.billing.snf.config.SnfBillingSystemConfig;
  * Test cases for the {@link SnfBillingSystemConfig} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfBillingSystemConfigTests {
 
@@ -50,7 +51,7 @@ public class SnfBillingSystemConfigTests {
 	public void snfBillingSystemBeanExposesEveryApi() throws NoSuchMethodException {
 		// GIVEN
 		final Method beanMethod = SnfBillingSystemConfig.class.getMethod("snfBillingSystem",
-				SnfInvoicingSystem.class);
+				SnfInvoicingSystem.class, InvoiceConsolidationResolver.class);
 
 		// THEN
 		// @formatter:off

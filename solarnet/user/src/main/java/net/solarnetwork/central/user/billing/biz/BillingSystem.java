@@ -33,6 +33,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -40,7 +41,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for interacting with a billing system.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface BillingSystem {
 
@@ -166,5 +167,125 @@ public interface BillingSystem {
 	@Nullable
 	Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
 			Locale locale);
+
+	/**
+	 * Search for consolidated invoices billed to a user.
+	 *
+	 * <p>
+	 * The filter's user is the primary account user. This implementation
+	 * returns no results, for billing systems that do not consolidate
+	 * invoices.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@code null}
+	 * @since 1.4
+	 */
+	default FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(
+			InvoiceFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		return new BasicFilterResults<>(null, 0L, 0L, 0);
+	}
+
+	/**
+	 * Get a consolidated invoice billed to a user, with the invoices it is
+	 * made of.
+	 *
+	 * <p>
+	 * This implementation returns {@code null}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param invoiceId
+	 *        the consolidated invoice ID
+	 * @param locale
+	 *        the desired locale
+	 * @return the consolidated invoice, or {@code null} if not available
+	 * @since 1.4
+	 */
+	default @Nullable Invoice getConsolidatedInvoice(Long userId, String invoiceId,
+			Locale locale) {
+		return null;
+	}
+
+	/**
+	 * Render a consolidated invoice billed to a user.
+	 *
+	 * <p>
+	 * This implementation returns {@code null}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param invoiceId
+	 *        the consolidated invoice ID
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@code null} if the invoice
+	 *         is not available
+	 * @since 1.4
+	 */
+	default @Nullable Resource renderConsolidatedInvoice(Long userId, String invoiceId,
+			MimeType outputType, Locale locale) {
+		return null;
+	}
+
+	/**
+	 * Get a preview of the consolidated invoice for the invoice consolidation
+	 * group a user is the primary account of.
+	 *
+	 * <p>
+	 * This implementation returns {@code null}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview consolidated invoice, or {@code null} if the user is
+	 *         not the primary account of a valid group
+	 * @since 1.4
+	 */
+	default @Nullable Invoice getPreviewConsolidatedInvoice(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
+		return null;
+	}
+
+	/**
+	 * Render a preview of the consolidated invoice for the invoice
+	 * consolidation group a user is the primary account of.
+	 *
+	 * <p>
+	 * This implementation returns {@code null}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@code null} if the user is
+	 *         not the primary account of a valid group
+	 * @since 1.4
+	 */
+	default @Nullable Resource previewConsolidatedInvoice(Long userId,
+			InvoiceGenerationOptions options, MimeType outputType, Locale locale) {
+		return null;
+	}
 
 }

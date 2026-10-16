@@ -37,6 +37,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Set;
 import javax.money.Monetary;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +49,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.MapBindingResult;
 import org.springframework.web.bind.support.SimpleSessionStatus;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -55,6 +58,7 @@ import net.solarnetwork.central.reg.web.AccountEditController;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
 import net.solarnetwork.central.user.account.domain.SnAccountInfo;
+import net.solarnetwork.central.user.account.domain.SnAccountLinkInput;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 
@@ -62,7 +66,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
  * Test cases for the {@link AccountEditController} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -331,6 +335,83 @@ public class AccountEditControllerTests {
 		and.then(sessionStatus.isComplete())
 			.as("Session form bean preserved so the user can retry")
 			.isFalse()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void account() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var info = new SnAccountInfo(randomString(), account(userId), Set.of());
+		given(userAccountBiz.getAccountForUser(userId)).willReturn(info);
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final SnAccountInfo result = controller.account();
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Account of the active user provided, so the form can tell if it is linked")
+			.isSameAs(info)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void account_notAvailable() {
+		// GIVEN
+		final Long userId = randomLong();
+		given(userAccountBiz.getAccountForUser(userId)).willThrow(new RuntimeException("Nope"));
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final SnAccountInfo result = controller.account();
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("No account provided when not available")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void submit_parentAccount_invalid() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var input = new SnAccountCreationInput();
+		final var link = new SnAccountLinkInput();
+		link.setUsername("parent@localhost");
+		link.setPassword("secret");
+		input.setParentAccount(link);
+		final BindingResult errors = errorsFor(input);
+
+		final var linkErrors = new MapBindingResult(new HashMap<>(), "parentAccount");
+		linkErrors.reject("account.consolidated.error.parentLinked",
+				new Object[] { "parent@localhost" }, "Not linked.");
+		given(userAccountBiz.verifyParentAccount(eq(userId), same(link)))
+				.willThrow(new ValidationException("Not linked.", linkErrors, null));
+
+		// WHEN
+		becomeUser(randomString(), null, userId);
+
+		final String result = controller.submit(input, errors);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Form view returned when the parent account is not verified")
+			.isEqualTo(EDIT_VIEW)
+			;
+		and.then(errors.getFieldError("parentAccount.username"))
+			.as("Problem given as an error of the parent account email")
+			.isNotNull()
+			.returns("account.consolidated.error.parentLinked", from(FieldError::getCode))
 			;
 		// @formatter:on
 	}

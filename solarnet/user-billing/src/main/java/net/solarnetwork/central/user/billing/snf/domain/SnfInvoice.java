@@ -73,6 +73,7 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 	private @Nullable Address address;
 	private @Nullable Set<SnfInvoiceItem> items;
 	private @Nullable Set<SnfInvoiceNodeUsage> usages;
+	private @Nullable Long consolidatedInvoiceId;
 	private @Nullable BigDecimal paidAmount;
 
 	// used by DAO insert to return assigned key
@@ -290,6 +291,7 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 		if ( usages != null ) {
 			other.usages = new LinkedHashSet<>(usages);
 		}
+		other.consolidatedInvoiceId = consolidatedInvoiceId;
 		other.paidAmount = paidAmount;
 	}
 
@@ -545,6 +547,28 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 			return Map.of();
 		}
 		return usages.stream().collect(Collectors.toMap(SnfInvoiceNodeUsage::getNodeId, e -> e));
+	}
+
+	/**
+	 * Get the ID of the consolidated invoice this invoice is part of.
+	 *
+	 * @return the consolidated invoice ID, or {@code null} if this invoice is
+	 *         not part of a consolidated invoice
+	 * @since 2.1
+	 */
+	public final @Nullable Long getConsolidatedInvoiceId() {
+		return consolidatedInvoiceId;
+	}
+
+	/**
+	 * Set the ID of the consolidated invoice this invoice is part of.
+	 *
+	 * @param consolidatedInvoiceId
+	 *        the consolidated invoice ID to set
+	 * @since 2.1
+	 */
+	public final void setConsolidatedInvoiceId(@Nullable Long consolidatedInvoiceId) {
+		this.consolidatedInvoiceId = consolidatedInvoiceId;
 	}
 
 	/**

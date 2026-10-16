@@ -46,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
  * Test cases for the {@link MyBatisAccountDao} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -369,5 +369,36 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		assertThat("Negative claim clamped to 0", claimed.compareTo(BigDecimal.ZERO), equalTo(0));
+	}
+
+	@Test
+	public void lockAccount() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+
+		// WHEN
+		boolean result = dao.lockAccount(account.getAccountId());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Existing account locked")
+			.isTrue()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void lockAccount_noMatch() {
+		// WHEN
+		boolean result = dao.lockAccount(randomLong());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Unknown account not locked")
+			.isFalse()
+			;
+		// @formatter:on
 	}
 }

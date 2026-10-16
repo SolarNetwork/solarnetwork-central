@@ -45,7 +45,7 @@ import net.solarnetwork.central.user.account.domain.SnAddressInput;
  * Controller for the account registration pages.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SessionAttributes({ AccountEditController.ACCOUNT_INPUT })
 @RequestMapping(value = "/u/sec/account/edit")
@@ -110,6 +110,20 @@ public class AccountEditController {
 	 *
 	 * @return the account edit page reference
 	 */
+	/**
+	 * Provide the active user's account information, if available.
+	 *
+	 * @return the account information, or {@code null} if not available
+	 */
+	@ModelAttribute(binding = false, name = "account")
+	public @Nullable SnAccountInfo account() {
+		try {
+			return biz().getAccountForUser(SecurityUtils.getCurrentActorUserId());
+		} catch ( Exception e ) {
+			return null;
+		}
+	}
+
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public String edit() {
 		return "sec/account/edit";
@@ -128,6 +142,9 @@ public class AccountEditController {
 	public String submit(
 			@Valid @ModelAttribute(AccountEditController.ACCOUNT_INPUT) SnAccountCreationInput input,
 			Errors errors) {
+		if ( !errors.hasErrors() ) {
+			AccountInputSupport.verifyParentAccount(this::biz, input, errors);
+		}
 		if ( errors.hasErrors() ) {
 			return "sec/account/edit";
 		}
@@ -155,7 +172,7 @@ public class AccountEditController {
 		try {
 			biz().updateAccount(SecurityUtils.getCurrentActorUserId(), input);
 		} catch ( ValidationException e ) {
-			errors.addAllErrors(e.getErrors());
+			AccountInputSupport.addErrors(errors, e);
 		} catch ( Exception e ) {
 			errors.addError(new ObjectError(ACCOUNT_INPUT, e.getMessage()));
 		}

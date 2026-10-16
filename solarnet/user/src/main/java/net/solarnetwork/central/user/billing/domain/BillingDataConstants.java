@@ -1,21 +1,21 @@
 /* ==================================================================
  * BillingDataConstants.java - 22/08/2017 2:00:21 PM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,9 +27,9 @@ import net.solarnetwork.central.domain.UserFilterCommand;
 
 /**
  * Constants related to billing data.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class BillingDataConstants {
 
@@ -41,8 +41,32 @@ public final class BillingDataConstants {
 	public static final String ACCOUNTING_DATA_PROP = "accounting";
 
 	/**
+	 * The user internal data property for an invoice consolidation group, as a
+	 * Map.
+	 *
+	 * @since 1.1
+	 */
+	public static final String INVOICE_CONSOLIDATION_DATA_PROP = "invoiceConsolidation";
+
+	/**
+	 * The invoice consolidation property for the other users in the group, as a
+	 * List.
+	 *
+	 * @since 1.1
+	 */
+	public static final String USER_IDS_PROP = "userIds";
+
+	/**
+	 * The invoice consolidation data property to also deliver the other users
+	 * their own invoices, as a Boolean.
+	 *
+	 * @since 1.1
+	 */
+	public static final String DELIVER_MEMBER_INVOICES_PROP = "deliverMemberInvoices";
+
+	/**
 	 * Create a new filter for searching for a specific accounting type.
-	 * 
+	 *
 	 * @param type
 	 *        the type of accounting to search for
 	 * @return the filter
@@ -52,4 +76,5 @@ public final class BillingDataConstants {
 		criteria.setInternalData(Map.of(ACCOUNTING_DATA_PROP, type));
 		return criteria;
 	}
+
 }

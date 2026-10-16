@@ -34,7 +34,7 @@ import net.solarnetwork.central.user.account.biz.UserAccountBiz;
  * Security enforcing AOP aspect for {@link UserAccountBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -62,6 +62,22 @@ public class AccountSecurityAspect extends AuthorizationSupport {
 	public void forUserReadAccess(Long userId) {
 	}
 
+	/**
+	 * Match methods that link or unlink accounts, or verify an account to link.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	@Pointcut("""
+			(execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.link*(..))
+			|| execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.unlink*(..))
+			|| execution(* net.solarnetwork.central.user.account.biz.UserAccountBiz.verify*(..)))
+			&& args(userId, ..)
+			""")
+	public void linkForUser(Long userId) {
+	}
+
 	@Before(value = """
 			forUserReadAccess(userId)
 			""", argNames = "userId")
@@ -72,6 +88,7 @@ public class AccountSecurityAspect extends AuthorizationSupport {
 	@Before(value = """
 			   createForUser(userId)
 			|| updateForUser(userId)
+			|| linkForUser(userId)
 			""", argNames = "userId")
 	public void checkForUserWriteAccess(Long userId) {
 		requireUserWriteAccess(userId);

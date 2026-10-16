@@ -24,16 +24,20 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
+import java.util.Collection;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import net.solarnetwork.central.user.account.biz.UserAccountBiz;
 import net.solarnetwork.central.user.account.domain.SnAccountCreationInput;
 import net.solarnetwork.central.user.account.domain.SnAccountInfo;
+import net.solarnetwork.central.user.account.domain.SnAccountLinkInput;
+import net.solarnetwork.central.user.account.domain.SnLinkedAccountInfo;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 
@@ -41,7 +45,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for billing account management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1AccountController")
 @RequestMapping(value = { "/u/sec/account", "/api/v1/sec/user/account" })
@@ -97,6 +101,35 @@ public class AccountController {
 	public Result<SnAccountInfo> viewAccount() {
 		final UserAccountBiz biz = biz();
 		return success(biz.getAccountForUser(getCurrentActorUserId()));
+	}
+
+	/**
+	 * Link a child account to the active user's account.
+	 *
+	 * @param input
+	 *        the child account credentials
+	 * @return the child account
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/link", method = RequestMethod.POST)
+	public Result<SnLinkedAccountInfo> linkAccount(SnAccountLinkInput input) {
+		final UserAccountBiz biz = biz();
+		return success(biz.linkAccount(getCurrentActorUserId(), input));
+	}
+
+	/**
+	 * Unlink a child account from the active user's account.
+	 *
+	 * @param userId
+	 *        the ID of the child account user
+	 * @return the child accounts still linked
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/unlink", method = RequestMethod.POST)
+	public Result<Collection<SnLinkedAccountInfo>> unlinkAccount(
+			@RequestParam("userId") Long userId) {
+		final UserAccountBiz biz = biz();
+		return success(biz.unlinkAccount(getCurrentActorUserId(), userId));
 	}
 
 }

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfConsolidatedInvoice">
+
+	<insert id="insert-SnfConsolidatedInvoice" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice">
+		<selectKey keyProperty="invoiceId" resultType="long" order="BEFORE">
+			SELECT nextval('solarbill.bill_inv_seq') AS id
+		</selectKey>
+		INSERT INTO solarbill.bill_consol_invoice (
+			id
+			<if test="created != null">,created</if>
+			, acct_id
+			, addr_id
+			, date_start
+			, date_end
+			, currency
+		) VALUES (
+			#{invoiceId}
+			<if test="created != null">,#{created}</if>
+			, #{accountId}
+			, #{address.addressId}
+			, #{startDate}
+			, #{endDate}
+			, #{currencyCode}
+		)
+	</insert>
+
+	<insert id="insert-SnfConsolidatedInvoice-member" parameterType="map">
+		INSERT INTO solarbill.bill_consol_invoice_member (consol_id, inv_id)
+		VALUES (#{consolId}, #{invoiceId})
+	</insert>
+
+	<sql id="fragment-SnfConsolidatedInvoice-full-result">
+		  cinv.id 			AS bill_consol_invoice_id
+		, cinv.created 		AS bill_consol_invoice_created
+		, cinv.acct_id 		AS bill_consol_invoice_acct_id
+		, cinv.addr_id 		AS bill_consol_invoice_addr_id
+		, cinv.date_start 	AS bill_consol_invoice_date_start
+		, cinv.date_end 	AS bill_consol_invoice_date_end
+		, cinv.currency 	AS bill_consol_invoice_currency
+		, mem.inv_id 		AS bill_consol_invoice_member_inv_id
+		, macct.user_id 	AS bill_consol_invoice_member_user_id
+	</sql>
+
+	<resultMap id="SnfConsolidatedInvoice-MemberResult" type="net.solarnetwork.central.domain.UserLongCompositePK">
+		<constructor>
+			<idArg column="bill_consol_invoice_member_user_id" javaType="Long"/>
+			<idArg column="bill_consol_invoice_member_inv_id" javaType="Long"/>
+		</constructor>
+	</resultMap>
+
+	<resultMap id="SnfConsolidatedInvoice-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice">
+		<constructor>
+			<idArg column="bill_consol_invoice_id" javaType="Long"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_consol_invoice_acct_id" javaType="Long"/>
+			<arg column="bill_consol_invoice_created" javaType="java.time.Instant"/>
+			<arg column="bill_consol_invoice_date_start" javaType="java.time.LocalDate"/>
+			<arg column="bill_consol_invoice_date_end" javaType="java.time.LocalDate"/>
+			<arg column="bill_consol_invoice_currency" javaType="String"/>
+		</constructor>
+		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
+		<collection property="invoiceIds" notNullColumn="bill_consol_invoice_member_inv_id" resultMap="SnfConsolidatedInvoice-MemberResult"/>
+	</resultMap>
+
+	<sql id="fragment-SnfConsolidatedInvoice-joins">
+		INNER JOIN
+			solarbill.bill_account acct ON acct.id = cinv.acct_id
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = cinv.addr_id
+		LEFT OUTER JOIN
+			solarbill.bill_consol_invoice_member mem ON mem.consol_id = cinv.id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice minv ON minv.id = mem.inv_id
+		LEFT OUTER JOIN
+			solarbill.bill_account macct ON macct.id = minv.acct_id
+	</sql>
+
+	<select id="get-SnfConsolidatedInvoice-for-id" parameterType="net.solarnetwork.central.domain.UserLongCompositePK" resultMap="SnfConsolidatedInvoice-FullResult">
+		SELECT
+			<include refid="fragment-SnfConsolidatedInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_consol_invoice cinv
+		<include refid="fragment-SnfConsolidatedInvoice-joins"/>
+		WHERE
+			cinv.id = #{entityId}
+			AND acct.user_id = #{userId}
+		ORDER BY
+			mem.inv_id
+	</select>
+
+	<sql id="find-SnfConsolidatedInvoice-for-filter-where">
+		<where>
+			<if test="userId != null">
+				AND acct1.user_id = #{userId}
+			</if>
+			<if test="accountId != null">
+				AND cinv1.acct_id = #{accountId}
+			</if>
+			<if test="invoiceId != null">
+				AND EXISTS (
+					SELECT mem1.inv_id
+					FROM solarbill.bill_consol_invoice_member mem1
+					WHERE mem1.consol_id = cinv1.id
+					AND mem1.inv_id = #{invoiceId}
+				)
+			</if>
+			<if test="startDate != null">
+				AND cinv1.date_start &gt;= #{startDate,javaType=java.time.LocalDate,jdbcType=DATE}
+			</if>
+			<if test="endDate != null">
+				AND cinv1.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+			</if>
+			<if test="unpaidOnly">
+				AND EXISTS (
+					SELECT ci1.id
+					FROM solarbill.bill_consol_invoice_info ci1
+					WHERE ci1.id = cinv1.id
+					AND COALESCE(ci1.paid_amount, 0::NUMERIC) &lt; COALESCE(ci1.total_amount, 0::NUMERIC)
+				)
+			</if>
+		</where>
+	</sql>
+
+	<select id="find-SnfConsolidatedInvoice-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter"
+			resultMap="SnfConsolidatedInvoice-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SnfConsolidatedInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_consol_invoice cinv
+		<include refid="fragment-SnfConsolidatedInvoice-joins"/>
+		WHERE
+			<!-- Limiting done via sub-query because we want all account invoices of the limited consolidated invoices. -->
+			cinv.id = ANY(
+				SELECT cinv1.id
+				FROM solarbill.bill_consol_invoice cinv1
+				INNER JOIN solarbill.bill_account acct1 ON acct1.id = cinv1.acct_id
+				<include refid="find-SnfConsolidatedInvoice-for-filter-where"/>
+				ORDER BY
+				<choose>
+					<when test="sorts != null and sorts.size &gt; 0">
+						 <foreach collection="sorts" item="item" separator=",">
+							<if test="item.sortKey == &quot;ACCOUNT&quot;">cinv1.acct_id</if>
+							<if test="item.sortKey == &quot;DATE&quot;">cinv1.date_start</if>
+							<if test="item.sortKey == &quot;ID&quot;">cinv1.id</if>
+							<if test="item.descending">DESC</if>
+						</foreach>
+					</when>
+					<otherwise>
+						cinv1.date_start DESC, cinv1.id
+					</otherwise>
+				</choose>
+				<if test="max != null">
+					LIMIT #{max}
+				</if>
+				<if test="offset != null and offset &gt; 0">
+					OFFSET #{offset}
+				</if>
+			)
+		ORDER BY
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;ACCOUNT&quot;">bill_consol_invoice_acct_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">bill_consol_invoice_date_start</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_consol_invoice_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				bill_consol_invoice_date_start DESC, bill_consol_invoice_id
+			</otherwise>
+		</choose>
+		, bill_consol_invoice_member_inv_id
+	</select>
+
+	<select id="find-SnfConsolidatedInvoice-for-filter-count" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter"
+			resultType="long">
+		SELECT count(cinv1.id)
+		FROM solarbill.bill_consol_invoice cinv1
+		INNER JOIN solarbill.bill_account acct1 ON acct1.id = cinv1.acct_id
+		<include refid="find-SnfConsolidatedInvoice-for-filter-where"/>
+	</select>
+
+</mapper>

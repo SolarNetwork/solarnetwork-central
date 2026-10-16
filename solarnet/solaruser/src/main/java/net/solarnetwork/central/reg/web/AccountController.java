@@ -22,8 +22,13 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.MessageSourceResolvable;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,22 +40,30 @@ import net.solarnetwork.central.user.account.domain.SnAccountInfo;
  * Controller for the account pages.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @GlobalServiceController
 public class AccountController {
 
 	private final @Nullable UserAccountBiz userAccountBiz;
+	private final MessageSource messageSource;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param userAccountBiz
 	 *        the user account biz
+	 * @param messageSource
+	 *        the message source to resolve the invoice consolidation problem
+	 *        of the account with
+	 * @throws IllegalArgumentException
+	 *         if {@code messageSource} is {@code null}
 	 */
-	public AccountController(@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz) {
+	public AccountController(@Autowired(required = false) @Nullable UserAccountBiz userAccountBiz,
+			MessageSource messageSource) {
 		super();
 		this.userAccountBiz = userAccountBiz;
+		this.messageSource = requireNonNullArgument(messageSource, "messageSource");
 	}
 
 	/**
@@ -85,10 +98,26 @@ public class AccountController {
 	/**
 	 * Render the account main page.
 	 *
+	 * <p>
+	 * The problem with the invoice consolidation group of the account, if any,
+	 * is provided as the {@code consolidationProblem} model attribute, resolved
+	 * in the locale of the request.
+	 * </p>
+	 *
+	 * @param model
+	 *        the model
+	 * @param locale
+	 *        the request locale
 	 * @return the main page reference
 	 */
 	@RequestMapping(value = "/u/sec/account", method = RequestMethod.GET)
-	public String home() {
+	public String home(Model model, Locale locale) {
+		if ( model.getAttribute("account") instanceof SnAccountInfo info ) {
+			final MessageSourceResolvable problem = info.consolidationProblem();
+			if ( problem != null ) {
+				model.addAttribute("consolidationProblem", messageSource.getMessage(problem, locale));
+			}
+		}
 		return "sec/account/account";
 	}
 

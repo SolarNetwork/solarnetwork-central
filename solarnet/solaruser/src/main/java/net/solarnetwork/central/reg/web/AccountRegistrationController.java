@@ -48,7 +48,7 @@ import net.solarnetwork.central.user.domain.User;
  * Controller for the account registration pages.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SessionAttributes({ AccountRegistrationController.ACCOUNT_INPUT })
 @RequestMapping(value = "/u/sec/account/register")
@@ -139,6 +139,9 @@ public class AccountRegistrationController {
 	public String submit(
 			@Valid @ModelAttribute(AccountRegistrationController.ACCOUNT_INPUT) SnAccountCreationInput input,
 			Errors errors) {
+		if ( !errors.hasErrors() ) {
+			AccountInputSupport.verifyParentAccount(this::biz, input, errors);
+		}
 		if ( errors.hasErrors() ) {
 			return "sec/account/register";
 		}
@@ -166,7 +169,7 @@ public class AccountRegistrationController {
 		try {
 			biz().createAccount(SecurityUtils.getCurrentActorUserId(), input);
 		} catch ( ValidationException e ) {
-			errors.addAllErrors(e.getErrors());
+			AccountInputSupport.addErrors(errors, e);
 		} catch ( Exception e ) {
 			errors.addError(new ObjectError(ACCOUNT_INPUT, e.getMessage()));
 		}

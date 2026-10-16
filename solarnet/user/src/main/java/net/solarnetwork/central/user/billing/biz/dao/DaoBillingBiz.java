@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -166,6 +166,61 @@ public class DaoBillingBiz implements BillingBiz {
 			return null;
 		}
 		return system.previewInvoice(userId, options, outputType, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(InvoiceFilter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
+		BillingSystem system = billingSystemForUser(filter.getUserId());
+		if ( system == null ) {
+			return new BasicFilterResults<>(null, 0L, 0L, 0);
+		}
+		return system.findFilteredConsolidatedInvoices(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable Invoice getConsolidatedInvoice(Long userId, String invoiceId, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getConsolidatedInvoice(userId, invoiceId, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable Resource renderConsolidatedInvoice(Long userId, String invoiceId,
+			MimeType outputType, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.renderConsolidatedInvoice(userId, invoiceId, outputType, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable Invoice getPreviewConsolidatedInvoice(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getPreviewConsolidatedInvoice(userId, options, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable Resource previewConsolidatedInvoice(Long userId,
+			InvoiceGenerationOptions options, MimeType outputType, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.previewConsolidatedInvoice(userId, options, outputType, locale);
 	}
 
 }

@@ -30,6 +30,8 @@ app:
       mail.from: "accounts@localhost"
       html-template-cache:
         ttl: 3600
+      consolidated-html-template-cache:
+        ttl: 3600
   cache:
     persistence.path: "var/cache"
     user-metadata-cache:

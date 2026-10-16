@@ -83,8 +83,10 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
 import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceConsolidationGroup;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfConsolidatedInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
@@ -92,10 +94,15 @@ import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.ConsolidatedInvoiceAccount;
+import net.solarnetwork.central.user.billing.snf.domain.ConsolidatedInvoiceImpl;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsages;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
@@ -105,8 +112,10 @@ import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.service.TemplateRenderer;
 
 /**
@@ -133,6 +142,21 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public static final String DRAFT_INVOICE_NUMBER = nonnull(
 			SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID), "Draft invoice number");
 
+	/**
+	 * The consolidated invoice template parameter for the account invoices.
+	 *
+	 * @since 2.2
+	 */
+	public static final String ACCOUNTS_PARAM = "accounts";
+
+	/**
+	 * The consolidated invoice template parameter to render only the summary,
+	 * without the account invoices.
+	 *
+	 * @since 2.2
+	 */
+	public static final String SUMMARY_ONLY_PARAM = "summaryOnly";
+
 	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { GLOBAL_MESSAGE_BUNDLE_NAME,
 			MESSAGE_BUNDLE_NAME };
 
@@ -146,8 +170,10 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private final TaxCodeDao taxCodeDao;
 	private final VersionedMessageDao messageDao;
 	private @Nullable SnfTaxCodeResolver taxCodeResolver;
+	private @Nullable SnfConsolidatedInvoiceDao consolidatedInvoiceDao;
 	private @Nullable List<SnfInvoiceDeliverer> deliveryServices;
 	private @Nullable List<SnfInvoiceRendererResolver> rendererResolvers;
+	private @Nullable List<SnfConsolidatedInvoiceRendererResolver> consolidatedRendererResolvers;
 	private @Nullable Cache<String, VersionedMessages> messageCache;
 	private String datumPropertiesInKey = DATUM_PROPS_IN_KEY;
 	private String datumOutKey = DATUM_OUT_KEY;
@@ -217,8 +243,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public @Nullable SnfInvoice findInvoiceForPeriod(UserLongCompositePK accountId,
-			LocalDate startDate, LocalDate endDate) {
+	public @Nullable SnfInvoice findInvoiceForPeriod(UserLongCompositePK accountId, LocalDate startDate,
+			LocalDate endDate) {
 		SnfInvoiceFilter filter = SnfInvoiceFilter
 				.forAccount(requireNonNullArgument(accountId.getEntityId(), "accountId.entityId"));
 		filter.setStartDate(requireNonNullArgument(startDate, "startDate"));
@@ -457,6 +483,78 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
+	public @Nullable SnfConsolidatedInvoice generateConsolidatedInvoice(InvoiceConsolidationGroup group,
+			YearMonth month, SnfInvoicingSystem.InvoiceGenerationOptions options) {
+		requireNonNullArgument(group, "group");
+		requireNonNullArgument(month, "month");
+		final boolean dryRun = (options != null && options.isDryRun());
+		final LocalDate startDate = month.atDay(1);
+		final LocalDate endDate = month.plusMonths(1).atDay(1);
+		final Long primaryUserId = group.primaryUserId();
+
+		final Account primary = accountDao.getForUser(primaryUserId, endDate);
+		if ( primary == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, primaryUserId);
+		}
+		if ( !dryRun ) {
+			requireConsolidatedInvoiceDao();
+
+			// generate one group month at a time, so a duplicate task cannot invoice an account twice
+			accountDao.lockAccount(primary.getAccountId());
+		}
+
+		final List<SnfInvoice> invoices = new ArrayList<>(group.userIds().size());
+		for ( Long userId : group.userIds() ) {
+			if ( !dryRun ) {
+				final Account account = accountDao.getForUser(userId, endDate);
+				if ( account == null ) {
+					throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+				}
+				final SnfInvoice existing = findInvoiceForPeriod(account.id(), startDate, endDate);
+				if ( existing != null ) {
+					log.info("Not consolidating invoice {} of user {} for month {}: already generated.",
+							existing.getInvoiceId(), userId, month);
+					continue;
+				}
+			}
+			final SnfInvoice invoice = generateInvoice(userId, startDate, endDate, options);
+			if ( invoice != null ) {
+				invoices.add(invoice);
+			}
+		}
+		if ( invoices.isEmpty() ) {
+			log.info("No invoices generated for the invoice consolidation group of user {} for month {}",
+					primaryUserId, month);
+			return null;
+		}
+
+		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(primary.getAccountId(),
+				primaryUserId, Instant.now(), startDate, endDate, primary.getCurrencyCode());
+		invoice.setAddress(primary.getAddress());
+		invoice.setInvoices(invoices);
+
+		// for dryRun support, we generate a negative invoice ID
+		final UserLongCompositePK invoicePk = (dryRun
+				? new UserLongCompositePK(primaryUserId, DRAFT_INVOICE_ID)
+				: requireConsolidatedInvoiceDao().save(invoice));
+		final SnfConsolidatedInvoice result = invoice.copyWithId(invoicePk);
+
+		log.info("Generated consolidated invoice for user {} for month {}: {}", primaryUserId, month,
+				result);
+
+		return result;
+	}
+
+	private SnfConsolidatedInvoiceDao requireConsolidatedInvoiceDao() {
+		final SnfConsolidatedInvoiceDao dao = this.consolidatedInvoiceDao;
+		if ( dao == null ) {
+			throw new UnsupportedOperationException("No consolidated invoice DAO is available.");
+		}
+		return dao;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
 	public boolean deliverInvoice(final UserLongCompositePK invoiceId) {
 		// get account
 		final Account account = accountDao.getForUser(invoiceId.getUserId());
@@ -478,9 +576,81 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 
 		// TODO: support configuration for account
+		return awaitDelivery(deliverer.deliverInvoice(invoice, account, null));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable SnfConsolidatedInvoice getConsolidatedInvoice(UserLongCompositePK invoiceId) {
+		final SnfConsolidatedInvoice invoice = requireConsolidatedInvoiceDao().get(invoiceId);
+		if ( invoice != null ) {
+			invoice.setInvoices(accountInvoices(invoice));
+		}
+		return invoice;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> findFilteredConsolidatedInvoices(
+			SnfConsolidatedInvoiceFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
+		final SnfConsolidatedInvoiceDao dao = this.consolidatedInvoiceDao;
+		if ( dao == null ) {
+			return new BasicFilterResults<>(List.of(), 0L, 0L, 0);
+		}
+		final FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> results = dao
+				.findFiltered(requireNonNullArgument(filter, "filter"), sorts, offset, max);
+		for ( SnfConsolidatedInvoice invoice : results ) {
+			invoice.setInvoices(accountInvoices(invoice));
+		}
+		return results;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable SnfConsolidatedInvoice findConsolidatedInvoiceForInvoice(
+			UserLongCompositePK invoiceId) {
+		final SnfConsolidatedInvoiceDao dao = this.consolidatedInvoiceDao;
+		if ( dao == null ) {
+			return null;
+		}
+		final FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> results = dao.findFiltered(
+				SnfConsolidatedInvoiceFilter.forInvoice(
+						requireNonNullArgument(invoiceId.getEntityId(), "invoiceId.entityId")),
+				null, null, null);
+		final Iterator<SnfConsolidatedInvoice> itr = (results != null ? results.iterator() : null);
+		return (itr != null && itr.hasNext() ? itr.next() : null);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public boolean deliverConsolidatedInvoice(final UserLongCompositePK invoiceId) {
+		// get primary account
+		final Account account = accountDao.getForUser(invoiceId.getUserId());
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId.getUserId());
+		}
+
+		final SnfConsolidatedInvoice invoice = getConsolidatedInvoice(invoiceId);
+		if ( invoice == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
+		}
+
+		SnfInvoiceDeliverer deliverer = invoiceDeliverer();
+		if ( deliverer == null ) {
+			String msg = format(
+					"No invoice delivery service available to delivery consolidated invoice %d",
+					invoiceId.getEntityId());
+			log.error(msg);
+			throw new RepeatableTaskException(msg);
+		}
+
+		return awaitDelivery(deliverer.deliverConsolidatedInvoice(invoice, account, null));
+	}
+
+	private boolean awaitDelivery(CompletableFuture<Result<Object>> future) {
 		try {
 			final int maxSeconds = getDeliveryTimeoutSecs();
-			CompletableFuture<Result<Object>> future = deliverer.deliverInvoice(invoice, account, null);
 			Result<Object> result;
 			if ( maxSeconds > 0 ) {
 				result = future.get(maxSeconds, TimeUnit.SECONDS);
@@ -547,19 +717,29 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	private Resource invoiceResource(byte[] data, SnfInvoice invoice, MessageSource messageSource,
 			MimeType outputType, Locale locale) {
-		String extension;
-		if ( outputType.isCompatibleWith(MimeType.valueOf("application/pdf")) ) {
-			extension = ".pdf";
-		} else {
-			extension = "." + outputType.getSubtype();
-		}
 		Object[] filenameArgs = new Object[] {
-				DRAFT_INVOICE_ID.equals(invoice.getInvoiceId())
-						? messageSource.getMessage("draftInvoice", null, "DRAFT", locale)
-						: SnfBillingUtils.invoiceNumForId(invoice.getInvoiceId()),
-				YearMonth.from(invoice.getStartDate()).toString(), extension };
+				invoiceNumber(invoice.getInvoiceId(), messageSource, locale),
+				YearMonth.from(invoice.getStartDate()).toString(), fileExtension(outputType) };
 		String filename = messageSource.getMessage("invoice.filename", filenameArgs,
 				"SolarNetwork Invoice {0} - {1}{2}", locale);
+		return namedResource(data, filename);
+	}
+
+	private static @Nullable String invoiceNumber(Long invoiceId, MessageSource messageSource,
+			Locale locale) {
+		return (DRAFT_INVOICE_ID.equals(invoiceId)
+				? messageSource.getMessage("draftInvoice", null, "DRAFT", locale)
+				: SnfBillingUtils.invoiceNumForId(invoiceId));
+	}
+
+	private static String fileExtension(MimeType outputType) {
+		if ( outputType.isCompatibleWith(MimeType.valueOf("application/pdf")) ) {
+			return ".pdf";
+		}
+		return "." + outputType.getSubtype();
+	}
+
+	private static Resource namedResource(byte[] data, @Nullable String filename) {
 		return new ByteArrayResource(data) {
 
 			@Override
@@ -568,6 +748,94 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			}
 
 		};
+	}
+
+	@Override
+	public MessageSource messageSourceForConsolidatedInvoice(SnfConsolidatedInvoice invoice) {
+		requireNonNullArgument(invoice, "invoice");
+		final ZoneId zone = invoice.getTimeZone();
+		final Instant version = invoice.getStartDate().atStartOfDay(zone != null ? zone : UTC)
+				.toInstant();
+		return messageSourceForDate(version);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Resource renderConsolidatedInvoice(SnfConsolidatedInvoice invoice, MimeType outputType,
+			Locale locale, boolean summaryOnly) {
+		final TemplateRenderer renderer = consolidatedRenderer(invoice, outputType, locale);
+		final List<SnfInvoice> accountInvoices = accountInvoices(invoice);
+		final List<Invoice> invoices = new ArrayList<>(accountInvoices.size());
+		final List<ConsolidatedInvoiceAccount> accounts = new ArrayList<>(accountInvoices.size());
+		for ( SnfInvoice accountInvoice : accountInvoices ) {
+			// each account invoice is localized with its own messages, as when rendered alone
+			final InvoiceImpl accountInvoiceImpl = invoiceForSnfInvoice(accountInvoice,
+					messageSourceForInvoice(accountInvoice), locale);
+			invoices.add(accountInvoiceImpl);
+			accounts.add(new ConsolidatedInvoiceAccount(accountInvoice.getAccountId(),
+					new LocalizedInvoice(accountInvoiceImpl, locale),
+					nonnull(accountInvoice.getAddress(), "Account invoice address")));
+		}
+		final VersionedMessageDaoMessageSource messageSource = (VersionedMessageDaoMessageSource) messageSourceForConsolidatedInvoice(
+				invoice);
+		final LocalizedInvoice localizedInvoice = new LocalizedInvoice(
+				new ConsolidatedInvoiceImpl(invoice, invoices), locale);
+		final Properties messages = messageSource.propertiesForLocale(locale);
+		final Map<String, Object> parameters = new LinkedHashMap<>(8);
+		parameters.put("invoice", localizedInvoice);
+		parameters.put("address", invoice.getAddress());
+		parameters.put(ACCOUNTS_PARAM, accounts);
+		parameters.put("messages", messages);
+		parameters.put(SUMMARY_ONLY_PARAM, summaryOnly);
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream(4096)) {
+			renderer.render(locale, outputType, parameters, out);
+			Object[] filenameArgs = new Object[] {
+					invoiceNumber(invoice.getInvoiceId(), messageSource, locale),
+					YearMonth.from(invoice.getStartDate()).toString(), fileExtension(outputType) };
+			String filename = messageSource.getMessage("consolidatedInvoice.filename", filenameArgs,
+					"SolarNetwork Consolidated Invoice {0} - {1}{2}", locale);
+			return namedResource(out.toByteArray(), filename);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private List<SnfInvoice> accountInvoices(SnfConsolidatedInvoice invoice) {
+		final List<SnfInvoice> invoices = invoice.getInvoices();
+		if ( invoices != null ) {
+			return invoices;
+		}
+		final List<UserLongCompositePK> invoiceIds = invoice.getInvoiceIds();
+		if ( invoiceIds == null ) {
+			return List.of();
+		}
+		final List<SnfInvoice> result = new ArrayList<>(invoiceIds.size());
+		for ( UserLongCompositePK invoiceId : invoiceIds ) {
+			SnfInvoice accountInvoice = invoiceDao.get(invoiceId);
+			if ( accountInvoice == null ) {
+				throw new IllegalStateException(
+						"Account invoice %s of consolidated invoice %s not found.".formatted(invoiceId,
+								invoice.getId()));
+			}
+			result.add(accountInvoice);
+		}
+		return result;
+	}
+
+	private TemplateRenderer consolidatedRenderer(SnfConsolidatedInvoice invoice, MimeType mimeType,
+			Locale locale) {
+		final List<SnfConsolidatedInvoiceRendererResolver> resolvers = consolidatedRendererResolvers;
+		if ( resolvers != null ) {
+			for ( SnfConsolidatedInvoiceRendererResolver resolver : resolvers ) {
+				TemplateRenderer r = resolver.rendererForConsolidatedInvoice(invoice, mimeType, locale);
+				if ( r != null ) {
+					return r;
+				}
+			}
+		}
+		String msg = String.format("MIME %s not supported for consolidated invoice rendering.",
+				mimeType);
+		throw new IllegalArgumentException(msg);
 	}
 
 	/**
@@ -650,6 +918,11 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * mutated in any way.
 	 * </p>
 	 *
+	 * <p>
+	 * Tax is computed on each item amount rounded to cents, as items are saved,
+	 * with only the total of each tax code rounded.
+	 * </p>
+	 *
 	 * @param invoice
 	 *        the invoice to compute tax items for
 	 * @return the list of tax items, never {@code null}
@@ -674,6 +947,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						if ( itemKey == null || itemAmount == null ) {
 							continue;
 						}
+						final BigDecimal savedAmount = itemAmount.setScale(2, RoundingMode.HALF_UP);
 						for ( TaxCode tax : taxes ) {
 							final String taxCode = tax.getCode();
 							final BigDecimal taxRate = tax.getRate();
@@ -681,7 +955,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 								continue;
 							}
 							if ( itemKey.equalsIgnoreCase(tax.getItemKey()) ) {
-								taxAmounts.merge(taxCode, taxRate.multiply(itemAmount), BigDecimal::add);
+								taxAmounts.merge(taxCode, taxRate.multiply(savedAmount),
+										BigDecimal::add);
 							}
 						}
 					}
@@ -1024,6 +1299,30 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	}
 
 	/**
+	 * Get the consolidated invoice DAO.
+	 *
+	 * @return the DAO, or {@code null} if consolidated invoices are not
+	 *         supported
+	 * @since 2.2
+	 */
+	public final @Nullable SnfConsolidatedInvoiceDao getConsolidatedInvoiceDao() {
+		return consolidatedInvoiceDao;
+	}
+
+	/**
+	 * Set the consolidated invoice DAO.
+	 *
+	 * @param consolidatedInvoiceDao
+	 *        the DAO to set, or {@code null} if consolidated invoices are not
+	 *        supported
+	 * @since 2.2
+	 */
+	public final void setConsolidatedInvoiceDao(
+			@Nullable SnfConsolidatedInvoiceDao consolidatedInvoiceDao) {
+		this.consolidatedInvoiceDao = consolidatedInvoiceDao;
+	}
+
+	/**
 	 * Get the optional message cache.
 	 *
 	 * @return the cache
@@ -1079,6 +1378,28 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public final void setRendererResolvers(
 			@Nullable List<SnfInvoiceRendererResolver> rendererResolvers) {
 		this.rendererResolvers = rendererResolvers;
+	}
+
+	/**
+	 * Get the consolidated invoice renderer resolver services.
+	 *
+	 * @return the services
+	 * @since 2.2
+	 */
+	public final @Nullable List<SnfConsolidatedInvoiceRendererResolver> getConsolidatedRendererResolvers() {
+		return consolidatedRendererResolvers;
+	}
+
+	/**
+	 * Set the consolidated invoice renderer resolver services.
+	 *
+	 * @param consolidatedRendererResolvers
+	 *        the services to set
+	 * @since 2.2
+	 */
+	public final void setConsolidatedRendererResolvers(
+			@Nullable List<SnfConsolidatedInvoiceRendererResolver> consolidatedRendererResolvers) {
+		this.consolidatedRendererResolvers = consolidatedRendererResolvers;
 	}
 
 	/**

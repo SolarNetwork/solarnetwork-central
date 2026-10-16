@@ -24,13 +24,14 @@ package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
  * Search result match for an Invoice.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface InvoiceMatch extends FilterMatch<String> {
 
@@ -88,5 +89,27 @@ public interface InvoiceMatch extends FilterMatch<String> {
 	 * @return the currency code
 	 */
 	String getCurrencyCode();
+
+	/**
+	 * Test if this is a consolidated invoice, which combines the invoices of
+	 * the accounts of an invoice consolidation group.
+	 *
+	 * @return {@code true} if this is a consolidated invoice
+	 * @since 1.2
+	 */
+	default boolean isConsolidated() {
+		return false;
+	}
+
+	/**
+	 * Get the number of the consolidated invoice this invoice is part of.
+	 *
+	 * @return the consolidated invoice number, or {@code null} if this invoice
+	 *         is not part of a consolidated invoice
+	 * @since 1.2
+	 */
+	default @Nullable String getConsolidatedInvoiceNumber() {
+		return null;
+	}
 
 }

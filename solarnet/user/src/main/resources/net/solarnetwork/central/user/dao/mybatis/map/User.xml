@@ -155,6 +155,13 @@
 		{call solaruser.store_user_data(?, ?::jsonb)}
 	</update>
 
+	<select id="lock-User-for-update" parameterType="long" resultType="long"
+			flushCache="true" useCache="false">
+		SELECT id FROM solaruser.user_user
+		WHERE id = #{id}
+		FOR UPDATE
+	</select>
+
 	<!-- 
 		FilterableDao support 
 	-->

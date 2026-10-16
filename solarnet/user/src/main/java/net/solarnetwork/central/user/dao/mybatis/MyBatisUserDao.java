@@ -90,6 +90,17 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	public static final String UPDATE_INTERNAL_DATA = "update-internal-data";
 
 	/**
+	 * The query name used in {@link #lockUser(Long)}.
+	 *
+	 * <p>
+	 * The statement is passed a {@code userId} parameter.
+	 * </p>
+	 *
+	 * @since 2.3
+	 */
+	public static final String LOCK_USER = "lock-User-for-update";
+
+	/**
 	 * The query parameter for a general filter object value.
 	 *
 	 * @since 1.2
@@ -180,6 +191,16 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 			log.warn("Exception marshalling {} to JSON", data, e);
 			return "{}";
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 2.3
+	 */
+	@Override
+	public boolean lockUser(Long userId) {
+		return selectFirst(LOCK_USER, userId) != null;
 	}
 
 }

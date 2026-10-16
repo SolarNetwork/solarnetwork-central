@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf;
 import java.util.concurrent.CompletableFuture;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
@@ -34,7 +35,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * API for a service that can deliver an invoice to an account holder.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface SnfInvoiceDeliverer extends Identity<String> {
 
@@ -51,5 +52,30 @@ public interface SnfInvoiceDeliverer extends Identity<String> {
 	 */
 	CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
 			@Nullable IdentifiableConfiguration configuration);
+
+	/**
+	 * Deliver a consolidated invoice.
+	 *
+	 * <p>
+	 * This default implementation returns a future that fails with an
+	 * {@link UnsupportedOperationException}.
+	 * </p>
+	 *
+	 * @param invoice
+	 *        the consolidated invoice to deliver, including its account
+	 *        invoices
+	 * @param account
+	 *        the primary account the consolidated invoice is billed to
+	 * @param configuration
+	 *        any account-specific configuration to use
+	 * @return a future for the results
+	 * @since 2.1
+	 */
+	default CompletableFuture<Result<Object>> deliverConsolidatedInvoice(
+			SnfConsolidatedInvoice invoice, Account account,
+			@Nullable IdentifiableConfiguration configuration) {
+		return CompletableFuture.failedFuture(new UnsupportedOperationException(
+				"Delivering consolidated invoices is not supported by " + getId()));
+	}
 
 }
