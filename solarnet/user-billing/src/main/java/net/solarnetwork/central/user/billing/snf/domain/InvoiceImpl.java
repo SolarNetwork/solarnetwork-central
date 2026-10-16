@@ -46,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -116,7 +116,9 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public BigDecimal getBalance() {
-		return invoice.getTotalAmount();
+		final BigDecimal total = invoice.getTotalAmount();
+		final BigDecimal paid = invoice.getPaidAmount();
+		return (paid != null ? total.subtract(paid) : total);
 	}
 
 	@Override

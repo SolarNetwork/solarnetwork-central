@@ -51,7 +51,7 @@ import net.solarnetwork.domain.Differentiable;
  * SNF invoice entity.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 		implements UserRelatedEntity<UserLongCompositePK>,
@@ -73,6 +73,7 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 	private @Nullable Address address;
 	private @Nullable Set<SnfInvoiceItem> items;
 	private @Nullable Set<SnfInvoiceNodeUsage> usages;
+	private @Nullable BigDecimal paidAmount;
 
 	// used by DAO insert to return assigned key
 	private transient @Nullable Long configId;
@@ -289,6 +290,7 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 		if ( usages != null ) {
 			other.usages = new LinkedHashSet<>(usages);
 		}
+		other.paidAmount = paidAmount;
 	}
 
 	@Override
@@ -543,6 +545,33 @@ public class SnfInvoice extends BasicEntity<UserLongCompositePK>
 			return Map.of();
 		}
 		return usages.stream().collect(Collectors.toMap(SnfInvoiceNodeUsage::getNodeId, e -> e));
+	}
+
+	/**
+	 * Get the total amount of the payments applied to the invoice.
+	 *
+	 * <p>
+	 * This is provided by the DAO when it loads the invoice, from the invoice
+	 * payments, and is not saved with the invoice.
+	 * </p>
+	 *
+	 * @return the paid amount, or {@code null} if no payments are applied or
+	 *         the amount is not known
+	 * @since 2.1
+	 */
+	public final @Nullable BigDecimal getPaidAmount() {
+		return paidAmount;
+	}
+
+	/**
+	 * Set the total amount of the payments applied to the invoice.
+	 *
+	 * @param paidAmount
+	 *        the paid amount to set
+	 * @since 2.1
+	 */
+	public final void setPaidAmount(@Nullable BigDecimal paidAmount) {
+		this.paidAmount = paidAmount;
 	}
 
 }

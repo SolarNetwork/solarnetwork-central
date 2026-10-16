@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -53,7 +54,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * Test cases for the {@link InvoiceImpl} class.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class InvoiceTests {
 
@@ -140,6 +141,34 @@ public class InvoiceTests {
 			assertThat(String.format("Usage %d proper order", i), usage.getUsageKey(),
 					is(equalTo((long) i)));
 		}
+	}
+
+	@Test
+	public void balance_paid() {
+		// GIVEN
+		SnfInvoice inv = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
+		SnfInvoiceItem itm = SnfInvoiceItem.newItem(inv, InvoiceItemType.Usage, NodeUsage.DATUM_OUT_KEY,
+				new BigDecimal("1234567890"), new BigDecimal("10.00"));
+		SnfInvoiceItem tax = SnfInvoiceItem.newItem(inv, InvoiceItemType.Tax, "GST", BigDecimal.ONE,
+				new BigDecimal("1.50"));
+		inv.setItems(new LinkedHashSet<>(asList(itm, tax)));
+		inv.setPaidAmount(new BigDecimal("4.00"));
+
+		// WHEN
+		InvoiceImpl invoice = new InvoiceImpl(inv);
+
+		// THEN
+		// @formatter:off
+		then(invoice.getAmount())
+			.as("Amount is the total amount")
+			.isEqualByComparingTo("11.50")
+			;
+		then(invoice.getBalance())
+			.as("Balance is the total amount less the paid amount")
+			.isEqualByComparingTo("7.50")
+			;
+		// @formatter:on
 	}
 
 }

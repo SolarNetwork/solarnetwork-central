@@ -33,6 +33,8 @@
 		, inv.date_start 	AS bill_invoice_date_start
 		, inv.date_end 		AS bill_invoice_date_end
 		, inv.currency 		AS bill_invoice_currency
+		, (SELECT SUM(ipay.amount) FROM solarbill.bill_invoice_payment ipay
+			WHERE ipay.acct_id = inv.acct_id AND ipay.inv_id = inv.id) AS bill_invoice_paid_amount
 	</sql>
 
 	<resultMap id="SnfInvoice-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
@@ -45,6 +47,7 @@
 			<arg column="bill_invoice_date_end" javaType="java.time.LocalDate"/>
 			<arg column="bill_invoice_currency" javaType="String"/>
 		</constructor>
+		<result property="paidAmount" column="bill_invoice_paid_amount"/>
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
 		<association property="usages" notNullColumn="bill_invoice_node_usage_node_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.SnfInvoiceNodeUsage-FullResult"/>

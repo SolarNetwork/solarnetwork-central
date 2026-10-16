@@ -45,6 +45,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -882,6 +883,82 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			then(result.getTotalResults())
 				.as("Total results counts the unpaid invoices")
 				.isEqualTo(2L)
+				;
+			// @formatter:on
+		}
+	}
+
+	private void pay(SnfInvoice invoice, BigDecimal amount) {
+		final UUID paymentId = insertPayment(invoice.getAccountId(), PaymentType.Payment, amount,
+				invoice.getCurrencyCode());
+		insertInvoicePayment(invoice.getAccountId(), paymentId, invoice.getInvoiceId(), amount);
+	}
+
+	@Test
+	public void getByPK_paidAmount() {
+		// GIVEN
+		final SnfInvoice invoice = insertWithItems();
+		pay(invoice, new BigDecimal("2.00"));
+		pay(invoice, new BigDecimal("3.00"));
+
+		// clear the MyBatis cache of the invoice, loaded before the payments were added
+		getSqlSessionTemplate().clearCache();
+
+		// WHEN
+		final SnfInvoice result = dao.get(invoice.getId());
+
+		// THEN
+		// @formatter:off
+		then(result.getPaidAmount())
+			.as("Paid amount is the total of the invoice payments")
+			.isEqualByComparingTo("5.00")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getByPK_paidAmount_none() {
+		// GIVEN
+		final SnfInvoice invoice = insertWithItems();
+
+		// WHEN
+		final SnfInvoice result = dao.get(invoice.getId());
+
+		// THEN
+		// @formatter:off
+		then(result.getPaidAmount())
+			.as("No paid amount without invoice payments")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void filterForAccount_paidAmount() {
+		// GIVEN
+		final SnfInvoice oldest = insertWithItems();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 2);
+		payInFull(oldest);
+		pay(others.get(0), new BigDecimal("1.50"));
+
+		final SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+
+		for ( Integer max : Arrays.asList(null, 10) ) {
+			// WHEN
+			final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
+					SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, (max != null ? 0L : null), max);
+
+			// THEN
+			// @formatter:off
+			then(result)
+				.as("All invoices returned, newest first (max %s)", max)
+				.containsExactly(others.get(1), others.get(0), oldest)
+				.extracting(SnfInvoice::getPaidAmount)
+				.as("Paid amount is the total of each invoice's payments (max %s)", max)
+				.usingElementComparator(Comparator.nullsFirst(BigDecimal::compareTo))
+				.containsExactly(null, new BigDecimal("1.50"), oldest.getTotalAmount())
 				;
 			// @formatter:on
 		}
