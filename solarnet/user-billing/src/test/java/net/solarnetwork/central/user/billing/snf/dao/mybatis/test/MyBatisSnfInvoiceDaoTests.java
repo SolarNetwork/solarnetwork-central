@@ -30,6 +30,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Credit;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
@@ -614,13 +615,14 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setUnpaidOnly(true);
 		final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
 				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result page count", result.getReturnedResultCount(), equalTo(1));
-		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
+		assertThat("Total results provided", result.getTotalResults(), equalTo(1L));
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 		assertThat("Returned page results", invoices, hasSize(1));
@@ -792,4 +794,97 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 					equalTo(true));
 		}
 	}
+
+	private Account createAccount(Long userId) {
+		Address address = new Address(null, Instant.ofEpochMilli(System.currentTimeMillis()), userId,
+				"Other Dude", "other@localhost", "NZ", "Pacific/Auckland");
+		address.setLocality("Wellington");
+		address = addressDao.get(addressDao.save(address));
+		Account account = new Account(unassignedEntityIdKey(userId),
+				Instant.ofEpochMilli(System.currentTimeMillis()), "NZD", "en_NZ");
+		account.setAddress(address);
+		return accountDao.get(accountDao.save(account));
+	}
+
+	private void payInFull(SnfInvoice invoice) {
+		final BigDecimal amount = invoice.getTotalAmount();
+		final UUID paymentId = insertPayment(invoice.getAccountId(), PaymentType.Payment, amount,
+				invoice.getCurrencyCode());
+		insertInvoicePayment(invoice.getAccountId(), paymentId, invoice.getInvoiceId(), amount);
+	}
+
+	@Test
+	public void filterForUser_sortDefault_paged_otherUser() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
+
+		final List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		// another user with invoices in the same months
+		final Account otherAccount = createAccount(TEST_USER_ID - 1);
+		createMonthlyInvoices(otherAccount, otherAccount.getAddress(), "NZD", last.getStartDate(), 4);
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
+
+		for ( int offset = 0; offset < 6; offset += 2 ) {
+			final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter, null,
+					(long) offset, 2);
+
+			// THEN
+			// @formatter:off
+			then(result)
+				.as("Page %d has only the user's invoices, in order", offset / 2)
+				.containsExactlyElementsOf(expectedInvoices.subList(Math.min(offset, 4),
+						Math.min(offset + 2, 4)))
+				;
+			then(result.getTotalResults())
+				.as("Total results counts only the user's invoices")
+				.isEqualTo(4L)
+				;
+			// @formatter:on
+		}
+	}
+
+	@Test
+	public void findUnpaid_paged() {
+		// GIVEN
+		final SnfInvoice oldest = insertWithItems();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongCompositePK(last.getUserId(), last.getAccountId())),
+				last.getAddress(), "NZD", last.getStartDate().plusMonths(1), 3);
+
+		// pay the two latest invoices, so the unpaid invoices are not on the first page of all invoices
+		payInFull(others.get(1));
+		payInFull(others.get(2));
+
+		final List<SnfInvoice> expectedInvoices = List.of(others.get(0), oldest);
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setUnpaidOnly(true);
+
+		for ( int offset = 0; offset < 3; offset++ ) {
+			final FilterResults<SnfInvoice, UserLongCompositePK> result = dao.findFiltered(filter,
+					SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, (long) offset, 1);
+
+			// THEN
+			// @formatter:off
+			then(result)
+				.as("Page %d has the unpaid invoice at that offset", offset)
+				.containsExactlyElementsOf(expectedInvoices.subList(Math.min(offset, 2),
+						Math.min(offset + 1, 2)))
+				;
+			then(result.getTotalResults())
+				.as("Total results counts the unpaid invoices")
+				.isEqualTo(2L)
+				;
+			// @formatter:on
+		}
+	}
+
 }

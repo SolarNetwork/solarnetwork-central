@@ -125,24 +125,24 @@
 						SELECT inv1.id 
 						FROM solarbill.bill_invoice inv1
 						<if test="userId != null">
-							INNER JOIN solarbill.bill_account acct1 ON acct.id = inv1.acct_id
+							INNER JOIN solarbill.bill_account acct1 ON acct1.id = inv1.acct_id
 						</if>
 						<if test="unpaidOnly">
 							INNER JOIN LATERAL (
 								WITH paid AS (
 									SELECT SUM(ipay1.amount) AS paid
 									FROM solarbill.bill_invoice_payment ipay1
-									WHERE ipay1.inv_id = inv.id AND ipay1.acct_id = inv.acct_id
+									WHERE ipay1.inv_id = inv1.id AND ipay1.acct_id = inv1.acct_id
 								)
 								, bill AS (
 									SELECT SUM(invi1.amount) AS bill
 									FROM solarbill.bill_invoice_item invi1 
-									WHERE invi1.inv_id = inv.id
+									WHERE invi1.inv_id = inv1.id
 								)
-								SELECT inv.id AS inv_id
+								SELECT inv1.id AS inv_id
 								FROM paid, bill
 								WHERE COALESCE(paid, 0::NUMERIC) &lt; COALESCE(bill, 0::NUMERIC) 
-							) pay ON pay.inv_id = inv.id
+							) pay1 ON pay1.inv_id = inv1.id
 						</if>
 						<where>
 							<if test="userId != null">
