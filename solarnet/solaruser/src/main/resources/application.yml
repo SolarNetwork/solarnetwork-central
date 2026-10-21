@@ -4,6 +4,17 @@ app:
     key: user
   billing:
     delivery-timeout-secs: 60
+    preview:
+      max-concurrent: 2
+      failure-retry-delay-secs: 60
+      cache:
+        ttl: 3600
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+      group-cache:
+        ttl: 60
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
     invoice:
       mail.from: accounts@localhost
       html-template-cache:

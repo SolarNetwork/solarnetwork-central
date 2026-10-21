@@ -82,7 +82,7 @@ import net.solarnetwork.central.user.dao.UserDao;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -92,6 +92,7 @@ public class ConsolidatedBillingWebTests extends AbstractJUnit5CentralTransactio
 
 	private static final String INVOICES_URL = "/u/sec/billing/invoices/list";
 	private static final String CONSOLIDATED_URL = "/u/sec/billing/consolidated-invoices";
+	private static final String PREVIEW_STATUS_URL = "/u/sec/billing/invoices/preview/status";
 
 	private static final Long PRIMARY_USER_ID = 1L;
 	private static final String PRIMARY_USERNAME = "primary@localhost";
@@ -293,6 +294,42 @@ public class ConsolidatedBillingWebTests extends AbstractJUnit5CentralTransactio
 					contains(memberAug.getInvoiceId().toString())))
 			.andExpect(jsonPath("$.data.results[0].consolidatedInvoiceNumber")
 					.value(num(consolidated.getInvoiceId())))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void previewConsolidatedInvoiceStatus_primary() throws Exception {
+		// month unique to this test, as previews are cached across tests
+		// @formatter:off
+		getAs(PRIMARY_USER_ID, PRIMARY_USERNAME,
+				CONSOLIDATED_URL + "/preview/status?month=2026-05")
+			.andExpect(jsonPath("$.data.state").value("Running"))
+			.andExpect(jsonPath("$.data.accounts[*].userId",
+					contains(PRIMARY_USER_ID.intValue(), MEMBER_USER_ID.intValue())))
+			.andExpect(jsonPath("$.data.accounts[*].name", contains("Primary Co", "Member Co")))
+			.andExpect(jsonPath("$.data.accounts[*].state", contains("Running", "Waiting")))
+			.andExpect(jsonPath("$.data.invoice").doesNotExist())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void previewConsolidatedInvoiceStatus_member() throws Exception {
+		// @formatter:off
+		getAs(MEMBER_USER_ID, MEMBER_USERNAME, CONSOLIDATED_URL + "/preview/status?month=2026-04")
+			.andExpect(jsonPath("$.data").doesNotExist())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void previewInvoiceStatus_member() throws Exception {
+		// month unique to this test, as previews are cached across tests
+		// @formatter:off
+		getAs(MEMBER_USER_ID, MEMBER_USERNAME, PREVIEW_STATUS_URL + "?month=2026-03")
+			.andExpect(jsonPath("$.data.state").value("Running"))
+			.andExpect(jsonPath("$.data.invoice").doesNotExist())
 			;
 		// @formatter:on
 	}

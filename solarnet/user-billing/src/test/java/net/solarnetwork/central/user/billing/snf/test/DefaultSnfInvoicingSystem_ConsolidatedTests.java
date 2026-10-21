@@ -33,6 +33,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -70,7 +71,7 @@ import net.solarnetwork.domain.Result;
  * support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -278,6 +279,47 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 		then(accountDao).should(never()).lockAccount(any());
 		then(system).should(never()).findInvoiceForPeriod(any(), any(), any());
 		then(consolidatedInvoiceDao).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void preview() {
+		// GIVEN
+		given(accountDao.getForUser(1L, END_DATE)).willReturn(primary);
+
+		final SnfInvoice primaryInvoice = invoice(primary, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
+		final SnfInvoice memberInvoice = invoice(member, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
+		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE,
+				dryRunOptions());
+		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE,
+				dryRunOptions());
+		final SnfConsolidatedInvoice generated = system.generateConsolidatedInvoice(group, MONTH,
+				dryRunOptions());
+
+		// WHEN
+		SnfConsolidatedInvoice result = system.previewConsolidatedInvoice(group, MONTH,
+				List.of(primaryInvoice, memberInvoice));
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Preview same as dry-run generated consolidated invoice")
+			.usingRecursiveComparison()
+			.ignoringFields("created")
+			.isEqualTo(generated)
+			;
+		// @formatter:on
+		then(system).should(times(2)).generateInvoice(any(), any(), any(), any());
+		then(consolidatedInvoiceDao).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void preview_noInvoices() {
+		// WHEN
+		SnfConsolidatedInvoice result = system.previewConsolidatedInvoice(group, MONTH, List.of());
+
+		// THEN
+		and.then(result).as("No preview without account invoices").isNull();
+		then(accountDao).shouldHaveNoInteractions();
 	}
 
 	@Test

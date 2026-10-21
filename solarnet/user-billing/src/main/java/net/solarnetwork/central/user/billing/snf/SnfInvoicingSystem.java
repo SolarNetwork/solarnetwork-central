@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for generating invoices for the {@link SnfBillingSystem}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface SnfInvoicingSystem {
 
@@ -158,6 +158,33 @@ public interface SnfInvoicingSystem {
 	@Nullable
 	SnfConsolidatedInvoice generateConsolidatedInvoice(InvoiceConsolidationGroup group,
 			YearMonth month, InvoiceGenerationOptions options);
+
+	/**
+	 * Create a draft consolidated invoice from account invoices that have
+	 * already been generated.
+	 *
+	 * <p>
+	 * This supports previewing a consolidated invoice whose account invoices
+	 * were generated separately, as dry-run invoices of
+	 * {@link #generateInvoice(Long, LocalDate, LocalDate, InvoiceGenerationOptions)}.
+	 * The result is the same as a dry-run
+	 * {@link #generateConsolidatedInvoice(InvoiceConsolidationGroup, YearMonth, InvoiceGenerationOptions)}
+	 * would generate from the same account invoices. Nothing is saved.
+	 * </p>
+	 *
+	 * @param group
+	 *        the group of accounts the invoices are for
+	 * @param month
+	 *        the month of the invoices
+	 * @param invoices
+	 *        the account invoices, in group order
+	 * @return the draft consolidated invoice, or {@code null} if
+	 *         {@code invoices} is empty (i.e. no charges)
+	 * @since 2.2
+	 */
+	@Nullable
+	SnfConsolidatedInvoice previewConsolidatedInvoice(InvoiceConsolidationGroup group,
+			YearMonth month, List<SnfInvoice> invoices);
 
 	/**
 	 * Deliver an invoice via an account-specific delivery mechanism (such as

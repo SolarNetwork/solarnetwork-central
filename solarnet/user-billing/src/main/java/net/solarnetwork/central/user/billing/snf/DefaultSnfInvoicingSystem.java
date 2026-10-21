@@ -122,7 +122,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -528,10 +528,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			return null;
 		}
 
-		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(primary.getAccountId(),
-				primaryUserId, Instant.now(), startDate, endDate, primary.getCurrencyCode());
-		invoice.setAddress(primary.getAddress());
-		invoice.setInvoices(invoices);
+		final SnfConsolidatedInvoice invoice = newConsolidatedInvoice(primary, startDate, endDate,
+				invoices);
 
 		// for dryRun support, we generate a negative invoice ID
 		final UserLongCompositePK invoicePk = (dryRun
@@ -543,6 +541,36 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				result);
 
 		return result;
+	}
+
+	private static SnfConsolidatedInvoice newConsolidatedInvoice(Account primary, LocalDate startDate,
+			LocalDate endDate, List<SnfInvoice> invoices) {
+		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(primary.getAccountId(),
+				primary.getUserId(), Instant.now(), startDate, endDate, primary.getCurrencyCode());
+		invoice.setAddress(primary.getAddress());
+		invoice.setInvoices(invoices);
+		return invoice;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable SnfConsolidatedInvoice previewConsolidatedInvoice(
+			InvoiceConsolidationGroup group, YearMonth month, List<SnfInvoice> invoices) {
+		requireNonNullArgument(group, "group");
+		requireNonNullArgument(month, "month");
+		requireNonNullArgument(invoices, "invoices");
+		if ( invoices.isEmpty() ) {
+			return null;
+		}
+		final LocalDate startDate = month.atDay(1);
+		final LocalDate endDate = month.plusMonths(1).atDay(1);
+		final Long primaryUserId = group.primaryUserId();
+		final Account primary = accountDao.getForUser(primaryUserId, endDate);
+		if ( primary == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, primaryUserId);
+		}
+		return newConsolidatedInvoice(primary, startDate, endDate, invoices)
+				.copyWithId(new UserLongCompositePK(primaryUserId, DRAFT_INVOICE_ID));
 	}
 
 	private SnfConsolidatedInvoiceDao requireConsolidatedInvoiceDao() {

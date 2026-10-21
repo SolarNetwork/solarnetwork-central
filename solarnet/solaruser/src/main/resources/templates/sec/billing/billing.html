@@ -18,13 +18,18 @@
 <section id="upcoming-invoice" class="hidden">
 	<h2>
 		<span data-th-text="#{billing.upcomingInvoice.header}">Upcoming invoices</span>
-		<a class="btn btn-info float-end" data-th-href="@{/u/sec/billing/invoices/preview/render/pdf}"
+		<a class="btn btn-info float-end preview-print disabled" aria-disabled="true"
+			data-th-href="@{/u/sec/billing/invoices/preview/render/pdf}"
 			data-th-text="#{print.label}">Print</a>
 	</h2>
 	<p class="intro" data-th-utext="#{billing.upcomingInvoice.intro}">
 		Here is your upcoming invoice.
 	</p>
-	<table class="invoice table" id="upcoming-invoice-table">
+	<p class="preview-loading fst-italic text-body-secondary" data-th-text="#{billing.preview.loading}">Loading…</p>
+	<p class="preview-failed hidden text-danger" data-th-text="#{billing.preview.failed}">
+		These charges could not be calculated right now.
+	</p>
+	<table class="invoice table hidden" id="upcoming-invoice-table">
 		<thead>
 			<tr class="template">
 				<th data-tprop="localizedDescription" class="col-sm-3"></th>
@@ -93,11 +98,19 @@
 <section id="upcoming-consolidated-invoice" class="hidden">
 	<h2>
 		<span data-th-text="#{billing.upcomingConsolidatedInvoice.header}">Current Consolidated Usage</span>
-		<a class="btn btn-info float-end" data-th-href="@{/u/sec/billing/consolidated-invoices/preview/render/pdf}"
+		<a class="btn btn-info float-end preview-print disabled" aria-disabled="true"
+			data-th-href="@{/u/sec/billing/consolidated-invoices/preview/render/pdf}"
 			data-th-text="#{print.label}">Print</a>
 	</h2>
 	<p class="intro" data-th-utext="#{billing.upcomingConsolidatedInvoice.intro}">
 		So far this month your account and the accounts linked to it have incurred the following charges:
+	</p>
+	<div class="progress preview-progress mb-3" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+			data-th-attr="aria-label=#{billing.preview.progress.label}" aria-label="Linked account charges loaded">
+		<div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+	</div>
+	<p class="preview-failed hidden text-danger" data-th-text="#{billing.preview.failed}">
+		These charges could not be calculated right now.
 	</p>
 	<table class="table" id="upcoming-consolidated-invoice-table">
 		<thead>
@@ -107,7 +120,12 @@
 			</tr>
 			<tr class="template">
 				<td data-tprop="name"></td>
-				<td data-tprop="localizedAmount"></td>
+				<td>
+					<span class="preview-amount hidden" data-tprop="localizedAmount"></span>
+					<span class="preview-loading fst-italic text-body-secondary" data-th-text="#{billing.preview.loading}">Loading…</span>
+					<span class="preview-none hidden text-body-secondary" data-th-text="#{billing.preview.noCharges}">No charges</span>
+					<span class="preview-failed hidden text-danger" data-th-text="#{billing.preview.unavailable}">Unavailable</span>
+				</td>
 			</tr>
 		</thead>
 		<tbody>
@@ -115,7 +133,12 @@
 		<tfoot>
 			<tr>
 				<th data-th-text="#{billing.invoice.totalWithTax.label}">Due</th>
-				<th data-tprop="localizedAmount"></th>
+				<th>
+					<span class="preview-amount hidden" data-tprop="localizedAmount"></span>
+					<span class="preview-loading fst-italic text-body-secondary" data-th-text="#{billing.preview.loading}">Loading…</span>
+					<span class="preview-none hidden text-body-secondary" data-th-text="#{billing.preview.noCharges}">No charges</span>
+					<span class="preview-failed hidden text-danger" data-th-text="#{billing.preview.incomplete}">Incomplete</span>
+				</th>
 			</tr>
 		</tfoot>
 	</table>

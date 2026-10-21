@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.config;
  * Marker interface for user billing configuration package.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface SolarNetUserBillingConfiguration {
 
@@ -42,6 +42,20 @@ public interface SolarNetUserBillingConfiguration {
 	 * @since 1.3
 	 */
 	String USER_BILLING_CONSOLIDATED_INVOICE = "user-billing-consolidated-invoice";
+
+	/**
+	 * A qualifier for SNF invoice previews generated in the background.
+	 *
+	 * @since 1.4
+	 */
+	String SNF_INVOICE_PREVIEW = "snf-invoice-preview";
+
+	/**
+	 * A qualifier for SNF consolidated invoice preview groups.
+	 *
+	 * @since 1.4
+	 */
+	String SNF_INVOICE_PREVIEW_GROUP = "snf-invoice-preview-group";
 
 	/**
 	 * A profile for recording SNF invoices in a GnuCash book.

@@ -352,25 +352,116 @@ $(document).ready(function() {
 		return haveRows;
 	}
 	
-	function renderPreviewConsolidatedInvoiceTable(table, json) {
-		var invoice = (json && json.data ? json.data : null),
-			accounts = (invoice ? invoice.localizedAccountInvoices : null),
-			haveAccounts = (Array.isArray(accounts) && accounts.length > 0),
-			tbody, templateRow, i, len, tr;
-		table = $(table);
-		if ( haveAccounts ) {
-			tbody = table.children('tbody');
+	/**
+	 * Test if a preview state is final, so the preview will not change.
+	 */
+	function isPreviewFinal(state) {
+		return (state === 'Done' || state === 'Failed');
+	}
+
+	/**
+	 * Poll a preview status URL until the preview is done or failed.
+	 *
+	 * The previews are generated in the background, so each status request
+	 * returns right away; requests are repeated with a growing delay.
+	 */
+	function pollPreviewStatus(url, onStatus) {
+		var delay = 1000,
+			errorCount = 0;
+		function next() {
+			setTimeout(poll, delay);
+			delay = Math.min(delay + 1000, 5000);
+		}
+		function poll() {
+			$.getJSON(url, function(json) {
+				var status = (json && json.data ? json.data : null);
+				errorCount = 0;
+				onStatus(status);
+				if ( status && !isPreviewFinal(status.state) ) {
+					next();
+				}
+			}).fail(function() {
+				// give up after several failed requests in a row
+				errorCount += 1;
+				if ( errorCount < 5 ) {
+					next();
+				}
+			});
+		}
+		poll();
+	}
+
+	/**
+	 * Show the preview state placeholders of an element.
+	 */
+	function showPreviewState(el, state, haveAmount) {
+		var done = (state === 'Done'),
+			failed = (state === 'Failed');
+		el.find('.preview-amount').toggleClass('hidden', !(done && haveAmount));
+		el.find('.preview-loading').toggleClass('hidden', isPreviewFinal(state));
+		el.find('.preview-none').toggleClass('hidden', !(done && !haveAmount));
+		el.find('.preview-failed').toggleClass('hidden', !failed);
+	}
+
+	function enablePreviewPrint(section, enabled) {
+		section.find('a.preview-print').toggleClass('disabled', !enabled)
+			.attr('aria-disabled', enabled ? null : 'true');
+	}
+
+	function renderPreviewInvoiceStatus(section, status) {
+		var state = status.state,
+			haveInvoice = !!(status.invoice && status.invoice.id);
+		section.children('.preview-loading').toggleClass('hidden', isPreviewFinal(state));
+		section.children('.preview-failed').toggleClass('hidden', state !== 'Failed');
+		enablePreviewPrint(section, state === 'Done');
+		if ( state === 'Done' && haveInvoice ) {
+			renderPreviewInvoiceTable(section.find('#upcoming-invoice-table').removeClass('hidden'),
+				{data: status.invoice});
+		}
+		// show while waiting, but hide like before when done without charges
+		return (state !== 'Done' || haveInvoice);
+	}
+
+	function renderPreviewConsolidatedInvoiceStatus(section, status) {
+		var accounts = status.accounts,
+			state = status.state,
+			table = section.find('#upcoming-consolidated-invoice-table'),
+			tbody = table.children('tbody'),
+			rows = tbody.children('tr'),
+			templateRow, tfoot, i, len, account, tr, finished = 0, percent;
+		if ( rows.length !== accounts.length ) {
 			templateRow = table.children('thead').children('tr.template');
 			tbody.empty();
 			for ( i = 0, len = accounts.length; i < len; i += 1 ) {
-				tr = templateRow.clone(true);
-				tr.removeClass('template');
-				replaceTemplateProperties(tr, accounts[i]);
-				tbody.append(tr);
+				tbody.append(templateRow.clone(true).removeClass('template'));
 			}
-			replaceTemplateProperties(table.children('tfoot'), invoice);
+			rows = tbody.children('tr');
 		}
-		return haveAccounts;
+		for ( i = 0, len = accounts.length; i < len; i += 1 ) {
+			account = accounts[i];
+			tr = rows.eq(i);
+			replaceTemplateProperties(tr, account);
+			showPreviewState(tr, account.state, !!account.localizedAmount);
+			if ( isPreviewFinal(account.state) ) {
+				finished += 1;
+			}
+		}
+
+		tfoot = table.children('tfoot');
+		if ( status.invoice ) {
+			replaceTemplateProperties(tfoot, status.invoice);
+		}
+		showPreviewState(tfoot, state, !!status.invoice);
+
+		percent = Math.round(finished * 100 / accounts.length);
+		section.find('.preview-progress').toggleClass('hidden', isPreviewFinal(state))
+			.attr('aria-valuenow', percent)
+			.children('.progress-bar').css('width', percent + '%');
+		section.children('.preview-failed').toggleClass('hidden', state !== 'Failed');
+		enablePreviewPrint(section, state === 'Done');
+
+		// show while waiting, but hide like before when done without charges
+		return (state !== 'Done' || !!status.invoice);
 	}
 
 	function loadInvoicePage(pageNum) {
@@ -409,17 +500,20 @@ $(document).ready(function() {
 		});
 
 		// get current consolidated usage, for the primary account of linked accounts
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/consolidated-invoices/preview'), function(json) {
-			console.log('Got preview consolidated invoice: %o', json);
-			var havePreview = renderPreviewConsolidatedInvoiceTable('#upcoming-consolidated-invoice-table', json);
-			$('#upcoming-consolidated-invoice').toggleClass('hidden', !havePreview);
+		pollPreviewStatus(SolarReg.solarUserURL('/sec/billing/consolidated-invoices/preview/status'), function(status) {
+			console.log('Got preview consolidated invoice status: %o', status);
+			var section = $('#upcoming-consolidated-invoice'),
+				show = !!(status && Array.isArray(status.accounts) && status.accounts.length > 0
+					&& renderPreviewConsolidatedInvoiceStatus(section, status));
+			section.toggleClass('hidden', !show);
 		});
 
 		// get current usage
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview'), function(json) {
-			console.log('Got preview invoice: %o', json);
-			var havePreview = renderPreviewInvoiceTable('#upcoming-invoice-table', json);
-			$('#upcoming-invoice').toggleClass('hidden', !havePreview);
+		pollPreviewStatus(SolarReg.solarUserURL('/sec/billing/invoices/preview/status'), function(status) {
+			console.log('Got preview invoice status: %o', status);
+			var section = $('#upcoming-invoice'),
+				show = !!(status && renderPreviewInvoiceStatus(section, status));
+			section.toggleClass('hidden', !show);
 		});
 		
 		// get unpaid invoices

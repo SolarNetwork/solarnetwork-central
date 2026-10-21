@@ -23,9 +23,11 @@
 package net.solarnetwork.central.user.billing.snf.config;
 
 import static net.solarnetwork.central.common.dao.config.VersionedMessageDaoConfig.VERSIONED_MESSAGES_CACHE;
+import static net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfiguration.SNF_INVOICE_PREVIEW_GROUP;
 import java.time.Clock;
 import java.util.List;
 import javax.cache.Cache;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,7 @@ import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfConsolidatedInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
+import net.solarnetwork.central.user.billing.snf.SnfInvoicePreviewService;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
@@ -49,6 +52,7 @@ import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewGroup;
 import net.solarnetwork.central.user.billing.snf.support.UserDataInvoiceConsolidationResolver;
 import net.solarnetwork.central.user.dao.UserDao;
 
@@ -56,7 +60,7 @@ import net.solarnetwork.central.user.dao.UserDao;
  * SNF BillingSystem configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class SnfBillingSystemConfig {
@@ -110,10 +114,14 @@ public class SnfBillingSystemConfig {
 
 	@Bean
 	public SnfBillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem,
-			InvoiceConsolidationResolver invoiceConsolidationResolver) {
+			InvoiceConsolidationResolver invoiceConsolidationResolver,
+			ObjectProvider<SnfInvoicePreviewService> previewService,
+			@Qualifier(SNF_INVOICE_PREVIEW_GROUP) ObjectProvider<Cache<Long, SnfInvoicePreviewGroup>> previewGroupCache) {
 		var system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao,
 				accountDao, invoiceDao, usageDao);
 		system.setConsolidationResolver(invoiceConsolidationResolver);
+		system.setPreviewService(previewService.getIfAvailable());
+		system.setPreviewGroupCache(previewGroupCache.getIfAvailable());
 		return system;
 	}
 

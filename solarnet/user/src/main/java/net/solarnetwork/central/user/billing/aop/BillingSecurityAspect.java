@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
  * Security enforcing AOP aspect for {@link BillingBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Aspect
 @Component
@@ -138,6 +138,28 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void findFilteredConsolidatedInvoices(InvoiceFilter filter) {
 	}
 
+	/**
+	 * Match getting a preview invoice status.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.3
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getPreviewInvoiceStatus(..)) && args(userId, ..)")
+	public void getPreviewInvoiceStatus(Long userId) {
+	}
+
+	/**
+	 * Match getting a preview consolidated invoice status.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @since 2.3
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getPreviewConsolidatedInvoiceStatus(..)) && args(userId, ..)")
+	public void getPreviewConsolidatedInvoiceStatus(Long userId) {
+	}
+
 	@Before(value = """
 			forUserAccess(userId)
 			|| getInvoice(userId)
@@ -148,6 +170,8 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 			|| renderConsolidatedInvoice(userId)
 			|| getPreviewConsolidatedInvoice(userId)
 			|| previewConsolidatedInvoice(userId)
+			|| getPreviewInvoiceStatus(userId)
+			|| getPreviewConsolidatedInvoiceStatus(userId)
 			""", argNames = "userId")
 	public void checkForUserAccess(Long userId) {
 		requireUserReadAccess(userId);

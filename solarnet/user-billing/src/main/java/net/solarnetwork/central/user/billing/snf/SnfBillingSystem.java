@@ -36,9 +36,12 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.StreamSupport;
+import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,10 +62,14 @@ import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
 import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewAccount;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceConsolidationGroup;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewState;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
@@ -79,6 +86,9 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreview;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewGroup;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewKey;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
@@ -92,7 +102,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
@@ -108,6 +118,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	private final SnfInvoicingSystem invoicingSystem;
 	private final NodeUsageDao nodeUsageDao;
 	private @Nullable InvoiceConsolidationResolver consolidationResolver;
+	private @Nullable SnfInvoicePreviewService previewService;
+	private @Nullable Cache<Long, SnfInvoicePreviewGroup> previewGroupCache;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -395,13 +407,20 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 	private @Nullable SnfInvoice createPreviewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options) {
-		Account account = accountDao.getForUser(userId);
-		if ( account == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
-		}
-
+		final Account account = requireAccount(userId);
 		final LocalDate start = previewStartDate(account, options);
 		final LocalDate end = start.plusMonths(1);
+
+		final SnfInvoicePreviewService service = this.previewService;
+		if ( service != null ) {
+			final SnfInvoicePreview completed = service
+					.completedAccountPreview(previewKey(account, options));
+			if ( completed != null ) {
+				log.debug("Using completed preview invoice for account {} (user {}) month {}",
+						account.getId(), account.getUserId(), start);
+				return completed.invoice();
+			}
+		}
 
 		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
 				account.getUserId(), start);
@@ -409,6 +428,41 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
 				options != null && options.isUseAccountCredit());
 		return invoicingSystem.generateInvoice(userId, start, end, opts);
+	}
+
+	private Account requireAccount(Long userId) {
+		final Account account = accountDao.getForUser(userId);
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+		}
+		return account;
+	}
+
+	private static SnfInvoicePreviewKey previewKey(Account account,
+			net.solarnetwork.central.user.billing.domain.@Nullable InvoiceGenerationOptions options) {
+		return new SnfInvoicePreviewKey(account.getUserId(),
+				YearMonth.from(previewStartDate(account, options)),
+				options != null && options.isUseAccountCredit());
+	}
+
+	private InvoiceImpl localizedInvoice(SnfInvoice invoice, Locale locale) {
+		return invoiceForSnfInvoice(invoice, invoicingSystem.messageSourceForInvoice(invoice), locale);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public InvoicePreviewStatus getPreviewInvoiceStatus(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			Locale locale) {
+		final SnfInvoicePreviewService service = this.previewService;
+		if ( service == null ) {
+			return BillingSystem.super.getPreviewInvoiceStatus(userId, options, locale);
+		}
+		final SnfInvoicePreview preview = service
+				.accountPreview(previewKey(requireAccount(userId), options));
+		final SnfInvoice invoice = preview.invoice();
+		return new InvoicePreviewStatus(preview.state(),
+				invoice != null ? localizedInvoice(invoice, locale) : null);
 	}
 
 	private static LocalDate previewStartDate(Account account,
@@ -595,11 +649,21 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		if ( group == null || !group.isPrimary(userId) || !group.isValid() ) {
 			return null;
 		}
-		final Account account = accountDao.getForUser(userId);
-		if ( account == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
-		}
+		final Account account = requireAccount(userId);
 		final LocalDate start = previewStartDate(account, options);
+
+		final SnfInvoicePreviewService service = this.previewService;
+		if ( service != null ) {
+			final List<SnfInvoice> invoices = completedGroupInvoices(service, group,
+					previewKey(account, options));
+			if ( invoices != null ) {
+				log.debug(
+						"Using completed preview invoices for consolidated invoice for account {} (user {}) month {}",
+						account.getId(), account.getUserId(), start);
+				return invoicingSystem.previewConsolidatedInvoice(group, YearMonth.from(start),
+						invoices);
+			}
+		}
 
 		log.debug("Generating preview consolidated invoice for account {} (user {}) month {}",
 				account.getId(), account.getUserId(), start);
@@ -607,6 +671,185 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		final SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
 				options != null && options.isUseAccountCredit());
 		return invoicingSystem.generateConsolidatedInvoice(group, YearMonth.from(start), opts);
+	}
+
+	/**
+	 * Get the completed preview invoices of all accounts of a group.
+	 *
+	 * @return the invoices of the accounts with charges, in group order, or
+	 *         {@code null} if any account preview is not completed
+	 */
+	private static @Nullable List<SnfInvoice> completedGroupInvoices(
+			SnfInvoicePreviewService service, InvoiceConsolidationGroup group,
+			SnfInvoicePreviewKey key) {
+		final List<SnfInvoice> result = new ArrayList<>(group.userIds().size());
+		for ( Long memberUserId : group.userIds() ) {
+			final SnfInvoicePreview completed = service.completedAccountPreview(
+					new SnfInvoicePreviewKey(memberUserId, key.month(), key.useAccountCredit()));
+			if ( completed == null ) {
+				return null;
+			}
+			final SnfInvoice invoice = completed.invoice();
+			if ( invoice != null ) {
+				result.add(invoice);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * This implementation returns {@code null} if no preview service is
+	 * configured.
+	 * </p>
+	 */
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
+			Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			Locale locale) {
+		final SnfInvoicePreviewService service = this.previewService;
+		if ( service == null ) {
+			return null;
+		}
+		final SnfInvoicePreviewGroup previewGroup = previewGroup(userId);
+		if ( previewGroup == null ) {
+			return null;
+		}
+		final InvoiceConsolidationGroup group = previewGroup.group();
+		final SnfInvoicePreviewKey key = previewKey(previewGroup.account(), options);
+		final List<SnfInvoicePreview> previews = service.groupPreview(group, key);
+
+		final List<Long> userIds = group.userIds();
+		final List<ConsolidatedInvoicePreviewAccount> accounts = new ArrayList<>(userIds.size());
+		final List<InvoicePreviewState> states = new ArrayList<>(userIds.size());
+		final List<SnfInvoice> invoices = new ArrayList<>(userIds.size());
+		for ( int i = 0, len = userIds.size(); i < len; i++ ) {
+			final Long memberUserId = userIds.get(i);
+			final SnfInvoicePreview preview = previews.get(i);
+			final SnfInvoice invoice = preview.invoice();
+			String invoiceNumber = null;
+			String localizedAmount = null;
+			if ( invoice != null ) {
+				final InvoiceImpl accountInvoice = localizedInvoice(invoice, locale);
+				invoiceNumber = accountInvoice.getInvoiceNumber();
+				localizedAmount = new LocalizedInvoice(accountInvoice, locale).getLocalizedAmount();
+				invoices.add(invoice);
+			}
+			accounts.add(new ConsolidatedInvoicePreviewAccount(memberUserId,
+					previewGroup.accountName(memberUserId), preview.state(), invoiceNumber,
+					localizedAmount));
+			states.add(preview.state());
+		}
+
+		final InvoicePreviewState state = InvoicePreviewState.combined(states);
+		Invoice invoice = null;
+		if ( state == InvoicePreviewState.Done ) {
+			final SnfConsolidatedInvoice consolidated = invoicingSystem
+					.previewConsolidatedInvoice(group, key.month(), invoices);
+			if ( consolidated != null ) {
+				invoice = localizedConsolidatedInvoice(consolidated, locale);
+			}
+		}
+		return new ConsolidatedInvoicePreviewStatus(state, accounts, invoice);
+	}
+
+	/**
+	 * Resolve the group a user is the primary account of, for previewing its
+	 * consolidated invoice.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @return the group, or {@code null} if the user is not the primary
+	 *         account of a valid group
+	 */
+	private @Nullable SnfInvoicePreviewGroup previewGroup(Long userId) {
+		final Cache<Long, SnfInvoicePreviewGroup> cache = this.previewGroupCache;
+		if ( cache != null ) {
+			final SnfInvoicePreviewGroup cached = cache.get(userId);
+			if ( cached != null ) {
+				return cached;
+			}
+		}
+		final InvoiceConsolidationResolver resolver = this.consolidationResolver;
+		if ( resolver == null ) {
+			return null;
+		}
+		final InvoiceConsolidationGroup group = resolver.groupForUser(userId);
+		if ( group == null || !group.isPrimary(userId) || !group.isValid() ) {
+			return null;
+		}
+		final Account account = requireAccount(userId);
+		final Map<Long, String> names = new HashMap<>(group.userIds().size());
+		for ( Long memberUserId : group.userIds() ) {
+			final Account memberAccount = (memberUserId.equals(userId) ? account
+					: accountDao.getForUser(memberUserId));
+			final Address address = (memberAccount != null ? memberAccount.getAddress() : null);
+			final String name = (address != null ? address.getName() : null);
+			if ( name != null ) {
+				names.put(memberUserId, name);
+			}
+		}
+		final SnfInvoicePreviewGroup result = new SnfInvoicePreviewGroup(group, account, names);
+		if ( cache != null ) {
+			cache.put(userId, result);
+		}
+		return result;
+	}
+
+	/**
+	 * Get the preview service.
+	 *
+	 * @return the service, or {@code null} if previews are generated within
+	 *         each request
+	 * @since 2.6
+	 */
+	public final @Nullable SnfInvoicePreviewService getPreviewService() {
+		return previewService;
+	}
+
+	/**
+	 * Set the preview service.
+	 *
+	 * @param previewService
+	 *        the service to generate previews in the background with, or
+	 *        {@code null} to generate previews within each request
+	 * @since 2.6
+	 */
+	public final void setPreviewService(@Nullable SnfInvoicePreviewService previewService) {
+		this.previewService = previewService;
+	}
+
+	/**
+	 * Get the preview group cache.
+	 *
+	 * @return the cache, or {@code null}
+	 * @since 2.6
+	 */
+	public final @Nullable Cache<Long, SnfInvoicePreviewGroup> getPreviewGroupCache() {
+		return previewGroupCache;
+	}
+
+	/**
+	 * Set the preview group cache.
+	 *
+	 * <p>
+	 * This caches the groups resolved for consolidated invoice preview
+	 * statuses, by primary account user ID, so that each status request does
+	 * not resolve the group and its account names again.
+	 * </p>
+	 *
+	 * @param previewGroupCache
+	 *        the cache to set, or {@code null} to resolve the group for each
+	 *        status request
+	 * @since 2.6
+	 */
+	public final void setPreviewGroupCache(
+			@Nullable Cache<Long, SnfInvoicePreviewGroup> previewGroupCache) {
+		this.previewGroupCache = previewGroupCache;
 	}
 
 }

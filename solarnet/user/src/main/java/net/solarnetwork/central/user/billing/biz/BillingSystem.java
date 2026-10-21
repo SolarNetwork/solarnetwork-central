@@ -28,10 +28,13 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewState;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -41,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for interacting with a billing system.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface BillingSystem {
 
@@ -285,6 +288,68 @@ public interface BillingSystem {
 	 */
 	default @Nullable Resource previewConsolidatedInvoice(Long userId,
 			InvoiceGenerationOptions options, MimeType outputType, Locale locale) {
+		return null;
+	}
+
+	/**
+	 * Get the status of a preview invoice for the current billing cycle,
+	 * without waiting for the preview to be generated.
+	 *
+	 * <p>
+	 * A system that generates previews in the background returns the preview
+	 * state, starting to generate the preview if needed. A caller asks again
+	 * later until the state is {@code Done} or {@code Failed}.
+	 * </p>
+	 *
+	 * <p>
+	 * This implementation generates the preview with
+	 * {@link #getPreviewInvoice(Long, InvoiceGenerationOptions, Locale)} and
+	 * returns it as {@code Done}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID to get the invoice for
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview status, never {@code null}
+	 * @since 1.5
+	 */
+	default InvoicePreviewStatus getPreviewInvoiceStatus(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
+		return new InvoicePreviewStatus(InvoicePreviewState.Done,
+				getPreviewInvoice(userId, options, locale));
+	}
+
+	/**
+	 * Get the status of a preview consolidated invoice for the current billing
+	 * cycle, for the invoice consolidation group a user is the primary account
+	 * of, without waiting for the preview to be generated.
+	 *
+	 * <p>
+	 * A system that generates previews in the background returns the preview
+	 * state of each account of the group, starting to generate the next one if
+	 * needed. A caller asks again later until the state is {@code Done} or
+	 * {@code Failed}.
+	 * </p>
+	 *
+	 * <p>
+	 * This implementation returns {@code null}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview status, or {@code null} if the user is not the
+	 *         primary account of a valid group
+	 * @since 1.5
+	 */
+	default @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
+			Long userId, InvoiceGenerationOptions options, Locale locale) {
 		return null;
 	}
 

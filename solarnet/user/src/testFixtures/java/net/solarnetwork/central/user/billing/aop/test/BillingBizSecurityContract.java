@@ -40,7 +40,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class BillingBizSecurityContract {
 
@@ -85,6 +85,10 @@ public final class BillingBizSecurityContract {
 				.userRead(biz -> biz.previewConsolidatedInvoice(a.userId(),
 						new BasicInvoiceGenerationOptions(false), MimeTypeUtils.TEXT_HTML,
 						Locale.ENGLISH))
+				.userRead(biz -> biz.getPreviewInvoiceStatus(a.userId(),
+						new BasicInvoiceGenerationOptions(false), Locale.ENGLISH))
+				.userRead(biz -> biz.getPreviewConsolidatedInvoiceStatus(a.userId(),
+						new BasicInvoiceGenerationOptions(false), Locale.ENGLISH))
 				.build();
 		// @formatter:on
 	}

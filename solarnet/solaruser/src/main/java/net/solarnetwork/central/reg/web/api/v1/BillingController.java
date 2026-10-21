@@ -52,9 +52,11 @@ import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BasicInvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
@@ -66,7 +68,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -299,6 +301,46 @@ public class BillingController {
 	}
 
 	/**
+	 * Get the status of the current billing cycle's preview invoice, without
+	 * waiting for it to be generated.
+	 *
+	 * <p>
+	 * The preview is started if needed. Request again until the state is
+	 * {@code Done} or {@code Failed}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
+	 * @param locale
+	 *        the request locale
+	 * @return the preview status, with the invoice when done
+	 * @since 2.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/preview/status", method = RequestMethod.GET)
+	public Result<InvoicePreviewStatus> previewInvoiceStatus(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		InvoicePreviewStatus result = biz.getPreviewInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
+		final Invoice invoice = (result != null ? result.invoice() : null);
+		return success(result != null && invoice != null
+				? new InvoicePreviewStatus(result.state(), localized(invoice, locale))
+				: result);
+	}
+
+	/**
 	 * Render a preview of the current billing cycle's invoice.
 	 *
 	 * @param accept
@@ -488,6 +530,50 @@ public class BillingController {
 		Invoice result = biz.getPreviewConsolidatedInvoice(userId,
 				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
 		return success(result != null ? localized(result, locale) : null);
+	}
+
+	/**
+	 * Get the status of the current billing cycle's preview consolidated
+	 * invoice, for the invoice consolidation group of a primary account,
+	 * without waiting for it to be generated.
+	 *
+	 * <p>
+	 * The preview of the next account of the group is started if needed.
+	 * Request again until the state is {@code Done} or {@code Failed}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the optional user ID of the primary account; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
+	 * @param locale
+	 *        the request locale
+	 * @return the preview status, with each account of the group and the
+	 *         consolidated invoice when done, or {@code null} data if the user
+	 *         is not the primary account of a valid group
+	 * @since 2.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/consolidated-invoices/preview/status", method = RequestMethod.GET)
+	public Result<ConsolidatedInvoicePreviewStatus> previewConsolidatedInvoiceStatus(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		ConsolidatedInvoicePreviewStatus result = biz.getPreviewConsolidatedInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
+		final Invoice invoice = (result != null ? result.invoice() : null);
+		return success(result != null && invoice != null
+				? new ConsolidatedInvoicePreviewStatus(result.state(), result.accounts(),
+						localized(invoice, locale))
+				: result);
 	}
 
 	/**

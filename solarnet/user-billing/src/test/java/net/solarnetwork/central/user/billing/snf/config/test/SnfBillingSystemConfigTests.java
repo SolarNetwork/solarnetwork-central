@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.config.test;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
 import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.user.billing.snf.config.SnfBillingSystemConfig;
  * Test cases for the {@link SnfBillingSystemConfig} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SnfBillingSystemConfigTests {
 
@@ -51,7 +52,8 @@ public class SnfBillingSystemConfigTests {
 	public void snfBillingSystemBeanExposesEveryApi() throws NoSuchMethodException {
 		// GIVEN
 		final Method beanMethod = SnfBillingSystemConfig.class.getMethod("snfBillingSystem",
-				SnfInvoicingSystem.class, InvoiceConsolidationResolver.class);
+				SnfInvoicingSystem.class, InvoiceConsolidationResolver.class, ObjectProvider.class,
+				ObjectProvider.class);
 
 		// THEN
 		// @formatter:off

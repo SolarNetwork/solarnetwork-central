@@ -33,10 +33,12 @@ import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -48,7 +50,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -221,6 +223,28 @@ public class DaoBillingBiz implements BillingBiz {
 			return null;
 		}
 		return system.previewConsolidatedInvoice(userId, options, outputType, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable InvoicePreviewStatus getPreviewInvoiceStatus(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getPreviewInvoiceStatus(userId, options, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
+			Long userId, InvoiceGenerationOptions options, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getPreviewConsolidatedInvoiceStatus(userId, options, locale);
 	}
 
 }

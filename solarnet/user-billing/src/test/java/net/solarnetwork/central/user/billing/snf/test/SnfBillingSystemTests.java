@@ -69,13 +69,19 @@ import net.solarnetwork.central.user.account.domain.SnAccountInput;
 import net.solarnetwork.central.user.account.domain.SnAddressInput;
 import net.solarnetwork.central.user.billing.biz.InvoiceConsolidationResolver;
 import net.solarnetwork.central.user.billing.domain.BasicInvoiceGenerationOptions;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewAccount;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceConsolidationGroup;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewState;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.NamedCost;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
+import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
+import net.solarnetwork.central.user.billing.snf.SnfInvoicePreviewService;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.AddressDao;
@@ -91,6 +97,9 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfConsolidatedInvoiceFi
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreview;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewGroup;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewKey;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
@@ -102,7 +111,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link SnfBillingSystem}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -125,6 +134,9 @@ public class SnfBillingSystemTests {
 
 	@Mock
 	private InvoiceConsolidationResolver consolidationResolver;
+
+	@Mock
+	private SnfInvoicePreviewService previewService;
 
 	@Captor
 	private ArgumentCaptor<SnfInvoiceFilter> invoiceFilterCaptor;
@@ -852,6 +864,296 @@ public class SnfBillingSystemTests {
 
 		// THEN
 		and.then(result).as("No preview without consolidation support").isNull();
+	}
+
+	@Test
+	public void getPreviewInvoiceStatus_running() {
+		// GIVEN
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		givenAccount(userId);
+		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
+		given(previewService.accountPreview(key))
+				.willReturn(SnfInvoicePreview.running(clock.instant()));
+
+		// WHEN
+		InvoicePreviewStatus result = system.getPreviewInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("Running status without invoice")
+				.isEqualTo(new InvoicePreviewStatus(InvoicePreviewState.Running, null));
+		then(invoicingSystem).should(never()).generateInvoice(any(), any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewInvoiceStatus_done() {
+		// GIVEN
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		givenAccount(userId);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), true);
+		given(previewService.accountPreview(key))
+				.willReturn(SnfInvoicePreview.done(clock.instant(), invoice));
+		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
+
+		// WHEN
+		InvoicePreviewStatus result = system.getPreviewInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), true), Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Done status")
+			.returns(InvoicePreviewState.Done, from(InvoicePreviewStatus::state))
+			.extracting(InvoicePreviewStatus::invoice)
+			.as("Preview invoice returned")
+			.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("3.00"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getPreviewInvoiceStatus_noService() {
+		// GIVEN
+		final Long userId = randomLong();
+		givenAccount(userId);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		given(invoicingSystem.generateInvoice(eq(userId), eq(AUG), eq(AUG.plusMonths(1)), any()))
+				.willReturn(invoice);
+		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
+
+		// WHEN
+		InvoicePreviewStatus result = system.getPreviewInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Preview generated within request, so done")
+			.returns(InvoicePreviewState.Done, from(InvoicePreviewStatus::state))
+			.extracting(InvoicePreviewStatus::invoice)
+			.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("3.00"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getPreviewInvoice_usesCompletedPreview() {
+		// GIVEN
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		givenAccount(userId);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
+		given(previewService.completedAccountPreview(key))
+				.willReturn(SnfInvoicePreview.done(clock.instant(), invoice));
+		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
+
+		// WHEN
+		Invoice result = system.getPreviewInvoice(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("Completed preview returned").isNotNull()
+				.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("3.00"));
+		then(invoicingSystem).should(never()).generateInvoice(any(), any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewInvoice_notCompleted() {
+		// GIVEN
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		givenAccount(userId);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		given(invoicingSystem.generateInvoice(eq(userId), eq(AUG), eq(AUG.plusMonths(1)), any()))
+				.willReturn(invoice);
+		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
+
+		// WHEN
+		Invoice result = system.getPreviewInvoice(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		then(previewService).should()
+				.completedAccountPreview(new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false));
+		and.then(result).as("Preview generated within request").isNotNull()
+				.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("3.00"));
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoiceStatus_running() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		system.setPreviewService(previewService);
+		final var groupCache = new SimpleCache<Long, SnfInvoicePreviewGroup>("Test Group Cache");
+		system.setPreviewGroupCache(groupCache);
+		final Long userId = randomLong();
+		final Long memberUserId = randomLong();
+		final Account account = givenAccount(userId);
+		givenAccount(memberUserId);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
+				false);
+		given(consolidationResolver.groupForUser(userId)).willReturn(group);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
+		given(previewService.groupPreview(group, key)).willReturn(List.of(
+				SnfInvoicePreview.done(clock.instant(), invoice),
+				SnfInvoicePreview.running(clock.instant())));
+		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
+
+		// WHEN
+		final var options = new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false);
+		ConsolidatedInvoicePreviewStatus result = system.getPreviewConsolidatedInvoiceStatus(userId,
+				options, Locale.ENGLISH);
+		ConsolidatedInvoicePreviewStatus again = system.getPreviewConsolidatedInvoiceStatus(userId,
+				options, Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Running while any account running")
+			.returns(InvoicePreviewState.Running, from(ConsolidatedInvoicePreviewStatus::state))
+			.as("No consolidated invoice until all accounts done")
+			.returns(null, from(ConsolidatedInvoicePreviewStatus::invoice))
+			.extracting(ConsolidatedInvoicePreviewStatus::accounts,
+					InstanceOfAssertFactories.list(ConsolidatedInvoicePreviewAccount.class))
+			.as("Each account of the group, in group order")
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.returns(userId, from(ConsolidatedInvoicePreviewAccount::userId))
+					.returns("Tester " + userId, from(ConsolidatedInvoicePreviewAccount::name))
+					.returns(InvoicePreviewState.Done, from(ConsolidatedInvoicePreviewAccount::state))
+					.returns("NZ$3.00", from(ConsolidatedInvoicePreviewAccount::localizedAmount))
+					;
+				and.then(l).element(1)
+					.returns(memberUserId, from(ConsolidatedInvoicePreviewAccount::userId))
+					.returns("Tester " + memberUserId, from(ConsolidatedInvoicePreviewAccount::name))
+					.returns(InvoicePreviewState.Running, from(ConsolidatedInvoicePreviewAccount::state))
+					.returns(null, from(ConsolidatedInvoicePreviewAccount::localizedAmount))
+					;
+			})
+			;
+		// @formatter:on
+		and.then(again).as("Same status again").isEqualTo(result);
+		then(consolidationResolver).should().groupForUser(userId);
+		and.then(groupCache.get(userId)).as("Group cached for primary account")
+				.returns(account, from(SnfInvoicePreviewGroup::account));
+		then(invoicingSystem).should(never()).previewConsolidatedInvoice(any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoiceStatus_done() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		final Long memberUserId = randomLong();
+		final Account account = givenAccount(userId);
+		givenAccount(memberUserId);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
+				false);
+		given(consolidationResolver.groupForUser(userId)).willReturn(group);
+		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
+		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
+		given(previewService.groupPreview(group, key))
+				.willReturn(List.of(SnfInvoicePreview.done(clock.instant(), invoice),
+						SnfInvoicePreview.done(clock.instant(), null)));
+		given(invoicingSystem.messageSourceForInvoice(any())).willReturn(new StaticMessageSource());
+		final SnfConsolidatedInvoice preview = consolidatedInvoice(-1L, account, AUG, invoice);
+		given(invoicingSystem.previewConsolidatedInvoice(group, YearMonth.from(AUG),
+				List.of(invoice))).willReturn(preview);
+
+		// WHEN
+		ConsolidatedInvoicePreviewStatus result = system.getPreviewConsolidatedInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Done when all accounts done")
+			.returns(InvoicePreviewState.Done, from(ConsolidatedInvoicePreviewStatus::state))
+			.satisfies(s -> and.then(s.accounts()).element(1)
+				.as("Account without charges done without amount")
+				.returns(InvoicePreviewState.Done, from(ConsolidatedInvoicePreviewAccount::state))
+				.returns(null, from(ConsolidatedInvoicePreviewAccount::localizedAmount)))
+			.extracting(ConsolidatedInvoicePreviewStatus::invoice)
+			.as("Consolidated preview of accounts with charges")
+			.asInstanceOf(InstanceOfAssertFactories.type(LocalizedConsolidatedInvoice.class))
+			.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("3.00"))
+			;
+		// @formatter:on
+		then(invoicingSystem).should(never()).generateConsolidatedInvoice(any(), any(), any());
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoiceStatus_member() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		final Long primaryUserId = randomLong();
+		given(consolidationResolver.groupForUser(userId)).willReturn(
+				new InvoiceConsolidationGroup(primaryUserId, List.of(primaryUserId, userId), false));
+
+		// WHEN
+		ConsolidatedInvoicePreviewStatus result = system.getPreviewConsolidatedInvoiceStatus(userId,
+				new BasicInvoiceGenerationOptions(false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No preview status for a member of a group").isNull();
+		then(previewService).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoiceStatus_noService() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+
+		// WHEN
+		ConsolidatedInvoicePreviewStatus result = system.getPreviewConsolidatedInvoiceStatus(
+				randomLong(), new BasicInvoiceGenerationOptions(false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("No preview status without preview service").isNull();
+		then(consolidationResolver).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void getPreviewConsolidatedInvoice_usesCompletedPreviews() {
+		// GIVEN
+		system.setConsolidationResolver(consolidationResolver);
+		system.setPreviewService(previewService);
+		final Long userId = randomLong();
+		final Long memberUserId = randomLong();
+		final Account account = givenAccount(userId);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
+				false);
+		given(consolidationResolver.groupForUser(userId)).willReturn(group);
+		final SnfInvoice invoice1 = invoice(-1L, userId, AUG, "3.00");
+		final SnfInvoice invoice2 = invoice(-1L, memberUserId, AUG, "4.00");
+		given(previewService
+				.completedAccountPreview(new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false)))
+						.willReturn(SnfInvoicePreview.done(clock.instant(), invoice1));
+		given(previewService.completedAccountPreview(
+				new SnfInvoicePreviewKey(memberUserId, YearMonth.from(AUG), false)))
+						.willReturn(SnfInvoicePreview.done(clock.instant(), invoice2));
+		final SnfConsolidatedInvoice preview = consolidatedInvoice(-1L, account, AUG, invoice1,
+				invoice2);
+		given(invoicingSystem.previewConsolidatedInvoice(group, YearMonth.from(AUG),
+				List.of(invoice1, invoice2))).willReturn(preview);
+		given(invoicingSystem.messageSourceForInvoice(any())).willReturn(new StaticMessageSource());
+
+		// WHEN
+		Invoice result = system.getPreviewConsolidatedInvoice(userId,
+				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
+
+		// THEN
+		and.then(result).as("Consolidated preview of completed account previews").isNotNull()
+				.satisfies(i -> and.then(i.getAmount()).isEqualByComparingTo("7.00"));
+		then(invoicingSystem).should(never()).generateConsolidatedInvoice(any(), any(), any());
 	}
 
 }

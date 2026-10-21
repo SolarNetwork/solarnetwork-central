@@ -53,7 +53,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Web API level integration tests for the {@link BillingController} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -62,6 +62,8 @@ public class BillingControllerWebTests extends AbstractJUnit5CentralTransactiona
 	private static final String PREVIEW_PATH = "/api/v1/sec/user/billing/invoices/preview";
 	private static final String CONSOLIDATED_PREVIEW_PATH = "/api/v1/sec/user/billing/consolidated-invoices/preview";
 	private static final String CONSOLIDATED_LIST_PATH = "/api/v1/sec/user/billing/consolidated-invoices/list";
+	private static final String PREVIEW_STATUS_PATH = "/api/v1/sec/user/billing/invoices/preview/status";
+	private static final String CONSOLIDATED_PREVIEW_STATUS_PATH = "/api/v1/sec/user/billing/consolidated-invoices/preview/status";
 
 	@Autowired
 	private MockMvc mvc;
@@ -143,6 +145,30 @@ public class BillingControllerWebTests extends AbstractJUnit5CentralTransactiona
 	public void listConsolidatedInvoices_otherUser() throws Exception {
 		// WHEN
 		getForUser(CONSOLIDATED_LIST_PATH, otherUserId).andExpect(status().isForbidden());
+	}
+
+	@Test
+	public void previewInvoiceStatus() throws Exception {
+		// WHEN
+		getForUser(PREVIEW_STATUS_PATH, userId).andExpect(status().isOk());
+	}
+
+	@Test
+	public void previewInvoiceStatus_otherUser() throws Exception {
+		// WHEN
+		getForUser(PREVIEW_STATUS_PATH, otherUserId).andExpect(status().isForbidden());
+	}
+
+	@Test
+	public void previewConsolidatedInvoiceStatus() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_PREVIEW_STATUS_PATH, userId).andExpect(status().isOk());
+	}
+
+	@Test
+	public void previewConsolidatedInvoiceStatus_otherUser() throws Exception {
+		// WHEN
+		getForUser(CONSOLIDATED_PREVIEW_STATUS_PATH, otherUserId).andExpect(status().isForbidden());
 	}
 
 }

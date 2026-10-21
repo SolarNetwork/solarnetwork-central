@@ -27,10 +27,12 @@ import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.user.billing.domain.ConsolidatedInvoicePreviewStatus;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoicePreviewStatus;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -38,7 +40,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface BillingBiz {
 
@@ -265,5 +267,45 @@ public interface BillingBiz {
 	@Nullable
 	Resource previewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
 			MimeType outputType, Locale locale);
+
+	/**
+	 * Get the status of a preview invoice for the current billing cycle,
+	 * without waiting for the preview to be generated.
+	 *
+	 * @param userId
+	 *        the user ID to get the invoice for
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview status, or {@code null} if not available
+	 * @see BillingSystem#getPreviewInvoiceStatus(Long, InvoiceGenerationOptions,
+	 *      Locale)
+	 * @since 1.6
+	 */
+	@Nullable
+	InvoicePreviewStatus getPreviewInvoiceStatus(Long userId, InvoiceGenerationOptions options,
+			Locale locale);
+
+	/**
+	 * Get the status of a preview consolidated invoice for the current billing
+	 * cycle, for the invoice consolidation group a user is the primary account
+	 * of, without waiting for the preview to be generated.
+	 *
+	 * @param userId
+	 *        the user ID of the primary account
+	 * @param options
+	 *        the invoice generation options
+	 * @param locale
+	 *        the desired locale
+	 * @return the preview status, or {@code null} if the user is not the
+	 *         primary account of a valid group
+	 * @see BillingSystem#getPreviewConsolidatedInvoiceStatus(Long,
+	 *      InvoiceGenerationOptions, Locale)
+	 * @since 1.6
+	 */
+	@Nullable
+	ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(Long userId,
+			InvoiceGenerationOptions options, Locale locale);
 
 }
