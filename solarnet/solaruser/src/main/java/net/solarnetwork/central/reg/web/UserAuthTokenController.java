@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -159,11 +160,14 @@ public class UserAuthTokenController extends ControllerSupport {
 		final Instant notAfterDate = (notAfter != null
 				? notAfter.atStartOfDay(ZoneOffset.UTC).toInstant()
 				: null);
-		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(), SecurityTokenType.User,
-				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
-						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
-						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
-						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
+		UserAuthToken token = nonnull(
+				userBiz.generateUserAuthToken(user.getUserId(), SecurityTokenType.User,
+						new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
+								.withMinAggregation(minAggregation)
+								.withNodeMetadataPaths(nodeMetadataPaths)
+								.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
+								.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build()),
+				"New token");
 		token = updateTokenInfo(user, token, name, description);
 		return success(new GeneratedUserAuthToken(token));
 	}
@@ -173,7 +177,7 @@ public class UserAuthTokenController extends ControllerSupport {
 		if ( (name != null && !name.isBlank()) || (description != null && !description.isBlank()) ) {
 			token.setName(name != null && !name.isBlank() ? name : null);
 			token.setDescription(description != null && !description.isBlank() ? description : null);
-			userBiz.updateUserAuthTokenInfo(user.getUserId(), token.getId(), token);
+			userBiz.updateUserAuthTokenInfo(user.getUserId(), token.id(), token);
 		}
 		return token;
 	}
@@ -253,12 +257,14 @@ public class UserAuthTokenController extends ControllerSupport {
 		final Instant notAfterDate = (notAfter != null
 				? notAfter.atStartOfDay(ZoneOffset.UTC).toInstant()
 				: null);
-		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
-				SecurityTokenType.ReadNodeData,
-				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
-						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
-						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
-						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
+		UserAuthToken token = nonnull(
+				userBiz.generateUserAuthToken(user.getUserId(), SecurityTokenType.ReadNodeData,
+						new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
+								.withMinAggregation(minAggregation)
+								.withNodeMetadataPaths(nodeMetadataPaths)
+								.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
+								.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build()),
+				"New token");
 		token = updateTokenInfo(user, token, name, description);
 		return success(new GeneratedUserAuthToken(token));
 	}

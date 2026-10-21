@@ -100,6 +100,7 @@ public class NewNodeController extends ControllerSupport {
 	 *        the model
 	 * @return view name
 	 */
+	@SuppressWarnings("NullAway") // TODO: remove after WebUtils 1.1 available
 	@RequestMapping(method = RequestMethod.POST, value = "/associate.*",
 			params = { "username", "confirmationKey" })
 	public String confirmNodeAssociation(HttpServletRequest request, NetworkAssociationDetails details,
@@ -122,6 +123,7 @@ public class NewNodeController extends ControllerSupport {
 	 * @return view name
 	 * @since 1.1
 	 */
+	@SuppressWarnings("NullAway") // TODO: remove after WebUtils 1.1 available
 	@RequestMapping(method = RequestMethod.GET, value = "/cert.*",
 			params = { "username", "confirmationKey", "keystorePassword" })
 	public String getNodeCertificate(HttpServletRequest request, NetworkAssociationDetails details,

@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -231,11 +232,13 @@ public class UserAlertController extends ControllerSupport {
 					// convert ageMinutes to age (seconds)
 					Object v = model.getOptions().get("ageMinutes");
 					double minutes = 1;
-					try {
-						minutes = Double.parseDouble(v.toString());
-					} catch ( NumberFormatException e ) {
-						// ignore
-						log.warn("Alert option ageMinutes is not a number, setting to 1: [{}]", v);
+					if ( v != null ) {
+						try {
+							minutes = Double.parseDouble(v.toString());
+						} catch ( NumberFormatException e ) {
+							// ignore
+							log.warn("Alert option ageMinutes is not a number, setting to 1: [{}]", v);
+						}
 					}
 					options.put(UserAlertOptions.AGE_THRESHOLD, Math.round(minutes * 60.0));
 				} else if ( UserAlertOptions.EMAIL_TOS.equalsIgnoreCase(me.getKey()) ) {
@@ -293,7 +296,7 @@ public class UserAlertController extends ControllerSupport {
 		return success(alert);
 	}
 
-	private void populateUsefulAlertOptions(UserAlert alert, Locale locale) {
+	private void populateUsefulAlertOptions(@Nullable UserAlert alert, Locale locale) {
 		if ( alert == null ) {
 			return;
 		}
@@ -309,7 +312,7 @@ public class UserAlertController extends ControllerSupport {
 				options = new LinkedHashMap<>();
 			}
 			options.put("situationDate",
-					fmt.format(alert.getSituation().getCreated().atOffset(ZoneOffset.UTC)));
+					fmt.format(alert.getSituation().created().atOffset(ZoneOffset.UTC)));
 			if ( alert.getSituation().getNotified() != null ) {
 				options.put("situationNotificationDate",
 						fmt.format(alert.getSituation().getNotified().atOffset(ZoneOffset.UTC)));
