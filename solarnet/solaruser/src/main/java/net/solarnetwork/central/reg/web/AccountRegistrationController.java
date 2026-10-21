@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
@@ -100,17 +101,19 @@ public class AccountRegistrationController {
 		final var form = new SnAccountCreationInput();
 
 		// populate some default values based on the active user
-		final User user = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
+		final User user = nonnull(userBiz.getUser(SecurityUtils.getCurrentActorUserId()), "User");
 		final var addr = new SnAddressInput();
 		form.setAddress(addr);
 		addr.setEmail(user.getEmail());
 		addr.setCountry(user.getCountry());
 		addr.setTimeZoneId(user.timeZone().getId());
 
+		final String country = (user.getCountry() != null ? user.getCountry().toUpperCase(Locale.ROOT)
+				: "US");
+
 		final var acct = new SnAccountInput();
 		form.setAccount(acct);
-		Locale locale = Locale.forLanguageTag(
-				"%s-%s".formatted(user.lang(), user.getCountry().toUpperCase(Locale.ROOT)));
+		Locale locale = Locale.forLanguageTag("%s-%s".formatted(user.lang(), country));
 		acct.setLocale(locale.toLanguageTag());
 
 		return form;

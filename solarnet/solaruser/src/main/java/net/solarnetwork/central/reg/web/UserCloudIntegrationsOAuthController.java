@@ -161,8 +161,8 @@ public class UserCloudIntegrationsOAuthController {
 				integration.getServiceIdentifier());
 
 		var uri = (redirectUri != null ? URI.create(redirectUri)
-				: fromMethodCall(on(UserCloudIntegrationsOAuthController.class).handleOAuthAuthCode(null,
-						Locale.getDefault())).buildAndExpand().toUri());
+				: fromMethodCall(on(UserCloudIntegrationsOAuthController.class)
+						.handleOAuthAuthCode(request, Locale.getDefault())).buildAndExpand().toUri());
 
 		var params = Map.of(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code,
 				CloudIntegrationService.AUTHORIZATION_STATE_PARAM, stateValue,

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Base64;
 import java.util.HashMap;
@@ -126,7 +127,7 @@ public class ResetPasswordController extends ControllerSupport {
 			mailModel.put("receipt", receipt);
 			mailModel.put("url", uriBuilder.build().encode().toUriString());
 
-			mailService.sendMail(new BasicMailAddress(null, receipt.getUsername()),
+			mailService.sendMail(new BasicMailAddress(null, nonnull(receipt.getUsername(), "Username")),
 					new ClasspathResourceMessageTemplateDataSource(locale,
 							messageSource.getMessage("user.resetpassword.mail.subject", null, locale),
 							"net/solarnetwork/central/reg/web/reset-password.txt", mailModel));

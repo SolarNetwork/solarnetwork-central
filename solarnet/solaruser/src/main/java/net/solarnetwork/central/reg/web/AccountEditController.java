@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -91,8 +92,8 @@ public class AccountEditController {
 	public SnAccountCreationInput accountInput() {
 		final var form = new SnAccountCreationInput();
 
-		final SnAccountInfo info = userAccountBiz
-				.getAccountForUser(SecurityUtils.getCurrentActorUserId());
+		final SnAccountInfo info = biz()
+				.getAccountForUser(nonnull(SecurityUtils.getCurrentActorUserId(), "User ID"));
 
 		final var addr = SnAddressInput.forAddress(info.account().getAddress());
 		form.setAddress(addr);
@@ -105,11 +106,6 @@ public class AccountEditController {
 		return form;
 	}
 
-	/**
-	 * Render the account edit page.
-	 *
-	 * @return the account edit page reference
-	 */
 	/**
 	 * Provide the active user's account information, if available.
 	 *

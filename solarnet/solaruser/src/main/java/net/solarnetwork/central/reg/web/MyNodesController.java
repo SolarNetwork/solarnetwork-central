@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -326,7 +327,7 @@ public class MyNodesController extends ControllerSupport {
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 
-					mailService.sendMail(new BasicMailAddress(null, xfer.getEmail()),
+					mailService.sendMail(new BasicMailAddress(null, nonnull(xfer.getEmail(), "Email")),
 							new ClasspathResourceMessageTemplateDataSource(locale,
 									messageSource.getMessage(
 											"my-nodes.transferOwnership.mail.subject.cancelled", null,
@@ -359,7 +360,9 @@ public class MyNodesController extends ControllerSupport {
 					mailModel.put("transfer", xfer);
 
 					mailService
-							.sendMail(new BasicMailAddress(null, xfer.getUser().getEmail()),
+							.sendMail(
+									new BasicMailAddress(null,
+											nonnull(xfer.getUser(), "User").getEmail()),
 									new ClasspathResourceMessageTemplateDataSource(locale,
 											messageSource.getMessage(
 													("my-nodes.transferOwnership.mail.subject."
