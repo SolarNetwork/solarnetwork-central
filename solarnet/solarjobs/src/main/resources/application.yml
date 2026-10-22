@@ -221,7 +221,7 @@ app:
       invoice-gen:
         maximum-wait-ms: 240000
         parallelism: 1
-        schedule: "0 20 4,20 5,10,15,20 * *"
+        schedule: "0 20 4,20 2,7,12,17 * *"
     c2c:
       ds-poll:
         maximum-iterations: 10
