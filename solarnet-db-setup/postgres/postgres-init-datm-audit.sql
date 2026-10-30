@@ -216,7 +216,8 @@ $$;
 /**
  * Increment the `solardatm.aud_datm_io` table `datum_q_count` for a stream.
  *
- * @param sid 				the stream ID to update audit datum for
+ * @param node 				the node ID to update audit datum for
+ * @param source 			the source ID to update audit datum for
  * @param ts				ts the query date
  * @param dcount			the datum count to insert, or add to an existing record
  */
