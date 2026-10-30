@@ -805,7 +805,11 @@ $$
 			, SUM(a.datum_q_count)::bigint AS datum_q_count
 			, SUM(a.flux_byte_count)::bigint AS flux_byte_count
 		FROM nodes nodes
-		INNER JOIN solardatm.da_datm_meta_aliased meta ON meta.node_id = ANY(nodes.nodes)
+		INNER JOIN (
+			SELECT stream_id, node_id FROM solardatm.da_datm_meta_aliased_all
+			UNION ALL
+			SELECT stream_id, alias_node_id AS node_id FROM solardatm.da_datm_alias_del
+		) meta ON meta.node_id = ANY(nodes.nodes)
 		INNER JOIN solardatm.aud_datm_daily a ON a.stream_id = meta.stream_id
 			AND a.ts_start >= nodes.sdate AND a.ts_start < nodes.edate
 		GROUP BY meta.node_id

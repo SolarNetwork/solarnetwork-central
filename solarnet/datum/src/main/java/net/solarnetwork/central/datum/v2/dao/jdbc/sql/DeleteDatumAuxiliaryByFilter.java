@@ -40,7 +40,7 @@ import net.solarnetwork.util.SearchFilter;
  * {@link DatumAuxiliaryCriteria} filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class DeleteDatumAuxiliaryByFilter implements PreparedStatementCreator, SqlProvider {
 
@@ -63,7 +63,7 @@ public final class DeleteDatumAuxiliaryByFilter implements PreparedStatementCrea
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

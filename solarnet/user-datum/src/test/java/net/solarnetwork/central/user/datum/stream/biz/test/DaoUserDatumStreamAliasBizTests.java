@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.datum.stream.biz.test;
 import static java.time.Instant.EPOCH;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType.AliasOnly;
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_UUID_ID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.datum.stream.biz.impl.DaoUserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -56,7 +59,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link DaoUserDatumStreamAliasBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -174,7 +177,7 @@ public class DaoUserDatumStreamAliasBizTests {
 		input.setSourceId(randomSourceId());
 		input.setOriginalObjectId(nodeId);
 		input.setOriginalSourceId(randomSourceId());
-		final var saveId = randomUUID();
+		final var saveId = UNASSIGNED_UUID_ID;
 		final ObjectDatumStreamAliasEntity result = service.saveAlias(userId, saveId, input);
 
 		// THEN
@@ -199,6 +202,70 @@ public class DaoUserDatumStreamAliasBizTests {
 			.as("Result from DAO get() returned")
 			.isSameAs(daoResult)
 			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAlias_update() {
+		// GIVEN
+		final Long userId = randomLong();
+		final UUID aliasId = randomUUID();
+
+		final var existing = new ObjectDatumStreamAliasEntity(aliasId, EPOCH, EPOCH, Node, randomLong(),
+				randomSourceId(), randomLong(), randomSourceId());
+		given(aliasDao.get(aliasId)).willReturn(existing);
+		given(aliasDao.save(any())).willReturn(aliasId);
+
+		// WHEN
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setObjectId(randomLong());
+		input.setSourceId(randomSourceId());
+		input.setOriginalObjectId(randomLong());
+		input.setOriginalSourceId(randomSourceId());
+		final ObjectDatumStreamAliasEntity result = service.saveAlias(userId, aliasId, input);
+
+		// THEN
+		// @formatter:off
+		then(aliasDao).should().save(aliasCaptor.capture());
+		and.then(aliasCaptor.getValue())
+			.as("Existing alias ID passed to DAO")
+			.returns(aliasId, from(ObjectDatumStreamAliasEntity::getId))
+			;
+		and.then(result)
+			.as("Result from DAO get() returned")
+			.isSameAs(existing)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAlias_assignedIdNotFound() {
+		// GIVEN
+		final Long userId = randomLong();
+		final UUID aliasId = randomUUID();
+
+		given(aliasDao.get(aliasId)).willReturn(null);
+
+		// WHEN
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setObjectId(randomLong());
+		input.setSourceId(randomSourceId());
+		input.setOriginalObjectId(randomLong());
+		input.setOriginalSourceId(randomSourceId());
+
+		// @formatter:off
+		and.thenThrownBy(() -> service.saveAlias(userId, aliasId, input))
+			.as("Saving with an ID that is not an existing alias is not allowed")
+			.isInstanceOfSatisfying(AuthorizationException.class, e -> {
+				and.then(e.getReason())
+					.as("Unknown object reason given")
+					.isEqualTo(AuthorizationException.Reason.UNKNOWN_OBJECT)
+					;
+			})
+			;
+
+		// THEN
+		then(aliasDao).should(never()).save(any());
 		// @formatter:on
 	}
 

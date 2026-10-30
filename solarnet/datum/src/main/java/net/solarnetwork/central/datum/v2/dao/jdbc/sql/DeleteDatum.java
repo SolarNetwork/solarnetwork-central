@@ -34,7 +34,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
  * Delete datum stream data matching an {@link ObjectStreamCriteria} filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public final class DeleteDatum implements PreparedStatementCreator, SqlProvider {
@@ -59,7 +59,7 @@ public final class DeleteDatum implements PreparedStatementCreator, SqlProvider 
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

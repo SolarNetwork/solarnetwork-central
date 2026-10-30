@@ -4,4 +4,4 @@
  * ============================================================================
  */
 
-SELECT svalue FROM solarcommon.db_migration_set_tag('20261016');
+SELECT svalue FROM solarcommon.db_migration_set_tag('20261101');

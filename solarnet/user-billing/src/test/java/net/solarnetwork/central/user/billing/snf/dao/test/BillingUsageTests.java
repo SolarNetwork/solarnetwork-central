@@ -59,7 +59,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * stored procedure.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -334,6 +334,105 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 			.returns(sum(aliasAudit, AuditDatum::getDatumQueryCount), m -> m.get("datum_out"))
 			.as("Alias node has no properties in")
 			.returns(0L, m -> m.get("prop_in"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void usage_alias_datumOut_aliasDeleted() {
+		// GIVEN
+		final Long locId = randomLong();
+		setupTestLocation(locId, TEST_ZONE.getId());
+
+		final Long userId = randomLong();
+		setupTestUser(userId, locId);
+
+		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
+				"alias", orig);
+
+		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
+
+		// WHEN
+		jdbcTemplate.update("delete from solardatm.da_datm_alias where stream_id = ?::uuid",
+				alias.getStreamId().toString());
+		Map<Long, Map<String, Object>> result = billingUsage(userId);
+
+		// THEN
+		// @formatter:off
+		then(result.get(alias.getObjectId()))
+			.as("Alias node usage still reported after alias deleted")
+			.isNotNull()
+			.as("Alias node datum out summed from deleted alias stream query counts")
+			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void usage_alias_datumOut_originalStreamDeleted() {
+		// GIVEN
+		final Long locId = randomLong();
+		setupTestLocation(locId, TEST_ZONE.getId());
+
+		final Long userId = randomLong();
+		setupTestUser(userId, locId);
+
+		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
+				"alias", orig);
+
+		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
+
+		// WHEN
+		jdbcTemplate.update("delete from solardatm.da_datm_meta where stream_id = ?::uuid",
+				orig.getStreamId().toString());
+		Map<Long, Map<String, Object>> result = billingUsage(userId);
+
+		// THEN
+		// @formatter:off
+		then(result.get(alias.getObjectId()))
+			.as("Alias node usage still reported after original stream deleted")
+			.isNotNull()
+			.as("Alias node datum out summed from deleted alias stream query counts")
+			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void usage_alias_datumOut_originalNodeTransferred() {
+		// GIVEN
+		final Long locId = randomLong();
+		setupTestLocation(locId, TEST_ZONE.getId());
+
+		final Long userId = randomLong();
+		setupTestUser(userId, locId);
+
+		final Long newOwnerUserId = randomLong();
+		setupTestUser(newOwnerUserId, locId);
+
+		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
+				"alias", orig);
+
+		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
+
+		// WHEN
+		jdbcTemplate.update("update solaruser.user_node set user_id = ? where node_id = ?",
+				newOwnerUserId, orig.getObjectId());
+		Map<Long, Map<String, Object>> result = billingUsage(userId);
+
+		// THEN
+		// @formatter:off
+		then(result.get(alias.getObjectId()))
+			.as("Alias node usage still reported after alias stops resolving")
+			.isNotNull()
+			.as("Alias node datum out summed from alias stream query counts")
+			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
 			;
 		// @formatter:on
 	}

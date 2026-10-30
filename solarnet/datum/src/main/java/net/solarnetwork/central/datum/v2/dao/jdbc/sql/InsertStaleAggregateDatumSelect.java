@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public final class InsertStaleAggregateDatumSelect implements PreparedStatementCreator, SqlProvider {
@@ -92,7 +92,7 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

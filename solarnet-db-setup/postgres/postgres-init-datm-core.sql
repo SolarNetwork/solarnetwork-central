@@ -113,7 +113,72 @@ CREATE TABLE solardatm.da_datm_alias (
 CREATE INDEX da_datm_alias_node_source_idx ON solardatm.da_datm_alias (node_id, source_id);
 
 /**
- * View combining da_datm_meta and da_datm_alias, to ease querying.
+ * Test if a datum stream alias may resolve to its original stream.
+ *
+ * Current node ownership is always used, so the result follows node ownership transfers. If
+ * either node has no owner the alias may not resolve, unless the alias is on the original node.
+ *
+ * @param orig_node 	the original stream node ID
+ * @param orig_source 	the original stream source ID
+ * @param host_node 	the alias node ID
+ * @returns `TRUE` if the alias may resolve to the original stream
+ */
+CREATE OR REPLACE FUNCTION solardatm.da_datm_alias_allowed(
+		orig_node 	BIGINT,
+		orig_source TEXT,
+		host_node 	BIGINT
+	) RETURNS BOOLEAN LANGUAGE plpgsql STABLE PARALLEL SAFE AS
+$$
+DECLARE
+	orig_user 	BIGINT;
+	host_user 	BIGINT;
+BEGIN
+	IF orig_node = host_node THEN
+		RETURN TRUE;
+	END IF;
+
+	SELECT user_id INTO orig_user FROM solaruser.user_node WHERE node_id = orig_node;
+	SELECT user_id INTO host_user FROM solaruser.user_node WHERE node_id = host_node;
+
+	RETURN COALESCE(orig_user = host_user, FALSE);
+END
+$$;
+
+/**
+ * View combining da_datm_meta and all da_datm_alias rows, to support accounting on alias streams
+ * that may no longer resolve. Use `solardatm.da_datm_meta_aliased` for anything else.
+ */
+CREATE OR REPLACE VIEW solardatm.da_datm_meta_aliased_all AS
+SELECT s.stream_id
+	, s.node_id
+	, s.source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, FALSE AS is_alias
+	, s.created
+	, s.updated
+FROM solardatm.da_datm_meta s
+UNION ALL
+SELECT a.stream_id
+	, a.alias_node_id AS node_id
+	, a.alias_source_id AS source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, TRUE AS is_alias
+	, a.created
+	, a.modified AS updated
+FROM solardatm.da_datm_alias a
+INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
+;
+
+/**
+ * View combining da_datm_meta and the da_datm_alias rows that may resolve, to ease querying.
  */
 CREATE OR REPLACE VIEW solardatm.da_datm_meta_aliased AS
 SELECT s.stream_id
@@ -142,6 +207,7 @@ SELECT a.stream_id
 	, a.modified AS updated
 FROM solardatm.da_datm_alias a
 INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
+WHERE solardatm.da_datm_alias_allowed(a.node_id, a.source_id::TEXT, a.alias_node_id)
 ;
 
 /**
@@ -173,6 +239,68 @@ CREATE TRIGGER da_datm_meta_node_source_checker
     ON solardatm.da_datm_meta
     FOR EACH ROW
     EXECUTE PROCEDURE solardatm.da_datm_validate_node_source();
+
+/**
+ * Disallow saving a datum stream alias with the ID of a node or location datum stream.
+ */
+CREATE OR REPLACE FUNCTION solardatm.da_datm_alias_validate_stream_id()
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
+BEGIN
+	IF EXISTS (SELECT 1 FROM solardatm.da_datm_meta WHERE stream_id = NEW.stream_id)
+			OR EXISTS (SELECT 1 FROM solardatm.da_loc_datm_meta WHERE stream_id = NEW.stream_id) THEN
+		RAISE EXCEPTION 'Stream ID % already exists as a datum stream.', NEW.stream_id
+		USING ERRCODE = 'integrity_constraint_violation',
+			SCHEMA = 'solardatm',
+			TABLE = 'da_datm_alias',
+			HINT = 'Use a different stream ID.';
+	END IF;
+	RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER da_datm_alias_stream_id_checker
+    BEFORE INSERT OR UPDATE OF stream_id
+    ON solardatm.da_datm_alias
+    FOR EACH ROW
+    EXECUTE PROCEDURE solardatm.da_datm_alias_validate_stream_id();
+
+/**
+ * Node IDs of deleted datum stream aliases, so usage audited on those streams can still be
+ * attributed to the alias node.
+ *
+ * @param stream_id 		the alias stream ID
+ * @param alias_node_id 	the alias node ID
+ * @param deleted 			the deletion date
+ */
+CREATE TABLE solardatm.da_datm_alias_del (
+	stream_id			UUID NOT NULL,
+	alias_node_id		BIGINT NOT NULL,
+	deleted				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT da_datm_alias_del_pk PRIMARY KEY (stream_id)
+);
+
+CREATE INDEX da_datm_alias_del_alias_node_idx ON solardatm.da_datm_alias_del (alias_node_id);
+
+/**
+ * Record deleted datum stream aliases.
+ */
+CREATE OR REPLACE FUNCTION solardatm.da_datm_alias_record_delete()
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
+BEGIN
+	INSERT INTO solardatm.da_datm_alias_del (stream_id, alias_node_id)
+	VALUES (OLD.stream_id, OLD.alias_node_id)
+	ON CONFLICT (stream_id) DO UPDATE
+	SET alias_node_id = EXCLUDED.alias_node_id,
+		deleted = EXCLUDED.deleted;
+	RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER da_datm_alias_delete_recorder
+    AFTER DELETE
+    ON solardatm.da_datm_alias
+    FOR EACH ROW
+    EXECUTE PROCEDURE solardatm.da_datm_alias_record_delete();
 
 /*
 	================================================================================================
@@ -609,6 +737,53 @@ BEGIN
 		, m.names_i, m.names_a, m.names_s, m.jdata, 'n'::CHARACTER AS kind
 		, COALESCE(l.time_zone, 'UTC') AS time_zone
 	FROM solardatm.da_datm_meta_aliased m
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	WHERE m.stream_id = sid
+	LIMIT 1;
+
+	IF NOT FOUND THEN
+		RETURN QUERY
+		SELECT m.stream_id, m.loc_id AS obj_id, m.source_id, m.created, m.updated
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'l'::CHARACTER AS kind
+			, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_loc_datm_meta m
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id
+		WHERE m.stream_id = sid
+		LIMIT 1;
+	END IF;
+END;
+$$;
+
+/**
+ * Find metadata for a stream, for accounting, where an alias stream is included even if it may no
+ * longer resolve. Use `solardatm.find_metadata_for_stream()` for anything else.
+ *
+ * @param sid the stream ID to find metadata for
+ * @see solardatm.find_metadata_for_stream()
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_metadata_for_stream_all(
+		sid 		UUID
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		obj_id		BIGINT,
+		source_id	CHARACTER VARYING(64),
+		created		TIMESTAMP WITH TIME ZONE,
+		updated		TIMESTAMP WITH TIME ZONE,
+		names_i		TEXT[],
+		names_a		TEXT[],
+		names_s		TEXT[],
+		jdata		JSONB,
+		kind		CHARACTER,
+		time_zone	CHARACTER VARYING(64)
+	) LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
+		, m.names_i, m.names_a, m.names_s, m.jdata, 'n'::CHARACTER AS kind
+		, COALESCE(l.time_zone, 'UTC') AS time_zone
+	FROM solardatm.da_datm_meta_aliased_all m
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE m.stream_id = sid

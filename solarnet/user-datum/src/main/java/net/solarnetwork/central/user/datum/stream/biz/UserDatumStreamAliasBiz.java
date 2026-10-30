@@ -64,6 +64,11 @@ public interface UserDatumStreamAliasBiz {
 	/**
 	 * Save an alias entity for a user.
 	 *
+	 * <p>
+	 * An assigned {@code aliasId} updates an existing alias: it cannot be used
+	 * to create an alias with a specific ID.
+	 * </p>
+	 *
 	 * @param userId
 	 *        the user ID of the entity owner
 	 * @param aliasId

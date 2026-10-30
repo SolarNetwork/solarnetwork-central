@@ -38,7 +38,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * {@link ObjectStreamCriteria} filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectDatumRecordCounts implements PreparedStatementCreator, SqlProvider {
@@ -60,7 +60,7 @@ public final class SelectDatumRecordCounts implements PreparedStatementCreator, 
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

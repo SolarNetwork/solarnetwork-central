@@ -41,7 +41,7 @@ BEGIN
 
 	IF FOUND THEN
 		-- get stream time zone; will determine if node or location stream
-		SELECT * FROM solardatm.find_metadata_for_stream(stale.stream_id) INTO meta;
+		SELECT * FROM solardatm.find_metadata_for_stream_all(stale.stream_id) INTO meta;
 		tz := COALESCE(meta.time_zone, 'UTC');
 
 		CASE kind
@@ -236,7 +236,7 @@ BEGIN
 	-- the following query can only ever return 1 row (i.e. a node/source combo
 	-- is globally unique across da_datm_meta and da_datm_alias)
 	SELECT m.stream_id, COALESCE(l.time_zone, 'UTC')
-	FROM solardatm.da_datm_meta_aliased m
+	FROM solardatm.da_datm_meta_aliased_all m
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE m.node_id = node AND m.source_id = source

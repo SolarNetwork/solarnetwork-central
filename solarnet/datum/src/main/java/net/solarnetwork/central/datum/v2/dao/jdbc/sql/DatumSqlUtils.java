@@ -75,7 +75,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -990,6 +990,42 @@ public final class DatumSqlUtils {
 			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
 			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
 			@Nullable String zoneClause, StringBuilder buf) {
+		return nodeMetadataFilterSql(filter, filter.includeStreamAliases(), style, streamFilter,
+				datumTableName, aggregation, combiningConfig, zoneClause, buf);
+	}
+
+	/**
+	 * Generate SQL query to find node metadata, ignoring any stream alias
+	 * criteria.
+	 *
+	 * <p>
+	 * Statements that use the resulting {@code stream_id} column directly, such
+	 * as to change datum or to find anything other than datum through an alias
+	 * original stream, must use this method so that they only ever act on real
+	 * streams.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
+	 *      StringBuilder)
+	 * @since 2.10
+	 */
+	public static int nodeMetadataWithoutAliasesFilterSql(ObjectMetadataCriteria filter,
+			MetadataSelectStyle style, StringBuilder buf) {
+		return nodeMetadataFilterSql(filter, false, style, null, null, null, null,
+				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
+	}
+
+	private static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, boolean aliased,
+			MetadataSelectStyle style, @Nullable ObjectStreamCriteria streamFilter,
+			@Nullable String datumTableName, @Nullable Aggregation aggregation,
+			@Nullable CombiningConfig combiningConfig, @Nullable String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
 		if ( style == MetadataSelectStyle.WithGeography ) {
@@ -1002,11 +1038,11 @@ public final class DatumSqlUtils {
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
-		if ( filter.includeStreamAliases() ) {
+		if ( aliased ) {
 			buf.append(", s.orig_stream_id");
 		}
 		buf.append("\nFROM solardatm.da_datm_meta");
-		if ( filter.includeStreamAliases() ) {
+		if ( aliased ) {
 			buf.append("_aliased");
 		}
 		buf.append(" s\n");

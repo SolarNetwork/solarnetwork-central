@@ -44,7 +44,7 @@ import net.solarnetwork.util.SearchFilter;
  * {@link DatumAuxiliaryCriteria} filter.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public final class SelectDatumAuxiliary
@@ -69,7 +69,7 @@ public final class SelectDatumAuxiliary
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

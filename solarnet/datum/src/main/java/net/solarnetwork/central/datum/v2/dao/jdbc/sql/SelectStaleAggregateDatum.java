@@ -41,7 +41,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * {@link DatumStreamCriteria} filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectStaleAggregateDatum
@@ -81,7 +81,7 @@ public final class SelectStaleAggregateDatum
 					buf);
 
 		} else {
-			DatumSqlUtils.nodeMetadataFilterSql(filter,
+			DatumSqlUtils.nodeMetadataWithoutAliasesFilterSql(filter,
 					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					buf);

@@ -38,6 +38,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.central.domain.Securable;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz;
@@ -48,7 +49,7 @@ import net.solarnetwork.dao.FilterResults;
  * DAO-based implementation of {@link UserDatumStreamAliasBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Securable
 public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
@@ -95,6 +96,9 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 	public ObjectDatumStreamAliasEntity saveAlias(Long userId, UUID aliasId,
 			ObjectDatumStreamAliasEntityInput input) {
 		validateInput(input);
+		if ( EntityConstants.isAssigned(aliasId) ) {
+			requireNonNullObject(aliasDao.get(aliasId), aliasId);
+		}
 		final ObjectDatumStreamAliasEntity alias = input.toEntity(aliasId, Instant.now());
 		final var pk = aliasDao.save(alias);
 		return requireNonNullObject(aliasDao.get(pk), pk);
