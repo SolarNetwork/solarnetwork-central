@@ -166,17 +166,17 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 
 		// WHEN
 		final int count = randomInt();
-		final AuditDatum d = incrementAndGet(aliasMeta, now, count, streamId);
+		final AuditDatum d = incrementAndGet(aliasMeta, now, count, aliasStreamId);
 
 		// THEN
-		DatumTestUtils.assertAuditDatum("Inserted query row for ORIGINAL stream", d, AuditDatumEntity
-				.ioAuditDatum(streamId, now.truncatedTo(HOURS), 0L, 0L, (long) count, 0L, 0L));
+		DatumTestUtils.assertAuditDatum("Inserted query row for ALIAS stream", d, AuditDatumEntity
+				.ioAuditDatum(aliasStreamId, now.truncatedTo(HOURS), 0L, 0L, (long) count, 0L, 0L));
 
 		// verify stale record added for Day
 		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
 		then(stale).as("One stale audit row created").hasSize(1);
-		DatumTestUtils.assertStaleAuditDatum("Stale for ORIGINAL stream", stale.get(0),
-				new StaleAuditDatumEntity(streamId,
+		DatumTestUtils.assertStaleAuditDatum("Stale for ALIAS stream", stale.get(0),
+				new StaleAuditDatumEntity(aliasStreamId,
 						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(DAYS).toInstant(), Day, now()));
 	}
 
