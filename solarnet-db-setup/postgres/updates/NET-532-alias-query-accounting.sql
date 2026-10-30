@@ -62,7 +62,7 @@ $$
 			meta.node_id
 			, SUM(acc.datum_count + acc.datum_hourly_count + acc.datum_daily_count + acc.datum_monthly_count) AS datum_count
 		FROM nodes nodes
-		INNER JOIN solardatm.da_datm_meta_aliased meta ON meta.node_id = ANY(nodes.nodes)
+		INNER JOIN solardatm.da_datm_meta meta ON meta.node_id = ANY(nodes.nodes)
 		INNER JOIN solardatm.aud_acc_datm_daily acc ON acc.stream_id = meta.stream_id
 			AND acc.ts_start >= nodes.sdate AND acc.ts_start < nodes.edate
 		GROUP BY meta.node_id
@@ -74,7 +74,7 @@ $$
 			, SUM(a.datum_q_count)::bigint AS datum_q_count
 			, SUM(a.flux_byte_count)::bigint AS flux_byte_count
 		FROM nodes nodes
-		INNER JOIN solardatm.da_datm_meta meta ON meta.node_id = ANY(nodes.nodes)
+		INNER JOIN solardatm.da_datm_meta_aliased meta ON meta.node_id = ANY(nodes.nodes)
 		INNER JOIN solardatm.aud_datm_daily a ON a.stream_id = meta.stream_id
 			AND a.ts_start >= nodes.sdate AND a.ts_start < nodes.edate
 		GROUP BY meta.node_id
