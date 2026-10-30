@@ -65,6 +65,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewKey;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DefaultSnfInvoicePreviewServiceTests {
 
@@ -181,8 +182,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final SnfInvoicePreview result = service.accountPreview(key(userId));
 
 		// THEN
-		then(invoicingSystem).should().generateInvoice(eq(userId), eq(START), eq(END),
-				dryRun(false));
+		then(invoicingSystem).should().generateInvoice(eq(userId), eq(START), eq(END), dryRun(false));
 		and.then(result).as("Preview done without invoice")
 				.isEqualTo(SnfInvoicePreview.done(clock.instant(), null));
 	}
@@ -370,9 +370,8 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final List<SnfInvoicePreview> done = service.groupPreview(group, key(userId1));
 
 		// THEN
-		and.then(step1).extracting(SnfInvoicePreview::state).as("First account started")
-				.containsExactly(InvoicePreviewState.Running, InvoicePreviewState.Waiting,
-						InvoicePreviewState.Waiting);
+		and.then(step1).extracting(SnfInvoicePreview::state).as("First account started").containsExactly(
+				InvoicePreviewState.Running, InvoicePreviewState.Waiting, InvoicePreviewState.Waiting);
 		and.then(step1again).extracting(SnfInvoicePreview::state)
 				.as("Next account not started while first running")
 				.containsExactly(InvoicePreviewState.Running, InvoicePreviewState.Waiting,
@@ -381,9 +380,8 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		and.then(step2).extracting(SnfInvoicePreview::state).as("Second account started")
 				.containsExactly(InvoicePreviewState.Done, InvoicePreviewState.Running,
 						InvoicePreviewState.Waiting);
-		and.then(step3).extracting(SnfInvoicePreview::state).as("Third account started")
-				.containsExactly(InvoicePreviewState.Done, InvoicePreviewState.Done,
-						InvoicePreviewState.Running);
+		and.then(step3).extracting(SnfInvoicePreview::state).as("Third account started").containsExactly(
+				InvoicePreviewState.Done, InvoicePreviewState.Done, InvoicePreviewState.Running);
 		and.then(done).extracting(SnfInvoicePreview::invoice).as("All accounts done, in group order")
 				.containsExactly(invoice1, null, invoice3);
 		and.then(tasks).as("No more tasks started once done").isEmpty();
@@ -395,8 +393,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(2);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 
 		// WHEN
 		service.accountPreview(key(userId1));
@@ -415,8 +412,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(2);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 
 		// WHEN
 		service.accountPreview(key(userId1));
@@ -436,8 +432,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(2);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 		given(invoicingSystem.generateInvoice(eq(userId1), eq(START), eq(END), dryRun(false)))
 				.willThrow(new RuntimeException("Test query timeout"));
 
@@ -458,8 +453,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(1);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 
 		// WHEN
 		service.accountPreview(key(randomLong()));
@@ -495,9 +489,8 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		and.then(tasksAfterFirst).as("Next account started when first finished").isOne();
 		and.then(tasksAfterSecond).as("Third account started when second finished").isOne();
 		and.then(done).extracting(SnfInvoicePreview::state)
-				.as("All accounts done without polling for each one")
-				.containsExactly(InvoicePreviewState.Done, InvoicePreviewState.Done,
-						InvoicePreviewState.Done);
+				.as("All accounts done without polling for each one").containsExactly(
+						InvoicePreviewState.Done, InvoicePreviewState.Done, InvoicePreviewState.Done);
 		and.then(tasks).as("No more tasks started once done").isEmpty();
 	}
 
@@ -507,8 +500,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(2);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 
 		// WHEN
 		service.groupPreview(group, key(userId1));
@@ -518,10 +510,8 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final List<SnfInvoicePreview> polled = service.groupPreview(group, key(userId1));
 
 		// THEN
-		and.then(tasksWhenNotPolled).as("Next account not started once group no longer polled")
-				.isZero();
-		and.then(polled).extracting(SnfInvoicePreview::state)
-				.as("Next account started by next poll")
+		and.then(tasksWhenNotPolled).as("Next account not started once group no longer polled").isZero();
+		and.then(polled).extracting(SnfInvoicePreview::state).as("Next account started by next poll")
 				.containsExactly(InvoicePreviewState.Done, InvoicePreviewState.Running);
 	}
 
@@ -531,8 +521,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		final DefaultSnfInvoicePreviewService service = service(2);
 		final Long userId1 = randomLong();
 		final Long userId2 = randomLong();
-		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false,
-				null);
+		final var group = new InvoiceConsolidationGroup(userId1, List.of(userId1, userId2), false, null);
 
 		// WHEN
 		service.groupPreview(group, key(userId1));
@@ -541,8 +530,7 @@ public class DefaultSnfInvoicePreviewServiceTests {
 		runTasks();
 
 		// THEN
-		and.then(tasks).as("Group not continued to second account, as already running")
-				.isEmpty();
+		and.then(tasks).as("Group not continued to second account, as already running").isEmpty();
 	}
 
 }
