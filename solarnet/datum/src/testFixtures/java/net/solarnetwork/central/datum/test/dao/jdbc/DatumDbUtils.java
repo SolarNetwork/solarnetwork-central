@@ -1665,11 +1665,12 @@ public final class DatumDbUtils {
 		int processed = 0;
 		while ( true ) {
 			cs.setString(2, kind);
-			if ( cs.execute() ) {
-				processed = cs.getInt(1);
-			} else {
+			cs.execute();
+			int count = cs.getInt(1);
+			if ( count < 1 ) {
 				break;
 			}
+			processed += count;
 		}
 		return processed;
 	}
