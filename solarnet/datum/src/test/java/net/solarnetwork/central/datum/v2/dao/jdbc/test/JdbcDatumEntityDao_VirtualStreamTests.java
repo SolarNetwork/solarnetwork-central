@@ -69,7 +69,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * {@link JdbcDatumEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupport {
 
@@ -749,6 +749,149 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					d.getStatistics().getAccumulating()[0],
 					arrayContaining(decimalArray(valueOf(33 * 2 * 2), null, null)));
 		}
+	}
+
+	private List<ObjectDatumStreamMetadata> givenTwoStreams() {
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null, null);
+		ObjectDatumStreamMetadata meta_2 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "b", new String[] { "w" }, new String[] { "wh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		return asList(meta_1, meta_2);
+	}
+
+	private void givenDailyDatum(ObjectDatumStreamMetadata meta, ZonedDateTime start, int days,
+			int value) {
+		List<AggregateDatum> datums = new ArrayList<>();
+		for ( int i = 0; i < days; i++ ) {
+			Instant ts = start.plusDays(i).toInstant();
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(value) },
+					new BigDecimal[] { new BigDecimal(value) }, null, null);
+			DatumPropertiesStatistics stats = statisticsOf(
+					new BigDecimal[][] { decimalArray("6", valueOf(value), valueOf(value)) },
+					new BigDecimal[][] { decimalArray(valueOf(value), "0", valueOf(value)) });
+			datums.add(new AggregateDatumEntity(meta.getStreamId(), ts, Aggregation.Day, props, stats));
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+	}
+
+	private static BasicDatumCriteria virtualCriteria(ZonedDateTime start, ZonedDateTime end,
+			Aggregation aggregation) {
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setNodeIds(new Long[] { 1L, 2L });
+		criteria.setSourceIds(new String[] { "a", "b" });
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		criteria.setAggregation(aggregation);
+		criteria.setObjectIdMaps(new String[] { "10:1,2" });
+		criteria.setSourceIdMaps(new String[] { "V:a,b" });
+		return criteria;
+	}
+
+	@Test
+	public void find_virtual_week_sum_combineNodeSource() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+
+		// start on a Monday, for 1 week
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 3, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 7, 10);
+		givenDailyDatum(metas.get(1), start, 7, 20);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(
+				virtualCriteria(start, start.plusDays(7), Aggregation.Week));
+
+		// THEN
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Returned 1 virtual node x 1 virtual source x 1 week", datumList, hasSize(1));
+		AggregateDatum d = datumList.getFirst();
+		assertThat("Virtual stream ID", d.getStreamId(), equalTo(virtualStreamId(10L, "V")));
+		assertThat("Result date is grouped by week", d.getTimestamp(), equalTo(start.toInstant()));
+		assertThat("Virtual W is sum of each stream's week", d.getProperties().getInstantaneous(),
+				arrayContaining(decimalArray("30")));
+		assertThat("Virtual Wh is sum of each stream's week", d.getProperties().getAccumulating(),
+				arrayContaining(decimalArray(valueOf((10 + 20) * 7))));
+	}
+
+	@Test
+	public void find_virtual_day_totalResultsCount() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 5, 10);
+		givenDailyDatum(metas.get(1), start, 5, 20);
+
+		// WHEN
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusDays(5), Aggregation.Day);
+		criteria.setMax(2);
+		criteria.setWithoutTotalResultsCount(false);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(criteria);
+
+		// THEN
+		assertThat("Total count is of virtual results", results.getTotalResults(), equalTo(5L));
+		assertThat("Returned results limited to max", results.getReturnedResultCount(), equalTo(2));
+	}
+
+	@Test
+	public void find_virtual_15min_totalResultsCount() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		final Instant now = Instant.now();
+		List<Datum> datums = new ArrayList<>();
+		for ( int i = 0; i < 13; i++ ) {
+			Instant ts = start.plusMinutes(i * 5).toInstant();
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
+			datums.add(new DatumEntity(metas.get(0).getStreamId(), ts, now, props));
+			datums.add(new DatumEntity(metas.get(1).getStreamId(), ts, now, props));
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusHours(1),
+				Aggregation.FifteenMinute);
+		criteria.setMax(2);
+		criteria.setWithoutTotalResultsCount(false);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(criteria);
+
+		// THEN
+		assertThat("Total count is of virtual results, not real streams", results.getTotalResults(),
+				equalTo(4L));
+		assertThat("Returned results limited to max", results.getReturnedResultCount(), equalTo(2));
+	}
+
+	@Test
+	public void find_virtual_year_totalResultsCount() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		List<AggregateDatum> datums = new ArrayList<>();
+		for ( int i = 0; i < 10; i++ ) {
+			Instant ts = start.plusMonths(i * 6).toInstant();
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
+			DatumPropertiesStatistics stats = statisticsOf(
+					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
+			datums.add(new AggregateDatumEntity(metas.get(0).getStreamId(), ts, Aggregation.Month, props,
+					stats));
+			datums.add(new AggregateDatumEntity(metas.get(1).getStreamId(), ts, Aggregation.Month, props,
+					stats));
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusYears(5), Aggregation.Year);
+		criteria.setMax(2);
+		criteria.setWithoutTotalResultsCount(false);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(criteria);
+
+		// THEN
+		assertThat("Total count is of virtual results", results.getTotalResults(), equalTo(5L));
+		assertThat("Returned results limited to max", results.getReturnedResultCount(), equalTo(2));
 	}
 
 }

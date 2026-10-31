@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  * @since 3.8
  */
 public final class SelectDatum
@@ -202,18 +202,10 @@ public final class SelectDatum
 		buf.append("SELECT ");
 		if ( combine != null ) {
 			buf.append("s.vstream_id AS stream_id,\n");
-			if ( aggregation == Aggregation.Week ) {
-				buf.append("	solarcommon.first(s.obj_rank) AS obj_rank,\n");
-				buf.append("	solarcommon.first(s.source_rank) AS source_rank,\n");
-				buf.append("	solarcommon.first(s.names_i) AS names_i,\n");
-				buf.append("	solarcommon.first(s.names_a) AS names_a,\n");
-
-			} else {
-				buf.append("	s.obj_rank,\n");
-				buf.append("	s.source_rank,\n");
-				buf.append("	s.names_i,\n");
-				buf.append("	s.names_a,\n");
-			}
+			buf.append("	s.obj_rank,\n");
+			buf.append("	s.source_rank,\n");
+			buf.append("	s.names_i,\n");
+			buf.append("	s.names_a,\n");
 		} else if ( aliased ) {
 			buf.append("s.stream_id,\n");
 		} else {
@@ -407,7 +399,9 @@ public final class SelectDatum
 		if ( aggregation == Aggregation.Week ) {
 			buf.append("GROUP BY ");
 			if ( combine != null ) {
-				buf.append("s.vstream_id");
+				// each real stream must produce its own rows to be combined
+				buf.append(
+						"s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a");
 			} else {
 				buf.append("datum.stream_id");
 			}
@@ -486,10 +480,11 @@ public final class SelectDatum
 		@Override
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
-			if ( isMinuteAggregation() ) {
+			if ( isMinuteAggregation() && combine == null ) {
 				// We use a specialized count query here because the actual query does a lot
 				// of computation to produce minute-level aggregation. The
 				// solardatm.count_datm_time_span_slots() function is designed to run faster.
+				// It counts the slots of each real stream, so cannot be used when combining.
 				sqlCte(buf);
 				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
 				buf.append("FROM s\n");
@@ -504,8 +499,9 @@ public final class SelectDatum
 				return buf.toString();
 			}
 
-			// non-minute aggregation; use normal wrapped count query
+			// use normal wrapped count query
 			sqlCore(buf);
+			sqlOrderByJoins(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

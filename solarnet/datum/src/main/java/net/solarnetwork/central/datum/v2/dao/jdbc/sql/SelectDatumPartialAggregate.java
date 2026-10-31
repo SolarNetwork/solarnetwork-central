@@ -61,7 +61,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public final class SelectDatumPartialAggregate
@@ -425,6 +425,9 @@ public final class SelectDatumPartialAggregate
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
 			sqlCore(buf);
+			if ( combine != null ) {
+				sqlOrderByJoins(buf);
+			}
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

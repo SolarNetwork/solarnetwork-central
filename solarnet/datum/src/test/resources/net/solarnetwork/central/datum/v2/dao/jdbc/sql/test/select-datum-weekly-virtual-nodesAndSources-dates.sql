@@ -29,10 +29,10 @@ WITH rs AS (
 )
 , d AS (
 	SELECT s.vstream_id AS stream_id,
-		solarcommon.first(s.obj_rank) AS obj_rank,
-		solarcommon.first(s.source_rank) AS source_rank,
-		solarcommon.first(s.names_i) AS names_i,
-		solarcommon.first(s.names_a) AS names_a,
+		s.obj_rank,
+		s.source_rank,
+		s.names_i,
+		s.names_a,
 		date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
@@ -41,7 +41,7 @@ WITH rs AS (
 	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 	WHERE datum.ts_start >= ?
 		AND datum.ts_start < ?
-	GROUP BY s.vstream_id, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
+	GROUP BY s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 )
 -- calculate instantaneous values per date + property NAME (to support joining different streams with different index orders)
 -- ordered by object/source ranking defined by query metadata; assume names are unique per stream

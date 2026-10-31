@@ -148,7 +148,7 @@ import net.solarnetwork.util.StringLongMapping;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -413,10 +413,19 @@ public class JdbcDatumEntityDao
 		final PreparedStatementCreator sql = filterSql(filter);
 		final RowMapper<Datum> mapper = mapper(filter);
 
-		ObjectDatumStreamMetadataProvider metadataProvider = null;
 		if ( mapper instanceof ObjectDatumStreamMetadataProvider p ) {
-			metadataProvider = p;
-		} else if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
+			// virtual streams use this; the mapper provides metadata for the rows it has mapped, and
+			// the processor needs the metadata first, so all rows must be mapped before starting
+			final List<Datum> results = jdbcTemplate.query(sql, mapper);
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, p));
+			for ( Datum d : results ) {
+				processor.handleResultItem(d);
+			}
+			return;
+		}
+
+		ObjectDatumStreamMetadataProvider metadataProvider = null;
+		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
 				metadataProvider = staticProvider(singleton(meta));

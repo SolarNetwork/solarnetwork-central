@@ -30,8 +30,10 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.sql.Timestamp;
@@ -198,6 +200,11 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 	}
 
 	private MockHttpServletRequestBuilder combiningQuery(String path, String nodeIds, String sourceIds) {
+		return combiningQuery(path, nodeIds, sourceIds, "2026-05-31", "2026-06-03");
+	}
+
+	private MockHttpServletRequestBuilder combiningQuery(String path, String nodeIds, String sourceIds,
+			String startDate, String endDate) {
 		// @formatter:off
 		return get(path)
 				.param("nodeIds", nodeIds)
@@ -205,9 +212,8 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 				.param("nodeIdMaps", victimNodeId + ":" + nodeId)
 				.param("sourceIdMaps", VIRTUAL_SOURCE_ID + ":" + SOURCE_A + "," + SOURCE_B)
 				.param("aggregation", "Hour")
-				.param("startDate", "2026-05-31")
-				.param("endDate", "2026-06-03")
-				.param("withoutTotalResultsCount", "true")
+				.param("startDate", startDate)
+				.param("endDate", endDate)
 				.accept(MediaType.APPLICATION_JSON);
 		// @formatter:on
 	}
@@ -245,13 +251,118 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 	@Test
 	public void stream_virtualIdsMatchOtherAccountStream() throws Exception {
 		// WHEN
-		// every result is virtual; a result is audited before it is written, so the audit outcome
-		// does not depend on the response status
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/datum", nodeId + "," + otherNodeId,
+				SOURCE_A + "," + SOURCE_B + "," + SOURCE_C))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.meta.length()", is(2)))
+			.andExpect(jsonPath("$.data.length()", is(HOURS * 2)))
+			;
+		// @formatter:on
+
+		// THEN
+		// @formatter:off
+		then(awaitAuditedCount(unmappedStreamId, HOURS, AUDIT_TIMEOUT_NS))
+			.as("Unmapped stream returned under its own IDs is counted")
+			.isEqualTo(HOURS)
+			;
+		// @formatter:on
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void stream_csv() throws Exception {
+		// WHEN
+		// @formatter:off
 		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/datum", nodeId.toString(),
-				SOURCE_A + "," + SOURCE_B));
+				SOURCE_A + "," + SOURCE_B)
+				.accept(MediaType.parseMediaType("text/csv")))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith("text/csv"))
+			.andExpect(content().string(containsString(VIRTUAL_SOURCE_ID)))
+			;
+		// @formatter:on
 
 		// THEN
 		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void stream_cbor() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/datum", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B)
+				.accept(MediaType.parseMediaType("application/cbor")))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith("application/cbor"))
+			;
+		// @formatter:on
+
+		// THEN
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void stream_noResults() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/datum", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B, "2020-01-01", "2020-01-02"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.success", is(true)))
+			.andExpect(jsonPath("$.meta").doesNotExist())
+			.andExpect(jsonPath("$.data").doesNotExist())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void streamReading_virtualIdsMatchOtherAccountStream() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/reading", nodeId + "," + otherNodeId,
+				SOURCE_A + "," + SOURCE_B + "," + SOURCE_C)
+				.param("readingType", "Difference"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.length()", is(HOURS * 2)))
+			;
+		// @formatter:on
+
+		// THEN
+		// @formatter:off
+		then(awaitAuditedCount(unmappedStreamId, HOURS, AUDIT_TIMEOUT_NS))
+			.as("Unmapped stream returned under its own IDs is counted")
+			.isEqualTo(HOURS)
+			;
+		// @formatter:on
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void streamReading_noMappings() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(get("/api/v1/pub/datum/stream/reading")
+				.param("nodeId", otherNodeId.toString())
+				.param("sourceId", SOURCE_C)
+				.param("readingType", "Difference")
+				.param("aggregation", "Hour")
+				.param("startDate", "2026-05-31")
+				.param("endDate", "2026-06-03")
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.length()", is(HOURS)))
+			;
+		// @formatter:on
+
+		// THEN
+		// @formatter:off
+		then(awaitAuditedCount(unmappedStreamId, HOURS, AUDIT_TIMEOUT_NS))
+			.as("Stream readings are counted")
+			.isEqualTo(HOURS)
+			;
+		// @formatter:on
 	}
 
 }
