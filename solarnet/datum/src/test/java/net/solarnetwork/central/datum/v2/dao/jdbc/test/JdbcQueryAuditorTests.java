@@ -69,7 +69,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -242,6 +242,41 @@ public class JdbcQueryAuditorTests {
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_1), 2),
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_2), 1),
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID_2, auditDate, TEST_SOURCE_1), 1))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumFilterResults_oneNodeAndSourcePattern() {
+		// GIVEN
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId("test.source.*");
+
+		List<GeneralNodeDatumFilterMatch> matches = List.of(match(TEST_NODE_ID, TEST_SOURCE_1),
+				match(TEST_NODE_ID, TEST_SOURCE_1), match(TEST_NODE_ID, TEST_SOURCE_2));
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 3L, 0L, 3);
+
+		// WHEN
+		auditor.auditNodeDatumFilterResults(filter, results);
+
+		// THEN
+		final Instant auditDate = testClock.instant();
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Results counted per matched source, not the pattern, which is not a stream")
+			.hasSize(2)
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_1, auditDate),
+					c -> and.then(c).hasValue(2))
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_2, auditDate),
+					c -> and.then(c).hasValue(1))
+			;
+		and.then(auditor.currentAuditResults())
+			.as("Current results counted per matched source, for cached responses to audit")
+			.containsOnly(
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_1), 2),
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_2), 1))
 			;
 		// @formatter:on
 	}

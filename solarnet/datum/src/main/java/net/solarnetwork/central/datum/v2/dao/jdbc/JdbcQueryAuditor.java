@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.datum.support.DatumUtils.WILDCARD_PATTERN_MATCHER;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Connection;
 import java.time.Clock;
@@ -74,7 +75,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class JdbcQueryAuditor extends BaseJdbcDatumIdServiceAuditor implements QueryAuditor {
 
@@ -164,10 +165,11 @@ public class JdbcQueryAuditor extends BaseJdbcDatumIdServiceAuditor implements Q
 
 		final Map<GeneralNodeDatumPK, Integer> resultMap = auditResultMap.get();
 
-		// try shortcut for single node + source
+		// try shortcut for single node + source; a source pattern is not a stream so cannot be used
 		Long[] nodeIds = filter.getNodeIds();
 		String[] sourceIds = filter.getSourceIds();
-		if ( nodeIds != null && nodeIds.length == 1 && sourceIds != null && sourceIds.length == 1 ) {
+		if ( nodeIds != null && nodeIds.length == 1 && sourceIds != null && sourceIds.length == 1
+				&& !WILDCARD_PATTERN_MATCHER.isPattern(sourceIds[0]) ) {
 			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, nodeIds[0], sourceIds[0]);
 			addNodeSourceCount(pk, returnedCount);
 			resultMap.put(pk, resultMap.getOrDefault(pk, 0) + returnedCount);
