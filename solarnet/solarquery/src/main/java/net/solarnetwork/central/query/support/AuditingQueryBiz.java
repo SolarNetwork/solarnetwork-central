@@ -118,4 +118,15 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 		super.findFilteredStreamDatum(filter, proxy, sortDescriptors, offset, max);
 	}
 
+	@Override
+	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
+			Period tolerance, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
+		auditor.resetCurrentAuditResults();
+		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilteredResultsProcessor(
+				processor, auditor, filter);
+		super.findFilteredStreamReadings(filter, readingType, tolerance, proxy, sortDescriptors, offset,
+				max);
+	}
+
 }
