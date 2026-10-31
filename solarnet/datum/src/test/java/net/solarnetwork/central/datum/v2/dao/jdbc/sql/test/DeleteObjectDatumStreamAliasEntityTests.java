@@ -73,9 +73,6 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 	private Array userIdsArray;
 
 	@Mock
-	private Array userNodeIdsArray;
-
-	@Mock
 	private Array streamIdsArray;
 
 	@Mock
@@ -246,8 +243,7 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 
 		givenPrepareStatement();
 		// @formatter:off
-		givenCreateSqlArray(filter.getNodeIds(), userNodeIdsArray)
-			.willReturn(aliasNodeIdsArray)
+		givenCreateSqlArray(filter.getNodeIds(), aliasNodeIdsArray)
 			.willReturn(nodeIdsArray)
 			;
 		givenCreateSqlArray(filter.getSourceIds(), aliasSourceIdsArray)
@@ -263,11 +259,10 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 		thenShouldPrepareSql("object-datum-stream-alias-delete-user-nodesAndSources.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
-		thenStatementShouldSetAndFreeArray(2, userNodeIdsArray);
-		thenStatementShouldSetAndFreeArray(3, aliasNodeIdsArray);
-		thenStatementShouldSetAndFreeArray(4, nodeIdsArray);
-		thenStatementShouldSetAndFreeArray(5, aliasSourceIdsArray);
-		thenStatementShouldSetAndFreeArray(6, sourceIdsArray);
+		thenStatementShouldSetAndFreeArray(2, aliasNodeIdsArray);
+		thenStatementShouldSetAndFreeArray(3, nodeIdsArray);
+		thenStatementShouldSetAndFreeArray(4, aliasSourceIdsArray);
+		thenStatementShouldSetAndFreeArray(5, sourceIdsArray);
 
 		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
@@ -284,9 +279,7 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 
 		givenPrepareStatement();
 		// @formatter:off
-		givenCreateSqlArray(filter.getNodeIds(), userNodeIdsArray)
-			.willReturn(aliasNodeIdsArray)
-			;
+		givenCreateSqlArray(filter.getNodeIds(), aliasNodeIdsArray);
 		givenCreateSqlArray(filter.getSourceIds(), aliasSourceIdsArray);
 		// @formatter:on
 
@@ -298,9 +291,8 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 		thenShouldPrepareSql("object-datum-stream-alias-delete-user-nodesAndSources-aliasOnly.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
-		thenStatementShouldSetAndFreeArray(2, userNodeIdsArray);
-		thenStatementShouldSetAndFreeArray(3, aliasNodeIdsArray);
-		thenStatementShouldSetAndFreeArray(4, aliasSourceIdsArray);
+		thenStatementShouldSetAndFreeArray(2, aliasNodeIdsArray);
+		thenStatementShouldSetAndFreeArray(3, aliasSourceIdsArray);
 
 		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}

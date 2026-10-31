@@ -27,13 +27,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasGrantEntityDao;
 import net.solarnetwork.central.user.datum.stream.biz.impl.DaoUserDatumStreamAliasBiz;
 
 /**
  * JDBC object datum stream alias entity DAO configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDatumStreamAliasBizConfig {
@@ -42,8 +43,9 @@ public class UserDatumStreamAliasBizConfig {
 	private Validator validator;
 
 	@Bean
-	public DaoUserDatumStreamAliasBiz userDatumStreamAliasBiz(ObjectDatumStreamAliasEntityDao aliasDao) {
-		var biz = new DaoUserDatumStreamAliasBiz(aliasDao);
+	public DaoUserDatumStreamAliasBiz userDatumStreamAliasBiz(ObjectDatumStreamAliasEntityDao aliasDao,
+			ObjectDatumStreamAliasGrantEntityDao grantDao) {
+		var biz = new DaoUserDatumStreamAliasBiz(aliasDao, grantDao);
 		biz.setValidator(validator);
 		return biz;
 	}

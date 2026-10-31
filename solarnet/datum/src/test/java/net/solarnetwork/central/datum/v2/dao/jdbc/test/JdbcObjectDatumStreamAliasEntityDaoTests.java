@@ -72,7 +72,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Test cases for the {@link JdbcObjectDatumStreamAliasEntityDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestSupport {
@@ -283,8 +283,11 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 					final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
 					DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 					for ( int a = 0; a < aliasCount; a++ ) {
+						final Long aliasNodeId = randomInt().longValue();
+						setupTestNode(aliasNodeId, locId);
+						setupUserNodeEntity(aliasNodeId, userId);
 						final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(
-								randomUUID(), now, now, Node, randomInt().longValue(), randomSourceId(),
+								randomUUID(), now, now, Node, aliasNodeId, randomSourceId(),
 								meta.getObjectId(), meta.getSourceId());
 						dao.save(alias);
 						entitiesByUser
@@ -479,6 +482,140 @@ public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestS
 			.containsExactlyInAnyOrderElementsOf(expected)
 			;
 		// @formatter:on
+	}
+
+	private ObjectDatumStreamAliasEntity crossAccountAlias(Long originalUserId, Long aliasUserId) {
+		final Instant now = MS_CLOCK.instant();
+		final Long nodeId = randomLong();
+		setupTestNode(nodeId, locId);
+		setupUserNodeEntity(nodeId, originalUserId);
+		final Long aliasNodeId = randomLong();
+		setupTestNode(aliasNodeId, locId);
+		setupUserNodeEntity(aliasNodeId, aliasUserId);
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
+		final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(randomUUID(), now,
+				now, Node, aliasNodeId, randomSourceId(), meta.getObjectId(), meta.getSourceId());
+		dao.save(alias);
+		return alias;
+	}
+
+	@Test
+	public void findFiltered_forUser_ownerIsAliasNodeOwner() {
+		// GIVEN
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, otherUserId);
+
+		// WHEN
+		final var aliasOwnerFilter = new BasicDatumCriteria();
+		aliasOwnerFilter.setUserId(otherUserId);
+		final var aliasOwnerResults = dao.findFiltered(aliasOwnerFilter);
+
+		final var streamOwnerFilter = new BasicDatumCriteria();
+		streamOwnerFilter.setUserId(userId);
+		final var streamOwnerResults = dao.findFiltered(streamOwnerFilter);
+
+		// THEN
+		// @formatter:off
+		then(aliasOwnerResults)
+			.as("Alias found for owner of alias node")
+			.containsExactly(alias)
+			;
+		then(streamOwnerResults)
+			.as("Alias not found for owner of original node")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forOriginalStream() {
+		// GIVEN
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, otherUserId);
+		final UUID originalStreamId = jdbcTemplate.queryForObject(
+				"SELECT stream_id FROM solardatm.da_datm_meta WHERE node_id = ?", UUID.class,
+				alias.getOriginalObjectId());
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(otherUserId);
+		filter.setStreamId(originalStreamId);
+		final var results = dao.findFiltered(filter);
+
+		// THEN
+		then(results).as("Alias found by the stream ID of its original stream").containsExactly(alias);
+	}
+
+	@Test
+	public void deleteFiltered_forUser_ownerIsAliasNodeOwner() {
+		// GIVEN
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, otherUserId);
+
+		// WHEN
+		final var streamOwnerFilter = new BasicDatumCriteria();
+		streamOwnerFilter.setUserId(userId);
+		final int streamOwnerResult = dao.delete(streamOwnerFilter);
+
+		final var aliasOwnerFilter = new BasicDatumCriteria();
+		aliasOwnerFilter.setUserId(otherUserId);
+		aliasOwnerFilter.setStreamId(alias.getStreamId());
+		aliasOwnerFilter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.AliasOnly);
+		final int aliasOwnerResult = dao.delete(aliasOwnerFilter);
+
+		// THEN
+		// @formatter:off
+		then(streamOwnerResult)
+			.as("Owner of original node cannot delete the alias of another user")
+			.isZero()
+			;
+		then(aliasOwnerResult)
+			.as("Owner of alias node can delete the alias")
+			.isOne()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void aliasAllowed_sameOwner() {
+		// GIVEN
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, userId);
+
+		// WHEN
+		final boolean result = dao.aliasAllowed(alias.getOriginalObjectId(), alias.getOriginalSourceId(),
+				alias.getObjectId());
+
+		// THEN
+		then(result).as("Alias between nodes of one owner allowed").isTrue();
+	}
+
+	@Test
+	public void aliasAllowed_otherOwner() {
+		// GIVEN
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, otherUserId);
+
+		// WHEN
+		final boolean result = dao.aliasAllowed(alias.getOriginalObjectId(), alias.getOriginalSourceId(),
+				alias.getObjectId());
+
+		// THEN
+		then(result).as("Alias of another owner without a grant is not allowed").isFalse();
+	}
+
+	@Test
+	public void aliasAllowed_streamNotFound() {
+		// GIVEN
+		final Long otherUserId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		final ObjectDatumStreamAliasEntity alias = crossAccountAlias(userId, otherUserId);
+
+		// WHEN
+		final boolean result = dao.aliasAllowed(alias.getOriginalObjectId(), "/not/a/source",
+				alias.getObjectId());
+
+		// THEN
+		then(result).as("Same answer as for a stream that does exist").isFalse();
 	}
 
 	@Test

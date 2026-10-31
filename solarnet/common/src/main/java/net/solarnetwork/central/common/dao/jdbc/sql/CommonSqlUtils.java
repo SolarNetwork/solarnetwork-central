@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  */
 public final class CommonSqlUtils {
 
@@ -282,7 +282,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@code null}, or {@literal false} to skip the parameter
+	 *        {@code null} or empty, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -291,7 +291,7 @@ public final class CommonSqlUtils {
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
 			int parameterOffset, String arrayType, Object @Nullable [] value, boolean setNull)
 			throws SQLException {
-		if ( value != null ) {
+		if ( value != null && value.length > 0 ) {
 			if ( value.length > 1 ) {
 				Array array = con.createArrayOf(arrayType, value);
 				stmt.setArray(++parameterOffset, array);

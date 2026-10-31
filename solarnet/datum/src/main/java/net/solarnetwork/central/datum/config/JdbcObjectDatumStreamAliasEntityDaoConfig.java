@@ -27,12 +27,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasGrantEntityDao;
 
 /**
  * JDBC object datum stream alias entity DAO configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class JdbcObjectDatumStreamAliasEntityDaoConfig {
@@ -43,6 +44,11 @@ public class JdbcObjectDatumStreamAliasEntityDaoConfig {
 	@Bean
 	public JdbcObjectDatumStreamAliasEntityDao datumStreamAliasEntityDao() {
 		return new JdbcObjectDatumStreamAliasEntityDao(jdbcOperations);
+	}
+
+	@Bean
+	public JdbcObjectDatumStreamAliasGrantEntityDao datumStreamAliasGrantEntityDao() {
+		return new JdbcObjectDatumStreamAliasGrantEntityDao(jdbcOperations);
 	}
 
 }

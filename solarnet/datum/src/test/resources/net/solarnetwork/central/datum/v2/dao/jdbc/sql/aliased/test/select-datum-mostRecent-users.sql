@@ -1,7 +1,11 @@
 WITH s AS (
 	SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
-	FROM solardatm.da_datm_meta_aliased s
-	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
+	FROM solaruser.user_node un
+	INNER JOIN LATERAL (
+		SELECT * FROM solardatm.da_datm_meta_aliased m
+		WHERE m.node_id = un.node_id
+		OFFSET 0
+	) s ON TRUE
 	WHERE un.user_id = ANY(?)
 )
 SELECT s.stream_id, 

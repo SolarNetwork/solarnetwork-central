@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.aop.SecuredProxies.securedProxy;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.mockito.Mockito.mock;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasGrantEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -81,7 +83,9 @@ public class UserDatumStreamAliasBizSecurityPolicyTests extends AbstractJUnit5Jd
 		aPolicyAlias = saveAlias(a, a.otherPrivateNodeId());
 		bAlias = saveAlias(b, b.privateNodeId());
 		final JdbcSolarNodeOwnershipDao ownershipDao = new JdbcSolarNodeOwnershipDao(jdbcTemplate);
-		biz = securedProxy((UserDatumStreamAliasBiz) new DaoUserDatumStreamAliasBiz(aliasDao),
+		biz = securedProxy(
+				(UserDatumStreamAliasBiz) new DaoUserDatumStreamAliasBiz(aliasDao,
+						mock(ObjectDatumStreamAliasGrantEntityDao.class)),
 				new UserDatumStreamAliasSecurityAspect(ownershipDao, aliasDao)).proxy();
 	}
 

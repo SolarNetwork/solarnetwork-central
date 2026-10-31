@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.user.datum.stream.aop.test;
 
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_UUID_ID;
 import static org.mockito.BDDMockito.given;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
@@ -35,6 +37,7 @@ import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
+import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasGrantEntityInput;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -43,14 +46,16 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * <p>
  * The contract is enforced by {@code UserDatumStreamAliasSecurityAspect}, which
  * applies only to targets annotated with {@code Securable}. Saving an alias
- * requires write access to both of its nodes, and replacing an existing alias
- * also requires write access to the existing alias's original node, which
- * determines the alias owner. The proxy must include an
- * {@link ObjectDatumStreamAliasEntityDao} mock.
+ * requires write access to its alias node, and to its original node unless the
+ * original stream has been shared with the alias node, which also requires an
+ * unrestricted actor. Replacing an existing alias also requires write access to
+ * the existing alias node, which determines the alias owner. Alias grants
+ * require an unrestricted actor, and write access to any nodes they name. The
+ * proxy must include an {@link ObjectDatumStreamAliasEntityDao} mock.
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserDatumStreamAliasBizSecurityContract {
 
@@ -94,6 +99,12 @@ public final class UserDatumStreamAliasBizSecurityContract {
 				.allowing(biz -> biz.saveAlias(userId, UNASSIGNED_UUID_ID,
 						input(b.publicNodeId(), b.sourceIds().getFirst(), a.privateNodeId())))
 					.as("other user public original node")
+				.allowing(biz -> biz.saveAlias(userId, UNASSIGNED_UUID_ID,
+						input(b.privateNodeId(), b.sourceIds().getFirst(), a.otherPrivateNodeId())),
+						a.userActor(), a.tokenActor())
+					.given(aliasAllowed(b.privateNodeId(), b.sourceIds().getFirst(),
+							a.otherPrivateNodeId()))
+					.as("other user original node granted")
 				.allowing(biz -> biz.saveAlias(userId, ownAlias.getStreamId(),
 						input(a.privateNodeId(), sourceId, a.privateNodeId())),
 						a.userActor(), a.tokenActor())
@@ -103,7 +114,42 @@ public final class UserDatumStreamAliasBizSecurityContract {
 						input(a.privateNodeId(), sourceId, a.privateNodeId())))
 					.given(aliasExists(otherAlias))
 					.as("existing other user alias")
+				.allowing(biz -> biz.saveAliases(userId,
+						List.of(input(a.privateNodeId(), sourceId, a.privateNodeId()))),
+						a.userActor(), a.tokenActor())
+				.allowing(biz -> biz.saveAliases(userId,
+						List.of(input(a.otherPrivateNodeId(), sourceId, a.otherPrivateNodeId()))),
+						a.userActor(), a.tokenActor(), a.restrictedTokenActor())
+					.as("policy node")
+				.allowing(biz -> biz.saveAliases(userId,
+						List.of(input(a.privateNodeId(), sourceId, a.privateNodeId()),
+								input(b.privateNodeId(), b.sourceIds().getFirst(), a.privateNodeId()))))
+					.as("one other user original node")
 				.userWrite(biz -> biz.deleteAliases(userId, null))
+				.allowing(biz -> biz.aliasGrantForUser(userId, 1L),
+						a.userActor(), a.tokenActor(), a.nodeActor())
+				.allowing(biz -> biz.listAliasGrants(userId, null),
+						a.userActor(), a.tokenActor(), a.nodeActor())
+				.allowing(biz -> biz.listReceivedAliasGrants(userId, null),
+						a.userActor(), a.tokenActor(), a.nodeActor())
+				.allowing(biz -> biz.listAvailableAliasStreams(userId, a.privateNodeId(), null),
+						a.userActor(), a.tokenActor(), a.nodeActor())
+				.allowing(biz -> biz.listAvailableAliasStreams(userId, b.privateNodeId(), null))
+					.as("other user node")
+				.allowing(biz -> biz.saveAliasGrant(userId, UNASSIGNED_LONG_ID,
+						grantInput(b.userId(), a.privateNodeId())),
+						a.userActor(), a.tokenActor())
+				.allowing(biz -> biz.saveAliasGrant(userId, UNASSIGNED_LONG_ID,
+						grantInput(b.userId(), a.otherPrivateNodeId())),
+						a.userActor(), a.tokenActor())
+					.as("policy node")
+				.allowing(biz -> biz.saveAliasGrant(userId, UNASSIGNED_LONG_ID,
+						grantInput(b.userId(), b.privateNodeId())))
+					.as("other user node")
+				.allowing(biz -> biz.updateAliasGrantEnabled(userId, 1L, true),
+						a.userActor(), a.tokenActor())
+				.allowing(biz -> biz.deleteAliasGrant(userId, 1L),
+						a.userActor(), a.tokenActor())
 				.build();
 		// @formatter:on
 	}
@@ -122,6 +168,19 @@ public final class UserDatumStreamAliasBizSecurityContract {
 		input.setObjectId(aliasNodeId);
 		input.setSourceId(originalSourceId + "/alias");
 		return input;
+	}
+
+	private static ObjectDatumStreamAliasGrantEntityInput grantInput(Long granteeId, Long nodeId) {
+		final ObjectDatumStreamAliasGrantEntityInput input = new ObjectDatumStreamAliasGrantEntityInput();
+		input.setGranteeId(granteeId);
+		input.setNodeIds(new Long[] { nodeId });
+		return input;
+	}
+
+	private static Consumer<SecuredProxy<UserDatumStreamAliasBiz>> aliasAllowed(Long originalNodeId,
+			String originalSourceId, Long aliasNodeId) {
+		return p -> given(p.mock(ObjectDatumStreamAliasEntityDao.class).aliasAllowed(originalNodeId,
+				originalSourceId, aliasNodeId)).willReturn(true);
 	}
 
 	private static Consumer<SecuredProxy<UserDatumStreamAliasBiz>> aliasExists(

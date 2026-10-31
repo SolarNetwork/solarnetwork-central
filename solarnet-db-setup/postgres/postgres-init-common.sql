@@ -175,6 +175,21 @@ $$
 $$;
 
 /**
+ * Convert a list of Ant path patterns into regular expressions.
+ *
+ * This is immutable, so it can be used for a generated column.
+ *
+ * @param pats the Ant path patterns to convert
+ * @returns the equivalent regular expressions
+ * @see solarcommon.ant_pattern_to_regexp()
+ */
+CREATE OR REPLACE FUNCTION solarcommon.ant_patterns_to_regexps(pats text[])
+RETURNS text[] LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT ARRAY(SELECT solarcommon.ant_pattern_to_regexp(p) FROM unnest(pats) p);
+$$;
+
+/**
  * Expand an Ant path pattern into regular expressions that match the pattern's
  * own path prefixes.
  *

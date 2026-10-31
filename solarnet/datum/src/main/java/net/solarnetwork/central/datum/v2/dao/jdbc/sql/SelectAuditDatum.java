@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * filter.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 3.8
  */
 public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlProvider,
@@ -227,7 +227,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 */
 	protected void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
+		DatumSqlUtils.nodeMetadataForAccountingFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);

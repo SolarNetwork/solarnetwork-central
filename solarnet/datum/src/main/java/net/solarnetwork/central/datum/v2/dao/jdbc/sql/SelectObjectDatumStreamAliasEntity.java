@@ -44,7 +44,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
  * Support for SELECT for {@link ObjectDatumStreamAliasEntity} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectObjectDatumStreamAliasEntity
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -124,12 +124,12 @@ public class SelectObjectDatumStreamAliasEntity
 				""");
 		if ( filter.hasUserCriteria() ) {
 			buf.append("""
-					INNER JOIN solaruser.user_node un ON un.node_id = da.node_id
+					INNER JOIN solaruser.user_node un ON un.node_id = da.alias_node_id
 					""");
 		}
 		if ( filter.hasStreamCriteria() && matchType != AliasOnly ) {
 			buf.append("""
-					INNER JOIN solardatm.da_datum_meta m
+					INNER JOIN solardatm.da_datm_meta m
 						ON m.node_id = da.node_id
 						AND m.source_id = da.source_id
 					""");

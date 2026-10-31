@@ -75,7 +75,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -990,8 +990,9 @@ public final class DatumSqlUtils {
 			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
 			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
 			@Nullable String zoneClause, StringBuilder buf) {
-		return nodeMetadataFilterSql(filter, filter.includeStreamAliases(), style, streamFilter,
-				datumTableName, aggregation, combiningConfig, zoneClause, buf);
+		return nodeMetadataFilterSql(filter,
+				filter.includeStreamAliases() ? MetadataAliasStyle.Resolvable : MetadataAliasStyle.None,
+				style, streamFilter, datumTableName, aggregation, combiningConfig, zoneClause, buf);
 	}
 
 	/**
@@ -1018,14 +1019,60 @@ public final class DatumSqlUtils {
 	 */
 	public static int nodeMetadataWithoutAliasesFilterSql(ObjectMetadataCriteria filter,
 			MetadataSelectStyle style, StringBuilder buf) {
-		return nodeMetadataFilterSql(filter, false, style, null, null, null, null,
+		return nodeMetadataFilterSql(filter, MetadataAliasStyle.None, style, null, null, null, null,
 				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
 
-	private static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, boolean aliased,
-			MetadataSelectStyle style, @Nullable ObjectStreamCriteria streamFilter,
-			@Nullable String datumTableName, @Nullable Aggregation aggregation,
-			@Nullable CombiningConfig combiningConfig, @Nullable String zoneClause, StringBuilder buf) {
+	/**
+	 * Generate SQL query to find node metadata for accounting, where stream
+	 * alias criteria includes aliases that are not allowed to resolve to their
+	 * original stream.
+	 *
+	 * <p>
+	 * Statements that read the usage recorded on a stream alias must use this
+	 * method so that usage that is billed is also reported, whether or not the
+	 * alias may currently resolve. Such statements must not read anything from
+	 * the original stream.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
+	 *      StringBuilder)
+	 * @since 2.11
+	 */
+	public static int nodeMetadataForAccountingFilterSql(ObjectMetadataCriteria filter,
+			MetadataSelectStyle style, StringBuilder buf) {
+		return nodeMetadataFilterSql(filter,
+				filter.includeStreamAliases() ? MetadataAliasStyle.All : MetadataAliasStyle.None, style,
+				null, null, null, null, SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
+	}
+
+	/** The stream aliases to include in a metadata query. */
+	private enum MetadataAliasStyle {
+
+		/** No aliases, only real streams. */
+		None,
+
+		/** Real streams and the aliases allowed to resolve. */
+		Resolvable,
+
+		/** Real streams and all aliases. */
+		All,
+
+	}
+
+	private static int nodeMetadataFilterSql(ObjectMetadataCriteria filter,
+			MetadataAliasStyle aliasStyle, MetadataSelectStyle style,
+			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
+			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
+			@Nullable String zoneClause, StringBuilder buf) {
+		final boolean aliased = (aliasStyle != MetadataAliasStyle.None);
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
 		if ( style == MetadataSelectStyle.WithGeography ) {
@@ -1041,13 +1088,26 @@ public final class DatumSqlUtils {
 		if ( aliased ) {
 			buf.append(", s.orig_stream_id");
 		}
-		buf.append("\nFROM solardatm.da_datm_meta");
-		if ( aliased ) {
-			buf.append("_aliased");
-		}
-		buf.append(" s\n");
-		if ( filter != null && (filter.hasUserCriteria() || filter.hasTokenCriteria()) ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
+		final String metaTableName = switch (aliasStyle) {
+			case None -> "solardatm.da_datm_meta";
+			case Resolvable -> "solardatm.da_datm_meta_aliased";
+			case All -> "solardatm.da_datm_meta_aliased_all";
+		};
+		final boolean ownerCriteria = (filter != null
+				&& (filter.hasUserCriteria() || filter.hasTokenCriteria()));
+		if ( aliased && ownerCriteria && filter != null && filter.getObjectIds() == null ) {
+			// only look at the owner's nodes, or every alias is found before any join to the owner
+			buf.append("\nFROM solaruser.user_node un\n");
+			buf.append("INNER JOIN LATERAL (\n");
+			buf.append("	SELECT * FROM ").append(metaTableName).append(" m\n");
+			buf.append("	WHERE m.node_id = un.node_id\n");
+			buf.append("	OFFSET 0\n");
+			buf.append(") s ON TRUE\n");
+		} else {
+			buf.append("\nFROM ").append(metaTableName).append(" s\n");
+			if ( ownerCriteria ) {
+				buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
+			}
 		}
 		if ( filter != null && filter.hasTokenCriteria() ) {
 			buf.append("INNER JOIN solaruser.user_auth_token ut ON ut.user_id = un.user_id\n");
@@ -1057,7 +1117,11 @@ public final class DatumSqlUtils {
 				|| (streamFilter != null && streamFilter.hasLocalDate()) ) {
 			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
 					: "LEFT OUTER JOIN");
-			buf.append(joinStyle).append(" solarnet.sn_node n ON n.node_id = s.node_id\n");
+			// stored aggregates are in the time zone of the original node, but keep its location private
+			final boolean originalNode = (aliasStyle == MetadataAliasStyle.Resolvable
+					&& style != MetadataSelectStyle.WithGeography);
+			buf.append(joinStyle).append(" solarnet.sn_node n ON n.node_id = s.")
+					.append(originalNode ? "orig_node_id" : "node_id").append('\n');
 			buf.append(joinStyle).append(" solarnet.sn_loc l ON l.id = n.loc_id\n");
 		}
 		if ( filter != null || streamFilter != null ) {

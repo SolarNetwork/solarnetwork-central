@@ -29,13 +29,17 @@ import static net.solarnetwork.domain.Result.error;
 import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.MessageSourceResolvable;
+import org.springframework.core.Conventions;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -46,30 +50,38 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterErrors;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Result.ErrorDetail;
 import tools.jackson.core.JacksonException;
 
 /**
  * A base class to support web service style controllers.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 @Order(100)
@@ -461,6 +473,105 @@ public final class WebServiceControllerSupport {
 		GLOBAL_WEB_LOG.debug("BindException in request {}: {}", requestDescription(request),
 				e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
+	}
+
+	/**
+	 * Handle a {@link HandlerMethodValidationException}.
+	 *
+	 * <p>
+	 * This is thrown instead of {@link BindException} when Spring validates a
+	 * handler method's parameters, such as a {@code @Valid} list request body.
+	 * </p>
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the locale
+	 * @return an error response object
+	 * @since 3.2
+	 */
+	@ExceptionHandler(HandlerMethodValidationException.class)
+	@ResponseBody
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public Result<Void> handleHandlerMethodValidationException(HandlerMethodValidationException e,
+			WebRequest request, Locale locale) {
+		GLOBAL_WEB_LOG.debug("HandlerMethodValidationException in request {}: {}",
+				requestDescription(request), e.toString());
+		final List<ErrorDetail> details = new ArrayList<>(4);
+		final StringBuilder buf = new StringBuilder();
+		for ( ParameterValidationResult result : e.getParameterValidationResults() ) {
+			if ( result instanceof ParameterErrors errors ) {
+				final Result<Void> r = ExceptionUtils.generateErrorsResult(withArgumentCodes(errors),
+						null, locale, messageSource);
+				appendMessage(buf, r.getMessage());
+				if ( r.getErrors() != null ) {
+					details.addAll(r.getErrors());
+				}
+				continue;
+			}
+			final String name = result.getMethodParameter().getParameterName();
+			for ( MessageSourceResolvable error : result.getResolvableErrors() ) {
+				final String msg = (messageSource != null ? messageSource.getMessage(error, locale)
+						: error.getDefaultMessage());
+				appendMessage(buf, msg);
+				details.add(new ErrorDetail(name, null, msg != null ? msg : "Validation error"));
+			}
+		}
+		return error("VAL.00004", !buf.isEmpty() ? buf.toString() : "Validation error", details);
+	}
+
+	/**
+	 * Add message codes based on the type of the validated argument.
+	 *
+	 * <p>
+	 * The object name of an error in a method parameter comes from the
+	 * parameter, or the collection holding the argument, so does not match the
+	 * {@code Code.objectName.field} messages used by {@link BindException}
+	 * errors.
+	 * </p>
+	 *
+	 * @param errors
+	 *        the errors
+	 * @return the errors to use
+	 */
+	private static Errors withArgumentCodes(ParameterErrors errors) {
+		final Object arg = errors.getArgument();
+		if ( arg == null ) {
+			return errors;
+		}
+		final String name = Conventions.getVariableName(arg);
+		final BindingResult result = new BeanPropertyBindingResult(arg, name);
+		errors.getGlobalErrors().forEach(result::addError);
+		for ( FieldError error : errors.getFieldErrors() ) {
+			final String[] codes = error.getCodes();
+			final List<String> allCodes = new ArrayList<>(codes != null ? codes.length + 1 : 1);
+			if ( error.getCode() != null ) {
+				allCodes.add(error.getCode() + '.' + name + '.' + error.getField());
+			}
+			if ( codes != null ) {
+				allCodes.addAll(List.of(codes));
+			}
+			final FieldError copy = new FieldError(name, error.getField(), error.getRejectedValue(),
+					error.isBindingFailure(), allCodes.toArray(String[]::new), error.getArguments(),
+					error.getDefaultMessage());
+			if ( error.contains(ConstraintViolation.class) ) {
+				copy.wrap(error.unwrap(ConstraintViolation.class));
+			}
+			result.addError(copy);
+		}
+		return result;
+	}
+
+	private static void appendMessage(StringBuilder buf, @Nullable String msg) {
+		if ( msg == null ) {
+			return;
+		}
+		if ( !buf.isEmpty() ) {
+			buf.append(' ');
+		}
+		buf.append(msg);
 	}
 
 	/**

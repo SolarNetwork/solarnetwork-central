@@ -118,6 +118,13 @@ CREATE INDEX da_datm_alias_node_source_idx ON solardatm.da_datm_alias (node_id, 
  * Current node ownership is always used, so the result follows node ownership transfers. If
  * either node has no owner the alias may not resolve, unless the alias is on the original node.
  *
+ * An alias on a node with a different owner than the original node may only resolve if the
+ * original node is not archived and the owner of the original node has an enabled
+ * `solaruser.da_datm_alias_grant` for the owner of the alias node that matches the original node
+ * and source. A grant therefore only ever applies to nodes its owner currently owns. If the alias
+ * node is public the matching grant must also have `allow_public` set, as anyone can then read the
+ * original stream.
+ *
  * @param orig_node 	the original stream node ID
  * @param orig_source 	the original stream source ID
  * @param host_node 	the alias node ID
@@ -131,16 +138,38 @@ CREATE OR REPLACE FUNCTION solardatm.da_datm_alias_allowed(
 $$
 DECLARE
 	orig_user 	BIGINT;
+	orig_arch 	BOOLEAN;
 	host_user 	BIGINT;
+	host_priv 	BOOLEAN;
 BEGIN
 	IF orig_node = host_node THEN
 		RETURN TRUE;
 	END IF;
 
-	SELECT user_id INTO orig_user FROM solaruser.user_node WHERE node_id = orig_node;
-	SELECT user_id INTO host_user FROM solaruser.user_node WHERE node_id = host_node;
+	SELECT user_id, archived INTO orig_user, orig_arch
+	FROM solaruser.user_node WHERE node_id = orig_node;
 
-	RETURN COALESCE(orig_user = host_user, FALSE);
+	SELECT user_id, private INTO host_user, host_priv
+	FROM solaruser.user_node WHERE node_id = host_node;
+
+	IF orig_user IS NULL OR host_user IS NULL THEN
+		RETURN FALSE;
+	ELSIF orig_user = host_user THEN
+		RETURN TRUE;
+	ELSIF orig_arch THEN
+		RETURN FALSE;
+	END IF;
+
+	RETURN EXISTS (
+		SELECT 1
+		FROM solaruser.da_datm_alias_grant g
+		WHERE g.grantee_id = host_user
+			AND g.user_id = orig_user
+			AND g.enabled
+			AND (host_priv OR g.allow_public)
+			AND (g.node_ids IS NULL OR orig_node = ANY(g.node_ids))
+			AND (g.source_regexps IS NULL OR orig_source ~ ANY(g.source_regexps))
+	);
 END
 $$;
 
@@ -160,6 +189,7 @@ SELECT s.stream_id
 	, FALSE AS is_alias
 	, s.created
 	, s.updated
+	, s.node_id AS orig_node_id
 FROM solardatm.da_datm_meta s
 UNION ALL
 SELECT a.stream_id
@@ -173,6 +203,7 @@ SELECT a.stream_id
 	, TRUE AS is_alias
 	, a.created
 	, a.modified AS updated
+	, s.node_id AS orig_node_id
 FROM solardatm.da_datm_alias a
 INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
 ;
@@ -192,6 +223,7 @@ SELECT s.stream_id
 	, FALSE AS is_alias
 	, s.created
 	, s.updated
+	, s.node_id AS orig_node_id
 FROM solardatm.da_datm_meta s
 UNION ALL
 SELECT a.stream_id
@@ -205,6 +237,7 @@ SELECT a.stream_id
 	, TRUE AS is_alias
 	, a.created
 	, a.modified AS updated
+	, s.node_id AS orig_node_id
 FROM solardatm.da_datm_alias a
 INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
 WHERE solardatm.da_datm_alias_allowed(a.node_id, a.source_id::TEXT, a.alias_node_id)

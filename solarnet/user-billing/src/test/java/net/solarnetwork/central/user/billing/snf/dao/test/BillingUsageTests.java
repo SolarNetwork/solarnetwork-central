@@ -59,7 +59,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * stored procedure.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -396,6 +396,59 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 			.as("Alias node usage still reported after original stream deleted")
 			.isNotNull()
 			.as("Alias node datum out summed from deleted alias stream query counts")
+			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void usage_alias_datumOut_otherAccount() {
+		// GIVEN
+		final Long locId = randomLong();
+		setupTestLocation(locId, TEST_ZONE.getId());
+
+		final Long ownerId = randomLong();
+		setupTestUser(ownerId, locId);
+
+		final Long hostUserId = randomLong();
+		setupTestUser(hostUserId, locId);
+
+		final ObjectDatumStreamMetadata orig = setupTestStream(ownerId, locId, randomLong(), "orig");
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(hostUserId, locId, randomLong(),
+				"alias", orig);
+
+		jdbcTemplate.update("""
+				INSERT INTO solaruser.da_datm_alias_grant (user_id, enabled, grantee_id, node_ids)
+				VALUES (?, TRUE, ?, ARRAY[?::BIGINT])
+				""", ownerId, hostUserId, orig.getObjectId());
+
+		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
+
+		// WHEN
+		Map<Long, Map<String, Object>> hostResult = billingUsage(hostUserId);
+		Map<Long, Map<String, Object>> ownerResult = billingUsage(ownerId);
+
+		jdbcTemplate.update("DELETE FROM solaruser.da_datm_alias_grant WHERE user_id = ?", ownerId);
+		Map<Long, Map<String, Object>> revokedResult = billingUsage(hostUserId);
+
+		// THEN
+		// @formatter:off
+		then(hostResult.get(alias.getObjectId()))
+			.as("Alias node usage reported to owner of alias node")
+			.isNotNull()
+			.as("Alias owner pays datum out for querying other account's stream")
+			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
+			;
+		then(ownerResult)
+			.as("Stream owner does not pay for queries made through alias")
+			.doesNotContainKey(alias.getObjectId())
+			.doesNotContainKey(orig.getObjectId())
+			;
+		then(revokedResult.get(alias.getObjectId()))
+			.as("Alias node usage still reported after grant revoked")
+			.isNotNull()
+			.as("Past query counts still billed to alias owner")
 			.containsEntry("datum_out", sum(aliasAudit, AuditDatum::getDatumQueryCount))
 			;
 		// @formatter:on

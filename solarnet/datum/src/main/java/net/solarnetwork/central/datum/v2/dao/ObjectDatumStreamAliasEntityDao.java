@@ -32,10 +32,30 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link ObjectDatumStreamAliasEntity} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ObjectDatumStreamAliasEntityDao extends GenericDao<ObjectDatumStreamAliasEntity, UUID>,
 		FilterableDao<ObjectDatumStreamAliasEntity, UUID, ObjectDatumStreamAliasFilter>,
 		FilterableDeleteDao<ObjectDatumStreamAliasFilter> {
+
+	/**
+	 * Test if an alias of a stream may resolve to that stream.
+	 *
+	 * <p>
+	 * The original stream does not have to exist, so this reveals nothing about
+	 * it.
+	 * </p>
+	 *
+	 * @param originalNodeId
+	 *        the original stream node ID
+	 * @param originalSourceId
+	 *        the original stream source ID
+	 * @param aliasNodeId
+	 *        the alias node ID
+	 * @return {@code true} if an alias on {@code aliasNodeId} may resolve to
+	 *         the original stream
+	 * @since 1.1
+	 */
+	boolean aliasAllowed(Long originalNodeId, String originalSourceId, Long aliasNodeId);
 
 }

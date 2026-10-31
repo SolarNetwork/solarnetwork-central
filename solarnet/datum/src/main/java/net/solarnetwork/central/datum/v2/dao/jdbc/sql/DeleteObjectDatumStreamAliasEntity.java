@@ -42,7 +42,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
  * filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCreator, SqlProvider {
 
@@ -88,26 +88,20 @@ public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCrea
 		return buf.toString();
 	}
 
+	private boolean joinMetadata() {
+		return (matchType != AliasOnly && filter.hasStreamCriteria());
+	}
+
 	private void sqlCore(StringBuilder buf) {
-		if ( filter.hasUserCriteria() || (matchType != AliasOnly && filter.hasStreamCriteria()) ) {
-			buf.append("""
-						WITH m AS (
-							SELECT node_id, source_id, orig_stream_id
-							FROM %s.da_datm_meta_aliased
-					""".formatted(filter.hasUserCriteria() ? "solaruser" : "solardatm"));
-			var where = new StringBuilder();
-			whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
-			whereOptimizedArrayContains(filter.getNodeIds(), "node_id", where);
-			if ( !where.isEmpty() ) {
-				buf.append("\tWHERE ").append(where.substring(4));
-			}
-			buf.append(")\n");
-		}
 		buf.append("""
 				DELETE FROM solardatm.da_datm_alias da
 				""");
-		if ( filter.hasUserCriteria() || (matchType != AliasOnly && filter.hasStreamCriteria()) ) {
-			buf.append("USING m\n");
+		if ( filter.hasUserCriteria() ) {
+			buf.append("USING solaruser.user_node un\n");
+		}
+		if ( joinMetadata() ) {
+			buf.append(filter.hasUserCriteria() ? ", " : "USING ");
+			buf.append("solardatm.da_datm_meta m\n");
 		}
 	}
 
@@ -130,19 +124,25 @@ public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCrea
 
 	private void sqlWhere(StringBuilder buf) {
 		var where = new StringBuilder();
-		if ( filter.hasUserCriteria() || (matchType != AliasOnly && filter.hasStreamCriteria()) ) {
+		if ( joinMetadata() ) {
 			where.append("""
 						AND da.node_id = m.node_id
 						AND da.source_id = m.source_id
 					""");
 		}
 		int idx = 0;
+		if ( filter.hasUserCriteria() ) {
+			where.append("""
+						AND da.alias_node_id = un.node_id
+					""");
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "un.user_id", where);
+		}
 		if ( filter.hasStreamCriteria() ) {
 			if ( matchType == OriginalOrAlias ) {
-				idx += sqlWhereOr(idx, filter.getStreamIds(), "da.stream_id", "m.orig_stream_id", where);
+				idx += sqlWhereOr(idx, filter.getStreamIds(), "da.stream_id", "m.stream_id", where);
 			} else {
 				idx += whereOptimizedArrayContains(filter.getStreamIds(),
-						(matchType == AliasOnly ? "da.stream_id" : "m.orig_stream_id"), where);
+						(matchType == AliasOnly ? "da.stream_id" : "m.stream_id"), where);
 			}
 		}
 		if ( filter.hasNodeCriteria() ) {
@@ -174,9 +174,7 @@ public class DeleteObjectDatumStreamAliasEntity implements PreparedStatementCrea
 		int p = 0;
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 		}
-
 		if ( filter.hasStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getStreamIds());
 			if ( matchType == OriginalOrAlias ) {

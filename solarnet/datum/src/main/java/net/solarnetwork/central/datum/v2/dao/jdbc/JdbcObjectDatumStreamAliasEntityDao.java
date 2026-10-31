@@ -50,9 +50,11 @@ import net.solarnetwork.util.UuidGenerator;
  * JDBC implementation of {@link ObjectDatumStreamAliasEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcObjectDatumStreamAliasEntityDao implements ObjectDatumStreamAliasEntityDao {
+
+	private static final String ALIAS_ALLOWED_SQL = "SELECT solardatm.da_datm_alias_allowed(?, ?, ?)";
 
 	private final UuidGenerator uuidGenerator;
 	private final JdbcOperations jdbcOps;
@@ -146,6 +148,14 @@ public class JdbcObjectDatumStreamAliasEntityDao implements ObjectDatumStreamAli
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new DeleteObjectDatumStreamAliasEntity(filter);
 		return jdbcOps.update(sql);
+	}
+
+	@Override
+	public boolean aliasAllowed(Long originalNodeId, String originalSourceId, Long aliasNodeId) {
+		return Boolean.TRUE.equals(jdbcOps.queryForObject(ALIAS_ALLOWED_SQL, Boolean.class,
+				requireNonNullArgument(originalNodeId, "originalNodeId"),
+				requireNonNullArgument(originalSourceId, "originalSourceId"),
+				requireNonNullArgument(aliasNodeId, "aliasNodeId")));
 	}
 
 }

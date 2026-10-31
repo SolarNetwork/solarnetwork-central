@@ -33,10 +33,14 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
+import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.AfterEach;
@@ -58,7 +62,9 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.datum.stream.aop.UserDatumStreamAliasSecurityAspect;
+import net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
+import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasGrantEntityInput;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -66,7 +72,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link UserDatumStreamAliasSecurityAspect}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -185,6 +191,10 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
 				.willReturn(originalOwnership);
 
+		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId())).willReturn(aliasOwnership);
+
 		// WHEN
 		becomeUser(randomString(), randomString(), TEST_USER_ID);
 
@@ -206,11 +216,6 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		input.setOriginalSourceId(randomSourceId());
 		input.setObjectId(randomLong());
 		input.setSourceId(randomSourceId());
-
-		final var originalOwnership = new BasicSolarNodeOwnership(input.getOriginalObjectId(),
-				TEST_USER_ID, "NZ", UTC, true, false);
-		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
-				.willReturn(originalOwnership);
 
 		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), randomLong(), "NZ",
 				UTC, true, false);
@@ -243,6 +248,10 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
 				.willReturn(originalOwnership);
 
+		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId())).willReturn(aliasOwnership);
+
 		// WHEN
 		becomeUser(randomString(), randomString(), TEST_USER_ID);
 
@@ -264,11 +273,6 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		input.setOriginalSourceId(randomSourceId());
 		input.setObjectId(randomLong());
 		input.setSourceId(randomSourceId());
-
-		final var originalOwnership = new BasicSolarNodeOwnership(input.getOriginalObjectId(),
-				TEST_USER_ID, "NZ", UTC, true, false);
-		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
-				.willReturn(originalOwnership);
 
 		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), randomLong(), "NZ",
 				UTC, false, false);
@@ -300,10 +304,9 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 				ObjectDatumKind.Node, randomLong(), randomSourceId(), randomLong(), randomSourceId());
 		given(aliasDao.get(existing.getStreamId())).willReturn(existing);
 
-		final var existingOwnership = new BasicSolarNodeOwnership(existing.getOriginalObjectId(),
-				randomLong(), "NZ", UTC, true, false);
-		given(nodeOwnershipDao.ownershipForNodeId(existing.getOriginalObjectId()))
-				.willReturn(existingOwnership);
+		final var existingOwnership = new BasicSolarNodeOwnership(existing.getObjectId(), randomLong(),
+				"NZ", UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(existing.getObjectId())).willReturn(existingOwnership);
 
 		// WHEN
 		becomeUser(randomString(), randomString(), TEST_USER_ID);
@@ -312,10 +315,355 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		// @formatter:off
 		thenExceptionOfType(AuthorizationException.class)
 			.isThrownBy(() -> aspect.saveAliasAccessCheck(TEST_USER_ID, existing.getStreamId(), input))
-			.as("Denied ID is existing alias original node ID because owned by different user")
-			.returns(existing.getOriginalObjectId(), from(AuthorizationException::getId))
+			.as("Denied ID is existing alias node ID because owned by different user")
+			.returns(existing.getObjectId(), from(AuthorizationException::getId))
 			;
 		// @formatter:on
+	}
+
+	private ObjectDatumStreamAliasEntityInput crossAccountInput(boolean aliasPrivate) {
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setOriginalObjectId(randomLong());
+		input.setOriginalSourceId(randomSourceId());
+		input.setObjectId(randomLong());
+		input.setSourceId(randomSourceId());
+
+		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
+				.willReturn(new BasicSolarNodeOwnership(input.getOriginalObjectId(), randomLong(), "NZ",
+						UTC, true, false));
+		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId()))
+				.willReturn(new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ", UTC,
+						aliasPrivate, false));
+		return input;
+	}
+
+	private ObjectDatumStreamAliasGrantEntityInput grantInput(Long... nodeIds) {
+		final var input = new ObjectDatumStreamAliasGrantEntityInput();
+		input.setGranteeId(randomLong());
+		input.setNodeIds(nodeIds);
+		return input;
+	}
+
+	private void becomeRestrictedToken() {
+		final var policy = BasicSecurityPolicy.builder().withSourceIds(Set.of("/foo")).build();
+		becomeToken(randomString(), SecurityTokenType.User, TEST_USER_ID, policy);
+	}
+
+	@Test
+	public void saveAliasAccessCheck_noPolicy_crossAccount_granted() {
+		// GIVEN
+		final var input = crossAccountInput(true);
+		given(aliasDao.aliasAllowed(input.getOriginalObjectId(), input.getOriginalSourceId(),
+				input.getObjectId())).willReturn(true);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.saveAliasAccessCheck(TEST_USER_ID, randomUUID(), input);
+	}
+
+	@Test
+	public void saveAliasAccessCheck_noPolicy_crossAccount_publicAliasNode() {
+		// GIVEN
+		final var input = crossAccountInput(false);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Public node denied unless the database rule allows it")
+			.isThrownBy(() -> aspect.saveAliasAccessCheck(TEST_USER_ID, randomUUID(), input))
+			.returns(input.getOriginalObjectId(), from(AuthorizationException::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAliasAccessCheck_noPolicy_crossAccount_publicAliasNode_allowed() {
+		// GIVEN
+		final var input = crossAccountInput(false);
+		given(aliasDao.aliasAllowed(input.getOriginalObjectId(), input.getOriginalSourceId(),
+				input.getObjectId())).willReturn(true);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.saveAliasAccessCheck(TEST_USER_ID, randomUUID(), input);
+	}
+
+	@Test
+	public void saveAliasAccessCheck_noPolicy_crossAccount_noOriginalSource() {
+		// GIVEN
+		final var input = crossAccountInput(true);
+		input.setOriginalSourceId(null);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.isThrownBy(() -> aspect.saveAliasAccessCheck(TEST_USER_ID, randomUUID(), input))
+			.as("Denied ID is original node ID because source cannot be verified")
+			.returns(input.getOriginalObjectId(), from(AuthorizationException::getId))
+			;
+		then(aliasDao).should(never()).aliasAllowed(any(), any(), any());
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAliasAccessCheck_withPolicy_crossAccount() {
+		// GIVEN
+		final var input = crossAccountInput(true);
+
+		// WHEN
+		becomeRestrictedToken();
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("Restricted token cannot use stream from another account")
+			.isThrownBy(() -> aspect.saveAliasAccessCheck(TEST_USER_ID, randomUUID(), input))
+			;
+		then(aliasDao).should(never()).aliasAllowed(any(), any(), any());
+		// @formatter:on
+	}
+
+	private ObjectDatumStreamAliasEntityInput sameAccountInput() {
+		final var input = new ObjectDatumStreamAliasEntityInput();
+		input.setOriginalObjectId(randomLong());
+		input.setOriginalSourceId(randomSourceId());
+		input.setObjectId(randomLong());
+		input.setSourceId(randomSourceId());
+
+		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
+				.willReturn(new BasicSolarNodeOwnership(input.getOriginalObjectId(), TEST_USER_ID, "NZ",
+						UTC, true, false));
+		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId())).willReturn(
+				new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ", UTC, true, false));
+		return input;
+	}
+
+	@Test
+	public void saveAliasesAccessCheck_ok() {
+		// GIVEN
+		final var sameAccount = sameAccountInput();
+		final var otherAccount = crossAccountInput(true);
+		given(aliasDao.aliasAllowed(otherAccount.getOriginalObjectId(),
+				otherAccount.getOriginalSourceId(), otherAccount.getObjectId())).willReturn(true);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.saveAliasesAccessCheck(TEST_USER_ID, List.of(sameAccount, otherAccount));
+	}
+
+	@Test
+	public void saveAliasesAccessCheck_oneDenied() {
+		// GIVEN
+		final var sameAccount = sameAccountInput();
+		final var otherAccount = crossAccountInput(true);
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.isThrownBy(() -> aspect.saveAliasesAccessCheck(TEST_USER_ID,
+					List.of(sameAccount, otherAccount)))
+			.as("Denied ID is original node ID of input without grant")
+			.returns(otherAccount.getOriginalObjectId(), from(AuthorizationException::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAliasesAccessCheck_wrongUser() {
+		// WHEN
+		becomeUser(randomString(), randomString(), randomLong());
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveAliasesAccessCheck(TEST_USER_ID, List.of()));
+	}
+
+	@Test
+	public void saveAliasesAccessCheck_tooMany() {
+		// GIVEN
+		final var inputs = Collections.nCopies(UserDatumStreamAliasBiz.MAX_BULK_ALIASES + 1,
+				new ObjectDatumStreamAliasEntityInput());
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenIllegalArgumentException()
+			.isThrownBy(() -> aspect.saveAliasesAccessCheck(TEST_USER_ID, inputs))
+			;
+		then(nodeOwnershipDao).shouldHaveNoInteractions();
+		// @formatter:on
+	}
+
+	@Test
+	public void listAvailableAliasStreamsAccessCheck_ok() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId))
+				.willReturn(new BasicSolarNodeOwnership(nodeId, TEST_USER_ID, "NZ", UTC, true, false));
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.listAvailableAliasStreamsAccessCheck(TEST_USER_ID, nodeId);
+	}
+
+	@Test
+	public void listAvailableAliasStreamsAccessCheck_publicNode() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId))
+				.willReturn(new BasicSolarNodeOwnership(nodeId, TEST_USER_ID, "NZ", UTC, false, false));
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.listAvailableAliasStreamsAccessCheck(TEST_USER_ID, nodeId);
+	}
+
+	@Test
+	public void listAvailableAliasStreamsAccessCheck_otherUserNode() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId))
+				.willReturn(new BasicSolarNodeOwnership(nodeId, randomLong(), "NZ", UTC, true, false));
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.isThrownBy(() -> aspect.listAvailableAliasStreamsAccessCheck(TEST_USER_ID, nodeId))
+			.as("Denied ID is node owned by different user")
+			.returns(nodeId, from(AuthorizationException::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listAvailableAliasStreamsAccessCheck_withPolicy() {
+		// WHEN
+		becomeRestrictedToken();
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(
+				() -> aspect.listAvailableAliasStreamsAccessCheck(TEST_USER_ID, randomLong()));
+	}
+
+	@Test
+	public void readAliasGrantAccessCheck_ok() {
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.readAliasGrantAccessCheck(TEST_USER_ID);
+	}
+
+	@Test
+	public void readAliasGrantAccessCheck_wrongUser() {
+		// WHEN
+		becomeUser(randomString(), randomString(), randomLong());
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.readAliasGrantAccessCheck(TEST_USER_ID));
+	}
+
+	@Test
+	public void readAliasGrantAccessCheck_withPolicy() {
+		// WHEN
+		becomeRestrictedToken();
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.readAliasGrantAccessCheck(TEST_USER_ID));
+	}
+
+	@Test
+	public void changeAliasGrantAccessCheck_withPolicy() {
+		// WHEN
+		becomeRestrictedToken();
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.changeAliasGrantAccessCheck(TEST_USER_ID));
+	}
+
+	@Test
+	public void saveAliasGrantAccessCheck_ownNode() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId))
+				.willReturn(new BasicSolarNodeOwnership(nodeId, TEST_USER_ID, "NZ", UTC, true, false));
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.saveAliasGrantAccessCheck(TEST_USER_ID, grantInput(nodeId));
+	}
+
+	@Test
+	public void saveAliasGrantAccessCheck_noNodes() {
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		aspect.saveAliasGrantAccessCheck(TEST_USER_ID, grantInput((Long[]) null));
+		then(nodeOwnershipDao).shouldHaveNoInteractions();
+	}
+
+	@Test
+	public void saveAliasGrantAccessCheck_otherUserNode() {
+		// GIVEN
+		final Long ownNodeId = randomLong();
+		final Long otherNodeId = randomLong();
+		given(nodeOwnershipDao.ownershipForNodeId(ownNodeId)).willReturn(
+				new BasicSolarNodeOwnership(ownNodeId, TEST_USER_ID, "NZ", UTC, true, false));
+		given(nodeOwnershipDao.ownershipForNodeId(otherNodeId)).willReturn(
+				new BasicSolarNodeOwnership(otherNodeId, randomLong(), "NZ", UTC, true, false));
+
+		// WHEN
+		becomeUser(randomString(), randomString(), TEST_USER_ID);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.isThrownBy(() -> aspect.saveAliasGrantAccessCheck(TEST_USER_ID,
+					grantInput(ownNodeId, otherNodeId)))
+			.as("Denied ID is node owned by different user")
+			.returns(otherNodeId, from(AuthorizationException::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveAliasGrantAccessCheck_withPolicy() {
+		// WHEN
+		becomeRestrictedToken();
+
+		// THEN
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(
+				() -> aspect.saveAliasGrantAccessCheck(TEST_USER_ID, grantInput(randomLong())));
 	}
 
 	@Test
@@ -468,6 +816,10 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
 				.willReturn(originalOwnership);
 
+		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId())).willReturn(aliasOwnership);
+
 		// WHEN
 		// @formatter:off
 		final var policy = BasicSecurityPolicy.builder()
@@ -495,15 +847,6 @@ public class UserDatumStreamAliasSecurityAspectTests implements CentralTestConst
 		input.setOriginalSourceId(randomSourceId());
 		input.setObjectId(randomLong());
 		input.setSourceId(randomSourceId());
-
-		final var originalOwnership = new BasicSolarNodeOwnership(input.getOriginalObjectId(),
-				TEST_USER_ID, "NZ", UTC, true, false);
-		given(nodeOwnershipDao.ownershipForNodeId(input.getOriginalObjectId()))
-				.willReturn(originalOwnership);
-
-		final var aliasOwnership = new BasicSolarNodeOwnership(input.getObjectId(), TEST_USER_ID, "NZ",
-				UTC, true, false);
-		given(nodeOwnershipDao.ownershipForNodeId(input.getObjectId())).willReturn(aliasOwnership);
 
 		// WHEN
 		// @formatter:off

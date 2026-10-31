@@ -62,7 +62,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link DatumSqlUtils} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -170,6 +170,124 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void nodeMetadataFilterSql_user_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+		filter.setUserId(1L);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		DatumSqlUtils.nodeMetadataFilterSql(filter, Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(buf.toString())
+			.as("Streams found per user node, so aliases of other users are never evaluated")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
+					FROM solaruser.user_node un
+					INNER JOIN LATERAL (
+						SELECT * FROM solardatm.da_datm_meta_aliased m
+						WHERE m.node_id = un.node_id
+						OFFSET 0
+					) s ON TRUE
+					WHERE un.user_id = ?
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_userAndNode_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+		filter.setUserId(1L);
+		filter.setNodeId(2L);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		DatumSqlUtils.nodeMetadataFilterSql(filter, Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(buf.toString())
+			.as("Node criteria limits the aliases evaluated")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased s
+					INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
+					WHERE s.node_id = ?
+					AND un.user_id = ?
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_WithGeography_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		DatumSqlUtils.nodeMetadataFilterSql(filter, WithGeography, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(buf.toString())
+			.as("Location is that of the alias node, not the original node")
+			.contains("INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataForAccountingFilterSql_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		DatumSqlUtils.nodeMetadataForAccountingFilterSql(filter, WithZone, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(buf.toString())
+			.as("All aliases included, with the time zone of the alias node")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone,
+						s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased_all s
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataForAccountingFilterSql_notAliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		DatumSqlUtils.nodeMetadataForAccountingFilterSql(filter, Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(buf.toString())
+			.as("Alias view not used without alias criteria")
+			.doesNotContain("_aliased")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void nodeMetadataFilterSql_all_Full_Aliased() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -191,7 +309,7 @@ public class DatumSqlUtilsTests {
 					SELECT s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata,
 						'n'::CHARACTER AS kind, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
 					FROM solardatm.da_datm_meta_aliased s
-					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.orig_node_id
 					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 					""")
 			;
@@ -246,7 +364,7 @@ public class DatumSqlUtilsTests {
 			.isEqualToNormalizingWhitespace("""
 					SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
 					FROM solardatm.da_datm_meta_aliased s
-					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.orig_node_id
 					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 					""")
 			;

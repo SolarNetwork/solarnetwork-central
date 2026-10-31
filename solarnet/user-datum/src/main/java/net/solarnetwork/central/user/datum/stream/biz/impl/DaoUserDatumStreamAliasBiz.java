@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.datum.stream.biz.impl;
 
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_UUID_ID;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,27 +37,36 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamAliasGrantFilter;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasGrantEntityDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasGrantFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasGrantEntity;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasGrantStream;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.central.domain.Securable;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
+import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasGrantEntityInput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
  * DAO-based implementation of {@link UserDatumStreamAliasBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Securable
 public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 
 	private final ObjectDatumStreamAliasEntityDao aliasDao;
+	private final ObjectDatumStreamAliasGrantEntityDao grantDao;
 
 	private @Nullable Validator validator;
 
@@ -63,12 +75,17 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 	 * 
 	 * @param aliasDao
 	 *        the alias DAO
+	 * @param grantDao
+	 *        the alias grant DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
+	 * @since 1.2
 	 */
-	public DaoUserDatumStreamAliasBiz(ObjectDatumStreamAliasEntityDao aliasDao) {
+	public DaoUserDatumStreamAliasBiz(ObjectDatumStreamAliasEntityDao aliasDao,
+			ObjectDatumStreamAliasGrantEntityDao grantDao) {
 		super();
 		this.aliasDao = requireNonNullArgument(aliasDao, "aliasDao");
+		this.grantDao = requireNonNullArgument(grantDao, "grantDao");
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -106,11 +123,94 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public List<ObjectDatumStreamAliasEntity> saveAliases(Long userId,
+			List<ObjectDatumStreamAliasEntityInput> inputs) {
+		if ( requireNonNullArgument(inputs, "inputs").size() > MAX_BULK_ALIASES ) {
+			throw new IllegalArgumentException(
+					"No more than %d aliases can be saved at once.".formatted(MAX_BULK_ALIASES));
+		}
+		for ( ObjectDatumStreamAliasEntityInput input : inputs ) {
+			validateInput(requireNonNullArgument(input, "input"));
+		}
+		final Instant now = Instant.now();
+		final var result = new ArrayList<ObjectDatumStreamAliasEntity>(inputs.size());
+		for ( ObjectDatumStreamAliasEntityInput input : inputs ) {
+			final var pk = aliasDao.save(input.toEntity(UNASSIGNED_UUID_ID, now));
+			result.add(requireNonNullObject(aliasDao.get(pk), pk));
+		}
+		return result;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public void deleteAliases(Long userId, @Nullable ObjectDatumStreamAliasFilter filter) {
 		final var f = new BasicDatumCriteria();
 		f.copyFrom(filter);
 		f.setUserId(userId);
 		aliasDao.delete(f);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public ObjectDatumStreamAliasGrantEntity aliasGrantForUser(Long userId, Long grantId) {
+		final var pk = new UserLongCompositePK(userId, grantId);
+		return requireNonNullObject(grantDao.get(pk), pk);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ObjectDatumStreamAliasGrantEntity, UserLongCompositePK> listAliasGrants(
+			Long userId, @Nullable ObjectDatumStreamAliasGrantFilter filter) {
+		final var f = new BasicObjectDatumStreamAliasGrantFilter(filter);
+		f.setUserId(userId);
+		return grantDao.findFiltered(f);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ObjectDatumStreamAliasGrantEntity, UserLongCompositePK> listReceivedAliasGrants(
+			Long userId, @Nullable ObjectDatumStreamAliasGrantFilter filter) {
+		final var f = new BasicObjectDatumStreamAliasGrantFilter(filter);
+		f.setGranteeId(userId);
+		f.setEnabled(true);
+		return grantDao.findFiltered(f);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ObjectDatumStreamAliasGrantStream, UserLongStringCompositePK> listAvailableAliasStreams(
+			Long userId, Long aliasNodeId, @Nullable ObjectDatumStreamAliasGrantFilter filter) {
+		return grantDao.findAvailableStreams(userId, aliasNodeId, filter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ObjectDatumStreamAliasGrantEntity saveAliasGrant(Long userId, Long grantId,
+			ObjectDatumStreamAliasGrantEntityInput input) {
+		validateInput(input);
+		final var id = new UserLongCompositePK(userId, grantId);
+		if ( id.entityIdIsAssigned() ) {
+			requireNonNullObject(grantDao.get(id), id);
+		}
+		final var pk = grantDao.save(input.toEntity(id, Instant.now()));
+		return requireNonNullObject(grantDao.get(pk), pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ObjectDatumStreamAliasGrantEntity updateAliasGrantEnabled(Long userId, Long grantId,
+			boolean enabled) {
+		final var pk = new UserLongCompositePK(userId, grantId);
+		final var filter = new BasicObjectDatumStreamAliasGrantFilter();
+		filter.setGrantId(grantId);
+		grantDao.updateEnabledStatus(userId, filter, enabled);
+		return requireNonNullObject(grantDao.get(pk), pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteAliasGrant(Long userId, Long grantId) {
+		grantDao.delete(grantDao.entityKey(new UserLongCompositePK(userId, grantId)));
 	}
 
 	private void validateInput(final @Nullable Object input) {
