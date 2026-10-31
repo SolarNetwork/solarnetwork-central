@@ -262,6 +262,7 @@ subprojects {
     pluginManager.withPlugin('com.diffplug.spotless') { 
 		spotless {
 			java {
+				targetExclude('**/build/generated/**')
 				eclipse()
 					.configFile("${project.rootDir}/config/solarnetwork-codeformat.xml")
 				
