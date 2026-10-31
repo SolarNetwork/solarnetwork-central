@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -241,6 +242,71 @@ public class JdbcQueryAuditorTests {
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_1), 2),
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID, auditDate, TEST_SOURCE_2), 1),
 					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID_2, auditDate, TEST_SOURCE_1), 1))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumFilterResults_virtualIds() {
+		// GIVEN
+		final Long virtualNodeId = -100L;
+		final String virtualSourceId = "virtual.source";
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_2 });
+		filter.setSourceIds(new String[] { TEST_SOURCE_1, TEST_SOURCE_2 });
+		filter.setNodeIdMappings(Map.of(virtualNodeId, Set.of(TEST_NODE_ID)));
+		filter.setSourceIdMappings(Map.of(virtualSourceId, Set.of(TEST_SOURCE_1)));
+
+		List<GeneralNodeDatumFilterMatch> matches = List.of(match(virtualNodeId, virtualSourceId),
+				match(virtualNodeId, TEST_SOURCE_2), match(TEST_NODE_ID_2, virtualSourceId),
+				match(TEST_NODE_ID_2, TEST_SOURCE_2));
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 4L, 0L, 4);
+
+		// WHEN
+		auditor.auditNodeDatumFilterResults(filter, results);
+
+		// THEN
+		final Instant auditDate = testClock.instant();
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("Only the result with no virtual ID is counted")
+			.hasSize(1)
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID_2, TEST_SOURCE_2, auditDate),
+					c -> and.then(c).hasValue(1))
+			;
+		and.then(auditor.currentAuditResults())
+			.as("Virtual IDs left out of current results, so cached responses do not audit them")
+			.containsOnly(
+					Map.entry(new GeneralNodeDatumPK(TEST_NODE_ID_2, auditDate, TEST_SOURCE_2), 1))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumFilterResults_oneNodeAndSourceWithMapping() {
+		// GIVEN
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_1);
+		filter.setNodeIdMappings(Map.of(-100L, Set.of(TEST_NODE_ID)));
+
+		List<GeneralNodeDatumFilterMatch> matches = List.of(match(-100L, TEST_SOURCE_1),
+				match(-100L, TEST_SOURCE_1));
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 2L, 0L, 2);
+
+		// WHEN
+		auditor.auditNodeDatumFilterResults(filter, results);
+
+		// THEN
+		final Instant auditDate = testClock.instant();
+		// @formatter:off
+		and.then(datumCountMap)
+			.as("The single stream selected by the filter is counted, not the virtual ID")
+			.hasSize(1)
+			.hasEntrySatisfying(DatumId.nodeId(TEST_NODE_ID, TEST_SOURCE_1, auditDate),
+					c -> and.then(c).hasValue(2))
 			;
 		// @formatter:on
 	}

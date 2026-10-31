@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.datum.support.DatumUtils.WILDCARD_PATTERN_MATCHER;
+import static net.solarnetwork.central.datum.support.DatumUtils.isVirtualNodeSource;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Connection;
 import java.time.Clock;
@@ -180,6 +181,10 @@ public class JdbcQueryAuditor extends BaseJdbcDatumIdServiceAuditor implements Q
 		Map<GeneralNodeDatumPK, Integer> counts = new HashMap<>(returnedCount);
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
 			GeneralNodeDatumPK id = nonnull(result.getId(), "ID");
+			// a virtual ID is not the stream the result came from, even if it matches one
+			if ( isVirtualNodeSource(filter, id.getNodeId(), id.getSourceId()) ) {
+				continue;
+			}
 			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, nonnull(id.getNodeId(), "nodeId"),
 					nonnull(id.getSourceId(), "sourceId"));
 			counts.compute(pk, (_, v) -> v == null ? 1 : v + 1);
