@@ -43,8 +43,8 @@ import org.springframework.context.MessageSourceResolvable;
  * </p>
  *
  * @param primaryUserId
- *        the user ID of the primary account, to which consolidated invoices
- *        are billed
+ *        the user ID of the primary account, to which consolidated invoices are
+ *        billed
  * @param userIds
  *        the user IDs of all accounts in the group, starting with the primary
  *        account, in the order the accounts are listed in a consolidated

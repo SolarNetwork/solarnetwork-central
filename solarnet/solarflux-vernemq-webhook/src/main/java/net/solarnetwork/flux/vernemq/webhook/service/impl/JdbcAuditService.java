@@ -44,8 +44,8 @@ import net.solarnetwork.util.StatTracker;
  * This service coalesces message byte counts in memory, per node/source/hour
  * for published messages and per user/hour for delivered messages, and flushes
  * these to the database via a single "writer" thread after a small delay. This
- * design is meant to support better throughput of audit updates. Counts not
- * yet written are written when the service shuts down, but can be lost if the
+ * design is meant to support better throughput of audit updates. Counts not yet
+ * written are written when the service shuts down, but can be lost if the
  * service stops without shutting down or the database is unavailable.
  * </p>
  *
@@ -164,8 +164,8 @@ public class JdbcAuditService extends BaseJdbcDatumIdServiceAuditor implements A
 	}
 
 	/**
-	 * Set the parameters of the {@code serviceIncrementSql} statement, to
-	 * write a count.
+	 * Set the parameters of the {@code serviceIncrementSql} statement, to write
+	 * a count.
 	 *
 	 * <p>
 	 * The statement must accept the following parameters:

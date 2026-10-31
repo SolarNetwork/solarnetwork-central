@@ -59,8 +59,8 @@ public final class SelectGncAccount implements PreparedStatementCreator, SqlProv
 	 * @param schema
 	 *        the schema of the GnuCash tables
 	 * @param byGuid
-	 *        {@code true} to select by GUID, or {@code false} to select by
-	 *        full name
+	 *        {@code true} to select by GUID, or {@code false} to select by full
+	 *        name
 	 * @param value
 	 *        the GUID, or full account name such as
 	 *        {@code Assets:Accounts Receivable}

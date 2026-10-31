@@ -192,8 +192,8 @@ public class AsyncChargePointStatusDao
 	 * A charger with buffered status updates.
 	 * 
 	 * <p>
-	 * Chargers are equal when their user and charge point identifier are
-	 * equal, regardless of when their updates are due.
+	 * Chargers are equal when their user and charge point identifier are equal,
+	 * regardless of when their updates are due.
 	 * </p>
 	 */
 	public final class PendingCharger implements Delayed {
@@ -244,8 +244,8 @@ public class AsyncChargePointStatusDao
 
 		@Override
 		public String toString() {
-			return "PendingCharger{userId=" + userId + ", chargePointIdentifier="
-					+ chargePointIdentifier + ", ready=" + ready + "}";
+			return "PendingCharger{userId=" + userId + ", chargePointIdentifier=" + chargePointIdentifier
+					+ ", ready=" + ready + "}";
 		}
 
 	}

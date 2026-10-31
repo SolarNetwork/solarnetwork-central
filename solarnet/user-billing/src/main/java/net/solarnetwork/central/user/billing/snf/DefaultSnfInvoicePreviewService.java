@@ -63,9 +63,9 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
  * <p>
  * The accounts of a group are generated one at a time. When one finishes, the
  * next one is started right away, as long as the group was asked for within
- * {@code groupPollTimeout}; otherwise the next request for the group starts
- * it. So a group keeps being generated while someone is waiting for it, and
- * stops soon after they leave.
+ * {@code groupPollTimeout}; otherwise the next request for the group starts it.
+ * So a group keeps being generated while someone is waiting for it, and stops
+ * soon after they leave.
  * </p>
  *
  * @author matt
@@ -89,8 +89,8 @@ public class DefaultSnfInvoicePreviewService implements SnfInvoicePreviewService
 	private final Executor executor;
 	private final Cache<SnfInvoicePreviewKey, SnfInvoicePreview> cache;
 	private final Semaphore permits;
-	private final ConcurrentMap<SnfInvoicePreviewKey, Instant> running = new ConcurrentHashMap<>(8,
-			0.9f, 2);
+	private final ConcurrentMap<SnfInvoicePreviewKey, Instant> running = new ConcurrentHashMap<>(8, 0.9f,
+			2);
 	private final ConcurrentMap<SnfInvoicePreviewKey, Instant> groupPolls = new ConcurrentHashMap<>(8,
 			0.9f, 2);
 	private @Nullable TransactionOperations transactionTemplate;
@@ -111,12 +111,11 @@ public class DefaultSnfInvoicePreviewService implements SnfInvoicePreviewService
 	 * @param maxConcurrent
 	 *        the maximum number of previews to generate at once
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}, or {@code maxConcurrent} is
-	 *         less than {@code 1}
+	 *         if any argument is {@code null}, or {@code maxConcurrent} is less
+	 *         than {@code 1}
 	 */
 	public DefaultSnfInvoicePreviewService(InstantSource clock, SnfInvoicingSystem invoicingSystem,
-			Executor executor, Cache<SnfInvoicePreviewKey, SnfInvoicePreview> cache,
-			int maxConcurrent) {
+			Executor executor, Cache<SnfInvoicePreviewKey, SnfInvoicePreview> cache, int maxConcurrent) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
@@ -317,8 +316,8 @@ public class DefaultSnfInvoicePreviewService implements SnfInvoicePreviewService
 		final var options = new SnfInvoicingOptions(true, key.useAccountCredit());
 		final TransactionOperations tx = this.transactionTemplate;
 		if ( tx != null ) {
-			return tx.execute(_ -> invoicingSystem.generateInvoice(key.userId(), startDate, endDate,
-					options));
+			return tx.execute(
+					_ -> invoicingSystem.generateInvoice(key.userId(), startDate, endDate, options));
 		}
 		return invoicingSystem.generateInvoice(key.userId(), startDate, endDate, options);
 	}
@@ -346,8 +345,8 @@ public class DefaultSnfInvoicePreviewService implements SnfInvoicePreviewService
 	/**
 	 * Get the failure retry delay.
 	 *
-	 * @return the delay after which a failed preview is started again;
-	 *         defaults to {@link #DEFAULT_FAILURE_RETRY_DELAY}
+	 * @return the delay after which a failed preview is started again; defaults
+	 *         to {@link #DEFAULT_FAILURE_RETRY_DELAY}
 	 */
 	public final Duration getFailureRetryDelay() {
 		return failureRetryDelay;

@@ -105,8 +105,7 @@ public final class UserExportBizSecurityContract {
 	}
 
 	private static UserDataConfiguration dataConfig(Long userId) {
-		return new UserDataConfiguration(userId, randomLong(), Instant.now(), "Test",
-				"test.service");
+		return new UserDataConfiguration(userId, randomLong(), Instant.now(), "Test", "test.service");
 	}
 
 }

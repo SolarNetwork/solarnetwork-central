@@ -28,8 +28,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * JUnit extension that clears the security context before and after each
- * test.
+ * JUnit extension that clears the security context before and after each test.
  *
  * @author matt
  * @version 1.0

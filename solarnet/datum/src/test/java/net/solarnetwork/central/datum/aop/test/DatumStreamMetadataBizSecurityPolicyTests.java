@@ -39,8 +39,8 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
- * Verify {@link DatumStreamMetadataBiz} restricts stream metadata to the
- * actor, using the database.
+ * Verify {@link DatumStreamMetadataBiz} restricts stream metadata to the actor,
+ * using the database.
  *
  * @author matt
  * @version 1.0

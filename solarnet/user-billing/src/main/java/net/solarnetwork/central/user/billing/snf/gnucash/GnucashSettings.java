@@ -67,8 +67,7 @@ public class GnucashSettings {
 		/**
 		 * Get the full name of the receivable account to post invoices to.
 		 *
-		 * @return the account name, such as
-		 *         {@code Assets:Accounts Receivable}
+		 * @return the account name, such as {@code Assets:Accounts Receivable}
 		 */
 		public final @Nullable String getReceivableAccount() {
 			return receivableAccount;
@@ -263,8 +262,7 @@ public class GnucashSettings {
 	 *         if the argument is {@code null}
 	 */
 	public final void setCustomerIdTemplate(String customerIdTemplate) {
-		this.customerIdTemplate = requireNonNullArgument(customerIdTemplate,
-				"customerIdTemplate");
+		this.customerIdTemplate = requireNonNullArgument(customerIdTemplate, "customerIdTemplate");
 	}
 
 	/**
@@ -333,8 +331,8 @@ public class GnucashSettings {
 	/**
 	 * Get the setting to add one GnuCash invoice line per invoice item.
 	 *
-	 * @return {@code true} for one line per item, or {@code false} for a
-	 *         single summary line; defaults to {@code true}
+	 * @return {@code true} for one line per item, or {@code false} for a single
+	 *         summary line; defaults to {@code true}
 	 */
 	public final boolean isItemized() {
 		return itemized;
@@ -356,8 +354,8 @@ public class GnucashSettings {
 	 * granted to an account.
 	 *
 	 * <p>
-	 * SNF invoices apply account credit after tax, so by default granted
-	 * credit does not change tax.
+	 * SNF invoices apply account credit after tax, so by default granted credit
+	 * does not change tax.
 	 * </p>
 	 *
 	 * @return {@code true} if the credit amount includes tax; defaults to

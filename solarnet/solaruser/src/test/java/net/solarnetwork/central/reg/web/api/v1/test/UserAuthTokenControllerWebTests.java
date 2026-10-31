@@ -1088,7 +1088,6 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		// @formatter:on
 	}
 
-
 	private static Instant expiry() {
 		return Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1, ChronoUnit.DAYS);
 	}

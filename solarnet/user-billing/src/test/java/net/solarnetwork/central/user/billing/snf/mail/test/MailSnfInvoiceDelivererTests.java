@@ -145,11 +145,11 @@ public class MailSnfInvoiceDelivererTests {
 	@Test
 	public void deliverConsolidatedInvoice() throws Exception {
 		// GIVEN
-		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L,
-				Instant.now(), START_DATE, START_DATE.plusMonths(1), "NZD");
+		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L, Instant.now(),
+				START_DATE, START_DATE.plusMonths(1), "NZD");
 		final Resource pdf = resource("PDF");
-		given(invoicingSystem.renderConsolidatedInvoice(invoice, MimeTypeUtils.TEXT_HTML, LOCALE,
-				true)).willReturn(resource("<p>Summary</p>"));
+		given(invoicingSystem.renderConsolidatedInvoice(invoice, MimeTypeUtils.TEXT_HTML, LOCALE, true))
+				.willReturn(resource("<p>Summary</p>"));
 		given(invoicingSystem.renderConsolidatedInvoice(eq(invoice), eq(PDF), eq(LOCALE), eq(false)))
 				.willReturn(pdf);
 
@@ -159,8 +159,8 @@ public class MailSnfInvoiceDelivererTests {
 		given(invoicingSystem.messageSourceForConsolidatedInvoice(invoice)).willReturn(messageSource);
 
 		// WHEN
-		CompletableFuture<Result<Object>> result = deliverer.deliverConsolidatedInvoice(invoice,
-				account, null);
+		CompletableFuture<Result<Object>> result = deliverer.deliverConsolidatedInvoice(invoice, account,
+				null);
 
 		// THEN
 		// @formatter:off
@@ -184,15 +184,15 @@ public class MailSnfInvoiceDelivererTests {
 	@Test
 	public void deliverConsolidatedInvoice_renderError() {
 		// GIVEN
-		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L,
-				Instant.now(), START_DATE, START_DATE.plusMonths(1), "NZD");
+		final SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L, Instant.now(),
+				START_DATE, START_DATE.plusMonths(1), "NZD");
 		final RuntimeException err = new IllegalArgumentException("Not supported");
-		given(invoicingSystem.renderConsolidatedInvoice(invoice, MimeTypeUtils.TEXT_HTML, LOCALE,
-				true)).willThrow(err);
+		given(invoicingSystem.renderConsolidatedInvoice(invoice, MimeTypeUtils.TEXT_HTML, LOCALE, true))
+				.willThrow(err);
 
 		// WHEN
-		CompletableFuture<Result<Object>> result = deliverer.deliverConsolidatedInvoice(invoice,
-				account, null);
+		CompletableFuture<Result<Object>> result = deliverer.deliverConsolidatedInvoice(invoice, account,
+				null);
 
 		// THEN
 		// @formatter:off

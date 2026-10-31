@@ -74,10 +74,8 @@ public class DatumAuxiliaryBizSecurityPolicyTests extends BaseDatumSecurityPolic
 
 	private static Set<NodeSourcePK> nodeSources(
 			Iterable<GeneralNodeDatumAuxiliaryFilterMatch> results) {
-		return StreamSupport.stream(results.spliterator(), false)
-				.map(m -> nonnull(m.getId(), "ID"))
-				.map(id -> new NodeSourcePK(id.getNodeId(), id.getSourceId()))
-				.collect(toSet());
+		return StreamSupport.stream(results.spliterator(), false).map(m -> nonnull(m.getId(), "ID"))
+				.map(id -> new NodeSourcePK(id.getNodeId(), id.getSourceId())).collect(toSet());
 	}
 
 	@Test
@@ -107,8 +105,7 @@ public class DatumAuxiliaryBizSecurityPolicyTests extends BaseDatumSecurityPolic
 		a.restrictedTokenActor().become();
 
 		// WHEN
-		var results = biz.findGeneralNodeDatumAuxiliary(nodes(a.otherPrivateNodeId()), null, null,
-				null);
+		var results = biz.findGeneralNodeDatumAuxiliary(nodes(a.otherPrivateNodeId()), null, null, null);
 
 		// THEN
 		// @formatter:off

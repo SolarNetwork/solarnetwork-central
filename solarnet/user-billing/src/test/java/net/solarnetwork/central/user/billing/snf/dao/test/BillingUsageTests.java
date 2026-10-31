@@ -65,8 +65,7 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final ZoneId TEST_ZONE = ZoneId.of("Pacific/Auckland");
 
-	private static final ZonedDateTime TEST_MONTH = ZonedDateTime.of(2026, 9, 1, 0, 0, 0, 0,
-			TEST_ZONE);
+	private static final ZonedDateTime TEST_MONTH = ZonedDateTime.of(2026, 9, 1, 0, 0, 0, 0, TEST_ZONE);
 
 	private static final int TEST_DAY_COUNT = 10;
 
@@ -129,8 +128,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 			// UUID streamId, Instant timestamp, Long datumCount,
 			// Long datumHourlyCount, Integer datumDailyCount, Long datumPropertyCount,
 			// Long datumQueryCount, Long datumPropertyUpdateCount, Long fluxDataInCount
-			result.add(AuditDatumEntity.dailyAuditDatum(streamId, day, 100L, 2L, 1, 400L, queryCount,
-					5L, 8_000L));
+			result.add(AuditDatumEntity.dailyAuditDatum(streamId, day, 100L, 2L, 1, 400L, queryCount, 5L,
+					8_000L));
 		}
 		return result;
 	}
@@ -143,8 +142,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		final var result = new ArrayList<AuditDatum>(TEST_DAY_COUNT);
 		for ( int i = 0; i < TEST_DAY_COUNT; i++ ) {
 			final Instant day = TEST_MONTH.plusDays(i).toInstant();
-			result.add(AuditDatumEntity.dailyAuditDatum(streamId, day, 0L, 0L, 0, 0L, queryCount, 0L,
-					0L));
+			result.add(
+					AuditDatumEntity.dailyAuditDatum(streamId, day, 0L, 0L, 0, 0L, queryCount, 0L, 0L));
 		}
 		return result;
 	}
@@ -244,8 +243,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		setupTestUser(userId, locId);
 
 		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
-		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
-				"alias", orig);
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(), "alias",
+				orig);
 
 		final List<AuditDatum> origAudit = auditDatumDaily(orig.getStreamId(), 1_000L);
 		final List<AuditDatum> origAccAudit = auditAccDatumDaily(orig.getStreamId());
@@ -348,8 +347,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		setupTestUser(userId, locId);
 
 		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
-		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
-				"alias", orig);
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(), "alias",
+				orig);
 
 		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
@@ -380,8 +379,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		setupTestUser(userId, locId);
 
 		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
-		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
-				"alias", orig);
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(), "alias",
+				orig);
 
 		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
@@ -415,8 +414,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		setupTestUser(newOwnerUserId, locId);
 
 		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
-		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
-				"alias", orig);
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(), "alias",
+				orig);
 
 		final List<AuditDatum> aliasAudit = aliasAuditDatumDaily(alias.getStreamId(), 3_000L);
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, aliasAudit);
@@ -447,8 +446,8 @@ public class BillingUsageTests extends AbstractJUnit5JdbcDaoTestSupport {
 		setupTestUser(userId, locId);
 
 		final ObjectDatumStreamMetadata orig = setupTestStream(userId, locId, randomLong(), "orig");
-		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(),
-				"alias", orig);
+		final ObjectDatumStreamAliasEntity alias = setupTestAlias(userId, locId, randomLong(), "alias",
+				orig);
 
 		// record query counts the way SolarQuery does, by node + source ID
 		final int origQueryCount = 11;

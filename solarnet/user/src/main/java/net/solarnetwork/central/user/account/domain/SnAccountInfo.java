@@ -45,8 +45,8 @@ import net.solarnetwork.central.user.billing.biz.BillingSystemRegistrar;
  *        any child accounts, or {@code null} if there are none
  * @param consolidationProblem
  *        the problem with the invoice consolidation group of the account, as a
- *        message to resolve where it is shown, or {@code null} if the account is
- *        not in an invalid group
+ *        message to resolve where it is shown, or {@code null} if the account
+ *        is not in an invalid group
  * @author matt
  * @version 1.1
  */
@@ -81,8 +81,8 @@ public record SnAccountInfo(String systemKey, SnAccount<?, ?, ?> account,
 	 * @param entitlements
 	 *        the account entitlements
 	 * @param parentAccount
-	 *        if this account is the child of another account, the info for
-	 *        that parent account
+	 *        if this account is the child of another account, the info for that
+	 *        parent account
 	 * @param childAccounts
 	 *        any child accounts, or {@code null} if there are none
 	 * @since 1.1

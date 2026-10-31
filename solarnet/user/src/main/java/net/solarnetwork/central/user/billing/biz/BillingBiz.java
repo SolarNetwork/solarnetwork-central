@@ -196,8 +196,8 @@ public interface BillingBiz {
 			@Nullable Integer max);
 
 	/**
-	 * Get a consolidated invoice billed to a user, with the invoices it is
-	 * made of.
+	 * Get a consolidated invoice billed to a user, with the invoices it is made
+	 * of.
 	 *
 	 * @param userId
 	 *        the user ID of the primary account
@@ -245,8 +245,7 @@ public interface BillingBiz {
 	 * @since 1.5
 	 */
 	@Nullable
-	Invoice getPreviewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
-			Locale locale);
+	Invoice getPreviewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options, Locale locale);
 
 	/**
 	 * Render a preview of the consolidated invoice for the invoice
@@ -279,8 +278,8 @@ public interface BillingBiz {
 	 * @param locale
 	 *        the desired locale
 	 * @return the preview status, or {@code null} if not available
-	 * @see BillingSystem#getPreviewInvoiceStatus(Long, InvoiceGenerationOptions,
-	 *      Locale)
+	 * @see BillingSystem#getPreviewInvoiceStatus(Long,
+	 *      InvoiceGenerationOptions, Locale)
 	 * @since 1.6
 	 */
 	@Nullable

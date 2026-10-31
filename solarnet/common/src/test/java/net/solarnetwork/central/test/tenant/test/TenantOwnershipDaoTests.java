@@ -42,9 +42,9 @@ import net.solarnetwork.central.test.tenant.TestToken;
 import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
 
 /**
- * Test cases for the {@link TenantOwnershipDao} class, verifying it returns
- * the same results as {@link JdbcSolarNodeOwnershipDao} for tenants inserted
- * into the database.
+ * Test cases for the {@link TenantOwnershipDao} class, verifying it returns the
+ * same results as {@link JdbcSolarNodeOwnershipDao} for tenants inserted into
+ * the database.
  *
  * @author matt
  * @version 1.0

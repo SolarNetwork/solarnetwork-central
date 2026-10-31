@@ -132,13 +132,12 @@ public class CommonSupportingProceduresTests extends AbstractJUnit5JdbcDaoTestSu
 				is(equalTo(UuidUtils.createUuidV7Boundary(t.truncatedTo(ChronoUnit.MICROS)))));
 	}
 
-
 	@ParameterizedTest
 	@CsvSource({ "1290,36", "255,16", "36,36", "1,36", "9223372036854775807,36" })
 	public void toBaseX(long n, int radix) {
 		// WHEN
-		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?, ?)", String.class,
-				n, radix);
+		String result = jdbcTemplate.queryForObject("SELECT solarcommon.to_baseX(?, ?)", String.class, n,
+				radix);
 
 		// THEN
 		// @formatter:off
@@ -198,8 +197,8 @@ public class CommonSupportingProceduresTests extends AbstractJUnit5JdbcDaoTestSu
 	public void toBaseX_roundTrip() {
 		// WHEN
 		Long result = jdbcTemplate.queryForObject(
-				"SELECT solarcommon.baseX_integer(solarcommon.to_baseX(?, ?), ?)", Long.class, 1290L,
-				36, 36);
+				"SELECT solarcommon.baseX_integer(solarcommon.to_baseX(?, ?), ?)", Long.class, 1290L, 36,
+				36);
 
 		// THEN
 		// @formatter:off

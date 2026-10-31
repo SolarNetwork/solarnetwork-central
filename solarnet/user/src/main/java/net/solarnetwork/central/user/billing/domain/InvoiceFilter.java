@@ -53,11 +53,11 @@ public interface InvoiceFilter extends Filter {
 	 * Flag to include consolidated invoices.
 	 *
 	 * <p>
-	 * When {@code true}, the results include the consolidated invoices billed to
-	 * the user, in place of the user's invoices that are part of a consolidated
-	 * invoice. A consolidated invoice is billed to the primary account of an
-	 * invoice consolidation group, so the invoices of the other accounts of the
-	 * group are left out, with nothing in their place.
+	 * When {@code true}, the results include the consolidated invoices billed
+	 * to the user, in place of the user's invoices that are part of a
+	 * consolidated invoice. A consolidated invoice is billed to the primary
+	 * account of an invoice consolidation group, so the invoices of the other
+	 * accounts of the group are left out, with nothing in their place.
 	 * </p>
 	 *
 	 * @return {@code true} to include consolidated invoices in place of the

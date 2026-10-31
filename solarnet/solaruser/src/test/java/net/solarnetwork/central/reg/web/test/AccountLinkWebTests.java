@@ -143,8 +143,8 @@ public class AccountLinkWebTests extends AbstractJUnit5CentralTransactionalTest 
 	private <T> T asUser(Long userId, String username, Supplier<T> action) {
 		final Authentication auth = TestSecurityContextHolder.getContext().getAuthentication();
 		final var principal = new AuthenticatedUser(
-				new User(username, "password", AuthorityUtils.createAuthorityList("ROLE_USER")),
-				userId, null, false);
+				new User(username, "password", AuthorityUtils.createAuthorityList("ROLE_USER")), userId,
+				null, false);
 		try {
 			TestSecurityContextHolder.setAuthentication(new UsernamePasswordAuthenticationToken(
 					principal, "password", principal.getAuthorities()));
@@ -198,8 +198,8 @@ public class AccountLinkWebTests extends AbstractJUnit5CentralTransactionalTest 
 	}
 
 	private void givenChildAccount(String currency) {
-		asUser(DEFAULT_USER_ID, DEFAULT_USERNAME, () -> userAccountBiz
-				.createAccount(DEFAULT_USER_ID, accountInput(DEFAULT_USERNAME, currency)));
+		asUser(DEFAULT_USER_ID, DEFAULT_USERNAME, () -> userAccountBiz.createAccount(DEFAULT_USER_ID,
+				accountInput(DEFAULT_USERNAME, currency)));
 	}
 
 	private static MockHttpServletRequestBuilder linkForm(String password) {
@@ -217,8 +217,7 @@ public class AccountLinkWebTests extends AbstractJUnit5CentralTransactionalTest 
 		return registerForm(parentPassword, "NZD");
 	}
 
-	private static MockHttpServletRequestBuilder registerForm(String parentPassword,
-			String currency) {
+	private static MockHttpServletRequestBuilder registerForm(String parentPassword, String currency) {
 		// @formatter:off
 		return post(REGISTER_URL)
 				.param("address.name", "Tester Dude")
@@ -276,9 +275,9 @@ public class AccountLinkWebTests extends AbstractJUnit5CentralTransactionalTest 
 	 * Register the active user's account linked to the parent account.
 	 */
 	private void registerLinked() throws Exception {
-		final MvcResult review = mvc.perform(registerForm(PARENT_PASSWORD))
-				.andExpect(status().isOk()).andExpect(view().name("sec/account/register-confirm"))
-				.andExpect(model().hasNoErrors()).andReturn();
+		final MvcResult review = mvc.perform(registerForm(PARENT_PASSWORD)).andExpect(status().isOk())
+				.andExpect(view().name("sec/account/register-confirm")).andExpect(model().hasNoErrors())
+				.andReturn();
 		final Cookie[] session = review.getResponse().getCookies();
 		mvc.perform(post(CONFIRM_URL).cookie(session).with(csrf())).andExpect(status().isOk())
 				.andExpect(view().name("sec/account/register-complete"))
@@ -427,14 +426,13 @@ public class AccountLinkWebTests extends AbstractJUnit5CentralTransactionalTest 
 		accountDao.save(childAccount);
 
 		final String expectedProblem = "Invoicing is on hold for these accounts until this problem is fixed:";
-		final String expectedMessage = "User %d is billed in USD, not NZD."
-				.formatted(DEFAULT_USER_ID);
+		final String expectedMessage = "User %d is billed in USD, not NZD.".formatted(DEFAULT_USER_ID);
 
 		// WHEN
 		final String parentPage = asParent(get(ACCOUNT_URL)).andExpect(status().isOk()).andReturn()
 				.getResponse().getContentAsString();
-		final String childPage = mvc.perform(get(ACCOUNT_URL)).andExpect(status().isOk())
-				.andReturn().getResponse().getContentAsString();
+		final String childPage = mvc.perform(get(ACCOUNT_URL)).andExpect(status().isOk()).andReturn()
+				.getResponse().getContentAsString();
 
 		// THEN
 		// @formatter:off

@@ -55,7 +55,7 @@ public class InstructorBizSecurityContractTests {
 		final NodeInstructionDao nodeInstructionDao = mock(NodeInstructionDao.class);
 		return securedProxy((InstructorBiz) mock(DaoInstructorBiz.class),
 				new InstructorSecurityAspect(tenants.ownershipDao(), nodeInstructionDao))
-				.withMock(NodeInstructionDao.class, nodeInstructionDao);
+						.withMock(NodeInstructionDao.class, nodeInstructionDao);
 	}
 
 	@TestFactory

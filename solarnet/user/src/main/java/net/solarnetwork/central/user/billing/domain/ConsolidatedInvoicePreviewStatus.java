@@ -34,8 +34,8 @@ import org.jspecify.annotations.Nullable;
  *        the combined preview state of all the accounts, as given by
  *        {@link InvoicePreviewState#combined(Iterable)}
  * @param accounts
- *        the status of each account, in the order the accounts are listed in
- *        a consolidated invoice
+ *        the status of each account, in the order the accounts are listed in a
+ *        consolidated invoice
  * @param invoice
  *        the preview consolidated invoice, when {@code state} is {@code Done}
  *        and there are charges, otherwise {@code null}

@@ -89,8 +89,8 @@ public class AccountInputValidationMessageTests {
 		binder.bind(request);
 		binder.validate();
 
-		return binder.getBindingResult().getFieldErrors().stream().collect(toMap(FieldError::getField,
-				e -> messageSource.getMessage(e, Locale.ENGLISH)));
+		return binder.getBindingResult().getFieldErrors().stream()
+				.collect(toMap(FieldError::getField, e -> messageSource.getMessage(e, Locale.ENGLISH)));
 	}
 
 	@Test

@@ -213,8 +213,7 @@ public final class ControllerDependencies {
 	 *        the reviewed dependencies
 	 * @return the reviews that do not cover any dependency
 	 */
-	public static List<Review> unusedReviews(ApplicationContext context,
-			Collection<Review> reviews) {
+	public static List<Review> unusedReviews(ApplicationContext context, Collection<Review> reviews) {
 		final Set<Dependency> dependencies = serviceDependencies(context);
 		return reviews.stream().filter(r -> dependencies.stream().noneMatch(r::covers)).toList();
 	}

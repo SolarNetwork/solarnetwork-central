@@ -106,8 +106,7 @@ public final class DatumStreamMetadataBizSecurityContract {
 			ObjectDatumStreamIdentity stream) {
 		return p -> given(p.mock(DatumStreamMetadataDao.class).findStreamMetadata(any()))
 				.willReturn(new BasicObjectDatumStreamMetadata(stream.getStreamId(), "UTC",
-						stream.getKind(), stream.getObjectId(), stream.getSourceId(), null, null,
-						null));
+						stream.getKind(), stream.getObjectId(), stream.getSourceId(), null, null, null));
 	}
 
 }

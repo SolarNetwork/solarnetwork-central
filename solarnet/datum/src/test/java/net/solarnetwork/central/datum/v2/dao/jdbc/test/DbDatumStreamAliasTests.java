@@ -285,8 +285,8 @@ public class DbDatumStreamAliasTests extends BaseDatumJdbcTestSupport {
 
 		final ZoneId zone = ZoneId.of(TEST_TZ);
 		final Instant day = Instant.now().atZone(zone).truncatedTo(DAYS).toInstant();
-		DatumDbUtils.insertAuditDatum(log, jdbcTemplate,
-				List.of(ioAuditDatum(alias.getStreamId(), day.truncatedTo(HOURS), 0L, 0L, 123L, 0L, 0L)));
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, List
+				.of(ioAuditDatum(alias.getStreamId(), day.truncatedTo(HOURS), 0L, 0L, 123L, 0L, 0L)));
 		DatumDbUtils.insertStaleAuditDatum(log, jdbcTemplate,
 				List.of(new StaleAuditDatumEntity(alias.getStreamId(), day, Day, Instant.now())));
 		transferNode(orig.getObjectId(), TEST_USER_2);

@@ -124,8 +124,8 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 	 */
 	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findAuditDatum(filter)", argNames = "pjp,filter")
-	public Object findAuditDatumForFilterAccessCheck(ProceedingJoinPoint pjp,
-			AuditDatumCriteria filter) throws Throwable {
+	public Object findAuditDatumForFilterAccessCheck(ProceedingJoinPoint pjp, AuditDatumCriteria filter)
+			throws Throwable {
 		final AuditDatumCriteria f = findAuditDatumForFilterCheck(filter);
 		if ( f == filter ) {
 			return pjp.proceed();

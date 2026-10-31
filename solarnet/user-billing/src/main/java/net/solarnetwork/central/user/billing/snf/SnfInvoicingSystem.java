@@ -156,8 +156,8 @@ public interface SnfInvoicingSystem {
 	 * @since 2.1
 	 */
 	@Nullable
-	SnfConsolidatedInvoice generateConsolidatedInvoice(InvoiceConsolidationGroup group,
-			YearMonth month, InvoiceGenerationOptions options);
+	SnfConsolidatedInvoice generateConsolidatedInvoice(InvoiceConsolidationGroup group, YearMonth month,
+			InvoiceGenerationOptions options);
 
 	/**
 	 * Create a draft consolidated invoice from account invoices that have
@@ -183,8 +183,8 @@ public interface SnfInvoicingSystem {
 	 * @since 2.2
 	 */
 	@Nullable
-	SnfConsolidatedInvoice previewConsolidatedInvoice(InvoiceConsolidationGroup group,
-			YearMonth month, List<SnfInvoice> invoices);
+	SnfConsolidatedInvoice previewConsolidatedInvoice(InvoiceConsolidationGroup group, YearMonth month,
+			List<SnfInvoice> invoices);
 
 	/**
 	 * Deliver an invoice via an account-specific delivery mechanism (such as
@@ -229,8 +229,7 @@ public interface SnfInvoicingSystem {
 	 * Find the consolidated invoice an account invoice is part of.
 	 *
 	 * <p>
-	 * The account invoices of the returned consolidated invoice are not
-	 * loaded.
+	 * The account invoices of the returned consolidated invoice are not loaded.
 	 * </p>
 	 *
 	 * @param invoiceId

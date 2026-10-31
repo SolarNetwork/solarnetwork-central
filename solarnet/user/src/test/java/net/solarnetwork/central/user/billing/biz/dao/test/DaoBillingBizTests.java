@@ -122,8 +122,8 @@ public class DaoBillingBizTests {
 		given(system1.getConsolidatedInvoice(userId, "4", Locale.ENGLISH)).willReturn(invoice);
 
 		// WHEN
-		FilterResults<InvoiceMatch, String> findResult = service
-				.findFilteredConsolidatedInvoices(filter, null, null, null);
+		FilterResults<InvoiceMatch, String> findResult = service.findFilteredConsolidatedInvoices(filter,
+				null, null, null);
 		Invoice getResult = service.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
 
 		// THEN
@@ -141,13 +141,12 @@ public class DaoBillingBizTests {
 		filter.setUserId(userId);
 
 		// WHEN
-		FilterResults<InvoiceMatch, String> findResult = service
-				.findFilteredConsolidatedInvoices(filter, null, null, null);
+		FilterResults<InvoiceMatch, String> findResult = service.findFilteredConsolidatedInvoices(filter,
+				null, null, null);
 		Invoice getResult = service.getConsolidatedInvoice(userId, "4", Locale.ENGLISH);
 
 		// THEN
-		then(findResult.getReturnedResultCount()).as("No results without a billing system")
-				.isZero();
+		then(findResult.getReturnedResultCount()).as("No results without a billing system").isZero();
 		then(getResult).as("No invoice without a billing system").isNull();
 	}
 

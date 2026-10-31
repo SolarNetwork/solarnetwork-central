@@ -40,8 +40,8 @@ import net.solarnetwork.central.test.tenant.TestTenants;
 
 /**
  * Verify the {@link DatumMaintenanceBizSecurityContract} for
- * {@link DatumMaintenanceBiz} with the {@code DatumMaintenanceSecurityAspect} aspect
- * applied.
+ * {@link DatumMaintenanceBiz} with the {@code DatumMaintenanceSecurityAspect}
+ * aspect applied.
  *
  * @author matt
  * @version 1.0

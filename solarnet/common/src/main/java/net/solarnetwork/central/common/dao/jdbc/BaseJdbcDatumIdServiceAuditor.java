@@ -371,8 +371,8 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	}
 
 	/**
-	 * Set the parameters of the {@code serviceIncrementSql} statement, to
-	 * write a count.
+	 * Set the parameters of the {@code serviceIncrementSql} statement, to write
+	 * a count.
 	 *
 	 * <p>
 	 * This implementation sets the parameters described in

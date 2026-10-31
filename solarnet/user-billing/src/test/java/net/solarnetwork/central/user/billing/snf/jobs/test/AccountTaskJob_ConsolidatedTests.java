@@ -40,8 +40,8 @@ import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskHandler;
 import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskJob;
 
 /**
- * Test cases for the {@link AccountTaskJob} class handling consolidated
- * invoice tasks.
+ * Test cases for the {@link AccountTaskJob} class handling consolidated invoice
+ * tasks.
  *
  * @author matt
  * @version 1.0
@@ -70,8 +70,7 @@ public class AccountTaskJob_ConsolidatedTests {
 
 	@BeforeEach
 	public void setup() {
-		job = new AccountTaskJob(null, taskDao, generateInvoiceTaskHandler,
-				deliverInvoiceTaskHandler);
+		job = new AccountTaskJob(null, taskDao, generateInvoiceTaskHandler, deliverInvoiceTaskHandler);
 		job.setParallelism(1);
 		job.setMaximumWaitMs(5000L);
 	}

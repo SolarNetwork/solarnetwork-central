@@ -1480,7 +1480,6 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		}
 	}
 
-
 	private List<StreamDatum> find15MinuteStream(Long userId) throws IOException {
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
 				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);

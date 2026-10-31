@@ -132,8 +132,8 @@ public class DefaultSnfInvoicingSystem_ConsolidatedRenderTests {
 		system = new DefaultSnfInvoicingSystem(accountDao, invoiceDao, invoiceItemDao,
 				invoiceNodeUsageDao, usageDao, taxCodeDao, messageDao);
 		system.setMessageCache(messageCache);
-		system.setConsolidatedRendererResolvers(
-				List.of(htmlResolver, new HtmlToPdfSnfConsolidatedInvoiceRendererResolver(htmlResolver)));
+		system.setConsolidatedRendererResolvers(List.of(htmlResolver,
+				new HtmlToPdfSnfConsolidatedInvoiceRendererResolver(htmlResolver)));
 		system.setRendererResolvers(List.of(new VersionedMessageSourceSnfInvoiceRendererResolver(
 				"/snf/text/html/invoice", "invoice", MimeTypeUtils.TEXT_HTML, messageDao, messageCache,
 				new SimpleCache<>("TestInvoiceTemplateCache"))));
@@ -142,21 +142,19 @@ public class DefaultSnfInvoicingSystem_ConsolidatedRenderTests {
 		primaryInvoice = invoice(1L, 10L, 2001L, primaryAddress, "12.00", "1.80");
 		memberInvoice = invoice(2L, 20L, 2002L, address(2L, "Member Co"), "30.00", "4.50");
 
-		invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L, Instant.now(), START_DATE, END_DATE,
-				"NZD");
+		invoice = new SnfConsolidatedInvoice(2010L, 1L, 10L, Instant.now(), START_DATE, END_DATE, "NZD");
 		invoice.setAddress(primaryAddress);
 		invoice.setInvoices(List.of(primaryInvoice, memberInvoice));
 	}
 
 	private static Address address(Long userId, String name) {
-		return new Address(userId, name, "user%d@localhost".formatted(userId), "NZ",
-				"Pacific/Auckland");
+		return new Address(userId, name, "user%d@localhost".formatted(userId), "NZ", "Pacific/Auckland");
 	}
 
 	private static SnfInvoice invoice(Long userId, Long accountId, Long invoiceId, Address address,
 			String usage, String tax) {
-		final SnfInvoice result = new SnfInvoice(invoiceId, userId, accountId, Instant.now(),
-				START_DATE, END_DATE, "NZD");
+		final SnfInvoice result = new SnfInvoice(invoiceId, userId, accountId, Instant.now(), START_DATE,
+				END_DATE, "NZD");
 		result.setAddress(address);
 		result.setItems(new LinkedHashSet<>(List.of(
 				SnfInvoiceItem.newItem(result, InvoiceItemType.Usage, NodeUsage.DATUM_PROPS_IN_KEY,
@@ -174,14 +172,15 @@ public class DefaultSnfInvoicingSystem_ConsolidatedRenderTests {
 	 * Group the body of a consolidated invoice into pages.
 	 *
 	 * <p>
-	 * The pages are not nested in elements of their own, so the invoice styles that select
-	 * {@code body} children apply to them. Instead the summary and each account invoice start
-	 * with an empty marker element.
+	 * The pages are not nested in elements of their own, so the invoice styles
+	 * that select {@code body} children apply to them. Instead the summary and
+	 * each account invoice start with an empty marker element.
 	 * </p>
 	 *
 	 * @param doc
 	 *        the document
-	 * @return a copy of each page's elements, in an element with the ID of the page marker
+	 * @return a copy of each page's elements, in an element with the ID of the
+	 *         page marker
 	 */
 	private static List<Element> pages(Document doc) {
 		final List<Element> result = new ArrayList<>(4);

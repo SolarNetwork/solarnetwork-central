@@ -121,8 +121,8 @@ public class DbProcessStaleAuditUserTests extends AbstractJUnit5JdbcDaoTestSuppo
 				new AuditUserServiceEntity(DatumId.nodeId(TEST_USER_ID, service, ts), Aggregation.Day,
 						3));
 		CommonDbTestUtils.assertAuditUserServiceValue("Day 2 counts summed (3 + 4)", days.get(1),
-				new AuditUserServiceEntity(DatumId.nodeId(TEST_USER_ID, service, ts2),
-						Aggregation.Day, 7));
+				new AuditUserServiceEntity(DatumId.nodeId(TEST_USER_ID, service, ts2), Aggregation.Day,
+						7));
 
 		// verify stale month record created
 		List<StaleAuditUserServiceValue> finalStaleRecords = CommonDbTestUtils

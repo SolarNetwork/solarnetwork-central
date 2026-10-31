@@ -39,8 +39,8 @@ import net.solarnetwork.central.test.tenant.TestTenants;
  * The security contracts of the service APIs of an application.
  *
  * <p>
- * This verifies that an application applies its security aspects to the
- * service beans that its controllers use, by running the contracts'
+ * This verifies that an application applies its security aspects to the service
+ * beans that its controllers use, by running the contracts'
  * {@link SecurityContract#denyTests(Object)} against the beans of the
  * application context. The bean of each API is resolved by type, as it is for
  * dependency injection, so the bean designated as primary is used when there

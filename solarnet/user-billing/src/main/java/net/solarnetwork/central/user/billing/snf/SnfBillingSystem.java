@@ -489,9 +489,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 	}
 
-	private FilterResults<InvoiceMatch, String> findFilteredInvoicesWithConsolidated(
-			Account account, SnfInvoiceFilter invoiceFilter, @Nullable Long offset,
-			@Nullable Integer max) {
+	private FilterResults<InvoiceMatch, String> findFilteredInvoicesWithConsolidated(Account account,
+			SnfInvoiceFilter invoiceFilter, @Nullable Long offset, @Nullable Integer max) {
 		// both kinds of invoice are found in full and merged newest first, then paged here
 		invoiceFilter.setExcludeConsolidated(true);
 		final net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongCompositePK> invoices = invoiceDao
@@ -515,23 +514,23 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 		final int start = (offset != null ? (int) Math.min(Math.max(offset, 0L), all.size()) : 0);
 		final int end = (max != null ? Math.min(start + max, all.size()) : all.size());
-		final List<InvoiceMatch> matches = all.subList(start, end).stream()
-				.map(DatedInvoiceMatch::match).toList();
+		final List<InvoiceMatch> matches = all.subList(start, end).stream().map(DatedInvoiceMatch::match)
+				.toList();
 		return new BasicFilterResults<>(matches, (long) all.size(), start, matches.size());
 	}
 
 	private static ConsolidatedInvoiceImpl consolidatedInvoiceMatch(SnfConsolidatedInvoice invoice) {
 		final List<SnfInvoice> accountInvoices = invoice.getInvoices();
-		return new ConsolidatedInvoiceImpl(invoice, (accountInvoices != null
-				? accountInvoices.stream().map(InvoiceImpl::new).toList()
-				: List.of()));
+		return new ConsolidatedInvoiceImpl(invoice,
+				(accountInvoices != null ? accountInvoices.stream().map(InvoiceImpl::new).toList()
+						: List.of()));
 	}
 
 	/**
 	 * Get the invoice consolidation resolver.
 	 *
-	 * @return the resolver, or {@code null} if consolidated invoice previews are
-	 *         not supported
+	 * @return the resolver, or {@code null} if consolidated invoice previews
+	 *         are not supported
 	 * @since 2.5
 	 */
 	public final @Nullable InvoiceConsolidationResolver getConsolidationResolver() {
@@ -552,9 +551,9 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(
-			InvoiceFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
-			@Nullable Long offset, @Nullable Integer max) {
+	public FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(InvoiceFilter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		final Account account = accountDao.getForUser(filter.getUserId());
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
@@ -566,8 +565,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 				.findFilteredConsolidatedInvoices(consolidatedFilter, null, offset, max);
 		final List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
 				.map(SnfBillingSystem::consolidatedInvoiceMatch).collect(toList());
-		return new BasicFilterResults<>(matches, results.getTotalResults(),
-				results.getStartingOffset(), results.getReturnedResultCount());
+		return new BasicFilterResults<>(matches, results.getTotalResults(), results.getStartingOffset(),
+				results.getReturnedResultCount());
 	}
 
 	private @Nullable SnfConsolidatedInvoice getSnfConsolidatedInvoice(final Long userId,
@@ -577,11 +576,11 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	}
 
 	/**
-	 * Localize a consolidated invoice, with each account invoice localized
-	 * with its own messages, as when rendered.
+	 * Localize a consolidated invoice, with each account invoice localized with
+	 * its own messages, as when rendered.
 	 */
-	private LocalizedConsolidatedInvoice localizedConsolidatedInvoice(
-			SnfConsolidatedInvoice invoice, Locale locale) {
+	private LocalizedConsolidatedInvoice localizedConsolidatedInvoice(SnfConsolidatedInvoice invoice,
+			Locale locale) {
 		final List<SnfInvoice> accountInvoices = invoice.getInvoices();
 		final int count = (accountInvoices != null ? accountInvoices.size() : 0);
 		final List<Invoice> invoices = new ArrayList<>(count);
@@ -598,8 +597,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 						new LocalizedInvoice(accountInvoiceImpl, locale).getLocalizedAmount()));
 			}
 		}
-		return new LocalizedConsolidatedInvoice(new ConsolidatedInvoiceImpl(invoice, invoices),
-				accounts, locale);
+		return new LocalizedConsolidatedInvoice(new ConsolidatedInvoiceImpl(invoice, invoices), accounts,
+				locale);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -679,9 +678,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	 * @return the invoices of the accounts with charges, in group order, or
 	 *         {@code null} if any account preview is not completed
 	 */
-	private static @Nullable List<SnfInvoice> completedGroupInvoices(
-			SnfInvoicePreviewService service, InvoiceConsolidationGroup group,
-			SnfInvoicePreviewKey key) {
+	private static @Nullable List<SnfInvoice> completedGroupInvoices(SnfInvoicePreviewService service,
+			InvoiceConsolidationGroup group, SnfInvoicePreviewKey key) {
 		final List<SnfInvoice> result = new ArrayList<>(group.userIds().size());
 		for ( Long memberUserId : group.userIds() ) {
 			final SnfInvoicePreview completed = service.completedAccountPreview(
@@ -707,8 +705,7 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	 */
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
-			Long userId,
+	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			Locale locale) {
 		final SnfInvoicePreviewService service = this.previewService;
@@ -748,8 +745,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 		final InvoicePreviewState state = InvoicePreviewState.combined(states);
 		Invoice invoice = null;
 		if ( state == InvoicePreviewState.Done ) {
-			final SnfConsolidatedInvoice consolidated = invoicingSystem
-					.previewConsolidatedInvoice(group, key.month(), invoices);
+			final SnfConsolidatedInvoice consolidated = invoicingSystem.previewConsolidatedInvoice(group,
+					key.month(), invoices);
 			if ( consolidated != null ) {
 				invoice = localizedConsolidatedInvoice(consolidated, locale);
 			}
@@ -763,8 +760,8 @@ public class SnfBillingSystem implements BillingSystem, BillingSystemRegistrar {
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @return the group, or {@code null} if the user is not the primary
-	 *         account of a valid group
+	 * @return the group, or {@code null} if the user is not the primary account
+	 *         of a valid group
 	 */
 	private @Nullable SnfInvoicePreviewGroup previewGroup(Long userId) {
 		final Cache<Long, SnfInvoicePreviewGroup> cache = this.previewGroupCache;

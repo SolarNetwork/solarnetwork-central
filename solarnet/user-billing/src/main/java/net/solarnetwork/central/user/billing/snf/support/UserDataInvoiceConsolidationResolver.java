@@ -54,24 +54,18 @@ import net.solarnetwork.central.user.domain.UserFilterMatch;
  * data of the primary account users.
  *
  * <p>
- * A group is configured in the internal data of its primary account user, as
- * an {@code invoiceConsolidation} object whose {@code userIds} array lists the
+ * A group is configured in the internal data of its primary account user, as an
+ * {@code invoiceConsolidation} object whose {@code userIds} array lists the
  * other users in the group, in the order they are to be listed in a
  * consolidated invoice. For example:
  * </p>
  *
- * <pre>{@code
- * {
- *   "accounting": "snf",
- *   "invoiceConsolidation": {
- *     "userIds": [456, 789]
- *   }
- * }
- * }</pre>
+ * <pre>{@code { "accounting": "snf", "invoiceConsolidation": { "userIds": [456,
+ * 789] } } }</pre>
  *
  * <p>
- * The optional {@code deliverMemberInvoices} property can be set to
- * {@code true} to also deliver each of the other users their own invoice. A
+ * The optional {@code deliverMemberInvoices} property can be set to {@code
+ * true} to also deliver each of the other users their own invoice. A
  * configuration that lists no other users is not a group.
  * </p>
  *
@@ -85,12 +79,11 @@ import net.solarnetwork.central.user.domain.UserFilterMatch;
  * The problem of an invalid group is one of the {@code PROBLEM_} message codes
  * of this class, with its message arguments. The messages are in the
  * {@code UserDataInvoiceConsolidationResolver} resource bundle of this class,
- * and the default message of each problem is the base message of the bundle,
- * so a message source without the bundle still resolves it.
+ * and the default message of each problem is the base message of the bundle, so
+ * a message source without the bundle still resolves it.
  * </p>
  *
- * @author matt
- * @version 1.0
+ * @author matt @version 1.0
  */
 public class UserDataInvoiceConsolidationResolver implements InvoiceConsolidationResolver {
 
@@ -118,7 +111,9 @@ public class UserDataInvoiceConsolidationResolver implements InvoiceConsolidatio
 	 */
 	public static final String PROBLEM_NESTED_GROUPS = "error.consolidated.nestedGroups";
 
-	/** The problem message code for a listed user that has a group of its own. */
+	/**
+	 * The problem message code for a listed user that has a group of its own.
+	 */
 	public static final String PROBLEM_CHILD_HAS_CHILDREN = "error.consolidated.childHasChildren";
 
 	/** The problem message code for a user not using the billing system. */
@@ -180,8 +175,7 @@ public class UserDataInvoiceConsolidationResolver implements InvoiceConsolidatio
 			return null;
 		}
 		final List<UserFilterMatch> listedBy = usersListing(userId);
-		Config config = parseConfig(userId,
-				user.getInternalDataValue(INVOICE_CONSOLIDATION_DATA_PROP));
+		Config config = parseConfig(userId, user.getInternalDataValue(INVOICE_CONSOLIDATION_DATA_PROP));
 		if ( config != null ) {
 			// the user is the primary account of a group
 			if ( config.problem == null && !listedBy.isEmpty() ) {
@@ -198,8 +192,7 @@ public class UserDataInvoiceConsolidationResolver implements InvoiceConsolidatio
 				return null;
 			}
 			if ( config.problem == null && listedBy.size() > 1 ) {
-				config.problem = problem(PROBLEM_CHILD_IN_MULTIPLE_PARENTS, userId,
-						userIds(listedBy));
+				config.problem = problem(PROBLEM_CHILD_IN_MULTIPLE_PARENTS, userId, userIds(listedBy));
 			}
 		}
 		if ( config.problem == null ) {

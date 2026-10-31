@@ -54,8 +54,8 @@ public class AccountController {
 	 * @param userAccountBiz
 	 *        the user account biz
 	 * @param messageSource
-	 *        the message source to resolve the invoice consolidation problem
-	 *        of the account with
+	 *        the message source to resolve the invoice consolidation problem of
+	 *        the account with
 	 * @throws IllegalArgumentException
 	 *         if {@code messageSource} is {@code null}
 	 */

@@ -57,15 +57,14 @@ import net.solarnetwork.util.ObjectUtils;
  *
  * <p>
  * An optional handshake semaphore can be configured to limit how many
- * handshakes are processed at once. Handshakes verify charger credentials
- * with a CPU-expensive password encoder, so when many chargers connect at
- * once, processing them all concurrently can starve the CPU until every
- * handshake takes longer than the chargers will wait. With a semaphore, a
- * handshake that cannot acquire a permit within the configured
- * {@code handshakeAcquireTimeout} is rejected with a
- * {@link HttpStatus#SERVICE_UNAVAILABLE} status, so the charger retries later.
- * The semaphore can be shared between interceptors, to apply one limit to all
- * of them.
+ * handshakes are processed at once. Handshakes verify charger credentials with
+ * a CPU-expensive password encoder, so when many chargers connect at once,
+ * processing them all concurrently can starve the CPU until every handshake
+ * takes longer than the chargers will wait. With a semaphore, a handshake that
+ * cannot acquire a permit within the configured {@code handshakeAcquireTimeout}
+ * is rejected with a {@link HttpStatus#SERVICE_UNAVAILABLE} status, so the
+ * charger retries later. The semaphore can be shared between interceptors, to
+ * apply one limit to all of them.
  * </p>
  *
  * @author matt

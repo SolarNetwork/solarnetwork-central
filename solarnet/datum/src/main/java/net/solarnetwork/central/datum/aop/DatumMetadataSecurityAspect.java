@@ -171,8 +171,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 */
 	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "findMetadata(filter)", argNames = "pjp,filter")
-	public Object readMetadataAccessCheck(ProceedingJoinPoint pjp,
-			GeneralNodeDatumMetadataFilter filter) throws Throwable {
+	public Object readMetadataAccessCheck(ProceedingJoinPoint pjp, GeneralNodeDatumMetadataFilter filter)
+			throws Throwable {
 		final Long[] nodeIds = (filter != null ? filter.getNodeIds() : null);
 		if ( nodeIds == null || nodeIds.length < 1 ) {
 			log.warn("Access DENIED to unspecified nodes");
@@ -269,9 +269,9 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * Check access to reading datum metadata.
 	 *
 	 * <p>
-	 * Location stream searches do not require any access. Node stream
-	 * searches, including those within a location, require read access to
-	 * every node and user in the filter, and at least one of either.
+	 * Location stream searches do not require any access. Node stream searches,
+	 * including those within a location, require read access to every node and
+	 * user in the filter, and at least one of either.
 	 * </p>
 	 *
 	 * @param pjp

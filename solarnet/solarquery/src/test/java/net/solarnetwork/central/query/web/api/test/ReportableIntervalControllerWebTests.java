@@ -118,9 +118,8 @@ public class ReportableIntervalControllerWebTests extends AbstractJUnit5CentralT
 		// GIVEN
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
-		final String policyJson = getJSONString(BasicSecurityPolicy.builder()
-				.withNodeIds(Set.of(nodeId)).withSourceIds(Set.of(sourceIds.getFirst())).build(),
-				null);
+		final String policyJson = getJSONString(BasicSecurityPolicy.builder().withNodeIds(Set.of(nodeId))
+				.withSourceIds(Set.of(sourceIds.getFirst())).build(), null);
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(), policyJson);
 

@@ -56,8 +56,8 @@ import net.solarnetwork.service.CertificateService;
  * contract, or has been reviewed as not needing one.
  *
  * <p>
- * The profiles of all optional features are active, so the controllers of
- * every feature are verified.
+ * The profiles of all optional features are active, so the controllers of every
+ * feature are verified.
  * </p>
  *
  * @author matt

@@ -88,8 +88,7 @@ public interface GnucashDao {
 	 * Get an account by its full name.
 	 *
 	 * @param path
-	 *        the full account name, such as
-	 *        {@code Assets:Accounts Receivable}
+	 *        the full account name, such as {@code Assets:Accounts Receivable}
 	 * @return the account, or {@code null} if not found
 	 */
 	@Nullable
@@ -147,8 +146,7 @@ public interface GnucashDao {
 	GncTaxTable taxTableForGuid(String guid);
 
 	/**
-	 * Get the hidden copies GnuCash made of a tax table when posting
-	 * invoices.
+	 * Get the hidden copies GnuCash made of a tax table when posting invoices.
 	 *
 	 * @param parentGuid
 	 *        the GUID of the copied tax table
@@ -248,10 +246,10 @@ public interface GnucashDao {
 	 * Get the open lots that hold credit for a customer in an account.
 	 *
 	 * <p>
-	 * These are lots with a negative balance that either hold a payment made
-	 * by the customer, or belong to one of the customer's business documents,
-	 * such as a credit note. The splits are loaded only for payment lots. The
-	 * lots are ordered by the post date of their earliest transaction.
+	 * These are lots with a negative balance that either hold a payment made by
+	 * the customer, or belong to one of the customer's business documents, such
+	 * as a credit note. The splits are loaded only for payment lots. The lots
+	 * are ordered by the post date of their earliest transaction.
 	 * </p>
 	 *
 	 * @param ownerGuid

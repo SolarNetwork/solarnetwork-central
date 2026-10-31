@@ -43,9 +43,9 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * Implementation of {@link Invoice} for a consolidated invoice.
  *
  * <p>
- * The amounts are the sums of those of the account invoices, and the items
- * are all the items of the account invoices, so the tax items of all accounts
- * can be totalled together.
+ * The amounts are the sums of those of the account invoices, and the items are
+ * all the items of the account invoices, so the tax items of all accounts can
+ * be totalled together.
  * </p>
  *
  * @author matt

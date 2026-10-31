@@ -141,8 +141,7 @@ public class UserCloudIntegrationsControlsControllerWebTests
 
 	private CloudControlConfiguration createControl(Long userId, Long integrationId, Long nodeId) {
 		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
-				clock.instant(), randomString(), randomString(), integrationId, nodeId,
-				randomString());
+				clock.instant(), randomString(), randomString(), integrationId, nodeId, randomString());
 		conf.setModified(conf.getCreated());
 		conf.setControlReference(randomString());
 		conf.setEnabled(true);
@@ -431,7 +430,6 @@ public class UserCloudIntegrationsControlsControllerWebTests
 			;
 		// @formatter:on
 	}
-
 
 	@Test
 	public void listControls_asRestrictedToken_nodeIdsInPolicy() throws Exception {

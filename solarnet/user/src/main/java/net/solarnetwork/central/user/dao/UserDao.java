@@ -123,9 +123,8 @@ public interface UserDao
 	 * Lock a user until the end of the current transaction.
 	 *
 	 * <p>
-	 * Use this to serialize changes that read and then update the internal
-	 * data of a user: other transactions that lock the same user wait for the
-	 * lock.
+	 * Use this to serialize changes that read and then update the internal data
+	 * of a user: other transactions that lock the same user wait for the lock.
 	 * </p>
 	 *
 	 * @param userId

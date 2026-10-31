@@ -84,8 +84,7 @@ public abstract class VersionedMessageSourceSupport {
 	public VersionedMessageSourceSupport(String bundleName, String rootTemplateName, MimeType mimeType,
 			VersionedMessageDao messageDao, Cache<String, VersionedMessages> messageCache,
 			Cache<String, ST4TemplateRenderer> templateCache) {
-		this(bundleName, List.of(), rootTemplateName, mimeType, messageDao, messageCache,
-				templateCache);
+		this(bundleName, List.of(), rootTemplateName, mimeType, messageDao, messageCache, templateCache);
 	}
 
 	/**
@@ -178,8 +177,7 @@ public abstract class VersionedMessageSourceSupport {
 		final String templateCacheKey = templateVersion.toString();
 		ST4TemplateRenderer renderer = templateCache.get(templateCacheKey);
 		if ( renderer == null ) {
-			MessageSourceGroup group = new MessageSourceGroup(bundleNames[0], messageSource, '$',
-					'$');
+			MessageSourceGroup group = new MessageSourceGroup(bundleNames[0], messageSource, '$', '$');
 			for ( MessageSourceGroup importedGroup : importedGroups ) {
 				group.importTemplates(importedGroup);
 			}

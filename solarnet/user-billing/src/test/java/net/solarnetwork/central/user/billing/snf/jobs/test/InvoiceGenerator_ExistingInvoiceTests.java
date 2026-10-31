@@ -88,15 +88,15 @@ public class InvoiceGenerator_ExistingInvoiceTests {
 		given(accountDao.getForAccountId(ACCOUNT_ID)).willReturn(account);
 
 		// a duplicate task for the same month already generated the invoice
-		final SnfInvoice existing = new SnfInvoice(INVOICE_ID, USER_ID, ACCOUNT_ID, Instant.now(),
-				date, date.plusMonths(1), "NZD");
+		final SnfInvoice existing = new SnfInvoice(INVOICE_ID, USER_ID, ACCOUNT_ID, Instant.now(), date,
+				date.plusMonths(1), "NZD");
 		given(invoicingSystem.findInvoiceForPeriod(account.id(), date, date.plusMonths(1)))
 				.willReturn(existing);
 
 		// WHEN
-		boolean result = generator.handleTask(AccountTask.newTask(
-				date.atStartOfDay(account.getTimeZone()).toInstant(), AccountTaskType.GenerateInvoice,
-				ACCOUNT_ID));
+		boolean result = generator
+				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
+						AccountTaskType.GenerateInvoice, ACCOUNT_ID));
 
 		// THEN
 		// @formatter:off

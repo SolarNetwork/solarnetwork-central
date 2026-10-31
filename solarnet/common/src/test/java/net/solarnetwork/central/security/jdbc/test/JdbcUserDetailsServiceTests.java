@@ -202,7 +202,6 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 		// @formatter:on
 	}
 
-
 	@Test
 	public void matchingToken_unparsablePolicy() {
 		// GIVEN
@@ -216,8 +215,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 					(auth_token,user_id,auth_secret,status,token_type,jpolicy)
 				VALUES (?,?,?,?::solaruser.user_auth_token_status
 					,?::solaruser.user_auth_token_type,?::json)
-				""", TEST_TOKEN, userId, TEST_TOKEN_PASSWORD, "Active", "User",
-				"\"not an object\"");
+				""", TEST_TOKEN, userId, TEST_TOKEN_PASSWORD, "Active", "User", "\"not an object\"");
 
 		// THEN
 		// @formatter:off

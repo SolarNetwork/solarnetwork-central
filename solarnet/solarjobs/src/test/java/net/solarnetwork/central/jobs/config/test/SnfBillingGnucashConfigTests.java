@@ -128,9 +128,8 @@ public class SnfBillingGnucashConfigTests {
 
 	@Test
 	public void notActive() {
-		runner.withInitializer(
-				ctx -> ctx.getEnvironment().setActiveProfiles("snf-billing")).run(ctx -> {
-					// @formatter:off
+		runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("snf-billing")).run(ctx -> {
+			// @formatter:off
 					then(ctx)
 						.as("Nothing configured without the GnuCash profile")
 						.doesNotHaveBean(GnucashDao.class)
@@ -138,7 +137,7 @@ public class SnfBillingGnucashConfigTests {
 						.doesNotHaveBean(PaymentAccountingSyncer.class)
 						;
 					// @formatter:on
-				});
+		});
 	}
 
 	@Test
@@ -149,7 +148,7 @@ public class SnfBillingGnucashConfigTests {
 						"app.billing.gnucash.currencies.NZD.payment-account=Assets:Bank",
 						"app.billing.gnucash.due-period=P2M")
 				.run(ctx -> {
-					// @formatter:off
+				// @formatter:off
 					then(ctx)
 						.as("Accounting beans configured")
 						.hasSingleBean(GnucashDao.class)
@@ -186,7 +185,7 @@ public class SnfBillingGnucashConfigTests {
 						"app.datasource-gnucash.hikari.minimum-idle=0")
 				.run(ctx -> {
 					final String url = ctx.getEnvironment().getRequiredProperty("gnucash.test.url");
-					// @formatter:off
+				// @formatter:off
 					then(ctx)
 						.as("GnuCash database configured")
 						.hasBean("gnucashDataSource")

@@ -106,8 +106,8 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	/**
-	 * Store a task with a token, as created from a token authenticated SolarUser
-	 * API request.
+	 * Store a task with a token, as created from a token authenticated
+	 * SolarUser API request.
 	 */
 	@Test
 	public void storeNew_withToken() {

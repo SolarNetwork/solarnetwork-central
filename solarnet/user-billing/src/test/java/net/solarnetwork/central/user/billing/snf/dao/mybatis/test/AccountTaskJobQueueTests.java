@@ -102,9 +102,10 @@ public class AccountTaskJobQueueTests extends AbstractMyBatisDaoTestSupport {
 
 	private Instant execAt(AccountTask task) {
 		getSqlSessionTemplate().flushStatements();
-		return jdbcTemplate.queryForObject(
-				"SELECT exec_at FROM solarbill.bill_account_task WHERE id = ?", Timestamp.class,
-				task.getId()).toInstant();
+		return jdbcTemplate
+				.queryForObject("SELECT exec_at FROM solarbill.bill_account_task WHERE id = ?",
+						Timestamp.class, task.getId())
+				.toInstant();
 	}
 
 	private AccountTask saveTask(AccountTaskType type, Instant created) {

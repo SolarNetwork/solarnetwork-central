@@ -100,8 +100,8 @@ public class SnfBillingConfig {
 	@Qualifier(SNF_INVOICE_PREVIEW)
 	public Cache<SnfInvoicePreviewKey, SnfInvoicePreview> snfInvoicePreviewCache(
 			@Qualifier(SNF_INVOICE_PREVIEW) CacheSettings settings) {
-		return settings.createCache(cacheManager, SnfInvoicePreviewKey.class,
-				SnfInvoicePreview.class, SNF_INVOICE_PREVIEW);
+		return settings.createCache(cacheManager, SnfInvoicePreviewKey.class, SnfInvoicePreview.class,
+				SNF_INVOICE_PREVIEW);
 	}
 
 	/**

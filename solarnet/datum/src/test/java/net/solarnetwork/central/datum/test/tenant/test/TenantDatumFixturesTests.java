@@ -128,8 +128,8 @@ public class TenantDatumFixturesTests extends AbstractJUnit5JdbcDaoTestSupport {
 		TenantDatumFixtures.insertDatumAuxiliary(jdbcTemplate, tenants.a(), DEFAULT_START, 2);
 
 		// THEN
-		final List<DatumAuxiliary> auxiliaries = DatumDbUtils.listDatumAuxiliary(jdbcTemplate)
-				.stream().filter(d -> streamIds.contains(d.getStreamId())).toList();
+		final List<DatumAuxiliary> auxiliaries = DatumDbUtils.listDatumAuxiliary(jdbcTemplate).stream()
+				.filter(d -> streamIds.contains(d.getStreamId())).toList();
 		// @formatter:off
 		then(auxiliaries)
 			.as("Auxiliary datum inserted for every stream")

@@ -68,16 +68,16 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * <p>
  * The stale row time stamps are local midnight in the stream time zone, so a
  * daily rollup window must be one day long <i>in that zone</i>. These tests pin
- * the audit rows to a daylight saving transition day in {@link #TEST_TZ}, where a
- * local day is not 24 hours long, and force the JDBC session time zone to UTC so
- * it differs from the stream time zone.
+ * the audit rows to a daylight saving transition day in {@link #TEST_TZ}, where
+ * a local day is not 24 hours long, and force the JDBC session time zone to UTC
+ * so it differs from the stream time zone.
  * </p>
  *
  * <p>
- * Note the stream time zone is resolved from the node's location rather than from
- * the stream metadata, so these tests need a node in {@link #TEST_TZ}; the other
- * tests in this package use streams on nodes that do not exist, which resolve to
- * UTC and so never see a transition.
+ * Note the stream time zone is resolved from the node's location rather than
+ * from the stream metadata, so these tests need a node in {@link #TEST_TZ}; the
+ * other tests in this package use streams on nodes that do not exist, which
+ * resolve to UTC and so never see a transition.
  * </p>
  *
  * @author matt
@@ -122,8 +122,8 @@ public class DbProcessStaleAuditDatumDailyDstTests extends BaseDatumJdbcTestSupp
 	 */
 	private UUID setupTestStreamOnTestZoneNode() {
 		setupTestNode();
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata
-				.emptyMeta(UUID.randomUUID(), TEST_TZ, Node, TEST_NODE_ID, "a");
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				TEST_TZ, Node, TEST_NODE_ID, "a");
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		jdbcTemplate.queryForObject("SELECT set_config('TimeZone', ?, TRUE)", String.class, "UTC");
 		return meta.getStreamId();
@@ -131,8 +131,8 @@ public class DbProcessStaleAuditDatumDailyDstTests extends BaseDatumJdbcTestSupp
 
 	/**
 	 * Verify the premise of these tests: the given local day is not 24 hours
-	 * long, the stream resolves to the node time zone, and the session time zone
-	 * differs from it.
+	 * long, the stream resolves to the node time zone, and the session time
+	 * zone differs from it.
 	 *
 	 * @param streamId
 	 *        the stream ID under test

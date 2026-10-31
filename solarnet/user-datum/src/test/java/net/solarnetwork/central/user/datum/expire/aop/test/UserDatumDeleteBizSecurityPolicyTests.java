@@ -85,9 +85,8 @@ public class UserDatumDeleteBizSecurityPolicyTests extends AbstractJUnit5JdbcDao
 					DATUM_COUNT);
 		}
 		final DaoUserDatumDeleteBiz dao = new DaoUserDatumDeleteBiz(Instant::now,
-				mock(UserEventAppenderBiz.class), mock(AsyncTaskExecutor.class),
-				mock(UserNodeDao.class), new JdbcDatumEntityDao(jdbcTemplate),
-				mock(UserDatumDeleteJobInfoDao.class));
+				mock(UserEventAppenderBiz.class), mock(AsyncTaskExecutor.class), mock(UserNodeDao.class),
+				new JdbcDatumEntityDao(jdbcTemplate), mock(UserDatumDeleteJobInfoDao.class));
 		biz = securedProxy((UserDatumDeleteBiz) dao,
 				new UserExpireSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate))).proxy();
 	}

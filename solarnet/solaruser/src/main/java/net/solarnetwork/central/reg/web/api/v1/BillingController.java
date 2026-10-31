@@ -203,8 +203,7 @@ public class BillingController {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
 		MediaType outputType = outputType(accept);
-		return resourceResponse(biz.renderInvoice(userId, invoiceId, outputType, locale),
-				outputType);
+		return resourceResponse(biz.renderInvoice(userId, invoiceId, outputType, locale), outputType);
 	}
 
 	/**
@@ -474,8 +473,8 @@ public class BillingController {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
 		MediaType outputType = outputType(accept);
-		return resourceResponse(
-				biz.renderConsolidatedInvoice(userId, invoiceId, outputType, locale), outputType);
+		return resourceResponse(biz.renderConsolidatedInvoice(userId, invoiceId, outputType, locale),
+				outputType);
 	}
 
 	/**
@@ -492,16 +491,15 @@ public class BillingController {
 	 * @since 2.3
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/consolidated-invoices/{invoiceId}/render/pdf",
-			method = RequestMethod.GET)
+	@RequestMapping(value = "/consolidated-invoices/{invoiceId}/render/pdf", method = RequestMethod.GET)
 	public ResponseEntity<Resource> renderPdfConsolidatedInvoice(@PathVariable String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		return renderConsolidatedInvoice(invoiceId, "application/pdf", userId, locale);
 	}
 
 	/**
-	 * Preview the current billing cycle's consolidated invoice, for the
-	 * invoice consolidation group of a primary account.
+	 * Preview the current billing cycle's consolidated invoice, for the invoice
+	 * consolidation group of a primary account.
 	 *
 	 * @param userId
 	 *        the optional user ID of the primary account; if not provided the
@@ -570,10 +568,11 @@ public class BillingController {
 		ConsolidatedInvoicePreviewStatus result = biz.getPreviewConsolidatedInvoiceStatus(userId,
 				new BasicInvoiceGenerationOptions(month(month), useCredit), locale);
 		final Invoice invoice = (result != null ? result.invoice() : null);
-		return success(result != null && invoice != null
-				? new ConsolidatedInvoicePreviewStatus(result.state(), result.accounts(),
-						localized(invoice, locale))
-				: result);
+		return success(
+				result != null && invoice != null
+						? new ConsolidatedInvoicePreviewStatus(result.state(), result.accounts(),
+								localized(invoice, locale))
+						: result);
 	}
 
 	/**
@@ -606,8 +605,9 @@ public class BillingController {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
 		MediaType outputType = outputType(accept);
-		return resourceResponse(biz.previewConsolidatedInvoice(userId,
-				new BasicInvoiceGenerationOptions(month(month), useCredit), outputType, locale),
+		return resourceResponse(
+				biz.previewConsolidatedInvoice(userId,
+						new BasicInvoiceGenerationOptions(month(month), useCredit), outputType, locale),
 				outputType);
 	}
 
@@ -629,14 +629,12 @@ public class BillingController {
 	 * @since 2.3
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/consolidated-invoices/preview/render/pdf",
-			method = RequestMethod.GET)
+	@RequestMapping(value = "/consolidated-invoices/preview/render/pdf", method = RequestMethod.GET)
 	public ResponseEntity<Resource> renderPreviewConsolidatedInvoicePdf(
 			@RequestParam(value = "userId", required = false) Long userId,
 			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
-		return renderPreviewConsolidatedInvoice("application/pdf", userId, month, useCredit,
-				locale);
+		return renderPreviewConsolidatedInvoice("application/pdf", userId, month, useCredit, locale);
 	}
 
 }

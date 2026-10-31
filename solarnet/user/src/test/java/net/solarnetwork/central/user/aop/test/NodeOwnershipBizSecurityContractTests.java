@@ -41,8 +41,8 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 
 /**
- * Verify the {@link NodeOwnershipBizSecurityContract} for {@link
- * NodeOwnershipBiz} with the {@code NodeOwnershipSecurityAspect} aspect
+ * Verify the {@link NodeOwnershipBizSecurityContract} for
+ * {@link NodeOwnershipBiz} with the {@code NodeOwnershipSecurityAspect} aspect
  * applied.
  *
  * @author matt
@@ -58,8 +58,7 @@ public class NodeOwnershipBizSecurityContractTests {
 		final UserNodeDao userNodeDao = mock(UserNodeDao.class);
 		return securedProxy((NodeOwnershipBiz) mock(DaoUserBiz.class),
 				new NodeOwnershipSecurityAspect(tenants.ownershipDao(), userDao, userNodeDao))
-				.withMock(UserDao.class, userDao)
-				.withMock(UserNodeDao.class, userNodeDao);
+						.withMock(UserDao.class, userDao).withMock(UserNodeDao.class, userNodeDao);
 	}
 
 	@TestFactory

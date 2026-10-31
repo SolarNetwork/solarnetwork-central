@@ -53,8 +53,8 @@ public class AspectPointcutsTests {
 	@Test
 	public void allMatched_securable() {
 		// WHEN
-		final List<String> result = AspectPointcuts
-				.unmatchedPointcuts(ToySecurableSecurityAspect.class, DaoToyBiz.class);
+		final List<String> result = AspectPointcuts.unmatchedPointcuts(ToySecurableSecurityAspect.class,
+				DaoToyBiz.class);
 
 		// THEN
 		// @formatter:off

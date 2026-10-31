@@ -83,8 +83,7 @@ public class InstructorBizSecurityPolicyTests extends AbstractMyBatisDaoTestSupp
 		final MyBatisNodeInstructionDao dao = new MyBatisNodeInstructionDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 		biz = securedProxy((InstructorBiz) new DaoInstructorBiz(dao),
-				new InstructorSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate), dao))
-				.proxy();
+				new InstructorSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate), dao)).proxy();
 	}
 
 	private Long queued(Long nodeId) {

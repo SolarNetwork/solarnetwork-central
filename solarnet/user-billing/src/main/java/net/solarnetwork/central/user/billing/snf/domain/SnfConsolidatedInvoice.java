@@ -48,15 +48,15 @@ import net.solarnetwork.domain.Differentiable;
  * A consolidated invoice groups the invoices of a set of linked accounts for
  * one period, and is billed to one of them: the primary account. It has no
  * items of its own. Its user ID and account ID are those of the primary
- * account, and its invoice ID comes from the same sequence as account
- * invoices, so its invoice number is unique among all invoices.
+ * account, and its invoice ID comes from the same sequence as account invoices,
+ * so its invoice number is unique among all invoices.
  * </p>
  *
  * <p>
  * The {@code invoiceIds} property holds the IDs of the account invoices that
- * make up the consolidated invoice, in invoice ID order. The
- * {@code invoices} property can hold the account invoices themselves, when
- * they have been loaded.
+ * make up the consolidated invoice, in invoice ID order. The {@code invoices}
+ * property can hold the account invoices themselves, when they have been
+ * loaded.
  * </p>
  *
  * @author matt
@@ -153,8 +153,7 @@ public class SnfConsolidatedInvoice extends BasicEntity<UserLongCompositePK>
 	 */
 	public SnfConsolidatedInvoice(Long id, Long userId, Long accountId, Instant created,
 			LocalDate startDate, LocalDate endDate, String currencyCode) {
-		this(new UserLongCompositePK(userId, id), accountId, created, startDate, endDate,
-				currencyCode);
+		this(new UserLongCompositePK(userId, id), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	@Override
@@ -190,8 +189,7 @@ public class SnfConsolidatedInvoice extends BasicEntity<UserLongCompositePK>
 		BigDecimal result = BigDecimal.ZERO;
 		final List<SnfInvoice> invoices = getInvoices();
 		if ( invoices != null ) {
-			result = invoices.stream().map(SnfInvoice::getTotalAmount).reduce(result,
-					BigDecimal::add);
+			result = invoices.stream().map(SnfInvoice::getTotalAmount).reduce(result, BigDecimal::add);
 		}
 		return result;
 	}

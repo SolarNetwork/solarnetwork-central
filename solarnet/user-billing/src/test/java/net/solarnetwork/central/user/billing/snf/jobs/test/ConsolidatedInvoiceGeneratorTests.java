@@ -100,8 +100,8 @@ public class ConsolidatedInvoiceGeneratorTests {
 				consolidationResolver);
 
 		primary = new Account(PRIMARY_ACCOUNT_ID, PRIMARY_USER_ID, Instant.now(), "NZD", "en-NZ");
-		primary.setAddress(new Address(PRIMARY_USER_ID, "Primary", "primary@localhost", "NZ",
-				"Pacific/Auckland"));
+		primary.setAddress(
+				new Address(PRIMARY_USER_ID, "Primary", "primary@localhost", "NZ", "Pacific/Auckland"));
 	}
 
 	private static AccountTask task() {
@@ -112,8 +112,8 @@ public class ConsolidatedInvoiceGeneratorTests {
 	private static SnfConsolidatedInvoice consolidatedInvoice() {
 		SnfInvoice primaryInvoice = new SnfInvoice(100L, PRIMARY_USER_ID, PRIMARY_ACCOUNT_ID,
 				Instant.now(), START_DATE, END_DATE, "NZD");
-		SnfInvoice memberInvoice = new SnfInvoice(101L, MEMBER_USER_ID, MEMBER_ACCOUNT_ID,
-				Instant.now(), START_DATE, END_DATE, "NZD");
+		SnfInvoice memberInvoice = new SnfInvoice(101L, MEMBER_USER_ID, MEMBER_ACCOUNT_ID, Instant.now(),
+				START_DATE, END_DATE, "NZD");
 		SnfConsolidatedInvoice invoice = new SnfConsolidatedInvoice(200L, PRIMARY_USER_ID,
 				PRIMARY_ACCOUNT_ID, Instant.now(), START_DATE, END_DATE, "NZD");
 		invoice.setInvoices(List.of(primaryInvoice, memberInvoice));
@@ -252,8 +252,8 @@ public class ConsolidatedInvoiceGeneratorTests {
 	public void generate_noLongerPrimary() {
 		// GIVEN
 		given(accountDao.getForAccountId(PRIMARY_ACCOUNT_ID)).willReturn(primary);
-		given(consolidationResolver.groupForUser(PRIMARY_USER_ID)).willReturn(
-				new InvoiceConsolidationGroup(3L, List.of(3L, PRIMARY_USER_ID), false));
+		given(consolidationResolver.groupForUser(PRIMARY_USER_ID))
+				.willReturn(new InvoiceConsolidationGroup(3L, List.of(3L, PRIMARY_USER_ID), false));
 
 		// WHEN
 		boolean result = generator.handleTask(task());

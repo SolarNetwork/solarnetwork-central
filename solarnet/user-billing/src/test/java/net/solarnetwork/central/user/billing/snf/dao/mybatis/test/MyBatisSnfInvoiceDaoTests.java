@@ -499,8 +499,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		final Account account = accountDao
 				.get(new UserLongCompositePK(last.getUserId(), last.getAccountId()));
 		final LocalDate month = last.getStartDate().plusMonths(1);
-		createInvoiceWithCreditGrant(account, last.getAddress(), "NZD", month,
-				new BigDecimal("-4.56"));
+		createInvoiceWithCreditGrant(account, last.getAddress(), "NZD", month, new BigDecimal("-4.56"));
 
 		// WHEN
 		final SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
@@ -800,12 +799,14 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	private Long insertConsolidatedInvoice(Account primary, LocalDate startDate,
 			SnfInvoice... invoices) {
 		getSqlSessionTemplate().flushStatements();
-		final Long id = jdbcTemplate.queryForObject("""
-				INSERT INTO solarbill.bill_consol_invoice (acct_id, addr_id, date_start, date_end, currency)
-				VALUES (?, ?, ?, ?, ?)
-				RETURNING id
-				""", Long.class, primary.getAccountId(), primary.getAddress().getAddressId(),
-				startDate, startDate.plusMonths(1), primary.getCurrencyCode());
+		final Long id = jdbcTemplate.queryForObject(
+				"""
+						INSERT INTO solarbill.bill_consol_invoice (acct_id, addr_id, date_start, date_end, currency)
+						VALUES (?, ?, ?, ?, ?)
+						RETURNING id
+						""",
+				Long.class, primary.getAccountId(), primary.getAddress().getAddressId(), startDate,
+				startDate.plusMonths(1), primary.getCurrencyCode());
 		for ( SnfInvoice invoice : invoices ) {
 			jdbcTemplate.update(
 					"INSERT INTO solarbill.bill_consol_invoice_member (consol_id, inv_id) VALUES (?, ?)",
@@ -856,14 +857,14 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		filter.setExcludeConsolidated(true);
 
 		// WHEN
-		final FilterResults<SnfInvoice, UserLongCompositePK> all = dao.findFiltered(filter, null,
-				null, null);
-		final FilterResults<SnfInvoice, UserLongCompositePK> page = dao.findFiltered(filter, null,
-				0L, 10);
+		final FilterResults<SnfInvoice, UserLongCompositePK> all = dao.findFiltered(filter, null, null,
+				null);
+		final FilterResults<SnfInvoice, UserLongCompositePK> page = dao.findFiltered(filter, null, 0L,
+				10);
 
 		// THEN
-		final List<Long> expected = List.of(others.get(2).getInvoiceId(),
-				others.get(0).getInvoiceId(), last.getInvoiceId());
+		final List<Long> expected = List.of(others.get(2).getInvoiceId(), others.get(0).getInvoiceId(),
+				last.getInvoiceId());
 		// @formatter:off
 		then(all.getResults())
 			.as("Invoice that is part of a consolidated invoice left out, newest first")

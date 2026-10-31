@@ -133,8 +133,7 @@ public final class ApiMethods {
 		}
 		final Method result = invoked.get();
 		if ( result == null ) {
-			throw new IllegalArgumentException(
-					"No %s method invoked.".formatted(api.getSimpleName()));
+			throw new IllegalArgumentException("No %s method invoked.".formatted(api.getSimpleName()));
 		}
 		return result;
 	}

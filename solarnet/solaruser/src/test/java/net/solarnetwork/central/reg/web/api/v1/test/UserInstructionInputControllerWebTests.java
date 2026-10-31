@@ -69,8 +69,7 @@ import net.solarnetwork.central.user.inin.domain.EndpointConfigurationInput;
  *
  * <p>
  * These tests post the JSON the SolarUser instruction input endpoint form
- * submits, where every value is a string and an empty field is an empty
- * string.
+ * submits, where every value is a string and an empty field is an empty string.
  * </p>
  *
  * @author matt

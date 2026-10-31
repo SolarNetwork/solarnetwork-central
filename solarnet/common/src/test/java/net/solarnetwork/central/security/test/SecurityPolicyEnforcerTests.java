@@ -981,7 +981,6 @@ public class SecurityPolicyEnforcerTests {
 				""", filter.getSourceIds(), is(arrayContaining("/a/1", "/b/1", "/b/2")));
 	}
 
-
 	/** A filter whose source IDs cannot be read. */
 	public static final class ThrowingDatumFilter implements GeneralNodeDatumFilter {
 
@@ -1032,8 +1031,8 @@ public class SecurityPolicyEnforcerTests {
 	@Test
 	public void defaultMethod_restrictedToPolicyNodeIds() {
 		// GIVEN
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Set.of(TEST_NODE_ID)).build();
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(TEST_NODE_ID))
+				.build();
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2 });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
@@ -1053,8 +1052,8 @@ public class SecurityPolicyEnforcerTests {
 	@Test
 	public void defaultMethod_filledInFromPolicyNodeIds() {
 		// GIVEN
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Set.of(TEST_NODE_ID)).build();
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(TEST_NODE_ID))
+				.build();
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 

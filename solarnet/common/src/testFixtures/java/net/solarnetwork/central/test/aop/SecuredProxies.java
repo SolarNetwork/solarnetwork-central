@@ -42,10 +42,9 @@ public final class SecuredProxies {
 	 * Spring Boot does for application beans.
 	 *
 	 * <p>
-	 * The target is typically a Mockito mock of the real service
-	 * implementation class, so that pointcuts that match on the target class
-	 * (for example {@code @target(Securable)}) behave as they do in
-	 * production.
+	 * The target is typically a Mockito mock of the real service implementation
+	 * class, so that pointcuts that match on the target class (for example
+	 * {@code @target(Securable)}) behave as they do in production.
 	 * </p>
 	 *
 	 * @param <T>

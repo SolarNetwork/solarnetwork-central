@@ -39,9 +39,8 @@ import net.solarnetwork.central.test.tenant.SecurityContextExtension;
 import net.solarnetwork.central.test.tenant.TestTenants;
 
 /**
- * Verify the {@link AuditDatumBizSecurityContract} for
- * {@link AuditDatumBiz} with the {@code AuditDatumSecurityAspect} aspect
- * applied.
+ * Verify the {@link AuditDatumBizSecurityContract} for {@link AuditDatumBiz}
+ * with the {@code AuditDatumSecurityAspect} aspect applied.
  *
  * @author matt
  * @version 1.0

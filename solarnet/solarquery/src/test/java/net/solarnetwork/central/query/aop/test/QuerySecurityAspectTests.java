@@ -548,8 +548,7 @@ public class QuerySecurityAspectTests {
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
 		final SolarNodeOwnershipDao ownershipDao = mock(SolarNodeOwnershipDao.class);
-		given(ownershipDao.ownershipForNodeId(nodeId))
-				.willReturn(privateOwnershipFor(nodeId, userId));
+		given(ownershipDao.ownershipForNodeId(nodeId)).willReturn(privateOwnershipFor(nodeId, userId));
 		final QuerySecurityAspect aspect = new QuerySecurityAspect(ownershipDao);
 
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -558,8 +557,9 @@ public class QuerySecurityAspectTests {
 		setAuthenticatedReadNodeDataToken(userId, policy);
 
 		final ProceedingJoinPoint pjp = mock(ProceedingJoinPoint.class);
-		given(pjp.proceed()).willReturn(new LinkedHashSet<>(List.of(new NodeSourcePK(nodeId, "/A/B/watts"),
-				new NodeSourcePK(nodeId, "/A/C/watts"), new NodeSourcePK(nodeId, "/B/B/watts"))));
+		given(pjp.proceed()).willReturn(new LinkedHashSet<>(
+				List.of(new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
+						new NodeSourcePK(nodeId, "/B/B/watts"))));
 		replayAll();
 
 		// WHEN

@@ -53,9 +53,8 @@ public class OcppHandshakeConfig {
 	 */
 	@Qualifier(OCPP_HANDSHAKE)
 	@Bean
-	public Semaphore ocppHandshakeSemaphore(
-			@Value("${app.ocpp.handshake.max-concurrent:" + DEFAULT_MAX_CONCURRENT
-					+ "}") int maxConcurrent) {
+	public Semaphore ocppHandshakeSemaphore(@Value("${app.ocpp.handshake.max-concurrent:"
+			+ DEFAULT_MAX_CONCURRENT + "}") int maxConcurrent) {
 		return new Semaphore(Math.max(1, maxConcurrent), true);
 	}
 

@@ -554,8 +554,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public @Nullable SnfConsolidatedInvoice previewConsolidatedInvoice(
-			InvoiceConsolidationGroup group, YearMonth month, List<SnfInvoice> invoices) {
+	public @Nullable SnfConsolidatedInvoice previewConsolidatedInvoice(InvoiceConsolidationGroup group,
+			YearMonth month, List<SnfInvoice> invoices) {
 		requireNonNullArgument(group, "group");
 		requireNonNullArgument(month, "month");
 		requireNonNullArgument(invoices, "invoices");

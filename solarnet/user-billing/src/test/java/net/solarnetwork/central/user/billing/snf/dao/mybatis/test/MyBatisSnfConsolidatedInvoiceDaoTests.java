@@ -245,8 +245,7 @@ public class MyBatisSnfConsolidatedInvoiceDaoTests extends AbstractMyBatisDaoTes
 		final Account other = createAccount(randomLong());
 		final SnfInvoice inv5 = createInvoice(other, MONTH, new BigDecimal("5.67"));
 		SnfConsolidatedInvoice otherInvoice = new SnfConsolidatedInvoice(other.getAccountId(),
-				other.getUserId(), Instant.now(), MONTH, MONTH.plusMonths(1),
-				other.getCurrencyCode());
+				other.getUserId(), Instant.now(), MONTH, MONTH.plusMonths(1), other.getCurrencyCode());
 		otherInvoice.setAddress(other.getAddress());
 		otherInvoice.setInvoices(List.of(inv5));
 		dao.save(otherInvoice);
@@ -349,8 +348,7 @@ public class MyBatisSnfConsolidatedInvoiceDaoTests extends AbstractMyBatisDaoTes
 		final SnfConsolidatedInvoice cinv2 = createConsolidatedInvoice(month2, inv2);
 
 		// WHEN
-		SnfConsolidatedInvoiceFilter filter = SnfConsolidatedInvoiceFilter
-				.forUser(primary.getUserId());
+		SnfConsolidatedInvoiceFilter filter = SnfConsolidatedInvoiceFilter.forUser(primary.getUserId());
 		filter.setStartDate(month2);
 		filter.setEndDate(month2.plusMonths(1));
 		FilterResults<SnfConsolidatedInvoice, UserLongCompositePK> results = dao.findFiltered(filter,

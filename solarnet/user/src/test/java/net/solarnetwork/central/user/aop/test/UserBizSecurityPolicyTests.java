@@ -85,9 +85,9 @@ import net.solarnetwork.domain.SecurityPolicy;
  *
  * <p>
  * Managing tokens requires an unrestricted policy, but an unrestricted policy
- * can still have an expiry date and deny refreshing. {@code DaoUserBiz}
- * applies those constraints of the actor's policy to every token policy the
- * actor creates or updates, so they cannot be widened or removed.
+ * can still have an expiry date and deny refreshing. {@code DaoUserBiz} applies
+ * those constraints of the actor's policy to every token policy the actor
+ * creates or updates, so they cannot be widened or removed.
  * </p>
  *
  * @author matt
@@ -128,7 +128,7 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 				(UserBiz) new DaoUserBiz(userDao, userNodeDao, confirmationDao, certificateDao,
 						solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao),
 				new UserSecurityAspect(ownershipDao), new UserAuthTokenSecurityAspect(ownershipDao))
-				.proxy();
+						.proxy();
 	}
 
 	private static Set<Long> nodeIds(List<UserNode> nodes) {
@@ -158,15 +158,16 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 	}
 
 	private boolean archived(Long nodeId) {
-		return nonnull(jdbcTemplate.queryForObject(
-				"SELECT archived FROM solaruser.user_node WHERE node_id = ?", Boolean.class, nodeId),
+		return nonnull(
+				jdbcTemplate.queryForObject("SELECT archived FROM solaruser.user_node WHERE node_id = ?",
+						Boolean.class, nodeId),
 				"Archived");
 	}
 
 	private long tokenCount(Long userId) {
 		return nonnull(jdbcTemplate.queryForObject(
-				"SELECT COUNT(*) FROM solaruser.user_auth_token WHERE user_id = ?", Long.class,
-				userId), "Count");
+				"SELECT COUNT(*) FROM solaruser.user_auth_token WHERE user_id = ?", Long.class, userId),
+				"Count");
 	}
 
 	private @Nullable String tokenColumn(String column, String tokenId) {
@@ -334,8 +335,7 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 		final Long confirmationId = insertUserNodeConfirmation(jdbcTemplate, a.userId());
 		insertUserNodeConfirmation(jdbcTemplate, b.userId());
 		a.tokenActor().become();
-		final List<UserNodeConfirmation> tokenResults = biz
-				.getPendingUserNodeConfirmations(a.userId());
+		final List<UserNodeConfirmation> tokenResults = biz.getPendingUserNodeConfirmations(a.userId());
 		a.restrictedTokenActor().become();
 
 		// WHEN
@@ -905,8 +905,9 @@ public class UserBizSecurityPolicyTests extends AbstractMyBatisUserDaoTestSuppor
 	public void generateUserAuthToken_expiringNoRefreshToken_bothConstraintsApplied() {
 		// GIVEN
 		final Instant notAfter = expiry();
-		TestActor.token("expiring no refresh token", constrainedToken(BasicSecurityPolicy.builder()
-				.withNotAfter(notAfter).withRefreshAllowed(false).build())).become();
+		TestActor.token("expiring no refresh token", constrainedToken(
+				BasicSecurityPolicy.builder().withNotAfter(notAfter).withRefreshAllowed(false).build()))
+				.become();
 
 		// WHEN
 		final UserAuthToken result = generate(SecurityTokenType.User, refreshPolicy(true));

@@ -31,8 +31,8 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncSlot;
 
 /**
- * Select the GUIDs of the GnuCash objects that have a string slot with a
- * given value.
+ * Select the GUIDs of the GnuCash objects that have a string slot with a given
+ * value.
  *
  * <p>
  * The result column is the object GUID.

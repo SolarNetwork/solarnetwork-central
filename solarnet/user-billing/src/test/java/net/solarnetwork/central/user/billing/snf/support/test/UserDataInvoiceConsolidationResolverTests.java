@@ -150,8 +150,8 @@ public class UserDataInvoiceConsolidationResolverTests {
 
 	private static boolean lists(User user, Long userId) {
 		return (user.getInternalDataValue("invoiceConsolidation") instanceof Map<?, ?> config
-				&& config.get("userIds") instanceof Collection<?> ids && ids.stream()
-						.anyMatch(id -> id instanceof Number n && n.longValue() == userId));
+				&& config.get("userIds") instanceof Collection<?> ids
+				&& ids.stream().anyMatch(id -> id instanceof Number n && n.longValue() == userId));
 	}
 
 	/**
@@ -353,8 +353,8 @@ public class UserDataInvoiceConsolidationResolverTests {
 		InvoiceConsolidationGroup member = resolver.groupForUser(2L);
 
 		// THEN
-		final InvoiceConsolidationGroup expected = new InvoiceConsolidationGroup(1L,
-				List.of(1L, 2L), false, problem(PROBLEM_USER_ID_NOT_NUMBER, "userIds", "\"abc\""));
+		final InvoiceConsolidationGroup expected = new InvoiceConsolidationGroup(1L, List.of(1L, 2L),
+				false, problem(PROBLEM_USER_ID_NOT_NUMBER, "userIds", "\"abc\""));
 		// @formatter:off
 		and.then(primary)
 			.as("Group invalid for the primary")

@@ -117,8 +117,8 @@ public class SnfBillingSystemConfig {
 			InvoiceConsolidationResolver invoiceConsolidationResolver,
 			ObjectProvider<SnfInvoicePreviewService> previewService,
 			@Qualifier(SNF_INVOICE_PREVIEW_GROUP) ObjectProvider<Cache<Long, SnfInvoicePreviewGroup>> previewGroupCache) {
-		var system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao,
-				accountDao, invoiceDao, usageDao);
+		var system = new SnfBillingSystem(Clock.systemUTC(), snfInvoicingSystem, addressDao, accountDao,
+				invoiceDao, usageDao);
 		system.setConsolidationResolver(invoiceConsolidationResolver);
 		system.setPreviewService(previewService.getIfAvailable());
 		system.setPreviewGroupCache(previewGroupCache.getIfAvailable());

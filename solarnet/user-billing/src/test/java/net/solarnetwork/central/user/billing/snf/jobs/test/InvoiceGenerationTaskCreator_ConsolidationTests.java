@@ -102,12 +102,11 @@ public class InvoiceGenerationTaskCreator_ConsolidationTests {
 				.toList();
 		given(userDao.findFiltered(any(), isNull(), eq(0L),
 				eq(InvoiceGenerationTaskCreator.DEFAULT_BATCH_SIZE)))
-				.willReturn(new BasicFilterResults<>(users));
+						.willReturn(new BasicFilterResults<>(users));
 	}
 
 	private Account givenAccount(Long userId, ZoneId zone, LocalDate invoicedThrough) {
-		Address address = new Address(userId, "User " + userId, "user@localhost", "NZ",
-				zone.getId());
+		Address address = new Address(userId, "User " + userId, "user@localhost", "NZ", zone.getId());
 		Account account = new Account(userId * 10, userId, Instant.now(), "NZD", "en-NZ");
 		account.setAddress(address);
 		given(invoicingSystem.accountForUser(userId)).willReturn(account);
@@ -193,11 +192,11 @@ public class InvoiceGenerationTaskCreator_ConsolidationTests {
 		// GIVEN
 		final LocalDate endDate = LocalDate.of(2026, 11, 1);
 		givenUsers(1L, 2L);
-		final InvoiceConsolidationGroup group = new InvoiceConsolidationGroup(1L, List.of(1L, 2L),
-				false,
+		final InvoiceConsolidationGroup group = new InvoiceConsolidationGroup(1L, List.of(1L, 2L), false,
 				new DefaultMessageSourceResolvable(
 						new String[] { "error.consolidated.currencyMismatch" },
-						new Object[] { 2L, "USD", "NZD" }, "User {0,number,#} is billed in {1}, not {2}."));
+						new Object[] { 2L, "USD", "NZD" },
+						"User {0,number,#} is billed in {1}, not {2}."));
 		given(consolidationResolver.groupForUser(1L)).willReturn(group);
 		given(consolidationResolver.groupForUser(2L)).willReturn(group);
 

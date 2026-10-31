@@ -176,8 +176,7 @@ public interface BillingSystem {
 	 *
 	 * <p>
 	 * The filter's user is the primary account user. This implementation
-	 * returns no results, for billing systems that do not consolidate
-	 * invoices.
+	 * returns no results, for billing systems that do not consolidate invoices.
 	 * </p>
 	 *
 	 * @param filter
@@ -191,15 +190,15 @@ public interface BillingSystem {
 	 * @return the results, never {@code null}
 	 * @since 1.4
 	 */
-	default FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(
-			InvoiceFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
-			@Nullable Long offset, @Nullable Integer max) {
+	default FilterResults<InvoiceMatch, String> findFilteredConsolidatedInvoices(InvoiceFilter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		return new BasicFilterResults<>(null, 0L, 0L, 0);
 	}
 
 	/**
-	 * Get a consolidated invoice billed to a user, with the invoices it is
-	 * made of.
+	 * Get a consolidated invoice billed to a user, with the invoices it is made
+	 * of.
 	 *
 	 * <p>
 	 * This implementation returns {@code null}.
@@ -214,8 +213,7 @@ public interface BillingSystem {
 	 * @return the consolidated invoice, or {@code null} if not available
 	 * @since 1.4
 	 */
-	default @Nullable Invoice getConsolidatedInvoice(Long userId, String invoiceId,
-			Locale locale) {
+	default @Nullable Invoice getConsolidatedInvoice(Long userId, String invoiceId, Locale locale) {
 		return null;
 	}
 
@@ -286,8 +284,8 @@ public interface BillingSystem {
 	 *         not the primary account of a valid group
 	 * @since 1.4
 	 */
-	default @Nullable Resource previewConsolidatedInvoice(Long userId,
-			InvoiceGenerationOptions options, MimeType outputType, Locale locale) {
+	default @Nullable Resource previewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
 		return null;
 	}
 
@@ -316,8 +314,8 @@ public interface BillingSystem {
 	 * @return the preview status, never {@code null}
 	 * @since 1.5
 	 */
-	default InvoicePreviewStatus getPreviewInvoiceStatus(Long userId,
-			InvoiceGenerationOptions options, Locale locale) {
+	default InvoicePreviewStatus getPreviewInvoiceStatus(Long userId, InvoiceGenerationOptions options,
+			Locale locale) {
 		return new InvoicePreviewStatus(InvoicePreviewState.Done,
 				getPreviewInvoice(userId, options, locale));
 	}
@@ -348,8 +346,8 @@ public interface BillingSystem {
 	 *         primary account of a valid group
 	 * @since 1.5
 	 */
-	default @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
-			Long userId, InvoiceGenerationOptions options, Locale locale) {
+	default @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
 		return null;
 	}
 

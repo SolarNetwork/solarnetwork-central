@@ -96,8 +96,7 @@ public final class UserContractFixtures {
 	 *        the alert node ID, or {@code null} for a user alert
 	 * @return the alert
 	 */
-	public static UserAlert alert(TestTenant tenant, @Nullable Long alertId,
-			@Nullable Long nodeId) {
+	public static UserAlert alert(TestTenant tenant, @Nullable Long alertId, @Nullable Long nodeId) {
 		final UserAlert alert = new UserAlert();
 		alert.setId(alertId);
 		alert.setUserId(tenant.userId());

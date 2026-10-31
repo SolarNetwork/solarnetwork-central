@@ -39,9 +39,9 @@ import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
  *
  * <p>
  * The contract is enforced by {@code UserOscpSecurityAspect}. Saving an asset
- * also requires read access to its node. The node IDs of the user and
- * capacity group settings are not checked, because OSCP only publishes datum
- * to nodes owned by the settings' user.
+ * also requires read access to its node. The node IDs of the user and capacity
+ * group settings are not checked, because OSCP only publishes datum to nodes
+ * owned by the settings' user.
  * </p>
  *
  * @author matt

@@ -41,9 +41,9 @@ import net.solarnetwork.central.user.billing.snf.domain.Payment;
  *
  * <p>
  * The task data holds the payment ID in the {@link AccountTask#ID_PARAM}
- * parameter and the user ID in the {@link AccountTask#USER_ID_PARAM}
- * parameter. Exceptions thrown by the accounting system are not handled, so
- * the task is attempted again later.
+ * parameter and the user ID in the {@link AccountTask#USER_ID_PARAM} parameter.
+ * Exceptions thrown by the accounting system are not handled, so the task is
+ * attempted again later.
  * </p>
  *
  * @author matt
@@ -87,8 +87,8 @@ public class PaymentAccountingSyncer implements AccountTaskHandler {
 		}
 		final Account account = accountDao.getForUser(userId);
 		if ( account == null ) {
-			log.error("Account task {} cannot be handled because user {} has no billing account.",
-					task, userId);
+			log.error("Account task {} cannot be handled because user {} has no billing account.", task,
+					userId);
 			return true;
 		}
 		final UserUuidPK id = new UserUuidPK(userId, paymentId);
@@ -105,8 +105,8 @@ public class PaymentAccountingSyncer implements AccountTaskHandler {
 	private @Nullable Object param(AccountTask task, String key) {
 		final Object val = (task.getTaskData() != null ? task.getTaskData().get(key) : null);
 		if ( val == null ) {
-			log.error("Account task {} cannot be handled because no '{}' parameter is available.",
-					task, key);
+			log.error("Account task {} cannot be handled because no '{}' parameter is available.", task,
+					key);
 		}
 		return val;
 	}

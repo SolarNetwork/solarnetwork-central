@@ -156,8 +156,7 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 		final SnfInvoice memberInvoice = invoice(member, 101L);
 		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE,
 				defaultOptions());
-		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE,
-				defaultOptions());
+		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE, defaultOptions());
 
 		final UserLongCompositePK id = new UserLongCompositePK(1L, 200L);
 		given(consolidatedInvoiceDao.save(any())).willReturn(id);
@@ -258,10 +257,8 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 
 		final SnfInvoice primaryInvoice = invoice(primary, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
 		final SnfInvoice memberInvoice = invoice(member, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
-		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE,
-				dryRunOptions());
-		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE,
-				dryRunOptions());
+		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE, dryRunOptions());
+		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE, dryRunOptions());
 
 		// WHEN
 		SnfConsolidatedInvoice result = system.generateConsolidatedInvoice(group, MONTH,
@@ -288,10 +285,8 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 
 		final SnfInvoice primaryInvoice = invoice(primary, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
 		final SnfInvoice memberInvoice = invoice(member, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID);
-		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE,
-				dryRunOptions());
-		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE,
-				dryRunOptions());
+		doReturn(primaryInvoice).when(system).generateInvoice(1L, START_DATE, END_DATE, dryRunOptions());
+		doReturn(memberInvoice).when(system).generateInvoice(2L, START_DATE, END_DATE, dryRunOptions());
 		final SnfConsolidatedInvoice generated = system.generateConsolidatedInvoice(group, MONTH,
 				dryRunOptions());
 
@@ -328,8 +323,8 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 		final UserLongCompositePK id = new UserLongCompositePK(1L, 200L);
 		final SnfInvoice primaryInvoice = invoice(primary, 100L);
 		final SnfInvoice memberInvoice = invoice(member, 101L);
-		final SnfConsolidatedInvoice saved = new SnfConsolidatedInvoice(200L, 1L,
-				primary.getAccountId(), Instant.now(), START_DATE, END_DATE, "NZD");
+		final SnfConsolidatedInvoice saved = new SnfConsolidatedInvoice(200L, 1L, primary.getAccountId(),
+				Instant.now(), START_DATE, END_DATE, "NZD");
 		saved.setInvoiceIds(List.of(primaryInvoice.getId(), memberInvoice.getId()));
 		given(consolidatedInvoiceDao.get(id)).willReturn(saved);
 		given(invoiceDao.get(primaryInvoice.getId())).willReturn(primaryInvoice);
@@ -355,8 +350,8 @@ public class DefaultSnfInvoicingSystem_ConsolidatedTests {
 		final UserLongCompositePK id = new UserLongCompositePK(1L, 200L);
 		given(accountDao.getForUser(1L)).willReturn(primary);
 
-		final SnfConsolidatedInvoice saved = new SnfConsolidatedInvoice(200L, 1L,
-				primary.getAccountId(), Instant.now(), START_DATE, END_DATE, "NZD");
+		final SnfConsolidatedInvoice saved = new SnfConsolidatedInvoice(200L, 1L, primary.getAccountId(),
+				Instant.now(), START_DATE, END_DATE, "NZD");
 		saved.setInvoices(List.of(invoice(primary, 100L), invoice(member, 101L)));
 		doReturn(saved).when(system).getConsolidatedInvoice(id);
 

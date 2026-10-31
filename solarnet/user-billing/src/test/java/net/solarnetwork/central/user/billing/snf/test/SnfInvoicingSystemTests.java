@@ -404,14 +404,12 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		// DAO must return mutable list
 		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
 				.andReturn(new ArrayList<>(Arrays.asList(usage)));
-		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
-				.andReturn(emptyList());
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate)).andReturn(emptyList());
 
-		final Instant taxStart = LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone())
-				.toInstant();
+		final Instant taxStart = LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant();
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(asList(
-				new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST", new BigDecimal("0.15"),
-						taxStart, null),
+				new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST", new BigDecimal("0.15"), taxStart,
+						null),
 				new TaxCode("NZ", NodeUsage.DATUM_OUT_KEY, "GST", new BigDecimal("0.15"), taxStart,
 						null)));
 		expect(taxCodeDao.findFiltered(EasyMock.anyObject())).andReturn(taxCodeResults);

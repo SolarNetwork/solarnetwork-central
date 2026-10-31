@@ -62,8 +62,8 @@ import org.jspecify.annotations.Nullable;
  * @author matt
  * @version 1.0
  */
-public record GncEntry(String guid, Instant date, Instant dateEntered, String description,
-		String action, String notes, GncNumeric quantity, String accountGuid, GncNumeric price,
-		boolean taxable, boolean taxIncluded, @Nullable String taxTableGuid, String invoiceGuid) {
+public record GncEntry(String guid, Instant date, Instant dateEntered, String description, String action,
+		String notes, GncNumeric quantity, String accountGuid, GncNumeric price, boolean taxable,
+		boolean taxIncluded, @Nullable String taxTableGuid, String invoiceGuid) {
 
 }

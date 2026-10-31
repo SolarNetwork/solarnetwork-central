@@ -282,8 +282,7 @@ public class BasicSharedValueCacheConcurrencyTests {
 						if ( val != null ) {
 							hits.incrementAndGet();
 							// a reader must only ever observe a value the provider produced
-							if ( !sharedCache.containsValue(val)
-									&& !primaryCacheContainsValue(val) ) {
+							if ( !sharedCache.containsValue(val) && !primaryCacheContainsValue(val) ) {
 								throw new IllegalStateException(
 										"Reader observed a value present in neither cache: " + val);
 							}

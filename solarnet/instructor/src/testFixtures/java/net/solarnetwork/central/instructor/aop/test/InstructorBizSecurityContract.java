@@ -45,9 +45,9 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  *
  * <p>
  * The contract is enforced by {@code InstructorSecurityAspect}. Instructions
- * require write access to their nodes, and updating instructions by ID
- * requires write access to the node of each instruction, which the aspect
- * looks up. The proxy must include a {@link NodeInstructionDao} mock.
+ * require write access to their nodes, and updating instructions by ID requires
+ * write access to the node of each instruction, which the aspect looks up. The
+ * proxy must include a {@link NodeInstructionDao} mock.
  * </p>
  *
  * @author matt

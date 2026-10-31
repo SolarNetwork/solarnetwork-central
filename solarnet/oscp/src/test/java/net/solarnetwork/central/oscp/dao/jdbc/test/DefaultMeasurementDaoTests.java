@@ -524,7 +524,6 @@ public class DefaultMeasurementDaoTests {
 						asset.getEnergy().getDirection(), start))));
 	}
 
-
 	@SuppressWarnings("static-access")
 	@Test
 	public void getMeasurements_assetUserNodesOnly() throws IOException {

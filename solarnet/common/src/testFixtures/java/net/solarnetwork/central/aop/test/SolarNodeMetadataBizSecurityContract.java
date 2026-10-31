@@ -36,9 +36,8 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * <p>
  * The contract is enforced by {@code NodeMetadataSecurityAspect}. Modifying
  * metadata requires write access to the node. Finding metadata requires read
- * access to the filter's nodes, which the security policy enforcer applies,
- * so metadata of public nodes can be found by anyone whose policy allows the
- * node.
+ * access to the filter's nodes, which the security policy enforcer applies, so
+ * metadata of public nodes can be found by anyone whose policy allows the node.
  * </p>
  *
  * @author matt

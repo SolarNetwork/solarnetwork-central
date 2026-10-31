@@ -50,7 +50,7 @@ public interface SnfConsolidatedInvoiceRendererResolver {
 	 * @return the renderer, or {@code null} if none can be resolved
 	 */
 	@Nullable
-	TemplateRenderer rendererForConsolidatedInvoice(SnfConsolidatedInvoice invoice,
-			MimeType mimeType, Locale locale);
+	TemplateRenderer rendererForConsolidatedInvoice(SnfConsolidatedInvoice invoice, MimeType mimeType,
+			Locale locale);
 
 }

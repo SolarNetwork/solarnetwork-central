@@ -60,8 +60,8 @@ public enum AsyncJdbcChargePointActionStatusCount {
 	ResultsReplaced,
 
 	/**
-	 * Results added back to the queue after failing to be written, to try
-	 * again after reconnecting.
+	 * Results added back to the queue after failing to be written, to try again
+	 * after reconnecting.
 	 *
 	 * @since 1.2
 	 */

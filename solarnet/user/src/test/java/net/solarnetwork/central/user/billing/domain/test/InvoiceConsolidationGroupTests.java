@@ -42,8 +42,7 @@ public class InvoiceConsolidationGroupTests {
 	@Test
 	public void valid() {
 		// WHEN
-		InvoiceConsolidationGroup group = new InvoiceConsolidationGroup(1L, List.of(1L, 3L, 2L),
-				true);
+		InvoiceConsolidationGroup group = new InvoiceConsolidationGroup(1L, List.of(1L, 3L, 2L), true);
 
 		// THEN
 		// @formatter:off

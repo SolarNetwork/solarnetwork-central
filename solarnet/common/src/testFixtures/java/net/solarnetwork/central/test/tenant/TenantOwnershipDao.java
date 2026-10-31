@@ -101,16 +101,15 @@ public class TenantOwnershipDao implements SolarNodeOwnershipDao {
 			final SecurityPolicy policy = token.policy();
 			final Set<Long> policyNodeIds = (policy != null ? policy.getNodeIds() : null);
 			return tenant.nodeIds().stream().filter(nodeId -> !tenant.isArchived(nodeId))
-					.filter(nodeId -> policyNodeIds == null || policyNodeIds.contains(nodeId))
-					.sorted().toArray(Long[]::new);
+					.filter(nodeId -> policyNodeIds == null || policyNodeIds.contains(nodeId)).sorted()
+					.toArray(Long[]::new);
 		}
 		return new Long[0];
 	}
 
 	@Override
 	public Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds) {
-		final Map<UUID, ObjectDatumStreamMetadataId> result = new LinkedHashMap<>(
-				streamIds.length);
+		final Map<UUID, ObjectDatumStreamMetadataId> result = new LinkedHashMap<>(streamIds.length);
 		for ( UUID streamId : streamIds ) {
 			for ( TestTenant tenant : tenants ) {
 				for ( ObjectDatumStreamIdentity s : tenant.streams() ) {

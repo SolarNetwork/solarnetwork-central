@@ -47,8 +47,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 	private int statFrequency = DEFAULT_STAT_FREQUENCY;
 	private int workQueueSize = DEFUALT_WORK_QUEUE_SIZE;
 	private Duration workItemMaxWait = Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
-	private Duration sqsSendMaxWait = Duration
-			.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS);
+	private Duration sqsSendMaxWait = Duration.ofMillis(SqsOverflowQueue.DEFAULT_SQS_SEND_MAX_WAIT_MS);
 	private int readConcurrency = SqsOverflowQueue.DEFAULT_READ_CONCURRENCY;
 	private int writeConcurrency = SqsOverflowQueue.DEFAULT_WRITE_CONCURRENCY;
 	private int readMaxMessageCount = SqsOverflowQueue.DEFAULT_READ_MAX_MESSAGE_COUNT;
@@ -60,8 +59,7 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 			.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 	private Duration pingTestTimeout = Duration.ofMillis(SqsOverflowQueue.DEFAULT_PING_TEST_TIMEOUT_MS);
 
-	private Duration shutdownWait = Duration
-			.ofSeconds(SqsOverflowQueue.DEFAULT_SHUTDOWN_WAIT_SECS);
+	private Duration shutdownWait = Duration.ofSeconds(SqsOverflowQueue.DEFAULT_SHUTDOWN_WAIT_SECS);
 
 	/**
 	 * Create an asynchronous client from the settings of this instance.
@@ -102,9 +100,9 @@ public class SqsOverflowQueueSettings extends SqsProperties {
 		if ( readMaxWaitTime != null ) {
 			// round a positive sub-second wait up to 1s rather than truncating it to 0,
 			// which would turn off long polling and busy-poll the queue instead
-			queue.setReadMaxWaitTimeSecs((int) (readMaxWaitTime.isZero() || readMaxWaitTime.isNegative()
-					? 0
-					: Math.max(1L, readMaxWaitTime.toSeconds())));
+			queue.setReadMaxWaitTimeSecs(
+					(int) (readMaxWaitTime.isZero() || readMaxWaitTime.isNegative() ? 0
+							: Math.max(1L, readMaxWaitTime.toSeconds())));
 		}
 		if ( readSleepMin != null ) {
 			queue.setReadSleepMinMs(readSleepMin.toMillis());

@@ -77,8 +77,8 @@ public class InvoiceAccountingSyncerTests {
 	}
 
 	private static AccountTask task(Map<String, Object> data) {
-		return AccountTask.newTask(Instant.now(), AccountTaskType.SyncInvoiceToAccounting,
-				ACCOUNT_ID, data);
+		return AccountTask.newTask(Instant.now(), AccountTaskType.SyncInvoiceToAccounting, ACCOUNT_ID,
+				data);
 	}
 
 	@Test

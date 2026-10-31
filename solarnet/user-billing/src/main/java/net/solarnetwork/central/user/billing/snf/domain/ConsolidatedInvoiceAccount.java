@@ -49,8 +49,7 @@ public class ConsolidatedInvoiceAccount {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public ConsolidatedInvoiceAccount(Long accountId, LocalizedInvoiceInfo invoice,
-			Address address) {
+	public ConsolidatedInvoiceAccount(Long accountId, LocalizedInvoiceInfo invoice, Address address) {
 		super();
 		this.accountId = requireNonNullArgument(accountId, "accountId");
 		this.invoice = requireNonNullArgument(invoice, "invoice");

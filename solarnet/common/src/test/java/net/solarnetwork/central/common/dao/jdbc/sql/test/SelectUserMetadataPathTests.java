@@ -200,8 +200,7 @@ public class SelectUserMetadataPathTests {
 		filter.setTokenIds(tokenIds);
 
 		// WHEN
-		PreparedStatement result = new SelectUserMetadataPath(filter, path)
-				.createPreparedStatement(con);
+		PreparedStatement result = new SelectUserMetadataPath(filter, path).createPreparedStatement(con);
 
 		// THEN
 		// @formatter:off

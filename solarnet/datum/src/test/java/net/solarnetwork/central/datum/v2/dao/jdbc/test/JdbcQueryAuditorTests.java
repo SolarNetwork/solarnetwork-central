@@ -123,8 +123,7 @@ public class JdbcQueryAuditorTests {
 	 */
 	private void awaitFirstFlush() throws InterruptedException {
 		final long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-		while ( stats.get(JdbcServiceAuditorCount.CountsFlushed) < 1
-				&& System.nanoTime() < end ) {
+		while ( stats.get(JdbcServiceAuditorCount.CountsFlushed) < 1 && System.nanoTime() < end ) {
 			Thread.sleep(10);
 		}
 	}

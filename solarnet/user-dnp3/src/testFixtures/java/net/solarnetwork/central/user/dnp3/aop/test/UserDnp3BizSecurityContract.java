@@ -41,8 +41,8 @@ import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationI
  *
  * <p>
  * The contract is enforced by {@code UserDnp3SecurityAspect}. The node IDs of
- * measurement and control configurations are not checked, because DNP3
- * servers only use configurations for nodes owned by the server's user.
+ * measurement and control configurations are not checked, because DNP3 servers
+ * only use configurations for nodes owned by the server's user.
  * </p>
  *
  * @author matt

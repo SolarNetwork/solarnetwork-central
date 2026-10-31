@@ -175,8 +175,8 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 		a.userActor().become();
 
 		// WHEN
-		var results = biz.findFilteredGeneralNodeDatum(
-				nodeFilter(a.privateNodeId(), b.privateNodeId()), null, null, null);
+		var results = biz.findFilteredGeneralNodeDatum(nodeFilter(a.privateNodeId(), b.privateNodeId()),
+				null, null, null);
 
 		// THEN
 		// @formatter:off
@@ -263,8 +263,7 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 				BasicSecurityPolicy.builder().withSourceIds(Set.of(pattern)).build()).become();
 
 		// WHEN
-		var results = biz.findFilteredGeneralNodeDatum(nodeFilter(a.privateNodeId()), null, null,
-				null);
+		var results = biz.findFilteredGeneralNodeDatum(nodeFilter(a.privateNodeId()), null, null, null);
 
 		// THEN
 		// @formatter:off
@@ -307,8 +306,7 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@Test
 	public void aggregationsPolicy_otherAggregationDenied() {
 		// GIVEN
-		tokenActor(a, SecurityTokenType.ReadNodeData, policy("{\"aggregations\":[\"Day\"]}"))
-				.become();
+		tokenActor(a, SecurityTokenType.ReadNodeData, policy("{\"aggregations\":[\"Day\"]}")).become();
 		final DatumFilterCommand hourFilter = nodeFilter(a.privateNodeId());
 		hourFilter.setAggregate(Aggregation.Hour);
 		final DatumFilterCommand dayFilter = nodeFilter(a.privateNodeId());
@@ -337,10 +335,8 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 	public void streamQuery_otherUserStreamRemoved() throws Exception {
 		// GIVEN
 		a.userActor().become();
-		final ObjectDatumStreamIdentity aStream = a.stream(a.privateNodeId(),
-				a.sourceIds().getFirst());
-		final ObjectDatumStreamIdentity bStream = b.stream(b.privateNodeId(),
-				b.sourceIds().getFirst());
+		final ObjectDatumStreamIdentity aStream = a.stream(a.privateNodeId(), a.sourceIds().getFirst());
+		final ObjectDatumStreamIdentity bStream = b.stream(b.privateNodeId(), b.sourceIds().getFirst());
 		final StreamDatumFilterCommand filter = new StreamDatumFilterCommand();
 		filter.setStreamIds(new UUID[] { aStream.getStreamId(), bStream.getStreamId() });
 
@@ -367,8 +363,7 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 		final ObjectDatumStreamIdentity otherStream = a.stream(a.otherPrivateNodeId(),
 				a.sourceIds().get(1));
 		final StreamDatumFilterCommand filter = new StreamDatumFilterCommand();
-		filter.setStreamIds(
-				new UUID[] { policyStream.getStreamId(), otherStream.getStreamId() });
+		filter.setStreamIds(new UUID[] { policyStream.getStreamId(), otherStream.getStreamId() });
 
 		// WHEN
 		final var processor = new BasicStreamDatumFilteredResultsProcessor();
@@ -468,8 +463,7 @@ public class QueryBizSecurityPolicyTests extends AbstractJUnit5JdbcDaoTestSuppor
 		tenants.anonymous().become();
 
 		// WHEN
-		var results = biz.findFilteredGeneralNodeDatum(nodeFilter(a.publicNodeId()), null, null,
-				null);
+		var results = biz.findFilteredGeneralNodeDatum(nodeFilter(a.publicNodeId()), null, null, null);
 
 		// THEN
 		// @formatter:off

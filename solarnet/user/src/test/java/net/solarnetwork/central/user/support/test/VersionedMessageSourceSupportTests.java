@@ -90,8 +90,8 @@ public class VersionedMessageSourceSupportTests {
 	@Test
 	public void importedTemplates() throws IOException {
 		// GIVEN
-		TestRendererResolver resolver = new TestRendererResolver("/test/main",
-				List.of("/test/parts"), messageDao, messageCache, templateCache);
+		TestRendererResolver resolver = new TestRendererResolver("/test/main", List.of("/test/parts"),
+				messageDao, messageCache, templateCache);
 
 		// WHEN
 		String result = render(resolver.renderer(VERSION_1));
@@ -108,8 +108,8 @@ public class VersionedMessageSourceSupportTests {
 	@Test
 	public void importedTemplates_newVersion() throws IOException {
 		// GIVEN
-		TestRendererResolver resolver = new TestRendererResolver("/test/main",
-				List.of("/test/parts"), messageDao, messageCache, templateCache);
+		TestRendererResolver resolver = new TestRendererResolver("/test/main", List.of("/test/parts"),
+				messageDao, messageCache, templateCache);
 		TemplateRenderer renderer1 = resolver.renderer(VERSION_1);
 
 		// WHEN

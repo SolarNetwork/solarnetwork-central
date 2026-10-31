@@ -81,8 +81,8 @@ public record GncSplit(String guid, String txGuid, String accountGuid, String me
 	 */
 	public static GncSplit unreconciled(String guid, String txGuid, String accountGuid, String memo,
 			String action, GncNumeric value, GncNumeric quantity, @Nullable String lotGuid) {
-		return new GncSplit(guid, txGuid, accountGuid, memo, action, RECONCILE_NO, Instant.EPOCH,
-				value, quantity, lotGuid);
+		return new GncSplit(guid, txGuid, accountGuid, memo, action, RECONCILE_NO, Instant.EPOCH, value,
+				quantity, lotGuid);
 	}
 
 }

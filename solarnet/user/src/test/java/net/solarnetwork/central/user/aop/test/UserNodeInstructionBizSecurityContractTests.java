@@ -39,9 +39,9 @@ import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionBiz;
 
 /**
- * Verify the {@link UserNodeInstructionBizSecurityContract} for {@link
- * UserNodeInstructionBiz} with the {@code UserNodeInstructionSecurityAspect}
- * aspect applied.
+ * Verify the {@link UserNodeInstructionBizSecurityContract} for
+ * {@link UserNodeInstructionBiz} with the
+ * {@code UserNodeInstructionSecurityAspect} aspect applied.
  *
  * @author matt
  * @version 1.0

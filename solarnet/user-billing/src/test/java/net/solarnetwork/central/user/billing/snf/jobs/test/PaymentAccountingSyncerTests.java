@@ -82,8 +82,8 @@ public class PaymentAccountingSyncerTests {
 	}
 
 	private static AccountTask task(Map<String, Object> data) {
-		return AccountTask.newTask(Instant.now(), AccountTaskType.SyncPaymentToAccounting,
-				ACCOUNT_ID, data);
+		return AccountTask.newTask(Instant.now(), AccountTaskType.SyncPaymentToAccounting, ACCOUNT_ID,
+				data);
 	}
 
 	private static Account account() {
@@ -111,8 +111,7 @@ public class PaymentAccountingSyncerTests {
 		given(accountingSystem.syncPayment(payment, invoicePayments, account)).willReturn(true);
 
 		// WHEN
-		boolean result = syncer
-				.handleTask(task(Map.of("id", PAYMENT_ID.toString(), "userId", USER_ID)));
+		boolean result = syncer.handleTask(task(Map.of("id", PAYMENT_ID.toString(), "userId", USER_ID)));
 
 		// THEN
 		// @formatter:off
@@ -172,8 +171,7 @@ public class PaymentAccountingSyncerTests {
 		given(accountDao.getForUser(USER_ID)).willReturn(account());
 
 		// WHEN
-		boolean result = syncer
-				.handleTask(task(Map.of("id", PAYMENT_ID.toString(), "userId", USER_ID)));
+		boolean result = syncer.handleTask(task(Map.of("id", PAYMENT_ID.toString(), "userId", USER_ID)));
 
 		// THEN
 		// @formatter:off

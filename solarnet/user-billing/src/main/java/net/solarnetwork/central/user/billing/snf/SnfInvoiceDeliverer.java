@@ -71,9 +71,8 @@ public interface SnfInvoiceDeliverer extends Identity<String> {
 	 * @return a future for the results
 	 * @since 2.1
 	 */
-	default CompletableFuture<Result<Object>> deliverConsolidatedInvoice(
-			SnfConsolidatedInvoice invoice, Account account,
-			@Nullable IdentifiableConfiguration configuration) {
+	default CompletableFuture<Result<Object>> deliverConsolidatedInvoice(SnfConsolidatedInvoice invoice,
+			Account account, @Nullable IdentifiableConfiguration configuration) {
 		return CompletableFuture.failedFuture(new UnsupportedOperationException(
 				"Delivering consolidated invoices is not supported by " + getId()));
 	}

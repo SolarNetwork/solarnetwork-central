@@ -100,9 +100,9 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	 * Check access to find metadata.
 	 *
 	 * <p>
-	 * Read access is required for every user in the filter, and the metadata
-	 * of the results is restricted to the metadata paths of the active
-	 * security policy.
+	 * Read access is required for every user in the filter, and the metadata of
+	 * the results is restricted to the metadata paths of the active security
+	 * policy.
 	 * </p>
 	 *
 	 * @param pjp

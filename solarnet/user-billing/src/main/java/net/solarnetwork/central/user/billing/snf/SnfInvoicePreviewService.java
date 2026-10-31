@@ -34,8 +34,8 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewKey;
  * <p>
  * The usage queries of a preview invoice can take longer than an HTTP request
  * is allowed to. The methods of this service never wait for them: they start
- * generating a preview when needed, and return its current state. A caller
- * asks again later to get the finished preview.
+ * generating a preview when needed, and return its current state. A caller asks
+ * again later to get the finished preview.
  * </p>
  *
  * @author matt
@@ -44,13 +44,12 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicePreviewKey;
 public interface SnfInvoicePreviewService {
 
 	/**
-	 * Get the preview invoice of an account, starting to generate it if
-	 * needed.
+	 * Get the preview invoice of an account, starting to generate it if needed.
 	 *
 	 * <p>
-	 * This method does not wait for the preview to be generated. If the
-	 * preview cannot be started now, a {@code Waiting} preview is returned,
-	 * and the preview is started by a later call.
+	 * This method does not wait for the preview to be generated. If the preview
+	 * cannot be started now, a {@code Waiting} preview is returned, and the
+	 * preview is started by a later call.
 	 * </p>
 	 *
 	 * @param key
@@ -60,15 +59,15 @@ public interface SnfInvoicePreviewService {
 	SnfInvoicePreview accountPreview(SnfInvoicePreviewKey key);
 
 	/**
-	 * Get the preview invoices of the accounts of a group, starting to
-	 * generate the next one if needed.
+	 * Get the preview invoices of the accounts of a group, starting to generate
+	 * the next one if needed.
 	 *
 	 * <p>
 	 * The accounts are generated one at a time, in group order: the next
-	 * account is started only when no account of the group is being
-	 * generated. An implementation may start the next account as soon as one
-	 * finishes, while the group is still being asked for. This method does not
-	 * wait for any preview to be generated.
+	 * account is started only when no account of the group is being generated.
+	 * An implementation may start the next account as soon as one finishes,
+	 * while the group is still being asked for. This method does not wait for
+	 * any preview to be generated.
 	 * </p>
 	 *
 	 * @param group

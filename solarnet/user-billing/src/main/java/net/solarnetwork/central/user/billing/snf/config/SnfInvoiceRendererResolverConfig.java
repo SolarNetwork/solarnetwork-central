@@ -135,8 +135,8 @@ public class SnfInvoiceRendererResolverConfig implements SolarNetUserBillingConf
 	 * The consolidated invoice HTML template cache.
 	 *
 	 * <p>
-	 * This must not be shared with the invoice template cache, because both
-	 * are keyed by message versions only.
+	 * This must not be shared with the invoice template cache, because both are
+	 * keyed by message versions only.
 	 * </p>
 	 *
 	 * @param settings

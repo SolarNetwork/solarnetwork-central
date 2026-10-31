@@ -219,10 +219,10 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				// do not treat a property that cannot be verified as verified
 				final Throwable cause = (e instanceof InvocationTargetException ite
 						&& ite.getCause() != null ? ite.getCause() : e);
-				LOG.warn("Access DENIED to {} for {}: error verifying policy: {}", methodName,
-						principal, cause.toString());
-				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
-						methodName, cause);
+				LOG.warn("Access DENIED to {} for {}: error verifying policy: {}", methodName, principal,
+						cause.toString());
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, methodName,
+						cause);
 			}
 		}
 		return !filtered;

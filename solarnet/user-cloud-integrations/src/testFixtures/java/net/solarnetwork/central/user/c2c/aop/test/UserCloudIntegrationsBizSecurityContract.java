@@ -195,8 +195,8 @@ public final class UserCloudIntegrationsBizSecurityContract {
 	}
 
 	private static CloudDatumStreamConfiguration datumStream(UserLongCompositePK id, Long nodeId) {
-		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(id,
-				Instant.now(), "Test", "test.service", ObjectDatumKind.Node);
+		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(id, Instant.now(),
+				"Test", "test.service", ObjectDatumKind.Node);
 		conf.setObjectId(nodeId);
 		return conf;
 	}

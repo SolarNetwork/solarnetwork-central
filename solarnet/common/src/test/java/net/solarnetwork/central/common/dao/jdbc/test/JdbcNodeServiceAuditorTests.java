@@ -525,8 +525,7 @@ public class JdbcNodeServiceAuditorTests {
 	}
 
 	@Test
-	public void auditNodeService_transientWriteFailure_countWrittenAfterReconnect()
-			throws Exception {
+	public void auditNodeService_transientWriteFailure_countWrittenAfterReconnect() throws Exception {
 		// GIVEN
 		final int count = 123;
 

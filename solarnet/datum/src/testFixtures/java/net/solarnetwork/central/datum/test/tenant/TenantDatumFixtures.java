@@ -62,7 +62,10 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamIdentity;
  */
 public final class TenantDatumFixtures {
 
-	/** The default start date: midnight, 1 January 2026, in the tenant time zone. */
+	/**
+	 * The default start date: midnight, 1 January 2026, in the tenant time
+	 * zone.
+	 */
 	public static final ZonedDateTime DEFAULT_START = ZonedDateTime.of(2026, 1, 1, 0, 0, 0, 0,
 			ZoneId.of(TestTenant.TIME_ZONE));
 
@@ -90,8 +93,8 @@ public final class TenantDatumFixtures {
 	 *        the number of datum to insert per stream
 	 * @return the inserted datum
 	 */
-	public static List<Datum> insertDatum(JdbcOperations jdbcOps, TestTenant tenant,
-			ZonedDateTime start, Duration period, int count) {
+	public static List<Datum> insertDatum(JdbcOperations jdbcOps, TestTenant tenant, ZonedDateTime start,
+			Duration period, int count) {
 		final Instant received = Instant.now();
 		final List<Datum> datums = new ArrayList<>(tenant.streams().size() * count);
 		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
@@ -130,8 +133,8 @@ public final class TenantDatumFixtures {
 	 * @throws IllegalArgumentException
 	 *         if {@code aggregation} is not supported
 	 */
-	public static List<AggregateDatum> insertAggregateDatum(JdbcOperations jdbcOps,
-			TestTenant tenant, Aggregation aggregation, ZonedDateTime start, int count) {
+	public static List<AggregateDatum> insertAggregateDatum(JdbcOperations jdbcOps, TestTenant tenant,
+			Aggregation aggregation, ZonedDateTime start, int count) {
 		final List<AggregateDatum> datums = new ArrayList<>(tenant.streams().size() * count);
 		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {
 			for ( int i = 0; i < count; i++ ) {
@@ -200,8 +203,8 @@ public final class TenantDatumFixtures {
 	 *        the number of hourly auxiliary datum to insert per stream
 	 * @return the inserted auxiliary datum
 	 */
-	public static List<DatumAuxiliary> insertDatumAuxiliary(JdbcOperations jdbcOps,
-			TestTenant tenant, ZonedDateTime start, int count) {
+	public static List<DatumAuxiliary> insertDatumAuxiliary(JdbcOperations jdbcOps, TestTenant tenant,
+			ZonedDateTime start, int count) {
 		final Instant updated = Instant.now();
 		final List<DatumAuxiliary> datums = new ArrayList<>(tenant.streams().size() * count);
 		for ( ObjectDatumStreamIdentity s : tenant.streams() ) {

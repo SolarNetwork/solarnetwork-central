@@ -103,14 +103,14 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 	@BeforeEach
 	public void setup() {
 		settings = new GnucashSettings();
-		settings.getCurrencies().put("NZD", currency("Assets:Accounts Receivable",
-				"Income:Subscription", "Assets:Bank", "GST (Sales)", "Posted Datum Metrics"));
-		settings.getCurrencies().put("USD", currency("Assets:Accounts Receivable USD",
-				"Income:Subscription USD", "Assets:Bank USD", "GST Zero (Sales)",
-				"USD Posted Datum Metrics"));
-		service = new GnucashAccountingSystem(Clock.fixed(CREATED, ZoneOffset.UTC),
-				transactionTemplate, new JdbcGnucashDao(jdbcTemplate, SCHEMA), settings,
-				invoicingSystem, taxCodeResolver, taxCodeDao);
+		settings.getCurrencies().put("NZD", currency("Assets:Accounts Receivable", "Income:Subscription",
+				"Assets:Bank", "GST (Sales)", "Posted Datum Metrics"));
+		settings.getCurrencies().put("USD",
+				currency("Assets:Accounts Receivable USD", "Income:Subscription USD", "Assets:Bank USD",
+						"GST Zero (Sales)", "USD Posted Datum Metrics"));
+		service = new GnucashAccountingSystem(Clock.fixed(CREATED, ZoneOffset.UTC), transactionTemplate,
+				new JdbcGnucashDao(jdbcTemplate, SCHEMA), settings, invoicingSystem, taxCodeResolver,
+				taxCodeDao);
 	}
 
 	private static GnucashSettings.CurrencySettings currency(String receivable, String income,
@@ -125,8 +125,7 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 	}
 
 	private Account account(String currency) {
-		var addr = new Address(USER_ID, "Example Ltd", "accounts@example.com", "NZ",
-				"Pacific/Auckland");
+		var addr = new Address(USER_ID, "Example Ltd", "accounts@example.com", "NZ", "Pacific/Auckland");
 		addr.setStreet(new String[] { "Level 1", "1 Main Street" });
 		addr.setLocality("Auckland");
 		addr.setPostalCode("1010");
@@ -173,9 +172,8 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 
 	private void givenTaxCodes(String... itemKeys) {
 		given(taxCodeResolver.taxCodeFilterForInvoice(any())).willReturn(new TaxCodeFilter());
-		given(taxCodeDao.findFiltered(any())).willReturn(new BasicFilterResults<>(Arrays
-				.stream(itemKeys).map(k -> new TaxCode("NZ", k, "GST", new BigDecimal("0.15"),
-						Instant.EPOCH, null))
+		given(taxCodeDao.findFiltered(any())).willReturn(new BasicFilterResults<>(Arrays.stream(itemKeys)
+				.map(k -> new TaxCode("NZ", k, "GST", new BigDecimal("0.15"), Instant.EPOCH, null))
 				.toList()));
 	}
 
@@ -195,10 +193,9 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 
 	/** Split values keyed by account GUID, in cents. */
 	private Map<String, Long> splitValues(Object txGuid) {
-		return rows("SELECT account_guid, value_num, value_denom FROM splits WHERE tx_guid = ?",
-				txGuid).stream().collect(Collectors.toMap(r -> (String) r.get("account_guid"),
-						r -> (Long) r.get("value_num") * 100 / (Long) r.get("value_denom"),
-						Long::sum));
+		return rows("SELECT account_guid, value_num, value_denom FROM splits WHERE tx_guid = ?", txGuid)
+				.stream().collect(Collectors.toMap(r -> (String) r.get("account_guid"),
+						r -> (Long) r.get("value_num") * 100 / (Long) r.get("value_denom"), Long::sum));
 	}
 
 	private BigDecimal lotBalance(Object lotGuid) {
@@ -813,8 +810,8 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 	}
 
 	private static InvoicePayment invoicePayment(Payment payment, Long invoiceId, String amount) {
-		var ip = new InvoicePayment(UUID.randomUUID(), USER_ID, ACCOUNT_ID,
-				payment.getId().getUuid(), invoiceId, payment.getCreated());
+		var ip = new InvoicePayment(UUID.randomUUID(), USER_ID, ACCOUNT_ID, payment.getId().getUuid(),
+				invoiceId, payment.getCreated());
 		ip.setAmount(new BigDecimal(amount));
 		return ip;
 	}
@@ -861,8 +858,8 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		payment.setReference(" Bank ref 123 ");
 
 		// WHEN
-		boolean result = service.syncPayment(payment,
-				List.of(invoicePayment(payment, 1931L, "12.06")), account);
+		boolean result = service.syncPayment(payment, List.of(invoicePayment(payment, 1931L, "12.06")),
+				account);
 
 		// THEN
 		// @formatter:off
@@ -989,8 +986,9 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		final Payment payment = payment("20.00", PAID, "NZD");
 
 		// WHEN
-		service.syncPayment(payment, List.of(invoicePayment(payment, 1932L, "7.94"),
-				invoicePayment(payment, 1931L, "12.06")), account);
+		service.syncPayment(payment,
+				List.of(invoicePayment(payment, 1932L, "7.94"), invoicePayment(payment, 1931L, "12.06")),
+				account);
 
 		// THEN
 		final String txGuid = paymentTransactions(payment).getFirst();
@@ -1014,8 +1012,7 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		final Account account = account("NZD");
 		givenNzdInvoices(account, 1931L);
 		final Payment payment = payment("12.06", PAID, "NZD");
-		final List<InvoicePayment> invoicePayments = List
-				.of(invoicePayment(payment, 1931L, "12.06"));
+		final List<InvoicePayment> invoicePayments = List.of(invoicePayment(payment, 1931L, "12.06"));
 		service.syncPayment(payment, invoicePayments, account);
 
 		// WHEN
@@ -1180,8 +1177,7 @@ public class GnucashAccountingSystemTests extends AbstractGnucashTestSupport {
 		// the invoice is part of a consolidated invoice
 		final SnfConsolidatedInvoice consolidated = new SnfConsolidatedInvoice(2010L, USER_ID,
 				ACCOUNT_ID, CREATED, START, START.plusMonths(1), "NZD");
-		given(invoicingSystem.findConsolidatedInvoiceForInvoice(invoice.id()))
-				.willReturn(consolidated);
+		given(invoicingSystem.findConsolidatedInvoiceForInvoice(invoice.id())).willReturn(consolidated);
 
 		// WHEN
 		boolean result = service.syncInvoice(invoice, account);

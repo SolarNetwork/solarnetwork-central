@@ -97,8 +97,8 @@ public final class SelectGncLotSplits implements PreparedStatementCreator, SqlPr
 		final Instant reconciled = getTimestamp(rs, 7);
 		final GncSplit split = new GncSplit(rs.getString(1), rs.getString(2), rs.getString(3),
 				getString(rs, 4), getString(rs, 5), rs.getString(6),
-				(reconciled != null ? reconciled : Instant.EPOCH), getNumeric(rs, 8),
-				getNumeric(rs, 10), rs.getString(12));
+				(reconciled != null ? reconciled : Instant.EPOCH), getNumeric(rs, 8), getNumeric(rs, 10),
+				rs.getString(12));
 		return new GncLotSplit(split, rs.getString(13),
 				nonnull(getTimestamp(rs, 14), "Transaction post date"));
 	}

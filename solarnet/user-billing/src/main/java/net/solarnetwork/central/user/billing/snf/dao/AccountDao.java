@@ -42,9 +42,9 @@ public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
 	 * Get an account for a given account ID.
 	 *
 	 * <p>
-	 * Unlike {@link #get(Comparable)} this method does not restrict the
-	 * account to a specific user, and is meant for internal tasks that only
-	 * know the account ID.
+	 * Unlike {@link #get(Comparable)} this method does not restrict the account
+	 * to a specific user, and is meant for internal tasks that only know the
+	 * account ID.
 	 * </p>
 	 *
 	 * @param accountId
@@ -109,8 +109,8 @@ public interface AccountDao extends GenericDao<Account, UserLongCompositePK> {
 	 * Lock an account until the end of the current transaction.
 	 *
 	 * <p>
-	 * This should only be invoked within a transaction. Other transactions
-	 * that lock the same account wait for the lock.
+	 * This should only be invoked within a transaction. Other transactions that
+	 * lock the same account wait for the lock.
 	 * </p>
 	 *
 	 * @param accountId

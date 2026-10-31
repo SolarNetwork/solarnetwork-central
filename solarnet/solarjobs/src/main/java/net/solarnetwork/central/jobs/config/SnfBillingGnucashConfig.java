@@ -104,7 +104,8 @@ public class SnfBillingGnucashConfig {
 	@Bean
 	public GnucashDao gnucashDao(GnucashSettings settings, DataSource dataSource,
 			@Qualifier(GNUCASH) ObjectProvider<DataSource> gnucashDataSource) {
-		var dao = new JdbcGnucashDao(new JdbcTemplate(gnucashDataSource.getIfAvailable(() -> dataSource)),
+		var dao = new JdbcGnucashDao(
+				new JdbcTemplate(gnucashDataSource.getIfAvailable(() -> dataSource)),
 				settings.getSchema());
 		dao.setLockTimeoutSecs(settings.getLockTimeoutSecs());
 		return dao;
@@ -131,8 +132,8 @@ public class SnfBillingGnucashConfig {
 	}
 
 	@Bean
-	public PaymentAccountingSyncer paymentAccountingSyncer(AccountDao accountDao,
-			PaymentDao paymentDao, SnfAccountingSystem accountingSystem) {
+	public PaymentAccountingSyncer paymentAccountingSyncer(AccountDao accountDao, PaymentDao paymentDao,
+			SnfAccountingSystem accountingSystem) {
 		return new PaymentAccountingSyncer(accountDao, paymentDao, accountingSystem);
 	}
 

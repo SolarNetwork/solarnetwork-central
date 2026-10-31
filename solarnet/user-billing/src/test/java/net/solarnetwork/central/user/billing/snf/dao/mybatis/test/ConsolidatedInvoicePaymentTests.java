@@ -264,8 +264,8 @@ public class ConsolidatedInvoicePaymentTests extends AbstractMyBatisDaoTestSuppo
 	@Test
 	public void pay_reference() {
 		// WHEN
-		List<Map<String, Object>> result = pay(consolidated.getInvoiceId(), new BigDecimal("8.13"),
-				null, "Bank deposit 123");
+		List<Map<String, Object>> result = pay(consolidated.getInvoiceId(), new BigDecimal("8.13"), null,
+				"Bank deposit 123");
 
 		// THEN
 		// @formatter:off

@@ -79,8 +79,7 @@ public final class InsertGncCustomer implements PreparedStatementCreator, SqlPro
 				""".replace("{schema}", schema);
 	}
 
-	private static int setAddress(PreparedStatement stmt, int p, GncAddress addr)
-			throws SQLException {
+	private static int setAddress(PreparedStatement stmt, int p, GncAddress addr) throws SQLException {
 		stmt.setString(++p, addr.name());
 		stmt.setString(++p, addr.addr1());
 		stmt.setString(++p, addr.addr2());

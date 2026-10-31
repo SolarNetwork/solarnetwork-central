@@ -91,8 +91,7 @@ public record GncNumeric(long num, long denom) {
 	 *         denominator
 	 */
 	public static GncNumeric of(BigDecimal value, long fraction) {
-		return new GncNumeric(value.multiply(BigDecimal.valueOf(fraction)).longValueExact(),
-				fraction);
+		return new GncNumeric(value.multiply(BigDecimal.valueOf(fraction)).longValueExact(), fraction);
 	}
 
 	/**

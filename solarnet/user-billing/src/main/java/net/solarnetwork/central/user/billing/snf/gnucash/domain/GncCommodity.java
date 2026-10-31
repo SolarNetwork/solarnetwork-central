@@ -44,8 +44,8 @@ public record GncCommodity(String guid, String namespace, String mnemonic, int f
 	/**
 	 * Get the number of decimal places of the smallest fraction.
 	 *
-	 * @return the number of decimal places, such as {@literal 2} for a
-	 *         fraction of {@literal 100}
+	 * @return the number of decimal places, such as {@literal 2} for a fraction
+	 *         of {@literal 100}
 	 * @throws IllegalStateException
 	 *         if the fraction is not a power of ten
 	 */

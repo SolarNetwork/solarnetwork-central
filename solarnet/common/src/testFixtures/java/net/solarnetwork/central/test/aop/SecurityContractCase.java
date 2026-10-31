@@ -44,8 +44,8 @@ import net.solarnetwork.central.test.tenant.TestActor;
  *        the actors allowed to make the invocation; all other actors must be
  *        denied
  * @param setup
- *        optional setup to run against a new proxy before the invocation,
- *        for example to stub mocks the aspect uses to look up entities
+ *        optional setup to run against a new proxy before the invocation, for
+ *        example to stub mocks the aspect uses to look up entities
  * @param targetInvokedOnDeny
  *        {@code true} if the proxy target may be invoked even when access is
  *        denied, for example when the aspect checks the returned value

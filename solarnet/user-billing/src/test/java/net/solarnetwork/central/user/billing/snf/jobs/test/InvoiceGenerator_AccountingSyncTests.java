@@ -96,16 +96,16 @@ public class InvoiceGenerator_AccountingSyncTests {
 		account.setAddress(address);
 		given(accountDao.getForAccountId(ACCOUNT_ID)).willReturn(account);
 
-		final SnfInvoice invoice = new SnfInvoice(INVOICE_ID, USER_ID, ACCOUNT_ID, Instant.now(),
-				date, date.plusMonths(1), "NZD");
+		final SnfInvoice invoice = new SnfInvoice(INVOICE_ID, USER_ID, ACCOUNT_ID, Instant.now(), date,
+				date.plusMonths(1), "NZD");
 		given(invoicingSystem.generateInvoice(USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.willReturn(invoice);
 		given(taskDao.save(any())).willReturn(UUID.randomUUID());
 
 		// WHEN
-		boolean result = generator.handleTask(AccountTask.newTask(
-				date.atStartOfDay(account.getTimeZone()).toInstant(), AccountTaskType.GenerateInvoice,
-				ACCOUNT_ID));
+		boolean result = generator
+				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
+						AccountTaskType.GenerateInvoice, ACCOUNT_ID));
 
 		// THEN
 		// @formatter:off

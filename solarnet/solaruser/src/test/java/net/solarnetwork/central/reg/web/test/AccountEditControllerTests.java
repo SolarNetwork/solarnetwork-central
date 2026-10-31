@@ -392,8 +392,8 @@ public class AccountEditControllerTests {
 		final BindingResult errors = errorsFor(input);
 
 		final var linkErrors = new MapBindingResult(new HashMap<>(), "parentAccount");
-		linkErrors.reject("account.consolidated.error.parentLinked",
-				new Object[] { "parent@localhost" }, "Not linked.");
+		linkErrors.reject("account.consolidated.error.parentLinked", new Object[] { "parent@localhost" },
+				"Not linked.");
 		given(userAccountBiz.verifyParentAccount(eq(userId), same(link)))
 				.willThrow(new ValidationException("Not linked.", linkErrors, null));
 

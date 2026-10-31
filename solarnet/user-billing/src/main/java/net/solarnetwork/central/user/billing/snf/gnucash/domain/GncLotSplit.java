@@ -31,8 +31,7 @@ import org.jspecify.annotations.Nullable;
  * @param split
  *        the split
  * @param txnType
- *        the transaction type, such as
- *        {@link GncTransaction#TXN_TYPE_PAYMENT}
+ *        the transaction type, such as {@link GncTransaction#TXN_TYPE_PAYMENT}
  * @param postDate
  *        the transaction's post date
  * @author matt

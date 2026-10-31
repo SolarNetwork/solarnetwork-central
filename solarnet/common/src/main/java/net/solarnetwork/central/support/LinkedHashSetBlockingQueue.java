@@ -45,13 +45,13 @@ import org.jspecify.annotations.Nullable;
  * {@link #offer(Object, long, TimeUnit)} return {@code true} and
  * {@link #put(Object)} returns normally without the queue having grown. One
  * exception applies: when the queue is full {@code offer()} returns
- * {@code false} without inspecting the element, even if that element is
- * already queued.
+ * {@code false} without inspecting the element, even if that element is already
+ * queued.
  * </p>
  *
  * <p>
- * All mutating and inspecting operations are guarded by a single lock, so
- * this class is thread safe. The {@link #iterator()} returned is <i>weakly
+ * All mutating and inspecting operations are guarded by a single lock, so this
+ * class is thread safe. The {@link #iterator()} returned is <i>weakly
  * consistent</i>: it iterates a snapshot of the elements taken when the
  * iterator was created, never throws
  * {@link java.util.ConcurrentModificationException}, and does not reflect
@@ -62,9 +62,8 @@ import org.jspecify.annotations.Nullable;
  * </p>
  *
  * <p>
- * When a delegate set is provided, this queue assumes exclusive ownership
- * of it: modifying the delegate directly will corrupt the queue size
- * accounting.
+ * When a delegate set is provided, this queue assumes exclusive ownership of
+ * it: modifying the delegate directly will corrupt the queue size accounting.
  * </p>
  *
  * <p>

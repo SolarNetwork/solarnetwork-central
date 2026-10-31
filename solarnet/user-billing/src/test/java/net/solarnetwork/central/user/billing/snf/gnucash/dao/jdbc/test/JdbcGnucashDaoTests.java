@@ -155,9 +155,8 @@ public class JdbcGnucashDaoTests extends AbstractGnucashTestSupport {
 	public void customer_saveAndFind() {
 		// GIVEN
 		var customer = new GncCustomer(guid(), "SN_123", "Example Ltd", "", true, nzd.guid(), true,
-				GncCustomer.TAX_INCLUDED_USE_GLOBAL, gstTable.guid(),
-				new GncAddress("Example Ltd", "1 Main St", "Auckland 1010", "New Zealand", "", "",
-						"", "accounts@example.com"),
+				GncCustomer.TAX_INCLUDED_USE_GLOBAL, gstTable.guid(), new GncAddress("Example Ltd",
+						"1 Main St", "Auckland 1010", "New Zealand", "", "", "", "accounts@example.com"),
 				GncAddress.EMPTY);
 
 		// WHEN
@@ -352,8 +351,8 @@ public class JdbcGnucashDaoTests extends AbstractGnucashTestSupport {
 		final String payTxGuid = guid();
 		dao.saveTransaction(new GncTransaction(payTxGuid, nzd.guid(), "", date, date, CUSTOMER_NAME));
 		final GncNumeric paid = new GncNumeric(-500, 100);
-		dao.saveSplit(GncSplit.unreconciled(guid(), payTxGuid, receivable.guid(), "", "Payment",
-				paid, paid, lotGuid));
+		dao.saveSplit(GncSplit.unreconciled(guid(), payTxGuid, receivable.guid(), "", "Payment", paid,
+				paid, lotGuid));
 
 		// WHEN
 		List<GncInvoiceRef> result = dao.invoices("1931");

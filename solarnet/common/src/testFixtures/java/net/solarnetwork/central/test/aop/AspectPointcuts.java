@@ -49,8 +49,8 @@ public final class AspectPointcuts {
 	 *
 	 * <p>
 	 * A pointcut that matches nothing usually means a method was renamed, or
-	 * the pointcut expression is wrong, and some method is not being secured
-	 * as intended. Matching is static, so runtime conditions such as
+	 * the pointcut expression is wrong, and some method is not being secured as
+	 * intended. Matching is static, so runtime conditions such as
 	 * {@code @target(...)} are assumed to match.
 	 * </p>
 	 *
@@ -72,8 +72,8 @@ public final class AspectPointcuts {
 			final String[] paramNames = (pointcut.argNames().isBlank()
 					? Arrays.stream(m.getParameters()).map(Parameter::getName).toArray(String[]::new)
 					: pointcut.argNames().trim().split("\\s*,\\s*"));
-			final AspectJExpressionPointcut pc = new AspectJExpressionPointcut(aspectClass,
-					paramNames, m.getParameterTypes());
+			final AspectJExpressionPointcut pc = new AspectJExpressionPointcut(aspectClass, paramNames,
+					m.getParameterTypes());
 			pc.setExpression(pointcut.value());
 			if ( Arrays.stream(targetTypes).noneMatch(t -> AopUtils.canApply(pc, t)) ) {
 				result.add(m.getName());

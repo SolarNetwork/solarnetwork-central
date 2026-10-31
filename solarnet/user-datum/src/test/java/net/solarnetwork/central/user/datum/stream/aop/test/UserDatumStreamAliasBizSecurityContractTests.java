@@ -56,7 +56,7 @@ public class UserDatumStreamAliasBizSecurityContractTests {
 		final ObjectDatumStreamAliasEntityDao aliasDao = mock(ObjectDatumStreamAliasEntityDao.class);
 		return securedProxy((UserDatumStreamAliasBiz) mock(DaoUserDatumStreamAliasBiz.class),
 				new UserDatumStreamAliasSecurityAspect(tenants.ownershipDao(), aliasDao))
-				.withMock(ObjectDatumStreamAliasEntityDao.class, aliasDao);
+						.withMock(ObjectDatumStreamAliasEntityDao.class, aliasDao);
 	}
 
 	@TestFactory

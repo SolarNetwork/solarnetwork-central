@@ -107,8 +107,7 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 		return createUserNodes(userId, count, true);
 	}
 
-	private List<Long> createUserNodes(final Long userId, final int count,
-			final boolean requiresAuth) {
+	private List<Long> createUserNodes(final Long userId, final int count, final boolean requiresAuth) {
 		List<Long> result = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
 			Long nodeId = randomLong();
@@ -642,8 +641,7 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 	}
 
 	@Test
-	public void createAlias_asUnrestrictedToken_aliasNodeOwnedByAnotherUser_public()
-			throws Exception {
+	public void createAlias_asUnrestrictedToken_aliasNodeOwnedByAnotherUser_public() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
@@ -687,8 +685,7 @@ public class DatumStreamAliasControllerWebTests extends AbstractJUnit5CentralTra
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
 
 		final List<Long> nodeIds = createUserNodes(2);
-		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeIds.getFirst(),
-				randomSourceId());
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeIds.getFirst(), randomSourceId());
 
 		final Long userId2 = randomLong();
 		setupTestUser(userId2, userId2 + "@localhost");

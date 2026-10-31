@@ -516,9 +516,8 @@ public class CentralOcppWebSocketHandshakeInterceptorTests {
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 
 		// WHEN
-		boolean result = interceptor.beforeHandshake(
-				basicAuthRequest(randomString(), "foo", "bar"), new ServletServerHttpResponse(res),
-				handler, new LinkedHashMap<>(8));
+		boolean result = interceptor.beforeHandshake(basicAuthRequest(randomString(), "foo", "bar"),
+				new ServletServerHttpResponse(res), handler, new LinkedHashMap<>(8));
 
 		// THEN
 		// @formatter:off
@@ -549,9 +548,8 @@ public class CentralOcppWebSocketHandshakeInterceptorTests {
 
 		// WHEN
 		final long start = System.nanoTime();
-		boolean result = interceptor.beforeHandshake(
-				basicAuthRequest(randomString(), "foo", "bar"), new ServletServerHttpResponse(res),
-				handler, new LinkedHashMap<>(8));
+		boolean result = interceptor.beforeHandshake(basicAuthRequest(randomString(), "foo", "bar"),
+				new ServletServerHttpResponse(res), handler, new LinkedHashMap<>(8));
 		final Duration waited = Duration.ofNanos(System.nanoTime() - start);
 
 		// THEN

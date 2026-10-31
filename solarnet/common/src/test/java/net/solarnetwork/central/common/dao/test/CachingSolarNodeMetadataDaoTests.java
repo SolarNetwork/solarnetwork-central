@@ -75,8 +75,6 @@ public class CachingSolarNodeMetadataDaoTests {
 				Executors.newVirtualThreadPerTaskExecutor());
 	}
 
-
-
 	@Test
 	public void get_cacheMiss() {
 		// GIVEN

@@ -74,8 +74,8 @@ import net.solarnetwork.service.PasswordEncoder;
  * Linking a child account to a parent account adds the child to the invoice
  * consolidation group of the parent, which is stored in the internal data of
  * the parent account user. Linking requires both a
- * {@link #setPasswordEncoder(PasswordEncoder)} to verify the credentials of
- * the account to link, and an
+ * {@link #setPasswordEncoder(PasswordEncoder)} to verify the credentials of the
+ * account to link, and an
  * {@link #setConsolidationResolver(InvoiceConsolidationResolver)} to check the
  * resulting group.
  * </p>
@@ -100,7 +100,9 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 	/** The error code for linking to a parent account that is a child. */
 	public static final String LINK_PARENT_LINKED_ERROR_CODE = "account.consolidated.error.parentLinked";
 
-	/** The error code for linking accounts that can not be invoiced together. */
+	/**
+	 * The error code for linking accounts that can not be invoiced together.
+	 */
 	public static final String LINK_INVALID_ERROR_CODE = "account.consolidated.error.invalid";
 
 	/** The error code for account linking not being available. */
@@ -233,8 +235,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 				SnLinkedAccountInfo parent = null;
 				List<SnLinkedAccountInfo> children = null;
 				final InvoiceConsolidationResolver resolver = this.consolidationResolver;
-				final InvoiceConsolidationGroup group = (resolver != null
-						? resolver.groupForUser(userId)
+				final InvoiceConsolidationGroup group = (resolver != null ? resolver.groupForUser(userId)
 						: null);
 				if ( group != null && group.isPrimary(userId) ) {
 					children = linkedAccounts(group.memberUserIds());
@@ -339,8 +340,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 		}
 		final String username = input.getUsername();
 		final String password = input.getPassword();
-		final User user = (username != null && !username.isBlank()
-				? userDao.getUserByEmail(username)
+		final User user = (username != null && !username.isBlank() ? userDao.getUserByEmail(username)
 				: null);
 		final String encodedPassword = (user != null ? user.getPassword() : null);
 		if ( user == null || encodedPassword == null || password == null || password.isEmpty()
@@ -386,8 +386,8 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 			throw linkException(LINK_PARENT_LINKED_ERROR_CODE,
 					"The account {0} is itself linked to another account.", parent.getEmail());
 		} else if ( parentGroup != null && !parentGroup.isValid() ) {
-			throw linkException(LINK_INVALID_ERROR_CODE,
-					"The accounts can not be linked: {0}", parentGroup.problem());
+			throw linkException(LINK_INVALID_ERROR_CODE, "The accounts can not be linked: {0}",
+					parentGroup.problem());
 		}
 		return true;
 	}
@@ -619,8 +619,8 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 	 * Set the password encoder.
 	 *
 	 * @param passwordEncoder
-	 *        the password encoder to verify the credentials of accounts to
-	 *        link with
+	 *        the password encoder to verify the credentials of accounts to link
+	 *        with
 	 * @since 1.1
 	 */
 	public void setPasswordEncoder(@Nullable PasswordEncoder passwordEncoder) {
@@ -644,8 +644,7 @@ public class DefaultUserAccountBiz implements UserAccountBiz {
 	 *        the resolver to find the linked accounts with
 	 * @since 1.1
 	 */
-	public void setConsolidationResolver(
-			@Nullable InvoiceConsolidationResolver consolidationResolver) {
+	public void setConsolidationResolver(@Nullable InvoiceConsolidationResolver consolidationResolver) {
 		this.consolidationResolver = consolidationResolver;
 	}
 

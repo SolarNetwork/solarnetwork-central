@@ -374,9 +374,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	}
 
 	@Override
-	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Long offset, final Integer max) {
+	public FilterResults<SolarNodeMetadata, Long> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max) {
 		return solarNodeMetadataBiz.findSolarNodeMetadata(
 				solarNodeMetadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset,
 				max);

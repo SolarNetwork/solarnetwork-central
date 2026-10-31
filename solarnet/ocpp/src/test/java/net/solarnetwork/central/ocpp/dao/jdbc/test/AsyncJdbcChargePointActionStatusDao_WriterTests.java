@@ -79,8 +79,8 @@ import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
 
 /**
- * Test cases for the {@link AsyncJdbcChargePointActionStatusDao} writer, with
- * a mock JDBC connection.
+ * Test cases for the {@link AsyncJdbcChargePointActionStatusDao} writer, with a
+ * mock JDBC connection.
  *
  * @author matt
  * @version 1.0
@@ -465,8 +465,8 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 					final ThreadLocalRandom rng = ThreadLocalRandom.current();
 					for ( int seq = 1; seq <= updatesPerProducer; seq++ ) {
 						final int idx = firstAction + rng.nextInt(actionsPerProducer);
-						dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, 0, 0,
-								"Action" + idx, idx + "-" + seq, Instant.now());
+						dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, 0, 0, "Action" + idx,
+								idx + "-" + seq, Instant.now());
 						lastAdded.set(idx, seq);
 						if ( rng.nextInt(16) == 0 ) {
 							// pause now and then, to vary how updates and writes interleave
@@ -877,8 +877,8 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 
 		// fail the first write as a lost connection would, then succeed
 		given(jdbcStatement.execute())
-				.willThrow(new SQLException("An I/O error occurred while sending to the backend.",
-						"08006"))
+				.willThrow(
+						new SQLException("An I/O error occurred while sending to the backend.", "08006"))
 				.willReturn(false);
 
 		// WHEN
@@ -924,8 +924,7 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 		// the connection is not usable after the error, so the problem is with the connection
 		given(jdbcStatement.getConnection()).willReturn(jdbcConnection);
 		given(jdbcConnection.isValid(anyInt())).willReturn(false);
-		given(jdbcStatement.execute()).willThrow(new SQLException("Unexpected error"))
-				.willReturn(false);
+		given(jdbcStatement.execute()).willThrow(new SQLException("Unexpected error")).willReturn(false);
 
 		// WHEN
 		update(TEST_CHARGER_IDENT, 1, 1, TEST_ACTION, "a1");
@@ -953,8 +952,7 @@ public class AsyncJdbcChargePointActionStatusDao_WriterTests {
 	}
 
 	@Test
-	public void updateActionTimestamp_laterUpdateWhileWriteFails_laterWrittenInstead()
-			throws Exception {
+	public void updateActionTimestamp_laterUpdateWhileWriteFails_laterWrittenInstead() throws Exception {
 		// GIVEN
 		givenWriterConnection();
 		final Instant laterDate = nextDate.plusSeconds(60);

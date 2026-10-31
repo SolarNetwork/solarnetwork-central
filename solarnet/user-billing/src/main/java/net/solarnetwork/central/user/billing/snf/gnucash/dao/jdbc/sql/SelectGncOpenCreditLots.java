@@ -42,8 +42,7 @@ import org.springframework.jdbc.core.SqlProvider;
  * <p>
  * The result columns are {@code lot_guid}, {@code doc_guid}, {@code doc_id},
  * {@code doc_credit_note}, {@code balance}, {@code first_post}, and
- * {@code last_post}. The document columns are {@code null} for a payment
- * lot.
+ * {@code last_post}. The document columns are {@code null} for a payment lot.
  * </p>
  *
  * @author matt

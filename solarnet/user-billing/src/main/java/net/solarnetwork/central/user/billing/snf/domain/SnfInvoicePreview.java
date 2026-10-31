@@ -35,13 +35,12 @@ import net.solarnetwork.central.user.billing.domain.InvoicePreviewState;
  * @param date
  *        when the preview reached {@code state}, or started {@code Running}
  * @param invoice
- *        the dry-run invoice, when {@code state} is {@code Done} and there
- *        are charges, otherwise {@code null}
+ *        the dry-run invoice, when {@code state} is {@code Done} and there are
+ *        charges, otherwise {@code null}
  * @author matt
  * @version 1.0
  */
-public record SnfInvoicePreview(InvoicePreviewState state, Instant date,
-		@Nullable SnfInvoice invoice) {
+public record SnfInvoicePreview(InvoicePreviewState state, Instant date, @Nullable SnfInvoice invoice) {
 
 	/**
 	 * Constructor.
@@ -49,8 +48,7 @@ public record SnfInvoicePreview(InvoicePreviewState state, Instant date,
 	 * @param state
 	 *        the preview state
 	 * @param date
-	 *        when the preview reached {@code state}, or started
-	 *        {@code Running}
+	 *        when the preview reached {@code state}, or started {@code Running}
 	 * @param invoice
 	 *        the dry-run invoice, when {@code state} is {@code Done} and there
 	 *        are charges, otherwise {@code null}

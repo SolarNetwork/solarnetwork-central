@@ -957,7 +957,6 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
-
 	/**
 	 * Configure a datum stream, and all its supporting configuration, for a
 	 * 30-minute resolution Solcast irradiance stream.
@@ -1108,7 +1107,6 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 			;
 		// @formatter:on
 	}
-
 
 	/**
 	 * Validate that when the requested end date falls part way through a

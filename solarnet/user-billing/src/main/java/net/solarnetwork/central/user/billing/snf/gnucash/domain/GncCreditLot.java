@@ -34,15 +34,14 @@ import org.jspecify.annotations.Nullable;
  * @param guid
  *        the GUID
  * @param balance
- *        the balance, in the account commodity; customer credit in a
- *        receivable account is negative
+ *        the balance, in the account commodity; customer credit in a receivable
+ *        account is negative
  * @param firstPostDate
  *        the post date of the lot's earliest transaction
  * @param lastPostDate
  *        the post date of the lot's latest transaction
  * @param documentGuid
- *        the GUID of the lot's business document, or {@code null} for a
- *        payment
+ *        the GUID of the lot's business document, or {@code null} for a payment
  * @param documentTitle
  *        the title of the lot's business document, such as
  *        {@code Credit Note 123}
@@ -51,9 +50,8 @@ import org.jspecify.annotations.Nullable;
  * @author matt
  * @version 1.0
  */
-public record GncCreditLot(String guid, BigDecimal balance, Instant firstPostDate,
-		Instant lastPostDate, @Nullable String documentGuid, @Nullable String documentTitle,
-		List<GncLotSplit> splits) {
+public record GncCreditLot(String guid, BigDecimal balance, Instant firstPostDate, Instant lastPostDate,
+		@Nullable String documentGuid, @Nullable String documentTitle, List<GncLotSplit> splits) {
 
 	/**
 	 * Test if the lot belongs to a business document, such as a credit note.

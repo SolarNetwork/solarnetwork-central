@@ -101,7 +101,8 @@ public class SnAccountLinkInput implements Serializable {
 	 */
 	public final void setUsername(@Nullable String username) {
 		final SnLinkedAccountInfo verified = this.verifiedAccount;
-		if ( verified != null && (username == null || !verified.email().equalsIgnoreCase(username.trim())) ) {
+		if ( verified != null
+				&& (username == null || !verified.email().equalsIgnoreCase(username.trim())) ) {
 			this.verifiedAccount = null;
 		}
 		this.username = username;

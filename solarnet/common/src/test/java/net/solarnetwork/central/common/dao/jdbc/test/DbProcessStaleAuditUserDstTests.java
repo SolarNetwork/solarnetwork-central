@@ -45,11 +45,11 @@ import net.solarnetwork.domain.datum.Aggregation;
  * {@link solardatm.process_one_aud_stale_user} procedure.
  *
  * <p>
- * The stale row time stamps are local midnight in the user time zone, so a daily
- * rollup window must be one day long <i>in that zone</i>. These tests pin the
- * audit rows to a daylight saving transition day in {@link #TEST_TZ}, where a
- * local day is not 24 hours long, and force the JDBC session time zone to UTC so
- * it differs from the user time zone.
+ * The stale row time stamps are local midnight in the user time zone, so a
+ * daily rollup window must be one day long <i>in that zone</i>. These tests pin
+ * the audit rows to a daylight saving transition day in {@link #TEST_TZ}, where
+ * a local day is not 24 hours long, and force the JDBC session time zone to UTC
+ * so it differs from the user time zone.
  * </p>
  *
  * @author matt

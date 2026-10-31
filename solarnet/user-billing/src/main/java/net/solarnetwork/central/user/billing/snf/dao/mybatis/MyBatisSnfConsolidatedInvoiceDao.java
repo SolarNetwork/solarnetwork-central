@@ -129,8 +129,8 @@ public class MyBatisSnfConsolidatedInvoiceDao
 			}
 		}
 
-		List<SnfConsolidatedInvoice> results = selectList(QueryName.FindFiltered.getQueryName(),
-				filter, null, null);
+		List<SnfConsolidatedInvoice> results = selectList(QueryName.FindFiltered.getQueryName(), filter,
+				null, null);
 		return new BasicFilterResults<>(results, totalCount, offset != null ? offset.intValue() : 0,
 				results.size());
 	}

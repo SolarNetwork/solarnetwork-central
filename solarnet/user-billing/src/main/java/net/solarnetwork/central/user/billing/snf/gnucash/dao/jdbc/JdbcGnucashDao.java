@@ -134,21 +134,20 @@ public class JdbcGnucashDao implements GnucashDao {
 
 	@Override
 	public @Nullable GncCommodity currency(String code) {
-		return first(jdbcOps.query(
-				new SelectGncCommodity(schema, GncCommodity.CURRENCY_NAMESPACE, code),
+		return first(jdbcOps.query(new SelectGncCommodity(schema, GncCommodity.CURRENCY_NAMESPACE, code),
 				SelectGncCommodity.ROW_MAPPER));
 	}
 
 	@Override
 	public @Nullable GncAccount account(String path) {
-		return first(jdbcOps.query(new SelectGncAccount(schema, false, path),
-				SelectGncAccount.ROW_MAPPER));
+		return first(
+				jdbcOps.query(new SelectGncAccount(schema, false, path), SelectGncAccount.ROW_MAPPER));
 	}
 
 	@Override
 	public @Nullable GncAccount accountForGuid(String guid) {
-		return first(jdbcOps.query(new SelectGncAccount(schema, true, guid),
-				SelectGncAccount.ROW_MAPPER));
+		return first(
+				jdbcOps.query(new SelectGncAccount(schema, true, guid), SelectGncAccount.ROW_MAPPER));
 	}
 
 	@Override
@@ -177,8 +176,8 @@ public class JdbcGnucashDao implements GnucashDao {
 	}
 
 	private List<GncTaxTable> taxTables(SelectGncTaxTables.Criteria criteria, String value) {
-		final List<GncTaxTable> result = jdbcOps
-				.query(new SelectGncTaxTables(schema, criteria, value), SelectGncTaxTables.EXTRACTOR);
+		final List<GncTaxTable> result = jdbcOps.query(new SelectGncTaxTables(schema, criteria, value),
+				SelectGncTaxTables.EXTRACTOR);
 		return (result != null ? result : List.of());
 	}
 
@@ -232,8 +231,7 @@ public class JdbcGnucashDao implements GnucashDao {
 
 	@Override
 	public List<String> objectsWithSlot(String name, String value) {
-		return jdbcOps.query(new SelectGncSlotObjects(schema, name, value),
-				(rs, _) -> rs.getString(1));
+		return jdbcOps.query(new SelectGncSlotObjects(schema, name, value), (rs, _) -> rs.getString(1));
 	}
 
 	@Override
@@ -242,22 +240,22 @@ public class JdbcGnucashDao implements GnucashDao {
 		jdbcOps.query(new SelectGncOpenCreditLots(schema, ownerGuid, accountGuid), rs -> {
 			final String docGuid = rs.getString(2);
 			final String docTitle = (docGuid != null
-					? (rs.getLong(4) != 0 ? CREDIT_NOTE_TITLE : INVOICE_TITLE) + " "
-							+ rs.getString(3)
+					? (rs.getLong(4) != 0 ? CREDIT_NOTE_TITLE : INVOICE_TITLE) + " " + rs.getString(3)
 					: null);
 			final BigDecimal balance = rs.getBigDecimal(5);
 			final Instant firstPost = nonnull(getTimestamp(rs, 6), "First post date");
 			final Instant lastPost = nonnull(getTimestamp(rs, 7), "Last post date");
-			lots.add(new GncCreditLot(rs.getString(1), balance, firstPost, lastPost, docGuid,
-					docTitle, List.of()));
+			lots.add(new GncCreditLot(rs.getString(1), balance, firstPost, lastPost, docGuid, docTitle,
+					List.of()));
 		});
 		// load the splits of the payment lots, which may be moved to apply the payments
 		for ( ListIterator<GncCreditLot> itr = lots.listIterator(); itr.hasNext(); ) {
 			final GncCreditLot lot = itr.next();
 			if ( !lot.isDocument() ) {
 				itr.set(new GncCreditLot(lot.guid(), lot.balance(), lot.firstPostDate(),
-						lot.lastPostDate(), null, null, jdbcOps.query(
-								new SelectGncLotSplits(schema, lot.guid()), SelectGncLotSplits.ROW_MAPPER)));
+						lot.lastPostDate(), null, null,
+						jdbcOps.query(new SelectGncLotSplits(schema, lot.guid()),
+								SelectGncLotSplits.ROW_MAPPER)));
 			}
 		}
 		return lots;
@@ -292,8 +290,8 @@ public class JdbcGnucashDao implements GnucashDao {
 	 * Set the maximum number of seconds to wait to lock the book.
 	 *
 	 * <p>
-	 * GnuCash holds its own lock on the book only briefly while claiming it,
-	 * so a long wait is not expected.
+	 * GnuCash holds its own lock on the book only briefly while claiming it, so
+	 * a long wait is not expected.
 	 * </p>
 	 *
 	 * @param lockTimeoutSecs

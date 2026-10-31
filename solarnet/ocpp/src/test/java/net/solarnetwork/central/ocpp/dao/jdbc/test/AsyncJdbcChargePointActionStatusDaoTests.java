@@ -160,8 +160,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 								+ s.get(AsyncJdbcChargePointActionStatusCount.UpdatesFailed)
 								+ s.get(AsyncJdbcChargePointActionStatusCount.ResultsReplaced))
 				.as("ResultsRemoved stat tracked")
-				.returns(processed,
-						(s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved));
+				.returns(processed, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved));
 	}
 
 	@Test

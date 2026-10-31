@@ -38,9 +38,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  *
  * <p>
  * The contract is enforced by {@code UserExpireSecurityAspect}. Deleting datum
- * by filter requires write access to the filter's user and to every node in
- * the filter; without nodes the delete applies to all of the user's nodes.
- * Deleting datum by ID only deletes datum of the user's nodes.
+ * by filter requires write access to the filter's user and to every node in the
+ * filter; without nodes the delete applies to all of the user's nodes. Deleting
+ * datum by ID only deletes datum of the user's nodes.
  * </p>
  *
  * @author matt
@@ -96,8 +96,8 @@ public final class UserDatumDeleteBizSecurityContract {
 
 	private static ObjectDatumId datumId(TestTenant tenant, Long nodeId) {
 		final String sourceId = tenant.sourceIds().getFirst();
-		return ObjectDatumId.datumId(ObjectDatumKind.Node,
-				tenant.stream(nodeId, sourceId).getStreamId(), nodeId, sourceId, Instant.now(), null);
+		return ObjectDatumId.datumId(ObjectDatumKind.Node, tenant.stream(nodeId, sourceId).getStreamId(),
+				nodeId, sourceId, Instant.now(), null);
 	}
 
 	private static DatumFilterCommand filter(Long userId, Long... nodeIds) {

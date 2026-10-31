@@ -149,7 +149,6 @@ public class ResetPasswordControllerTests extends AbstractJUnit5CentralTransacti
 		// @formatter:on
 	}
 
-
 	@Test
 	public void generateResetCode_htmlInEmail_escaped() throws Exception {
 		// GIVEN

@@ -84,8 +84,8 @@ public class InvoiceAccountingSyncer implements AccountTaskHandler {
 		}
 		final Account account = accountDao.getForUser(userId);
 		if ( account == null ) {
-			log.error("Account task {} cannot be handled because user {} has no billing account.",
-					task, userId);
+			log.error("Account task {} cannot be handled because user {} has no billing account.", task,
+					userId);
 			return true;
 		}
 		final SnfInvoice invoice = invoiceDao.get(new UserLongCompositePK(userId, invoiceId));
@@ -101,8 +101,8 @@ public class InvoiceAccountingSyncer implements AccountTaskHandler {
 	private @Nullable Long longParam(AccountTask task, String key) {
 		final Object val = (task.getTaskData() != null ? task.getTaskData().get(key) : null);
 		if ( val == null ) {
-			log.error("Account task {} cannot be handled because no '{}' parameter is available.",
-					task, key);
+			log.error("Account task {} cannot be handled because no '{}' parameter is available.", task,
+					key);
 			return null;
 		}
 		try {

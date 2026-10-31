@@ -55,8 +55,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
 		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
 		result = prime * result + ((unpaid == null) ? 0 : unpaid.hashCode());
-		result = prime * result
-				+ ((includeConsolidated == null) ? 0 : includeConsolidated.hashCode());
+		result = prime * result + ((includeConsolidated == null) ? 0 : includeConsolidated.hashCode());
 		return result;
 	}
 

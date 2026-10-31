@@ -55,7 +55,7 @@ public class UserAlertBizSecurityContractTests {
 		final UserAlertDao alertDao = mock(UserAlertDao.class);
 		return securedProxy((UserAlertBiz) mock(DaoUserAlertBiz.class),
 				new UserAlertSecurityAspect(tenants.ownershipDao(), alertDao))
-				.withMock(UserAlertDao.class, alertDao);
+						.withMock(UserAlertDao.class, alertDao);
 	}
 
 	@TestFactory

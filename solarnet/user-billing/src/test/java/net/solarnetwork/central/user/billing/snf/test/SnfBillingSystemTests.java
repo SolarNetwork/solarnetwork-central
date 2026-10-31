@@ -570,10 +570,10 @@ public class SnfBillingSystemTests {
 	private static final LocalDate SEP = LocalDate.of(2026, 9, 1);
 
 	private Account givenAccount(Long userId) {
-		final var account = new Account(new UserLongCompositePK(userId, randomLong()),
-				clock.instant(), "NZD", "en-NZ");
-		account.setAddress(new Address(userId, "Tester " + userId, randomEmail(), "NZ",
-				"Pacific/Auckland"));
+		final var account = new Account(new UserLongCompositePK(userId, randomLong()), clock.instant(),
+				"NZD", "en-NZ");
+		account.setAddress(
+				new Address(userId, "Tester " + userId, randomEmail(), "NZ", "Pacific/Auckland"));
 		given(accountDao.getForUser(userId)).willReturn(account);
 		return account;
 	}
@@ -583,15 +583,15 @@ public class SnfBillingSystemTests {
 				start.plusMonths(1), "NZD");
 		invoice.setAddress(
 				new Address(userId, "Tester " + userId, randomEmail(), "NZ", "Pacific/Auckland"));
-		invoice.setItems(Set.of(SnfInvoiceItem.newItem(id, InvoiceItemType.Usage,
-				"datum-props-in", BigDecimal.ONE, new BigDecimal(amount))));
+		invoice.setItems(Set.of(SnfInvoiceItem.newItem(id, InvoiceItemType.Usage, "datum-props-in",
+				BigDecimal.ONE, new BigDecimal(amount))));
 		return invoice;
 	}
 
-	private static SnfConsolidatedInvoice consolidatedInvoice(Long id, Account primary,
-			LocalDate start, SnfInvoice... invoices) {
-		final var invoice = new SnfConsolidatedInvoice(id, primary.getUserId(),
-				primary.getAccountId(), Instant.now(), start, start.plusMonths(1), "NZD");
+	private static SnfConsolidatedInvoice consolidatedInvoice(Long id, Account primary, LocalDate start,
+			SnfInvoice... invoices) {
+		final var invoice = new SnfConsolidatedInvoice(id, primary.getUserId(), primary.getAccountId(),
+				Instant.now(), start, start.plusMonths(1), "NZD");
 		invoice.setAddress(primary.getAddress());
 		invoice.setInvoices(List.of(invoices));
 		return invoice;
@@ -618,8 +618,8 @@ public class SnfBillingSystemTests {
 		filter.setIncludeConsolidated(true);
 
 		// WHEN
-		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null,
-				null, null);
+		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null, null,
+				null);
 
 		// THEN
 		final List<InvoiceMatch> matches = new ArrayList<>();
@@ -663,19 +663,18 @@ public class SnfBillingSystemTests {
 		final Long userId = randomLong();
 		final Account account = givenAccount(userId);
 		given(invoiceDao.findFiltered(any(), any(), isNull(), isNull()))
-				.willReturn(new BasicFilterResults<>(List.of(invoice(5L, userId, SEP, "2.00"),
-						invoice(1L, userId, JUL, "1.00"))));
+				.willReturn(new BasicFilterResults<>(
+						List.of(invoice(5L, userId, SEP, "2.00"), invoice(1L, userId, JUL, "1.00"))));
 		given(invoicingSystem.findFilteredConsolidatedInvoices(any(), isNull(), isNull(), isNull()))
-				.willReturn(new BasicFilterResults<>(List.of(consolidatedInvoice(4L, account, AUG,
-						invoice(2L, userId, AUG, "3.00")))));
+				.willReturn(new BasicFilterResults<>(List
+						.of(consolidatedInvoice(4L, account, AUG, invoice(2L, userId, AUG, "3.00")))));
 
 		final var filter = new InvoiceFilterCommand();
 		filter.setUserId(userId);
 		filter.setIncludeConsolidated(true);
 
 		// WHEN
-		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null, 1L,
-				1);
+		FilterResults<InvoiceMatch, String> results = system.findFilteredInvoices(filter, null, 1L, 1);
 
 		// THEN
 		// @formatter:off
@@ -785,8 +784,7 @@ public class SnfBillingSystemTests {
 		final Long userId = randomLong();
 		final Long memberUserId = randomLong();
 		final Account account = givenAccount(userId);
-		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
-				false);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId), false);
 		given(consolidationResolver.groupForUser(userId)).willReturn(group);
 		final SnfConsolidatedInvoice preview = consolidatedInvoice(-1L, account, AUG,
 				invoice(-1L, userId, AUG, "3.00"), invoice(-1L, memberUserId, AUG, "4.00"));
@@ -799,8 +797,8 @@ public class SnfBillingSystemTests {
 				new BasicInvoiceGenerationOptions(YearMonth.from(AUG), false), Locale.ENGLISH);
 
 		// THEN
-		then(invoicingSystem).should().generateConsolidatedInvoice(same(group),
-				eq(YearMonth.from(AUG)), any());
+		then(invoicingSystem).should().generateConsolidatedInvoice(same(group), eq(YearMonth.from(AUG)),
+				any());
 		// @formatter:off
 		and.then(invoicingOptionsCaptor.getValue())
 			.as("Dry run, so nothing is saved")
@@ -843,9 +841,8 @@ public class SnfBillingSystemTests {
 		system.setConsolidationResolver(consolidationResolver);
 		final Long userId = randomLong();
 		given(consolidationResolver.groupForUser(userId))
-				.willReturn(new InvoiceConsolidationGroup(userId, List.of(userId, randomLong()),
-						false, new DefaultMessageSourceResolvable(
-								"error.consolidated.currencyMismatch")));
+				.willReturn(new InvoiceConsolidationGroup(userId, List.of(userId, randomLong()), false,
+						new DefaultMessageSourceResolvable("error.consolidated.currencyMismatch")));
 
 		// WHEN
 		Invoice result = system.getPreviewConsolidatedInvoice(userId,
@@ -873,8 +870,7 @@ public class SnfBillingSystemTests {
 		final Long userId = randomLong();
 		givenAccount(userId);
 		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
-		given(previewService.accountPreview(key))
-				.willReturn(SnfInvoicePreview.running(clock.instant()));
+		given(previewService.accountPreview(key)).willReturn(SnfInvoicePreview.running(clock.instant()));
 
 		// WHEN
 		InvoicePreviewStatus result = system.getPreviewInvoiceStatus(userId,
@@ -994,14 +990,13 @@ public class SnfBillingSystemTests {
 		final Long memberUserId = randomLong();
 		final Account account = givenAccount(userId);
 		givenAccount(memberUserId);
-		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
-				false);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId), false);
 		given(consolidationResolver.groupForUser(userId)).willReturn(group);
 		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
 		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
-		given(previewService.groupPreview(group, key)).willReturn(List.of(
-				SnfInvoicePreview.done(clock.instant(), invoice),
-				SnfInvoicePreview.running(clock.instant())));
+		given(previewService.groupPreview(group, key))
+				.willReturn(List.of(SnfInvoicePreview.done(clock.instant(), invoice),
+						SnfInvoicePreview.running(clock.instant())));
 		given(invoicingSystem.messageSourceForInvoice(invoice)).willReturn(new StaticMessageSource());
 
 		// WHEN
@@ -1039,8 +1034,8 @@ public class SnfBillingSystemTests {
 		// @formatter:on
 		and.then(again).as("Same status again").isEqualTo(result);
 		then(consolidationResolver).should().groupForUser(userId);
-		and.then(groupCache.get(userId)).as("Group cached for primary account")
-				.returns(account, from(SnfInvoicePreviewGroup::account));
+		and.then(groupCache.get(userId)).as("Group cached for primary account").returns(account,
+				from(SnfInvoicePreviewGroup::account));
 		then(invoicingSystem).should(never()).previewConsolidatedInvoice(any(), any(), any());
 	}
 
@@ -1053,8 +1048,7 @@ public class SnfBillingSystemTests {
 		final Long memberUserId = randomLong();
 		final Account account = givenAccount(userId);
 		givenAccount(memberUserId);
-		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
-				false);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId), false);
 		given(consolidationResolver.groupForUser(userId)).willReturn(group);
 		final SnfInvoice invoice = invoice(-1L, userId, AUG, "3.00");
 		final var key = new SnfInvoicePreviewKey(userId, YearMonth.from(AUG), false);
@@ -1063,8 +1057,8 @@ public class SnfBillingSystemTests {
 						SnfInvoicePreview.done(clock.instant(), null)));
 		given(invoicingSystem.messageSourceForInvoice(any())).willReturn(new StaticMessageSource());
 		final SnfConsolidatedInvoice preview = consolidatedInvoice(-1L, account, AUG, invoice);
-		given(invoicingSystem.previewConsolidatedInvoice(group, YearMonth.from(AUG),
-				List.of(invoice))).willReturn(preview);
+		given(invoicingSystem.previewConsolidatedInvoice(group, YearMonth.from(AUG), List.of(invoice)))
+				.willReturn(preview);
 
 		// WHEN
 		ConsolidatedInvoicePreviewStatus result = system.getPreviewConsolidatedInvoiceStatus(userId,
@@ -1129,8 +1123,7 @@ public class SnfBillingSystemTests {
 		final Long userId = randomLong();
 		final Long memberUserId = randomLong();
 		final Account account = givenAccount(userId);
-		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId),
-				false);
+		final var group = new InvoiceConsolidationGroup(userId, List.of(userId, memberUserId), false);
 		given(consolidationResolver.groupForUser(userId)).willReturn(group);
 		final SnfInvoice invoice1 = invoice(-1L, userId, AUG, "3.00");
 		final SnfInvoice invoice2 = invoice(-1L, memberUserId, AUG, "4.00");

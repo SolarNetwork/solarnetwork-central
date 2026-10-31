@@ -110,8 +110,7 @@ public abstract class BaseDatumSecurityPolicyTestSupport extends AbstractJUnit5J
 	protected static Set<UUID> streamIds(TestTenant tenant, Long nodeId, String... sourceIds) {
 		final String[] sources = (sourceIds.length > 0 ? sourceIds
 				: tenant.sourceIds().toArray(String[]::new));
-		return Arrays.stream(sources).map(s -> tenant.stream(nodeId, s).getStreamId())
-				.collect(toSet());
+		return Arrays.stream(sources).map(s -> tenant.stream(nodeId, s).getStreamId()).collect(toSet());
 	}
 
 }

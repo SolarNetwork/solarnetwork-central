@@ -67,8 +67,7 @@ public class UserEventHookSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(userId);
 	}
 
-	@Before(value = "saveConfiguration(config) || deleteConfiguration(config)",
-			argNames = "config")
+	@Before(value = "saveConfiguration(config) || deleteConfiguration(config)", argNames = "config")
 	public void saveConfigurationCheck(UserIdRelated config) {
 		final Long userId = config != null ? config.getUserId() : null;
 		requireUserWriteAccess(userId);

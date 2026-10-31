@@ -69,7 +69,7 @@ public final class RegistrationBizSecurityContract {
 		final Long confirmationId = randomLong();
 		final Consumer<SecuredProxy<RegistrationBiz>> confirmationSetup = p -> given(
 				p.mock(UserNodeConfirmationDao.class).get(confirmationId))
-				.willReturn(new UserNodeConfirmation(user(a)));
+						.willReturn(new UserNodeConfirmation(user(a)));
 
 		// @formatter:off
 		return SecurityContract.forApi(RegistrationBiz.class, tenants)

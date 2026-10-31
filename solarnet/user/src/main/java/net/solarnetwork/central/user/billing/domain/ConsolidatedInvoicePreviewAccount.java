@@ -44,9 +44,8 @@ import org.jspecify.annotations.Nullable;
  * @author matt
  * @version 1.0
  */
-public record ConsolidatedInvoicePreviewAccount(Long userId, String name,
-		InvoicePreviewState state, @Nullable String invoiceNumber,
-		@Nullable String localizedAmount) {
+public record ConsolidatedInvoicePreviewAccount(Long userId, String name, InvoicePreviewState state,
+		@Nullable String invoiceNumber, @Nullable String localizedAmount) {
 
 	/**
 	 * Constructor.
@@ -58,14 +57,13 @@ public record ConsolidatedInvoicePreviewAccount(Long userId, String name,
 	 * @param state
 	 *        the preview state of the account invoice
 	 * @param invoiceNumber
-	 *        the account invoice number, when {@code state} is {@code Done}
-	 *        and there are charges, otherwise {@code null}
+	 *        the account invoice number, when {@code state} is {@code Done} and
+	 *        there are charges, otherwise {@code null}
 	 * @param localizedAmount
 	 *        the localized account invoice amount, when {@code state} is
 	 *        {@code Done} and there are charges, otherwise {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code userId}, {@code name}, or {@code state} is
-	 *         {@code null}
+	 *         if {@code userId}, {@code name}, or {@code state} is {@code null}
 	 */
 	public ConsolidatedInvoicePreviewAccount {
 		requireNonNullArgument(userId, "userId");

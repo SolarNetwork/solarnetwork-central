@@ -50,9 +50,9 @@ import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasE
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Verify security policies are enforced on {@link UserDatumStreamAliasBiz}
- * with the {@code UserDatumStreamAliasSecurityAspect} aspect applied, using
- * the database.
+ * Verify security policies are enforced on {@link UserDatumStreamAliasBiz} with
+ * the {@code UserDatumStreamAliasSecurityAspect} aspect applied, using the
+ * database.
  *
  * @author matt
  * @version 1.0
@@ -88,9 +88,8 @@ public class UserDatumStreamAliasBizSecurityPolicyTests extends AbstractJUnit5Jd
 	private ObjectDatumStreamAliasEntity saveAlias(TestTenant tenant, Long nodeId) {
 		final Instant now = Instant.now();
 		final String sourceId = tenant.sourceIds().getFirst();
-		final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(
-				UUID.randomUUID(), now, now, ObjectDatumKind.Node, nodeId, sourceId + "/alias", nodeId,
-				sourceId);
+		final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(UUID.randomUUID(),
+				now, now, ObjectDatumKind.Node, nodeId, sourceId + "/alias", nodeId, sourceId);
 		aliasDao.save(alias);
 		return alias;
 	}

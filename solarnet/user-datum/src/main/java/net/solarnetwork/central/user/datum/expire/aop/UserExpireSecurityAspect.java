@@ -183,8 +183,8 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 	 */
 	@SuppressWarnings("ReferenceEquality")
 	@Around(value = "deleteDatumIds(userId, ids)", argNames = "pjp,userId,ids")
-	public Object deleteDatumIdsAccessCheck(ProceedingJoinPoint pjp, Long userId,
-			Set<ObjectDatumId> ids) throws Throwable {
+	public Object deleteDatumIdsAccessCheck(ProceedingJoinPoint pjp, Long userId, Set<ObjectDatumId> ids)
+			throws Throwable {
 		final Set<ObjectDatumId> allowed = policyRestrictedDatumIds(ids);
 		if ( allowed == ids ) {
 			return pjp.proceed();

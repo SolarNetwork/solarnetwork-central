@@ -36,8 +36,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
  *
  * <ol>
  * <li>anonymous</li>
- * <li>A user, A user token, A restricted user token, A data token, A
- * node</li>
+ * <li>A user, A user token, A restricted user token, A data token, A node</li>
  * <li>B user, B user token, B data token, B node</li>
  * </ol>
  *

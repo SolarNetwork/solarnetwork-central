@@ -537,8 +537,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MediaType.APPLICATION_JSON;
 		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
-		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null,
-				new DatumSamples());
+		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
 		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
@@ -682,8 +681,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MediaType.APPLICATION_JSON;
 		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
-		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null,
-				new DatumSamples());
+		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
 		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
@@ -834,8 +832,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MediaType.APPLICATION_JSON;
 		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
-		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null,
-				new DatumSamples());
+		final GeneralDatum xformOutput = nodeDatum(xformNodeId, xformSourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
 		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));

@@ -41,8 +41,8 @@ import net.solarnetwork.central.test.tenant.TestTenants;
 
 /**
  * Verify the {@link DatumStreamMetadataBizSecurityContract} for
- * {@link DatumStreamMetadataBiz} with the {@code DatumStreamMetadataSecurityAspect} aspect
- * applied.
+ * {@link DatumStreamMetadataBiz} with the
+ * {@code DatumStreamMetadataSecurityAspect} aspect applied.
  *
  * @author matt
  * @version 1.0
@@ -56,7 +56,7 @@ public class DatumStreamMetadataBizSecurityContractTests {
 		final DatumStreamMetadataDao metaDao = mock(DatumStreamMetadataDao.class);
 		return securedProxy((DatumStreamMetadataBiz) mock(DaoDatumStreamMetadataBiz.class),
 				new DatumStreamMetadataSecurityAspect(tenants.ownershipDao(), metaDao))
-				.withMock(DatumStreamMetadataDao.class, metaDao);
+						.withMock(DatumStreamMetadataDao.class, metaDao);
 	}
 
 	@TestFactory

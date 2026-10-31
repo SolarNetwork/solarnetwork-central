@@ -145,9 +145,8 @@ public class ConsolidatedBillingWebTests extends AbstractJUnit5CentralTransactio
 		primaryAug = createInvoice(primary, AUG, "2.00");
 		memberAug = createInvoice(member, AUG, "3.00");
 
-		final var invoice = new SnfConsolidatedInvoice(primary.getAccountId(),
-				primary.getUserId(), Instant.now(), AUG, AUG.plusMonths(1),
-				primary.getCurrencyCode());
+		final var invoice = new SnfConsolidatedInvoice(primary.getAccountId(), primary.getUserId(),
+				Instant.now(), AUG, AUG.plusMonths(1), primary.getCurrencyCode());
 		invoice.setAddress(primary.getAddress());
 		invoice.setInvoices(List.of(primaryAug, memberAug));
 		consolidated = invoice.copyWithId(consolidatedInvoiceDao.save(invoice));
@@ -194,8 +193,8 @@ public class ConsolidatedBillingWebTests extends AbstractJUnit5CentralTransactio
 	}
 
 	private SnfInvoice createInvoice(Account account, LocalDate start, String amount) {
-		final var invoice = new SnfInvoice(account.getAccountId(), account.getUserId(),
-				Instant.now(), start, start.plusMonths(1), account.getCurrencyCode());
+		final var invoice = new SnfInvoice(account.getAccountId(), account.getUserId(), Instant.now(),
+				start, start.plusMonths(1), account.getCurrencyCode());
 		invoice.setAddress(account.getAddress());
 		final UserLongCompositePK id = invoiceDao.save(invoice);
 		invoiceItemDao.save(newItem(id.getEntityId(), Usage, "datum-props-in", BigDecimal.ONE,
@@ -204,8 +203,8 @@ public class ConsolidatedBillingWebTests extends AbstractJUnit5CentralTransactio
 	}
 
 	private ResultActions getAs(Long userId, String username, String url) throws Exception {
-		return mvc.perform(get(url).with(authentication(authenticationFor(userId, username)))
-				.locale(NZ).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+		return mvc.perform(get(url).with(authentication(authenticationFor(userId, username))).locale(NZ)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 	}
 
 	private static String num(Long invoiceId) {

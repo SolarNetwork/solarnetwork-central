@@ -48,8 +48,7 @@ public class GnucashBookLockedException extends RepeatableTaskException {
 	 *        the process ID of GnuCash
 	 */
 	public GnucashBookLockedException(String hostname, int pid) {
-		super("The GnuCash book is open in GnuCash on host [%s] (process %d).".formatted(hostname,
-				pid));
+		super("The GnuCash book is open in GnuCash on host [%s] (process %d).".formatted(hostname, pid));
 		this.hostname = hostname;
 		this.pid = pid;
 	}

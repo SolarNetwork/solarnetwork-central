@@ -81,8 +81,6 @@ public class CachingUserMetadataDaoTests {
 				Executors.newVirtualThreadPerTaskExecutor(), metadataCache);
 	}
 
-
-
 	/**
 	 * The metadata returned by the delegate is restricted to the token policy's
 	 * paths, so the cache key must vary with the token or one token would serve

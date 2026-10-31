@@ -41,8 +41,8 @@ public interface SnfAccountingSystem {
 	 * Record an invoice in the accounting system.
 	 *
 	 * <p>
-	 * Recording an invoice the accounting system already has does nothing, so
-	 * a failed attempt can safely be repeated.
+	 * Recording an invoice the accounting system already has does nothing, so a
+	 * failed attempt can safely be repeated.
 	 * </p>
 	 *
 	 * @param invoice
@@ -61,9 +61,9 @@ public interface SnfAccountingSystem {
 	 *
 	 * <p>
 	 * The payment is applied to the invoices it pays, which the accounting
-	 * system must already have. Any amount not applied to an invoice is kept
-	 * as credit for the account. Recording a payment the accounting system
-	 * already has does nothing, so a failed attempt can safely be repeated.
+	 * system must already have. Any amount not applied to an invoice is kept as
+	 * credit for the account. Recording a payment the accounting system already
+	 * has does nothing, so a failed attempt can safely be repeated.
 	 * </p>
 	 *
 	 * @param payment
@@ -78,7 +78,6 @@ public interface SnfAccountingSystem {
 	 * @throws RepeatableTaskException
 	 *         if the payment cannot be recorded now, but might be later
 	 */
-	boolean syncPayment(Payment payment, Collection<InvoicePayment> invoicePayments,
-			Account account);
+	boolean syncPayment(Payment payment, Collection<InvoicePayment> invoicePayments, Account account);
 
 }

@@ -119,10 +119,8 @@ public class DaoSolarNodeMetadataBizTests {
 
 		Capture<SolarNodeMetadataFilter> filterCap = new Capture<>();
 
-		EasyMock.expect(
-				solarNodeMetadataDao.findFiltered(EasyMock.capture(filterCap), EasyMock.isNull(),
-						EasyMock.isNull(), EasyMock.isNull()))
-				.andReturn(new BasicFilterResults<>(List.of()));
+		EasyMock.expect(solarNodeMetadataDao.findFiltered(EasyMock.capture(filterCap), EasyMock.isNull(),
+				EasyMock.isNull(), EasyMock.isNull())).andReturn(new BasicFilterResults<>(List.of()));
 
 		// WHEN
 		replayAll();

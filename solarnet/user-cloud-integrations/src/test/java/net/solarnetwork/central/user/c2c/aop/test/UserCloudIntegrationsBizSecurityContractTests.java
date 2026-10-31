@@ -57,7 +57,7 @@ public class UserCloudIntegrationsBizSecurityContractTests {
 				CloudDatumStreamConfigurationDao.class);
 		return securedProxy((UserCloudIntegrationsBiz) mock(DaoUserCloudIntegrationsBiz.class),
 				new UserCloudIntegrationsSecurityAspect(tenants.ownershipDao(), datumStreamDao))
-				.withMock(CloudDatumStreamConfigurationDao.class, datumStreamDao);
+						.withMock(CloudDatumStreamConfigurationDao.class, datumStreamDao);
 	}
 
 	@TestFactory

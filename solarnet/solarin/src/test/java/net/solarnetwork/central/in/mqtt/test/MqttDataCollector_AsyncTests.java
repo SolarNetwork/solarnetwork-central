@@ -190,8 +190,8 @@ public class MqttDataCollector_AsyncTests {
 
 		// read the security context back on the same worker thread
 		final AtomicReference<Authentication> leaked = new AtomicReference<>();
-		executor.submit(() -> leaked.set(SecurityContextHolder.getContext().getAuthentication()))
-				.get(5, TimeUnit.SECONDS);
+		executor.submit(() -> leaked.set(SecurityContextHolder.getContext().getAuthentication())).get(5,
+				TimeUnit.SECONDS);
 
 		// THEN
 		// @formatter:off
@@ -349,8 +349,7 @@ public class MqttDataCollector_AsyncTests {
 	@Test
 	public void persistFailed_notAcknowledged() {
 		// GIVEN
-		willThrow(new RuntimeException("boom!")).given(dataCollectorBiz)
-				.postGeneralNodeDatum(any());
+		willThrow(new RuntimeException("boom!")).given(dataCollectorBiz).postGeneralNodeDatum(any());
 
 		// WHEN
 		CompletionStage<?> result = service.onMqttMessageAsync(datumMessage());

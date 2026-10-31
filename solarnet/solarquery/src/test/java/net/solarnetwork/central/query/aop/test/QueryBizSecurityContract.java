@@ -41,8 +41,8 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * The contract is enforced by {@code QuerySecurityAspect}, which applies only
  * to targets annotated with {@code Securable}. Datum queries require read
  * access to the nodes (or the nodes of the streams) and are subject to the
- * security policy's node and source restrictions. Queries for several nodes
- * are narrowed to the nodes the actor can read, rather than denied.
+ * security policy's node and source restrictions. Queries for several nodes are
+ * narrowed to the nodes the actor can read, rather than denied.
  * </p>
  *
  * <p>

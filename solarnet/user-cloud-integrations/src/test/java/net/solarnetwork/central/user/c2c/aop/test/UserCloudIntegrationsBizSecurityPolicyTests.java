@@ -149,8 +149,7 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 						mock(ClientAccessTokenDao.class), mock(TextEncryptor.class),
 						List.of(integrationService)),
 				new UserCloudIntegrationsSecurityAspect(new JdbcSolarNodeOwnershipDao(jdbcTemplate),
-						datumStreamDao))
-				.proxy();
+						datumStreamDao)).proxy();
 	}
 
 	private Long integration(TestTenant tenant) {
@@ -198,8 +197,7 @@ public class UserCloudIntegrationsBizSecurityPolicyTests extends AbstractJUnit5J
 
 	private static Set<UserLongCompositePK> ids(
 			Iterable<? extends Entity<UserLongCompositePK>> results) {
-		return StreamSupport.stream(results.spliterator(), false).map(Entity::getId)
-				.collect(toSet());
+		return StreamSupport.stream(results.spliterator(), false).map(Entity::getId).collect(toSet());
 	}
 
 	@Test

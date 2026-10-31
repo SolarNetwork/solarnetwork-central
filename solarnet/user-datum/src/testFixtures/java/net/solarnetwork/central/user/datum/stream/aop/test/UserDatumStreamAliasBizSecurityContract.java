@@ -114,8 +114,8 @@ public final class UserDatumStreamAliasBizSecurityContract {
 				nodeId, sourceId + "/alias", nodeId, sourceId);
 	}
 
-	private static ObjectDatumStreamAliasEntityInput input(Long originalNodeId,
-			String originalSourceId, Long aliasNodeId) {
+	private static ObjectDatumStreamAliasEntityInput input(Long originalNodeId, String originalSourceId,
+			Long aliasNodeId) {
 		final ObjectDatumStreamAliasEntityInput input = new ObjectDatumStreamAliasEntityInput();
 		input.setOriginalObjectId(originalNodeId);
 		input.setOriginalSourceId(originalSourceId);

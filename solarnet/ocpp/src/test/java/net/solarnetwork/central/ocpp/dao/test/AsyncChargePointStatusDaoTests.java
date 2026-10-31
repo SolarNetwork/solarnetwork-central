@@ -224,9 +224,9 @@ public class AsyncChargePointStatusDaoTests {
 	}
 
 	/**
-	 * Make the delegate DAO behave like the real SQL: a connected update
-	 * always replaces the row, and a disconnected update only clears the row
-	 * when it is for the stored instance and session.
+	 * Make the delegate DAO behave like the real SQL: a connected update always
+	 * replaces the row, and a disconnected update only clears the row when it
+	 * is for the stored instance and session.
 	 *
 	 * @return the simulated rows, keyed by charger identifier
 	 */
@@ -240,10 +240,11 @@ public class AsyncChargePointStatusDaoTests {
 			if ( connected ) {
 				rows.put(cpId, new StatusRow(connectedTo, sessionId));
 			} else {
-				rows.computeIfPresent(cpId,
-						(_, row) -> row.connectedTo().equals(connectedTo)
-								&& row.sessionId().equals(sessionId) ? new StatusRow(null, null)
-										: row);
+				rows.computeIfPresent(
+						cpId, (_,
+								row) -> row.connectedTo().equals(connectedTo)
+										&& row.sessionId().equals(sessionId) ? new StatusRow(null, null)
+												: row);
 			}
 			return null;
 		}).given(delegate).updateConnectionStatus(any(), any(), any(), any(), any(), anyBoolean());

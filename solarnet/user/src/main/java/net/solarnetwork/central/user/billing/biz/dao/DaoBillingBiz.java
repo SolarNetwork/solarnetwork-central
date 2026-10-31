@@ -205,8 +205,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable Invoice getPreviewConsolidatedInvoice(Long userId,
-			InvoiceGenerationOptions options, Locale locale) {
+	public @Nullable Invoice getPreviewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
+			Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
@@ -216,8 +216,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable Resource previewConsolidatedInvoice(Long userId,
-			InvoiceGenerationOptions options, MimeType outputType, Locale locale) {
+	public @Nullable Resource previewConsolidatedInvoice(Long userId, InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
@@ -238,8 +238,8 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(
-			Long userId, InvoiceGenerationOptions options, Locale locale) {
+	public @Nullable ConsolidatedInvoicePreviewStatus getPreviewConsolidatedInvoiceStatus(Long userId,
+			InvoiceGenerationOptions options, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;

@@ -390,8 +390,8 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		final SnfInvoice invoice2 = createTestInvoiceWithDefaultItems(account, address,
 				LocalDate.of(2020, 3, 1));
 		final BigDecimal partial = new BigDecimal("1.00");
-		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(
-				account.getAccountId(), new Long[] { invoice2.getInvoiceId(), invoice1.getInvoiceId() },
+		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(account.getAccountId(),
+				new Long[] { invoice2.getInvoiceId(), invoice1.getInvoiceId() },
 				invoice1.getTotalAmount().add(partial), now());
 		final UUID paymentId = (UUID) payRows.getFirst().get("id");
 
@@ -428,9 +428,8 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
 				LocalDate.of(2020, 2, 1));
-		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(
-				account.getAccountId(), new Long[] { invoice.getInvoiceId() },
-				invoice.getTotalAmount(), now());
+		final List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(account.getAccountId(),
+				new Long[] { invoice.getInvoiceId() }, invoice.getTotalAmount(), now());
 		final UUID paymentId = (UUID) payRows.getFirst().get("id");
 
 		// WHEN

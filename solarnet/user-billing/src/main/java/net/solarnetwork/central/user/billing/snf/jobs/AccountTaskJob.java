@@ -120,11 +120,11 @@ public class AccountTaskJob extends JobSupport {
 				final Instant execAt = Instant.now().plus(retryDelay);
 				if ( e instanceof RepeatableTaskException ) {
 					log.debug(e.getMessage(), e);
-					log.info("Error processing account task {}; will re-try after {}: {}",
-							task.getId(), execAt, e.getMessage());
+					log.info("Error processing account task {}; will re-try after {}: {}", task.getId(),
+							execAt, e.getMessage());
 				} else {
-					log.error("Error processing account task {}; will re-try after {}: {}", task,
-							execAt, e.toString(), e);
+					log.error("Error processing account task {}; will re-try after {}: {}", task, execAt,
+							e.toString(), e);
 				}
 				// the task's transaction has rolled back, so defer in a new one
 				if ( transactionTemplate != null ) {
@@ -192,8 +192,7 @@ public class AccountTaskJob extends JobSupport {
 
 	private boolean handleOptionalTask(AccountTask task, @Nullable AccountTaskHandler handler) {
 		if ( handler == null ) {
-			log.warn("No handler is available for {} account task {}", task.getTaskType(),
-					task.getId());
+			log.warn("No handler is available for {} account task {}", task.getTaskType(), task.getId());
 			return false;
 		}
 		return handler.handleTask(task);

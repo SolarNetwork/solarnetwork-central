@@ -53,8 +53,7 @@ public class LocalizedConsolidatedInvoice extends LocalizedInvoice {
 	public LocalizedConsolidatedInvoice(ConsolidatedInvoiceImpl invoice,
 			List<LocalizedConsolidatedInvoiceAccount> accountInvoices, Locale locale) {
 		super(invoice, locale);
-		this.accountInvoices = List
-				.copyOf(requireNonNullArgument(accountInvoices, "accountInvoices"));
+		this.accountInvoices = List.copyOf(requireNonNullArgument(accountInvoices, "accountInvoices"));
 	}
 
 	/**

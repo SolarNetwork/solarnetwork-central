@@ -52,8 +52,7 @@ public class ConsolidatedInvoiceImplTests {
 
 	private static final LocalDate START_DATE = LocalDate.of(2026, 10, 1);
 
-	private static InvoiceImpl invoice(Long invoiceId, String usage, String tax,
-			String credit) {
+	private static InvoiceImpl invoice(Long invoiceId, String usage, String tax, String credit) {
 		SnfInvoice invoice = new SnfInvoice(invoiceId, 1L, 2L, Instant.now(), START_DATE,
 				START_DATE.plusMonths(1), "NZD");
 		List<SnfInvoiceItem> items = new ArrayList<>(3);

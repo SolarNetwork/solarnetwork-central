@@ -95,10 +95,10 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * An SNF invoice is added as a posted GnuCash invoice, with the rows GnuCash
  * itself writes when posting: the invoice, with one line per invoice item or a
  * summary line, a transaction with splits to the receivable, income, and tax
- * accounts, and a lot that payments are later matched against. GnuCash
- * computes tax from the invoice lines and its tax tables, rounding each line's
- * value and then each tax account's total, and the result must match the SNF
- * invoice's tax items exactly or nothing is written.
+ * accounts, and a lot that payments are later matched against. GnuCash computes
+ * tax from the invoice lines and its tax tables, rounding each line's value and
+ * then each tax account's total, and the result must match the SNF invoice's
+ * tax items exactly or nothing is written.
  * </p>
  *
  * <p>
@@ -134,8 +134,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 			Map.entry("accounts", 1), Map.entry("books", 1), Map.entry("commodities", 1),
 			Map.entry("customers", 2), Map.entry("entries", 4), Map.entry("invoices", 4),
 			Map.entry("lots", 2), Map.entry("slots", 4), Map.entry("splits", 5),
-			Map.entry("taxtable_entries", 3), Map.entry("taxtables", 2),
-			Map.entry("transactions", 4));
+			Map.entry("taxtable_entries", 3), Map.entry("taxtables", 2), Map.entry("transactions", 4));
 
 	/** The GnuCash type name of an invoice. */
 	public static final String INVOICE_TYPE = "Invoice";
@@ -206,13 +205,12 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public GnucashAccountingSystem(Clock clock, TransactionTemplate transactionTemplate,
-			GnucashDao dao, GnucashSettings settings, SnfInvoicingSystem invoicingSystem,
+	public GnucashAccountingSystem(Clock clock, TransactionTemplate transactionTemplate, GnucashDao dao,
+			GnucashSettings settings, SnfInvoicingSystem invoicingSystem,
 			SnfTaxCodeResolver taxCodeResolver, TaxCodeDao taxCodeDao) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
-		this.transactionTemplate = requireNonNullArgument(transactionTemplate,
-				"transactionTemplate");
+		this.transactionTemplate = requireNonNullArgument(transactionTemplate, "transactionTemplate");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.settings = requireNonNullArgument(settings, "settings");
 		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
@@ -224,17 +222,17 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 * The GnuCash customer, currency, and receivable account to record SNF
 	 * invoices or payments for one account with.
 	 */
-	private record Ledger(GncCustomer customer, GncCommodity currency,
-			CurrencySettings currencySettings, GncAccount receivable) {
+	private record Ledger(GncCustomer customer, GncCommodity currency, CurrencySettings currencySettings,
+			GncAccount receivable) {
 
 	}
 
 	/**
 	 * The details of an SNF invoice being recorded.
 	 */
-	private record Doc(SnfInvoice invoice, Account account, String id, Instant now,
-			GncCustomer customer, GncCommodity currency, CurrencySettings currencySettings,
-			GncAccount receivable, String notes) {
+	private record Doc(SnfInvoice invoice, Account account, String id, Instant now, GncCustomer customer,
+			GncCommodity currency, CurrencySettings currencySettings, GncAccount receivable,
+			String notes) {
 
 	}
 
@@ -245,8 +243,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 *        the line amount: the quantity multiplied by the price, as a
 	 *        positive amount
 	 */
-	private record Line(String description, GncNumeric quantity, GncNumeric price,
-			BigDecimal amount, boolean taxable, boolean taxIncluded, String accountGuid) {
+	private record Line(String description, GncNumeric quantity, GncNumeric price, BigDecimal amount,
+			boolean taxable, boolean taxIncluded, String accountGuid) {
 
 	}
 
@@ -300,10 +298,10 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		// skip an invoice that is already in GnuCash, such as one added by an earlier attempt
 		final List<GncInvoiceRef> existing = dao.invoices(id);
 		if ( !existing.isEmpty() ) {
-			if ( existingCustomer != null && existing.stream()
-					.anyMatch(e -> existingCustomer.guid().equals(e.ownerGuid())) ) {
-				log.info("SNF invoice {} for user {} is already in GnuCash, owned by customer {}",
-						id, invoice.getUserId(), customerId);
+			if ( existingCustomer != null
+					&& existing.stream().anyMatch(e -> existingCustomer.guid().equals(e.ownerGuid())) ) {
+				log.info("SNF invoice {} for user {} is already in GnuCash, owned by customer {}", id,
+						invoice.getUserId(), customerId);
 				return false;
 			}
 			throw new GnucashSyncException(
@@ -311,8 +309,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 							.formatted(id, customerId));
 		}
 
-		final Ledger ledger = ledger(existingCustomer, customerId, account,
-				invoice.getCurrencyCode());
+		final Ledger ledger = ledger(existingCustomer, customerId, account, invoice.getCurrencyCode());
 		final Doc doc = new Doc(invoice, account, id, clock.instant(), ledger.customer(),
 				ledger.currency(), ledger.currencySettings(), ledger.receivable(), notes(invoice));
 		if ( isCreditGrant(invoice) ) {
@@ -337,8 +334,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 *
 	 * @param invoice
 	 *        the SNF invoice
-	 * @return the notes, naming the consolidated invoice the SNF invoice is part
-	 *         of, if any
+	 * @return the notes, naming the consolidated invoice the SNF invoice is
+	 *         part of, if any
 	 */
 	private String notes(SnfInvoice invoice) {
 		final SnfConsolidatedInvoice consolidated = invoicingSystem
@@ -350,8 +347,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 				.formatted(SnfBillingUtils.invoiceNumForId(consolidated.getInvoiceId()));
 	}
 
-	private Ledger ledger(@Nullable GncCustomer existingCustomer, String customerId,
-			Account account, String currencyCode) {
+	private Ledger ledger(@Nullable GncCustomer existingCustomer, String customerId, Account account,
+			String currencyCode) {
 		final CurrencySettings cs = settings.currency(currencyCode);
 		if ( cs == null ) {
 			throw new GnucashSyncException(
@@ -363,8 +360,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		}
 		final GncAccount receivable = account(cs.getReceivableAccount(), "receivable", currency);
 		if ( !GncAccount.TYPE_RECEIVABLE.equals(receivable.type()) ) {
-			throw new GnucashSyncException("GnuCash account %s is not a receivable account."
-					.formatted(receivable.path()));
+			throw new GnucashSyncException(
+					"GnuCash account %s is not a receivable account.".formatted(receivable.path()));
 		}
 
 		final GncCustomer customer;
@@ -404,8 +401,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 			throw new GnucashSyncException("GnuCash has no account %s.".formatted(path));
 		}
 		if ( !currency.guid().equals(account.commodityGuid()) ) {
-			throw new GnucashSyncException("GnuCash account %s does not use currency %s."
-					.formatted(path, currency.mnemonic()));
+			throw new GnucashSyncException(
+					"GnuCash account %s does not use currency %s.".formatted(path, currency.mnemonic()));
 		}
 		return account;
 	}
@@ -421,10 +418,9 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final String name = (addr != null && addr.getName() != null && !addr.getName().isBlank()
 				? addr.getName().trim()
 				: customerId);
-		final GncCustomer customer = new GncCustomer(guid(), customerId, name, "", true,
-				currency.guid(), taxTable != null, GncCustomer.TAX_INCLUDED_USE_GLOBAL,
-				(taxTable != null ? taxTable.guid() : null), gncAddress(addr, name),
-				GncAddress.EMPTY);
+		final GncCustomer customer = new GncCustomer(guid(), customerId, name, "", true, currency.guid(),
+				taxTable != null, GncCustomer.TAX_INCLUDED_USE_GLOBAL,
+				(taxTable != null ? taxTable.guid() : null), gncAddress(addr, name), GncAddress.EMPTY);
 		dao.saveCustomer(customer);
 		if ( taxTable != null ) {
 			dao.incrementTaxTableRefcount(taxTable.guid());
@@ -447,7 +443,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 				}
 			}
 		}
-		final String city = Stream.of(addr.getLocality(), addr.getStateOrProvince(), addr.getPostalCode())
+		final String city = Stream
+				.of(addr.getLocality(), addr.getStateOrProvince(), addr.getPostalCode())
 				.filter(s -> s != null && !s.isBlank()).map(String::trim).collect(joining(" "));
 		if ( !city.isEmpty() ) {
 			lines.add(city);
@@ -498,9 +495,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	private void addInvoice(Doc doc) {
 		final SnfInvoice invoice = doc.invoice();
 		final List<SnfInvoiceItem> items = sortedItems(invoice);
-		final List<SnfInvoiceItem> charges = items.stream()
-				.filter(i -> i.getItemType() != InvoiceItemType.Tax
-						&& i.getItemType() != InvoiceItemType.Credit)
+		final List<SnfInvoiceItem> charges = items.stream().filter(
+				i -> i.getItemType() != InvoiceItemType.Tax && i.getItemType() != InvoiceItemType.Credit)
 				.toList();
 		if ( charges.isEmpty() ) {
 			throw new GnucashSyncException(
@@ -521,14 +517,13 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		if ( totals.tax().compareTo(snfTax) != 0 ) {
 			throw new GnucashSyncException(
 					"GnuCash would compute %s tax on SNF invoice %s, but the invoice has %s tax."
-							.formatted(totals.tax().toPlainString(), doc.id(),
-									snfTax.toPlainString()));
+							.formatted(totals.tax().toPlainString(), doc.id(), snfTax.toPlainString()));
 		}
 		if ( totals.total().subtract(credit).compareTo(invoice.getTotalAmount()) != 0 ) {
 			throw new GnucashSyncException(
 					"GnuCash would compute a total of %s less %s credit for SNF invoice %s, but the invoice total is %s."
-							.formatted(totals.total().toPlainString(), credit.toPlainString(),
-									doc.id(), invoice.getTotalAmount().toPlainString()));
+							.formatted(totals.total().toPlainString(), credit.toPlainString(), doc.id(),
+									invoice.getTotalAmount().toPlainString()));
 		}
 
 		final List<GncCreditLot> creditLots = (credit.signum() > 0
@@ -554,8 +549,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		log.info(
 				"Added SNF invoice {} for user {} to GnuCash for customer {}: {} lines, total {} {} including {} tax, less {} credit",
 				doc.id(), invoice.getUserId(), doc.customer().id(), lines.size(),
-				totals.total().toPlainString(), doc.currency().mnemonic(),
-				totals.tax().toPlainString(), credit.toPlainString());
+				totals.total().toPlainString(), doc.currency().mnemonic(), totals.tax().toPlainString(),
+				credit.toPlainString());
 	}
 
 	private List<Line> invoiceLines(Doc doc, List<SnfInvoiceItem> charges, GncAccount income,
@@ -564,8 +559,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		// zero-rated supplies, so the zero tax is still recorded
 		final boolean zeroRated = (taxTable != null
 				&& taxTable.entries().stream().allMatch(e -> e.amount().isZero()));
-		final Set<String> taxedKeys = (taxTable != null && !zeroRated
-				? snfTaxedItemKeys(doc.invoice())
+		final Set<String> taxedKeys = (taxTable != null && !zeroRated ? snfTaxedItemKeys(doc.invoice())
 				: Set.of());
 		final List<Line> lines = new ArrayList<>(charges.size());
 		if ( settings.isItemized() ) {
@@ -596,8 +590,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		return lines;
 	}
 
-	private static String itemDescription(SnfInvoiceItem item, MessageSource messages,
-			Locale locale) {
+	private static String itemDescription(SnfInvoiceItem item, MessageSource messages, Locale locale) {
 		// the GnuCash book is for SolarNetwork itself, so fall back to English for an account
 		// locale without messages
 		String desc = messages.getMessage(item.getKey() + ".item", null, null, locale);
@@ -616,7 +609,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 
 	private Set<String> snfTaxedItemKeys(SnfInvoice invoice) {
 		final Set<String> keys = new HashSet<>(8);
-		for ( TaxCode code : taxCodeDao.findFiltered(taxCodeResolver.taxCodeFilterForInvoice(invoice)) ) {
+		for ( TaxCode code : taxCodeDao
+				.findFiltered(taxCodeResolver.taxCodeFilterForInvoice(invoice)) ) {
 			keys.add(code.getItemKey().toLowerCase(Locale.ROOT));
 		}
 		return keys;
@@ -676,15 +670,12 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 							MathContext.DECIMAL128);
 				}
 				for ( GncTaxTableEntry entry : taxTable.entries() ) {
-					tax.merge(entry.accountGuid(),
-							pretax.multiply(entry.amount().toBigDecimal()).divide(ONE_HUNDRED,
-									MathContext.DECIMAL128),
-							BigDecimal::add);
+					tax.merge(entry.accountGuid(), pretax.multiply(entry.amount().toBigDecimal())
+							.divide(ONE_HUNDRED, MathContext.DECIMAL128), BigDecimal::add);
 				}
 			}
 			// GnuCash rounds each line's value, but only the total of each tax account
-			net.merge(line.accountGuid(), pretax.setScale(scale, RoundingMode.HALF_UP),
-					BigDecimal::add);
+			net.merge(line.accountGuid(), pretax.setScale(scale, RoundingMode.HALF_UP), BigDecimal::add);
 		}
 		tax.replaceAll((_, v) -> v.setScale(scale, RoundingMode.HALF_UP));
 		return new Totals(net, tax, net.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add),
@@ -703,11 +694,12 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final Instant postDate = dayNeutral(date, zone);
 		final Instant lineInstant = localNoon(lineDate, zone);
 
-		dao.saveInvoice(new GncInvoice(invoiceGuid, doc.id(), postDate, postDate, doc.notes(), true,
-				doc.currency().guid(), GncInvoice.OWNER_TYPE_CUSTOMER, doc.customer().guid(),
-				Objects.requireNonNullElse(
-						SnfBillingUtils.invoiceNumForId(doc.invoice().getInvoiceId()), ""),
-				txnGuid, lotGuid, doc.receivable().guid()));
+		dao.saveInvoice(
+				new GncInvoice(invoiceGuid, doc.id(), postDate, postDate, doc.notes(), true,
+						doc.currency().guid(), GncInvoice.OWNER_TYPE_CUSTOMER, doc.customer().guid(),
+						Objects.requireNonNullElse(
+								SnfBillingUtils.invoiceNumForId(doc.invoice().getInvoiceId()), ""),
+						txnGuid, lotGuid, doc.receivable().guid()));
 		dao.saveSlot(GncSlot.int64(invoiceGuid, "credit-note", creditNote ? 1 : 0));
 		for ( Line line : lines ) {
 			dao.saveEntry(new GncEntry(guid(), lineInstant, doc.now(), line.description(), "", "",
@@ -728,8 +720,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final BigDecimal sign = (creditNote ? BigDecimal.ONE : BigDecimal.ONE.negate());
 		for ( Map.Entry<String, BigDecimal> e : totals.netByAccount().entrySet() ) {
 			final GncNumeric value = GncNumeric.of(e.getValue().multiply(sign), fraction);
-			dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, e.getKey(), "", type, value, value,
-					null));
+			dao.saveSplit(
+					GncSplit.unreconciled(guid(), txnGuid, e.getKey(), "", type, value, value, null));
 		}
 		for ( Map.Entry<String, BigDecimal> e : totals.taxByAccount().entrySet() ) {
 			final GncNumeric value = GncNumeric.of(e.getValue().multiply(sign), fraction);
@@ -737,8 +729,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 					taxAmount(doc, e.getKey(), value), null));
 		}
 		final GncNumeric total = GncNumeric.of(totals.total().multiply(sign.negate()), fraction);
-		dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, doc.receivable().guid(), "", type,
-				total, total, lotGuid));
+		dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, doc.receivable().guid(), "", type, total,
+				total, lotGuid));
 
 		dao.saveLot(new GncLot(lotGuid, doc.receivable().guid(), GncLot.CLOSED_UNKNOWN));
 		saveFrameGuid(lotGuid, "gncInvoice", "invoice-guid", invoiceGuid);
@@ -800,8 +792,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	}
 
 	/**
-	 * Move a payment's splits from its lot onto an invoice lot, as GnuCash
-	 * does when it applies a payment to an invoice.
+	 * Move a payment's splits from its lot onto an invoice lot, as GnuCash does
+	 * when it applies a payment to an invoice.
 	 *
 	 * @return the amount still to apply
 	 */
@@ -822,8 +814,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 				moved++;
 			} else {
 				// reduce the split to what is needed, leaving the rest of the payment in its lot
-				final GncNumeric quantity = GncNumeric.of(remaining.negate(),
-						split.quantity().denom());
+				final GncNumeric quantity = GncNumeric.of(remaining.negate(), split.quantity().denom());
 				final GncNumeric value = reducedValue(split, quantity);
 				dao.updateSplit(split.guid(), value, quantity, posting.lotGuid());
 				dao.saveSplit(GncSplit.unreconciled(guid(), split.txGuid(), split.accountGuid(),
@@ -845,8 +836,7 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 * exactly matches the amount, then a bigger one, then the biggest smaller
 	 * one, and prefer payments over lot links.
 	 */
-	private static GncLotSplit bestOffsettingSplit(List<GncLotSplit> candidates,
-			BigDecimal target) {
+	private static GncLotSplit bestOffsettingSplit(List<GncLotSplit> candidates, BigDecimal target) {
 		GncLotSplit best = candidates.getFirst();
 		int bestFlags = -1;
 		BigDecimal bestAmount = BigDecimal.ZERO;
@@ -871,8 +861,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 			return GncNumeric.of(quantity.toBigDecimal(), split.value().denom());
 		}
 		// the payment was in another currency, so scale the value by the same exchange rate
-		final BigDecimal reduced = quantity.toBigDecimal().multiply(value)
-				.divide(amount, MathContext.DECIMAL128);
+		final BigDecimal reduced = quantity.toBigDecimal().multiply(value).divide(amount,
+				MathContext.DECIMAL128);
 		return GncNumeric.of(reduced.setScale(scale(split.value().denom()), RoundingMode.HALF_UP),
 				split.value().denom());
 	}
@@ -890,8 +880,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final Instant postDate = (creditLot.lastPostDate().isAfter(posting.postDate())
 				? creditLot.lastPostDate()
 				: posting.postDate());
-		dao.saveTransaction(new GncTransaction(txnGuid, doc.currency().guid(), "", postDate,
-				doc.now(), doc.customer().name()));
+		dao.saveTransaction(new GncTransaction(txnGuid, doc.currency().guid(), "", postDate, doc.now(),
+				doc.customer().name()));
 		dao.saveSlot(GncSlot.string(txnGuid, "trans-txn-type", GncTransaction.TXN_TYPE_LINK));
 		final String memo = LOT_LINK_MEMO_PREFIX
 				+ Stream.of(posting.title(), Objects.requireNonNullElse(creditLot.documentTitle(), ""))
@@ -927,8 +917,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 									amount.toPlainString()));
 		}
 		final LocalDate date = invoice.getStartDate();
-		post(doc, true, List.of(line), totals, taxTable, date,
-				dayNeutral(date, settings.getTimeZone()), date);
+		post(doc, true, List.of(line), totals, taxTable, date, dayNeutral(date, settings.getTimeZone()),
+				date);
 		log.info("Added SNF credit invoice {} for user {} to GnuCash as a credit note for {} {}",
 				doc.id(), invoice.getUserId(), amount.toPlainString(), doc.currency().mnemonic());
 	}
@@ -961,16 +951,15 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 					.formatted(id, payment.getPaymentType()));
 		}
 		if ( payment.getAmount().signum() < 1 ) {
-			throw new GnucashSyncException(
-					"SNF payment %s has no amount to record.".formatted(id));
+			throw new GnucashSyncException("SNF payment %s has no amount to record.".formatted(id));
 		}
 
 		final String customerId = settings.customerId(payment.getUserId());
 		final Ledger ledger = ledger(existingCustomer(customerId), customerId, account,
 				payment.getCurrencyCode());
 		final GncCommodity currency = ledger.currency();
-		final GncAccount deposit = account(ledger.currencySettings().getPaymentAccount(),
-				"payment", currency);
+		final GncAccount deposit = account(ledger.currencySettings().getPaymentAccount(), "payment",
+				currency);
 
 		// the amount paid on each invoice, by invoice ID, and then by the GUID of the invoice's lot
 		final Map<Long, BigDecimal> invoiceAmounts = new TreeMap<>();
@@ -989,28 +978,25 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		final BigDecimal unapplied = payment.getAmount().subtract(applied);
 		if ( unapplied.signum() < 0 ) {
 			throw new GnucashSyncException(
-					"SNF payment %s applies %s to invoices, more than its amount of %s."
-							.formatted(id, applied.toPlainString(),
-									payment.getAmount().toPlainString()));
+					"SNF payment %s applies %s to invoices, more than its amount of %s.".formatted(id,
+							applied.toPlainString(), payment.getAmount().toPlainString()));
 		}
 
 		// GnuCash dates the payment on the day it was made, in the account's time zone
-		final ZoneId zone = Objects.requireNonNullElse(account.getTimeZone(),
-				settings.getTimeZone());
+		final ZoneId zone = Objects.requireNonNullElse(account.getTimeZone(), settings.getTimeZone());
 		final LocalDate date = LocalDate.ofInstant(nonnull(payment.getCreated(), "Payment created"),
 				zone);
 		final long fraction = currency.fraction();
 		final String txnGuid = guid();
 		final String ref = payment.getReference();
-		dao.saveTransaction(new GncTransaction(txnGuid, currency.guid(),
-				(ref != null ? ref.trim() : ""), dayNeutral(date, settings.getTimeZone()),
-				clock.instant(), ledger.customer().name()));
+		dao.saveTransaction(new GncTransaction(txnGuid, currency.guid(), (ref != null ? ref.trim() : ""),
+				dayNeutral(date, settings.getTimeZone()), clock.instant(), ledger.customer().name()));
 		dao.saveSlot(GncSlot.string(txnGuid, "trans-txn-type", GncTransaction.TXN_TYPE_PAYMENT));
 		dao.saveSlot(GncSlot.string(txnGuid, PAYMENT_ID_SLOT, id));
 
 		final GncNumeric total = GncNumeric.of(payment.getAmount(), fraction);
-		dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, deposit.guid(), "", PAYMENT_ACTION,
-				total, total, null));
+		dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, deposit.guid(), "", PAYMENT_ACTION, total,
+				total, null));
 		for ( Map.Entry<String, BigDecimal> e : lotAmounts.entrySet() ) {
 			final GncNumeric value = GncNumeric.of(e.getValue().negate(), fraction);
 			dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, ledger.receivable().guid(), "",
@@ -1023,8 +1009,8 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 			dao.saveLot(new GncLot(lotGuid, ledger.receivable().guid(), GncLot.CLOSED_UNKNOWN));
 			final String frameGuid = guid();
 			dao.saveSlot(GncSlot.frame(lotGuid, "gncOwner", frameGuid));
-			dao.saveSlot(GncSlot.int64(frameGuid, "gncOwner/owner-type",
-					GncInvoice.OWNER_TYPE_CUSTOMER));
+			dao.saveSlot(
+					GncSlot.int64(frameGuid, "gncOwner/owner-type", GncInvoice.OWNER_TYPE_CUSTOMER));
 			dao.saveSlot(GncSlot.guid(frameGuid, "gncOwner/owner-guid", ledger.customer().guid()));
 			final GncNumeric value = GncNumeric.of(unapplied.negate(), fraction);
 			dao.saveSplit(GncSplit.unreconciled(guid(), txnGuid, ledger.receivable().guid(), "",
@@ -1032,9 +1018,9 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 		}
 		log.info(
 				"Added SNF payment {} for user {} to GnuCash for customer {}: {} {} deposited to {}, {} applied to invoices {}, {} left as credit",
-				id, payment.getUserId(), ledger.customer().id(),
-				payment.getAmount().toPlainString(), currency.mnemonic(), deposit.path(),
-				applied.toPlainString(), invoiceAmounts.keySet(), unapplied.toPlainString());
+				id, payment.getUserId(), ledger.customer().id(), payment.getAmount().toPlainString(),
+				currency.mnemonic(), deposit.path(), applied.toPlainString(), invoiceAmounts.keySet(),
+				unapplied.toPlainString());
 		return true;
 	}
 
@@ -1044,12 +1030,10 @@ public class GnucashAccountingSystem implements SnfAccountingSystem {
 	 *
 	 * @return the GUID of the invoice's lot
 	 */
-	private String paidInvoiceLot(String paymentId, Ledger ledger, Long invoiceId,
-			BigDecimal amount) {
+	private String paidInvoiceLot(String paymentId, Ledger ledger, Long invoiceId, BigDecimal amount) {
 		final String id = invoiceId.toString();
 		final GncInvoiceRef inv = dao.invoices(id).stream()
-				.filter(i -> ledger.customer().guid().equals(i.ownerGuid())).findFirst()
-				.orElse(null);
+				.filter(i -> ledger.customer().guid().equals(i.ownerGuid())).findFirst().orElse(null);
 		if ( inv == null ) {
 			throw new GnucashSyncException(
 					"SNF payment %s pays invoice %s, but GnuCash customer %s has no invoice %s."

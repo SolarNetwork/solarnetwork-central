@@ -65,7 +65,7 @@ public final class UserAlertBizSecurityContract {
 		final Long alertId = randomLong();
 		final Consumer<SecuredProxy<UserAlertBiz>> alertSetup = p -> given(
 				p.mock(UserAlertDao.class).get(alertId))
-				.willReturn(alert(a, alertId, a.privateNodeId()));
+						.willReturn(alert(a, alertId, a.privateNodeId()));
 
 		// @formatter:off
 		return SecurityContract.forApi(UserAlertBiz.class, tenants)

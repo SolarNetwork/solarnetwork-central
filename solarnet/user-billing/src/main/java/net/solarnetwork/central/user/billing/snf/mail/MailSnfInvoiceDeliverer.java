@@ -61,8 +61,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * <p>
  * An invoice is sent as an HTML body with a PDF attachment. A consolidated
  * invoice is sent with only its summary as the HTML body, and the full
- * consolidated invoice, including the account invoices, as the PDF
- * attachment.
+ * consolidated invoice, including the account invoices, as the PDF attachment.
  * </p>
  *
  * @author matt
@@ -128,16 +127,16 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 							format("SolarNetwork invoice %s (%s)", subjectArgs), locale),
 					"Email subject");
 
-			return new SimpleMessageDataSource(subject, copyToString(
-					new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
+			return new SimpleMessageDataSource(subject,
+					copyToString(
+							new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
 					singleton(pdf));
 		});
 	}
 
 	@Override
-	public CompletableFuture<Result<Object>> deliverConsolidatedInvoice(
-			SnfConsolidatedInvoice invoice, Account account,
-			@Nullable IdentifiableConfiguration configuration) {
+	public CompletableFuture<Result<Object>> deliverConsolidatedInvoice(SnfConsolidatedInvoice invoice,
+			Account account, @Nullable IdentifiableConfiguration configuration) {
 		return send(account, invoice, locale -> {
 			Resource content = invoicingSystem.renderConsolidatedInvoice(invoice,
 					MimeTypeUtils.TEXT_HTML, locale, true);
@@ -155,8 +154,9 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 							format("SolarNetwork consolidated invoice %s (%s)", subjectArgs), locale),
 					"Email subject");
 
-			return new SimpleMessageDataSource(subject, copyToString(
-					new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
+			return new SimpleMessageDataSource(subject,
+					copyToString(
+							new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
 					singleton(pdf));
 		});
 	}

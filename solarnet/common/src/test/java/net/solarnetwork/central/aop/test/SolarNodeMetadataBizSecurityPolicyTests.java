@@ -106,8 +106,8 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractJUnit5JdbcD
 		a.userActor().become();
 
 		// WHEN
-		var results = biz.findSolarNodeMetadata(nodes(a.privateNodeId(), b.privateNodeId()), null,
-				null, null);
+		var results = biz.findSolarNodeMetadata(nodes(a.privateNodeId(), b.privateNodeId()), null, null,
+				null);
 
 		// THEN
 		// @formatter:off
@@ -124,8 +124,8 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractJUnit5JdbcD
 		a.restrictedTokenActor().become();
 
 		// WHEN
-		var results = biz.findSolarNodeMetadata(nodes(a.privateNodeId(), a.otherPrivateNodeId()),
-				null, null, null);
+		var results = biz.findSolarNodeMetadata(nodes(a.privateNodeId(), a.otherPrivateNodeId()), null,
+				null, null);
 
 		// THEN
 		// @formatter:off
@@ -142,8 +142,8 @@ public class SolarNodeMetadataBizSecurityPolicyTests extends AbstractJUnit5JdbcD
 		tenants.anonymous().become();
 
 		// WHEN
-		var results = biz.findSolarNodeMetadata(nodes(a.publicNodeId(), a.privateNodeId()), null,
-				null, null);
+		var results = biz.findSolarNodeMetadata(nodes(a.publicNodeId(), a.privateNodeId()), null, null,
+				null);
 
 		// THEN
 		// @formatter:off

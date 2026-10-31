@@ -78,8 +78,8 @@ public class ConsolidatedInvoiceDeliverer implements AccountTaskHandler {
 		final Map<String, Object> taskData = task.getTaskData();
 		final Object val = (taskData != null ? taskData.get(name) : null);
 		if ( val == null ) {
-			log.error("Account task {} cannot be handled because no '{}' parameter is available.",
-					task, name);
+			log.error("Account task {} cannot be handled because no '{}' parameter is available.", task,
+					name);
 			return null;
 		}
 		try {

@@ -39,8 +39,8 @@ import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncNumeric;
  * Utilities for GnuCash SQL statements.
  *
  * <p>
- * GnuCash stores timestamps in {@code timestamp without time zone} columns,
- * as UTC wall time with second precision.
+ * GnuCash stores timestamps in {@code timestamp without time zone} columns, as
+ * UTC wall time with second precision.
  * </p>
  *
  * @author matt
@@ -123,8 +123,7 @@ public final class GnucashSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int setNumeric(PreparedStatement stmt, int p, GncNumeric value)
-			throws SQLException {
+	public static int setNumeric(PreparedStatement stmt, int p, GncNumeric value) throws SQLException {
 		stmt.setLong(p, value.num());
 		stmt.setLong(++p, value.denom());
 		return p;

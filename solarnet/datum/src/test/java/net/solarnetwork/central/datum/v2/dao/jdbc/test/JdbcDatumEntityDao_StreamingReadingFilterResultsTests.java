@@ -595,7 +595,6 @@ public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseD
 						null, propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null)));
 	}
 
-
 	private Long setupNodeUser(Long nodeId) {
 		setupTestLocation();
 		setupTestNode(nodeId);

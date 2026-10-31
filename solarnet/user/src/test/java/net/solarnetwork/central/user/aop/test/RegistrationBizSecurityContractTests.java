@@ -40,8 +40,9 @@ import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 
 /**
- * Verify the {@link RegistrationBizSecurityContract} for {@link
- * RegistrationBiz} with the {@code RegistrationSecurityAspect} aspect applied.
+ * Verify the {@link RegistrationBizSecurityContract} for
+ * {@link RegistrationBiz} with the {@code RegistrationSecurityAspect} aspect
+ * applied.
  *
  * @author matt
  * @version 1.0
@@ -55,7 +56,7 @@ public class RegistrationBizSecurityContractTests {
 		final UserNodeConfirmationDao confirmationDao = mock(UserNodeConfirmationDao.class);
 		return securedProxy((RegistrationBiz) mock(DaoRegistrationBiz.class),
 				new RegistrationSecurityAspect(tenants.ownershipDao(), confirmationDao))
-				.withMock(UserNodeConfirmationDao.class, confirmationDao);
+						.withMock(UserNodeConfirmationDao.class, confirmationDao);
 	}
 
 	@TestFactory

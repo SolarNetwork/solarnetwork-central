@@ -93,8 +93,8 @@ public class VersionedMessageSourceSnfConsolidatedInvoiceRendererResolver
 	public @Nullable TemplateRenderer rendererForConsolidatedInvoice(SnfConsolidatedInvoice invoice,
 			MimeType mimeType, Locale locale) {
 		final ZoneId zone = invoice.getTimeZone();
-		final Instant version = invoice.getStartDate()
-				.atStartOfDay(zone != null ? zone : ZoneOffset.UTC).toInstant();
+		final Instant version = invoice.getStartDate().atStartOfDay(zone != null ? zone : ZoneOffset.UTC)
+				.toInstant();
 		return rendererForVersion(version, mimeType, locale);
 	}
 

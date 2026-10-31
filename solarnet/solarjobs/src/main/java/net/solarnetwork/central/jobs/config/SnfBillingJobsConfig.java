@@ -102,8 +102,8 @@ public class SnfBillingJobsConfig {
 	@Bean
 	public ConsolidatedInvoiceGenerator consolidatedInvoiceGenerator(
 			ObjectProvider<InvoiceAccountingSyncer> invoiceAccountingSyncer) {
-		var generator = new ConsolidatedInvoiceGenerator(accountDao, accountTaskDao,
-				snfInvoicingSystem, invoiceConsolidationResolver);
+		var generator = new ConsolidatedInvoiceGenerator(accountDao, accountTaskDao, snfInvoicingSystem,
+				invoiceConsolidationResolver);
 		generator.setSyncInvoicesToAccounting(invoiceAccountingSyncer.getIfAvailable() != null);
 		return generator;
 	}

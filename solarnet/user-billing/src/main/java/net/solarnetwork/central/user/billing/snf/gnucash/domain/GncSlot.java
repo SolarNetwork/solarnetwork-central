@@ -31,10 +31,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>
  * A slot named with a path, like {@code gncInvoice/invoice-guid}, belongs to a
- * frame slot named {@code gncInvoice}, and the frame's {@code guidValue} is
- * the {@code objGuid} of the slots inside it. GnuCash writes {@literal 0} and
- * the epoch to the integer and time columns a slot does not use, and
- * {@code null} to the rest.
+ * frame slot named {@code gncInvoice}, and the frame's {@code guidValue} is the
+ * {@code objGuid} of the slots inside it. GnuCash writes {@literal 0} and the
+ * epoch to the integer and time columns a slot does not use, and {@code null}
+ * to the rest.
  * </p>
  *
  * @param objGuid

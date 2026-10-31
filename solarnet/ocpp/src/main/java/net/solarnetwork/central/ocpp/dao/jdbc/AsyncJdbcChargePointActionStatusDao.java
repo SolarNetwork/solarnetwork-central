@@ -57,9 +57,9 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * <p>
- * An update that cannot be written because of a problem with the update
- * itself is discarded. Otherwise, such as when the connection to the database
- * is lost, the update is kept to try again after reconnecting.
+ * An update that cannot be written because of a problem with the update itself
+ * is discarded. Otherwise, such as when the connection to the database is lost,
+ * the update is kept to try again after reconnecting.
  * </p>
  *
  * @author matt
@@ -257,7 +257,8 @@ public class AsyncJdbcChargePointActionStatusDao
 						if ( !keepGoing ) {
 							// stopping, so give up rather than try again
 							if ( writeOnExit ) {
-								log.error("Error writing remaining OCPP charge point action statuses: {}",
+								log.error(
+										"Error writing remaining OCPP charge point action statuses: {}",
 										e.toString());
 							}
 							break;
@@ -338,8 +339,8 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @throws InterruptedException
 	 *         if interrupted during the update delay
 	 */
-	private void writeUpdate(PreparedStatement stmt, ChargePointActionStatusUpdate key,
-			boolean throttle) throws SQLException, InterruptedException {
+	private void writeUpdate(PreparedStatement stmt, ChargePointActionStatusUpdate key, boolean throttle)
+			throws SQLException, InterruptedException {
 		stats.increment(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
 		// remove the update before writing it, so an update added from now on queues the action again
 		final var upd = latestStatuses.remove(key);

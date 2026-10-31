@@ -41,9 +41,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A combination of {@link BlockingQueue} and {@link Set}: an unbounded
- * blocking queue of {@link Delayed} elements that holds at most one of any
- * elements that are equal to each other.
+ * A combination of {@link BlockingQueue} and {@link Set}: an unbounded blocking
+ * queue of {@link Delayed} elements that holds at most one of any elements that
+ * are equal to each other.
  *
  * <p>
  * Adapted from {@link java.util.concurrent.DelayQueue}. An element is
@@ -52,19 +52,19 @@ import org.jspecify.annotations.Nullable;
  * equal to zero. The <em id="head">head</em> of the queue is the element with
  * the earliest expiration time, whether or not it has expired. The
  * <em id="expired-head">expired head</em> of the queue is the head, if it has
- * expired. Only expired elements can be taken from the queue, so when there
- * is no expired head {@link #poll()} returns {@code null}, even though
+ * expired. Only expired elements can be taken from the queue, so when there is
+ * no expired head {@link #poll()} returns {@code null}, even though
  * {@link #size()} counts both expired and unexpired elements.
  * </p>
  *
  * <p>
  * Elements are ordered by their {@code compareTo()} method, while duplicates
  * are detected by the delegate set, which by default means their
- * {@code equals()} and {@code hashCode()} methods. Offering an element equal
- * to one already in the queue leaves the queue unchanged: the existing
- * element is kept, along with its delay, and the offered element is
- * discarded. That is not treated as a failure, so the insertion methods
- * return {@code true} for duplicate elements.
+ * {@code equals()} and {@code hashCode()} methods. Offering an element equal to
+ * one already in the queue leaves the queue unchanged: the existing element is
+ * kept, along with its delay, and the offered element is discarded. That is not
+ * treated as a failure, so the insertion methods return {@code true} for
+ * duplicate elements.
  * </p>
  *
  * @author matt
@@ -553,8 +553,8 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	}
 
 	/**
-	 * Removes the element equal to the specified element from this queue, if
-	 * it is present, whether or not it has expired.
+	 * Removes the element equal to the specified element from this queue, if it
+	 * is present, whether or not it has expired.
 	 */
 	@Override
 	public boolean remove(@Nullable Object o) {

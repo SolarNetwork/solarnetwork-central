@@ -92,8 +92,8 @@ public final class SelectGncCustomer implements PreparedStatementCreator, SqlPro
 
 	private static GncCustomer mapRow(ResultSet rs, int rowNum) throws SQLException {
 		return new GncCustomer(rs.getString(1), rs.getString(2), rs.getString(3), getString(rs, 4),
-				getBoolean(rs, 5), rs.getString(6), getBoolean(rs, 7), rs.getInt(8),
-				rs.getString(9), address(rs, 10), address(rs, 18));
+				getBoolean(rs, 5), rs.getString(6), getBoolean(rs, 7), rs.getInt(8), rs.getString(9),
+				address(rs, 10), address(rs, 18));
 	}
 
 }

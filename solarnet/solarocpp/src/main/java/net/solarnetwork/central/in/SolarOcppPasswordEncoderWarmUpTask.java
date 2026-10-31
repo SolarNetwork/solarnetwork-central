@@ -41,11 +41,10 @@ import net.solarnetwork.service.PasswordEncoder;
  * <p>
  * Every OCPP WebSocket handshake verifies the charger credentials with the
  * password encoder, which is intentionally CPU-expensive. Until the JIT has
- * compiled the encoder's hashing loops they run several times slower. This
- * task runs the encoder before the web server accepts connections, so the
- * hashing code is compiled before chargers reconnect. The time each
- * verification takes is logged, which shows the per-handshake cost on the
- * deployed hardware.
+ * compiled the encoder's hashing loops they run several times slower. This task
+ * runs the encoder before the web server accepts connections, so the hashing
+ * code is compiled before chargers reconnect. The time each verification takes
+ * is logged, which shows the per-handshake cost on the deployed hardware.
  * </p>
  *
  * @author matt
@@ -136,8 +135,7 @@ public class SolarOcppPasswordEncoderWarmUpTask implements AppWarmUpTask {
 	/**
 	 * Get the number of times to verify a password.
 	 *
-	 * @return the number of iterations; defaults to
-	 *         {@link #DEFAULT_ITERATIONS}
+	 * @return the number of iterations; defaults to {@link #DEFAULT_ITERATIONS}
 	 */
 	public final int getIterations() {
 		return iterations;

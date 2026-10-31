@@ -55,7 +55,7 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 		 * @since 2.2
 		 */
 		FindInvoicePaymentsForPayment("find-InvoicePayment-for-payment"),
-		
+
 		;
 
 		private final String queryName;

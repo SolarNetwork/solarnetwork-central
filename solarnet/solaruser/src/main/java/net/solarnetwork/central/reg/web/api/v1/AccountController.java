@@ -126,8 +126,7 @@ public class AccountController {
 	 * @since 1.1
 	 */
 	@RequestMapping(value = "/unlink", method = RequestMethod.POST)
-	public Result<Collection<SnLinkedAccountInfo>> unlinkAccount(
-			@RequestParam("userId") Long userId) {
+	public Result<Collection<SnLinkedAccountInfo>> unlinkAccount(@RequestParam("userId") Long userId) {
 		final UserAccountBiz biz = biz();
 		return success(biz.unlinkAccount(getCurrentActorUserId(), userId));
 	}

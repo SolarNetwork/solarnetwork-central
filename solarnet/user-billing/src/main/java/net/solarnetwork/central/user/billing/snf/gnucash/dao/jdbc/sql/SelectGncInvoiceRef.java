@@ -81,8 +81,8 @@ public final class SelectGncInvoiceRef implements PreparedStatementCreator, SqlP
 	}
 
 	private static GncInvoiceRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-		return new GncInvoiceRef(rs.getString(1), rs.getString(2), rs.getString(3),
-				rs.getString(4), rs.getString(5), rs.getBigDecimal(6));
+		return new GncInvoiceRef(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
+				rs.getString(5), rs.getBigDecimal(6));
 	}
 
 }

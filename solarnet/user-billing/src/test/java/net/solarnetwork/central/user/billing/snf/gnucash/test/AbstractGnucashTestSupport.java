@@ -58,13 +58,12 @@ import net.solarnetwork.central.user.billing.snf.gnucash.domain.GncTaxTableEntry
  * database.
  *
  * <p>
- * Each test runs in a transaction that is rolled back. The database starts
- * with an empty book, so a book like SolarNetwork's is set up before each
- * test. The connection is set by the {@code gnucash.test.url},
- * {@code gnucash.test.username}, and {@code gnucash.test.password}
- * properties, loaded from {@code application.yml} the way Spring Boot tests
- * load it, so an {@code application.yml} in the working directory can
- * change them.
+ * Each test runs in a transaction that is rolled back. The database starts with
+ * an empty book, so a book like SolarNetwork's is set up before each test. The
+ * connection is set by the {@code gnucash.test.url},
+ * {@code gnucash.test.username}, and {@code gnucash.test.password} properties,
+ * loaded from {@code application.yml} the way Spring Boot tests load it, so an
+ * {@code application.yml} in the working directory can change them.
  * </p>
  *
  * @author matt
@@ -308,8 +307,7 @@ public abstract class AbstractGnucashTestSupport {
 	 *        the tax table, or {@code null}
 	 * @return the customer GUID
 	 */
-	protected String insertCustomer(String id, GncCommodity currency,
-			@Nullable GncTaxTable taxTable) {
+	protected String insertCustomer(String id, GncCommodity currency, @Nullable GncTaxTable taxTable) {
 		final String guid = guid();
 		jdbcTemplate.update("""
 				INSERT INTO customers (guid, name, id, notes, active, discount_num, discount_denom
@@ -320,9 +318,8 @@ public abstract class AbstractGnucashTestSupport {
 					, shipaddr_phone, shipaddr_fax, shipaddr_email, terms, tax_included, taxtable)
 				VALUES (?, ?, ?, '', 1, 0, 1, 0, 1, ?, ?, ?, '', '', '', '', '', '', ''
 					, '', '', '', '', '', '', '', '', NULL, ?, ?)
-				""", guid, CUSTOMER_NAME, id, currency.guid(), taxTable != null ? 1 : 0,
-				CUSTOMER_NAME, GncCustomer.TAX_INCLUDED_NO,
-				(taxTable != null ? taxTable.guid() : null));
+				""", guid, CUSTOMER_NAME, id, currency.guid(), taxTable != null ? 1 : 0, CUSTOMER_NAME,
+				GncCustomer.TAX_INCLUDED_NO, (taxTable != null ? taxTable.guid() : null));
 		return guid;
 	}
 
@@ -349,8 +346,8 @@ public abstract class AbstractGnucashTestSupport {
 	 * @param guidVal
 	 *        the GUID value
 	 */
-	protected void insertSlot(String objGuid, String name, int type, long int64,
-			@Nullable String string, @Nullable String guidVal) {
+	protected void insertSlot(String objGuid, String name, int type, long int64, @Nullable String string,
+			@Nullable String guidVal) {
 		jdbcTemplate.update("""
 				INSERT INTO slots (obj_guid, name, slot_type, int64_val, string_val, double_val
 					, timespec_val, guid_val, numeric_val_num, numeric_val_denom, gdate_val)

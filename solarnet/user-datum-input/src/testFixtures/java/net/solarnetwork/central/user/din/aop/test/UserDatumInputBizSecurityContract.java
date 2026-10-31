@@ -41,8 +41,8 @@ import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
  * Security contract for {@link UserDatumInputBiz}.
  *
  * <p>
- * The contract is enforced by {@code UserDatumInputSecurityAspect}. The node
- * ID of an endpoint is not checked, because datum input only accepts datum for
+ * The contract is enforced by {@code UserDatumInputSecurityAspect}. The node ID
+ * of an endpoint is not checked, because datum input only accepts datum for
  * nodes owned by the endpoint's user.
  * </p>
  *

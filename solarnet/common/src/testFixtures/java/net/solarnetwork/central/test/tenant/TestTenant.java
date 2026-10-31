@@ -200,8 +200,8 @@ public final class TestTenant {
 	 */
 	public void insertStreams(JdbcOperations jdbcOps) {
 		final List<ObjectDatumStreamMetadata> metas = streams.stream()
-				.map(s -> (ObjectDatumStreamMetadata) new BasicObjectDatumStreamMetadata(
-						s.getStreamId(), TIME_ZONE, s.getKind(), s.getObjectId(), s.getSourceId(),
+				.map(s -> (ObjectDatumStreamMetadata) new BasicObjectDatumStreamMetadata(s.getStreamId(),
+						TIME_ZONE, s.getKind(), s.getObjectId(), s.getSourceId(),
 						new String[] { "watts" }, new String[] { "wattHours" }, null))
 				.toList();
 		CommonDbUtils.insertObjectDatumStreamMetadata(null, jdbcOps, metas);

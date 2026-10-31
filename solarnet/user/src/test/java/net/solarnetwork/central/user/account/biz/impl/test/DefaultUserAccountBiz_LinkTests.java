@@ -67,8 +67,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
- * Test cases for linking accounts with the {@link DefaultUserAccountBiz}
- * class.
+ * Test cases for linking accounts with the {@link DefaultUserAccountBiz} class.
  *
  * @author matt
  * @version 1.0
@@ -436,8 +435,7 @@ public class DefaultUserAccountBiz_LinkTests {
 		given(resolver.groupForUser(CHILD_ID)).willReturn(null);
 		given(resolver.groupForUser(PARENT_ID)).willReturn(
 				new InvoiceConsolidationGroup(PARENT_ID, List.of(PARENT_ID, OTHER_ID), false),
-				new InvoiceConsolidationGroup(PARENT_ID, List.of(PARENT_ID, OTHER_ID, CHILD_ID),
-						false));
+				new InvoiceConsolidationGroup(PARENT_ID, List.of(PARENT_ID, OTHER_ID, CHILD_ID), false));
 
 		// WHEN
 		SnAccountInfo result = service.createAccount(CHILD_ID, input);
@@ -529,8 +527,8 @@ public class DefaultUserAccountBiz_LinkTests {
 		given(registrar.createAccount(eq(CHILD_ID), same(input))).willAnswer(_ -> account);
 		given(userDao.getUserRoles(child)).willReturn(Set.of());
 		given(resolver.groupForUser(CHILD_ID)).willReturn(null);
-		given(resolver.groupForUser(PARENT_ID)).willReturn(null, new InvoiceConsolidationGroup(
-				PARENT_ID, List.of(PARENT_ID, CHILD_ID), false, CURRENCY_PROBLEM));
+		given(resolver.groupForUser(PARENT_ID)).willReturn(null, new InvoiceConsolidationGroup(PARENT_ID,
+				List.of(PARENT_ID, CHILD_ID), false, CURRENCY_PROBLEM));
 
 		// WHEN
 		// @formatter:off
@@ -580,8 +578,8 @@ public class DefaultUserAccountBiz_LinkTests {
 		givenUser(PARENT_ID);
 		final User child = user(CHILD_ID);
 		givenCredentials(child);
-		given(resolver.groupForUser(CHILD_ID))
-				.willReturn(new InvoiceConsolidationGroup(PARENT_ID, List.of(PARENT_ID, CHILD_ID), false));
+		given(resolver.groupForUser(CHILD_ID)).willReturn(
+				new InvoiceConsolidationGroup(PARENT_ID, List.of(PARENT_ID, CHILD_ID), false));
 
 		// WHEN
 		SnLinkedAccountInfo result = service.linkAccount(PARENT_ID, credentials(child));
