@@ -259,8 +259,10 @@ subprojects {
 		maxHeapSize = '1500m'
 	}
 	
-    pluginManager.withPlugin('spotless') { 
+    pluginManager.withPlugin('com.diffplug.spotless') { 
 		spotless {
+			// existing code has not all been formatted, so do not fail the check task on it
+			enforceCheck false
 			java {
 				eclipse()
 					.configFile("${project.rootDir}/config/solarnetwork-codeformat.xml")
