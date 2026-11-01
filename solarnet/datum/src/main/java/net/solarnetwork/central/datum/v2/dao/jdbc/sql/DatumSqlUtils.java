@@ -75,7 +75,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.11
+ * @version 2.12
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -957,6 +957,11 @@ public final class DatumSqlUtils {
 		if ( combiningConfig != null ) {
 			buf.append("\n, s.names_i\n");
 			buf.append(", s.names_a");
+			if ( kind != ObjectDatumKind.Location ) {
+				// the virtual IDs replace these, but auditing needs them
+				buf.append("\n, s.node_id AS rnode_id\n");
+				buf.append(", s.source_id AS rsource_id");
+			}
 		}
 		return paramCount;
 	}

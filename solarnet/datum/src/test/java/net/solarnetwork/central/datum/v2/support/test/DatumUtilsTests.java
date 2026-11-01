@@ -50,6 +50,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -60,10 +61,12 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.CombinedAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
@@ -93,7 +96,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link DatumUtils} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DatumUtilsTests {
 
@@ -255,6 +258,36 @@ public class DatumUtilsTests {
 		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
 				nullValue());
 		assertGeneralDatumSamples(d.getSamples());
+	}
+
+	@Test
+	public void toGeneralNodeDatum_combined() {
+		// GIVEN
+		final Set<NodeSourcePK> contributors = Set.of(new NodeSourcePK(1L, "a"),
+				new NodeSourcePK(2L, "b"));
+		CombinedAggregateDatumEntity datum = new CombinedAggregateDatumEntity(UUID.randomUUID(),
+				Instant.now(), Aggregation.Hour, newProps(), newStats(), contributors);
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, newNodeMeta());
+
+		// THEN
+		assertThat("Class unchanged, because the class name appears in XML responses", d.getClass(),
+				equalTo(ReportingGeneralNodeDatum.class));
+		assertThat("Contributors copied", d.contributors(), equalTo(contributors));
+	}
+
+	@Test
+	public void toGeneralNodeDatum_notCombined() {
+		// GIVEN
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+				Aggregation.Hour, newProps(), newStats());
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, newNodeMeta());
+
+		// THEN
+		assertThat("No contributors", d.contributors(), nullValue());
 	}
 
 	@Test

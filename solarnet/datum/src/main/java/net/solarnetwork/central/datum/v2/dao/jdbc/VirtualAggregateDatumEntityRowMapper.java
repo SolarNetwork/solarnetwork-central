@@ -31,12 +31,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.CombinedAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -73,10 +78,12 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * <li>names_a</li>
  * <li>obj_id</li>
  * <li>source_id</li>
+ * <li>rnode_ids (node streams only)</li>
+ * <li>rsource_ids (node streams only)</li>
  * </ol>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public class VirtualAggregateDatumEntityRowMapper
@@ -125,7 +132,26 @@ public class VirtualAggregateDatumEntityRowMapper
 
 		DatumProperties props = DatumProperties.propertiesOf(data_i, data_a, data_s, data_t);
 		DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(stat_i, stat_a);
-		return new AggregateDatumEntity(streamId, ts, aggregation, props, stats);
+		if ( kind != ObjectDatumKind.Node ) {
+			return new AggregateDatumEntity(streamId, ts, aggregation, props, stats);
+		}
+
+		Long[] rnode_ids = getArray(rs, 13);
+		String[] rsource_ids = getArray(rs, 14);
+		return new CombinedAggregateDatumEntity(streamId, ts, aggregation, props, stats,
+				contributors(rnode_ids, rsource_ids));
+	}
+
+	private static Set<NodeSourcePK> contributors(Long @Nullable [] nodeIds,
+			String @Nullable [] sourceIds) {
+		if ( nodeIds == null || sourceIds == null ) {
+			return Set.of();
+		}
+		Set<NodeSourcePK> result = LinkedHashSet.newLinkedHashSet(nodeIds.length);
+		for ( int i = 0; i < nodeIds.length; i++ ) {
+			result.add(new NodeSourcePK(nodeIds[i], sourceIds[i]));
+		}
+		return Collections.unmodifiableSet(result);
 	}
 
 	@Override

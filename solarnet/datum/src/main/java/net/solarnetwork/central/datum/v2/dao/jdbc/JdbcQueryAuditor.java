@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.datum.support.DatumUtils.WILDCARD_PATTERN_MATCHER;
-import static net.solarnetwork.central.datum.support.DatumUtils.isVirtualNodeSource;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Connection;
 import java.time.Clock;
@@ -31,6 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,8 +38,10 @@ import javax.sql.DataSource;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.BaseJdbcDatumIdServiceAuditor;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.domain.CombinedDatumContributors;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.Datum;
@@ -72,11 +74,13 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * <p>
- * Counts are keyed by node ID and source ID.
+ * Counts are keyed by node ID and source ID. A result combined from other
+ * streams counts once on each stream that contributed to it, never on the
+ * virtual IDs it is returned with.
  * </p>
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public class JdbcQueryAuditor extends BaseJdbcDatumIdServiceAuditor implements QueryAuditor {
 
@@ -180,11 +184,18 @@ public class JdbcQueryAuditor extends BaseJdbcDatumIdServiceAuditor implements Q
 		// coalesce counts by key first to simplify inserts into counters
 		Map<GeneralNodeDatumPK, Integer> counts = new HashMap<>(returnedCount);
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
-			GeneralNodeDatumPK id = nonnull(result.getId(), "ID");
-			// a virtual ID is not the stream the result came from, even if it matches one
-			if ( isVirtualNodeSource(filter, id.getNodeId(), id.getSourceId()) ) {
+			final Set<NodeSourcePK> contributors = (result instanceof CombinedDatumContributors c
+					? c.contributors()
+					: null);
+			if ( contributors != null ) {
+				for ( NodeSourcePK stream : contributors ) {
+					GeneralNodeDatumPK pk = nodeDatumKey(auditDate, stream.getNodeId(),
+							stream.getSourceId());
+					counts.compute(pk, (_, v) -> v == null ? 1 : v + 1);
+				}
 				continue;
 			}
+			GeneralNodeDatumPK id = nonnull(result.getId(), "ID");
 			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, nonnull(id.getNodeId(), "nodeId"),
 					nonnull(id.getSourceId(), "sourceId"));
 			counts.compute(pk, (_, v) -> v == null ? 1 : v + 1);

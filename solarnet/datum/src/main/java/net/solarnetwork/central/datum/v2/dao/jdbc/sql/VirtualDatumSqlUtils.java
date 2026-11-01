@@ -31,7 +31,7 @@ import net.solarnetwork.service.support.TextResourceCache;
  * SQL utilities for virtual datum.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 3.8
  */
 public final class VirtualDatumSqlUtils {
@@ -118,6 +118,28 @@ public final class VirtualDatumSqlUtils {
 	public static final String READING_DIFF_COMBINE_CALC_PARAM_NAME = "READING_DIFF_CALC";
 
 	/**
+	 * The SQL select columns for the real streams that contributed to each
+	 * result of a {@link #combineContributorsCteSql()} query.
+	 *
+	 * @since 2.1
+	 */
+	public static final String COMBINE_CONTRIBUTORS_SELECT_SQL = ", dc.rnode_ids, dc.rsource_ids";
+
+	/**
+	 * The SQL join for the {@link #combineContributorsCteSql()} CTE.
+	 *
+	 * <p>
+	 * Both sides of this join have the same keys, so it returns the same rows
+	 * as an inner join. A full join is used because it forces a hash join on
+	 * both keys: with an inner join the planner can choose a merge join on the
+	 * stream ID alone, which was about 10x slower.
+	 * </p>
+	 *
+	 * @since 2.1
+	 */
+	public static final String COMBINE_CONTRIBUTORS_JOIN_SQL = "FULL OUTER JOIN dc ON dc.stream_id = datum.stream_id AND dc.ts = datum.ts_start\n";
+
+	/**
 	 * Get a SQL group of CTE expressions for combining datum streams into
 	 * virtual stream results.
 	 *
@@ -143,5 +165,23 @@ public final class VirtualDatumSqlUtils {
 		};
 		return TextResourceCache.INSTANCE.getResourceAsString("datum-combine-cte.sql",
 				VirtualDatumSqlUtils.class, DatumSqlUtils.SQL_COMMENT, templates);
+	}
+
+	/**
+	 * Get a SQL CTE expression for the real streams that contributed to each
+	 * result of a {@link #combineCteSql(CombiningType)} query.
+	 *
+	 * <p>
+	 * This must follow the {@link #combineCteSql(CombiningType)} SQL. The
+	 * {@code d} CTE must include {@code rnode_id} and {@code rsource_id}
+	 * columns.
+	 * </p>
+	 *
+	 * @return the SQL
+	 * @since 2.1
+	 */
+	public static String combineContributorsCteSql() {
+		return TextResourceCache.INSTANCE.getResourceAsString("datum-combine-contributors-cte.sql",
+				VirtualDatumSqlUtils.class, DatumSqlUtils.SQL_COMMENT, Map.of());
 	}
 }

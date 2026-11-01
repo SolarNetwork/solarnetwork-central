@@ -12,6 +12,8 @@ SELECT COUNT(*) FROM (WITH rs AS (
 		, COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank
 		, s.names_i
 		, s.names_a
+		, s.node_id AS rnode_id
+		, s.source_id AS rsource_id
 	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
@@ -31,6 +33,8 @@ SELECT COUNT(*) FROM (WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
+		s.rnode_id,
+		s.rsource_id,
 		datum.ts_start AS ts,
 		datum.data_i,
 		datum.data_a,

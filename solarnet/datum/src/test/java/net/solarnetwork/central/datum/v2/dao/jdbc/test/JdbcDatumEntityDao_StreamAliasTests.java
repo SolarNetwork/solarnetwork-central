@@ -53,6 +53,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasGrantEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
@@ -272,6 +273,56 @@ public class JdbcDatumEntityDao_StreamAliasTests extends BaseDatumJdbcTestSuppor
 				then(d.getProperties().getAccumulating())
 					.as("Result is the sum of the week")
 					.containsExactly(new BigDecimal("30"))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void contributors_aliasIsHostStream() {
+		// GIVEN
+		final String ownSource = "s/own";
+		final ObjectDatumStreamMetadata own = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				TEST_TZ, Node, hostNodeId, ownSource, new String[] { "x" }, new String[] { "w" }, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(own));
+
+		final ZonedDateTime day = LocalDate.of(2026, 1, 5).atStartOfDay(ZoneId.of(TEST_TZ));
+		final List<AggregateDatum> datums = new ArrayList<>();
+		for ( UUID streamId : List.of(orig.getStreamId(), own.getStreamId()) ) {
+			datums.add(new AggregateDatumEntity(streamId, day.toInstant(), Aggregation.Day,
+					propertiesOf(new BigDecimal[] { BigDecimal.ONE },
+							new BigDecimal[] { BigDecimal.TEN }, null, null),
+					statisticsOf(new BigDecimal[][] { decimalArray("6", "1", "1") },
+							new BigDecimal[][] { decimalArray("10", "0", "10") })));
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		final BasicDatumCriteria filter = aliasFilter();
+		filter.setSourceIds(new String[] { ALIAS_SOURCE, ownSource });
+		filter.setSourceIdMaps(new String[] { "V:%s,%s".formatted(ALIAS_SOURCE, ownSource) });
+		filter.setAggregation(Aggregation.Day);
+		filter.setStartDate(day.toInstant());
+		filter.setEndDate(day.plusDays(1).toInstant());
+
+		// WHEN
+		final List<Object[]> result = jdbcTemplate.query(new SelectDatum(filter),
+				(rs, _) -> new Object[] { rs.getArray("rnode_ids").getArray(),
+						rs.getArray("rsource_ids").getArray() });
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("One combined result")
+			.singleElement()
+			.satisfies(row -> {
+				then((Long[]) row[0])
+					.as("Contributors are on the host node, not the original stream's node")
+					.containsExactly(hostNodeId, hostNodeId)
+					;
+				then((String[]) row[1])
+					.as("Contributors are the alias source, not the original stream's source")
+					.containsExactly(ALIAS_SOURCE, ownSource)
 					;
 			})
 			;

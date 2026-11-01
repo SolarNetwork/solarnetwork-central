@@ -34,8 +34,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.domain.NodeMappingFilter;
-import net.solarnetwork.central.domain.SourceMappingFilter;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
@@ -49,7 +47,7 @@ import tools.jackson.databind.ObjectMapper;
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public final class DatumUtils {
 
@@ -169,42 +167,6 @@ public final class DatumUtils {
 		}
 		sources.removeIf(source -> !pathMatcher.match(pattern, source));
 		return sources;
-	}
-
-	/**
-	 * Test if a node and source ID combination includes a virtual ID defined by
-	 * a filter.
-	 *
-	 * <p>
-	 * A filter that implements {@link NodeMappingFilter} or
-	 * {@link SourceMappingFilter} can relabel results with virtual IDs, which
-	 * are chosen by the caller and do not identify a stream the results came
-	 * from.
-	 * </p>
-	 *
-	 * @param filter
-	 *        the filter
-	 * @param nodeId
-	 *        the node ID to test
-	 * @param sourceId
-	 *        the source ID to test
-	 * @return {@code true} if {@code nodeId} or {@code sourceId} is a virtual
-	 *         ID defined by {@code filter}
-	 * @since 3.2
-	 */
-	public static boolean isVirtualNodeSource(@Nullable Object filter, @Nullable Long nodeId,
-			@Nullable String sourceId) {
-		if ( filter instanceof NodeMappingFilter f && nodeId != null ) {
-			final Map<Long, Set<Long>> mappings = f.getNodeIdMappings();
-			if ( mappings != null && mappings.containsKey(nodeId) ) {
-				return true;
-			}
-		}
-		if ( filter instanceof SourceMappingFilter f && sourceId != null ) {
-			final Map<String, Set<String>> mappings = f.getSourceIdMappings();
-			return mappings != null && mappings.containsKey(sourceId);
-		}
-		return false;
 	}
 
 	/**

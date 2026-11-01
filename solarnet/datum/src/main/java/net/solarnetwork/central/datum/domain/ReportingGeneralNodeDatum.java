@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -40,16 +41,17 @@ import net.solarnetwork.domain.SerializeIgnore;
  * towards reporting.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "localDate", "localTime" })
 public class ReportingGeneralNodeDatum extends GeneralNodeDatum
-		implements ReportingGeneralNodeDatumMatch {
+		implements ReportingGeneralNodeDatumMatch, CombinedDatumContributors {
 
 	@Serial
 	private static final long serialVersionUID = -8529409354188959691L;
 
 	private @Nullable LocalDateTime localDateTime;
+	private @Nullable Set<NodeSourcePK> contributors;
 
 	/**
 	 * Constructor.
@@ -104,6 +106,28 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum
 
 	public final void setLocalDateTime(@Nullable LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
+	}
+
+	/**
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	@Override
+	public final @Nullable Set<NodeSourcePK> contributors() {
+		return contributors;
+	}
+
+	/**
+	 * Set the streams that contributed to this datum.
+	 *
+	 * @param contributors
+	 *        the contributing streams
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	public final void setContributors(@Nullable Set<NodeSourcePK> contributors) {
+		this.contributors = contributors;
 	}
 
 }

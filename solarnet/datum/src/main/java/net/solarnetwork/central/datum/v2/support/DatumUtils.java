@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.CombinedDatumContributors;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -115,7 +116,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.13
+ * @version 2.14
  * @since 2.8
  */
 public final class DatumUtils {
@@ -646,6 +647,9 @@ public final class DatumUtils {
 		// use ReportingGeneralNodeDatum to support localDateTime property
 		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum(meta.getObjectId(),
 				datum.getTimestamp(), meta.getSourceId());
+		if ( datum instanceof CombinedDatumContributors c ) {
+			gnd.setContributors(c.contributors());
+		}
 
 		DatumSamples s = new DatumSamples();
 

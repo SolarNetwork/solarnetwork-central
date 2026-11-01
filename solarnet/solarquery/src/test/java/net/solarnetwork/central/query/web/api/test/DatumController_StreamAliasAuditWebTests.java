@@ -34,8 +34,10 @@ import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -82,7 +84,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest(properties = "app.datum.query-auditor.flush-delay=50")
 @ActiveProfiles("query-auditor")
@@ -95,6 +97,9 @@ public class DatumController_StreamAliasAuditWebTests extends AbstractJUnit5Cent
 	private static final String CSV_SOURCE_ID = "A";
 	private static final String ORIG_SOURCE_ID = "orig/A";
 	private static final String ALIAS_SOURCE_ID = "alias/A";
+	private static final String OWN_SOURCE_ID = "own/A";
+	private static final String VIRTUAL_SOURCE_ID = "virt/V";
+	private static final int HOURS = 3;
 	private static final int MAX = 3;
 
 	private final List<UUID> streamIds = new ArrayList<>();
@@ -175,12 +180,14 @@ public class DatumController_StreamAliasAuditWebTests extends AbstractJUnit5Cent
 	@AfterEach
 	public void cleanup() {
 		for ( UUID streamId : streamIds ) {
-			jdbcTemplate.update("DELETE FROM solardatm.aud_datm_io WHERE stream_id = ?", streamId);
-			jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm WHERE stream_id = ?", streamId);
+			// metadata first: the auditor may still flush, and adds no rows without a stream to find
 			jdbcTemplate.update("DELETE FROM solardatm.da_datm_alias WHERE stream_id = ?", streamId);
 			jdbcTemplate.update("DELETE FROM solardatm.da_datm_alias_del WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly WHERE stream_id = ?", streamId);
 			jdbcTemplate.update("DELETE FROM solardatm.da_datm WHERE stream_id = ?", streamId);
 			jdbcTemplate.update("DELETE FROM solardatm.da_datm_meta WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.aud_datm_io WHERE stream_id = ?", streamId);
 		}
 		for ( Long userId : userIds ) {
 			jdbcTemplate.update("DELETE FROM solaruser.user_node WHERE user_id = ?", userId);
@@ -224,6 +231,34 @@ public class DatumController_StreamAliasAuditWebTests extends AbstractJUnit5Cent
 		return get(path)
 				.param("startDate", "2001-01-01")
 				.param("endDate", "2030-01-01")
+				.param("includeStreamAliases", "true")
+				.accept(MediaType.APPLICATION_JSON);
+		// @formatter:on
+	}
+
+	private void hourlyDatum(UUID streamId) {
+		final Instant start = Instant.parse("2026-06-01T00:00:00Z");
+		for ( int i = 0; i < HOURS; i++ ) {
+			jdbcTemplate.update("""
+					INSERT INTO solardatm.agg_datm_hourly (
+						stream_id, ts_start, data_i, data_a, stat_i, read_a
+					) VALUES (
+						?, ?, '{1.5}'::numeric[], '{3}'::numeric[]
+						, '{{60,1,2}}'::numeric[], '{{3,0,3}}'::numeric[]
+					)
+					""", streamId, Timestamp.from(start.plus(i, ChronoUnit.HOURS)));
+		}
+	}
+
+	private MockHttpServletRequestBuilder combiningQuery(String path, String... sourceIds) {
+		// @formatter:off
+		return get(path)
+				.param("nodeId", hostNodeId.toString())
+				.param("sourceIds", String.join(",", sourceIds))
+				.param("sourceIdMaps", VIRTUAL_SOURCE_ID + ":" + String.join(",", sourceIds))
+				.param("aggregation", "Hour")
+				.param("startDate", "2026-05-31")
+				.param("endDate", "2026-06-03")
 				.param("includeStreamAliases", "true")
 				.accept(MediaType.APPLICATION_JSON);
 		// @formatter:on
@@ -339,6 +374,72 @@ public class DatumController_StreamAliasAuditWebTests extends AbstractJUnit5Cent
 
 		// THEN
 		thenAliasStreamAudited(MAX);
+	}
+
+	@Test
+	public void list_combined() throws Exception {
+		// GIVEN
+		grant(true);
+		final UUID ownStreamId = stream(hostNodeId, OWN_SOURCE_ID);
+		hourlyDatum(origStreamId);
+		hourlyDatum(ownStreamId);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", ALIAS_SOURCE_ID, OWN_SOURCE_ID))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results.length()", is(HOURS)))
+			;
+
+		// THEN
+		then(awaitAuditedCount(ownStreamId, HOURS))
+			.as("Each combined result counted on host's own stream")
+			.isEqualTo(HOURS)
+			;
+		// @formatter:on
+		thenAliasStreamAudited(HOURS);
+	}
+
+	@Test
+	public void list_combinedOneAlias() throws Exception {
+		// GIVEN
+		grant(true);
+		hourlyDatum(origStreamId);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", ALIAS_SOURCE_ID))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results.length()", is(HOURS)))
+			;
+		// @formatter:on
+
+		// THEN
+		thenAliasStreamAudited(HOURS);
+	}
+
+	@Test
+	public void stream_combined() throws Exception {
+		// GIVEN
+		grant(true);
+		final UUID ownStreamId = stream(hostNodeId, OWN_SOURCE_ID);
+		hourlyDatum(origStreamId);
+		hourlyDatum(ownStreamId);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/datum", ALIAS_SOURCE_ID, OWN_SOURCE_ID))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.length()", is(HOURS)))
+			;
+
+		// THEN
+		then(awaitAuditedCount(ownStreamId, HOURS))
+			.as("Each combined result counted on host's own stream")
+			.isEqualTo(HOURS)
+			;
+		// @formatter:on
+		thenAliasStreamAudited(HOURS);
 	}
 
 	@Test

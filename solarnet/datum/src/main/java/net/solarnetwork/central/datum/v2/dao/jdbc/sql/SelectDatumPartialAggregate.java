@@ -74,6 +74,7 @@ public final class SelectDatumPartialAggregate
 	private final @Nullable CombiningConfig combine;
 	private final @Nullable DatumRollupType rollup;
 	private final List<DatumCriteria> intervalFilters;
+	private final boolean contributors;
 
 	/**
 	 * Constructor.
@@ -169,6 +170,7 @@ public final class SelectDatumPartialAggregate
 
 		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
 		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
+		this.contributors = (combine != null && filter.getObjectKind() != Location);
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -215,6 +217,10 @@ public final class SelectDatumPartialAggregate
 			buf.append("	s.source_rank,\n");
 			buf.append("	s.names_i,\n");
 			buf.append("	s.names_a,\n");
+			if ( contributors ) {
+				buf.append("	s.rnode_id,\n");
+				buf.append("	s.rsource_id,\n");
+			}
 		} else if ( aliased ) {
 			buf.append("s.stream_id,\n");
 		} else {
@@ -311,7 +317,7 @@ public final class SelectDatumPartialAggregate
 		}
 	}
 
-	private void sqlCore(StringBuilder buf) {
+	private void sqlCore(StringBuilder buf, boolean withContributors) {
 		sqlCte(buf);
 
 		// overall rollup
@@ -352,6 +358,9 @@ public final class SelectDatumPartialAggregate
 		}
 		if ( combine != null ) {
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
+			if ( withContributors ) {
+				buf.append(VirtualDatumSqlUtils.combineContributorsCteSql()).append("\n");
+			}
 		}
 		if ( rollup == null ) {
 			buf.append("SELECT datum.*");
@@ -359,10 +368,15 @@ public final class SelectDatumPartialAggregate
 		if ( combine != null ) {
 			buf.append(", vs.").append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", vs.source_id");
-
+			if ( withContributors ) {
+				buf.append(VirtualDatumSqlUtils.COMBINE_CONTRIBUTORS_SELECT_SQL);
+			}
 		}
 		if ( rollup == null ) {
 			buf.append("\nFROM datum\n");
+		}
+		if ( withContributors ) {
+			buf.append(VirtualDatumSqlUtils.COMBINE_CONTRIBUTORS_JOIN_SQL);
 		}
 	}
 
@@ -382,7 +396,7 @@ public final class SelectDatumPartialAggregate
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf);
+		sqlCore(buf, contributors);
 		sqlOrderByJoins(buf);
 		if ( rollup != null ) {
 			buf.append("""
@@ -424,7 +438,7 @@ public final class SelectDatumPartialAggregate
 		@Override
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
-			sqlCore(buf);
+			sqlCore(buf, false);
 			if ( combine != null ) {
 				sqlOrderByJoins(buf);
 			}

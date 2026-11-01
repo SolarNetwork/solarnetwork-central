@@ -29,12 +29,18 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
+import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER;
+import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER_HIT;
+import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER_MISS;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.sql.Timestamp;
@@ -69,7 +75,8 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * <p>
  * A combining query labels its results with virtual IDs chosen by the caller.
  * Those IDs must never be recorded as query usage, because they can match a
- * stream the query did not read.
+ * stream the query did not read. Each result is counted once on every real
+ * stream that contributed to it instead.
  * </p>
  *
  * <p>
@@ -81,7 +88,15 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @author matt
  * @version 1.1
  */
-@SpringBootTest(properties = "app.datum.query-auditor.flush-delay=50")
+// use a separate persistent cache directory, as other test contexts lock the default one;
+// enable the query cache, as in production
+// @formatter:off
+@SpringBootTest(properties = {
+		"app.cache.persistence.path=build/tmp/DatumController_VirtualStreamAuditWebTests/cache",
+		"app.datum.query-auditor.flush-delay=50",
+		"app.query-cache.enabled=true",
+})
+// @formatter:on
 @ActiveProfiles("query-auditor")
 @AutoConfigureMockMvc
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -103,6 +118,8 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 	private Long nodeId;
 	private Long otherNodeId;
 	private Long victimNodeId;
+	private UUID streamIdA;
+	private UUID streamIdB;
 	private UUID unmappedStreamId;
 	private UUID victimStreamId;
 
@@ -155,8 +172,10 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 		otherNodeId = node(userId, false);
 		victimNodeId = node(victimUserId, true);
 
-		hourlyDatum(stream(nodeId, SOURCE_A));
-		hourlyDatum(stream(nodeId, SOURCE_B));
+		streamIdA = stream(nodeId, SOURCE_A);
+		hourlyDatum(streamIdA);
+		streamIdB = stream(nodeId, SOURCE_B);
+		hourlyDatum(streamIdB);
 		unmappedStreamId = stream(otherNodeId, SOURCE_C);
 		hourlyDatum(unmappedStreamId);
 
@@ -166,10 +185,11 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 	@AfterEach
 	public void cleanup() {
 		for ( UUID streamId : streamIds ) {
-			jdbcTemplate.update("DELETE FROM solardatm.aud_datm_io WHERE stream_id = ?", streamId);
-			jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm WHERE stream_id = ?", streamId);
-			jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly WHERE stream_id = ?", streamId);
+			// metadata first: the auditor may still flush, and adds no rows without a stream to find
 			jdbcTemplate.update("DELETE FROM solardatm.da_datm_meta WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm WHERE stream_id = ?", streamId);
+			jdbcTemplate.update("DELETE FROM solardatm.aud_datm_io WHERE stream_id = ?", streamId);
 		}
 		for ( Long userId : userIds ) {
 			jdbcTemplate.update("DELETE FROM solaruser.user_node WHERE user_id = ?", userId);
@@ -219,6 +239,19 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 		// @formatter:on
 	}
 
+	private void thenCombinedStreamsAudited(int count) throws InterruptedException {
+		// @formatter:off
+		then(awaitAuditedCount(streamIdA, count, AUDIT_TIMEOUT_NS))
+			.as("Each combined result counted once on contributing stream A")
+			.isEqualTo(count)
+			;
+		then(awaitAuditedCount(streamIdB, count, AUDIT_TIMEOUT_NS))
+			.as("Each combined result counted once on contributing stream B")
+			.isEqualTo(count)
+			;
+		// @formatter:on
+	}
+
 	private void thenVictimStreamNotAudited() throws InterruptedException {
 		// @formatter:off
 		then(awaitAuditedCount(victimStreamId, 1, AUDIT_QUIET_NS))
@@ -246,7 +279,118 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 			.isEqualTo(HOURS)
 			;
 		// @formatter:on
+		thenCombinedStreamsAudited(HOURS);
 		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void reading_virtualIdsMatchOtherAccountStream() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/reading", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B)
+				.param("readingType", "Difference"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results.length()", is(HOURS)))
+			;
+		// @formatter:on
+
+		// THEN
+		thenCombinedStreamsAudited(HOURS);
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void mostRecent_virtualIdsMatchOtherAccountStream() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/mostRecent", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results.length()", is(1)))
+			;
+		// @formatter:on
+
+		// THEN
+		thenCombinedStreamsAudited(1);
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void streamReading_calculatedAt() throws Exception {
+		// WHEN
+		mvc.perform(combiningQuery("/api/v1/pub/datum/stream/reading", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B).param("readingType", "CalculatedAt"));
+
+		// THEN
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void list_cacheHit() throws Exception {
+		// GIVEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B))
+			.andExpect(status().isOk())
+			.andExpect(header().string(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_MISS))
+			;
+		// @formatter:on
+		thenCombinedStreamsAudited(HOURS);
+
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B))
+			.andExpect(status().isOk())
+			.andExpect(header().string(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_HIT))
+			;
+		// @formatter:on
+
+		// THEN
+		thenCombinedStreamsAudited(HOURS * 2);
+		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void list_json() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results[0].length()", is(7)))
+			.andExpect(jsonPath("$.data.results[0].sourceId", is(VIRTUAL_SOURCE_ID)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void list_csv() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B)
+				.accept(MediaType.parseMediaType("text/csv")))
+			.andExpect(status().isOk())
+			.andExpect(content().string(startsWith(
+					"created,localDate,localTime,nodeId,sourceId,watts,wattHours\r\n")))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void list_xml() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(combiningQuery("/api/v1/pub/datum/list", nodeId.toString(),
+				SOURCE_A + "," + SOURCE_B)
+				.accept(MediaType.TEXT_XML))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("<ReportingGeneralNodeDatum created=")))
+			.andExpect(content().string(not(containsString("ontributor"))))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -285,6 +429,7 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 			.isEqualTo(HOURS)
 			;
 		// @formatter:on
+		thenCombinedStreamsAudited(HOURS);
 		thenVictimStreamNotAudited();
 	}
 
@@ -354,6 +499,7 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 			.isEqualTo(HOURS)
 			;
 		// @formatter:on
+		thenCombinedStreamsAudited(HOURS);
 		thenVictimStreamNotAudited();
 	}
 

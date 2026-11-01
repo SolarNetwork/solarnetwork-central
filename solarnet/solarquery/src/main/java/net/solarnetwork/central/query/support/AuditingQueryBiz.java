@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link QueryAuditor}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class AuditingQueryBiz extends DelegatingQueryBiz {
 
@@ -114,7 +114,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			Long offset, Integer max) throws IOException {
 		auditor.resetCurrentAuditResults();
 		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilteredResultsProcessor(
-				processor, auditor, filter);
+				processor, auditor);
 		super.findFilteredStreamDatum(filter, proxy, sortDescriptors, offset, max);
 	}
 
@@ -124,7 +124,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		auditor.resetCurrentAuditResults();
 		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilteredResultsProcessor(
-				processor, auditor, filter);
+				processor, auditor);
 		super.findFilteredStreamReadings(filter, readingType, tolerance, proxy, sortDescriptors, offset,
 				max);
 	}

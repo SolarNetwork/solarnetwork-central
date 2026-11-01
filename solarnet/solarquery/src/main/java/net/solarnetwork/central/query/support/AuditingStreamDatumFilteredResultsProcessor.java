@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.query.support;
 
-import static net.solarnetwork.central.datum.support.DatumUtils.isVirtualNodeSource;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
@@ -36,8 +35,9 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.domain.CombinedDatumContributors;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -54,7 +54,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.2
  */
 public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<GeneralNodeDatumPK, Integer>
@@ -62,12 +62,12 @@ public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<Gen
 
 	private final StreamDatumFilteredResultsProcessor delegate;
 	private final QueryAuditor auditor;
-	private final StreamDatumFilter filter;
 	private final Instant auditDate;
 	private final Set<Entry<GeneralNodeDatumPK, Integer>> keySet;
 
 	// the following is used to reduce the amount of garbage collected while auditing the response
 	private final Map<UUID, GeneralNodeDatumPK> auditDatumKeys;
+	private final Map<NodeSourcePK, GeneralNodeDatumPK> contributorDatumKeys;
 
 	private ObjectDatumStreamMetadataProvider metadataProvider;
 	private GeneralNodeDatumPK currentKey;
@@ -79,18 +79,16 @@ public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<Gen
 	 *        the delegate
 	 * @param auditor
 	 *        the auditor
-	 * @param filter
-	 *        the filter used for the query
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
 	public AuditingStreamDatumFilteredResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
-			QueryAuditor auditor, StreamDatumFilter filter) {
+			QueryAuditor auditor) {
 		super();
 		this.delegate = requireNonNullArgument(delegate, "delegate");
 		this.auditor = requireNonNullArgument(auditor, "auditor");
-		this.filter = requireNonNullArgument(filter, "filter");
 		this.auditDatumKeys = new HashMap<>(16);
+		this.contributorDatumKeys = new HashMap<>(16);
 		this.auditDate = Instant.now(auditor.getAuditClock());
 		this.keySet = new AbstractSet<>() {
 
@@ -148,11 +146,18 @@ public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<Gen
 
 	@Override
 	public void handleResultItem(StreamDatum d) throws IOException {
-		if ( metadataProvider != null && d != null && d.getStreamId() != null ) {
+		final Set<NodeSourcePK> contributors = (d instanceof CombinedDatumContributors c
+				? c.contributors()
+				: null);
+		if ( contributors != null ) {
+			for ( NodeSourcePK stream : contributors ) {
+				currentKey = contributorDatumKeys.computeIfAbsent(stream,
+						s -> new GeneralNodeDatumPK(s.getNodeId(), auditDate, s.getSourceId()));
+				auditor.addNodeDatumAuditResults(this);
+			}
+		} else if ( metadataProvider != null && d != null && d.getStreamId() != null ) {
 			ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
-			// a virtual ID is not the stream the result came from, even if it matches one
-			if ( meta != null && meta.getKind() == ObjectDatumKind.Node
-					&& !isVirtualNodeSource(filter, meta.getObjectId(), meta.getSourceId()) ) {
+			if ( meta != null && meta.getKind() == ObjectDatumKind.Node ) {
 				currentKey = auditDatumKeys.computeIfAbsent(d.getStreamId(),
 						_ -> new GeneralNodeDatumPK(meta.getObjectId(), auditDate, meta.getSourceId()));
 				auditor.addNodeDatumAuditResults(this);

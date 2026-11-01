@@ -71,6 +71,7 @@ public final class SelectDatum
 	private final @Nullable CombiningConfig combine;
 	private final @Nullable DatumRollupType rollup;
 	private final int fetchSize;
+	private final boolean contributors;
 
 	/**
 	 * Constructor.
@@ -136,6 +137,7 @@ public final class SelectDatum
 		this.fetchSize = fetchSize;
 		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
 		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
+		this.contributors = (combine != null && filter.getObjectKind() != Location);
 	}
 
 	private boolean isDateOrLocalDateRangeRequired() {
@@ -206,6 +208,10 @@ public final class SelectDatum
 			buf.append("	s.source_rank,\n");
 			buf.append("	s.names_i,\n");
 			buf.append("	s.names_a,\n");
+			if ( contributors ) {
+				buf.append("	s.rnode_id,\n");
+				buf.append("	s.rsource_id,\n");
+			}
 		} else if ( aliased ) {
 			buf.append("s.stream_id,\n");
 		} else {
@@ -388,7 +394,7 @@ public final class SelectDatum
 		}
 	}
 
-	private void sqlCore(StringBuilder buf) {
+	private void sqlCore(StringBuilder buf, boolean withContributors) {
 		sqlCte(buf);
 		if ( combine != null ) {
 			buf.append(", d AS (\n");
@@ -402,6 +408,9 @@ public final class SelectDatum
 				// each real stream must produce its own rows to be combined
 				buf.append(
 						"s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a");
+				if ( contributors ) {
+					buf.append(", s.rnode_id, s.rsource_id");
+				}
 			} else if ( aliased ) {
 				buf.append("s.stream_id");
 			} else {
@@ -417,17 +426,26 @@ public final class SelectDatum
 			}
 			buf.append(")\n");
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
+			if ( withContributors ) {
+				buf.append(VirtualDatumSqlUtils.combineContributorsCteSql()).append("\n");
+			}
 			buf.append("SELECT datum.*, vs.")
 					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
-					.append(", vs.source_id\n");
-			buf.append("FROM datum\n");
+					.append(", vs.source_id");
+			if ( withContributors ) {
+				buf.append(VirtualDatumSqlUtils.COMBINE_CONTRIBUTORS_SELECT_SQL);
+			}
+			buf.append("\nFROM datum\n");
+			if ( withContributors ) {
+				buf.append(VirtualDatumSqlUtils.COMBINE_CONTRIBUTORS_JOIN_SQL);
+			}
 		}
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf);
+		sqlCore(buf, contributors);
 		sqlOrderByJoins(buf);
 		if ( rollup != null ) {
 			buf.append("""
@@ -502,7 +520,7 @@ public final class SelectDatum
 			}
 
 			// use normal wrapped count query
-			sqlCore(buf);
+			sqlCore(buf, false);
 			sqlOrderByJoins(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}

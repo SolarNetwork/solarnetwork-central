@@ -11,7 +11,9 @@ WITH rs AS (
 			END AS source_id
 		, COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank
 		, s.names_i
-		, s.names_a, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
+		, s.names_a
+		, s.node_id AS rnode_id
+		, s.source_id AS rsource_id, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
 	FROM solardatm.da_datm_meta_aliased s
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.orig_node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
@@ -33,6 +35,8 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
+		s.rnode_id,
+		s.rsource_id,
 		date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
@@ -41,7 +45,7 @@ WITH rs AS (
 	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.orig_stream_id
 	WHERE datum.ts_start >= ?
 		AND datum.ts_start < ?
-	GROUP BY s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
+	GROUP BY s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a, s.rnode_id, s.rsource_id, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 )
 -- calculate instantaneous values per date + property NAME (to support joining different streams with different index orders)
 -- ordered by object/source ranking defined by query metadata; assume names are unique per stream
@@ -142,7 +146,20 @@ WITH rs AS (
 	FROM di_ary
 	FULL OUTER JOIN da_ary ON da_ary.stream_id = di_ary.stream_id AND da_ary.ts = di_ary.ts
 )
-SELECT datum.*, vs.node_id, vs.source_id
+-- collect the real streams that contributed to each virtual stream result
+, dc AS (
+	SELECT
+		  stream_id
+		, ts
+		, array_agg(rnode_id ORDER BY rnode_id, rsource_id) AS rnode_ids
+		, array_agg(rsource_id::TEXT ORDER BY rnode_id, rsource_id) AS rsource_ids
+	FROM d
+	WHERE num_nonnulls(VARIADIC d.data_i) > 0
+		OR num_nonnulls(VARIADIC d.data_a) > 0
+	GROUP BY stream_id, ts
+)
+SELECT datum.*, vs.node_id, vs.source_id, dc.rnode_ids, dc.rsource_ids
 FROM datum
+FULL OUTER JOIN dc ON dc.stream_id = datum.stream_id AND dc.ts = datum.ts_start
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
 ORDER BY stream_id, ts_start

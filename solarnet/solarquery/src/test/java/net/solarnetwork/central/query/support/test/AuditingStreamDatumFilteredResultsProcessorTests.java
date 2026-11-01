@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.never;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
@@ -46,12 +47,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.CombinedAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.support.AuditingStreamDatumFilteredResultsProcessor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -60,7 +64,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for the {@link AuditingStreamDatumFilteredResultsProcessor} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -104,25 +108,33 @@ public class AuditingStreamDatumFilteredResultsProcessorTests {
 				DatumProperties.propertiesOf(null, null, null, null));
 	}
 
-	private void handleResults(StreamDatumFilterCommand filter, ObjectDatumStreamMetadata... metas)
-			throws IOException {
-		final var processor = new AuditingStreamDatumFilteredResultsProcessor(delegate, auditor, filter);
-		processor.start(null, null, null,
-				singletonMap(METADATA_PROVIDER_ATTR, staticProvider(List.of(metas))));
-		for ( ObjectDatumStreamMetadata meta : metas ) {
-			final StreamDatum d = datum(meta);
-			processor.handleResultItem(d);
-			then(delegate).should().handleResultItem(d);
+	private static StreamDatum combinedDatum(ObjectDatumStreamMetadata meta, Instant ts,
+			Set<NodeSourcePK> contributors) {
+		return new CombinedAggregateDatumEntity(meta.getStreamId(), ts, Aggregation.Hour,
+				DatumProperties.propertiesOf(null, null, null, null),
+				DatumPropertiesStatistics.statisticsOf(null, null), contributors);
+	}
+
+	private void handleResults(ObjectDatumStreamMetadata meta, StreamDatum... datum) throws IOException {
+		try (final var processor = new AuditingStreamDatumFilteredResultsProcessor(delegate, auditor)) {
+			processor.start(null, null, null,
+					singletonMap(METADATA_PROVIDER_ATTR, staticProvider(List.of(meta))));
+			for ( StreamDatum d : datum ) {
+				processor.handleResultItem(d);
+				then(delegate).should().handleResultItem(d);
+			}
 		}
 	}
 
 	@Test
-	public void noMappings() throws IOException {
+	public void plainResult() throws IOException {
 		// GIVEN
 		givenAuditResultsRecorded();
 
+		final ObjectDatumStreamMetadata meta = meta(NODE_ID, SOURCE_ID);
+
 		// WHEN
-		handleResults(new StreamDatumFilterCommand(), meta(NODE_ID, SOURCE_ID));
+		handleResults(meta, datum(meta));
 
 		// THEN
 		// @formatter:off
@@ -134,25 +146,66 @@ public class AuditingStreamDatumFilteredResultsProcessorTests {
 	}
 
 	@Test
-	public void virtualIds() throws IOException {
+	public void combined() throws IOException {
 		// GIVEN
 		givenAuditResultsRecorded();
 
-		final StreamDatumFilterCommand filter = new StreamDatumFilterCommand();
-		filter.setNodeIdMappings(Map.of(VIRTUAL_NODE_ID, Set.of(NODE_ID)));
-		filter.setSourceIdMappings(Map.of(VIRTUAL_SOURCE_ID, Set.of(SOURCE_ID)));
+		final ObjectDatumStreamMetadata meta = meta(VIRTUAL_NODE_ID, VIRTUAL_SOURCE_ID);
 
 		// WHEN
-		handleResults(filter, meta(VIRTUAL_NODE_ID, VIRTUAL_SOURCE_ID),
-				meta(VIRTUAL_NODE_ID, "unmapped"), meta(2L, VIRTUAL_SOURCE_ID), meta(2L, "unmapped"));
+		handleResults(meta,
+				combinedDatum(meta, AUDIT_DATE,
+						Set.of(new NodeSourcePK(NODE_ID, SOURCE_ID), new NodeSourcePK(2L, SOURCE_ID))),
+				combinedDatum(meta, AUDIT_DATE.plusSeconds(3600),
+						Set.of(new NodeSourcePK(NODE_ID, SOURCE_ID))));
 
 		// THEN
 		// @formatter:off
 		and.then(audited)
-			.as("Only the result with no virtual ID is counted")
-			.containsExactly(new GeneralNodeDatumPK(2L, AUDIT_DATE, "unmapped"))
+			.as("Each result counted once on each contributing stream, and not on its virtual IDs")
+			.containsExactlyInAnyOrder(
+					new GeneralNodeDatumPK(NODE_ID, AUDIT_DATE, SOURCE_ID),
+					new GeneralNodeDatumPK(2L, AUDIT_DATE, SOURCE_ID),
+					new GeneralNodeDatumPK(NODE_ID, AUDIT_DATE, SOURCE_ID))
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void combined_noContributors() throws IOException {
+		// GIVEN
+		final ObjectDatumStreamMetadata meta = meta(VIRTUAL_NODE_ID, VIRTUAL_SOURCE_ID);
+
+		// WHEN
+		handleResults(meta, combinedDatum(meta, AUDIT_DATE, Set.of()));
+
+		// THEN
+		then(auditor).should(never()).addNodeDatumAuditResults(any());
+	}
+
+	@Test
+	public void combined_noMetadata() throws IOException {
+		// GIVEN
+		givenAuditResultsRecorded();
+
+		final ObjectDatumStreamMetadata meta = meta(VIRTUAL_NODE_ID, VIRTUAL_SOURCE_ID);
+		final StreamDatum d = combinedDatum(meta, AUDIT_DATE,
+				Set.of(new NodeSourcePK(NODE_ID, SOURCE_ID)));
+
+		try (final var processor = new AuditingStreamDatumFilteredResultsProcessor(delegate, auditor)) {
+
+			// WHEN
+			processor.start(null, null, null, null);
+			processor.handleResultItem(d);
+
+			// THEN
+			// @formatter:off
+			and.then(audited)
+				.as("Contributors need no metadata to be counted")
+				.containsExactly(new GeneralNodeDatumPK(NODE_ID, AUDIT_DATE, SOURCE_ID))
+				;
+			// @formatter:on
+		}
 	}
 
 }

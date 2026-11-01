@@ -28,14 +28,19 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.virtualStreamId;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -46,8 +51,11 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.CombinedDatumContributors;
 import net.solarnetwork.central.datum.domain.CombiningType;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -55,6 +63,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.VirtualAggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -981,6 +992,296 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 				.collect(toList());
 		assertThat("Running total is on each real stream, because it does not support combining",
 				streamIds, containsInAnyOrder(metas.get(0).getStreamId(), metas.get(1).getStreamId()));
+	}
+
+	private record Contributors(Instant ts, List<Long> nodeIds, List<String> sourceIds) {
+	}
+
+	private List<Contributors> contributors(PreparedStatementCreator sql) {
+		return jdbcTemplate.query(sql, (rs, _) -> {
+			assertThat("Result is on a stream", rs.getObject("stream_id"), notNullValue());
+			return new Contributors(rs.getTimestamp("ts_start").toInstant(),
+					asList((Long[]) rs.getArray("rnode_ids").getArray()),
+					asList((String[]) rs.getArray("rsource_ids").getArray()));
+		});
+	}
+
+	private void givenDailyProperties(ObjectDatumStreamMetadata meta, ZonedDateTime date,
+			DatumProperties props) {
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate,
+				List.of(new AggregateDatumEntity(meta.getStreamId(), date.toInstant(), Aggregation.Day,
+						props, statisticsOf(null, null))));
+	}
+
+	@Test
+	public void contributors_day() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 3, 10);
+		givenDailyDatum(metas.get(1), start, 2, 20); // no datum on 3rd day
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatum(virtualCriteria(start, start.plusDays(3), Aggregation.Day)));
+
+		// THEN
+		assertThat("Each day lists only the streams with datum on that day", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b")),
+						new Contributors(start.plusDays(1).toInstant(), asList(1L, 2L),
+								asList("a", "b")),
+						new Contributors(start.plusDays(2).toInstant(), asList(1L), asList("a"))));
+	}
+
+	@Test
+	public void contributors_week() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 3, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 7, 10);
+		givenDailyDatum(metas.get(1), start, 7, 20);
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatum(virtualCriteria(start, start.plusDays(7), Aggregation.Week)));
+
+		// THEN
+		assertThat("Each stream listed once per week", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b"))));
+	}
+
+	@Test
+	public void contributors_15min() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		final Instant now = Instant.now();
+		List<Datum> datums = new ArrayList<>();
+		for ( int i = 0; i < 5; i++ ) {
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
+			datums.add(new DatumEntity(metas.get(0).getStreamId(), start.plusMinutes(i * 5).toInstant(),
+					now, props));
+			datums.add(new DatumEntity(metas.get(1).getStreamId(), start.plusMinutes(i * 5).toInstant(),
+					now, props));
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		List<Contributors> results = contributors(new SelectDatum(
+				virtualCriteria(start, start.plusMinutes(15), Aggregation.FifteenMinute)));
+
+		// THEN
+		assertThat("Each stream listed once per slot", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b"))));
+	}
+
+	@Test
+	public void contributors_year() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenMonthlyDatum(metas.get(0), start, 10);
+		givenMonthlyDatum(metas.get(0), start.plusMonths(1), 10);
+		givenMonthlyDatum(metas.get(1), start, 20);
+
+		// WHEN
+		List<Contributors> results = contributors(new SelectDatumPartialAggregate(
+				virtualCriteria(start, start.plusYears(1), Aggregation.Year), Aggregation.Month));
+
+		// THEN
+		assertThat("Each stream listed once per year", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b"))));
+	}
+
+	@Test
+	public void contributors_month_partialDay() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final ZonedDateTime march = start.plusMonths(1);
+		givenMonthlyDatum(metas.get(0), start, 10);
+		givenMonthlyDatum(metas.get(1), start, 20);
+		givenDailyDatum(metas.get(0), march, 5, 1);
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatumPartialAggregate(virtualPartialCriteria(start, march.plusDays(5))));
+
+		// THEN
+		assertThat("Whole and partial months list their own streams", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b")),
+						new Contributors(march.toInstant(), asList(1L), asList("a"))));
+	}
+
+	@Test
+	public void contributors_statusOnlyStream() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final DatumProperties statusOnly = propertiesOf(null, null, new String[] { "ok" }, null);
+		givenDailyDatum(metas.get(0), start, 1, 10);
+		givenDailyProperties(metas.get(1), start, statusOnly);
+		givenDailyProperties(metas.get(1), start.plusDays(1), statusOnly); // alone in slot
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatum(virtualCriteria(start, start.plusDays(2), Aggregation.Day)));
+
+		// THEN
+		assertThat("Status values do not contribute, and a slot of only those has no result", results,
+				contains(new Contributors(start.toInstant(), asList(1L), asList("a"))));
+	}
+
+	@Test
+	public void contributors_nullPropertiesStream() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 1, 10);
+		givenDailyProperties(metas.get(1), start,
+				propertiesOf(new BigDecimal[] { null }, new BigDecimal[] { null }, null, null));
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatum(virtualCriteria(start, start.plusDays(1), Aggregation.Day)));
+
+		// THEN
+		assertThat("Null values do not contribute", results,
+				contains(new Contributors(start.toInstant(), asList(1L), asList("a"))));
+	}
+
+	@Test
+	public void contributors_singleProperty() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 1, 10);
+		givenDailyProperties(metas.get(1), start,
+				propertiesOf(null, new BigDecimal[] { BigDecimal.ONE }, null, null));
+
+		// WHEN
+		List<Contributors> results = contributors(
+				new SelectDatum(virtualCriteria(start, start.plusDays(1), Aggregation.Day)));
+
+		// THEN
+		assertThat("One accumulating value is enough to contribute", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b"))));
+	}
+
+	@Test
+	public void contributors_sortTimeNodeSource() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 2, 10);
+		givenDailyDatum(metas.get(1), start, 1, 20);
+
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusDays(2), Aggregation.Day);
+		criteria.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		List<Contributors> results = contributors(new SelectDatum(criteria));
+
+		// THEN
+		assertThat("Sorting works with contributors joined", results,
+				contains(new Contributors(start.toInstant(), asList(1L, 2L), asList("a", "b")),
+						new Contributors(start.plusDays(1).toInstant(), asList(1L), asList("a"))));
+	}
+
+	@Test
+	public void contributors_mostRecent() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 2, 10);
+		givenDailyDatum(metas.get(1), start, 2, 20);
+
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusDays(2), Aggregation.Day);
+		criteria.setMostRecent(true);
+
+		// WHEN
+		List<Contributors> results = contributors(new SelectDatum(criteria));
+
+		// THEN
+		assertThat("Most recent result lists each stream", results, contains(
+				new Contributors(start.plusDays(1).toInstant(), asList(1L, 2L), asList("a", "b"))));
+	}
+
+	@Test
+	public void find_virtual_day_contributors() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 2, 10);
+		givenDailyDatum(metas.get(1), start, 1, 20);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(
+				virtualCriteria(start, start.plusDays(2), Aggregation.Day));
+
+		// THEN
+		List<CombinedDatumContributors> datumList = stream(results.spliterator(), false)
+				.map(CombinedDatumContributors.class::cast).collect(toList());
+		assertThat("Returned 1 virtual stream x 2 days", datumList, hasSize(2));
+		assertThat("First day has both streams", datumList.get(0).contributors(),
+				contains(new NodeSourcePK(1L, "a"), new NodeSourcePK(2L, "b")));
+		assertThat("Second day has only the stream with datum", datumList.get(1).contributors(),
+				contains(new NodeSourcePK(1L, "a")));
+	}
+
+	@Test
+	public void mapRow_missingContributors() {
+		// GIVEN
+		final String sql = """
+				SELECT ?::uuid, CURRENT_TIMESTAMP, ARRAY[1]::NUMERIC[], NULL::NUMERIC[], NULL::TEXT[],
+					NULL::TEXT[], NULL::NUMERIC[][], NULL::NUMERIC[][], ARRAY['w'], NULL::TEXT[],
+					1::BIGINT, 'V', NULL::BIGINT[], NULL::TEXT[]
+				""";
+
+		// WHEN
+		List<AggregateDatum> results = jdbcTemplate.query(sql,
+				new VirtualAggregateDatumEntityRowMapper(Aggregation.Day, ObjectDatumKind.Node),
+				UUID.randomUUID().toString());
+
+		// THEN
+		assertThat("Mapped row", results, hasSize(1));
+		CombinedDatumContributors c = (CombinedDatumContributors) results.getFirst();
+		assertThat("A missing list means no contributors, not an unknown result", c.contributors(),
+				empty());
+	}
+
+	@Test
+	public void find_virtual_day_location() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Location, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null,
+				null);
+		ObjectDatumStreamMetadata meta_2 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Location, 2L, "b", new String[] { "w" }, new String[] { "wh" }, null,
+				null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(meta_1, start, 1, 10);
+		givenDailyDatum(meta_2, start, 1, 20);
+
+		BasicDatumCriteria criteria = virtualCriteria(start, start.plusDays(1), Aggregation.Day);
+		criteria.setNodeIds(null);
+		criteria.setLocationIds(new Long[] { 1L, 2L });
+		criteria.setObjectKind(ObjectDatumKind.Location);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(criteria);
+
+		// THEN
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Returned 1 virtual location x 1 virtual source x 1 day", datumList, hasSize(1));
+		assertThat("Virtual W is sum of each stream",
+				datumList.getFirst().getProperties().getInstantaneous(),
+				arrayContaining(decimalArray("30")));
+		assertThat("Location datum has no contributors", datumList.getFirst(),
+				not(instanceOf(CombinedDatumContributors.class)));
 	}
 
 }

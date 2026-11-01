@@ -11,7 +11,9 @@ WITH rs AS (
 			END AS source_id
 		, COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank
 		, s.names_i
-		, s.names_a, s.orig_stream_id
+		, s.names_a
+		, s.node_id AS rnode_id
+		, s.source_id AS rsource_id, s.orig_stream_id
 	FROM solardatm.da_datm_meta_aliased s
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
@@ -31,6 +33,8 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
+		s.rnode_id,
+		s.rsource_id,
 		datum.ts_start AS ts,
 		datum.data_i,
 		datum.data_a,
@@ -142,7 +146,20 @@ WITH rs AS (
 	FROM di_ary
 	FULL OUTER JOIN da_ary ON da_ary.stream_id = di_ary.stream_id AND da_ary.ts = di_ary.ts
 )
-SELECT datum.*, vs.node_id, vs.source_id
+-- collect the real streams that contributed to each virtual stream result
+, dc AS (
+	SELECT
+		  stream_id
+		, ts
+		, array_agg(rnode_id ORDER BY rnode_id, rsource_id) AS rnode_ids
+		, array_agg(rsource_id::TEXT ORDER BY rnode_id, rsource_id) AS rsource_ids
+	FROM d
+	WHERE num_nonnulls(VARIADIC d.data_i) > 0
+		OR num_nonnulls(VARIADIC d.data_a) > 0
+	GROUP BY stream_id, ts
+)
+SELECT datum.*, vs.node_id, vs.source_id, dc.rnode_ids, dc.rsource_ids
 FROM datum
+FULL OUTER JOIN dc ON dc.stream_id = datum.stream_id AND dc.ts = datum.ts_start
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
 ORDER BY ts_start, node_id, source_id
