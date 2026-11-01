@@ -61,7 +61,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * </p>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 3.8
  */
 public final class SelectDatumPartialAggregate
@@ -224,7 +224,7 @@ public final class SelectDatumPartialAggregate
 				|| (filter.getAggregation() == aggregation && aggregation != Aggregation.Year) ) {
 			// main agg: direct results
 			buf.append("	datum.ts_start");
-			if ( rollup != null ) {
+			if ( combine != null || rollup != null ) {
 				buf.append(" AS ts");
 			}
 			buf.append(",\n");
