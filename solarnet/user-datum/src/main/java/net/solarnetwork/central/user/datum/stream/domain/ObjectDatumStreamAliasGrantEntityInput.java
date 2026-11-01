@@ -39,6 +39,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class ObjectDatumStreamAliasGrantEntityInput
 		extends BaseUserRelatedStdInput<ObjectDatumStreamAliasGrantEntity, UserLongCompositePK> {
 
