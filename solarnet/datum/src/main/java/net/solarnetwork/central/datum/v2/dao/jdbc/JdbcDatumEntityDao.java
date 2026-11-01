@@ -148,7 +148,7 @@ import net.solarnetwork.util.StringLongMapping;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 3.3
+ * @version 3.4
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -331,7 +331,8 @@ public class JdbcDatumEntityDao
 				|| filter.hasDatumRollupCriteria() ) {
 			return DatumEntityRowMapper.INSTANCE;
 		} else if ( filter.hasIdMappings() && filter.getAggregation() != null
-				&& filter.getAggregation() != Aggregation.None ) {
+				&& filter.getAggregation() != Aggregation.None
+				&& filter.getAggregation() != Aggregation.RunningTotal ) {
 			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
 					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
 							: ObjectDatumKind.Node);
