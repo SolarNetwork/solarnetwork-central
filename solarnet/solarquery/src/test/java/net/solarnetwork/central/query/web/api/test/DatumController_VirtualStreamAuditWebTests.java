@@ -30,6 +30,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,7 +79,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest(properties = "app.datum.query-auditor.flush-delay=50")
 @ActiveProfiles("query-auditor")
@@ -246,6 +247,23 @@ public class DatumController_VirtualStreamAuditWebTests extends AbstractJUnit5Ce
 			;
 		// @formatter:on
 		thenVictimStreamNotAudited();
+	}
+
+	@Test
+	public void list_runningTotal() throws Exception {
+		// WHEN
+		// @formatter:off
+		mvc.perform(get("/api/v1/pub/datum/list")
+				.param("nodeIds", nodeId.toString())
+				.param("sourceIds", SOURCE_A + "," + SOURCE_B)
+				.param("nodeIdMaps", victimNodeId + ":" + nodeId)
+				.param("sourceIdMaps", VIRTUAL_SOURCE_ID + ":" + SOURCE_A + "," + SOURCE_B)
+				.param("aggregation", "RunningTotal")
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.results[*].sourceId", containsInAnyOrder(SOURCE_A, SOURCE_B)))
+			;
+		// @formatter:on
 	}
 
 	@Test

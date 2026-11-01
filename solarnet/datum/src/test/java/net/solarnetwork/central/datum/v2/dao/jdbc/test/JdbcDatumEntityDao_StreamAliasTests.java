@@ -25,12 +25,16 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static net.solarnetwork.central.datum.v2.domain.ObjectDatumId.nodeId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +45,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.test.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -48,6 +53,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasGrantEntityDao;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
@@ -57,6 +63,8 @@ import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
@@ -73,7 +81,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_StreamAliasTests extends BaseDatumJdbcTestSupport {
 
@@ -219,6 +227,53 @@ public class JdbcDatumEntityDao_StreamAliasTests extends BaseDatumJdbcTestSuppor
 		then(result.getReturnedResultCount())
 			.as("Alias owner can query the original stream")
 			.isEqualTo(1)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void find_week_aliasResolves() {
+		// GIVEN
+		final ZonedDateTime week = LocalDate.of(2026, 1, 5).atStartOfDay(ZoneId.of(TEST_TZ));
+		final List<AggregateDatum> datums = new ArrayList<>();
+		for ( int i = 0; i < 3; i++ ) {
+			final DatumProperties props = propertiesOf(new BigDecimal[] { BigDecimal.ONE },
+					new BigDecimal[] { BigDecimal.TEN }, null, null);
+			final DatumPropertiesStatistics stats = statisticsOf(
+					new BigDecimal[][] { decimalArray("6", "1", "1") },
+					new BigDecimal[][] { decimalArray("10", "0", "10") });
+			datums.add(new AggregateDatumEntity(orig.getStreamId(), week.plusDays(i).toInstant(),
+					Aggregation.Day, props, stats));
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		final BasicDatumCriteria filter = aliasFilter();
+		filter.setAggregation(Aggregation.Week);
+		filter.setStartDate(week.toInstant());
+		filter.setEndDate(week.plusDays(7).toInstant());
+
+		// WHEN
+		final var result = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Week result for alias")
+			.singleElement()
+			.satisfies(d -> {
+				then(d.getStreamId())
+					.as("Result is on the alias stream")
+					.isEqualTo(alias.getStreamId())
+					;
+				then(d.getTimestamp())
+					.as("Result date is grouped by week")
+					.isEqualTo(week.toInstant())
+					;
+				then(d.getProperties().getAccumulating())
+					.as("Result is the sum of the week")
+					.containsExactly(new BigDecimal("30"))
+					;
+			})
 			;
 		// @formatter:on
 	}

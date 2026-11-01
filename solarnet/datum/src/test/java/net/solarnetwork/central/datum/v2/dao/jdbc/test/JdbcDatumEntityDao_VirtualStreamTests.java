@@ -33,6 +33,7 @@ import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statistics
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -69,7 +70,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * {@link JdbcDatumEntityDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupport {
 
@@ -892,6 +893,94 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 		// THEN
 		assertThat("Total count is of virtual results", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned results limited to max", results.getReturnedResultCount(), equalTo(2));
+	}
+
+	private void givenMonthlyDatum(ObjectDatumStreamMetadata meta, ZonedDateTime month, int value) {
+		DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(value) },
+				new BigDecimal[] { new BigDecimal(value) }, null, null);
+		DatumPropertiesStatistics stats = statisticsOf(
+				new BigDecimal[][] { decimalArray("6", valueOf(value), valueOf(value)) },
+				new BigDecimal[][] { decimalArray(valueOf(value), "0", valueOf(value)) });
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate,
+				List.of(new AggregateDatumEntity(meta.getStreamId(), month.toInstant(),
+						Aggregation.Month, props, stats)));
+	}
+
+	private static BasicDatumCriteria virtualPartialCriteria(ZonedDateTime start, ZonedDateTime end) {
+		BasicDatumCriteria criteria = virtualCriteria(start, end, Aggregation.Month);
+		criteria.setStartDate(null);
+		criteria.setEndDate(null);
+		criteria.setLocalStartDate(start.toLocalDateTime());
+		criteria.setLocalEndDate(end.toLocalDateTime());
+		criteria.setPartialAggregation(Aggregation.Day);
+		return criteria;
+	}
+
+	@Test
+	public void find_virtual_month_partialDay_wholeMonthFirst() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final ZonedDateTime march = start.plusMonths(1);
+		givenMonthlyDatum(metas.get(0), start, 10);
+		givenMonthlyDatum(metas.get(1), start, 20);
+		givenDailyDatum(metas.get(0), march, 5, 1);
+		givenDailyDatum(metas.get(1), march, 5, 2);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(
+				virtualPartialCriteria(start, march.plusDays(5)));
+
+		// THEN
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Returned 1 virtual stream x 2 months", datumList, hasSize(2));
+		assertThat("Whole month date", datumList.get(0).getTimestamp(), equalTo(start.toInstant()));
+		assertThat("Whole month is sum of each stream's month",
+				datumList.get(0).getProperties().getAccumulating(), arrayContaining(decimalArray("30")));
+		assertThat("Partial month date", datumList.get(1).getTimestamp(), equalTo(march.toInstant()));
+		assertThat("Partial month is sum of each stream's days",
+				datumList.get(1).getProperties().getAccumulating(), arrayContaining(decimalArray("15")));
+	}
+
+	@Test
+	public void find_virtual_month_partialDay_wholeMonthOnly() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenMonthlyDatum(metas.get(0), start, 10);
+		givenMonthlyDatum(metas.get(1), start, 20);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(
+				virtualPartialCriteria(start, start.plusMonths(1)));
+
+		// THEN
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Returned 1 virtual stream x 1 month", datumList, hasSize(1));
+		assertThat("Month is sum of each stream's month",
+				datumList.getFirst().getProperties().getAccumulating(),
+				arrayContaining(decimalArray("30")));
+	}
+
+	@Test
+	public void find_runningTotal_ignoresMappings() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> metas = givenTwoStreams();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		givenDailyDatum(metas.get(0), start, 5, 10);
+		givenDailyDatum(metas.get(1), start, 5, 20);
+
+		// WHEN
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(
+				virtualCriteria(start, start.plusDays(5), Aggregation.RunningTotal));
+
+		// THEN
+		List<UUID> streamIds = stream(results.spliterator(), false).map(Datum::getStreamId)
+				.collect(toList());
+		assertThat("Running total is on each real stream, because it does not support combining",
+				streamIds, containsInAnyOrder(metas.get(0).getStreamId(), metas.get(1).getStreamId()));
 	}
 
 }

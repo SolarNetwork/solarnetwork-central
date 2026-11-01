@@ -62,7 +62,7 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
-		datum.ts_start,
+		datum.ts_start AS ts,
 		datum.data_i,
 		datum.data_a,
 		datum.data_s,
