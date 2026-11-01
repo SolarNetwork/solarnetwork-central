@@ -2,6 +2,9 @@
 -- New
 -- ==========================================================================================
 
+-- so solarcommon.ant_patterns_to_regexps() can also be parallel safe
+ALTER FUNCTION solarcommon.ant_pattern_to_regexp(text) PARALLEL SAFE;
+
 /**
  * Convert a list of Ant path patterns into regular expressions.
  *
@@ -12,7 +15,7 @@
  * @see solarcommon.ant_pattern_to_regexp()
  */
 CREATE OR REPLACE FUNCTION solarcommon.ant_patterns_to_regexps(pats text[])
-RETURNS text[] LANGUAGE SQL STRICT IMMUTABLE AS
+RETURNS text[] LANGUAGE SQL STRICT IMMUTABLE PARALLEL SAFE AS
 $$
 	SELECT ARRAY(SELECT solarcommon.ant_pattern_to_regexp(p) FROM unnest(pats) p);
 $$;
