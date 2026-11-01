@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  * @since 3.8
  */
 public final class SelectDatum
@@ -402,6 +402,8 @@ public final class SelectDatum
 				// each real stream must produce its own rows to be combined
 				buf.append(
 						"s.vstream_id, datum.stream_id, s.obj_rank, s.source_rank, s.names_i, s.names_a");
+			} else if ( aliased ) {
+				buf.append("s.stream_id");
 			} else {
 				buf.append("datum.stream_id");
 			}
