@@ -14,6 +14,7 @@ app:
       disk-max-size-mb: 0
   datasource:
     hikari:
+      poolName: "Main_Pool"
       minimumIdle: 1
       connectionTimeout: 30000
       idleTimeout: 600000

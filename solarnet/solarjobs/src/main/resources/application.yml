@@ -128,6 +128,7 @@ app:
         requeue-error-count-maximum: 50
   datasource:
     hikari:
+      poolName: "Main_Pool"
       minimumIdle: 1
       connectionTimeout: 30000
       idleTimeout: 600000
@@ -139,6 +140,7 @@ app:
     initialize: false
   datasource-gnucash:
     hikari:
+      poolName: "Gnucash_Pool"
       minimumIdle: 0
       connectionTimeout: 30000
       idleTimeout: 600000

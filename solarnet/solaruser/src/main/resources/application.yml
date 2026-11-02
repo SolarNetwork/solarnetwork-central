@@ -95,6 +95,7 @@ app:
         multiplier: 2.0        
   datasource:
     hikari:
+      poolName: "Main_Pool"
       minimumIdle: 1
       connectionTimeout: 30000
       idleTimeout: 600000

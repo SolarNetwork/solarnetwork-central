@@ -6,6 +6,7 @@ app:
   cache.persistence.path: "var/cache"
   datasource:
     hikari:
+      poolName: "RO_Pool"
       minimumIdle: 1
       connectionTimeout: 30000
       idleTimeout: 600000
@@ -18,6 +19,7 @@ app:
     ping-query: "SELECT CURRENT_TIMESTAMP"
   datasource-read-write:
     hikari:
+      poolName: "RW_Pool"
       minimumIdle: 0
       connectionTimeout: 30000
       idleTimeout: 600000
