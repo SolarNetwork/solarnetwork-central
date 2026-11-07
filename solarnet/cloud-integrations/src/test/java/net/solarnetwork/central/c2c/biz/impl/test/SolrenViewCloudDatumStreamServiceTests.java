@@ -55,6 +55,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -119,7 +120,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SolrenViewCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -1031,7 +1032,7 @@ public class SolrenViewCloudDatumStreamServiceTests implements CloudIntegrations
 								"ab", 478,
 								"bc", 479,
 								"ca", 478,
-								"voltage", 478.3f
+								"voltage", new BigDecimal("478.3")
 							), null, null),
 						Datum::asSampleOperations)
 					;

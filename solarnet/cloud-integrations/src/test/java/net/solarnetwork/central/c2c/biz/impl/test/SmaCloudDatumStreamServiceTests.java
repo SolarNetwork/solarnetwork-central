@@ -67,6 +67,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -157,7 +158,7 @@ import tools.jackson.databind.node.ObjectNode;
  * Test cases for the {@link SmaCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -334,8 +335,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 								"postalCode", "00001",
 								"street", "123 Main Street",
 								"c", "US",
-								"lat", 42.38f,
-								"lon", -71.07f,
+								"lat", new BigDecimal("42.380000"),
+								"lon", new BigDecimal("-71.070000"),
 								"startDate", Instant.parse("2021-11-03T00:00:00Z")
 								));
 						expectedMeta.putAll(Map.of(
@@ -371,8 +372,8 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 								"postalCode", "00002",
 								"street", "234 Main Road",
 								"c", "US",
-								"lat", 39.82f,
-								"lon", -75.38f,
+								"lat", new BigDecimal("39.820000"),
+								"lon", new BigDecimal("-75.380000"),
 								"startDate", Instant.parse("2023-10-11T00:00:00Z")
 								));
 						expectedMeta.putAll(Map.of(
@@ -1136,7 +1137,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index1 = 4;
 							final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T07:10:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-									"watts", 46.8f,
+									"watts", new BigDecimal("46.8"),
 									"wh", 4), null, null);
 
 							and.then(invList).element(index1, type(GeneralDatum.class))
@@ -1150,7 +1151,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index2 = 70;
 							final Instant expectedTs2 = LocalDateTime.parse("2025-03-28T12:40:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-									"watts", 4969.9f,
+									"watts", new BigDecimal("4969.9"),
 									"wh", 413), null, null);
 
 							and.then(invList).element(index2, type(GeneralDatum.class))
@@ -1343,7 +1344,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		final int datumPerDevice = 79;
 		and.then(result)
-			.as("%d Datum x2 devices @ 50% each parsed from HTTP responses", datumPerDevice)
+			.as("%d Datum x2 devices @ 50%% each parsed from HTTP responses", datumPerDevice)
 			.hasSize(datumPerDevice)
 			.allSatisfy(d -> {
 				and.then(d)
@@ -1365,7 +1366,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index1 = 4;
 							final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T07:10:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-									"watts", 46.8f,
+									"watts", new BigDecimal("46.8"),
 									"wh", 4), null, null);
 
 							and.then(invList).element(index1, type(GeneralDatum.class))
@@ -1379,7 +1380,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index2 = 70;
 							final Instant expectedTs2 = LocalDateTime.parse("2025-03-28T12:40:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-									"watts", 4969.9f,
+									"watts", new BigDecimal("4969.9"),
 									"wh", 413), null, null);
 
 							and.then(invList).element(index2, type(GeneralDatum.class))
@@ -1588,7 +1589,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 		final int datumPerDevice = 79;
 		and.then(result)
-			.as("%d Datum x2 devices @ 50% each parsed from HTTP responses", datumPerDevice)
+			.as("%d Datum x2 devices @ 50%% each parsed from HTTP responses", datumPerDevice)
 			.hasSize(datumPerDevice)
 			.allSatisfy(d -> {
 				and.then(d)
@@ -1610,7 +1611,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index1 = 4;
 							final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T07:10:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-									"watts", 46.8f,
+									"watts", new BigDecimal("46.8"),
 									"wh", 4), null, null);
 
 							and.then(invList).element(index1, type(GeneralDatum.class))
@@ -1624,7 +1625,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 							final int index2 = 70;
 							final Instant expectedTs2 = LocalDateTime.parse("2025-03-28T12:40:00").atZone(systemTimeZone).toInstant();
 							final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-									"watts", 4969.9f,
+									"watts", new BigDecimal("4969.9"),
 									"wh", 413), null, null);
 
 							and.then(invList).element(index2, type(GeneralDatum.class))
@@ -2416,9 +2417,9 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 				final int index1 = 0;
 				final Instant expectedTs1 = LocalDateTime.parse("2025-03-01T10:00:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-						"dcPower_a", 874.905f,
-						"dcPower_b", 866.89f,
-						"dcPower_c", 780.665f), null, null);
+						"dcPower_a", new BigDecimal("874.905"),
+						"dcPower_b", new BigDecimal("866.89"),
+						"dcPower_c", new BigDecimal("780.665")), null, null);
 
 				and.then(list).element(index1, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index1)
@@ -2594,9 +2595,9 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 				final int index1 = 0;
 				final Instant expectedTs1 = givenStartDate;
 				final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-						"dcPower_a", 1.1f,
-						"dcPower_b", 2.2f,
-						"dcPower_c", 3.3f), null, null);
+						"dcPower_a", new BigDecimal("1.1"),
+						"dcPower_b", new BigDecimal("2.2"),
+						"dcPower_c", new BigDecimal("3.3")), null, null);
 
 				and.then(list).element(index1, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index1)
@@ -2607,9 +2608,9 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 
 				final Instant expectedTs2 = endDay.atStartOfDay(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-						"dcPower_a", 0.1f,
-						"dcPower_b", 0.2f,
-						"dcPower_c", 0.3f), null, null);
+						"dcPower_a", new BigDecimal("0.1"),
+						"dcPower_b", new BigDecimal("0.2"),
+						"dcPower_c", new BigDecimal("0.3")), null, null);
 
 				and.then(list).last(type(GeneralDatum.class))
 					.as("Last datum has expected date")
@@ -3841,9 +3842,9 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 				final int index2 = 216;
 				final Instant expectedTs2 = LocalDateTime.parse("2025-03-02T00:00:00").atZone(systemTimeZone).toInstant();
 				final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-						"dcPower_a", 0.1f,
-						"dcPower_b", 0.2f,
-						"dcPower_c", 0.3f), null, null);
+						"dcPower_a", new BigDecimal("0.1"),
+						"dcPower_b", new BigDecimal("0.2"),
+						"dcPower_c", new BigDecimal("0.3")), null, null);
 
 				and.then(list).element(index2, type(GeneralDatum.class))
 					.as("Datum %d has expected date", index2)
@@ -5619,7 +5620,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 						final int index1 = 4;
 						final Instant expectedTs1 = LocalDateTime.parse("2025-03-28T07:10:00").atZone(systemTimeZone).toInstant();
 						final DatumSamples expectedSamples1 = new DatumSamples(Map.of(
-								"watts", 46.8f,
+								"watts", new BigDecimal("46.8"),
 								"wh", 4), null, null);
 
 						and.then(invList).element(index1, type(GeneralDatum.class))
@@ -5632,7 +5633,7 @@ public class SmaCloudDatumStreamServiceTests implements CloudIntegrationsUserEve
 						final int index2 = 70;
 						final Instant expectedTs2 = LocalDateTime.parse("2025-03-28T12:40:00").atZone(systemTimeZone).toInstant();
 						final DatumSamples expectedSamples2 = new DatumSamples(Map.of(
-								"watts", 4969.9f,
+								"watts", new BigDecimal("4969.9"),
 								"wh", 413), null, null);
 
 						and.then(invList).element(index2, type(GeneralDatum.class))

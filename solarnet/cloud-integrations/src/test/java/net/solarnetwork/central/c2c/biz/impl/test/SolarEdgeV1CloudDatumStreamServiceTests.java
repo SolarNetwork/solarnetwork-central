@@ -145,7 +145,7 @@ import tools.jackson.databind.ObjectMapper;
  * Test cases for the {@link SolarEdgeV1CloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -459,7 +459,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(timestampFmt.parse("2024-10-23 16:15:00", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from merged meter power and energy data")
 					.returns(new DatumSamples(Map.of(
-								"watts", 1720.0271f
+								"watts", new BigDecimal("1720.0271")
 							), Map.of(
 								"wattHours", 37539808
 							), null),
@@ -833,7 +833,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(timestampFmt.parse("2024-10-23 16:15:00", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from merged meter power and energy data")
 					.returns(new DatumSamples(Map.of(
-								"watts", 1720.0271f,
+								"watts", new BigDecimal("1720.0271"),
 								"invWattsTot", datumEntity1Watts.add(datumEntity2Watts).intValue()
 							), Map.of(
 								"wattHours", 37539808
@@ -1086,7 +1086,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(timestampFmt.parse("2025-02-27 11:45:00", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from merged meter power and expressions")
 					.returns(new DatumSamples(Map.of(
-								"watts", 11059.199f,
+								"watts", new BigDecimal("11059.199"),
 								"wattsInvSum", (int)allDaoDatum.stream().mapToLong(
 											d -> d.getProperties().instantaneousValue(0).longValue()).sum()
 							), Map.of(

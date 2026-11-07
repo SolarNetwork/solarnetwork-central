@@ -123,7 +123,7 @@ import tools.jackson.databind.ObjectMapper;
  * Test cases for the {@link EGaugeCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -317,7 +317,7 @@ public class EGaugeCloudDatumStreamServiceTests implements CloudIntegrationsUser
 					.returns(Instant.ofEpochSecond(1678391100L), from(Datum::getTimestamp))
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
-								"temp", 5.335f
+								"temp", new BigDecimal("5.335")
 							),null , null),
 						Datum::asSampleOperations)
 					;

@@ -100,7 +100,7 @@ import tools.jackson.databind.ObjectMapper;
  * Test cases for the {@link SolcastIrradianceCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -662,7 +662,7 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
 								  "irradiance", 13
-								, "temp", 16.1f
+								, "temp", new BigDecimal("16.1")
 							),null , null),
 						Datum::asSampleOperations)
 					;

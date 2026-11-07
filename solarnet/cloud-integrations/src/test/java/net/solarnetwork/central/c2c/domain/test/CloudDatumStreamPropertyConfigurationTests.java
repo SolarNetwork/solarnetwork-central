@@ -41,7 +41,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link CloudDatumStreamPropertyConfiguration} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CloudDatumStreamPropertyConfigurationTests {
 
@@ -120,7 +120,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		Object result = entity.applyValueTransforms(input);
 
 		then(result).as("Scale applied")
-				.isEqualTo(input.setScale(entity.getScale(), RoundingMode.HALF_UP).floatValue());
+				.isEqualTo(input.setScale(entity.getScale(), RoundingMode.HALF_UP));
 	}
 
 	@Test
@@ -136,9 +136,8 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		BigDecimal input = new BigDecimal("1.234567");
 		Object result = entity.applyValueTransforms(input);
 
-		then(result).as("Multiplication then scale applied")
-				.isEqualTo(input.multiply(entity.getMultiplier())
-						.setScale(entity.getScale(), RoundingMode.HALF_UP).floatValue());
+		then(result).as("Multiplication then scale applied").isEqualTo(input
+				.multiply(entity.getMultiplier()).setScale(entity.getScale(), RoundingMode.HALF_UP));
 	}
 
 }

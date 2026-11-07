@@ -142,7 +142,7 @@ import tools.jackson.databind.node.ObjectNode;
  * Test cases for the {@link SolarEdgeV2CloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -830,7 +830,7 @@ public class SolarEdgeV2CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(Instant.parse("2026-08-10T11:45:00Z"), from(Datum::getTimestamp))
 					.as("Datum samples from telemetry data")
 					.returns(new DatumSamples(Map.of(
-								"watts", 2943.3333f
+								"watts", new BigDecimal("2943.3333")
 							), Map.of(
 								"wattHours", 719
 							), null),
@@ -1508,7 +1508,7 @@ public class SolarEdgeV2CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(firstInv2DatumDate, from(Datum::getTimestamp))
 					.as("Datum samples from merged from first INV/1 + latest INV/2 lookup")
 					.returns(new DatumSamples(Map.of(
-								"wattsInvSum", (358.33334 + 415.0)
+								"wattsInvSum", new BigDecimal("358.33334").add(new BigDecimal("415.0"))
 							), Map.of(
 								"wattHoursInvSum", (91 + 92)
 							), null),
@@ -1673,7 +1673,7 @@ public class SolarEdgeV2CloudDatumStreamServiceTests implements CloudIntegration
 					.as("Timestamp from inverter data")
 					.returns(firstDatumTs, from(Datum::getTimestamp))
 					.as("Datum samples from inverter data")
-					.returns(new DatumSamples(Map.of("watts", 1568.3334f), null, null), from(Datum::asSampleOperations))
+					.returns(new DatumSamples(Map.of("watts", new BigDecimal("1568.3334")), null, null), from(Datum::asSampleOperations))
 					;
 			})
 			;
@@ -2122,7 +2122,7 @@ public class SolarEdgeV2CloudDatumStreamServiceTests implements CloudIntegration
 					.returns(firstDatumTs, from(Datum::getTimestamp))
 					.as("Datum samples from inverter data, adjusted from kW unit to W")
 					.returns(new DatumSamples(Map.of(
-							"watts", 1568333.4f
+							"watts", new BigDecimal("1568333.4")
 						), Map.of(
 							"wattHours", 376000
 						), null), from(Datum::asSampleOperations))

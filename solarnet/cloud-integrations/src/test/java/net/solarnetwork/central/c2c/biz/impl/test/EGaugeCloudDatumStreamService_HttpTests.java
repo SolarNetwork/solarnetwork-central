@@ -47,6 +47,7 @@ import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
 import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -105,7 +106,7 @@ import okhttp3.mockwebserver.RecordedRequest;
  * class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -402,7 +403,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 					.returns(Instant.ofEpochSecond(1678391100L), from(Datum::getTimestamp))
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
-								"temp", 5.335f
+								"temp", new BigDecimal("5.335")
 							),null , null),
 						Datum::asSampleOperations)
 					;
