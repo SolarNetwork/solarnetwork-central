@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web;
 
+import static net.solarnetwork.util.StringUtils.compareComponentsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.splitByCharacterTypeCamelCase;
 import java.util.Comparator;
 import java.util.Map;
@@ -68,7 +69,7 @@ import net.solarnetwork.dao.FilterResults;
  * }</pre>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SwaggerUtils {
 
@@ -108,43 +109,6 @@ public class SwaggerUtils {
 			return compareComponentsIgnoreCase(a.getKey(), b.getKey(), "/");
 		}
 
-	}
-
-	/**
-	 * Perform a case-insensitive array components comparison with shorter items
-	 * coming before longer ones.
-	 *
-	 * <p>
-	 * Each string is first split using the given {@code split} pattern into
-	 * arrays. Then each component of those arrays are compared in a
-	 * case-insensitive manner.
-	 * </p>
-	 *
-	 * @param l
-	 *        the first string
-	 * @param r
-	 *        the second string
-	 * @param split
-	 *        the pattern to split each string by
-	 * @return the compare result
-	 */
-	// TODO: use StringUtils 1.17 compareComponentsIgnoreCase
-	public static int compareComponentsIgnoreCase(String l, String r, String split) {
-		var ac = l.split(split, 0);
-		var bc = r.split(split, 0);
-		var acLen = ac.length;
-		var bcLen = bc.length;
-		for ( int i = 0, len = Math.min(acLen, bcLen); i < len; i += 1 ) {
-			int res = ac[i].compareToIgnoreCase(bc[i]);
-			if ( res != 0 ) {
-				return res;
-			} else if ( i + 1 == acLen ) {
-				return -1;
-			} else if ( i + 1 == bcLen ) {
-				return 1;
-			}
-		}
-		return 0;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
