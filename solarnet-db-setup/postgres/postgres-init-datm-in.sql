@@ -172,7 +172,7 @@ BEGIN
 		IF idx < 1 THEN
 			UPDATE solardatm.da_datm_meta SET names_s = CASE
 					WHEN COALESCE(array_position(names_s, p.key), 0) < 1 THEN array_append(names_s, p.key)
-					ELSE names_i
+					ELSE names_s
 					END
 			WHERE stream_id = sid
 			RETURNING names_s INTO p_s;
