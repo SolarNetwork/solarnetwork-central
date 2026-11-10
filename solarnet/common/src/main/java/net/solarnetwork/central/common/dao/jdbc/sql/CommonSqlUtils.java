@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  *
  * @author matt
- * @version 2.11
+ * @version 2.12
  */
 public final class CommonSqlUtils {
 
@@ -135,7 +135,7 @@ public final class CommonSqlUtils {
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
 			int parameterOffset, Long @Nullable [] value, boolean setNull) throws SQLException {
-		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value, setNull);
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "bigint", value, setNull);
 	}
 
 	/**
@@ -1146,14 +1146,14 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Pattern for matching SQL LIKE pattern reserved characters.
-	 * 
+	 *
 	 * @since 2.10
 	 */
 	public static final Pattern LIKE_PATTERN_RESERVED = Pattern.compile("([_%\\\\])");
 
 	/**
 	 * Escape reserved SQL LIKE pattern characters.
-	 * 
+	 *
 	 * @param value
 	 *        the value to escape
 	 * @return the escaped value, or {@code null} if {@code value} is
@@ -1523,7 +1523,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query LIKE substring match parameter.
-	 * 
+	 *
 	 * <p>
 	 * The SQL type {@link Types#VARCHAR} will be used.
 	 * </p>
