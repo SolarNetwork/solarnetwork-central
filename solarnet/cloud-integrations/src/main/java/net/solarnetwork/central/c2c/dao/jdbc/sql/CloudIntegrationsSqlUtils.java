@@ -116,13 +116,13 @@ public final class CloudIntegrationsSqlUtils {
 			// @formatter:off
 			buf.append(
 					"""
-						cds.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+						cds.source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
 						OR (
 							jsonb_typeof(cds.sprops->'sourceIdMap') = 'object'
 							AND EXISTS (
 								SELECT TRUE
 								FROM jsonb_array_elements_text(jsonb_path_query_array(cds.sprops->'sourceIdMap', '$.*')) AS m_source_id
-								WHERE m_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+								WHERE m_source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
 							)
 						)
 						OR 	(
@@ -131,7 +131,7 @@ public final class CloudIntegrationsSqlUtils {
 							AND EXISTS (
 								SELECT TRUE
 								FROM jsonb_array_elements_text(cds.sprops->'virtualSourceIds') AS v_source_id
-								WHERE v_source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
+								WHERE v_source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(sources.source_ids))))
 							)
 						)
 					""");

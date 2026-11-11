@@ -506,7 +506,7 @@ public class DatumSqlUtilsTests {
 					FROM solardatm.da_datm_meta s
 					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-					WHERE s.source_id ~ solarcommon.ant_pattern_to_regexp(?)
+					WHERE s.source_id ~* solarcommon.ant_pattern_to_regexp(?)
 					""")
 			;
 		// @formatter:on
@@ -566,7 +566,7 @@ public class DatumSqlUtilsTests {
 					FROM solardatm.da_datm_meta s
 					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-					WHERE s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
+					WHERE s.source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 					""")
 			;
 		// @formatter:on
@@ -750,7 +750,7 @@ public class DatumSqlUtilsTests {
 					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 					WHERE s.node_id = ANY(?)
-					AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
+					AND s.source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 					""")
 			;
 		// @formatter:on

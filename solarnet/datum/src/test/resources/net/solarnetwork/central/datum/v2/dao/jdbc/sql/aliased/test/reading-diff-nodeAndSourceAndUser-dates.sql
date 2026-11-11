@@ -3,7 +3,7 @@ WITH s AS (
 	FROM solardatm.da_datm_meta_aliased s 
 	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
 	WHERE s.node_id = ?
-		AND s.source_id ~ solarcommon.ant_pattern_to_regexp(?)
+		AND s.source_id ~* solarcommon.ant_pattern_to_regexp(?)
 		AND un.user_id = ?
 )
 , datum AS (

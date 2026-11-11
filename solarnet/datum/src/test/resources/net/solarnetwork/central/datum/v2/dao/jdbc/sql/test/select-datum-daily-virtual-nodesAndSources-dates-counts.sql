@@ -16,7 +16,7 @@ SELECT COUNT(*) FROM (WITH rs AS (
 		, s.source_id AS rsource_id
 	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
-		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
+		AND s.source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 , s AS (
 	SELECT solardatm.virutal_stream_id(node_id, source_id) AS vstream_id

@@ -554,7 +554,7 @@ public final class DatumSqlUtils {
 			}
 
 			if ( havePattern ) {
-				buf.append("~ ");
+				buf.append("~* ");
 			} else {
 				buf.append("= ");
 			}
@@ -608,7 +608,7 @@ public final class DatumSqlUtils {
 			buf.append("\tAND ut.auth_token = ANY(?)\n");
 			buf.append("	AND (COALESCE(jsonb_array_length(ut.jpolicy->'sourceIds'), 0) < 1\n");
 			buf.append(
-					"		OR s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(jsonb_array_elements_text(ut.jpolicy->'sourceIds'))))\n");
+					"		OR s.source_id ~* ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(jsonb_array_elements_text(ut.jpolicy->'sourceIds'))))\n");
 			buf.append("	)\n");
 			buf.append("	AND (COALESCE(jsonb_array_length(ut.jpolicy->'nodeIds'), 0) < 1\n");
 			buf.append(
