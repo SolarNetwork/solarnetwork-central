@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
-import net.solarnetwork.central.common.dao.SourceCriteria;
 import net.solarnetwork.central.datum.support.DatumUtils;
+import net.solarnetwork.dao.SourceCriteria;
 
 /**
  * SQL helper methods for cloud integrations.

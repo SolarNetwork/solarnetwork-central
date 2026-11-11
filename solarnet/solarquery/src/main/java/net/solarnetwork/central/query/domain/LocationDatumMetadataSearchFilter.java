@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.query.domain;
 
-import net.solarnetwork.central.common.dao.LocationCriteria;
 import net.solarnetwork.central.domain.PaginationFilter;
+import net.solarnetwork.dao.LocationCriteria;
 
 /**
  * Search criteria for location datum metadata searches.

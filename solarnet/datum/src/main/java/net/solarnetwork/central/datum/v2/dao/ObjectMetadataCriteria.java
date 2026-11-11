@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.dao.DatumObjectCriteria;
+
 /**
  * Search criteria for object metadata.
  *
@@ -30,6 +32,6 @@ package net.solarnetwork.central.datum.v2.dao;
  * @version 1.0
  * @since 2.8
  */
-public interface ObjectMetadataCriteria extends ObjectCriteria, StreamMetadataCriteria {
+public interface ObjectMetadataCriteria extends DatumObjectCriteria, StreamMetadataCriteria {
 
 }

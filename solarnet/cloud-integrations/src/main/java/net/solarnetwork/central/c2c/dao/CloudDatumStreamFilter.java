@@ -26,7 +26,7 @@ import net.solarnetwork.central.common.dao.EnabledCriteria;
 import net.solarnetwork.central.common.dao.IdentifiableCriteria;
 import net.solarnetwork.central.common.dao.NameCriteria;
 import net.solarnetwork.central.common.dao.NodeCriteria;
-import net.solarnetwork.central.common.dao.SourceCriteria;
+import net.solarnetwork.dao.SourceCriteria;
 
 /**
  * A filter for cloud datum stream entities.

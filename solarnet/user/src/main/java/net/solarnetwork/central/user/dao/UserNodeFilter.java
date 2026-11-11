@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.user.dao;
 
-import net.solarnetwork.central.common.dao.LocationCriteria;
 import net.solarnetwork.central.common.dao.NameCriteria;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.LocationCriteria;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 

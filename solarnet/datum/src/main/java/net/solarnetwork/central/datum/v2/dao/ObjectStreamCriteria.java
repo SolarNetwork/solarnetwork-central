@@ -23,12 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.common.dao.LocationCriteria;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.SecurityTokenCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.LocationCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.SortCriteria;
 import net.solarnetwork.domain.datum.ObjectDatumKind;

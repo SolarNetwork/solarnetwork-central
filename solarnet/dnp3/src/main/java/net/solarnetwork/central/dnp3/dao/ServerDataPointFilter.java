@@ -27,9 +27,9 @@ import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.NodeOwnershipCriteria;
-import net.solarnetwork.central.common.dao.SourceCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SourceCriteria;
 
 /**
  * A filter for DNP3-related server measurement and control entities.

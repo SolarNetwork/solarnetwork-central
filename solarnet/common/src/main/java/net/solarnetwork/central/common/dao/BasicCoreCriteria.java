@@ -27,7 +27,9 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.dao.LocationCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SourceCriteria;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimplePagination;
 

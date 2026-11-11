@@ -23,9 +23,9 @@
 package net.solarnetwork.central.user.datum.flux.dao;
 
 import net.solarnetwork.central.common.dao.NodeCriteria;
-import net.solarnetwork.central.common.dao.SourceCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SourceCriteria;
 
 /**
  * A filter for SolarFlux aggregate publish configuration entities.

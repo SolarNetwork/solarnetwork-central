@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.dao.LocationCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
