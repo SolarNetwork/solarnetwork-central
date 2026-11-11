@@ -37,8 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
@@ -47,6 +45,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.StreamRange;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumIdentity;
@@ -321,13 +320,13 @@ public class JdbcDatumBulkLoadingSupport {
 		final DatumProperties p = d.getProperties();
 
 		// NOTE that prepareArrayParameter uses 0-based parameter offsets, unlike direct JDBC
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
 				p.getInstantaneousLength() > 0 ? p.getInstantaneous() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
 				p.getAccumulatingLength() > 0 ? p.getAccumulating() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
 				p.getStatusLength() > 0 ? p.getStatus() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
 				p.getTagsLength() > 0 ? p.getTags() : null, true);
 
 		stmt.setBoolean(8, track);

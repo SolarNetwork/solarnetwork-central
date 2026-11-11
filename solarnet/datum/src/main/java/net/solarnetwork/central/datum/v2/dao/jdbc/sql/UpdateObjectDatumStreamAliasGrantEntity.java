@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareArrayParameter;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

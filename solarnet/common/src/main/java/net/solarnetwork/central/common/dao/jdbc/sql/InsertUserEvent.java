@@ -30,6 +30,7 @@ import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Insert {@link UserEvent} entities.
@@ -71,7 +72,7 @@ public final class InsertUserEvent implements PreparedStatementCreator, SqlProvi
 		stmt.setObject(1, event.getUserId());
 		stmt.setObject(2, event.getEventId());
 
-		CommonSqlUtils.prepareArrayParameter(con, stmt, 2, event.getTags());
+		CommonJdbcUtils.prepareArrayParameter(con, stmt, 2, event.getTags());
 
 		if ( event.getMessage() != null ) {
 			stmt.setString(4, event.getMessage());

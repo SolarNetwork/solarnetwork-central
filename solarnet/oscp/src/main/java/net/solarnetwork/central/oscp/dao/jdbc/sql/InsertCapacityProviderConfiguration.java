@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
 import static net.solarnetwork.central.oscp.domain.RegistrationStatus.Pending;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareCodedValue;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,8 +33,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Insert {@link CapacityProviderConfiguration} entities.
@@ -99,7 +99,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 
-		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonJdbcUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

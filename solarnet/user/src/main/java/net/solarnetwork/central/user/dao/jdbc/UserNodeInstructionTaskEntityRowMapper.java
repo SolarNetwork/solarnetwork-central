@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;

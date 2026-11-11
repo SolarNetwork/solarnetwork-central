@@ -31,11 +31,11 @@ import java.sql.Types;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Update {@link CapacityProviderConfiguration} entity settings.
@@ -92,7 +92,7 @@ public final class UpdateSystemSettings implements PreparedStatementCreator, Sql
 		} else {
 			stmt.setNull(++p, Types.SMALLINT);
 		}
-		p = CommonSqlUtils.prepareCodedValuesArray(con, stmt, p, settings.measurementStyles(), true);
+		p = CommonJdbcUtils.prepareCodedValuesArray(con, stmt, p, settings.measurementStyles(), true);
 		stmt.setObject(++p, id.getUserId(), Types.BIGINT);
 		stmt.setObject(++p, id.getEntityId(), Types.BIGINT);
 		return stmt;

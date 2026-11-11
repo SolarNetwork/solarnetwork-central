@@ -24,8 +24,8 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.time.Instant;

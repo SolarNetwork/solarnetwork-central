@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.PreparedStatement;

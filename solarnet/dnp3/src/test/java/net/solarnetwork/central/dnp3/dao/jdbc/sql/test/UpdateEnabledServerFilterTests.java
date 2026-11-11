@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.dnp3.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.HamcrestCondition.matching;
 import static org.mockito.AdditionalMatchers.aryEq;

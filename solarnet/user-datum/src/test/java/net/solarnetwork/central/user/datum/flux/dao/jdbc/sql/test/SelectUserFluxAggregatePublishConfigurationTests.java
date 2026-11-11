@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.user.datum.flux.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;

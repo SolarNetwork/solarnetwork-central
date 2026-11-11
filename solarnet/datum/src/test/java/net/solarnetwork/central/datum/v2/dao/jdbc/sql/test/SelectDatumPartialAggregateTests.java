@@ -30,7 +30,7 @@ import static java.time.temporal.ChronoField.HOUR_OF_DAY;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.time.temporal.TemporalAdjusters.firstDayOfNextMonth;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.util.ClassUtils.getResourceAsString;
 import static org.assertj.core.api.BDDAssertions.and;

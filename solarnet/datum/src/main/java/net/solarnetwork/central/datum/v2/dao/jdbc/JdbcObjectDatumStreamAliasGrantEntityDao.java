@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;

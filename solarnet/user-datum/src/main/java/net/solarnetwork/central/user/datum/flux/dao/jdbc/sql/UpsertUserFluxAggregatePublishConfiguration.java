@@ -31,8 +31,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.user.datum.flux.domain.UserFluxAggregatePublishConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Upsert {@link UserFluxAggregatePublishConfiguration} entities.
@@ -99,8 +99,8 @@ public final class UpsertUserFluxAggregatePublishConfiguration
 		if ( update ) {
 			stmt.setObject(++p, entity.getConfigurationId());
 		}
-		p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, entity.getNodeIds(), true);
-		p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, entity.getSourceIds(), true);
+		p = CommonJdbcUtils.prepareArrayParameter(con, stmt, p, entity.getNodeIds(), true);
+		p = CommonJdbcUtils.prepareArrayParameter(con, stmt, p, entity.getSourceIds(), true);
 		stmt.setBoolean(++p, entity.isPublish());
 		stmt.setBoolean(++p, entity.isRetain());
 		return stmt;

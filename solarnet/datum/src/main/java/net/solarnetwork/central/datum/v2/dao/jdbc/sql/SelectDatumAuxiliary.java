@@ -31,11 +31,11 @@ import java.sql.SQLException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.support.SearchFilterUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.util.SearchFilter;
 

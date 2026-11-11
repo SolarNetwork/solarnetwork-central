@@ -23,10 +23,10 @@
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;

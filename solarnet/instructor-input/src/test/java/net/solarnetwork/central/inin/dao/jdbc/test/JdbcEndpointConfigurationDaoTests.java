@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcEndpointConfigurationDao;
@@ -52,6 +51,7 @@ import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Test cases for the {@link JdbcEndpointConfigurationDao} class.

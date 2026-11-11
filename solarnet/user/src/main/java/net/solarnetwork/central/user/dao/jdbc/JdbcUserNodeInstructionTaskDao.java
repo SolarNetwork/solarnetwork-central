@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -46,6 +45,7 @@ import net.solarnetwork.central.user.dao.jdbc.sql.UpdateUserNodeInstructionTaskE
 import net.solarnetwork.central.user.dao.jdbc.sql.UpdateUserNodeInstructionTaskEntityState;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

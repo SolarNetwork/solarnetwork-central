@@ -34,7 +34,6 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.ColumnCountProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -56,6 +55,7 @@ import net.solarnetwork.central.oscp.util.CapacityGroupSystemTaskContext;
 import net.solarnetwork.central.oscp.util.CapacityGroupTaskContext;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 import net.solarnetwork.central.oscp.util.TaskContext;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

@@ -36,9 +36,9 @@ import java.sql.Types;
 import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

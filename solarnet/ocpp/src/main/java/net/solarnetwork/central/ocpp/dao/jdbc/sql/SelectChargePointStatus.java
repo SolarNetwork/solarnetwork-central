@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.WHERE_COMPONENT_PREFIX_LENGTH;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.limitOffset;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.orderBySorts;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareDateRange;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareLimitOffset;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereDateRange;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareDateRange;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareLimitOffset;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.WHERE_COMPONENT_PREFIX_LENGTH;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.limitOffset;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.orderBySorts;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereDateRange;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

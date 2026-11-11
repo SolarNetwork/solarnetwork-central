@@ -48,7 +48,6 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
@@ -60,6 +59,8 @@ import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SimpleSortDescriptor;
@@ -1956,12 +1957,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria,
+	 * @see CommonJdbcUtils#prepareDateRange(DateRangeCriteria,
 	 *      PreparedStatement, int)
 	 */
 	public static int prepareDateRangeFilter(DateRangeCriteria filter, PreparedStatement stmt,
 			int parameterOffset) throws SQLException {
-		return CommonSqlUtils.prepareDateRange(filter, stmt, parameterOffset);
+		return CommonJdbcUtils.prepareDateRange(filter, stmt, parameterOffset);
 	}
 
 	/**
@@ -2002,12 +2003,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria,
+	 * @see CommonJdbcUtils#prepareLimitOffset(PaginationCriteria,
 	 *      PreparedStatement, int)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		return CommonSqlUtils.prepareLimitOffset(filter, stmt, parameterOffset);
+		return CommonJdbcUtils.prepareLimitOffset(filter, stmt, parameterOffset);
 	}
 
 	/**

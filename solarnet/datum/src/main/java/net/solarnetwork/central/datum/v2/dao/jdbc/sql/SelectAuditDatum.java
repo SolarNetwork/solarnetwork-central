@@ -30,11 +30,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

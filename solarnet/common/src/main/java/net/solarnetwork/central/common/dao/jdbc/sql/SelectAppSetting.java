@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,6 +31,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.AppSetting;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 
 /**
  * Select for {@link AppSetting} instances.
@@ -202,7 +204,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = CommonSqlUtils.createPreparedStatement(con, getSql(), forUpdate);
+		PreparedStatement stmt = CommonJdbcUtils.createPreparedStatement(con, getSql(), forUpdate);
 		int p = 0;
 		p = prepareOptimizedArrayParameter(con, stmt, p, keys);
 		prepareOptimizedArrayParameter(con, stmt, p, types);

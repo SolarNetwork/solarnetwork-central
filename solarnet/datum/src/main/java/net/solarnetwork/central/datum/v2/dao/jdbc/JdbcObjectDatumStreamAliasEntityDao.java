@@ -24,9 +24,9 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_STRING_ID;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;

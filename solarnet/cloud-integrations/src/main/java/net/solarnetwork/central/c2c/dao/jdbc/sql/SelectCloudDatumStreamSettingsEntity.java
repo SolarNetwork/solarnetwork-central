@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,8 +33,9 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 
 /**
  * Support for SELECT for {@link CloudDatumStreamSettingsEntity} entities.
@@ -207,7 +208,7 @@ public final class SelectCloudDatumStreamSettingsEntity
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
+		CommonJdbcUtils.prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}

@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Row mapper for {@link UserEvent} entities.

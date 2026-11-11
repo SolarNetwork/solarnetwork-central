@@ -39,8 +39,6 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
@@ -48,6 +46,8 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.LocalDateInterval;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

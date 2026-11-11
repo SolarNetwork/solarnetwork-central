@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;

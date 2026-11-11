@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.central.common.dao.jdbc.sql.SelectUserMetadataEntity.SQL_PRUNED_JDATA;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;

@@ -30,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 
 /**
  * Delete a location request entity.

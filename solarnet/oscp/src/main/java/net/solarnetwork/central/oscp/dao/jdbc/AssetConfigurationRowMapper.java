@@ -22,14 +22,13 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
@@ -41,6 +40,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.StatisticType;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Row mapper for {@link AssetConfiguration} entities.

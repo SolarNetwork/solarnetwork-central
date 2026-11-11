@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.support.SearchFilterUtils.toSqlJsonPath;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.util.ClassUtils.getResourceAsString;
 import static net.solarnetwork.util.SearchFilter.forLDAPSearchFilterString;
 import static org.assertj.core.api.BDDAssertions.and;

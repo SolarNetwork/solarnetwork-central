@@ -30,8 +30,8 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
@@ -99,13 +99,13 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 		final DatumProperties props = datum.getProperties();
 
 		// NOTE that prepareArrayParameter uses 0-based parameter offsets, unlike direct JDBC
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
 				props.getInstantaneousLength() > 0 ? props.getInstantaneous() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
 				props.getAccumulatingLength() > 0 ? props.getAccumulating() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
 				props.getStatusLength() > 0 ? props.getStatus() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
 				props.getTagsLength() > 0 ? props.getTags() : null, true);
 
 		return stmt;

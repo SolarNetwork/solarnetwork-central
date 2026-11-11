@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.getTimestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;

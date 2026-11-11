@@ -32,9 +32,9 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
@@ -91,13 +91,13 @@ public final class StoreDatum implements CallableStatementCreator, SqlProvider {
 		final DatumProperties p = datum.getProperties();
 
 		// NOTE that prepareArrayParameter uses 0-based parameter offsets, unlike direct JDBC
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 3,
 				p.getInstantaneousLength() > 0 ? p.getInstantaneous() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 4,
 				p.getAccumulatingLength() > 0 ? p.getAccumulating() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 5,
 				p.getStatusLength() > 0 ? p.getStatus() : null, true);
-		CommonSqlUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
+		CommonJdbcUtils.prepareArrayParameter(stmt.getConnection(), stmt, 6,
 				p.getTagsLength() > 0 ? p.getTags() : null, true);
 
 		return stmt;

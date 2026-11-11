@@ -24,8 +24,8 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.domain.UserLongIntegerCompositePK.UNASSIGNED_GROUP_ID;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;

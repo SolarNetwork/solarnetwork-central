@@ -29,9 +29,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.oscp.dao.LockingFilter;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 
 /**
  * Select for expired system heartbeat rows.
@@ -91,7 +92,7 @@ public final class SelectExternalSystemForHeartbeat implements PreparedStatement
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, 0);
+		CommonJdbcUtils.prepareLimitOffset(filter, stmt, 0);
 		return stmt;
 	}
 

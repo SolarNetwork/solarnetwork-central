@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.orderBySorts;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.orderBySorts;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedArrayContains;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,10 +35,12 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.domain.UserMetadata;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.support.SearchFilterUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.SearchFilter;
 
@@ -185,7 +187,7 @@ public class SelectUserMetadataEntity
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
+		CommonJdbcUtils.prepareLimitOffset(filter, stmt, p);
 		return stmt;
 	}
 

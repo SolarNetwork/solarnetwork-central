@@ -23,13 +23,12 @@
 package net.solarnetwork.central.oscp.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
@@ -38,6 +37,7 @@ import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAssetConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAssetConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

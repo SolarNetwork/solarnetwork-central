@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -30,12 +30,12 @@ import java.time.Instant;
 import java.util.Set;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.ColumnCountProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Base RowMapper for external system configuration entities.

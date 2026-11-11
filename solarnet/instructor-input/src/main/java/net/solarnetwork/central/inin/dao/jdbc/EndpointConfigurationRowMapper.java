@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.uuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Row mapper for {@link EndpointConfiguration} entities.

@@ -31,8 +31,10 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.UserEventFilter;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.support.SearchFilterUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.util.SearchFilter;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidTimestampDecoder;
@@ -128,7 +130,7 @@ public final class SelectUserEvent
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
+		CommonJdbcUtils.prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}
@@ -137,10 +139,10 @@ public final class SelectUserEvent
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = CommonSqlUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = CommonJdbcUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}
 		if ( filter.hasTagCriteria() ) {
-			p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, filter.getTags());
+			p = CommonJdbcUtils.prepareArrayParameter(con, stmt, p, filter.getTags());
 		}
 		if ( searchFilter != null ) {
 			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));

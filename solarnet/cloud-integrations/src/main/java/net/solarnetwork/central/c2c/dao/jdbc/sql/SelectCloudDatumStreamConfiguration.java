@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedLikeSubstringParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereEqual;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedLike;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareOptimizedLikeSubstringParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareParameter;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereEqual;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.whereOptimizedLike;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,8 +38,9 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
+import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -150,7 +151,7 @@ public final class SelectCloudDatumStreamConfiguration
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
+		CommonJdbcUtils.prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}

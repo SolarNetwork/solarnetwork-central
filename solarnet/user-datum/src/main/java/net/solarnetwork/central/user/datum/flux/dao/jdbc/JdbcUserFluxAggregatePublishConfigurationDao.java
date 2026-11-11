@@ -22,14 +22,13 @@
 
 package net.solarnetwork.central.user.datum.flux.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.datum.flux.domain.FluxPublishSettings;
 import net.solarnetwork.central.datum.flux.domain.FluxPublishSettingsInfo;
@@ -41,6 +40,7 @@ import net.solarnetwork.central.user.datum.flux.dao.jdbc.sql.SelectUserFluxAggre
 import net.solarnetwork.central.user.datum.flux.dao.jdbc.sql.UpsertUserFluxAggregatePublishConfiguration;
 import net.solarnetwork.central.user.datum.flux.domain.UserFluxAggregatePublishConfiguration;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.ObjectUtils;
 

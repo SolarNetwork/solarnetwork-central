@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareArrayParameter;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareCodedValue;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +34,6 @@ import java.sql.Types;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
@@ -45,6 +44,7 @@ import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.StatisticType;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Insert {@link AssetConfiguration} entities.
@@ -139,7 +139,7 @@ public final class InsertAssetConfiguration implements PreparedStatementCreator,
 		p = prepareCodedValue(stmt, p, energy != null ? energy.getDirection() : null,
 				EnergyDirection.Import, false);
 
-		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonJdbcUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
 import static net.solarnetwork.central.oscp.domain.MeasurementPeriod.FifteenMinute;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.prepareCodedValue;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,9 +32,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Update {@link CapacityGroupConfiguration} entities.
@@ -100,7 +100,7 @@ public final class UpdateCapacityGroupConfiguration implements PreparedStatement
 				false);
 		stmt.setObject(++p, entity.getCapacityProviderId());
 		stmt.setObject(++p, entity.getCapacityOptimizerId());
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		p = CommonJdbcUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		stmt.setObject(++p, id.getUserId());
 		stmt.setObject(++p, id.getEntityId());

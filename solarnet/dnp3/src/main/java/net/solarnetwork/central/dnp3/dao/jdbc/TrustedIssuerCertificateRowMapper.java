@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.dnp3.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;

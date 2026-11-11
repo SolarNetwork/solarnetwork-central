@@ -23,9 +23,9 @@
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
 import static java.util.UUID.randomUUID;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newAssetConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.AdditionalMatchers.aryEq;

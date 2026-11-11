@@ -36,9 +36,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

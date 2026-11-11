@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.domain.Location;
 
 /**

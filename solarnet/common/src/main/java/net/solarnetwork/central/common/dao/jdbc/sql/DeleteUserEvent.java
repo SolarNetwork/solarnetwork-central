@@ -32,6 +32,8 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurgeFilter;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidTimestampDecoder;
 
@@ -108,7 +110,7 @@ public final class DeleteUserEvent implements PreparedStatementCreator, SqlProvi
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = 0;
-		p = CommonSqlUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+		p = CommonJdbcUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		if ( filter.getStartDate() != null ) {
 			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getStartDate()));
 		}

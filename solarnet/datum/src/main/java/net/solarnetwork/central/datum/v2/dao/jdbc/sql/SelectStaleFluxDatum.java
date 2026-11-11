@@ -29,11 +29,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregationCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
+import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -172,7 +173,7 @@ public final class SelectStaleFluxDatum implements PreparedStatementCreator, Sql
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = CommonSqlUtils.createPreparedStatement(con, getSql(), forUpdate);
+		PreparedStatement stmt = CommonJdbcUtils.createPreparedStatement(con, getSql(), forUpdate);
 		prepareCore(con, stmt, 0);
 		return stmt;
 	}

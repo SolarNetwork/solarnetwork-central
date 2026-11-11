@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.getArray;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;

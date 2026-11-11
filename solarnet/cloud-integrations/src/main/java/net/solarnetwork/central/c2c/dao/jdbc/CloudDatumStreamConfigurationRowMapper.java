@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;

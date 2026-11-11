@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.timestampInstant;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.dao.jdbc.CommonJdbcUtils;
 
 /**
  * Row mapper for {@link CredentialConfiguration} entities.

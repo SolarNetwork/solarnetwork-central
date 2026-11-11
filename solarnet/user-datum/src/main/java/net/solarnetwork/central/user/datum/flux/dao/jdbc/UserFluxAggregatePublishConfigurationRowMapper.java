@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.datum.flux.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.arrayValue;
+import static net.solarnetwork.dao.jdbc.CommonJdbcUtils.arrayValue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
