@@ -72,7 +72,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array result column value.
-	 * 
+	 *
 	 * <p>
 	 * For {@link BigDecimal} values specially handling is included for
 	 * non-finite values returned from the database. If an exception is thrown
@@ -134,7 +134,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array result column value.
-	 * 
+	 *
 	 * @param <T>
 	 *        the expected array type
 	 * @param rs
@@ -200,7 +200,7 @@ public final class CommonJdbcUtils {
 	 *         if a casting error occurs
 	 */
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	public static <T> @Nullable T arrayValue(Object o) {
+	public static <T> @Nullable T arrayValue(@Nullable Object o) {
 		if ( o instanceof Array a ) {
 			try {
 				return (T) a.getArray();
@@ -313,7 +313,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a UUID statement value.
-	 * 
+	 *
 	 * @param call
 	 *        the call to read from
 	 * @param parameterIndex
@@ -333,7 +333,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a UUID statement value.
-	 * 
+	 *
 	 * @param call
 	 *        the call to read from
 	 * @param parameterIndex
@@ -524,18 +524,25 @@ public final class CommonJdbcUtils {
 	 *        the column number
 	 * @param clazz
 	 *        the enum class
+	 * @return the coded values, in array order without duplicates, or
+	 *         {@code null} if the column value is {@code null}; {@code null}
+	 *         array elements and unknown codes are ignored
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 1.1
 	 */
 	public static <T extends Enum<T> & CodedValue> @Nullable Set<T> getCodedValueSet(ResultSet rs,
 			int colNum, Class<T> clazz) throws SQLException {
-		Number[] codes = getArray(rs, colNum);
+		@Nullable
+		Number @Nullable [] codes = getArray(rs, colNum);
 		if ( codes == null ) {
 			return null;
 		}
 		Set<T> result = new LinkedHashSet<>(codes.length);
 		for ( Number code : codes ) {
+			if ( code == null ) {
+				continue;
+			}
 			int c = code.intValue();
 			for ( T e : clazz.getEnumConstants() ) {
 				if ( c == e.getCode() ) {
@@ -583,7 +590,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a Period from an INTERVAL column value.
-	 * 
+	 *
 	 * @param rs
 	 *        the result set to read from
 	 * @param column
@@ -607,7 +614,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a Period from an INTERVAL column value.
-	 * 
+	 *
 	 * @param rs
 	 *        the result set to read from
 	 * @param column
@@ -626,7 +633,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a Period from an INTERVAL column value.
-	 * 
+	 *
 	 * @param value
 	 *        the column number to get as a Period
 	 * @return the period, or {@code null} if the column value is null

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Connection;
@@ -33,7 +34,6 @@ import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -749,15 +749,18 @@ public final class CommonSqlUtils {
 	 *        the buffer to append the SQL to
 	 */
 	public static void limitOffsetLiteral(@Nullable PaginationCriteria filter, StringBuilder buf) {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				buf.append("\nLIMIT ").append(max);
-			}
-			Long offset = filter.getOffset();
-			if ( offset != null ) {
-				buf.append(" OFFSET ").append(offset);
-			}
+		if ( filter == null ) {
+			return;
+		}
+		boolean limit = false;
+		Integer max = filter.getMax();
+		if ( max != null && max > 0 ) {
+			buf.append("\nLIMIT ").append(max);
+			limit = true;
+		}
+		Long offset = filter.getOffset();
+		if ( offset != null && offset > 0 ) {
+			buf.append(limit ? ' ' : '\n').append("OFFSET ").append(offset);
 		}
 	}
 
@@ -1132,7 +1135,11 @@ public final class CommonSqlUtils {
 		}
 		boolean appended = false;
 		for ( SortDescriptor sort : sorts ) {
-			String sqlName = sortKeyMapping.get(sort.getSortKey());
+			String sortKey = nonEmptyString(sort.getSortKey());
+			if ( sortKey == null ) {
+				continue;
+			}
+			String sqlName = nonEmptyString(sortKeyMapping.get(sortKey));
 			if ( sqlName != null ) {
 				appended = true;
 				buf.append(", ").append(sqlName);
@@ -1164,14 +1171,7 @@ public final class CommonSqlUtils {
 		if ( value == null ) {
 			return null;
 		}
-		Matcher m = LIKE_PATTERN_RESERVED.matcher(value);
-		StringBuilder buf = new StringBuilder();
-		while ( m.find() ) {
-			String c = m.group(1);
-			m.appendReplacement(buf, "\\\\" + c);
-		}
-		m.appendTail(buf);
-		return buf.toString();
+		return LIKE_PATTERN_RESERVED.matcher(value).replaceAll("\\\\$1");
 	}
 
 	/**
