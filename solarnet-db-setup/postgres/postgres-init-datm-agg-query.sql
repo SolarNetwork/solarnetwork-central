@@ -421,13 +421,16 @@ $$
 				)
 			) AS min_ts
 			, (
-				-- find next datum date after maximum within slot (or exact end of slot)
+				-- find next datum date after maximum within slot (or exact end of slot) REQUIRING accumulating;
+				-- the next datum only contributes to the clock accumulation that crosses the end of the slot,
+				-- which is ignored beyond the 1 hour clock tolerance, so limiting the search to that keeps
+				-- REQUIRING accumulating fast even when no such datum exists (see NET-537)
 				SELECT CASE
 					WHEN d.ts IS NULL THEN drange.max_ts
 					WHEN drange.max_ts = end_ts THEN drange.max_ts
 					ELSE d.ts
 				END
-				FROM drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + tolerance, FALSE, FALSE) AS d(ts)
+				FROM meta, drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + LEAST(tolerance, INTERVAL 'PT1H'), TRUE, meta.has_no_a) AS d(ts)
 			) AS max_ts
 		) t
 	)

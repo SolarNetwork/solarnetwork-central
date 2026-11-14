@@ -181,11 +181,14 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		assertThat("Expected count returned", result, hasSize(2));
+		assertThat("Expected count returned", result, hasSize(1));
 		assertThat("First result is first available", result.get(0).getTimestamp(),
 				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-10-31T11:28:00Z", Instant::from))));
-		assertThat("Last result is one past end date", result.get(result.size() - 1).getTimestamp(),
-				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T00:49:00Z", Instant::from))));
+		assertThat("""
+				Last result is the same, because next datum at 2022-11-09T00:49:00Z is more \
+				than clock tolerance past end date so cannot contribute (NET-537)\
+				""", result.get(result.size() - 1).getTimestamp(),
+				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-10-31T11:28:00Z", Instant::from))));
 	}
 
 	@Test
@@ -269,11 +272,14 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		assertThat("Expected count returned", result, hasSize(59));
+		assertThat("Expected count returned", result, hasSize(58));
 		assertThat("First result is one before start date", result.get(0).getTimestamp(),
 				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T01:59:00Z", Instant::from))));
-		assertThat("Last result is one past end date", result.get(result.size() - 1).getTimestamp(),
-				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T19:00:00Z", Instant::from))));
+		assertThat("""
+				Last result is last within hour, because next datum at 2022-11-09T19:00:00Z is \
+				more than clock tolerance past end date so cannot contribute (NET-537)\
+				""", result.get(result.size() - 1).getTimestamp(),
+				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T02:59:00Z", Instant::from))));
 	}
 
 	@Test
