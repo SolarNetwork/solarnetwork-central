@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  * @since 3.8
  */
 public final class SelectDatum
@@ -270,10 +270,18 @@ public final class SelectDatum
 	}
 
 	private boolean isDateRangeInJoin() {
+		return isDateRangeFunction() || filter.isMostRecent();
+	}
+
+	/**
+	 * Test if the aggregation queries a function given the date range as
+	 * arguments, which uses the local dates only when both are given.
+	 */
+	private boolean isDateRangeFunction() {
 		return switch (aggregation) {
 			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute, DayOfWeek, SeasonalDayOfWeek, DayOfYear, HourOfDay, SeasonalHourOfDay, HourOfYear, WeekOfYear -> true;
 
-			default -> filter.isMostRecent();
+			default -> false;
 		};
 	}
 
@@ -466,7 +474,8 @@ public final class SelectDatum
 			// currently this implies a DOW/HOD style query; default date range will be the past 2 years
 			stmt.setObject(++p, LocalDate.now(UTC).minusYears(2).atStartOfDay(), Types.TIMESTAMP);
 			stmt.setObject(++p, LocalDate.now(UTC).plusDays(1).atStartOfDay(), Types.TIMESTAMP);
-		} else if ( filter.hasLocalDate() ) {
+		} else if ( isDateRangeFunction() ? filter.hasLocalDateRange() : filter.hasLocalDate() ) {
+			// the date range function SQL uses the local dates only when both are given
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);

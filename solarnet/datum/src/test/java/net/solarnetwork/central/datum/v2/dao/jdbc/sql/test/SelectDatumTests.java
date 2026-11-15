@@ -522,6 +522,84 @@ public class SelectDatumTests {
 	}
 
 	@Test
+	public void prep_find_15min_nodesAndSources_absoluteDatesWithOneLocalDate() throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setLocalStartDate(start.toLocalDateTime());
+
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
+
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
+
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
+
+		// WHEN
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		and.then(sqlCaptor.getValue()).as("Absolute dates used in SQL")
+				.containsPattern("rollup_datm_for_time_span_slots\\(s\\.(orig_)?stream_id, \\?, \\?, \\?\\)");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		// the absolute dates are bound, as the SQL uses them without both local dates
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setObject(eq(5), eq(filter.getAggregation().getLevel()));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void prep_find_15min_nodesAndSources_absoluteDatesWithOneLocalDate_count()
+			throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setLocalEndDate(start.plusHours(1).toLocalDateTime());
+
+		given(con.prepareStatement(any())).willReturn(stmt);
+
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
+
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
+
+		// WHEN
+		PreparedStatement result = new SelectDatum(filter).countPreparedStatementCreator()
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture());
+		and.then(sqlCaptor.getValue()).as("Absolute dates used in count SQL")
+				.containsPattern("count_datm_time_span_slots\\(s\\.(orig_)?stream_id, \\?, \\?, \\?\\)");
+
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setObject(eq(5), eq(filter.getAggregation().getLevel()));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
 	public void sql_find_daily_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -881,6 +959,47 @@ public class SelectDatumTests {
 		then(nodeIdsArray).should().free();
 		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
 		then(sourceIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void prep_find_seasonal_hod_nodesAndSources_absoluteDatesWithOneLocalDate()
+			throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
+		filter.setAggregation(Aggregation.SeasonalHourOfDay);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		filter.setLocalStartDate(LocalDateTime.of(2022, 2, 1, 0, 0));
+
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
+
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
+
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
+
+		// WHEN
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		and.then(sqlCaptor.getValue()).as("Absolute dates used in SQL")
+				.containsPattern("find_agg_datm_hod_seasonal\\(s\\.(orig_)?stream_id, \\?, \\?\\)");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		// the absolute dates are bound, as the SQL uses them without both local dates
 		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
 		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
 		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
