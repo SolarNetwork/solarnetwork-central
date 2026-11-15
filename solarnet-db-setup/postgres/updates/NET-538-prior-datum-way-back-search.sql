@@ -19,11 +19,17 @@
  * The search before the way-back datum now runs. It stays within the tolerance, and is skipped
  * when the stream has no accumulating properties.
  *
- * Neither function is declared STRICT any more. PostgreSQL never inlines a STRICT SQL function,
- * so each call planned the function's query on its own, without its argument values, and so
- * over every `da_datm` chunk. Inlined, the query is planned as part of the calling query, with
- * the argument values that query has, and only the chunks that can match are used. A NULL
- * argument still gives no rows.
+ * Neither function is declared STRICT any more. PostgreSQL never inlines a STRICT set-returning
+ * SQL function, so each call planned the function's query on its own, without its argument
+ * values, and so over every `da_datm` chunk. Inlined, the query is planned as part of the calling
+ * query, with the argument values that query has, and only the chunks that can match are used.
+ * A NULL argument still gives no rows.
+ *
+ * `find_datm_around_ts()` also now looks up the datum at the times it finds with
+ * `solardatm.find_datm_between()`, instead of joining `da_datm` on those times. A time found
+ * while the query runs cannot exclude any chunks when the query is planned, so once the function
+ * was inlined each of its three such joins was planned over every chunk. `find_datm_between()`
+ * plans its own query with the time as a value.
  *
  * The function signatures are unchanged, so `CREATE OR REPLACE` keeps their existing owner and
  * ACLs.
@@ -53,7 +59,10 @@
  *
  * This function is not declared STRICT, so that PostgreSQL can inline it into the calling query
  * and plan it with the argument values given, using only the chunks that can match. It returns
- * no rows if any argument is NULL, as a STRICT function would.
+ * no rows if any argument is NULL, as a STRICT function would. For the same reason it looks up
+ * the datum at the times it finds with `solardatm.find_datm_between()`, which plans its query
+ * with the time as a value: a join on a time found while the query runs would be planned over
+ * every chunk.
  *
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_at				the date of the datum to find adjacent datm for
@@ -93,7 +102,7 @@ $$
 				-- expand search past 14d slow search:
 				-- find prior datum date before ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
-				-- but then join back to solardatm.da_datm to restrict on must_a
+				-- but then look up the datum to restrict on must_a
 				WITH way_back AS (
 					SELECT d.ts
 					FROM meta, solardatm.find_time_before_ts(
@@ -133,9 +142,9 @@ $$
 						)
 					) AS ts
 				)
-				SELECT t.ts
-				FROM t
-				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
+				SELECT d.ts
+				FROM t, solardatm.find_datm_between(sid, t.ts, t.ts) d
 				WHERE (NOT must_a OR d.data_a IS NOT NULL)
 			)
 		) AS ts
@@ -152,14 +161,14 @@ $$
 			(
 				-- find next datum date after ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
-				-- but then join back to solardatm.da_datm to restrict on must_a
+				-- but then look up the datum to restrict on must_a
 				WITH t AS (
 					SELECT d.ts
 					FROM meta, solardatm.find_time_after_ts(sid, ts_at, ts_at + tolerance, FALSE, meta.has_no_a) AS d(ts)
 				)
-				SELECT t.ts
-				FROM t
-				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
+				SELECT d.ts
+				FROM t, solardatm.find_datm_between(sid, t.ts, t.ts) d
 				WHERE (NOT must_a OR d.data_a IS NOT NULL)
 			)
 		) AS ts
@@ -170,9 +179,9 @@ $$
 
 		UNION ALL
 
+		-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
 		SELECT d.*, 1 AS rtype
-		FROM srange
-		INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = srange.ts
+		FROM srange, solardatm.find_datm_between(sid, srange.ts, srange.ts) d
 	)
 	, d AS (
 		-- choose exact if available, fall back to before/after otherwise
