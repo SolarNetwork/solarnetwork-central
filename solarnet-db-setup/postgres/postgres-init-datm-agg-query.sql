@@ -309,6 +309,16 @@ $$;
  * The output `rtype` column will be 0, 1, or 2 if the row is a "raw" datum, "final reset" datum,
  * or "starting reset" datum. Reset records for final/start share the same timestamp.
  *
+ * The datum before the slot is first searched for, with accumulating properties, within the 14
+ * days before the slot (or the tolerance, if shorter). If none is found there, the latest datum
+ * before those 14 days and within the tolerance is used if it has accumulating properties.
+ * Otherwise the latest datum with accumulating properties within the 14 days before it, and
+ * within the tolerance, is used.
+ *
+ * This function is not declared STRICT, so that PostgreSQL can inline it into the calling query
+ * and plan it with the argument values given, using only the chunks that can match. It returns
+ * no rows if any argument is NULL, as a STRICT function would.
+ *
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
@@ -321,7 +331,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT INTERVAL 'P3M',
 		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
-	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STRICT STABLE ROWS 200 AS
+	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
 $$
 	-- find if stream even has accumulating properties, to avoid costly scan
 	WITH meta AS (
@@ -397,7 +407,6 @@ $$
 					, way_back_d AS (
 						SELECT d.ts, d.has_a
 						FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
-						WHERE d.has_a = TRUE
 					)
 					SELECT COALESCE(
 						(
@@ -407,15 +416,17 @@ $$
 							WHERE has_a
 						),
 						(
-							-- try short slow search near found time for accumulating properties
+							-- otherwise try short slow search before way-back datum for accumulating
+							-- properties, within the tolerance, unless stream has none (see NET-538)
 							SELECT d.ts
 							FROM meta, way_back_d, solardatm.find_time_before_ts(
 								  sid
 								, way_back_d.ts
-								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, GREATEST(way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D'), start_ts - tolerance)
 								, TRUE
 								, meta.has_no_a
 							) AS d(ts)
+							WHERE NOT meta.has_no_a
 						)
 					)
 				)
@@ -515,6 +526,8 @@ $$
 				END AS max_ts
 			FROM drange, srange, reset_range
 		) t
+		-- a NULL argument gives no rows, as for a STRICT function (see NET-538)
+		WHERE num_nulls(sid, start_ts, end_ts, tolerance, target_agg) = 0
 	)
 
 	-- return combined datum + resets

@@ -277,6 +277,19 @@ $$;
  * FROM solardatm.find_metadata_for_stream(sid)
  * ```
  *
+ * The datum before `ts_at` is first searched for within the 14 days before it (or the tolerance,
+ * if shorter). If none is found there, the latest datum before those 14 days and within the
+ * tolerance is used, unless `must_a` is TRUE and it has no accumulating properties: then the
+ * latest datum with accumulating properties within the 14 days before it, and within the
+ * tolerance, is used instead.
+ *
+ * This function is not declared STRICT, so that PostgreSQL can inline it into the calling query
+ * and plan it with the argument values given, using only the chunks that can match. It returns
+ * no rows if any argument is NULL, as a STRICT function would. For the same reason it looks up
+ * the datum at the times it finds with `solardatm.find_datm_between()`, which plans its query
+ * with the time as a value: a join on a time found while the query runs would be planned over
+ * every chunk.
+ *
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_at				the date of the datum to find adjacent datm for
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
@@ -289,7 +302,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_around_ts(
 		tolerance 	INTERVAL DEFAULT interval 'P1M',
 		must_a		BOOLEAN DEFAULT FALSE,
 		has_no_a 	BOOLEAN DEFAULT FALSE
-	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STRICT STABLE ROWS 2 AS
+	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
 $$
 	-- find if stream even has accumulating properties, to avoid costly scan
 	WITH meta AS (
@@ -315,7 +328,7 @@ $$
 				-- expand search past 14d slow search:
 				-- find prior datum date before ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
-				-- but then join back to solardatm.da_datm to restrict on must_a
+				-- but then look up the datum to restrict on must_a
 				WITH way_back AS (
 					SELECT d.ts
 					FROM meta, solardatm.find_time_before_ts(
@@ -330,32 +343,34 @@ $$
 				, way_back_d AS (
 					SELECT d.ts, d.has_a
 					FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
-					WHERE d.has_a = TRUE
 				)
 				, t AS (
 					SELECT COALESCE(
 						(
-							-- if way-back datum has accumulating properties, use it
+							-- if way-back datum has accumulating properties, or they are not
+							-- required, use it
 							SELECT ts
 							FROM way_back_d
-							WHERE has_a
+							WHERE has_a OR NOT must_a
 						),
 						(
-							-- try short slow search near found time for accumulating properties
+							-- otherwise try short slow search before way-back datum for accumulating
+							-- properties, within the tolerance, unless stream has none (see NET-538)
 							SELECT d.ts
 							FROM meta, way_back_d, solardatm.find_time_before_ts(
 								  sid
 								, way_back_d.ts
-								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, GREATEST(way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D'), ts_at - tolerance)
 								, TRUE
 								, meta.has_no_a
 							) AS d(ts)
+							WHERE NOT meta.has_no_a
 						)
 					) AS ts
 				)
-				SELECT t.ts
-				FROM t
-				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
+				SELECT d.ts
+				FROM t, solardatm.find_datm_between(sid, t.ts, t.ts) d
 				WHERE (NOT must_a OR d.data_a IS NOT NULL)
 			)
 		) AS ts
@@ -372,14 +387,14 @@ $$
 			(
 				-- find next datum date after ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
-				-- but then join back to solardatm.da_datm to restrict on must_a
+				-- but then look up the datum to restrict on must_a
 				WITH t AS (
 					SELECT d.ts
 					FROM meta, solardatm.find_time_after_ts(sid, ts_at, ts_at + tolerance, FALSE, meta.has_no_a) AS d(ts)
 				)
-				SELECT t.ts
-				FROM t
-				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
+				SELECT d.ts
+				FROM t, solardatm.find_datm_between(sid, t.ts, t.ts) d
 				WHERE (NOT must_a OR d.data_a IS NOT NULL)
 			)
 		) AS ts
@@ -390,9 +405,9 @@ $$
 
 		UNION ALL
 
+		-- a lookup rather than a join, so it is not planned over every chunk (see NET-538)
 		SELECT d.*, 1 AS rtype
-		FROM srange
-		INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = srange.ts
+		FROM srange, solardatm.find_datm_between(sid, srange.ts, srange.ts) d
 	)
 	, d AS (
 		-- choose exact if available, fall back to before/after otherwise
@@ -407,6 +422,8 @@ $$
 	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
 	FROM d
 	WHERE inc
+		-- a NULL argument gives no rows, as for a STRICT function (see NET-538)
+		AND num_nulls(sid, ts_at, tolerance, must_a, has_no_a) = 0
 $$;
 
 
