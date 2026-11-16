@@ -547,8 +547,8 @@ public class SelectDatumTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
 				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
-		and.then(sqlCaptor.getValue()).as("Absolute dates used in SQL")
-				.containsPattern("rollup_datm_for_time_span_slots\\(s\\.(orig_)?stream_id, \\?, \\?, \\?\\)");
+		and.then(sqlCaptor.getValue()).as("Absolute dates used in SQL").containsPattern(
+				"rollup_datm_for_time_span_slots\\(s\\.(orig_)?stream_id, \\?, \\?, \\?\\)");
 
 		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
 		then(nodeIdsArray).should().free();
