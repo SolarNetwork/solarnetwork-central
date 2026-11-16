@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.SecurityTokenCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.AggregationCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.LocationCriteria;

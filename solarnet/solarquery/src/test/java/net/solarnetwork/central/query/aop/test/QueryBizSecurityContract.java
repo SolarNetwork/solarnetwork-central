@@ -24,7 +24,6 @@ package net.solarnetwork.central.query.aop.test;
 
 import java.util.UUID;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -32,6 +31,7 @@ import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestActor;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

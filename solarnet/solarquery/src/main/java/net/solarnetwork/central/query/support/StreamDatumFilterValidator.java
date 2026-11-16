@@ -27,12 +27,12 @@ import java.time.Period;
 import org.springframework.validation.Errors;
 import org.springframework.validation.SmartValidator;
 import org.springframework.validation.Validator;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.support.DelegatingErrors;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

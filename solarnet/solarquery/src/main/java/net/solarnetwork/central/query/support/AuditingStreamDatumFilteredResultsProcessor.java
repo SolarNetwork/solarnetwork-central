@@ -38,7 +38,7 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.CombinedDatumContributors;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;

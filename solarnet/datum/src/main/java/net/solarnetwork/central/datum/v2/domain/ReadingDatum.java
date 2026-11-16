@@ -24,16 +24,17 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.datum.ReadingStreamDatum;
 
 /**
  * API for a "reading" object that represents a calculated reading for a
  * specific time period.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
-public interface ReadingDatum extends AggregateDatum {
+public interface ReadingDatum extends AggregateDatum, ReadingStreamDatum {
 
 	/**
 	 * Get the timestamp associated with the end of the reading.
@@ -47,6 +48,7 @@ public interface ReadingDatum extends AggregateDatum {
 	 *
 	 * @return the end timestamp, or {@code null} if the timestamp is implicit
 	 */
+	@Override
 	@Nullable
 	Instant getEndTimestamp();
 

@@ -31,11 +31,11 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.StreamDatum;
 

@@ -26,10 +26,10 @@ import net.solarnetwork.central.biz.UserEventBiz;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * Security contract for {@link UserEventBiz}.

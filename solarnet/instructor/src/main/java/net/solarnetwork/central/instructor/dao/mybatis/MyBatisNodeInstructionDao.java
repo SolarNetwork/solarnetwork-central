@@ -38,8 +38,8 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**

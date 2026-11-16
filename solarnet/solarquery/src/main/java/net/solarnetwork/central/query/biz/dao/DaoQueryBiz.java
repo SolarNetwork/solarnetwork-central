@@ -59,7 +59,6 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
@@ -80,10 +79,8 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.PropertyRestrictedObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
@@ -98,12 +95,15 @@ import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.domain.datum.PropertyRestrictedObjectDatumStreamMetadata;
 
 /**
  * Implementation of {@link QueryBiz}.

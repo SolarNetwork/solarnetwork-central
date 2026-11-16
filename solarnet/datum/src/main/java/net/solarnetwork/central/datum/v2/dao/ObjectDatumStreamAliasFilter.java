@@ -26,6 +26,7 @@ import net.solarnetwork.central.common.dao.NodeCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.SourceCriteria;
+import net.solarnetwork.dao.StreamCriteria;
 
 /**
  * A filter for object datum stream alias entities.

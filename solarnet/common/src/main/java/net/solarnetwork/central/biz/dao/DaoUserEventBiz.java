@@ -28,7 +28,7 @@ import net.solarnetwork.central.biz.UserEventBiz;
 import net.solarnetwork.central.common.dao.UserEventDao;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * DAO implementation of {@link UserEventBiz}.

@@ -52,11 +52,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.aliased.test.TestAliasedSqlResources;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.datum.DatumReadingType;
 
 /**
  * Test cases for the {@link SelectReadingDifference} class.

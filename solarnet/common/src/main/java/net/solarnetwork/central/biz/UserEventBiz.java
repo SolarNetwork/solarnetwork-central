@@ -25,7 +25,7 @@ package net.solarnetwork.central.biz;
 import java.io.IOException;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * Service API for managing user events.

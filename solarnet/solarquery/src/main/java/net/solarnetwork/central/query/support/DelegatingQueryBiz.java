@@ -30,7 +30,6 @@ import java.util.Set;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
@@ -41,14 +40,15 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.DatumReadingType;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.

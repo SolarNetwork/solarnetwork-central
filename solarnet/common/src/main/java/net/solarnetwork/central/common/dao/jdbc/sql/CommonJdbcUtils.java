@@ -35,7 +35,7 @@ import org.postgresql.util.PGInterval;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * Common JDBC utilities.
@@ -46,7 +46,7 @@ import net.solarnetwork.central.support.FilteredResultsProcessor;
 public final class CommonJdbcUtils {
 
 	private CommonJdbcUtils() {
-		// TODO Auto-generated constructor stub
+		// not available
 	}
 
 	/**

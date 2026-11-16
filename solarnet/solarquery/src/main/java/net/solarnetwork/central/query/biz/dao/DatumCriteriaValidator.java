@@ -24,9 +24,9 @@ package net.solarnetwork.central.query.biz.dao;
 
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ArrayUtils;
 

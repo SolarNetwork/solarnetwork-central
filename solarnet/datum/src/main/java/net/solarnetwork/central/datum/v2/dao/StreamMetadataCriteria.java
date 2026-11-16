@@ -28,6 +28,7 @@ import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.LocationCriteria;
 import net.solarnetwork.dao.SortCriteria;
 import net.solarnetwork.dao.SourceCriteria;
+import net.solarnetwork.dao.StreamCriteria;
 
 /**
  * Search criteria for stream metadata related data.

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.domain.datum.DatumReadingType;
 
 /**
  * Search filter for reading type.

@@ -47,12 +47,12 @@ import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.reg.config.JsonConfig;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import tools.jackson.databind.ObjectMapper;
 
 /**

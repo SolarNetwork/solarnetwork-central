@@ -27,7 +27,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.StreamDatum;
 
@@ -56,9 +56,9 @@ public interface ReadingDatumDao {
 	 * The type of datum instances passed to the given {@code processor} will
 	 * depend on the {@link DatumCriteria#getReadingType()} passed in the
 	 * {@code filter}. For
-	 * {@code net.solarnetwork.central.datum.domain.DatumReadingType#CalculatedAt}
-	 * plain {@link net.solarnetwork.central.datum.v2.domain.Datum} objects will
-	 * be used. For all others {@link ReadingDatum} objects will be used.
+	 * {@code net.solarnetwork.domain.datum.DatumReadingType#CalculatedAt} plain
+	 * {@link net.solarnetwork.central.datum.v2.domain.Datum} objects will be
+	 * used. For all others {@link ReadingDatum} objects will be used.
 	 * </p>
 	 *
 	 * @param filter

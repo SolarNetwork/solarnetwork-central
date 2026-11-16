@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.dao.ReadingTypeCriteria;
 
 /**
  * Search criteria for {@link Datum}.

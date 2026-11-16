@@ -50,6 +50,7 @@ import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.util.StringUtils;
 
 /**

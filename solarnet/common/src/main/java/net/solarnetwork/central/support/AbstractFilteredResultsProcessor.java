@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * Abstract convenience implementation of {@link FilteredResultsProcessor}.

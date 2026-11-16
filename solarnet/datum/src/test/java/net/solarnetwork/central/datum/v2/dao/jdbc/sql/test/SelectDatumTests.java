@@ -67,13 +67,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.CombiningType;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.aliased.test.TestAliasedSqlResources;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

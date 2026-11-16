@@ -41,8 +41,8 @@ import net.solarnetwork.central.common.dao.jdbc.sql.InsertUserEvent;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserEvent;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

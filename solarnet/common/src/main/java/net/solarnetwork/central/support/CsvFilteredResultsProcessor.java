@@ -44,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**

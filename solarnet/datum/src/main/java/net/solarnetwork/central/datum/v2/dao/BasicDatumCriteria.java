@@ -35,14 +35,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.datum.domain.CombiningType;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.ReadingTypeCriteria;
 import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumAuxiliaryType;
+import net.solarnetwork.domain.datum.DatumReadingType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

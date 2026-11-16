@@ -32,11 +32,11 @@ import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 

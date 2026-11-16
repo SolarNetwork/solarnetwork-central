@@ -54,8 +54,8 @@ import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.support.DelayQueueSet;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

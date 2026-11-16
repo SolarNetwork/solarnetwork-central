@@ -23,7 +23,7 @@
 package net.solarnetwork.central.query.support.test;
 
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
+import static net.solarnetwork.dao.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,8 +51,8 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.CombinedAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.support.AuditingStreamDatumFilteredResultsProcessor;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;

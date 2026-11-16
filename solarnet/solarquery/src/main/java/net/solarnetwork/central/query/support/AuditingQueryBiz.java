@@ -28,16 +28,16 @@ import java.time.Period;
 import java.util.List;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.DatumReadingType;
 
 /**
  * {@link QueryBiz} implementation that audits query events using a

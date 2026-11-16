@@ -53,7 +53,7 @@ public final class SelectDatumCalculatedAt implements PreparedStatementCreator, 
 
 	/**
 	 * The default time tolerance used for the
-	 * {@link net.solarnetwork.central.datum.domain.DatumReadingType#CalculatedAt}
+	 * {@link net.solarnetwork.domain.datum.DatumReadingType#CalculatedAt}
 	 * query.
 	 */
 	public static final Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);

@@ -39,9 +39,9 @@ import net.solarnetwork.central.ocpp.dao.jdbc.sql.SelectChargePointActionStatus;
 import net.solarnetwork.central.ocpp.dao.jdbc.sql.UpsertChargePointIdentifierActionTimestamp;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatusKey;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

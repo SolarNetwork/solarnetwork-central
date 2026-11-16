@@ -33,11 +33,11 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.test.aop.SecuredProxy;
 import net.solarnetwork.central.test.aop.SecurityContract;
 import net.solarnetwork.central.test.tenant.TestTenant;
 import net.solarnetwork.central.test.tenant.TestTenants;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**

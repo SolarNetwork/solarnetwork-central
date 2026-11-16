@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.io.SerializedString;
 import tools.jackson.databind.SerializationContext;

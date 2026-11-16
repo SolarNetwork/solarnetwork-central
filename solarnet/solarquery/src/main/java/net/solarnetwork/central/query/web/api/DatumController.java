@@ -47,7 +47,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -59,6 +58,7 @@ import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumReadingType;
 
 /**
  * Controller for querying datum related data.

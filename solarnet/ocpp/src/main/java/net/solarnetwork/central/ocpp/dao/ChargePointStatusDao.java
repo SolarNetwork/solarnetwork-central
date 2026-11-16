@@ -28,8 +28,8 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**

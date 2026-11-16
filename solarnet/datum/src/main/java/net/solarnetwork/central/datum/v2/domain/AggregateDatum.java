@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.time.Instant;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.datum.AggregateStreamDatum;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
@@ -30,10 +33,10 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
  * specific point in time and a set of property values.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
-public interface AggregateDatum extends Datum {
+public interface AggregateDatum extends Datum, AggregateStreamDatum {
 
 	/**
 	 * Get the aggregation associated with this datum.
@@ -47,6 +50,24 @@ public interface AggregateDatum extends Datum {
 	 * 
 	 * @return the statistics
 	 */
+	@Override
 	DatumPropertiesStatistics getStatistics();
+
+	/**
+	 * Get the timestamp for the end of the aggregate period covered by this
+	 * datum.
+	 *
+	 * <p>
+	 * This implementation returns {@code null}, because the end of the period
+	 * is implied by the aggregation.
+	 * </p>
+	 *
+	 * @return {@code null}
+	 * @since 1.3
+	 */
+	@Override
+	default @Nullable Instant getEndTimestamp() {
+		return null;
+	}
 
 }

@@ -55,9 +55,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
 

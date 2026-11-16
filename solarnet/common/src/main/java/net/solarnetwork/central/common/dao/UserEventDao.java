@@ -25,8 +25,8 @@ package net.solarnetwork.central.common.dao;
 import java.io.IOException;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.FilteredResultsProcessor;
 
 /**
  * DAO API user events.

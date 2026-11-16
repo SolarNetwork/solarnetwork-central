@@ -27,8 +27,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.datum.v2.dao.AggregationCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
+import net.solarnetwork.dao.AggregationCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
