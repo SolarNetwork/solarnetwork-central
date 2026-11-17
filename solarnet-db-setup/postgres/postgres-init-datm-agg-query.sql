@@ -315,6 +315,12 @@ $$;
  * Otherwise the latest datum with accumulating properties within the 14 days before it, and
  * within the tolerance, is used.
  *
+ * The datum before the slot is searched for only when something returned can be differenced
+ * against it: a datum with accumulating properties in the slot (counting one exactly at `end_ts`,
+ * which is returned for the reading that ends the slot), a reset record in the slot (counting one
+ * exactly at `start_ts` or `end_ts`), or the next datum with accumulating properties after the
+ * slot. Otherwise only the datum in the slot are returned, as when the search finds nothing.
+ *
  * This function is not declared STRICT, so that PostgreSQL can inline it into the calling query
  * and plan it with the argument values given, using only the chunks that can match. It returns
  * no rows if any argument is NULL, as a STRICT function would.
@@ -370,11 +376,68 @@ $$
 		) AS r(max_ts) ON TRUE
 	)
 
+	-- find next datum date after maximum within slot (or exact end of slot) REQUIRING accumulating;
+	-- the next datum only contributes to the clock accumulation that crosses the end of the slot,
+	-- which is ignored beyond the 1 hour clock tolerance, so limiting the search to that keeps
+	-- REQUIRING accumulating fast even when no such datum exists (see NET-537)
+	, nrange AS (
+		SELECT (
+			SELECT CASE
+				WHEN d.ts IS NULL THEN drange.max_ts
+				WHEN drange.max_ts = end_ts THEN drange.max_ts
+				ELSE d.ts
+			END
+			FROM meta, drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + LEAST(tolerance, INTERVAL 'PT1H'), TRUE, meta.has_no_a) AS d(ts)
+		) AS max_ts
+	)
+
+	-- decide if the prior datum is needed, which is only when something returned can be
+	-- differenced against it; otherwise its search is skipped, as that reads every row back to
+	-- the datum it finds, or its whole window when there is none (see NET-539)
+	, prior AS (
+		-- a stream without accumulating properties has no prior datum to find
+		SELECT NOT COALESCE((SELECT has_no_a FROM meta), TRUE) AND (
+				-- the first datum in the slot has accumulating properties, which decides it for
+				-- most streams without another lookup
+				COALESCE(drange.min_has_a, FALSE)
+
+				-- the next datum after the slot is returned, so the clock accumulation from the
+				-- prior datum to it crosses the slot
+				OR COALESCE(nrange.max_ts > drange.max_ts, FALSE)
+
+				-- any datum in the slot has accumulating properties, counting one exactly at the
+				-- end of the slot (see NET-469)
+				OR EXISTS (
+					SELECT 1
+					FROM solardatm.da_datm d
+					WHERE d.stream_id = sid
+						AND d.ts >= start_ts
+						AND d.ts <= end_ts
+						AND d.data_a IS NOT NULL
+				)
+
+				-- a reset record is in the slot, counting one exactly at its start or end: its final
+				-- reading is differenced against the prior datum, which also limits the search for
+				-- reset records in reset_range below
+				OR EXISTS (
+					SELECT 1
+					FROM solardatm.da_datm_aux aux
+					WHERE aux.atype = 'Reset'::solardatm.da_datm_aux_type
+						AND aux.stream_id = sid
+						AND aux.ts >= start_ts
+						AND aux.ts <= end_ts
+				)
+			) AS needed
+		FROM drange, nrange
+	)
+
 	-- find prior/next datum date range to provide for clock and reading input
 	, srange AS (
-		SELECT COALESCE(t.min_ts, drange.min_ts, start_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts, end_ts) AS max_ts
-		FROM drange, (
-			SELECT COALESCE(
+		SELECT COALESCE(t.min_ts, drange.min_ts, start_ts) AS min_ts, COALESCE(nrange.max_ts, drange.max_ts, end_ts) AS max_ts
+		FROM drange, nrange, (
+			-- search for the prior datum only when it is needed; not searching gives the same
+			-- result as a search that finds nothing (see NET-539)
+			SELECT CASE WHEN prior.needed THEN COALESCE(
 				(
 					-- find prior datum date before minimum within slot (or exact start of slot) REQUIRING accumulating
 					-- but use forced shorter tolerance because REQUIRING accumulating too expensive
@@ -430,19 +493,8 @@ $$
 						)
 					)
 				)
-			) AS min_ts
-			, (
-				-- find next datum date after maximum within slot (or exact end of slot) REQUIRING accumulating;
-				-- the next datum only contributes to the clock accumulation that crosses the end of the slot,
-				-- which is ignored beyond the 1 hour clock tolerance, so limiting the search to that keeps
-				-- REQUIRING accumulating fast even when no such datum exists (see NET-537)
-				SELECT CASE
-					WHEN d.ts IS NULL THEN drange.max_ts
-					WHEN drange.max_ts = end_ts THEN drange.max_ts
-					ELSE d.ts
-				END
-				FROM meta, drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + LEAST(tolerance, INTERVAL 'PT1H'), TRUE, meta.has_no_a) AS d(ts)
-			) AS max_ts
+			) END AS min_ts
+			FROM prior
 		) t
 	)
 
