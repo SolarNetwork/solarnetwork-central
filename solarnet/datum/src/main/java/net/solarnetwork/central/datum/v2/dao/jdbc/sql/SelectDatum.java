@@ -24,31 +24,56 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.LOCATION_STREAM_METADATA_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.datumStreamSortMapping;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.timeColumnName;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Location;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.dao.jdbc.CommonSqlUtils;
 import net.solarnetwork.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
+ *
+ * <p>
+ * When the criteria has a maximum result count and the rows of each stream are
+ * ordered by time, the limit can be applied to each stream in a lateral join,
+ * ordered by time alone, before the overall ordering and limit. TimescaleDB can
+ * then stop reading each stream at the limit, however the statement is planned.
+ * A plain join often does not: on a large database PostgreSQL was seen to read
+ * every row of the stream in the date range, and all the stream metadata in
+ * stream order, and sort them, both when it planned the statement with its
+ * parameter values and when it used a generic plan. This per-stream limit is
+ * used when it cannot read more rows than the plain join: when the criteria can
+ * match only one stream, or when the results are sorted by time first (as a
+ * plain join must then read every row of every stream in the date range before
+ * sorting them). For criteria that can match many streams sorted by stream
+ * first, a plain join can stop after the first stream, so the plain join is
+ * kept.
+ * </p>
  *
  * @author matt
  * @version 1.10
@@ -72,6 +97,21 @@ public final class SelectDatum
 	private final @Nullable DatumRollupType rollup;
 	private final int fetchSize;
 	private final boolean contributors;
+	private final StreamLimit streamLimit;
+
+	/** The time order of a limit applied to each stream. */
+	private enum StreamLimit {
+
+		/** No per-stream limit. */
+		None,
+
+		/** Limit each stream, ordered by time ascending. */
+		Ascending,
+
+		/** Limit each stream, ordered by time descending. */
+		Descending,
+
+	}
 
 	/**
 	 * Constructor.
@@ -138,6 +178,125 @@ public final class SelectDatum
 		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
 		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 		this.contributors = (combine != null && filter.getObjectKind() != Location);
+		this.streamLimit = streamLimit(filter, aggregation, combine, rollup);
+	}
+
+	/**
+	 * Decide if, and in what time order, to apply the limit to each stream.
+	 *
+	 * <p>
+	 * Each stream then provides at most offset + max rows, so the overall
+	 * ordering, offset and limit return the same rows as a plain join only if
+	 * the requested ordering, within one stream, is by time in one direction.
+	 * Sort keys that map to stream metadata (stream, node, location, source)
+	 * are constant within a stream, so they may come before the time key.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the criteria
+	 * @param aggregation
+	 *        the aggregation
+	 * @param combine
+	 *        the virtual stream combining configuration
+	 * @param rollup
+	 *        the rollup type
+	 * @return the per-stream limit style, never {@code null}
+	 */
+	private static StreamLimit streamLimit(DatumCriteria filter, Aggregation aggregation,
+			@Nullable CombiningConfig combine, @Nullable DatumRollupType rollup) {
+		// the most recent query already limits each stream to one row; virtual streams are combined
+		// from all the rows of their real streams, and a rollup reads every row
+		if ( filter.isMostRecent() || combine != null || rollup != null ) {
+			return StreamLimit.None;
+		}
+		// only the tables joined directly to the stream metadata; the other aggregations query
+		// functions given the date range, or GROUP BY the Week
+		if ( !(aggregation == Aggregation.None || aggregation == Aggregation.Hour
+				|| aggregation == Aggregation.Day || aggregation == Aggregation.Month) ) {
+			return StreamLimit.None;
+		}
+		final Integer max = filter.getMax();
+		if ( max == null || max < 1 ) {
+			return StreamLimit.None;
+		}
+		// find the time direction exactly as sqlOrderBy() renders the sorts
+		final List<SortDescriptor> filterSorts = filter.getSorts();
+		final List<SortDescriptor> sorts = (filterSorts != null ? filterSorts
+				: DatumSqlUtils.SORTS_BY_STREAM_TIME);
+		final boolean location = (filter.getLocationId() != null);
+		final Map<String, String> sortMapping = datumStreamSortMapping(location ? Location : Node,
+				aggregation);
+		final Map<String, String> metaSortMapping = (location ? LOCATION_STREAM_METADATA_SORT_KEY_MAPPING
+				: NODE_STREAM_METADATA_SORT_KEY_MAPPING);
+		final String timeColumnName = timeColumnName(aggregation);
+		boolean timeFirst = true;
+		for ( SortDescriptor sort : sorts ) {
+			final String sortKey = nonEmptyString(sort.getSortKey());
+			if ( sortKey == null ) {
+				continue;
+			}
+			final String sqlName = nonEmptyString(sortMapping.get(sortKey));
+			if ( sqlName == null ) {
+				// not included in the ORDER BY
+				continue;
+			}
+			if ( timeColumnName.equals(sqlName) ) {
+				// when sorted by time first, a plain join must read every row of every stream in
+				// the date range before sorting, so the per-stream limit cannot read more; otherwise
+				// a plain join can stop after the first stream, so limit each stream only if just
+				// one can match
+				if ( timeFirst || isSingleStream(filter) ) {
+					return (sort.isDescending() ? StreamLimit.Descending : StreamLimit.Ascending);
+				}
+				return StreamLimit.None;
+			}
+			if ( !metaSortMapping.containsKey(sortKey) ) {
+				// not known to be constant within a stream
+				return StreamLimit.None;
+			}
+			timeFirst = false;
+		}
+		// no time ordering within a stream
+		return StreamLimit.None;
+	}
+
+	/**
+	 * Test if a criteria can match at most one stream.
+	 *
+	 * <p>
+	 * This is true for one stream ID, or for one node or location ID with one
+	 * source ID that is not a pattern, as the stream metadata (including the
+	 * aliased views) has one stream per object and source ID.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the criteria
+	 * @return {@code true} if the metadata filter can match at most one stream
+	 */
+	private static boolean isSingleStream(DatumCriteria filter) {
+		final UUID[] streamIds = filter.getStreamIds();
+		if ( streamIds != null && streamIds.length == 1 ) {
+			return true;
+		}
+		final Long[] objectIds = filter.getObjectIds();
+		final String[] sourceIds = filter.getSourceIds();
+		return (objectIds != null && objectIds.length == 1 && sourceIds != null && sourceIds.length == 1
+				&& sourceIds[0] != null && !DatumUtils.WILDCARD_PATTERN_MATCHER.isPattern(sourceIds[0]));
+	}
+
+	/**
+	 * Get the per-stream limit, which is the offset plus maximum result count.
+	 *
+	 * @return the limit
+	 */
+	private long streamLimitMax() {
+		final Integer max = filter.getMax();
+		final Long offset = filter.getOffset();
+		long result = (max != null ? max : 0L);
+		if ( offset != null && offset > 0 ) {
+			result = (offset > Long.MAX_VALUE - result ? Long.MAX_VALUE : result + offset);
+		}
+		return result;
 	}
 
 	private boolean isDateOrLocalDateRangeRequired() {
@@ -343,27 +502,38 @@ public final class SelectDatum
 		};
 	}
 
-	private void sqlFrom(StringBuilder buf) {
+	private void sqlFrom(StringBuilder buf, boolean withStreamLimit) {
 		buf.append("FROM s\n");
 		if ( filter.isMostRecent() ) {
-			buf.append("INNER JOIN LATERAL (\n");
-			buf.append("		SELECT datum.*\n");
-			buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
-			buf.append("		WHERE datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
-			if ( filter.hasDateOrLocalDate() ) {
-				addSqlWhere(buf, true);
-			}
-			buf.append("		ORDER BY datum.").append(timeColumnName(aggregation)).append(" DESC\n");
-			buf.append("		LIMIT 1\n");
-			buf.append("	) datum ON datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
+			sqlFromLateral(buf, true, "1");
+		} else if ( withStreamLimit && streamLimit != StreamLimit.None ) {
+			sqlFromLateral(buf, streamLimit == StreamLimit.Descending, "?");
 		} else {
 			buf.append("INNER JOIN ").append(sqlTableName()).append(" datum ON datum.stream_id = ")
 					.append(metaStreamIdColumnName).append("\n");
 		}
 	}
 
-	private void sqlWhere(StringBuilder buf) {
-		if ( isDateRangeInJoin() ) {
+	private void sqlFromLateral(StringBuilder buf, boolean descending, String limit) {
+		buf.append("INNER JOIN LATERAL (\n");
+		buf.append("		SELECT datum.*\n");
+		buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
+		buf.append("		WHERE datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
+		if ( filter.hasDateOrLocalDate() ) {
+			addSqlWhere(buf, true);
+		}
+		// order by time alone: TimescaleDB uses its ordered ChunkAppend only then
+		buf.append("		ORDER BY datum.").append(timeColumnName(aggregation));
+		if ( descending ) {
+			buf.append(" DESC");
+		}
+		buf.append("\n");
+		buf.append("		LIMIT ").append(limit).append("\n");
+		buf.append("	) datum ON datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
+	}
+
+	private void sqlWhere(StringBuilder buf, boolean withStreamLimit) {
+		if ( isDateRangeInJoin() || (withStreamLimit && streamLimit != StreamLimit.None) ) {
 			return;
 		}
 		addSqlWhere(buf, false);
@@ -402,14 +572,14 @@ public final class SelectDatum
 		}
 	}
 
-	private void sqlCore(StringBuilder buf, boolean withContributors) {
+	private void sqlCore(StringBuilder buf, boolean withContributors, boolean withStreamLimit) {
 		sqlCte(buf);
 		if ( combine != null ) {
 			buf.append(", d AS (\n");
 		}
 		sqlSelect(buf);
-		sqlFrom(buf);
-		sqlWhere(buf);
+		sqlFrom(buf, withStreamLimit);
+		sqlWhere(buf, withStreamLimit);
 		if ( aggregation == Aggregation.Week ) {
 			buf.append("GROUP BY ");
 			if ( combine != null ) {
@@ -453,7 +623,7 @@ public final class SelectDatum
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, contributors);
+		sqlCore(buf, contributors, true);
 		sqlOrderByJoins(buf);
 		if ( rollup != null ) {
 			buf.append("""
@@ -492,6 +662,10 @@ public final class SelectDatum
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
+		if ( streamLimit != StreamLimit.None ) {
+			// the per-stream limit follows the date range, before the overall limit and offset
+			stmt.setLong(++p, streamLimitMax());
+		}
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
@@ -528,8 +702,8 @@ public final class SelectDatum
 				return buf.toString();
 			}
 
-			// use normal wrapped count query
-			sqlCore(buf, false);
+			// use normal wrapped count query, without any per-stream limit so every row is counted
+			sqlCore(buf, false, false);
 			sqlOrderByJoins(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}

@@ -47,6 +47,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -54,7 +55,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Test cases for {@link SelectDatum} with the week-based aggregation types.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectDatum_WeeklyTests {
@@ -187,6 +188,26 @@ public class SelectDatum_WeeklyTests {
 		verify(stmt).setTimestamp(3, Timestamp.from(filter.getStartDate()));
 		verify(stmt).setTimestamp(4, Timestamp.from(filter.getEndDate()));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
+	}
+
+	@Test
+	public void find_weekly_nodeAndSource_absoluteDates_sortStreamTimeDesc_limit_sql() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Week);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS).minus(365, ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plus(366, ChronoUnit.DAYS));
+		filter.setSorts(QueryingDatumStreamsAccessor.SORT_BY_DATE_DESCENDING);
+		filter.setMax(1);
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		// the GROUP BY of the week rollup is not limited per stream
+		thenSqlEqualsResource(sql, "select-datum-weekly-node-source-dates-sortStreamTimeDesc-limit.sql");
 	}
 
 }
