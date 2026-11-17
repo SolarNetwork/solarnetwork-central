@@ -9,6 +9,10 @@
  * 	FROM solardatm.calc_stale_datm('11111'::uuid,'2020-10-07 08:00:40+13'::timestamptz)
  * 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
  *
+ * The lookups of the datum before and after are ordered by `ts` alone, not by `stream_id` and
+ * then `ts`: the stream is fixed, so the result is the same, and only then does Timescale scan
+ * the chunks within the tolerance instead of every chunk (see NET-541).
+ *
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_in				the date of the datum that has changed
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
@@ -28,7 +32,8 @@ $$
 		WHERE d.stream_id = sid
 			AND d.ts < ts_in
 			AND d.ts > ts_in - tolerance
-		ORDER BY d.stream_id, d.ts DESC
+		-- by time alone, so that only the chunks within the tolerance are scanned (see NET-541)
+		ORDER BY d.ts DESC
 		LIMIT 1
 	)
 	, b AS (
@@ -59,7 +64,8 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts > ts_in
 				AND d.ts < ts_in + tolerance
-			ORDER BY d.stream_id, d.ts
+			-- by time alone, so that only the chunks within the tolerance are scanned (see NET-541)
+			ORDER BY d.ts
 			LIMIT 1
 		)
 	)
