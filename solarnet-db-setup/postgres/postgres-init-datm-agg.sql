@@ -9,8 +9,18 @@
  * `0`, `h`, and `d` aggregate levels, so the associated audit values for the stale aggregate
  * period can be computed.
  *
+ * When processing an `h` aggregate for an hour that starts at or after the 15 minute boundary of
+ * `solardatm.agg_datm_15m_complete_from()`, the hour and its 15 minute rows are computed together
+ * by `solardatm.rollup_datm_15m_for_hour()`, and both are stored in one statement: the hour as
+ * before, then each 15 minute row that is new or has changed, while any 15 minute row of the hour
+ * that was not computed is deleted, as are all of them when the hour has no row. The boundary is
+ * read only after the stale record is claimed, so a change to it applies to every hour claimed
+ * after it commits. Hours that start before the boundary are processed exactly as before, and their
+ * 15 minute rows are neither written nor deleted.
+ *
  * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
  * @see solardatm.rollup_datm_for_time_span()
+ * @see solardatm.rollup_datm_15m_for_hour()
  * @see solardatm.rollup_agg_data_for_time_span()
  */
 CREATE OR REPLACE FUNCTION solardatm.process_one_agg_stale_datm(kind CHARACTER)
@@ -30,6 +40,7 @@ DECLARE
 	ts_prevstart			TIMESTAMP WITH TIME ZONE;
 
 	num_rows				BIGINT;
+	complete_15m			TIMESTAMP WITH TIME ZONE;
 
 	result_row				solardatm.obj_datm_id;
 	flux_pub 				solardatm.flux_pub_settings;
@@ -76,8 +87,62 @@ BEGIN
 		ts_end         := CASE kind WHEN 'h' THEN stale.ts_start + agg_span ELSE local_ts_end AT TIME ZONE tz END;
 		ts_prevstart   := CASE kind WHEN 'h' THEN stale.ts_start - agg_span ELSE (local_ts_start - agg_span) AT TIME ZONE tz END;
 
+		IF kind = 'h' THEN
+			-- NOTE read only after the stale record is claimed above: the NET-540 production
+			-- script that first sets the boundary relies on this
+			complete_15m := solardatm.agg_datm_15m_complete_from();
+		END IF;
+
 		BEGIN
-			IF kind = 'h' THEN
+			IF kind = 'h' AND stale.ts_start >= complete_15m THEN
+				-- store the hour and its 15 minute rows, all computed together; a 15 minute row is
+				-- rewritten only when it has changed, and those of the hour not computed are deleted
+				-- (all of them, when the hour has no row)
+				EXECUTE
+						'WITH r AS ('
+						'    SELECT * FROM solardatm.rollup_datm_15m_for_hour($1, $2, $3)'
+						')'
+						', h AS ('
+						'    INSERT INTO solardatm.agg_datm_hourly (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
+						'    SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+						'    FROM r '
+						'    ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
+						'        data_i = EXCLUDED.data_i, '
+						'        data_a = EXCLUDED.data_a, '
+						'        data_s = EXCLUDED.data_s, '
+						'        data_t = EXCLUDED.data_t, '
+						'        stat_i = EXCLUDED.stat_i, '
+						'        read_a = EXCLUDED.read_a '
+						'    RETURNING 1'
+						')'
+						', s AS ('
+						'    SELECT x.* FROM r, unnest(r.slots) x'
+						')'
+						', su AS ('
+						'    INSERT INTO solardatm.agg_datm_15m (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
+						'    SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+						'    FROM s '
+						'    ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
+						'        data_i = EXCLUDED.data_i, '
+						'        data_a = EXCLUDED.data_a, '
+						'        data_s = EXCLUDED.data_s, '
+						'        data_t = EXCLUDED.data_t, '
+						'        stat_i = EXCLUDED.stat_i, '
+						'        read_a = EXCLUDED.read_a '
+						'    WHERE (agg_datm_15m.data_i, agg_datm_15m.data_a, agg_datm_15m.data_s, '
+						'            agg_datm_15m.data_t, agg_datm_15m.stat_i, agg_datm_15m.read_a) '
+						'        IS DISTINCT FROM (EXCLUDED.data_i, EXCLUDED.data_a, EXCLUDED.data_s, '
+						'            EXCLUDED.data_t, EXCLUDED.stat_i, EXCLUDED.read_a)'
+						')'
+						', sd AS ('
+						'    DELETE FROM solardatm.agg_datm_15m d '
+						'    WHERE d.stream_id = $1 AND d.ts_start >= $2 AND d.ts_start < $3 '
+						'        AND NOT EXISTS (SELECT 1 FROM s WHERE s.ts_start = d.ts_start)'
+						')'
+						'SELECT count(*) FROM h'
+				INTO num_rows
+				USING stale.stream_id, stale.ts_start, ts_end;
+			ELSEIF kind = 'h' THEN
 				EXECUTE format(
 						'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
 						'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
@@ -91,6 +156,7 @@ BEGIN
 						'    read_a = EXCLUDED.read_a'
 						, dest_name)
 				USING stale.stream_id, stale.ts_start, ts_end;
+				GET DIAGNOSTICS num_rows = ROW_COUNT;
 			ELSE
 				EXECUTE format(
 						'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
@@ -105,8 +171,8 @@ BEGIN
 						'    read_a = EXCLUDED.read_a'
 						, dest_name)
 				USING stale.stream_id, stale.ts_start, ts_end, CASE kind WHEN 'M' THEN 'd' ELSE 'h' END;
+				GET DIAGNOSTICS num_rows = ROW_COUNT;
 			END IF;
-			GET DIAGNOSTICS num_rows = ROW_COUNT;
 		EXCEPTION WHEN invalid_text_representation THEN
 			RAISE EXCEPTION 'Invalid text representation processing stream % aggregate % range % - %',
 				stale.stream_id, kind, stale.ts_start, ts_end

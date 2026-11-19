@@ -36,6 +36,16 @@ BEGIN
 			-- whole hours (ceil) only; partial to be handled by stale processing
 			AND d.ts_start >= date_trunc('hour', ts_min) AT TIME ZONE tz + interval '1 hour'
 			AND d.ts_start < date_trunc('hour', ts_max) AT TIME ZONE tz
+		RETURNING d.ts_start
+	)
+	, fifteen AS (
+		-- the 15 minute rows of the hours deleted above, which are taken from the deleted rows
+		-- because hourly rows start on the hours of the session time zone, not always the
+		-- stream's; those of partial hours are handled by stale processing, with the hours
+		DELETE FROM solardatm.agg_datm_15m d
+		WHERE d.stream_id = sid
+			AND d.ts_start >= (SELECT min(h.ts_start) FROM hourly h)
+			AND d.ts_start < (SELECT max(h.ts_start) FROM hourly h) + interval '1 hour'
 	)
 	, daily AS (
 		DELETE FROM solardatm.agg_datm_daily d

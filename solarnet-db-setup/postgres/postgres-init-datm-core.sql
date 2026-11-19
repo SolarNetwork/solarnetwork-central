@@ -424,6 +424,53 @@ CREATE TABLE solardatm.agg_datm_hourly (
 
 CREATE UNIQUE INDEX IF NOT EXISTS agg_datm_hourly_pkey ON solardatm.agg_datm_hourly (stream_id, ts_start DESC);
 
+/**
+ * Aggregate 15 minute datum table: one row for each 15 minute slot of an hour that has datum or
+ * reset records, with the same columns as `agg_datm_hourly`.
+ *
+ * The rows of an hour are computed together with the hour itself, when the hour is processed by
+ * `solardatm.process_one_agg_stale_datm()`, so they add up to the hour. Hours that start before
+ * the `complete_from` time of `solardatm.agg_datm_15m_setting` get no rows when processed.
+ *
+ * The default fill factor is used, as for `agg_datm_hourly`: a row is rewritten only while its
+ * slot is current, and unchanged rows are not rewritten at all.
+ *
+ * @see solardatm.rollup_datm_15m_for_hour()
+ */
+CREATE TABLE solardatm.agg_datm_15m (
+	stream_id	UUID NOT NULL,
+	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][]
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS agg_datm_15m_pkey ON solardatm.agg_datm_15m (stream_id, ts_start DESC);
+
+/**
+ * Settings of the 15 minute aggregate table, `solardatm.agg_datm_15m`, in at most one row.
+ *
+ * `complete_from`: hours that start at or after this time get their 15 minute rows when they are
+ * processed, so the table is complete from here on; hours that start before it get none. With no
+ * row, no hour gets 15 minute rows. A backfill that writes the rows of earlier hours moves it back.
+ *
+ * Read it with `solardatm.agg_datm_15m_complete_from()`.
+ */
+CREATE TABLE solardatm.agg_datm_15m_setting (
+	id				BOOLEAN NOT NULL DEFAULT TRUE,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	complete_from	TIMESTAMP WITH TIME ZONE NOT NULL,
+	CONSTRAINT agg_datm_15m_setting_pkey PRIMARY KEY (id),
+	CONSTRAINT agg_datm_15m_setting_one_row CHECK (id)
+);
+
+-- a database built from this DDL computes the 15 minute rows of every hour it processes;
+-- a migrated database instead has no row until its 15 minute table is ready (see NET-540)
+INSERT INTO solardatm.agg_datm_15m_setting (complete_from) VALUES ('-infinity');
+
 -- agg daily datum table
 CREATE TABLE solardatm.agg_datm_daily (
 	stream_id	UUID NOT NULL,

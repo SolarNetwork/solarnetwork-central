@@ -116,7 +116,7 @@ import tools.jackson.core.json.JsonFactory;
  * Utilities for working with datum at the database level.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class DatumDbUtils {
 
@@ -1840,14 +1840,18 @@ public final class DatumDbUtils {
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param kind
-	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
-	 *        {@code Month}
+	 *        the aggregation kind to load, e.g. {@code FifteenMinute},
+	 *        {@code Hour}, {@code Day}, or {@code Month}
 	 * @return the results, never {@code null}
 	 */
 	public static List<AggregateDatum> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
 		String tableName;
 		RowMapper<AggregateDatum> mapper = switch (kind) {
+			case FifteenMinute -> {
+				tableName = "15m";
+				yield new AggregateDatumEntityRowMapper(Aggregation.FifteenMinute);
+			}
 			case Day -> {
 				tableName = "daily";
 				yield AggregateDatumEntityRowMapper.DAY_INSTANCE;

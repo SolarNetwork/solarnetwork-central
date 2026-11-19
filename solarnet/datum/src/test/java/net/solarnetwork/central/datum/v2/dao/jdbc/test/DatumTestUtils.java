@@ -73,7 +73,7 @@ import net.solarnetwork.util.NumberUtils;
  * Helper methods for datum tests.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public final class DatumTestUtils {
 
@@ -354,6 +354,7 @@ public final class DatumTestUtils {
 		jdbcTemplate.update("DELETE FROM solardatm.da_datm_meta");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_flux");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_15m");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_daily");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_monthly");
