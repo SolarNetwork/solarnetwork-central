@@ -622,7 +622,7 @@ $$;
  * The `data_a` output column contains the accumulated difference of the raw `data_a` properties
  * within the "clock" period.
  *
- * The `read_a` output column contains a tuple of [start, finish, difference] values for the raw
+ * The `read_a` output column contains a tuple of [difference, start, end] values for the raw
  * `data_a` properties within the "reading" period.
  *
  * @param sid 				the stream ID to find datm for
@@ -705,6 +705,11 @@ $$
 				-- crossing end of slot; allocate only start portion of accumulation within this slot
 				WHEN d.ts > end_ts AND lag(d.ts) OVER slot < end_ts
 					THEN EXTRACT('epoch' FROM end_ts - lag(d.ts) OVER slot) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
+
+				-- both rows at or after the end of the slot: the difference belongs to a later slot
+				-- (two reset records after the end, before the next datum; see NET-540)
+				WHEN lag(d.ts) OVER slot >= end_ts
+					THEN 0
 
 				ELSE 1
 				END as portion
@@ -989,6 +994,9 @@ $$;
 /**
  * Compute a higher-level rollup datm record of lower=level aggregate datum records over a time range.
  *
+ * The start and end readings of each accumulating property in `read_a` are those of the first and
+ * last row that has them, preferring rows whose accumulation in `data_a` is not NULL.
+ *
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
@@ -1045,25 +1053,23 @@ $$
 	, wa AS (
 		SELECT
 			  p.idx
+			, d.ts_start
 			, d.data_a[p.idx] AS val
 			, d.read_a[p.idx][1] AS rdiff
-			, first_value(d.read_a[p.idx][2]) OVER slot_start AS rstart
-			, first_value(d.read_a[p.idx][3]) OVER slot_end AS rend
+			, d.read_a[p.idx][2] AS rstart
+			, d.read_a[p.idx][3] AS rend
 		FROM d
 		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
-		WINDOW slot_start AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start
-				RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
-			slot_end AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start DESC
-				RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
-	-- calculate accumulating statistics
+	-- calculate accumulating statistics; the start and end readings are those of the first and
+	-- last row that has them, taking rows whose accumulation is not NULL first (see NET-544)
 	, da AS (
 		SELECT
 			idx
 			, sum(val) AS val
 			, sum(rdiff) AS rdiff
-			, min(rstart) AS rstart
-			, min(rend) AS rend
+			, (array_agg(rstart ORDER BY val IS NULL, ts_start) FILTER (WHERE rstart IS NOT NULL))[1] AS rstart
+			, (array_agg(rend ORDER BY val IS NULL, ts_start DESC) FILTER (WHERE rend IS NOT NULL))[1] AS rend
 		FROM wa
 		GROUP BY idx
 	)
