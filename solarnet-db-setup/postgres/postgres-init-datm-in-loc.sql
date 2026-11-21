@@ -3,10 +3,10 @@
  *
  * This function accepts the "current" property name arrays as an optimisation when migrating
  * multiple rows of data. If the given datum has properties that are not found in any of the
- * given name arrays, the name will be added and then the associated `solardatm.da_datm_meta`
+ * given name arrays, the name will be added and then the associated `solardatm.da_loc_datm_meta`
  * column updated to match. The name arrays are declared as `INOUT` so that the updated values
  * can be saved and used again, helping reduce the amount of updates needed to the
- * `solardatm.da_datm_meta` table.
+ * `solardatm.da_loc_datm_meta` table.
  *
  * @param sid 		the stream ID to use
  * @param ddate 	datum timestamp
@@ -67,6 +67,10 @@ BEGIN
 			v_i[idx] := NULL;
 		END;
 	END LOOP;
+	IF array_lower(v_i, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_i := array_fill(NULL::NUMERIC, ARRAY[array_lower(v_i, 1) - 1]) || v_i;
+	END IF;
 
 	-- copy accumulating props
 	FOR p IN SELECT * FROM jsonb_each_text(jdata_a) LOOP
@@ -85,9 +89,13 @@ BEGIN
 		EXCEPTION WHEN others THEN
 			RAISE WARNING 'JSON value not numeric: stream %, source %, ts %, i.key %, i.value %',
 				sid, src, ddate, p.key, p.value;
-			v_i[idx] := NULL;
+			v_a[idx] := NULL;
 		END;
 	END LOOP;
+	IF array_lower(v_a, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_a := array_fill(NULL::NUMERIC, ARRAY[array_lower(v_a, 1) - 1]) || v_a;
+	END IF;
 
 	-- copy status props
 	FOR p IN SELECT * FROM jsonb_each_text(jdata_s) LOOP
@@ -95,7 +103,7 @@ BEGIN
 		IF idx < 1 THEN
 			UPDATE solardatm.da_loc_datm_meta SET names_s = CASE
 					WHEN COALESCE(array_position(names_s, p.key), 0) < 1 THEN array_append(names_s, p.key)
-					ELSE names_i
+					ELSE names_s
 					END
 			WHERE stream_id = sid
 			RETURNING names_s INTO p_s;
@@ -103,6 +111,10 @@ BEGIN
 		END IF;
 		v_s[idx] := p.value;
 	END LOOP;
+	IF array_lower(v_s, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_s := array_fill(NULL::TEXT, ARRAY[array_lower(v_s, 1) - 1]) || v_s;
+	END IF;
 
 	INSERT INTO solardatm.da_datm (stream_id, ts, received, data_i, data_a, data_s, data_t)
 	VALUES (
@@ -134,8 +146,9 @@ $$;
  * @param src 	the source ID
  * @param rdate the date the datum was received by SolarNetwork
  * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
- * @param track if `TRUE` then also insert results of `solardatm.calc_stale_datm()`
- *                     into the `solardatm.agg_stale_datm` table
+ * @param track if `TRUE` then also insert results of `solardatm.calc_stale_datm()` into the
+ *              `solardatm.agg_stale_datm` table and call `solardatm.audit_increment_datum_count()`
+ *              to keep the audit data updated
  */
 CREATE OR REPLACE FUNCTION solardatm.store_loc_datum(
 	ddate 			TIMESTAMP WITH TIME ZONE,
@@ -150,7 +163,6 @@ DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
 	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
 	jdata_json 			JSONB 						:= jdata::jsonb;
-	ts_recv_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_recv);
 	is_insert 			BOOLEAN 					:= false;
 
 	sid 	UUID;
@@ -190,7 +202,7 @@ BEGIN
 		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid, ddate)
+		FROM solardatm.calc_stale_datm(sid, ts_crea)
 		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 	END IF;
 
