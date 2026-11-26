@@ -64,7 +64,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbDatumRollup_Net539Tests extends BaseDatumJdbcTestSupport {
 
@@ -486,10 +486,11 @@ public class DbDatumRollup_Net539Tests extends BaseDatumJdbcTestSupport {
 					;
 				then(list.get(1).getProperties().getAccumulating())
 					.as("""
-						Second slot has the next datum's share of the clock accumulation from the \
-						prior datum: (108 - 100) * (18:25 - 18:15) / (18:25 - 17:45)\
+						Second slot has the hour's whole share of the clock accumulation from the \
+						prior datum, as it holds the first datum of the hour with an accumulating \
+						value: (108 - 100) * (18:25 - 18:00) / (18:25 - 17:45)\
 						""")
-					.containsExactly(decimalArray("2"))
+					.containsExactly(decimalArray("5"))
 					;
 			})
 			;
